@@ -624,9 +624,9 @@ class RPMOutput:
             key = 'representative'
             if df[key].any():
                 s.loc[i, 'representative_gid'] = \
-                    df.loc[df[key], 'gid'].sort_values(by=key).values[0]
+                    df[df[key]].sort_values(by=key)['gid'].values[0]
                 s.loc[i, 'representative_gen_gid'] = \
-                    df.loc[df[key], 'gen_gid'].sort_values(by=key).values[0]
+                    df[df[key]].sort_values(by=key)['gen_gid'].values[0]
 
         return s
 
