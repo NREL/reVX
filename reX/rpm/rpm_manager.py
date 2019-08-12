@@ -2,17 +2,17 @@
 """
 Pipeline between reV and RPM
 """
-import psutil
-import os
 import concurrent.futures as cf
 import logging
+import os
 import pandas as pd
+import psutil
 from warnings import warn
 
 from reV.handlers.outputs import Outputs
-from reV.rpm.rpm_clusters import RPMClusters
-from reV.rpm.rpm_output import RPMOutput
-from reV.utilities.exceptions import RPMValueError, RPMRuntimeError
+from reX.rpm.rpm_clusters import RPMClusters
+from reX.rpm.rpm_output import RPMOutput
+from reX.utilities.exceptions import RPMValueError, RPMRuntimeError
 
 logger = logging.getLogger(__name__)
 

@@ -45,14 +45,14 @@ cluster_df = RPMClusters.cluster(fname, wind_gen_gids, n_clusters=6)
 
 """
 from copy import deepcopy
+import geopandas as gpd
 import logging
-import pywt
 import numpy as np
+import pywt
+from scipy.spatial import cKDTree
+from shapely.geometry import Point
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import normalize
-from scipy.spatial import cKDTree
-import geopandas as gpd
-from shapely.geometry import Point
 
 from reV.handlers.outputs import Outputs
 

@@ -2,17 +2,17 @@
 """
 RPM output handler.
 """
-import psutil
-import os
 import concurrent.futures as cf
 import logging
 import numpy as np
+import os
 import pandas as pd
+import psutil
 
-from reV.handlers.geotiff import Geotiff
 from reV.handlers.outputs import Outputs
-from reV.rpm.rpm_clusters import RPMClusters
-from reV.utilities.exceptions import RPMRuntimeError, RPMTypeError
+from reV.rpm.geotiff_handler import Geotiff
+from reX.rpm.rpm_clusters import RPMClusters
+from reX.utilities.exceptions import RPMRuntimeError, RPMTypeError
 
 logger = logging.getLogger(__name__)
 
