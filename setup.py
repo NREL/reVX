@@ -46,10 +46,10 @@ class PostDevelopCommand(develop):
 
 def get_sam_data_files():
     """
-    Get all data files in the SAM directory that are required to run reV.
+    Get all data files in the SAM directory that are required to run reX.
     """
 
-    rel_dir = 'reV/SAM/'
+    rel_dir = 'reX/SAM/'
     sam_dir = os.path.join(os.getcwd(), rel_dir)
     sam_data_files = []
     for root, _, files in os.walk(sam_dir):
@@ -72,7 +72,7 @@ click_dependency = "click>=7.0"
 scipy_dependency = "scipy>=1.2.1"
 
 setup(
-    name="reV",
+    name="reX",
     version=version,
     description="Renewable Energy Exchange Tool",
     long_description=readme,
