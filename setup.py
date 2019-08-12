@@ -82,7 +82,8 @@ setup(
     packages=find_packages(),
     package_dir={"rex": "rex"},
     entry_points={
-        "console_scripts": ["reX=reX.cli:main"],
+        "console_scripts": ["reX=reX.cli:main"
+                            "reX-rpm=reX.rpm.rpm_cli:main"],
     },
     include_package_data=True,
     license="BSD license",
