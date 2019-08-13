@@ -10,7 +10,7 @@ import pandas as pd
 import psutil
 
 from reV.handlers.outputs import Outputs
-from reV.rpm.geotiff_handler import Geotiff
+from reV.handlers.geotiff import Geotiff
 from reX.rpm.rpm_clusters import RPMClusters
 from reX.utilities.exceptions import RPMRuntimeError, RPMTypeError
 
