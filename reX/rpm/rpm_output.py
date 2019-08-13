@@ -622,11 +622,15 @@ class RPMOutput:
                 s.loc[i, 'included_area_km2'] = df['included_area_km2'].sum()
 
             key = 'representative'
+            sort_key = 'rank'
+            if 'rank_included' in df:
+                sort_key = 'rank_included'
+
             if df[key].any():
                 s.loc[i, 'representative_gid'] = \
-                    df[df[key]].sort_values(by=key)['gid'].values[0]
+                    df[df[key]].sort_values(by=sort_key)['gid'].values[0]
                 s.loc[i, 'representative_gen_gid'] = \
-                    df[df[key]].sort_values(by=key)['gen_gid'].values[0]
+                    df[df[key]].sort_values(by=sort_key)['gen_gid'].values[0]
 
         return s
 
