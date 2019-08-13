@@ -388,6 +388,11 @@ class RPMClusters:
         if beautify:
             clusters.geometry = clusters.geometry.buffer(-mean_dist)
             clusters.geometry = clusters.geometry.buffer(mean_dist)
+            for index, _ in clusters.iterrows():
+                geom = clusters.loc[index, 'geometry']
+                if geom.geom_type == 'MultiPolygon':
+                    clusters.loc[index, 'geometry'] = max(geom,
+                                                          key=lambda a: a.area)
 
         clusters.to_file(fpath)
         return fpath
