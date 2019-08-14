@@ -394,7 +394,7 @@ class RPMClusters:
                     clusters.loc[index, 'geometry'] = max(geom,
                                                           key=lambda a: a.area)
 
-        clusters.to_file(fpath)
+        clusters[['cluster_id', 'geometry']].to_file(fpath)
         return fpath
 
     def _contiguous_filter(self, drop_islands=True, buffer_weight=2):

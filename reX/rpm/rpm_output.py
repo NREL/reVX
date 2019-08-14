@@ -682,16 +682,8 @@ class RPMOutput:
             Filepath to write shape_file to.
         """
 
-        # Geopandas doesnt like writing booleans
-        if 'representative' in self._clusters:
-            self._clusters['representative'] = \
-                self._clusters['representative'].astype(int)
-
-        RPMClusters._generate_shapefile(self._clusters, fpath_shp)
-
-        if 'representative' in self._clusters:
-            self._clusters['representative'] = \
-                self._clusters['representative'].astype(bool)
+        labels = ['cluster_id', 'latitude', 'longitude']
+        RPMClusters._generate_shapefile(self._clusters[labels], fpath_shp)
 
     @staticmethod
     def _get_fout_names(job_tag):
