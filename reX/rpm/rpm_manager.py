@@ -24,12 +24,12 @@ class RPMClusterManager:
     - Runs RPMClusters in parallel for all regions
     - Save results to disk
     """
-    def __init__(self, cf_profiles, rpm_meta, rpm_region_col=None,
+    def __init__(self, cf_fpath, rpm_meta, rpm_region_col=None,
                  parallel=True):
         """
         Parameters
         ----------
-        cf_profiles : str
+        cf_fpath : str
             Path to reV .h5 files containing desired capacity factor profiles
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
@@ -48,7 +48,7 @@ class RPMClusterManager:
             logger.info('Initializing RPM clustering on regional column "{}".'
                         .format(rpm_region_col))
 
-        self._cf_h5 = cf_profiles
+        self._cf_h5 = cf_fpath
         self._rpm_regions = self._map_rpm_regions(rpm_meta,
                                                   region_col=rpm_region_col)
 
@@ -231,8 +231,8 @@ class RPMClusterManager:
         return rpm_clusters
 
     @classmethod
-    def run(cls, rpm_meta, fpath_gen, fpath_excl, fpath_techmap,
-            dset_techmap, out_dir, job_tag=None, rpm_region_col=None,
+    def run(cls, cf_fpath, rpm_meta, excl_fpath, techmap_fpath,
+            techmap_dset, out_dir, job_tag=None, rpm_region_col=None,
             parallel=True, output_kwargs=None, **cluster_kwargs):
         """
         RPM Cluster Manager:
@@ -242,20 +242,20 @@ class RPMClusterManager:
 
         Parameters
         ----------
+        cf_fpath : str
+            Path to reV .h5 files containing desired capacity factor profiles
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
             - Regions of interest
             - # of clusters per region
             - cf or resource GIDs if region is not in default meta data
-        fpath_gen : str
-            Path to reV .h5 files containing desired capacity factor profiles
-        fpath_excl : str | None
+        excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
-        fpath_techmap : str | None
+        techmap_fpath : str | None
             Filepath to tech mapping between exclusions and resource data.
             None will not apply exclusions.
-        dset_techmap : str
+        techmap_dset : str
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data.
         out_dir : str
@@ -280,7 +280,7 @@ class RPMClusterManager:
             f_int = f_int.replace('.csv', '_{}.csv'.format(job_tag))
 
         if not os.path.exists(f_int):
-            rpm = cls(fpath_gen, rpm_meta, rpm_region_col=rpm_region_col,
+            rpm = cls(cf_fpath, rpm_meta, rpm_region_col=rpm_region_col,
                       parallel=parallel)
             rpm._cluster(**cluster_kwargs)
             rpm_clusters = rpm._combine_region_clusters(rpm._rpm_regions)
@@ -298,8 +298,8 @@ class RPMClusterManager:
         if output_kwargs is None:
             output_kwargs = {}
 
-        RPMOutput.process_outputs(rpm_clusters, fpath_excl, fpath_techmap,
-                                  dset_techmap, fpath_gen, out_dir,
+        RPMOutput.process_outputs(rpm_clusters, cf_fpath, excl_fpath,
+                                  techmap_fpath, techmap_dset, out_dir,
                                   job_tag=job_tag, parallel=parallel,
                                   cluster_kwargs=cluster_kwargs,
                                   **output_kwargs)

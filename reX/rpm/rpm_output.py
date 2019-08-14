@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 class RPMOutput:
     """Framework to format and process RPM clustering results."""
 
-    def __init__(self, rpm_clusters, fpath_excl, fpath_techmap, dset_techmap,
-                 fpath_gen, excl_area=0.0081, include_threshold=0.001,
+    def __init__(self, rpm_clusters, cf_fpath, excl_fpath, techmap_fpath,
+                 techmap_dset, excl_area=0.0081, include_threshold=0.001,
                  n_profiles=1, rerank=True, cluster_kwargs=None,
                  parallel=True):
         """
@@ -30,17 +30,17 @@ class RPMOutput:
         rpm_clusters : pd.DataFrame | str
             Single DataFrame with (gid, gen_gid, cluster_id, rank),
             or str to file.
-        fpath_excl : str | None
+        cf_fpath : str
+            Path to reV .h5 files containing desired capacity factor profiles
+        excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
-        fpath_techmap : str | None
+        techmap_fpath : str | None
             Filepath to tech mapping between exclusions and resource data.
             None will not apply exclusions.
-        dset_techmap : str
+        techmap_dset : str
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data.
-        fpath_gen : str
-            reV generation output file.
         excl_area : float
             Area in km2 of one exclusion pixel.
         include_threshold : float
@@ -63,10 +63,10 @@ class RPMOutput:
         logger.info('Initializing RPM output processing...')
 
         self._clusters = self._parse_cluster_arg(rpm_clusters)
-        self._fpath_excl = fpath_excl
-        self._fpath_techmap = fpath_techmap
-        self._dset_techmap = dset_techmap
-        self._fpath_gen = fpath_gen
+        self._excl_fpath = excl_fpath
+        self._techmap_fpath = techmap_fpath
+        self._techmap_dset = techmap_dset
+        self._cf_fpath = cf_fpath
         self.excl_area = excl_area
         self.include_threshold = include_threshold
         self.n_profiles = n_profiles
@@ -147,7 +147,7 @@ class RPMOutput:
     def _init_lat_lon(self):
         """Initialize the lat/lon arrays and reduce their size."""
 
-        if self._fpath_techmap is not None:
+        if self._techmap_fpath is not None:
 
             self._full_lat_slice, self._full_lon_slice = \
                 self._get_lat_lon_slices(cluster_id=None)
@@ -168,14 +168,14 @@ class RPMOutput:
                                  self.excl_lon.min(), self._excl_lon.max()))
 
     @staticmethod
-    def _get_tm_data(fpath_techmap, dset_techmap, lat_slice, lon_slice):
+    def _get_tm_data(techmap_fpath, techmap_dset, lat_slice, lon_slice):
         """Get the techmap data.
 
         Parameters
         ----------
-        fpath_techmap : str
+        techmap_fpath : str
             Filepath to tech mapping between exclusions and resource data.
-        dset_techmap : str
+        techmap_dset : str
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data.
         lat_slice : slice
@@ -191,17 +191,17 @@ class RPMOutput:
             Techmap data mapping exclusions grid to resource gid (flattened).
         """
 
-        with Outputs(fpath_techmap) as tm:
-            techmap = tm[dset_techmap, lat_slice, lon_slice].astype(np.int32)
+        with Outputs(techmap_fpath) as tm:
+            techmap = tm[techmap_dset, lat_slice, lon_slice].astype(np.int32)
         return techmap.flatten()
 
     @staticmethod
-    def _get_excl_data(fpath_excl, lat_slice, lon_slice, band=0):
+    def _get_excl_data(excl_fpath, lat_slice, lon_slice, band=0):
         """Get the exclusions data from a geotiff file.
 
         Parameters
         ----------
-        fpath_excl : str
+        excl_fpath : str
             Filepath to exclusions data (must match the techmap grid).
         lat_slice : slice
             The latitude (row) slice to extract from the exclusions or
@@ -218,7 +218,7 @@ class RPMOutput:
             Exclusions data flattened and normalized from 0 to 1 (1 is incld).
         """
 
-        with Geotiff(fpath_excl) as excl:
+        with Geotiff(excl_fpath) as excl:
             excl_data = excl[band, lat_slice, lon_slice]
 
         # infer exclusions that are scaled percentages from 0 to 100
@@ -340,8 +340,8 @@ class RPMOutput:
             2D array representing the latitudes at each exclusion grid cell
         """
 
-        if self._excl_lat is None and self._fpath_techmap is not None:
-            with Outputs(self._fpath_techmap) as f:
+        if self._excl_lat is None and self._techmap_fpath is not None:
+            with Outputs(self._techmap_fpath) as f:
                 logger.debug('Importing Latitude data from techmap...')
                 self._excl_lat = f['latitude']
         return self._excl_lat
@@ -356,15 +356,15 @@ class RPMOutput:
             2D array representing the latitudes at each exclusion grid cell
         """
 
-        if self._excl_lon is None and self._fpath_techmap is not None:
-            with Outputs(self._fpath_techmap) as f:
+        if self._excl_lon is None and self._techmap_fpath is not None:
+            with Outputs(self._techmap_fpath) as f:
                 logger.debug('Importing Longitude data from techmap...')
                 self._excl_lon = f['longitude']
         return self._excl_lon
 
     @staticmethod
-    def _single_excl(cluster_id, clusters, fpath_excl, fpath_techmap,
-                     dset_techmap, lat_slice, lon_slice):
+    def _single_excl(cluster_id, clusters, excl_fpath, techmap_fpath,
+                     techmap_dset, lat_slice, lon_slice):
         """Calculate the exclusions for each resource GID in a cluster.
 
         Parameters
@@ -373,11 +373,11 @@ class RPMOutput:
             Single cluster ID of interest.
         clusters : pandas.DataFrame
             Single DataFrame with (gid, gen_gid, cluster_id, rank)
-        fpath_excl : str
+        excl_fpath : str
             Filepath to exclusions data (must match the techmap grid).
-        fpath_techmap : str
+        techmap_fpath : str
             Filepath to tech mapping between exclusions and resource data.
-        dset_techmap : str
+        techmap_dset : str
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data.
         lat_slice : slice
@@ -406,9 +406,9 @@ class RPMOutput:
         n_inclusions = np.zeros((len(locs), ), dtype=np.float32)
         n_points = np.zeros((len(locs), ), dtype=np.uint16)
 
-        techmap = RPMOutput._get_tm_data(fpath_techmap, dset_techmap,
+        techmap = RPMOutput._get_tm_data(techmap_fpath, techmap_dset,
                                          lat_slice, lon_slice)
-        exclusions = RPMOutput._get_excl_data(fpath_excl, lat_slice, lon_slice)
+        exclusions = RPMOutput._get_excl_data(excl_fpath, lat_slice, lon_slice)
 
         for i, ind in enumerate(clusters.loc[mask, :].index.values):
             techmap_locs = np.where(
@@ -451,8 +451,8 @@ class RPMOutput:
 
                 lat_s, lon_s = slices[cid]
                 future = exe.submit(self._single_excl, cid,
-                                    static_clusters, self._fpath_excl,
-                                    self._fpath_techmap, self._dset_techmap,
+                                    static_clusters, self._excl_fpath,
+                                    self._techmap_fpath, self._techmap_dset,
                                     lat_s, lon_s)
                 futures[future] = cid
                 logger.debug('Kicked off exclusions for cluster "{}", {} out '
@@ -494,7 +494,7 @@ class RPMOutput:
                     gen_gids = df.loc[mask, 'gen_gid']
                     self.cluster_kwargs['dist_rank_filter'] = False
                     self.cluster_kwargs['contiguous_filter'] = False
-                    future = exe.submit(RPMClusters.cluster, self._fpath_gen,
+                    future = exe.submit(RPMClusters.cluster, self._cf_fpath,
                                         gen_gids, 1, **self.cluster_kwargs)
                     futures[future] = cid
 
@@ -530,7 +530,7 @@ class RPMOutput:
             for n in range(self.n_profiles):
                 fni = fn_pro.replace('.csv', '_{}.csv'.format(n))
                 fpath_out_i = os.path.join(out_dir, fni)
-                self._get_rep_profile(self._clusters, self._fpath_gen, n=n,
+                self._get_rep_profile(self._clusters, self._cf_fpath, n=n,
                                       fpath_out=fpath_out_i)
                 logger.info('Saved {}'.format(fpath_out_i))
         else:
@@ -539,17 +539,17 @@ class RPMOutput:
                     fni = fn_pro.replace('.csv', '_{}.csv'.format(n))
                     fpath_out_i = os.path.join(out_dir, fni)
                     exe.submit(self._get_rep_profile, self._clusters,
-                               self._fpath_gen, n=n, fpath_out=fpath_out_i)
+                               self._cf_fpath, n=n, fpath_out=fpath_out_i)
 
     @staticmethod
-    def _get_rep_profile(clusters, fpath_gen, n=0, fpath_out=None):
+    def _get_rep_profile(clusters, cf_fpath, n=0, fpath_out=None):
         """Get a single representative profile timeseries dataframe.
 
         Parameters
         ----------
         clusters : pd.DataFrame
             Single DataFrame with (gid, gen_gid, cluster_id, rank).
-        fpath_gen : str
+        cf_fpath : str
             reV generation output file.
         n : int
             Rank of profile to get. Zero is the most representative profile.
@@ -568,7 +568,7 @@ class RPMOutput:
         if 'representative' not in clusters:
             clusters['representative'] = False
 
-        with Outputs(fpath_gen) as f:
+        with Outputs(cf_fpath) as f:
             ti = f.time_index
         cols = clusters.cluster_id.unique()
         profile_df = pd.DataFrame(index=ti, columns=cols)
@@ -588,7 +588,7 @@ class RPMOutput:
                     mask = (clusters['gen_gid'] == gen_gid)
                     clusters.loc[mask, 'representative'] = True
 
-                    with Outputs(fpath_gen) as f:
+                    with Outputs(cf_fpath) as f:
                         profile_df.loc[:, i] = f['cf_profile', :, gen_gid]
 
         if fpath_out is not None:
@@ -608,8 +608,8 @@ class RPMOutput:
         """
 
         if ('included_frac' not in self._clusters
-                and self._fpath_excl is not None
-                and self._fpath_techmap is not None):
+                and self._excl_fpath is not None
+                and self._techmap_fpath is not None):
             raise RPMRuntimeError('Exclusions must be applied before '
                                   'representative profiles can be '
                                   'determined.')
@@ -617,7 +617,7 @@ class RPMOutput:
         profiles = {}
         for n in range(self.n_profiles):
             self._clusters, profiles[n] = self._get_rep_profile(
-                self._clusters, self._fpath_gen, n=n)
+                self._clusters, self._cf_fpath, n=n)
 
         return profiles
 
@@ -632,8 +632,8 @@ class RPMOutput:
         """
 
         if ('included_frac' not in self._clusters
-                and self._fpath_excl is not None
-                and self._fpath_techmap is not None):
+                and self._excl_fpath is not None
+                and self._techmap_fpath is not None):
             raise RPMRuntimeError('Exclusions must be applied before '
                                   'representative profiles can be determined.')
         if 'representative' not in self._clusters:
@@ -738,8 +738,8 @@ class RPMOutput:
             os.makedirs(out_dir)
 
         if ('included_frac' not in self._clusters
-                and self._fpath_excl is not None
-                and self._fpath_techmap is not None):
+                and self._excl_fpath is not None
+                and self._techmap_fpath is not None):
             self.apply_exclusions()
 
         for i, profile in self.representative_profiles.items():
@@ -758,7 +758,7 @@ class RPMOutput:
         logger.info('Saved {}'.format(fn_shp))
 
     @classmethod
-    def extract_profiles(cls, rpm_clusters, fpath_gen, out_dir, n_profiles=1,
+    def extract_profiles(cls, rpm_clusters, cf_fpath, out_dir, n_profiles=1,
                          job_tag=None, parallel=True):
         """Use pre-formatted RPM cluster outputs to generate profile outputs.
 
@@ -767,7 +767,7 @@ class RPMOutput:
         rpm_clusters : pd.DataFrame | str
             Single DataFrame with (gid, gen_gid, cluster_id, rank),
             or str to file.
-        fpath_gen : str
+        cf_fpath : str
             reV generation output file.
         out_dir : str
             Directory to dump output files.
@@ -781,7 +781,7 @@ class RPMOutput:
             max number of workers. True uses all available.
         """
 
-        rpmo = cls(rpm_clusters, None, None, None, fpath_gen,
+        rpmo = cls(rpm_clusters, cf_fpath, None, None, None,
                    n_profiles=n_profiles, parallel=parallel)
 
         _, fn_pro, _, _ = rpmo._get_fout_names(job_tag)
@@ -791,8 +791,8 @@ class RPMOutput:
         rpmo._export_rep_profiles(fn_pro, out_dir)
 
     @classmethod
-    def process_outputs(cls, rpm_clusters, fpath_excl, fpath_techmap,
-                        dset_techmap, fpath_gen, out_dir, job_tag=None,
+    def process_outputs(cls, rpm_clusters, cf_fpath, excl_fpath,
+                        techmap_fpath, techmap_dset, out_dir, job_tag=None,
                         parallel=True, cluster_kwargs=None, **kwargs):
         """Perform output processing on clusters and write results to disk.
 
@@ -801,17 +801,17 @@ class RPMOutput:
         rpm_clusters : pd.DataFrame | str
             Single DataFrame with (gid, gen_gid, cluster_id, rank),
             or str to file.
-        fpath_excl : str | None
+        cf_fpath : str
+            Path to reV .h5 files containing desired capacity factor profiles
+        excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
-        fpath_techmap : str | None
+        techmap_fpath : str | None
             Filepath to tech mapping between exclusions and resource data.
             None will not apply exclusions.
-        dset_techmap : str
+        techmap_dset : str
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data.
-        fpath_gen : str
-            reV generation output file.
         out_dir : str
             Directory to dump output files.
         job_tag : str | None
@@ -824,7 +824,7 @@ class RPMOutput:
             RPMClusters kwargs
         """
 
-        rpmo = cls(rpm_clusters, fpath_excl, fpath_techmap, dset_techmap,
-                   fpath_gen, cluster_kwargs=cluster_kwargs, parallel=parallel,
-                   **kwargs)
+        rpmo = cls(rpm_clusters, cf_fpath, excl_fpath, techmap_fpath,
+                   techmap_dset, cluster_kwargs=cluster_kwargs,
+                   parallel=parallel, **kwargs)
         rpmo.export_all(out_dir, job_tag=job_tag)

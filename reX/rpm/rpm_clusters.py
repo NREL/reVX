@@ -66,25 +66,25 @@ class ClusteringMethods:
     def kmeans(data, **kwargs):
         """ Cluster based on kmeans methodology """
 
-        kmeans = KMeans(**kwargs)
+        kmeans = KMeans(random_state=0, **kwargs)
         results = kmeans.fit(data)
         return results.labels_
 
 
 class RPMClusters:
     """ Base class for RPM clusters """
-    def __init__(self, cf_h5_path, gen_gids, n_clusters):
+    def __init__(self, cf_fpath, gen_gids, n_clusters):
         """
         Parameters
         ----------
-        cf_h5_path : str
+        cf_fpath : str
             Path to reV .h5 files containing desired capacity factor profiles
         gen_gids : list | ndarray
             List or vector of gen_gids to cluster on
         n_clusters : int
             Number of clusters to identify
         """
-        self._meta, self._coefficients = self._parse_data(cf_h5_path,
+        self._meta, self._coefficients = self._parse_data(cf_fpath,
                                                           gen_gids)
         self._n_clusters = n_clusters
 
@@ -183,20 +183,20 @@ class RPMClusters:
         return coords
 
     @staticmethod
-    def _parse_data(cf_h5_path, gen_gids):
+    def _parse_data(cf_fpath, gen_gids):
         """
         Extract lat, lon coordinates for given gen_gids
         Extract and convert cf_profiles into wavelet coefficients
 
         Parameters
         ----------
-        cf_h5_path : str
+        cf_fpath : str
             Path to reV .h5 files containing desired capacity factor profiles
         gen_gids : list | ndarray
             List or vector of gen_gids to cluster on
         """
 
-        with Outputs(cf_h5_path, mode='r', unscale=False) as cfs:
+        with Outputs(cf_fpath, mode='r', unscale=False) as cfs:
             meta = cfs.meta.loc[gen_gids, ['latitude', 'longitude']]
             gid_slice, gid_idx = RPMClusters._gid_pos(gen_gids)
             coeff = cfs['cf_profile', :, gid_slice][:, gid_idx]
