@@ -376,7 +376,7 @@ class RPMClusters:
         return clusters, mean_dist
 
     @staticmethod
-    def _generate_shapefile(meta, fpath, beautify=False):
+    def _generate_shapefile(meta, fpath, beautify=True):
         """
         Generate cluster polygons and save to shapefile
         """
