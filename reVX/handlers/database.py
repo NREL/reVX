@@ -1,0 +1,81 @@
+# -*- coding: utf-8 -*-
+"""reX SQL Database handler.
+
+Created on Thu Aug 22 08:58:37 2019
+
+@author: gbuster
+"""
+import pandas as pd
+import psycopg2
+import getpass
+
+
+class Database:
+    """Framework to interact with the reV/reX database."""
+
+    def __init__(self, db_name, db_host='gds_edit.nrel.gov', db_user=None,
+                 db_pass=None, db_port=5432):
+        """
+        Parameters
+        ----------
+        db_name : str
+            Database name.
+        db_host : str
+            Database host name.
+        db_user : str
+            Your database user name.
+        db_pass : str
+            Database password (None if your password is cached).
+        db_port : int
+            Database port.
+        """
+
+        self.db_host = db_host or 'localhost'
+        self.db_name = db_name or db_user or getpass.getuser()
+        self.db_user = db_user or getpass.getuser()
+        self.db_pass = db_pass
+        self.db_port = db_port or 5432
+
+        self._con = psycopg2.connect(host=self.db_host,
+                                     port=self.db_port,
+                                     user=self.db_user,
+                                     password=self.db_pass,
+                                     database=self.db_name)
+
+    @property
+    def con(self):
+        """Return the database connection object."""
+        return self._con
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """close DB connection on exit."""
+        self._con.close()
+
+    @classmethod
+    def get_table(cls, table, schema, db_name, **kwargs):
+        """Get a table using a database query.
+
+        Parameters
+        ----------
+        table : str
+            Table name to retrieve from schema.
+        schema : str
+            Schema name being accessed in the database.
+        db_name : str
+            Database name.
+        **kwargs : dict
+            Additional keyword args to initialize the database connection.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            Dataframe representation of schema.table.
+        """
+
+        sql = 'SELECT * FROM "{}"."{}"'.format(schema, table)
+        with cls(db_name, **kwargs) as db:
+            df = pd.read_sql(sql, db.con)
+        return df

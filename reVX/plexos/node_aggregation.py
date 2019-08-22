@@ -535,20 +535,20 @@ class PlexosAggregation:
 
 
 if __name__ == '__main__':
+    from reX.handlers.database import Database
 
-    fplexos = 'C:/sandbox/reV/plexos_scratch/plexos_nodes.csv'
-    frev = ('C:/sandbox/reV/plexos_scratch/'
-            'naris_pv_standard_pv_conus_multiyear.csv')
     freeds = ('C:/sandbox/reV/plexos_scratch/'
               'BAU_naris_pv_standard_pv_conus_multiyear_'
               'US_rural_pv_reeds_to_rev_agg.csv')
 
-    cf_fpath = ''
+    cf_fpath = '/scratch/gbuster/naris/naris_rev_pv/naris_rev_pv_gen_2012.h5'
 
-    plexos_nodes = pd.read_csv(fplexos)
-    rev_sc = pd.read_csv(frev)
+    plexos_nodes = Database.get_table('plexos_nodes', 'rev', 'rev')
+    rev_sc = Database.get_table(
+        'naris_pv_standard_urban_v2_pv_conus_multiyear',
+        'final_results', 'tech_potential')
     reeds_build = pd.read_csv(freeds)
 
     pa = PlexosAggregation(plexos_nodes, rev_sc, reeds_build, cf_fpath)
-    table = pa._sc_build
-    node_map = pa._node_map
+    profiles = pa.make_profiles()
+    profiles.to_csv('plexos_agg_test.csv')
