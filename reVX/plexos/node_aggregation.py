@@ -4,13 +4,17 @@ Created on Wed Aug 21 13:47:43 2019
 
 @author: gbuster
 """
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import json
 import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
 from warnings import warn
+import logging
 
 from reV.handlers.outputs import Outputs
+
+logger = logging.getLogger(__name__)
 
 
 class PlexosNode:
@@ -34,7 +38,6 @@ class PlexosNode:
         exclusion_area : float
             Area in km2 associated with a single exclusion pixel.
         """
-
         self._sc_build = sc_build
         self._cf_fpath = cf_fpath
         self._cf_res_gids = cf_res_gids
@@ -53,14 +56,14 @@ class PlexosNode:
         -------
         sc_meta : pd.DataFrame
             Dataframe with rows corresponding to resource/generation pixels
-            that are part of this SC point.
+            that are part of this SC point. Sorted by cf_mean with best
+            cf_mean at top.
         """
 
         res_gids, gid_counts, _ = self._parse_sc_point(i)
 
         gid_capacity = [self._power_density * self._exclusion_area * c
                         for c in gid_counts]
-
         gen_gids = [np.where(self._cf_res_gids == g)[0][0]
                     for g in res_gids]
         sc_meta = pd.DataFrame({'gen_gids': gen_gids,
@@ -70,7 +73,7 @@ class PlexosNode:
         sc_meta = sc_meta.sort_values(by='gen_gids')
 
         with Outputs(self._cf_fpath, mode='r') as cf_outs:
-            cf_mean = cf_outs['cf_mean', sc_meta['gen_gids'].values]
+            cf_mean = cf_outs['cf_mean', list(sc_meta['gen_gids'].values)]
 
         sc_meta['cf_mean'] = cf_mean
         sc_meta = sc_meta.sort_values(by='cf_mean', ascending=False)
@@ -123,13 +126,13 @@ class PlexosNode:
         i : int
             Index value for the row of the target SC point in self._sc_build.
         profile : np.ndarray | None
-            (t, 1) array of generation in MW, or None if this is the first
+            (t,) array of generation in MW, or None if this is the first
             SC point to add generation.
 
         Returns
         ----------
         profile : np.ndarray
-            (t, 1) array of generation in MW.
+            (t,) array of generation in MW where t is the timeindex length.
         """
 
         sc_meta = self._get_sc_meta(i)
@@ -156,8 +159,8 @@ class PlexosNode:
             if buildout <= 0:
                 break
 
-        if len(profile.shape) == 1:
-            profile = profile.reshape((len(profile), 1))
+        if len(profile.shape) != 1:
+            profile = profile.flatten()
 
         return profile
 
@@ -184,7 +187,7 @@ class PlexosNode:
         Returns
         -------
         profile : np.ndarray
-            (t, 1) array of generation in MW.
+            (t, ) array of generation in MW.
         """
 
         profile = None
@@ -217,7 +220,7 @@ class PlexosAggregation:
                         'voltage', 'interconnect', 'built_capacity')
 
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 build_year=2050, exclusion_area=0.0081):
+                 build_year=2050, exclusion_area=0.0081, parallel=True):
         """
         Parameters
         ----------
@@ -234,6 +237,8 @@ class PlexosAggregation:
             REEDS year of interest.
         exclusion_area : float
             Area in km2 of an exclusion pixel.
+        parallel : bool
+            Flag to do node aggregation on parallel workers.
         """
 
         self._plexos_nodes = plexos_nodes
@@ -244,6 +249,8 @@ class PlexosAggregation:
         self._sc_res_gids = None
         self._power_density = None
         self._plexos_meta = None
+        self._time_index = None
+        self.parallel = parallel
 
         rev_sc = self._rename_cols(rev_sc, self.REV_NAME_MAP)
         reeds_build = self._rename_cols(reeds_build, self.REEDS_NAME_MAP)
@@ -251,6 +258,22 @@ class PlexosAggregation:
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build)
         self._node_map = self._make_node_map()
+        self._check_gids()
+
+    @property
+    def time_index(self):
+        """Get the generation profile time index.
+
+        Returns
+        -------
+        time_index : pd.Datetimeindex
+            Pandas datetime index sourced from the capacity factor data.
+        """
+
+        if self._time_index is None:
+            with Outputs(self._cf_fpath, mode='r') as cf_outs:
+                self._time_index = cf_outs.time_index
+        return self._time_index
 
     @property
     def plexos_meta(self):
@@ -268,15 +291,14 @@ class PlexosAggregation:
             node_builds = []
             for i in inodes:
                 mask = (self._node_map == i)
-                node_builds.append(
-                    self._sc_build.loc[mask, 'built_capacity'].sum())
+                built_cap = self._sc_build[mask]['built_capacity'].values.sum()
+                node_builds.append(built_cap)
 
             self._plexos_meta = self._plexos_nodes.iloc[inodes, :]
             self._plexos_meta['built_capacity'] = node_builds
 
-            if all([c in self._plexos_meta for c in self.PLEXOS_META_COLS]):
-                self._plexos_meta = self._plexos_meta[
-                    list(self.PLEXOS_META_COLS)]
+            self._plexos_meta = self._reduce_df(self._plexos_meta,
+                                                self.PLEXOS_META_COLS)
 
         return self._plexos_meta
 
@@ -289,7 +311,7 @@ class PlexosAggregation:
         n : int
             Number of unique plexos nodes in this buildout
         """
-        return len(self._plexos_meta)
+        return len(self.plexos_meta)
 
     @property
     def sc_res_gids(self):
@@ -297,8 +319,8 @@ class PlexosAggregation:
 
         Returns
         -------
-        sc_res_gids : list
-            List of resource GIDs associated with this REEDS buildout.
+        sc_res_gids : np.ndarray
+            Array of resource GIDs associated with this REEDS buildout.
         """
 
         if self._sc_res_gids is None:
@@ -310,7 +332,7 @@ class PlexosAggregation:
                 gid_col = list(gid_col)
 
             res_gids = [g for sub in gid_col for g in sub]
-            self._sc_res_gids = sorted(list(set(res_gids)))
+            self._sc_res_gids = np.array(sorted(list(set(res_gids))))
 
         return self._sc_res_gids
 
@@ -320,15 +342,15 @@ class PlexosAggregation:
 
         Returns
         -------
-        cf_res_gids : list
-            List of resource GIDs available in the cf file.
+        cf_res_gids : np.ndarray
+            Array of resource GIDs available in the cf file.
         """
 
         if self._cf_res_gids is None:
             with Outputs(self._cf_fpath, mode='r') as cf_outs:
                 self._cf_res_gids = cf_outs.get_meta_arr('gid')
-            if not isinstance(self._cf_res_gids, list):
-                self._cf_res_gids = list(self._cf_res_gids)
+            if not isinstance(self._cf_res_gids, np.ndarray):
+                self._cf_res_gids = np.array(list(self._cf_res_gids))
         return self._cf_res_gids
 
     @property
@@ -346,6 +368,36 @@ class PlexosAggregation:
                   / self._sc_build['area_sq_km'].values)
             self._power_density = np.round(np.mean(pd))
         return self._power_density
+
+    @staticmethod
+    def _reduce_df(df, cols):
+        """Reduce a df to just certain columns.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Dataframe to reduce.
+        cols : list | tuple
+            List of column names to keep.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            Dataframe with only cols if the input df had all cols.
+        """
+
+        if all([c in df for c in cols]):
+            df = df[list(cols)]
+        return df
+
+    def _check_gids(self):
+        """Ensure that the SC buildout GIDs are available in the cf file."""
+
+        missing = list(set(self.sc_res_gids) - set(self.available_res_gids))
+        if any(missing):
+            raise RuntimeError('The CF file is missing gids that were built '
+                               'in the REEDS-reV SC build out: {}'
+                               .format(missing))
 
     def _init_output(self):
         """Init the output array of aggregated PLEXOS profiles.
@@ -509,7 +561,7 @@ class PlexosAggregation:
 
         return i
 
-    def make_profiles(self):
+    def _make_profiles(self):
         """Make a 2D array of aggregated plexos gen profiles.
 
         Returns
@@ -521,34 +573,224 @@ class PlexosAggregation:
 
         profiles = self._init_output()
 
-        for i, inode in enumerate(np.unique(self._node_map)):
+        if self.parallel:
+            futures = {}
+            with ProcessPoolExecutor() as exe:
+                for i, inode in enumerate(np.unique(self._node_map)):
+                    mask = (self._node_map == inode)
+                    f = exe.submit(PlexosNode.make_profile,
+                                   self._sc_build[mask], self._cf_fpath,
+                                   self.available_res_gids, self.power_density,
+                                   exclusion_area=self.exclusion_area)
+                    futures[f] = i
 
-            mask = (self._node_map == inode)
+                for n, f in enumerate(as_completed(futures)):
+                    if n % 10 == 0:
+                        logger.info('{} out of {} futures are complete.'
+                                    .format(n + 1, len(futures)))
+                    i = futures[f]
+                    profiles[:, i] = f.result()
 
-            p = PlexosNode.make_profile(self._sc_build[mask], self._cf_fpath,
-                                        self.available_res_gids,
-                                        self.power_density,
-                                        exclusion_area=self.exclusion_area)
-            profiles[:, i] = p
+        else:
+            for i, inode in enumerate(np.unique(self._node_map)):
+                mask = (self._node_map == inode)
+                p = PlexosNode.make_profile(
+                    self._sc_build[mask], self._cf_fpath,
+                    self.available_res_gids, self.power_density,
+                    exclusion_area=self.exclusion_area)
+                profiles[:, i] = p
 
         return profiles
 
+    @classmethod
+    def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath, **kwargs):
+        """Run plexos aggregation.
+
+        Parameters
+        ----------
+        plexos_nodes : pd.DataFrame
+            Plexos node meta data including gid, lat/lon, voltage.
+        rev_sc : pd.DataFrame
+            reV supply curve results table including SC gid, lat/lon,
+            res_gids, res_id_counts.
+        reeds_build : pd.DataFrame
+            REEDS buildout with rows for built capacity at each reV SC point.
+        cf_fpath : str
+            File path to capacity factor file to get profiles from.
+
+        Returns
+        -------
+        plexos_meta : pd.DataFrame
+            Plexos node meta data with built capacities.
+        time_index : pd.datetimeindex
+            Time index for the profiles.
+        profiles : np.ndarray
+            Generation profile timeseries at each plexos node.
+        """
+
+        pa = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath, **kwargs)
+        profiles = pa._make_profiles()
+
+        return pa.plexos_meta, pa.time_index, profiles
+
+
+class DataCleaner:
+    """Class for custom Plexos data cleaning procedures."""
+
+    def __init__(self, plexos_meta, profiles):
+        self._plexos_meta = plexos_meta
+        self._profiles = profiles
+
+    def merge_small(self, capacity_threshold=20.0):
+        """Merge small plexos buildout nodes into closest bigger nodes.
+
+        Parameters
+        ----------
+        capacity_threshold : float
+            Capacity threshold, nodes with built capacities less than this
+            will be merged into bigger nodes.
+
+        Returns
+        -------
+        meta : pd.DataFrame
+            New plexos node meta data with updated built capacities.
+        profiles : np.ndarray
+            New profiles with big nodes having absorbed additional generation
+            from bigger nodes.
+        """
+
+        small = (self._plexos_meta['built_capacity'] < capacity_threshold)
+        big = (self._plexos_meta['built_capacity'] >= capacity_threshold)
+
+        n_nodes = np.sum(big)
+
+        if n_nodes == len(self._plexos_meta):
+            meta = None
+            profiles = None
+
+        else:
+            meta = self._plexos_meta[big]
+            profiles = self._profiles[:, big.values]
+            logger.info('Merging plexos nodes from {} to {} due to small '
+                        'nodes.'.format(len(self._plexos_meta), len(meta)))
+
+            labels = PlexosAggregation._get_coord_labels(self._plexos_meta)
+            tree = cKDTree(meta[labels])
+            _, nn_ind = tree.query(self._plexos_meta[labels], k=len(meta))
+
+            for i, index in enumerate(self._plexos_meta.index.values):
+                if small.values[i]:
+                    for nn in nn_ind[i, :]:
+                        if big.values[nn]:
+                            meta_ind = meta.index.values[nn]
+                            c = self._plexos_meta.loc[index, 'built_capacity']
+                            meta.loc[meta_ind, 'built_capacity'] += c
+                            profiles[:, nn] += self._profiles[:, i]
+
+                            break
+
+        return meta, profiles
+
+
+class Manager:
+    """Plexos job manager."""
+
+    def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
+                 **db_kwargs):
+        """
+        Parameters
+        ----------
+        plexos_nodes : str | pd.DataFrame
+            Plexos node meta data (CSV file path or database.schema.name)
+        rev_sc : str | pd.DataFrame
+            reV supply curve results (CSV file path or database.schema.name)
+        reeds_build : str | pd.DataFrame
+            REEDS buildout results (CSV file path or database.schema.name)
+        cf_fpath : str | pd.DataFrame
+            Capacity factor .h5 file path.
+        db_kwargs : dict
+            Optional additional kwargs for connecting to the database.
+        """
+        self.plexos_nodes = self._parse_name(plexos_nodes, **db_kwargs)
+        self.rev_sc = self._parse_name(rev_sc, **db_kwargs)
+        self.reeds_build = self._parse_name(reeds_build, **db_kwargs)
+        self.cf_fpath = cf_fpath
+
+    @staticmethod
+    def _parse_name(name, **kwargs):
+        """Parse a dataframe from an input name.
+
+        Parameters
+        ----------
+        name : str | pd.DataFrame
+            CSV file path or database.schema.name
+
+        Returns
+        -------
+        df : pd.DataFrame
+            Extracted table
+        """
+
+        if isinstance(name, str):
+            if name.endswith('.csv'):
+                df = pd.read_csv(name)
+            elif len(name.split('.')) == 3:
+                from reX.handlers.database import Database
+                db, schema, table = name.split('.')
+                df = Database.get_table(table, schema, db, **kwargs)
+
+        elif isinstance(name, pd.DataFrame):
+            df = name
+
+        else:
+            raise TypeError('Could not recognize input table name: '
+                            '{} with type {}'.format(name, type(name)))
+
+        return df
+
+    @classmethod
+    def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath, db_kwargs=None):
+        """Run the Plexos pipeline.
+
+        Parameters
+        ----------
+        plexos_nodes : str | pd.DataFrame
+            Plexos node meta data (CSV file path or database.schema.name)
+        rev_sc : str | pd.DataFrame
+            reV supply curve results (CSV file path or database.schema.name)
+        reeds_build : str | pd.DataFrame
+            REEDS buildout results (CSV file path or database.schema.name)
+        cf_fpath : str | pd.DataFrame
+            Capacity factor .h5 file path.
+        db_kwargs : dict
+            Optional additional kwargs for connecting to the database.
+        """
+        if db_kwargs is None:
+            db_kwargs = {}
+
+        pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath, **db_kwargs)
+        meta, time_index, profiles = PlexosAggregation.run(pm.plexos_nodes,
+                                                           pm.rev_sc,
+                                                           pm.reeds_build,
+                                                           pm.cf_fpath)
+        dc = DataCleaner(meta, profiles)
+        meta, profiles = dc.merge_small()
+
+        meta.to_csv('plexos_meta.csv')
+        profiles = pd.DataFrame(profiles, index=time_index)
+        profiles.iloc[:, 0:50].to_csv('plexos_profiles.csv')
+
 
 if __name__ == '__main__':
-    from reX.handlers.database import Database
+    from reV.utilities.loggers import init_logger
+    init_logger(__name__)
 
-    freeds = ('C:/sandbox/reV/plexos_scratch/'
-              'BAU_naris_pv_standard_pv_conus_multiyear_'
-              'US_rural_pv_reeds_to_rev_agg.csv')
-
+    reeds = ('/scratch/gbuster/naris/reeds_buildout_files/'
+             'BAU_naris_pv_standard_pv_conus_multiyear_'
+             'US_rural_pv_reeds_to_rev_agg.csv')
     cf_fpath = '/scratch/gbuster/naris/naris_rev_pv/naris_rev_pv_gen_2012.h5'
+    plexos_nodes = 'rev.rev.plexos_nodes'
+    rev_sc = ('tech_potential.final_results.'
+              'naris_pv_standard_pv_conus_multiyear')
 
-    plexos_nodes = Database.get_table('plexos_nodes', 'rev', 'rev')
-    rev_sc = Database.get_table(
-        'naris_pv_standard_urban_v2_pv_conus_multiyear',
-        'final_results', 'tech_potential')
-    reeds_build = pd.read_csv(freeds)
-
-    pa = PlexosAggregation(plexos_nodes, rev_sc, reeds_build, cf_fpath)
-    profiles = pa.make_profiles()
-    profiles.to_csv('plexos_agg_test.csv')
+    Manager.run(plexos_nodes, rev_sc, reeds, cf_fpath)
