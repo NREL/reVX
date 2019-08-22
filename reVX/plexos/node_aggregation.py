@@ -749,7 +749,8 @@ class Manager:
         return df
 
     @classmethod
-    def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath, db_kwargs=None):
+    def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath, out_fpath,
+            db_kwargs=None, agg_kwargs=None):
         """Run the Plexos pipeline.
 
         Parameters
@@ -762,35 +763,44 @@ class Manager:
             REEDS buildout results (CSV file path or database.schema.name)
         cf_fpath : str | pd.DataFrame
             Capacity factor .h5 file path.
+        out_fpath : str
+            Output h5 file.
         db_kwargs : dict
             Optional additional kwargs for connecting to the database.
+        agg_kwargs : dict
+            Optional additional kwargs for the aggregation run.
         """
         if db_kwargs is None:
             db_kwargs = {}
+        if agg_kwargs is None:
+            agg_kwargs = {}
+
+        logger.info('Running PLEXOS aggregation with plexos nodes input: {}'
+                    .format(plexos_nodes))
+        logger.info('Running PLEXOS aggregation with reV SC input: {}'
+                    .format(rev_sc))
+        logger.info('Running PLEXOS aggregation with REEDS input: {}'
+                    .format(reeds_build))
+        logger.info('Running PLEXOS aggregation with reV Gen input: {}'
+                    .format(cf_fpath))
+        logger.info('Running PLEXOS aggregation with output file: {}'
+                    .format(out_fpath))
 
         pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath, **db_kwargs)
         meta, time_index, profiles = PlexosAggregation.run(pm.plexos_nodes,
                                                            pm.rev_sc,
                                                            pm.reeds_build,
-                                                           pm.cf_fpath)
+                                                           pm.cf_fpath,
+                                                           **agg_kwargs)
         dc = DataCleaner(meta, profiles)
         meta, profiles = dc.merge_small()
 
-        meta.to_csv('plexos_meta.csv')
-        profiles = pd.DataFrame(profiles, index=time_index)
-        profiles.iloc[:, 0:50].to_csv('plexos_profiles.csv')
-
-
-if __name__ == '__main__':
-    from reV.utilities.loggers import init_logger
-    init_logger(__name__)
-
-    reeds = ('/scratch/gbuster/naris/reeds_buildout_files/'
-             'BAU_naris_pv_standard_pv_conus_multiyear_'
-             'US_rural_pv_reeds_to_rev_agg.csv')
-    cf_fpath = '/scratch/gbuster/naris/naris_rev_pv/naris_rev_pv_gen_2012.h5'
-    plexos_nodes = 'rev.rev.plexos_nodes'
-    rev_sc = ('tech_potential.final_results.'
-              'naris_pv_standard_pv_conus_multiyear')
-
-    Manager.run(plexos_nodes, rev_sc, reeds, cf_fpath)
+        logger.info('Saving result to file: {}'.format(out_fpath))
+        with Outputs(out_fpath, mode='w') as out:
+            out['meta'] = meta
+            out['time_index'] = time_index
+            out._create_dset('gen_profiles',
+                             profiles.shape,
+                             profiles.dtype,
+                             chunks=(None, 100),
+                             data=profiles)
