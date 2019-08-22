@@ -31,7 +31,7 @@ class RPMOutput:
             Single DataFrame with (gid, gen_gid, cluster_id, rank),
             or str to file.
         cf_fpath : str
-            Path to reV .h5 files containing desired capacity factor profiles
+            Path to reV .h5 file containing desired capacity factor profiles
         excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
@@ -802,7 +802,7 @@ class RPMOutput:
             Single DataFrame with (gid, gen_gid, cluster_id, rank),
             or str to file.
         cf_fpath : str
-            Path to reV .h5 files containing desired capacity factor profiles
+            Path to reV .h5 file containing desired capacity factor profiles
         excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
