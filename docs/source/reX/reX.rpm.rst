@@ -4,18 +4,18 @@ reX.rpm package
 Submodules
 ----------
 
-reX.rpm.cli\_rpm module
------------------------
-
-.. automodule:: reX.rpm.cli_rpm
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 reX.rpm.geotiff module
 ----------------------
 
 .. automodule:: reX.rpm.geotiff
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+reX.rpm.rpm\_cli module
+-----------------------
+
+.. automodule:: reX.rpm.rpm_cli
    :members:
    :undoc-members:
    :show-inheritance:
