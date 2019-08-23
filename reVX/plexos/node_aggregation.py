@@ -4,6 +4,7 @@ Created on Wed Aug 21 13:47:43 2019
 
 @author: gbuster
 """
+import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import json
 import numpy as np
@@ -547,13 +548,16 @@ class PlexosAggregation:
         reeds_coord_labels = self._get_coord_labels(reeds_build)
 
         if rev_coord_labels is not None and reeds_coord_labels is not None:
+            reeds_build = reeds_build.sort_values(reeds_join_on)
             reeds_sc_gids = reeds_build[reeds_join_on].values
             reeds_coords = reeds_build[reeds_coord_labels]
 
             rev_mask = (rev_sc[rev_join_on].isin(reeds_sc_gids))
+            rev_sc = rev_sc.sort_values(rev_join_on)
             rev_coords = rev_sc.loc[rev_mask, rev_coord_labels]
 
-            diff = (reeds_coords - rev_coords).values.flatten()
+            diff = reeds_coords.values - rev_coords.values
+            diff = diff.flatten()
 
             if diff.max() > threshold:
                 warn('reV SC and REEDS Buildout coordinates do not match. '
@@ -609,9 +613,9 @@ class PlexosAggregation:
         index = self._plexos_meta.index.values[i]
 
         if self._plexos_meta.loc[index, 'res_gids'] is None:
-            self._plexos_meta.loc[index, 'res_gids'] = json.dumps(res_gids)
-            self._plexos_meta.loc[index, 'gen_gids'] = json.dumps(gen_gids)
-            self._plexos_meta.loc[index, 'res_built'] = json.dumps(res_built)
+            self._plexos_meta.loc[index, 'res_gids'] = str(res_gids)
+            self._plexos_meta.loc[index, 'gen_gids'] = str(gen_gids)
+            self._plexos_meta.loc[index, 'res_built'] = str(res_built)
 
         else:
             a = json.loads(self._plexos_meta.loc[index, 'res_gids']) + res_gids
@@ -619,9 +623,9 @@ class PlexosAggregation:
             c = (json.loads(self._plexos_meta.loc[index, 'res_built'])
                  + res_built)
 
-            self._plexos_meta.loc[index, 'res_gids'] = json.dumps(a)
-            self._plexos_meta.loc[index, 'gen_gids'] = json.dumps(b)
-            self._plexos_meta.loc[index, 'res_built'] = json.dumps(c)
+            self._plexos_meta.loc[index, 'res_gids'] = str(a)
+            self._plexos_meta.loc[index, 'gen_gids'] = str(b)
+            self._plexos_meta.loc[index, 'res_built'] = str(c)
 
     def _make_profiles(self):
         """Make a 2D array of aggregated plexos gen profiles.
@@ -746,7 +750,7 @@ class DataCleaner:
                 val_final = json.loads(val_final)
                 val_orig = json.loads(val_orig)
                 val_final += val_orig
-                val_final = json.dumps(val_final)
+                val_final = str(val_final)
             else:
                 val_final += val_orig
 
@@ -804,6 +808,80 @@ class DataCleaner:
                             break
 
         return meta, profiles
+
+    def merge_extent(self, new_meta, new_profiles):
+        """Merge a new set of plexos node aggregation data into the self attr.
+
+        Parameters
+        ----------
+        new_meta : pd.DataFrame
+            A new set of Plexos node meta data to be merged into the meta in
+            self.
+        new_profiles : np.ndarray
+            A new set of plexos node profiles corresponding to new_meta to be
+            merged into the profiles in self where the meta data overlaps with
+            common nodes.
+        """
+
+        keep_index = []
+
+        logger.info('Merging extents with {} and {} nodes ({} total).'
+                    .format(len(self._plexos_meta), len(new_meta),
+                            len(self._plexos_meta) + len(new_meta)))
+
+        for i, ind in enumerate(new_meta.index.values):
+            lookup = (self._plexos_meta.gid.values == new_meta.loc[ind, 'gid'])
+            if any(lookup):
+                i_self = np.where(lookup)[0]
+                if len(i_self) > 1:
+                    warn('Duplicate PLEXOS node GIDs!')
+                else:
+                    i_self = i_self[0]
+
+                logger.debug('Merging plexos node IDs {} and {} '
+                             '(gids {} and {})'.format(
+                                 self._plexos_meta.iloc[i_self]['plexos_id'],
+                                 new_meta.iloc[i]['plexos_id'],
+                                 self._plexos_meta.iloc[i_self]['gid'],
+                                 new_meta.iloc[i]['gid']))
+
+                self._merge_plexos_meta(self._plexos_meta, new_meta, i_self, i)
+                self._profiles[:, i_self] += new_profiles[:, i]
+            else:
+                keep_index.append(i)
+
+        new_meta = new_meta.loc[new_meta.index.values[keep_index]]
+        new_profiles = new_profiles[:, keep_index]
+
+        self._plexos_meta = pd.concat([self._plexos_meta, new_meta], axis=0,
+                                      ignore_index=True)
+        self._profiles = np.hstack((self._profiles, new_profiles))
+
+        logger.info('Merged extents. Output has {} nodes.'
+                    .format(len(self._plexos_meta)))
+
+    def merge_multiple_extents(self, meta_list, profile_list):
+        """Merge multiple plexos extents into the self attrs.
+
+        Parameters
+        ----------
+        meta_list : list
+            List of new meta data extents to merge into self.
+        profile_list : list
+            List of new gen profile to merge into self.
+
+        Returns
+        -------
+        meta : pd.DataFrame
+            Merged plexos node meta data.
+        profiles : np.ndarray
+            New profiles with merged profiles for matching nodes.
+        """
+
+        for i, meta in enumerate(meta_list):
+            self.merge_extent(meta, profile_list[i])
+
+        return self._plexos_meta, self._profiles
 
 
 class Manager:
@@ -863,9 +941,9 @@ class Manager:
         return df
 
     @classmethod
-    def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath, out_fpath,
-            db_kwargs=None, agg_kwargs=None):
-        """Run the Plexos pipeline.
+    def main(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
+             db_kwargs=None, agg_kwargs=None):
+        """Run the Plexos pipeline for a single extent.
 
         Parameters
         ----------
@@ -877,13 +955,25 @@ class Manager:
             REEDS buildout results (CSV file path or database.schema.name)
         cf_fpath : str | pd.DataFrame
             Capacity factor .h5 file path.
-        out_fpath : str
-            Output h5 file.
         db_kwargs : dict
             Optional additional kwargs for connecting to the database.
         agg_kwargs : dict
             Optional additional kwargs for the aggregation run.
+
+        Returns
+        -------
+        meta : pd.DataFrame
+            Plexos node meta data.
+        time_index : pd.Datetimeindex
+            Time index.
+        profiles : np.ndarray
+            Plexos node generation profiles.
         """
+
+        meta = None
+        time_index = None
+        profiles = None
+
         if db_kwargs is None:
             db_kwargs = {}
         if agg_kwargs is None:
@@ -897,8 +987,6 @@ class Manager:
                     .format(reeds_build))
         logger.info('Running PLEXOS aggregation with reV Gen input: {}'
                     .format(cf_fpath))
-        logger.info('Running PLEXOS aggregation with output file: {}'
-                    .format(out_fpath))
 
         pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath, **db_kwargs)
 
@@ -911,18 +999,124 @@ class Manager:
         except Exception as e:
             logger.exception(e)
 
-        else:
-            dc = DataCleaner(meta, profiles)
-            out = dc.merge_small()
-            if out[0] is not None and out[1] is not None:
-                meta, profiles = out
+        return meta, time_index, profiles
 
-            logger.info('Saving result to file: {}'.format(out_fpath))
-            with Outputs(out_fpath, mode='w') as out:
-                out['meta'] = meta
-                out['time_index'] = time_index
-                out._create_dset('gen_profiles',
-                                 profiles.shape,
-                                 profiles.dtype,
-                                 chunks=(None, 100),
-                                 data=profiles)
+    @classmethod
+    def _run_group(cls, df_group, reeds_dir, cf_year, build_year):
+        """Run a group of plexos node aggregations all belonging to the same
+        final extent.
+
+        Parameters
+        ----------
+        df_group : str
+            DataFrame from the job_file with a common group.
+        reeds_dir : str
+            Directory containing the REEDS buildout files in the reeds_build
+            column in the df_group.
+        cf_year : str
+            Year of the cf_fpath resource year (will be inserted if {} is in
+            cf_fpath).
+        build_years : list | tuple
+            REEDS years to run scenarios for.
+
+        Returns
+        -------
+        meta : pd.DataFrame
+            Plexos node meta data.
+        time_index : pd.Datetimeindex
+            Time index.
+        profiles : np.ndarray
+            Plexos node generation profiles.
+        """
+
+        dc = None
+
+        for i in df_group.index.values:
+            plexos_nodes = df_group.loc[i, 'plexos_nodes']
+            reeds_build = os.path.join(reeds_dir,
+                                       df_group.loc[i, 'reeds_build'])
+            cf_fpath = df_group.loc[i, 'cf_fpath']
+            if '{}' in cf_fpath:
+                cf_fpath = cf_fpath.format(cf_year)
+
+            rev_sc = df_group.loc[i, 'rev_sc']
+
+            agg_kwargs = {'build_year': build_year}
+            meta, ti, profiles = cls.main(plexos_nodes, rev_sc, reeds_build,
+                                          cf_fpath, agg_kwargs=agg_kwargs)
+
+            if meta is not None:
+                if dc is None:
+                    dc = DataCleaner(meta, profiles)
+                else:
+                    dc.merge_extent(meta, profiles)
+
+        meta, profiles = dc.merge_small()
+
+        return meta, ti, profiles
+
+    @classmethod
+    def run(cls, job_file, out_dir, reeds_dir, cf_year=2012,
+            build_years=(2024, 2050)):
+        """Run plexos node aggregation for a job file input.
+
+        Parameters
+        ----------
+        job_file : str
+            CSV file with plexos aggregation job config. Needs the following
+            columns: (scenario, group, cf_fpath, reeds_build, rev_sc,
+            plexos_nodes)
+        out_dir : str
+            Path to an output directory.
+        reeds_dir : str
+            Directory containing the REEDS buildout files in the reeds_build
+            column in the job file.
+        cf_year : str
+            Year of the cf_fpath resource year (will be inserted if {} is in
+            cf_fpath).
+        build_years : list | tuple
+            REEDS years to run scenarios for.
+        """
+
+        job = pd.read_csv(job_file)
+
+        for scenario, df_scenario in job.groupby('scenario'):
+            logger.info('Running scenario "{}"'.format(scenario))
+            for build_year in build_years:
+                logger.info('Running build year {}'.format(build_year))
+                fn_out = '{}_{}_{}.h5'.format(scenario, build_year,
+                                              cf_year)
+                out_fpath = os.path.join(out_dir, fn_out)
+
+                if os.path.exists(out_fpath):
+                    logger.info('Skipping exists: {}'.format(out_fpath))
+                else:
+
+                    for group, df_group in df_scenario.groupby('group'):
+                        logger.info('Running group "{}"'.format(group))
+
+                        meta, time_index, profiles = cls._run_group(df_group,
+                                                                    reeds_dir,
+                                                                    cf_year,
+                                                                    build_year)
+
+                        logger.info('Saving result for group "{}" to file: {}'
+                                    .format(group, out_fpath))
+
+                        with Outputs(out_fpath, mode='a') as out:
+                            meta = out.to_records_array(meta)
+                            time_index = np.array(time_index.astype(str),
+                                                  dtype='S20')
+                            out._create_dset('{}/meta'.format(group),
+                                             meta.shape,
+                                             meta.dtype,
+                                             data=meta)
+                            out._create_dset('{}/time_index'.format(group),
+                                             time_index.shape,
+                                             time_index.dtype,
+                                             data=time_index)
+                            out._create_dset('{}/gen_profiles'.format(group),
+                                             profiles.shape,
+                                             profiles.dtype,
+                                             chunks=(None, 100),
+                                             data=profiles)
