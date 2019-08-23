@@ -133,10 +133,20 @@ class PlexosNode:
         ----------
         profile : np.ndarray
             (t,) array of generation in MW where t is the timeindex length.
+        res_gids : list
+            List of resource GID's that were built from this SC point.
+        gen_gids : list
+            List of generation GID's that were built from this SC point.
+        res_built : list
+            List of built capacities at each resource GID from this SC point.
         """
 
         sc_meta = self._get_sc_meta(i)
         _, _, buildout = self._parse_sc_point(i)
+
+        res_gids = []
+        gen_gids = []
+        res_built = []
 
         for j in sc_meta.index.values:
 
@@ -146,6 +156,10 @@ class PlexosNode:
                 to_build = sc_meta.loc[j, 'gid_capacity']
 
             buildout -= to_build
+
+            res_gids.append(sc_meta.loc[j, 'res_gids'])
+            gen_gids.append(sc_meta.loc[j, 'gen_gids'])
+            res_built.append(np.round(to_build, decimals=1))
 
             gen_gid = sc_meta.loc[j, 'gen_gids']
             with Outputs(self._cf_fpath, mode='r') as cf_outs:
@@ -162,7 +176,7 @@ class PlexosNode:
         if len(profile.shape) != 1:
             profile = profile.flatten()
 
-        return profile
+        return profile, res_gids, gen_gids, res_built
 
     @classmethod
     def make_profile(cls, sc_build, cf_fpath, cf_res_gids, power_density,
@@ -188,17 +202,29 @@ class PlexosNode:
         -------
         profile : np.ndarray
             (t, ) array of generation in MW.
+        res_gids : list
+            List of resource GID's that were built for this plexos node.
+        gen_gids : list
+            List of generation GID's that were built for this plexos node.
+        res_built : list
+            List of built capacities at each resource GID for this plexos node.
         """
 
         profile = None
+        res_gids = []
+        gen_gids = []
+        res_built = []
 
-        pn = cls(sc_build, cf_fpath, cf_res_gids, power_density,
-                 exclusion_area=exclusion_area)
+        n = cls(sc_build, cf_fpath, cf_res_gids, power_density,
+                exclusion_area=exclusion_area)
 
         for i in sc_build.index.values:
-            profile = pn._build(i, profile)
+            profile, i_res_gids, i_gen_gids, i_res_built = n._build(i, profile)
+            res_gids += i_res_gids
+            gen_gids += i_gen_gids
+            res_built += i_res_built
 
-        return profile
+        return profile, res_gids, gen_gids, res_built
 
 
 class PlexosAggregation:
@@ -299,6 +325,10 @@ class PlexosAggregation:
 
             self._plexos_meta = self._reduce_df(self._plexos_meta,
                                                 self.PLEXOS_META_COLS)
+
+            self._plexos_meta['res_gids'] = None
+            self._plexos_meta['gen_gids'] = None
+            self._plexos_meta['res_built'] = None
 
         return self._plexos_meta
 
@@ -561,6 +591,38 @@ class PlexosAggregation:
 
         return i
 
+    def _ammend_plexos_meta(self, i, res_gids, gen_gids, res_built):
+        """Ammend the plexos meta dataframe with data about resource buildouts.
+
+        Parameters
+        ----------
+        i : int
+            Index location to modify (iloc).
+        res_gids : list
+            List of resource GID's that were built for this plexos node.
+        gen_gids : list
+            List of generation GID's that were built for this plexos node.
+        res_built : list
+            List of built capacities at each resource GID for this plexos node.
+        """
+
+        index = self._plexos_meta.index.values[i]
+
+        if self._plexos_meta.loc[index, 'res_gids'] is None:
+            self._plexos_meta.loc[index, 'res_gids'] = json.dumps(res_gids)
+            self._plexos_meta.loc[index, 'gen_gids'] = json.dumps(gen_gids)
+            self._plexos_meta.loc[index, 'res_built'] = json.dumps(res_built)
+
+        else:
+            a = json.loads(self._plexos_meta.loc[index, 'res_gids']) + res_gids
+            b = json.loads(self._plexos_meta.loc[index, 'gen_gids']) + gen_gids
+            c = (json.loads(self._plexos_meta.loc[index, 'res_built'])
+                 + res_built)
+
+            self._plexos_meta.loc[index, 'res_gids'] = json.dumps(a)
+            self._plexos_meta.loc[index, 'gen_gids'] = json.dumps(b)
+            self._plexos_meta.loc[index, 'res_built'] = json.dumps(c)
+
     def _make_profiles(self):
         """Make a 2D array of aggregated plexos gen profiles.
 
@@ -585,11 +647,13 @@ class PlexosAggregation:
                     futures[f] = i
 
                 for n, f in enumerate(as_completed(futures)):
-                    if n % 10 == 0:
+                    if n % 50 == 0:
                         logger.info('{} out of {} futures are complete.'
                                     .format(n + 1, len(futures)))
                     i = futures[f]
-                    profiles[:, i] = f.result()
+                    profile, res_gids, gen_gids, res_built = f.result()
+                    profiles[:, i] = profile
+                    self._ammend_plexos_meta(i, res_gids, gen_gids, res_built)
 
         else:
             for i, inode in enumerate(np.unique(self._node_map)):
@@ -598,7 +662,11 @@ class PlexosAggregation:
                     self._sc_build[mask], self._cf_fpath,
                     self.available_res_gids, self.power_density,
                     exclusion_area=self.exclusion_area)
-                profiles[:, i] = p
+                profile, res_gids, gen_gids, res_built = p
+                profiles[:, i] = profile
+                self._ammend_plexos_meta(i, res_gids, gen_gids, res_built)
+
+        logger.info('Finished plexos node aggregation.')
 
         return profiles
 
@@ -641,6 +709,51 @@ class DataCleaner:
         self._plexos_meta = plexos_meta
         self._profiles = profiles
 
+    @staticmethod
+    def _merge_plexos_meta(meta_final, meta_orig, i_final, i_orig):
+        """Ammend the plexos meta dataframe with data about resource buildouts.
+
+        Parameters
+        ----------
+        meta_final : pd.DataFrame
+            Plexos meta data for the final set of nodes.
+        meta_orig : pd.DataFrame
+            Plexos meta data for the original pre-merge set of nodes.
+        i_final : int
+            Index location (iloc) of the persistent meta data row in
+            meta_final.
+        i_orig : int
+            Index location (iloc) of the meta data row to be merged in
+            meta_orig.
+
+        Returns
+        -------
+        meta_final : pd.DataFrame
+            Plexos meta data for the final set of nodes.
+        """
+
+        i_final = meta_final.index.values[i_final]
+        i_orig = meta_orig.index.values[i_orig]
+
+        cols = ['res_gids', 'gen_gids', 'res_built', 'built_capacity']
+
+        for col in cols:
+            val_final = meta_final.loc[i_final, col]
+            val_orig = meta_orig.loc[i_orig, col]
+            if not isinstance(val_final, type(val_orig)):
+                raise TypeError('Mismatch in column dtype for plexos meta!')
+            if isinstance(val_final, str):
+                val_final = json.loads(val_final)
+                val_orig = json.loads(val_orig)
+                val_final += val_orig
+                val_final = json.dumps(val_final)
+            else:
+                val_final += val_orig
+
+            meta_final.loc[i_final, col] = val_final
+
+        return meta_final
+
     def merge_small(self, capacity_threshold=20.0):
         """Merge small plexos buildout nodes into closest bigger nodes.
 
@@ -664,7 +777,8 @@ class DataCleaner:
 
         n_nodes = np.sum(big)
 
-        if n_nodes == len(self._plexos_meta):
+        if (n_nodes == len(self._plexos_meta) or n_nodes == 0
+                or len(self._plexos_meta) < 10):
             meta = None
             profiles = None
 
@@ -678,13 +792,13 @@ class DataCleaner:
             tree = cKDTree(meta[labels])
             _, nn_ind = tree.query(self._plexos_meta[labels], k=len(meta))
 
-            for i, index in enumerate(self._plexos_meta.index.values):
+            for i in range(len(self._plexos_meta)):
                 if small.values[i]:
                     for nn in nn_ind[i, :]:
                         if big.values[nn]:
-                            meta_ind = meta.index.values[nn]
-                            c = self._plexos_meta.loc[index, 'built_capacity']
-                            meta.loc[meta_ind, 'built_capacity'] += c
+                            meta = self._merge_plexos_meta(meta,
+                                                           self._plexos_meta,
+                                                           nn, i)
                             profiles[:, nn] += self._profiles[:, i]
 
                             break
@@ -787,20 +901,28 @@ class Manager:
                     .format(out_fpath))
 
         pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath, **db_kwargs)
-        meta, time_index, profiles = PlexosAggregation.run(pm.plexos_nodes,
-                                                           pm.rev_sc,
-                                                           pm.reeds_build,
-                                                           pm.cf_fpath,
-                                                           **agg_kwargs)
-        dc = DataCleaner(meta, profiles)
-        meta, profiles = dc.merge_small()
 
-        logger.info('Saving result to file: {}'.format(out_fpath))
-        with Outputs(out_fpath, mode='w') as out:
-            out['meta'] = meta
-            out['time_index'] = time_index
-            out._create_dset('gen_profiles',
-                             profiles.shape,
-                             profiles.dtype,
-                             chunks=(None, 100),
-                             data=profiles)
+        try:
+            meta, time_index, profiles = PlexosAggregation.run(pm.plexos_nodes,
+                                                               pm.rev_sc,
+                                                               pm.reeds_build,
+                                                               pm.cf_fpath,
+                                                               **agg_kwargs)
+        except Exception as e:
+            logger.exception(e)
+
+        else:
+            dc = DataCleaner(meta, profiles)
+            out = dc.merge_small()
+            if out[0] is not None and out[1] is not None:
+                meta, profiles = out
+
+            logger.info('Saving result to file: {}'.format(out_fpath))
+            with Outputs(out_fpath, mode='w') as out:
+                out['meta'] = meta
+                out['time_index'] = time_index
+                out._create_dset('gen_profiles',
+                                 profiles.shape,
+                                 profiles.dtype,
+                                 chunks=(None, 100),
+                                 data=profiles)
