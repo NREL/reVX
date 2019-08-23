@@ -106,7 +106,7 @@ dependencies:
   - pcre=8.43
   - pexpect=4.7.0
   - pickleshare=0.7.5
-  - pip=19.1.1
+  - pip=19.2.2
   - pixman=0.38.0
   - pluggy=0.12.0
   - poppler=0.65.0
