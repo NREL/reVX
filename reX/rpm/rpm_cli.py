@@ -162,3 +162,11 @@ def extra_profiles(ctx, profiles):
     rpm_o.extract_profiles(rpm_clusters, cf_fpath, out_dir,
                            n_profiles=profiles, job_tag=name,
                            parallel=parallel)
+
+
+if __name__ == '__main__':
+    try:
+        main(obj={})
+    except Exception:
+        logger.exception('Error running RPM CLI')
+        raise
