@@ -39,7 +39,7 @@ class RPMClusterManager:
             - cf or resource GIDs if region is not in default meta data
 
         rpm_region_col : str | Nonetype
-            If not None, the meta-data filed to map RPM regions to
+            If not None, the meta-data field to map RPM regions to
         parallel : bool | int
             Flag to apply exclusions in parallel. Integer is interpreted as
             max number of workers. True uses all available.
@@ -105,7 +105,7 @@ class RPMClusterManager:
             - # of clusters per region
             - cf or resource GIDs if region is not in default meta data
         region_col : str | Nonetype
-            If not None, the meta-data filed to map RPM regions to
+            If not None, the meta-data field to map RPM regions to
 
         Returns
         -------
@@ -248,22 +248,13 @@ class RPMClusterManager:
             - Regions of interest
             - # of clusters per region
             - cf or resource GIDs if region is not in default meta data
-        excl_fpath : str | None
-            Filepath to exclusions data (must match the techmap grid).
-            None will not apply exclusions.
-        techmap_fpath : str | None
-            Filepath to tech mapping between exclusions and resource data.
-            None will not apply exclusions.
-        techmap_dset : str
-            Dataset name in the techmap file containing the
-            exclusions-to-resource mapping data.
         out_dir : str
             Directory to dump output files.
         job_tag : str | None
             Optional name tag to add to the output files.
             Format is "rpm_cluster_output_{tag}.csv".
         rpm_region_col : str | Nonetype
-            If not None, the meta-data filed to map RPM regions to
+            If not None, the meta-data field to map RPM regions to
         parallel : bool | int
             Flag to apply exclusions in parallel. Integer is interpreted as
             max number of workers. True uses all available.
@@ -324,7 +315,7 @@ class RPMClusterManager:
             Optional name tag to add to the output files.
             Format is "rpm_cluster_output_{tag}.csv".
         rpm_region_col : str | Nonetype
-            If not None, the meta-data filed to map RPM regions to
+            If not None, the meta-data field to map RPM regions to
         parallel : bool | int
             Flag to apply exclusions in parallel. Integer is interpreted as
             max number of workers. True uses all available.
