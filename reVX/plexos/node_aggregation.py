@@ -281,7 +281,14 @@ class PlexosAggregation:
 
         rev_sc = self._rename_cols(rev_sc, self.REV_NAME_MAP)
         reeds_build = self._rename_cols(reeds_build, self.REEDS_NAME_MAP)
-        reeds_build = reeds_build[(reeds_build['reeds_year'] == build_year)]
+        year_mask = (reeds_build['reeds_year'] == build_year)
+        reeds_build = reeds_build[year_mask]
+
+        logger.info('Running PLEXOS aggregation for build year: {}'
+                    .format(build_year))
+        if not any(year_mask):
+            raise ValueError('Build year {} not found in reeds data!'
+                             .format(build_year))
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build)
         self._node_map = self._make_node_map()
