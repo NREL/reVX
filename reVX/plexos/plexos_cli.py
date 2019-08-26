@@ -14,7 +14,7 @@ from reX.plexos.node_aggregation import Manager
 logger = logging.getLogger(__name__)
 
 
-@click.group()
+@click.group(invoke_without_command=True)
 @click.option('--name', '-n', default='PLEXOS', type=STR,
               help='Job name. Default is "PLEXOS".')
 @click.option('--job_input', '-j', required=True,
@@ -47,29 +47,15 @@ def main(ctx, name, job_input, out_dir, reeds_dir, cf_year, build_years,
     ctx.obj['SCENARIO'] = scenario
     ctx.obj['VERBOSE'] = verbose
 
-    init_mult(name, out_dir, modules=[__name__, 'reX.plexos'],
-              verbose=verbose)
-
-    logger.info('Running reV to PLEXOS pipeline using job input:\n{}'
-                '\nOutputs to be stored in:\n{}'
-                .format(job_input, out_dir))
-
-
-@main.command()
-@click.pass_context
-def run(ctx):
-    """Aggregate PLEXOS profiles."""
-
-    job_input = ctx.obj['JOB_INPUT']
-    out_dir = ctx.obj['OUT_DIR']
-    reeds_dir = ctx.obj['REEDS_DIR']
-    cf_year = ctx.obj['CF_YEAR']
-    build_years = ctx.obj['BUILD_YEAR']
-    scenario = ctx.obj['SCENARIO']
-
-    logger.info('Aggregating plexos scenario "{}".'.format(scenario))
-    Manager.run(job_input, out_dir, reeds_dir, scenario=scenario,
-                cf_year=cf_year, build_years=build_years)
+    if ctx.invoked_subcommand is None:
+        init_mult(name, out_dir, modules=[__name__, 'reX.plexos'],
+                  verbose=verbose)
+        logger.info('Running reV to PLEXOS pipeline using job input:\n{}'
+                    '\nOutputs to be stored in:\n{}'
+                    .format(job_input, out_dir))
+        logger.info('Aggregating plexos scenario "{}".'.format(scenario))
+        Manager.run(job_input, out_dir, reeds_dir, scenario=scenario,
+                    cf_year=cf_year, build_years=build_years)
 
 
 def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_years,
@@ -95,7 +81,7 @@ def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_years,
     if verbose:
         args += '-v '
 
-    cmd = 'python -m reX.plexos.plexos_cli {} run'.format(args)
+    cmd = 'python -m reX.plexos.plexos_cli {}'.format(args)
     return cmd
 
 
