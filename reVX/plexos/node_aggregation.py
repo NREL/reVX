@@ -1045,6 +1045,9 @@ class Manager:
             cf_fpath = df_group.loc[i, 'cf_fpath']
             if '{}' in cf_fpath:
                 cf_fpath = cf_fpath.format(cf_year)
+            elif cf_year not in cf_fpath:
+                warn('Specified CF year {} not present in cf file string: {}'
+                     .format(cf_year, cf_fpath))
 
             rev_sc = df_group.loc[i, 'rev_sc']
 
@@ -1063,13 +1066,13 @@ class Manager:
         return meta, ti, profiles
 
     @classmethod
-    def run(cls, job_file, out_dir, reeds_dir, cf_year=2012,
+    def run(cls, job, out_dir, reeds_dir, scenario=None, cf_year=2012,
             build_years=(2024, 2050)):
         """Run plexos node aggregation for a job file input.
 
         Parameters
         ----------
-        job_file : str
+        job : str | pd.DataFrame
             CSV file with plexos aggregation job config. Needs the following
             columns: (scenario, group, cf_fpath, reeds_build, rev_sc,
             plexos_nodes)
@@ -1077,7 +1080,10 @@ class Manager:
             Path to an output directory.
         reeds_dir : str
             Directory containing the REEDS buildout files in the reeds_build
-            column in the job file.
+            column in the job.
+        scenario : str | None
+            Optional filter to run plexos aggregation for just one scenario in
+            the job.
         cf_year : str
             Year of the cf_fpath resource year (will be inserted if {} is in
             cf_fpath).
@@ -1085,7 +1091,11 @@ class Manager:
             REEDS years to run scenarios for.
         """
 
-        job = pd.read_csv(job_file)
+        if isinstance(job, str):
+            job = pd.read_csv(job)
+
+        if scenario is not None:
+            job = job[(job['scenario'] == scenario)]
 
         for scenario, df_scenario in job.groupby('scenario'):
             logger.info('Running scenario "{}"'.format(scenario))
