@@ -2,7 +2,7 @@
 """
 PLEXOS command line interface (cli).
 """
-
+import os
 import pandas as pd
 import click
 import logging
@@ -109,8 +109,8 @@ def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_years,
 @click.option('--feature', '-l', default=None, type=STR,
               help=('Additional flags for SLURM job. Format is "--qos=high" '
                     'or "--depend=[state:job_id]". Default is None.'))
-@click.option('--stdout_path', '-sout', default='OUT_DIR/stdout', type=STR,
-              help='Subprocess standard output path. Default is ./out/stdout')
+@click.option('--stdout_path', '-sout', default=None, type=STR,
+              help='Subprocess standard output path. Default is in out_dir.')
 @click.pass_context
 def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
     """Eagle submission tool for PLEXOS aggregation."""
@@ -123,8 +123,8 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
     scenario = ctx.obj['SCENARIO']
     verbose = ctx.obj['VERBOSE']
 
-    if 'OUT_DIR' in stdout_path:
-        stdout_path = stdout_path.replace('OUT_DIR', out_dir)
+    if stdout_path is None:
+        stdout_path = os.path.join(out_dir, 'stdout/')
 
     if scenario is None:
         job = pd.read_csv(job_input)
