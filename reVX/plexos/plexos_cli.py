@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 @click.group(invoke_without_command=True)
-@click.option('--name', '-n', default='PLEXOS', type=STR,
-              help='Job name. Default is "PLEXOS".')
+@click.option('--name', '-n', default='plx', type=STR,
+              help='Job name. Default is "plx".')
 @click.option('--job_input', '-j', required=True,
               type=click.Path(exists=True),
               help=('Path to plexos job input csv.'))
@@ -101,6 +101,7 @@ def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_years,
 def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
     """Eagle submission tool for PLEXOS aggregation."""
 
+    name = ctx.obj['NAME']
     job_input = ctx.obj['JOB_INPUT']
     out_dir = ctx.obj['OUT_DIR']
     reeds_dir = ctx.obj['REEDS_DIR']
@@ -119,7 +120,7 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
         scenarios = [scenario]
 
     for scenario in scenarios:
-        node_name = scenario
+        node_name = '{}_{}'.format(name, scenario.replace(' ', '_'))
         cmd = get_node_cmd(node_name, job_input, out_dir, reeds_dir, cf_year,
                            build_years, scenario, verbose)
 
