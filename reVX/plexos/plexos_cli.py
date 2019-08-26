@@ -84,8 +84,13 @@ def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_years,
             '-by {build} '
             '-s {scenario} ')
 
-    args = args.format(name=name, job=job_input, out=out_dir, reeds=reeds_dir,
-                       year=cf_year, build=build_years, scenario=scenario)
+    args = args.format(name=SLURM.s(name),
+                       job=SLURM.s(job_input),
+                       out=SLURM.s(out_dir),
+                       reeds=SLURM.s(reeds_dir),
+                       year=SLURM.s(cf_year),
+                       build=SLURM.s(build_years),
+                       scenario=SLURM.s(scenario))
 
     if verbose:
         args += '-v '
