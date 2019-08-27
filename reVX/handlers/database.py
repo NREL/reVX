@@ -8,6 +8,7 @@ Created on Thu Aug 22 08:58:37 2019
 import pandas as pd
 import psycopg2
 import getpass
+import time
 
 
 class Database:
@@ -55,7 +56,7 @@ class Database:
         self._con.close()
 
     @classmethod
-    def get_table(cls, table, schema, db_name, **kwargs):
+    def get_table(cls, table, schema, db_name, wait=300, **kwargs):
         """Get a table using a database query.
 
         Parameters
@@ -66,6 +67,9 @@ class Database:
             Schema name being accessed in the database.
         db_name : str
             Database name.
+        wait : int
+            Integer seconds to wait for DB connection to become available
+            before raising exception.
         **kwargs : dict
             Additional keyword args to initialize the database connection.
 
@@ -76,6 +80,23 @@ class Database:
         """
 
         sql = 'SELECT * FROM "{}"."{}"'.format(schema, table)
-        with cls(db_name, **kwargs) as db:
-            df = pd.read_sql(sql, db.con)
+
+        if wait > 0:
+            waited = 0
+            while True:
+                try:
+                    with cls(db_name, **kwargs) as db:
+                        df = pd.read_sql(sql, db.con)
+                except psycopg2.OperationalError as e:
+                    if waited > wait:
+                        raise e
+                    else:
+                        waited += 10
+                        time.sleep(10)
+                else:
+                    break
+        else:
+            with cls(db_name, **kwargs) as db:
+                df = pd.read_sql(sql, db.con)
+
         return df
