@@ -36,7 +36,6 @@ def main(ctx, name, cf_profiles, out_dir, parallel, verbose):
     ctx.obj['CF_FPATH'] = cf_profiles
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['PARALLEL'] = parallel
-    ctx.obj['VERBOSE'] = verbose
 
     init_mult(name, out_dir, modules=[__name__, 'reX.rpm'],
               verbose=verbose)

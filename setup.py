@@ -56,11 +56,11 @@ setup(
     version=version,
     description="Renewable Energy Exchange Tool",
     long_description=readme,
-    author="Galen Maclaurin",
-    author_email="galen.maclaurin@nrel.gov",
+    author="Michael Rossol",
+    author_email="michael.rossol@nrel.gov",
     url="https://github.com/NREL/reX",
     packages=find_packages(),
-    package_dir={"rex": "rex"},
+    package_dir={"reX": "reX"},
     entry_points={
         "console_scripts": ["reX=reX.cli:main"
                             "reV-rpm=reX.rpm.rpm_cli:main"],
