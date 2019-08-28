@@ -62,7 +62,7 @@ setup(
     packages=find_packages(),
     package_dir={"reX": "reX"},
     entry_points={
-        "console_scripts": ["reX=reX.cli:main"
+        "console_scripts": ["reX=reX.cli:main",
                             "reV-rpm=reX.rpm.rpm_cli:main"],
     },
     include_package_data=True,
