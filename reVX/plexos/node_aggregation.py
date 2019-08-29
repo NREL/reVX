@@ -721,6 +721,35 @@ class DataCleaner:
         self._profiles = profiles
 
     @staticmethod
+    def pre_filter_plexos_meta(plexos_meta):
+        """Pre-filter the plexos meta data to drop bad node names and
+        duplicate lat/lons.
+
+        Parameters
+        ----------
+        meta_final : pd.DataFrame
+            Plexos meta data.
+
+        Returns
+        -------
+        meta_final : pd.DataFrame
+            Filtered plexos meta data.
+        """
+
+        # as of 8/2019 there were two erroneous plexos nodes with bad names
+        mask = (plexos_meta['plexos_id'] != '#NAME?')
+        plexos_meta = plexos_meta[mask]
+
+        # Several plexos nodes share the same location. As of 8/2019
+        # Josh Novacheck suggests that the duplicate locations can be dropped.
+        plexos_meta = plexos_meta.sort_values(by='voltage', ascending=False)
+        plexos_meta = plexos_meta.drop_duplicates(
+            subset=['latitude', 'longitude'], keep='first')
+        plexos_meta = plexos_meta.sort_values(by='gid')
+
+        return plexos_meta
+
+    @staticmethod
     def _merge_plexos_meta(meta_final, meta_orig, i_final, i_orig):
         """Ammend the plexos meta dataframe with data about resource buildouts.
 
@@ -911,6 +940,9 @@ class Manager:
             Optional additional kwargs for connecting to the database.
         """
         self.plexos_nodes = self._parse_name(plexos_nodes, **db_kwargs)
+        self.plexos_nodes = DataCleaner.pre_filter_plexos_meta(
+            self.plexos_nodes)
+
         self.rev_sc = self._parse_name(rev_sc, **db_kwargs)
         self.reeds_build = self._parse_name(reeds_build, **db_kwargs)
         self.cf_fpath = cf_fpath
