@@ -43,7 +43,7 @@ def main(ctx, name, job_input, out_dir, reeds_dir, cf_year, build_years,
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['REEDS_DIR'] = reeds_dir
     ctx.obj['CF_YEAR'] = cf_year
-    ctx.obj['BUILD_YEAR'] = build_years
+    ctx.obj['BUILD_YEARS'] = build_years
     ctx.obj['SCENARIO'] = scenario
     ctx.obj['VERBOSE'] = verbose
 
@@ -106,7 +106,7 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
     out_dir = ctx.obj['OUT_DIR']
     reeds_dir = ctx.obj['REEDS_DIR']
     cf_year = ctx.obj['CF_YEAR']
-    build_years = ctx.obj['BUILD_YEAR']
+    build_years = ctx.obj['BUILD_YEARS']
     scenario = ctx.obj['SCENARIO']
     verbose = ctx.obj['VERBOSE']
 
@@ -120,25 +120,28 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
         scenarios = [scenario]
 
     for scenario in scenarios:
-        node_name = '{}_{}'.format(name, scenario.replace(' ', '_'))
-        cmd = get_node_cmd(node_name, job_input, out_dir, reeds_dir, cf_year,
-                           build_years, scenario, verbose)
+        for year in build_years:
+            node_name = '{}_{}_{}'.format(name, scenario.replace(' ', '_'),
+                                          year)
+            cmd = get_node_cmd(node_name, job_input, out_dir, reeds_dir,
+                               cf_year, [year], scenario, verbose)
 
-        logger.info('Running reX plexos aggregation on Eagle with node name '
-                    '"{}"'.format(node_name))
+            logger.info('Running reX plexos aggregation on Eagle with node '
+                        'name "{}"'.format(node_name))
 
-        slurm = SLURM(cmd, alloc=alloc, memory=memory, walltime=walltime,
-                      feature=feature, name=node_name,
-                      stdout_path=stdout_path)
-        if slurm.id:
-            msg = ('Kicked off reX plexos aggregation job "{}" '
-                   '(SLURM jobid #{}) on Eagle.'.format(node_name, slurm.id))
-        else:
-            msg = ('Was unable to kick off reV generation job "{}". '
-                   'Please see the stdout error messages'
-                   .format(node_name))
-        click.echo(msg)
-        logger.info(msg)
+            slurm = SLURM(cmd, alloc=alloc, memory=memory, walltime=walltime,
+                          feature=feature, name=node_name,
+                          stdout_path=stdout_path)
+            if slurm.id:
+                msg = ('Kicked off reX plexos aggregation job "{}" '
+                       '(SLURM jobid #{}) on Eagle.'
+                       .format(node_name, slurm.id))
+            else:
+                msg = ('Was unable to kick off reV generation job "{}". '
+                       'Please see the stdout error messages'
+                       .format(node_name))
+            click.echo(msg)
+            logger.info(msg)
 
 
 if __name__ == '__main__':

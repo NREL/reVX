@@ -1119,12 +1119,15 @@ class Manager:
         cf_year : str
             Year of the cf_fpath resource year (will be inserted if {} is in
             cf_fpath).
-        build_years : list | tuple
+        build_years : list | tuple | int
             REEDS years to run scenarios for.
         """
 
         if isinstance(job, str):
             job = pd.read_csv(job)
+
+        if isinstance(build_years, int):
+            build_years = [build_years]
 
         if scenario is not None:
             job = job[(job['scenario'] == scenario)]
@@ -1169,3 +1172,5 @@ class Manager:
                                              profiles.dtype,
                                              chunks=(None, 100),
                                              data=profiles)
+
+        logger.info('Plexos aggregation complete!')
