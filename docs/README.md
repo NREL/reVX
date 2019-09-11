@@ -12,7 +12,7 @@ pip install sphinx
 
 ## Refreshing the API Documentation
 
-- Make sure reV is in your PYTHONPATH
+- Make sure reVX is in your PYTHONPATH
 - Delete the contents of `source/reVX`.
 - Run `sphinx-apidoc -o source/reVX ..` from the `docs` folder.
 - Compare `source/reVX/modules.rst` to `source/reVX.rst`.

@@ -1,4 +1,4 @@
-reV-X
+reVX
 =====
 
 .. toctree::
