@@ -946,6 +946,9 @@ class Manager:
         self.rev_sc = self._parse_name(rev_sc, **db_kwargs)
         self.reeds_build = self._parse_name(reeds_build, **db_kwargs)
         self.cf_fpath = cf_fpath
+        if not os.path.exists(self.cf_fpath):
+            raise FileNotFoundError('Could not find cf_fpath: {}'
+                                    .format(cf_fpath))
 
     @staticmethod
     def _parse_name(name, **kwargs):
@@ -966,7 +969,7 @@ class Manager:
             if name.endswith('.csv'):
                 df = pd.read_csv(name)
             elif len(name.split('.')) == 3:
-                from reX.handlers.database import Database
+                from reVX.handlers.database import Database
                 db, schema, table = name.split('.')
                 df = Database.get_table(table, schema, db, **kwargs)
 
