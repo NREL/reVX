@@ -1,16 +1,16 @@
-.. reV-X documentation master file, created by
+.. reVX documentation master file, created by
    sphinx-quickstart on Thu Jun 14 10:26:46 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to reV-X's documentation!
+Welcome to reVX's documentation!
 ====================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   reV-X
+   reVX
 
 Indices and tables
 ==================

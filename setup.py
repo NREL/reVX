@@ -52,23 +52,23 @@ click_dependency = "click>=7.0"
 scipy_dependency = "scipy>=1.2.1"
 
 setup(
-    name="reV-X",
+    name="reVX",
     version=version,
-    description="Renewable Energy Potential(V) EXchange Tool: reV-X",
+    description="Renewable Energy Potential(V) eXchange Tool: reVX",
     long_description=readme,
     author="Michael Rossol",
     author_email="michael.rossol@nrel.gov",
-    url="https://github.com/NREL/reV-X",
+    url="https://github.com/NREL/reVX",
     packages=find_packages(),
-    package_dir={"reV-X": "reVX"},
+    package_dir={"reVX": "reVX"},
     entry_points={
-        "console_scripts": ["reV-X=reVX.cli:main",
+        "console_scripts": ["reVX=reVX.cli:main",
                             "reV-rpm=reVX.rpm.rpm_cli:main"],
     },
     include_package_data=True,
     license="BSD license",
     zip_safe=False,
-    keywords="reV-X",
+    keywords="reVX",
     classifiers=[
         "Development Status :: Beta",
         "Intended Audience :: Modelers",

@@ -145,7 +145,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'reV-X.tex', 'reV-X Documentation',
+    (master_doc, 'reVX.tex', 'reVX Documentation',
      'Michael Rossol', 'manual'),
 ]
 
@@ -155,7 +155,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'reV-X', 'reV-X Documentation',
+    (master_doc, 'reVX', 'reVX Documentation',
      [author], 1)
 ]
 
@@ -166,8 +166,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'reV-X', 'reV-X Documentation',
-     author, 'reV-X', 'Renewable Energy Potential(V) EXchange Tool',
+    (master_doc, 'reVX', 'reVX Documentation',
+     author, 'reVX', 'Renewable Energy Potential(V) EXchange Tool',
      'Miscellaneous'),
 ]
 

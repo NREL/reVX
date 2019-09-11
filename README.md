@@ -1,7 +1,7 @@
-# reV-X
+# reVX
 
-Renewable Energy Potential(V) EXchange Tool: reV-X
+Renewable Energy Potential(V) eXchange Tool: reVX
 
-[Execution examples.](https://github.com/NREL/reV-X/tree/master/examples)
+[Execution examples.](https://github.com/NREL/reVX/tree/master/examples)
 
-[Install instructions.](https://github.com/NREL/reV-X/wiki/Installation-Guide)
+[Install instructions.](https://github.com/NREL/reVX/wiki/Installation-Guide)
