@@ -13,9 +13,9 @@ pip install sphinx
 ## Refreshing the API Documentation
 
 - Make sure reV is in your PYTHONPATH
-- Delete the contents of `source/reX`.
-- Run `sphinx-apidoc -o source/reX ..` from the `docs` folder.
-- Compare `source/reV/modules.rst` to `source/reV.rst`.
+- Delete the contents of `source/reV-X`.
+- Run `sphinx-apidoc -o source/reV-X ..` from the `docs` folder.
+- Compare `source/reV-X/modules.rst` to `source/reV-X.rst`.
 - `git push` changes to the documentation source code as needed.
 - Make the documentation per below
 

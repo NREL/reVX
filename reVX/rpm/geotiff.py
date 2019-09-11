@@ -12,7 +12,7 @@ import xarray as xr
 from pyproj import transform, Proj
 
 from reV.handlers.parse_keys import parse_keys
-from reX.utilities.exceptions import GeoTiffKeyError
+from reVX.utilities.exceptions import GeoTiffKeyError
 
 
 class Geotiff:

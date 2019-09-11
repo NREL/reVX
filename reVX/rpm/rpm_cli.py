@@ -6,9 +6,9 @@ import click
 import logging
 from reV.utilities.cli_dtypes import STR
 
-from reX.utilities.loggers import init_mult
-from reX.rpm.rpm_manager import RPMClusterManager as rpm_cm
-from reX.rpm.rpm_output import RPMOutput as rpm_o
+from reVX.utilities.loggers import init_mult
+from reVX.rpm.rpm_manager import RPMClusterManager as rpm_cm
+from reVX.rpm.rpm_output import RPMOutput as rpm_o
 
 logger = logging.getLogger(__name__)
 

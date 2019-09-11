@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Logging for reV
+Logging for reV_X
 """
 import logging
 import sys
@@ -136,12 +136,12 @@ class LoggingAttributes:
             pass
 
 
-REX_LOGGERS = LoggingAttributes()
+REVX_LOGGERS = LoggingAttributes()
 
 
 def init_logger(logger_name, **kwargs):
     """
-    Starts logging instance and adds logging attributes to REX_LOGGERS
+    Starts logging instance and adds logging attributes to REVX_LOGGERS
 
     Parameters
     ----------
@@ -157,7 +157,7 @@ def init_logger(logger_name, **kwargs):
     """
     logger = setup_logger(logger_name, **kwargs)
 
-    REX_LOGGERS[logger_name] = kwargs
+    REVX_LOGGERS[logger_name] = kwargs
 
     return logger
 
@@ -197,8 +197,8 @@ def init_mult(name, logdir, modules, verbose=False, node=False):
     for module in modules:
         log_file = os.path.join(logdir, '{}.log'.format(name))
 
-        # check for redundant loggers in the REX_LOGGERS singleton
-        logger = REX_LOGGERS[module]
+        # check for redundant loggers in the REVX_LOGGERS singleton
+        logger = REVX_LOGGERS[module]
 
         if ((not node or (node and log_level == 'DEBUG'))
                 and 'log_file' not in logger):

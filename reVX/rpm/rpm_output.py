@@ -11,8 +11,8 @@ import psutil
 
 from reV.handlers.outputs import Outputs
 from reV.handlers.geotiff import Geotiff
-from reX.rpm.rpm_clusters import RPMClusters
-from reX.utilities.exceptions import RPMRuntimeError, RPMTypeError
+from reVX.rpm.rpm_clusters import RPMClusters
+from reVX.utilities.exceptions import RPMRuntimeError, RPMTypeError
 
 logger = logging.getLogger(__name__)
 

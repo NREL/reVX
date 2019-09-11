@@ -4,7 +4,7 @@ Custom Exceptions and Errors for reV
 """
 
 
-class reXError(Exception):
+class reVXError(Exception):
     """
     Generic Error for reV
     """

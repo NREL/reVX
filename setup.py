@@ -52,18 +52,18 @@ click_dependency = "click>=7.0"
 scipy_dependency = "scipy>=1.2.1"
 
 setup(
-    name="reX",
+    name="reV-X",
     version=version,
-    description="Renewable Energy Exchange Tool",
+    description="Renewable Energy Potential(V) EXchange Tool: reV-X",
     long_description=readme,
     author="Michael Rossol",
     author_email="michael.rossol@nrel.gov",
-    url="https://github.com/NREL/reX",
+    url="https://github.com/NREL/reV-X",
     packages=find_packages(),
-    package_dir={"reX": "reX"},
+    package_dir={"reV-X": "reVX"},
     entry_points={
-        "console_scripts": ["reX=reX.cli:main",
-                            "reV-rpm=reX.rpm.rpm_cli:main"],
+        "console_scripts": ["reV-X=reVX.cli:main",
+                            "reV-rpm=reVX.rpm.rpm_cli:main"],
     },
     include_package_data=True,
     license="BSD license",
