@@ -21,7 +21,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open("README.md", encoding="utf-8") as readme_file:
     readme = convert_text(readme_file.read(), "rst", format="md")
 
-with open(os.path.join(here, "reX", "version.py"), encoding="utf-8") as f:
+with open(os.path.join(here, "reVX", "version.py"), encoding="utf-8") as f:
     version = f.read()
 
 version = version.split('=')[-1].strip().strip('"').strip("'")
@@ -68,7 +68,7 @@ setup(
     include_package_data=True,
     license="BSD license",
     zip_safe=False,
-    keywords="reX",
+    keywords="reV-X",
     classifiers=[
         "Development Status :: Beta",
         "Intended Audience :: Modelers",
