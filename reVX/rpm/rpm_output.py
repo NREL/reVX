@@ -707,7 +707,7 @@ class RPMOutput:
             Filename for shapefile output.
         """
 
-        fn_out = 'rpm_cluster_output.csv'
+        fn_out = 'rpm_cluster_outputs.csv'
         fn_pro = 'rpm_rep_profiles.csv'
         fn_sum = 'rpm_cluster_summary.csv'
         fn_shp = 'rpm_cluster_shapes.shp'

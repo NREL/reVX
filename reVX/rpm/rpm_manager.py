@@ -326,11 +326,12 @@ class RPMClusterManager:
         """
 
         # intermediate job file
-        f_int = os.path.join(out_dir, 'rpm_cluster_temp.csv')
+        f_cluster = os.path.join(out_dir, 'rpm_initial_clusters.csv')
         if job_tag is not None:
-            f_int = f_int.replace('.csv', '_{}.csv'.format(job_tag))
+            f_cluster = f_cluster.replace('.csv', '_{}.csv'
+                                          .format(job_tag))
 
-        if not os.path.exists(f_int):
+        if not os.path.exists(f_cluster):
             rpm = cls(cf_fpath, rpm_meta, rpm_region_col=rpm_region_col,
                       parallel=parallel)
             rpm._cluster(**cluster_kwargs)
@@ -338,12 +339,12 @@ class RPMClusterManager:
 
             if not os.path.exists(out_dir):
                 os.makedirs(out_dir)
-            rpm_clusters.to_csv(f_int, index=False)
+            rpm_clusters.to_csv(f_cluster, index=False)
 
         else:
-            logger.info('Importing intermediate cluster results from: {}'
-                        .format(f_int))
-            rpm_clusters = f_int
+            logger.info('Importing initial cluster results from: {}'
+                        .format(f_cluster))
+            rpm_clusters = f_cluster
             rpm = None
 
         if output_kwargs is None:

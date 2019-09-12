@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
 @click.option('-p', '--parallel', is_flag=True,
-              help='Run clustering in parallel by region')
+              help='Run clustering in parallel by region. Default is serial.')
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
@@ -37,12 +37,12 @@ def main(ctx, name, cf_profiles, out_dir, parallel, verbose):
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['PARALLEL'] = parallel
 
-    init_mult(name, out_dir, modules=[__name__, 'reX.rpm'],
+    init_mult(name, out_dir, modules=[__name__, 'reVX.rpm'],
               verbose=verbose)
 
-    logger.info('Running reV to RPM pipeline using CF profiles:\n{}'
-                '\nOutputs to be stored in:\n{}'
-                .format(cf_profiles, out_dir))
+    logger.info('Running reV to RPM pipeline using CF profiles: {}'
+                .format(cf_profiles))
+    logger.info('Outputs to be stored in: {}'.format(out_dir))
 
 
 @main.group(invoke_without_command=True)
@@ -95,10 +95,9 @@ def and_profiles(ctx, exclusions, techmap, techmap_dset):
     out_dir = ctx.obj['OUT_DIR']
     parallel = ctx.obj['PARALLEL']
 
-    logger.info('Clustering regions based on:\n{}'
-                '\nAnd extracting representative profiles using exclusions:'
-                '\n{}'
-                .format(rpm_meta, exclusions))
+    logger.info('Clustering regions based on: {}'.format(rpm_meta))
+    logger.info('Extracting representative profiles using exclusions: {}'
+                .format(exclusions))
     rpm_cm.run_clusters_and_profiles(cf_fpath, rpm_meta, exclusions,
                                      techmap, techmap_dset, out_dir,
                                      job_tag=name, rpm_region_col=region_col,
@@ -118,7 +117,7 @@ def and_profiles(ctx, exclusions, techmap, techmap_dset):
               type=click.Path(exists=True),
               help=('Filepath to tech mapping between exclusions and resource '
                     'data. None will not apply exclusions.'))
-@click.option('--techmap_dset', '-td', default=None, type=STR,
+@click.option('--techmap_dset', '-tmd', default=None, type=STR,
               help=('Dataset name in the techmap file containing the '
                     'exclusions-to-resource mapping data.'))
 @click.pass_context
@@ -133,9 +132,10 @@ def rep_profiles(ctx, rpm_clusters, exclusions, techmap, techmap_dset):
     ctx.obj['RPM_CLUSTERS'] = rpm_clusters
 
     if ctx.invoked_subcommand is None:
-        logger.info('Extracting representative profiles from RPM clusters:\n{}'
-                    '\nUsing exclusions:\n{}'
-                    .format(rpm_clusters, exclusions))
+        logger.info('Extracting representative profiles from RPM clusters: {}'
+                    .format(rpm_clusters))
+        logger.info('Extracting representative profiles using exclusions: {}'
+                    .format(exclusions))
         rpm_o.process_outputs(rpm_clusters, cf_fpath, exclusions,
                               techmap, techmap_dset, out_dir,
                               job_tag=name, parallel=parallel)
