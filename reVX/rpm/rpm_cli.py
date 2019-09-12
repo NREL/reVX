@@ -81,8 +81,10 @@ def cluster(ctx, rpm_meta, region_col):
 @click.option('--techmap_dset', '-tmd', default=None, type=STR,
               help=('Dataset name in the techmap file containing the '
                     'exclusions-to-resource mapping data.'))
+@click.option('--trg', '-trg', default=None, type=STR,
+              help=('Filepath to TRG LCOE bins.'))
 @click.pass_context
-def and_profiles(ctx, exclusions, techmap, techmap_dset):
+def and_profiles(ctx, exclusions, techmap, techmap_dset, trg):
     """
     Cluster RPM Regions and extract representative profiles
     """
@@ -98,16 +100,23 @@ def and_profiles(ctx, exclusions, techmap, techmap_dset):
     logger.info('Clustering regions based on: {}'.format(rpm_meta))
     logger.info('Extracting representative profiles using exclusions: {}'
                 .format(exclusions))
+
+    output_kwargs = {}
+    if trg is not None:
+        output_kwargs = {'trg': trg}
+        logger.info('Applying TRGs: {}'.format(trg))
+
     rpm_cm.run_clusters_and_profiles(cf_fpath, rpm_meta, exclusions,
                                      techmap, techmap_dset, out_dir,
                                      job_tag=name, rpm_region_col=region_col,
-                                     parallel=parallel)
+                                     parallel=parallel,
+                                     output_kwargs=output_kwargs)
 
 
 @main.group(invoke_without_command=True)
 @click.option('--rpm_clusters', '-rc', required=True,
               type=click.Path(exists=True),
-              help=('RPM cluster results .csv with '
+              help=('Pre-existing RPM cluster results .csv with '
                     '(gid, gen_gid, cluster_id, rank)'))
 @click.option('--exclusions', '-e', default=None,
               type=click.Path(exists=True),
@@ -120,8 +129,10 @@ def and_profiles(ctx, exclusions, techmap, techmap_dset):
 @click.option('--techmap_dset', '-tmd', default=None, type=STR,
               help=('Dataset name in the techmap file containing the '
                     'exclusions-to-resource mapping data.'))
+@click.option('--trg', '-trg', default=None, type=STR,
+              help=('Filepath to TRG LCOE bins.'))
 @click.pass_context
-def rep_profiles(ctx, rpm_clusters, exclusions, techmap, techmap_dset):
+def rep_profiles(ctx, rpm_clusters, exclusions, techmap, techmap_dset, trg):
     """
     Extract representative profiles from existing RPM clusters
     """
@@ -136,15 +147,18 @@ def rep_profiles(ctx, rpm_clusters, exclusions, techmap, techmap_dset):
                     .format(rpm_clusters))
         logger.info('Extracting representative profiles using exclusions: {}'
                     .format(exclusions))
+
+        if trg is not None:
+            logger.info('Applying TRGs: {}'.format(trg))
+
         rpm_o.process_outputs(rpm_clusters, cf_fpath, exclusions,
                               techmap, techmap_dset, out_dir,
-                              job_tag=name, parallel=parallel)
+                              job_tag=name, parallel=parallel, trg=trg)
 
 
 @rep_profiles.command()
 @click.option('--profiles', '-np', required=True, type=int,
-              help=('Filepath to exclusions data (must match the techmap grid)'
-                    ' None will not apply exclusions.'))
+              help=('Number of profiles per cluster to export.'))
 @click.pass_context
 def extra_profiles(ctx, profiles):
     """
