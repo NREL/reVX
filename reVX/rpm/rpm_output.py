@@ -54,7 +54,7 @@ class RepresentativeProfiles:
 
     @staticmethod
     def _get_rep_profile(clusters, cf_fpath, irp=0, fpath_out=None,
-                         key='rank'):
+                         key='rank', cols=None):
         """Get a single representative profile timeseries dataframe.
 
         Parameters
@@ -69,15 +69,19 @@ class RepresentativeProfiles:
             Optional filepath to export files to.
         key : str
             Rank column to sort by to get the best ranked profile.
+        cols : list | None
+            Columns headers for the rep profiles. None will use whatever
+            cluster_ids are in clusters.
         """
 
         with Outputs(cf_fpath) as f:
             ti = f.time_index
-        cols = clusters.cluster_id.unique()
+        if cols is None:
+            cols = clusters.cluster_id.unique()
         profile_df = pd.DataFrame(index=ti, columns=cols)
         profile_df.index.name = 'time_index'
 
-        for i, df in clusters.groupby('cluster_id'):
+        for cid, df in clusters.groupby('cluster_id'):
             mask = ~df[key].isnull()
             if any(mask):
                 df_ranked = df[mask].sort_values(by=key)
@@ -88,10 +92,10 @@ class RepresentativeProfiles:
 
                     logger.info('Representative profile i #{} from cluster id '
                                 '{} is from gen_gid {}'
-                                .format(irp, i, gen_gid))
+                                .format(irp, cid, gen_gid))
 
                     with Outputs(cf_fpath) as f:
-                        profile_df.loc[:, i] = f['cf_profile', :, gen_gid]
+                        profile_df.loc[:, cid] = f['cf_profile', :, gen_gid]
 
         if fpath_out is not None:
             profile_df.to_csv(fpath_out)
@@ -154,6 +158,7 @@ class RepresentativeProfiles:
             None will use implicit logic to select the rank key.
         """
         rp = cls(clusters, key=key)
+        cols = clusters.cluster_id.unique()
 
         if rp.key == 'rank_included_trg':
             for itrg, df in clusters.groupby('trg'):
@@ -162,10 +167,11 @@ class RepresentativeProfiles:
                                                       .format(itrg))
 
                 rp._get_rep_profile(df, cf_fpath, irp=irp,
-                                    fpath_out=fpath_out_trg, key=rp.key)
+                                    fpath_out=fpath_out_trg, key=rp.key,
+                                    cols=cols)
         else:
             rp._get_rep_profile(rp.clusters, cf_fpath, irp=irp,
-                                fpath_out=fpath_out, key=rp.key)
+                                fpath_out=fpath_out, key=rp.key, cols=cols)
 
 
 class RPMOutput:
