@@ -21,87 +21,36 @@ logger = logging.getLogger(__name__)
 class RepresentativeProfiles:
     """Methods to export representative generation profiles."""
 
-    @classmethod
-    def export_profiles(cls, n_profiles, clusters, cf_fpath, fn_pro,
-                        out_dir, max_workers=1, key=None):
-        """Export representative profile files.
-
-        Parameters
-        ----------
-        n_profiles : int
-            Number of profiles to export.
-        clusters : pd.DataFrame
-            RPM output clusters attribute.
-        cf_fpath : str
-            Filepath to reV generation results to get profiles from.
-        fn_pro : str
-            Filename for representative profile output.
-        out_dir : str
-            Directory to dump output files.
-        key : str | None
-            Column in clusters to sort ranks by. None will allow for
-            default logic.
+    def __init__(self, clusters, key=None):
         """
-
-        if max_workers == 1:
-            for irp in range(n_profiles):
-                fni = fn_pro.replace('.csv', '_{}.csv'.format(irp))
-                fpath_out_i = os.path.join(out_dir, fni)
-                cls.get_rep_profile(clusters, cf_fpath, irp=irp,
-                                    fpath_out=fpath_out_i, key=key)
-        else:
-            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
-                for irp in range(n_profiles):
-                    fni = fn_pro.replace('.csv', '_{}.csv'.format(irp))
-                    fpath_out_i = os.path.join(out_dir, fni)
-                    exe.submit(cls.get_rep_profile, clusters,
-                               cf_fpath, irp=irp, fpath_out=fpath_out_i,
-                               key=key)
-
-    @classmethod
-    def get_rep_profile(cls, clusters, cf_fpath, irp=0, fpath_out=None,
-                        key=None):
-        """Get a single representative profile timeseries dataframe.
-
         Parameters
         ----------
         clusters : pd.DataFrame
             Single DataFrame with (gid, gen_gid, cluster_id, rank).
-        cf_fpath : str
-            reV generation output file.
-        irp : int
-            Rank of profile to get. Zero is the most representative profile.
-        fpath_out : str
-            Optional filepath to export directly in addition to returning.
         key : str | None
             Rank column to sort by to get the best ranked profile.
             None will use implicit logic to select the rank key.
         """
 
-        done = False
-        if 'rank_included_trg' in clusters and key is None:
-            logger.debug('Getting rep profiles based on column '
-                         '"rank_included_trg".')
-            for itrg, df in clusters.groupby('trg'):
-                if fpath_out is not None:
-                    fpath_out = fpath_out.replace('.csv', '_trg{}.csv'
-                                                  .format(itrg))
-
-                cls._get_rep_profile(df, cf_fpath, irp=irp,
-                                     fpath_out=fpath_out,
-                                     key='rank_included_trg')
-            done = True
-        elif key is None:
+        if key is not None:
+            self.key = key
+        elif 'rank_included_trg' in clusters:
+            self.key = 'rank_included_trg'
+        else:
             if 'rank_included' in clusters:
-                key = 'rank_included'
+                self.key = 'rank_included'
             else:
-                key = 'rank'
+                self.key = 'rank'
 
-        if not done:
-            logger.debug('Getting rep profiles based on column "{}".'
-                         .format(key))
-            cls._get_rep_profile(clusters, cf_fpath, irp=irp,
-                                 fpath_out=fpath_out, key=key)
+        if self.key not in clusters:
+            raise KeyError('Could not find rank column "{}" in '
+                           'cluster table. Cannot extract '
+                           'representative profiles.'.format(self.key))
+
+        logger.debug('Getting rep profiles based on column "{}".'
+                     .format(key))
+
+        self.clusters = clusters
 
     @staticmethod
     def _get_rep_profile(clusters, cf_fpath, irp=0, fpath_out=None,
@@ -117,7 +66,7 @@ class RepresentativeProfiles:
         irp : int
             Rank of profile to get. Zero is the most representative profile.
         fpath_out : str
-            Optional filepath to export directly in addition to returning.
+            Optional filepath to export files to.
         key : str
             Rank column to sort by to get the best ranked profile.
         """
@@ -147,6 +96,76 @@ class RepresentativeProfiles:
         if fpath_out is not None:
             profile_df.to_csv(fpath_out)
             logger.info('Saved {}'.format(fpath_out))
+
+    @classmethod
+    def export_profiles(cls, n_profiles, clusters, cf_fpath, fn_pro,
+                        out_dir, max_workers=1, key=None):
+        """Export representative profile files.
+
+        Parameters
+        ----------
+        n_profiles : int
+            Number of profiles to export.
+        clusters : pd.DataFrame
+            RPM output clusters attribute.
+        cf_fpath : str
+            Filepath to reV generation results to get profiles from.
+        fn_pro : str
+            Filename for representative profile output.
+        out_dir : str
+            Directory to dump output files.
+        key : str | None
+            Column in clusters to sort ranks by. None will allow for
+            default logic.
+        """
+
+        if max_workers == 1:
+            for irp in range(n_profiles):
+                fni = fn_pro.replace('.csv', '_rank{}.csv'.format(irp))
+                fpath_out_i = os.path.join(out_dir, fni)
+                cls.export_single(clusters, cf_fpath, irp=irp,
+                                  fpath_out=fpath_out_i, key=key)
+        else:
+            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
+                for irp in range(n_profiles):
+                    fni = fn_pro.replace('.csv', '_rank{}.csv'.format(irp))
+                    fpath_out_i = os.path.join(out_dir, fni)
+                    exe.submit(cls.export_single, clusters,
+                               cf_fpath, irp=irp, fpath_out=fpath_out_i,
+                               key=key)
+
+    @classmethod
+    def export_single(cls, clusters, cf_fpath, irp=0, fpath_out=None,
+                      key=None):
+        """Get a single representative profile timeseries dataframe.
+
+        Parameters
+        ----------
+        clusters : pd.DataFrame
+            Single DataFrame with (gid, gen_gid, cluster_id, rank).
+        cf_fpath : str
+            reV generation output file.
+        irp : int
+            Rank of profile to get. Zero is the most representative profile.
+        fpath_out : str
+            Optional filepath to export files to.
+        key : str | None
+            Rank column to sort by to get the best ranked profile.
+            None will use implicit logic to select the rank key.
+        """
+        rp = cls(clusters, key=key)
+
+        if rp.key == 'rank_included_trg':
+            for itrg, df in clusters.groupby('trg'):
+                if fpath_out is not None:
+                    fpath_out_trg = fpath_out.replace('.csv', '_trg{}.csv'
+                                                      .format(itrg))
+
+                rp._get_rep_profile(df, cf_fpath, irp=irp,
+                                    fpath_out=fpath_out_trg, key=rp.key)
+        else:
+            rp._get_rep_profile(rp.clusters, cf_fpath, irp=irp,
+                                fpath_out=fpath_out, key=rp.key)
 
 
 class RPMOutput:
@@ -640,9 +659,9 @@ class RPMOutput:
 
             lcoe_df = pd.DataFrame({'gen_gid': gen_gid,
                                     'lcoe_fcr': lcoe_fcr})
-            bcol = [c for c in self.trg if 'bin' in c.lower()][0]
+            bcol = [c for c in self.trg.columns if 'bin' in c.lower()][0]
             bins = sorted(list(self.trg[bcol].values))
-            trg_labels = [i + 1 for i in range(len(self.trg))]
+            trg_labels = [i + 1 for i in range(len(self.trg) - 1)]
             lcoe_df['trg_lcoe_bin'] = pd.cut(x=lcoe_df['lcoe_fcr'], bins=bins)
             lcoe_df['trg'] = pd.cut(x=lcoe_df['lcoe_fcr'], bins=bins,
                                     labels=trg_labels)
@@ -692,7 +711,7 @@ class RPMOutput:
             for i, future in enumerate(cf.as_completed(futures)):
                 gen_gid = futures[future]
                 mem = psutil.virtual_memory()
-                logger.info('Finished re-ranking {} out of {}.'
+                logger.info('Finished re-ranking {} out of {}. '
                             'Memory usage is {:.2f} out of {:.2f} GB.'
                             .format(i, len(futures),
                                     mem.used / 1e9, mem.total / 1e9))
@@ -856,8 +875,9 @@ class RPMOutput:
 
         RepresentativeProfiles.export_profiles(
             rpmo.n_profiles, rpmo._clusters, rpmo._cf_fpath, fn_pro, out_dir,
-            max_workers=rpmo.max_workers,
-            key=key)
+            max_workers=rpmo.max_workers, key=key)
+
+        logger.info('Finished extracting extra representative profiles!')
 
     @classmethod
     def process_outputs(cls, rpm_clusters, cf_fpath, excl_fpath,
