@@ -642,7 +642,7 @@ class RPMOutput:
         logger.info('Finished applying exclusions.')
 
         if self.rerank:
-            self.run_rerank()
+            self.run_rerank(groupby='cluster_id', rank_col='rank_included')
 
         return self._clusters
 
@@ -825,12 +825,12 @@ class RPMOutput:
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
-        self.apply_trgs()
-
         if ('included_frac' not in self._clusters
                 and self._excl_fpath is not None
                 and self._techmap_fpath is not None):
             self.apply_exclusions()
+
+        self.apply_trgs()
 
         RepresentativeProfiles.export_profiles(
             self.n_profiles, self._clusters, self._cf_fpath, fn_pro, out_dir,
