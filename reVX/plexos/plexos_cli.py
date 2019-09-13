@@ -11,7 +11,7 @@ from reV.utilities.execution import SLURM
 from reV.utilities.cli_dtypes import STR, INT, INTLIST
 from reV.utilities.loggers import init_mult
 
-from reVX.plexos.node_aggregation import Manager
+from reVX.plexos.rev_reeds_plexos import Manager
 
 logger = logging.getLogger(__name__)
 
