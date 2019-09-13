@@ -23,14 +23,14 @@ import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
-project = 'reV'
-copyright = '2018, Galen MacLaurin, Michael Rossol'
-author = 'Galen MacLaurin, Michael Rossol'
+project = 'reVX'
+copyright = '2018, Michael Rossol'
+author = 'Michael Rossol'
 
 # The short X.Y version
-version = '2.0.0'
+version = '1.0.0'
 # The full version, including alpha/beta/rc tags
-release = '2.0.0'
+release = '1.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -118,7 +118,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'reVdoc'
+htmlhelp_basename = 'reVXdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -145,8 +145,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'reV.tex', 'reV Documentation',
-     'Galen MacLaurin, Michael Rossol', 'manual'),
+    (master_doc, 'reVX.tex', 'reVX Documentation',
+     'Michael Rossol', 'manual'),
 ]
 
 
@@ -155,7 +155,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'reV', 'reV Documentation',
+    (master_doc, 'reVX', 'reVX Documentation',
      [author], 1)
 ]
 
@@ -166,8 +166,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'reV', 'reV Documentation',
-     author, 'reV', 'One line description of project.',
+    (master_doc, 'reVX', 'reVX Documentation',
+     author, 'reVX', 'Renewable Energy Potential(V) EXchange Tool',
      'Miscellaneous'),
 ]
 

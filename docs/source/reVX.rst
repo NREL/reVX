@@ -1,8 +1,8 @@
-reX
+reVX
 ###
 
 .. toctree::
    :maxdepth: 4
 
-   reV/modules
-   reX/reX
+   reVX/modules
+   reVX/reVX

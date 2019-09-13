@@ -21,7 +21,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open("README.md", encoding="utf-8") as readme_file:
     readme = convert_text(readme_file.read(), "rst", format="md")
 
-with open(os.path.join(here, "reX", "version.py"), encoding="utf-8") as f:
+with open(os.path.join(here, "reVX", "version.py"), encoding="utf-8") as f:
     version = f.read()
 
 version = version.split('=')[-1].strip().strip('"').strip("'")
@@ -44,26 +44,6 @@ class PostDevelopCommand(develop):
         develop.run(self)
 
 
-def get_sam_data_files():
-    """
-    Get all data files in the SAM directory that are required to run reV.
-    """
-
-    rel_dir = 'reV/SAM/'
-    sam_dir = os.path.join(os.getcwd(), rel_dir)
-    sam_data_files = []
-    for root, _, files in os.walk(sam_dir):
-
-        f_dir = root[root.index(rel_dir):]
-        for fname in files:
-            sam_data_files.append(os.path.join(f_dir, fname))
-
-    sam_data_files = [f for f in sam_data_files
-                      if not f.endswith(('.py', '.pyc'))]
-
-    return sam_data_files
-
-
 test_requires = ["pytest", ]
 
 numpy_dependency = "numpy>=1.15.0"
@@ -72,22 +52,23 @@ click_dependency = "click>=7.0"
 scipy_dependency = "scipy>=1.2.1"
 
 setup(
-    name="reV",
+    name="reVX",
     version=version,
-    description="Renewable Energy Exchange Tool",
+    description="Renewable Energy Potential(V) eXchange Tool: reVX",
     long_description=readme,
-    author="Galen Maclaurin",
-    author_email="galen.maclaurin@nrel.gov",
-    url="https://github.com/NREL/reX",
+    author="Michael Rossol",
+    author_email="michael.rossol@nrel.gov",
+    url="https://github.com/NREL/reVX",
     packages=find_packages(),
-    package_dir={"rex": "rex"},
+    package_dir={"reVX": "reVX"},
     entry_points={
-        "console_scripts": ["reX=reX.cli:main"],
+        "console_scripts": ["reVX=reVX.cli:main",
+                            "reV-rpm=reVX.rpm.rpm_cli:main"],
     },
     include_package_data=True,
     license="BSD license",
     zip_safe=False,
-    keywords="reX",
+    keywords="reVX",
     classifiers=[
         "Development Status :: Beta",
         "Intended Audience :: Modelers",
@@ -97,12 +78,12 @@ setup(
         "Programming Language :: Python :: 3.7",
     ],
     test_suite="tests",
-    install_requires=["click", "h5py", "numpy", "pandas", "psutil",
-                      "rasterio", "scipy"],
+    install_requires=["click", "h5py", "geopandas", "numpy", "pandas",
+                      "psutil", "pywavelets", "rasterio", "scipy",
+                      "scikit-learn"],
     extras_require={
         "test": test_requires,
         "dev": test_requires + ["pypandoc", "flake8", "pre-commit", "pylint"],
     },
     cmdclass={"develop": PostDevelopCommand},
-    data_files=[('sam_files', get_sam_data_files())],
 )
