@@ -7,6 +7,8 @@ import os
 import logging
 from warnings import warn
 import numpy as np
+import pandas as pd
+from scipy.spatial import cKDTree
 
 from reV.handlers.outputs import Outputs
 
@@ -158,20 +160,168 @@ class DpvResource:
                 out[dset] = arr
 
 
-if __name__ == '__main__':
-    from reV.utilities.loggers import init_logger
-    init_logger(__name__, log_level='DEBUG')
-    root_dir = '/projects/naris/generation_data/60min/naris_rev_pv_dgen/'
-    sub_dirs = ['dgen_a90_t28', 'dgen_a135_t28', 'dgen_a180_t28',
-                'dgen_a225_t28', 'dgen_a270_t28', 'dgen_t0']
-    fn_out = 'naris_rev_dpv_{}.h5'
+class DpvPlexosAggregation:
+    """Methods to aggregate DPV profiles to plexos nodes."""
 
-    job_frac_map = {'dgen_a90_t28': 0.13,
-                    'dgen_a135_t28': 0.09,
-                    'dgen_a180_t28': 0.25,
-                    'dgen_a225_t28': 0.09,
-                    'dgen_a270_t28': 0.13,
-                    'dgen_t0': 0.31}
-    year = 2007
-    DpvResource.merge(root_dir, sub_dirs, year, fn_out.format(year),
-                      job_frac_map)
+    def __init__(self, node_buildout, cf_fpath):
+        """
+        Parameters
+        ----------
+        node_buildout : str | pd.DataFrame
+            Plexos node buildout meta data. Must have the following columns:
+            [plexos_id, latitude, longitude, built_capacity]
+        cf_fpath : str
+            Filepath to a reV capacity factor file.
+        """
+        logger.info('Starting DPV to PLEXOS aggregation.')
+
+        self._parse_node_buildout(node_buildout)
+        self._cf_fpath = cf_fpath
+        self._cf_meta = None
+        self._time_index = None
+        self._kdtree = None
+
+        logger.info('Using CF file: {}'.format(self._cf_fpath))
+
+    def _parse_node_buildout(self, node_buildout,
+                             req=('plexos_id', 'latitude', 'longitude',
+                                  'built_capacity')):
+        """Parse the node buildout table.
+
+        Parameters
+        ----------
+        node_buildout : str | pd.DataFrame
+            Plexos node buildout meta data.
+        req : list
+            List of required column names in node_buildout
+        """
+
+        if isinstance(node_buildout, str):
+            logger.info('Using PLEXOS node file: {}'.format(node_buildout))
+            self._node_buildout = pd.read_csv(node_buildout)
+        elif isinstance(node_buildout, pd.DataFrame):
+            self._node_buildout = node_buildout
+        else:
+            raise TypeError('Did not recognize the type of the node buildout '
+                            'table input: {}'.format(type(node_buildout)))
+        missing = []
+        for r in req:
+            if r not in self._node_buildout:
+                missing.append(r)
+        if any(missing):
+            raise KeyError('Node buildout table is missing the following '
+                           'columns: {}'.format(missing))
+
+    @property
+    def cf_meta(self):
+        """Get the cf meta data.
+
+        Returns
+        -------
+        _cf_meta : pd.DataFrame
+            reV CF Meta data.
+        """
+        if self._cf_meta is None:
+            with Outputs(self._cf_fpath) as out:
+                self._cf_meta = out.meta
+        return self._cf_meta
+
+    @property
+    def time_index(self):
+        """Get the cf time index.
+
+        Returns
+        -------
+        _time_index : pd.DateTimeindex
+            reV timeindex data.
+        """
+        if self._time_index is None:
+            with Outputs(self._cf_fpath) as out:
+                self._time_index = out.time_index
+        return self._time_index
+
+    @property
+    def kdtree(self):
+        """Get the KDtree of the reV CF meta data coordinates.
+
+        Returns
+        -------
+        _kdtree : scipy.spatial.ckdtree
+            KDtree build from the reV CF meta data coordinates.
+        """
+        if self._kdtree is None:
+            self._kdtree = cKDTree(self.cf_meta[['latitude', 'longitude']])
+        return self._kdtree
+
+    def _run_nn(self):
+        """Run KDTree query, getting CF index values matching the node buildout
+
+        Returns
+        -------
+        i : np.ndarray
+            1D array of CF index values.
+        """
+        d, i = self.kdtree.query(
+            self._node_buildout[['latitude', 'longitude']], k=1)
+        logger.info('KDTree distance min / mean / max: {} / {} / {}'
+                    .format(np.round(d.min(), decimals=3),
+                            np.round(d.mean(), decimals=3),
+                            np.round(d.max(), decimals=3)))
+        return i.flatten()
+
+    def get_mapped_node_data(self, dset='cf_profile'):
+        """Get the CF dataset mapped to plexos nodes via NN results.
+
+        Returns
+        -------
+        node_arr : np.ndarray
+            Get a 2D dataset from the reV cf file mapped to the node_buildout
+            table via NN.
+        """
+        with Outputs(self._cf_fpath) as out:
+            arr = out[dset]
+        i = self._run_nn()
+        node_arr = arr[:, i]
+        return node_arr
+
+    def get_node_gen_profiles(self):
+        """Get the generation profiles (cf * capacity) mapped to the node meta.
+
+        Returns
+        -------
+        gen_profiles : np.ndarray
+            Timeseries profiles of (t, n) where t is the time index and n is
+            the node buildout. Units are the built_capacity units from the
+            node_buildout table.
+        """
+        node_arr = self.get_mapped_node_data(dset='cf_profile')
+        built_capacity = self._node_buildout['built_capacity'].values.flatten()
+        gen_profiles = node_arr * built_capacity
+        return gen_profiles
+
+    @classmethod
+    def run(cls, node_buildout, cf_fpath, out_fpath):
+        """
+        Parameters
+        ----------
+        node_buildout : str | pd.DataFrame
+            Plexos node buildout meta data. Must have the following columns:
+            [plexos_id, latitude, longitude, built_capacity]
+        cf_fpath : str
+            Filepath to a reV capacity factor file.
+        out_fpath : str
+            Output filepath.
+        """
+
+        pa = cls(node_buildout, cf_fpath)
+        profiles = pa.get_node_gen_profiles()
+
+        with Outputs(out_fpath, mode='w') as out:
+            meta = out.to_records_array(pa._node_buildout)
+            time_index = np.array(pa.time_index.astype(str), dtype='S20')
+            out._create_dset('dpv/meta', meta.shape, meta.dtype, data=meta)
+            out._create_dset('dpv/time_index', time_index.shape,
+                             time_index.dtype, data=time_index)
+            out._create_dset('dpv/gen_profiles', profiles.shape,
+                             profiles.dtype, chunks=(None, 100),
+                             data=profiles)
