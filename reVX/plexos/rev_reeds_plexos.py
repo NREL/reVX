@@ -22,7 +22,8 @@ class PlexosNode:
     """Framework to analyze the gen profile at a single plexos node."""
 
     def __init__(self, sc_build, cf_fpath, cf_res_gids, power_density,
-                 exclusion_area=0.0081):
+                 exclusion_area=0.0081, forecast_fpath=None,
+                 forecast_map=None):
         """
         Parameters
         ----------
@@ -38,12 +39,21 @@ class PlexosNode:
             Power density associated with the current buildout.
         exclusion_area : float
             Area in km2 associated with a single exclusion pixel.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, the generation profiles are sourced from this file.
+        forecast_map : np.ndarray | None
+            (n, 1) array of forecast meta data indices mapped to the generation
+            meta indices where n is the number of generation points. None if
+            no forecast data being considered.
         """
         self._sc_build = sc_build
         self._cf_fpath = cf_fpath
         self._cf_res_gids = cf_res_gids
         self._power_density = power_density
         self._exclusion_area = exclusion_area
+        self._forecast_fpath = forecast_fpath
+        self._forecast_map = forecast_map
 
     def _get_sc_meta(self, i):
         """Get meta for SC point index i, which is part of this plexos node.
@@ -158,13 +168,19 @@ class PlexosNode:
 
             buildout -= to_build
 
-            res_gids.append(sc_meta.loc[j, 'res_gids'])
-            gen_gids.append(sc_meta.loc[j, 'gen_gids'])
             res_built.append(np.round(to_build, decimals=1))
 
-            gen_gid = sc_meta.loc[j, 'gen_gids']
-            with Outputs(self._cf_fpath, mode='r') as cf_outs:
-                cf_profile = cf_outs['cf_profile', :, gen_gid]
+            if self._forecast_map is None:
+                gen_gid = sc_meta.loc[j, 'gen_gids']
+                with Outputs(self._cf_fpath, mode='r') as cf_outs:
+                    cf_profile = cf_outs['cf_profile', :, gen_gid]
+            else:
+                gen_gid = self._forecast_map[sc_meta.loc[j, 'gen_gids']]
+                with Outputs(self._forecast_fpath, mode='r') as cf_outs:
+                    cf_profile = cf_outs['cf_profile', :, gen_gid]
+
+            res_gids.append(sc_meta.loc[j, 'res_gids'])
+            gen_gids.append(gen_gid)
 
             if profile is None:
                 profile = to_build * cf_profile
@@ -181,7 +197,8 @@ class PlexosNode:
 
     @classmethod
     def make_profile(cls, sc_build, cf_fpath, cf_res_gids, power_density,
-                     exclusion_area=0.0081):
+                     exclusion_area=0.0081, forecast_fpath=None,
+                     forecast_map=None):
         """Make an aggregated generation profile for a single plexos node.
 
         Parameters
@@ -198,6 +215,13 @@ class PlexosNode:
             Power density associated with the current buildout.
         exclusion_area : float
             Area in km2 associated with a single exclusion pixel.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, the generation profiles are sourced from this file.
+        forecast_map : np.ndarray | None
+            (n, 1) array of forecast meta data indices mapped to the generation
+            meta indices where n is the number of generation points. None if
+            no forecast data being considered.
 
         Returns
         -------
@@ -217,7 +241,8 @@ class PlexosNode:
         res_built = []
 
         n = cls(sc_build, cf_fpath, cf_res_gids, power_density,
-                exclusion_area=exclusion_area)
+                exclusion_area=exclusion_area, forecast_fpath=forecast_fpath,
+                forecast_map=forecast_map)
 
         for i in sc_build.index.values:
             profile, i_res_gids, i_gen_gids, i_res_built = n._build(i, profile)
@@ -234,7 +259,8 @@ class PlexosAggregation:
     """
 
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 build_year=2050, exclusion_area=0.0081, parallel=True):
+                 forecast_fpath=None, build_year=2050, exclusion_area=0.0081,
+                 parallel=True):
         """
         Parameters
         ----------
@@ -247,6 +273,9 @@ class PlexosAggregation:
             REEDS buildout with rows for built capacity at each reV SC point.
         cf_fpath : str
             File path to capacity factor file to get profiles from.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, the generation profiles are sourced from this file.
         build_year : int
             REEDS year of interest.
         exclusion_area : float
@@ -257,6 +286,7 @@ class PlexosAggregation:
 
         self._plexos_nodes = plexos_nodes
         self._cf_fpath = cf_fpath
+        self._forecast_fpath = forecast_fpath
         self.build_year = build_year
         self.exclusion_area = exclusion_area
         self._cf_res_gids = None
@@ -277,6 +307,7 @@ class PlexosAggregation:
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build)
         self._node_map = self._make_node_map()
+        self._forecast_map = self._make_forecast_map()
         self._check_gids()
 
     @property
@@ -411,8 +442,13 @@ class PlexosAggregation:
             the number of plexos nodes.
         """
 
-        with Outputs(self._cf_fpath, mode='r') as out:
-            t = len(out.time_index)
+        if self._forecast_fpath is None:
+            with Outputs(self._cf_fpath, mode='r') as out:
+                t = len(out.time_index)
+        else:
+            with Outputs(self._forecast_fpath, mode='r') as out:
+                t = len(out.time_index)
+
         shape = (t, self.n_plexos_nodes)
         output = np.zeros(shape, dtype=np.float32)
         return output
@@ -522,6 +558,35 @@ class PlexosAggregation:
 
         return rev_sc, reeds_build
 
+    def _make_forecast_map(self):
+        """Run ckdtree to map forecast pixels to generation pixels.
+
+        Returns
+        -------
+        fmap : np.ndarray | None
+            (n, 1) array of forecast meta data indices mapped to the generation
+            meta indices where n is the number of generation points. None if
+            no forecast filepath input.
+        """
+
+        fmap = None
+        if self._forecast_fpath is not None:
+            logger.info('Making KDTree from forecast data: {}'
+                        .format(self._forecast_fpath))
+            with Outputs(self._cf_fpath) as out:
+                meta_cf = out.meta
+            with Outputs(self._forecast_fpath) as out:
+                meta_fo = out.meta
+
+            clabels = self._get_coord_labels(meta_cf)
+            tree = cKDTree(meta_fo[clabels])
+            d, fmap = tree.query(meta_cf[clabels])
+            logger.info('Distance (min / mean / max) from generation pixels '
+                        'to forecast pixels is: {} / {} / {}'
+                        .format(d.min(), d.mean(), d.max()))
+
+        return fmap
+
     def _make_node_map(self, k=1):
         """Run ckdtree to map built rev SC points to plexos nodes.
 
@@ -533,7 +598,6 @@ class PlexosAggregation:
         Returns
         -------
         i : np.ndarray
-        node_map : np.ndarray
             (n, k) array of node indices mapped to the SC builds where n is
             the number of SC points built and k is the number of neighbors
             requested. Values are the Plexos node index.
@@ -601,7 +665,9 @@ class PlexosAggregation:
                     f = exe.submit(PlexosNode.make_profile,
                                    self._sc_build[mask], self._cf_fpath,
                                    self.available_res_gids, self.power_density,
-                                   exclusion_area=self.exclusion_area)
+                                   exclusion_area=self.exclusion_area,
+                                   forecast_fpath=self._forecast_fpath,
+                                   forecast_map=self._forecast_map)
                     futures[f] = i
 
                 for n, f in enumerate(as_completed(futures)):
@@ -619,7 +685,9 @@ class PlexosAggregation:
                 p = PlexosNode.make_profile(
                     self._sc_build[mask], self._cf_fpath,
                     self.available_res_gids, self.power_density,
-                    exclusion_area=self.exclusion_area)
+                    exclusion_area=self.exclusion_area,
+                    forecast_fpath=self._forecast_fpath,
+                    forecast_map=self._forecast_map)
                 profile, res_gids, gen_gids, res_built = p
                 profiles[:, i] = profile
                 self._ammend_plexos_meta(i, res_gids, gen_gids, res_built)
@@ -629,7 +697,8 @@ class PlexosAggregation:
         return profiles
 
     @classmethod
-    def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath, **kwargs):
+    def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
+            forecast_fpath=None, **kwargs):
         """Run plexos aggregation.
 
         Parameters
@@ -643,6 +712,9 @@ class PlexosAggregation:
             REEDS buildout with rows for built capacity at each reV SC point.
         cf_fpath : str
             File path to capacity factor file to get profiles from.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, the generation profiles are sourced from this file.
 
         Returns
         -------
@@ -654,7 +726,8 @@ class PlexosAggregation:
             Generation profile timeseries at each plexos node.
         """
 
-        pa = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath, **kwargs)
+        pa = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath,
+                 forecast_fpath=forecast_fpath, **kwargs)
         profiles = pa._make_profiles()
 
         return pa.plexos_meta, pa.time_index, profiles
@@ -922,7 +995,7 @@ class Manager:
     """Plexos job manager."""
 
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 ecmwf_fpath=None, **db_kwargs):
+                 forecast_fpath=None, **db_kwargs):
         """
         Parameters
         ----------
@@ -934,10 +1007,9 @@ class Manager:
             REEDS buildout results (CSV file path or database.schema.name)
         cf_fpath : str
             Capacity factor .h5 file path.
-        ecmwf_fpath : str | None
+        forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
-            If not None, this replaces cf_fpath and the resource_ids are
-            updated in the rev_sc table.
+            If not None, the generation profiles are sourced from this file.
         db_kwargs : dict
             Optional additional kwargs for connecting to the database.
         """
@@ -957,7 +1029,12 @@ class Manager:
         if not os.path.exists(self.cf_fpath):
             raise FileNotFoundError('Could not find cf_fpath: {}'
                                     .format(cf_fpath))
-        self.ecmwf_integration(ecmwf_fpath)
+
+        self.forecast_fpath = forecast_fpath
+        if self.forecast_fpath is not None:
+            if not os.path.exists(self.forecast_fpath):
+                raise FileNotFoundError('Could not find forecast_fpath: {}'
+                                        .format(forecast_fpath))
 
     @staticmethod
     def _parse_name(name, **kwargs):
@@ -991,37 +1068,9 @@ class Manager:
 
         return df
 
-    def ecmwf_integration(self, ecmwf_fpath):
-        """Replace the cf_fpath with the ECMWF data and the resource gids in
-        the sc table.
-
-        Parameters
-        ----------
-        ecmwf_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, this replaces cf_fpath and the resource_ids are
-            updated in the rev_sc table.
-        """
-        if ecmwf_fpath is not None:
-            with Outputs(self.cf_fpath, mode='r') as out:
-                meta_cf = out.meta
-            with Outputs(ecmwf_fpath, mode='r') as out:
-                meta_ec = out.meta
-
-            logger.debug('res_ids: \n{}'.format(self.rev_sc.res_gids.values))
-            logger.debug('res_ids type: \n{}'.format(
-                self.rev_sc.res_gids.values.dtype))
-
-            clabels = ['latitude', 'longitude']
-            tree = cKDTree(meta_cf[clabels])
-            _ = tree.query(meta_ec[clabels])
-            logger.debug('CKDTREE is doen')
-
-            raise ValueError('DEBUG EXCEPTION')
-
     @classmethod
     def main(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-             db_kwargs=None, agg_kwargs=None):
+             forecast_fpath=None, agg_kwargs=None, **kwargs):
         """Run the Plexos pipeline for a single extent.
 
         Parameters
@@ -1034,10 +1083,13 @@ class Manager:
             REEDS buildout results (CSV file path or database.schema.name)
         cf_fpath : str | pd.DataFrame
             Capacity factor .h5 file path.
-        db_kwargs : dict
-            Optional additional kwargs for connecting to the database.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, the generation profiles are sourced from this file.
         agg_kwargs : dict
             Optional additional kwargs for the aggregation run.
+        kwargs : dict
+            Optional additional kwargs for Manager class.
 
         Returns
         -------
@@ -1053,8 +1105,6 @@ class Manager:
         time_index = None
         profiles = None
 
-        if db_kwargs is None:
-            db_kwargs = {}
         if agg_kwargs is None:
             agg_kwargs = {}
 
@@ -1066,15 +1116,17 @@ class Manager:
                     .format(reeds_build))
         logger.info('Running PLEXOS aggregation with reV Gen input: {}'
                     .format(cf_fpath))
+        logger.info('Running PLEXOS aggregation with forecast filepath: {}'
+                    .format(forecast_fpath))
 
-        pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath, **db_kwargs)
+        pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath,
+                 forecast_fpath=forecast_fpath, **kwargs)
 
         try:
-            meta, time_index, profiles = PlexosAggregation.run(pm.plexos_nodes,
-                                                               pm.rev_sc,
-                                                               pm.reeds_build,
-                                                               pm.cf_fpath,
-                                                               **agg_kwargs)
+            meta, time_index, profiles = PlexosAggregation.run(
+                pm.plexos_nodes, pm.rev_sc, pm.reeds_build, pm.cf_fpath,
+                forecast_fpath=pm.forecast_fpath, **agg_kwargs)
+
         except Exception as e:
             logger.exception(e)
 
@@ -1123,9 +1175,19 @@ class Manager:
 
             rev_sc = df_group.loc[i, 'rev_sc']
 
+            forecast_fpath = None
+            if 'forecast_fpath' in df_group:
+                forecast_fpath = df_group.loc[i, 'forecast_fpath']
+                if '{}' in forecast_fpath:
+                    forecast_fpath = forecast_fpath.format(cf_year)
+                elif cf_year not in forecast_fpath:
+                    warn('Specified CF year {} not present in ECMWF file '
+                         'string: {}'.format(cf_year, forecast_fpath))
+
             agg_kwargs = {'build_year': build_year}
             meta, ti, profiles = cls.main(plexos_nodes, rev_sc, reeds_build,
-                                          cf_fpath, agg_kwargs=agg_kwargs)
+                                          cf_fpath, agg_kwargs=agg_kwargs,
+                                          forecast_fpath=forecast_fpath)
 
             if meta is not None:
                 if dc is None:
