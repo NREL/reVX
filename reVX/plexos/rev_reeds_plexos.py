@@ -233,19 +233,6 @@ class PlexosAggregation:
     Framework to aggregate reV gen profiles to PLEXOS node power profiles.
     """
 
-    REEDS_NAME_MAP = {'capacity_reV': 'built_capacity',
-                      'capacity_rev': 'built_capacity',
-                      'year': 'reeds_year',
-                      'Year': 'reeds_year'}
-
-    REV_NAME_MAP = {'sq_km': 'area_sq_km',
-                    'capacity': 'potential_capacity',
-                    'resource_ids': 'res_gids',
-                    'resource_ids_cnts': 'gid_counts'}
-
-    PLEXOS_META_COLS = ('gid', 'plexos_id', 'latitude', 'longitude',
-                        'voltage', 'interconnect', 'built_capacity')
-
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  build_year=2050, exclusion_area=0.0081, parallel=True):
         """
@@ -279,8 +266,6 @@ class PlexosAggregation:
         self._time_index = None
         self.parallel = parallel
 
-        rev_sc = self._rename_cols(rev_sc, self.REV_NAME_MAP)
-        reeds_build = self._rename_cols(reeds_build, self.REEDS_NAME_MAP)
         year_mask = (reeds_build['reeds_year'] == build_year)
         reeds_build = reeds_build[year_mask]
 
@@ -331,8 +316,8 @@ class PlexosAggregation:
             self._plexos_meta = self._plexos_nodes.iloc[inodes, :]
             self._plexos_meta['built_capacity'] = node_builds
 
-            self._plexos_meta = self._reduce_df(self._plexos_meta,
-                                                self.PLEXOS_META_COLS)
+            self._plexos_meta = DataCleaner.reduce_df(
+                self._plexos_meta, DataCleaner.PLEXOS_META_COLS)
 
             self._plexos_meta['res_gids'] = None
             self._plexos_meta['gen_gids'] = None
@@ -407,27 +392,6 @@ class PlexosAggregation:
             self._power_density = np.round(np.mean(pd))
         return self._power_density
 
-    @staticmethod
-    def _reduce_df(df, cols):
-        """Reduce a df to just certain columns.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Dataframe to reduce.
-        cols : list | tuple
-            List of column names to keep.
-
-        Returns
-        -------
-        df : pd.DataFrame
-            Dataframe with only cols if the input df had all cols.
-        """
-
-        if all([c in df for c in cols]):
-            df = df[list(cols)]
-        return df
-
     def _check_gids(self):
         """Ensure that the SC buildout GIDs are available in the cf file."""
 
@@ -476,23 +440,6 @@ class PlexosAggregation:
         elif 'latitude' in df and 'longitude' in df:
             df_coord_labels = ['latitude', 'longitude']
         return df_coord_labels
-
-    @staticmethod
-    def _rename_cols(df, name_map):
-        """Do a column rename to make the merge with rev less confusing
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Input df with bad or inconsistent column names.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Same as inputs but with better col names.
-        """
-        df = df.rename(columns=name_map)
-        return df
 
     def _parse_rev_reeds(self, rev_sc, reeds_build):
         """Parse and combine reV SC and REEDS buildout tables into single table
@@ -716,9 +663,60 @@ class PlexosAggregation:
 class DataCleaner:
     """Class for custom Plexos data cleaning procedures."""
 
+    REEDS_NAME_MAP = {'capacity_reV': 'built_capacity',
+                      'capacity_rev': 'built_capacity',
+                      'year': 'reeds_year',
+                      'Year': 'reeds_year'}
+
+    REV_NAME_MAP = {'sq_km': 'area_sq_km',
+                    'capacity': 'potential_capacity',
+                    'resource_ids': 'res_gids',
+                    'resource_ids_cnts': 'gid_counts'}
+
+    PLEXOS_META_COLS = ('gid', 'plexos_id', 'latitude', 'longitude',
+                        'voltage', 'interconnect', 'built_capacity')
+
     def __init__(self, plexos_meta, profiles):
         self._plexos_meta = plexos_meta
         self._profiles = profiles
+
+    @staticmethod
+    def rename_cols(df, name_map):
+        """Do a column rename to make the merge with rev less confusing
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input df with bad or inconsistent column names.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Same as inputs but with better col names.
+        """
+        df = df.rename(columns=name_map)
+        return df
+
+    @staticmethod
+    def reduce_df(df, cols):
+        """Reduce a df to just certain columns.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Dataframe to reduce.
+        cols : list | tuple
+            List of column names to keep.
+
+        Returns
+        -------
+        df : pd.DataFrame
+            Dataframe with only cols if the input df had all cols.
+        """
+
+        if all([c in df for c in cols]):
+            df = df[list(cols)]
+        return df
 
     @staticmethod
     def pre_filter_plexos_meta(plexos_meta):
@@ -924,7 +922,7 @@ class Manager:
     """Plexos job manager."""
 
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 **db_kwargs):
+                 ecmwf_fpath=None, **db_kwargs):
         """
         Parameters
         ----------
@@ -934,8 +932,12 @@ class Manager:
             reV supply curve results (CSV file path or database.schema.name)
         reeds_build : str | pd.DataFrame
             REEDS buildout results (CSV file path or database.schema.name)
-        cf_fpath : str | pd.DataFrame
+        cf_fpath : str
             Capacity factor .h5 file path.
+        ecmwf_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, this replaces cf_fpath and the resource_ids are
+            updated in the rev_sc table.
         db_kwargs : dict
             Optional additional kwargs for connecting to the database.
         """
@@ -945,10 +947,17 @@ class Manager:
 
         self.rev_sc = self._parse_name(rev_sc, **db_kwargs)
         self.reeds_build = self._parse_name(reeds_build, **db_kwargs)
+
+        self.rev_sc = DataCleaner.rename_cols(self.rev_sc,
+                                              DataCleaner.REV_NAME_MAP)
+        self.reeds_build = DataCleaner.rename_cols(self.reeds_build,
+                                                   DataCleaner.REEDS_NAME_MAP)
+
         self.cf_fpath = cf_fpath
         if not os.path.exists(self.cf_fpath):
             raise FileNotFoundError('Could not find cf_fpath: {}'
                                     .format(cf_fpath))
+        self.ecmwf_integration(ecmwf_fpath)
 
     @staticmethod
     def _parse_name(name, **kwargs):
@@ -981,6 +990,34 @@ class Manager:
                             '{} with type {}'.format(name, type(name)))
 
         return df
+
+    def ecmwf_integration(self, ecmwf_fpath):
+        """Replace the cf_fpath with the ECMWF data and the resource gids in
+        the sc table.
+
+        Parameters
+        ----------
+        ecmwf_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, this replaces cf_fpath and the resource_ids are
+            updated in the rev_sc table.
+        """
+        if ecmwf_fpath is not None:
+            with Outputs(self.cf_fpath, mode='r') as out:
+                meta_cf = out.meta
+            with Outputs(ecmwf_fpath, mode='r') as out:
+                meta_ec = out.meta
+
+            logger.debug('res_ids: \n{}'.format(self.rev_sc.res_gids.values))
+            logger.debug('res_ids type: \n{}'.format(
+                self.rev_sc.res_gids.values.dtype))
+
+            clabels = ['latitude', 'longitude']
+            tree = cKDTree(meta_cf[clabels])
+            _ = tree.query(meta_ec[clabels])
+            logger.debug('CKDTREE is doen')
+
+            raise ValueError('DEBUG EXCEPTION')
 
     @classmethod
     def main(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
