@@ -156,7 +156,7 @@ class DpvResource:
             arr = dpv._merge_data(dset, job_frac_map)
             logger.debug('Writing "{}" to merged DPV output file.'
                          .format(dset))
-            with Outputs(fpath_out) as out:
+            with Outputs(fpath_out, mode='a') as out:
                 out[dset] = arr
 
 
