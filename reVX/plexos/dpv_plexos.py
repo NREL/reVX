@@ -316,6 +316,7 @@ class DpvPlexosAggregation:
         pa = cls(node_buildout, cf_fpath)
         profiles = pa.get_node_gen_profiles()
 
+        logger.info('Writing results to file: {}'.format(out_fpath))
         with Outputs(out_fpath, mode='w') as out:
             meta = out.to_records_array(pa._node_buildout)
             time_index = np.array(pa.time_index.astype(str), dtype='S20')
@@ -325,3 +326,5 @@ class DpvPlexosAggregation:
             out._create_dset('dpv/gen_profiles', profiles.shape,
                              profiles.dtype, chunks=(None, 100),
                              data=profiles)
+
+        logger.info('Finished DPV to PLEXOS aggregation.')
