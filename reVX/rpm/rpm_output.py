@@ -87,15 +87,19 @@ class RepresentativeProfiles:
                 df_ranked = df[mask].sort_values(by=key)
                 if irp < len(df_ranked):
                     rep = df_ranked.iloc[irp, :]
-                    gen_gid = rep['gen_gid']
-                    mask = (clusters['gen_gid'] == gen_gid)
+                    res_gid = rep['gid']
 
                     logger.info('Representative profile i #{} from cluster id '
-                                '{} is from gen_gid {}'
-                                .format(irp, cid, gen_gid))
+                                '{} is from res_gid {}'
+                                .format(irp, cid, res_gid))
 
                     with Outputs(cf_fpath) as f:
-                        profile_df.loc[:, cid] = f['cf_profile', :, gen_gid]
+                        meta_gid = f.get_meta_arr('gid')
+                        gen_gid_arr = np.where(meta_gid == res_gid)[0]
+                        if gen_gid_arr.size > 0:
+                            gen_gid = gen_gid_arr[0]
+                            profile_df.loc[:, cid] = f['cf_profile', :,
+                                                       gen_gid]
 
         if fpath_out is not None:
             profile_df.to_csv(fpath_out)
