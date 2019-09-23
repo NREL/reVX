@@ -381,7 +381,8 @@ class RPMClusters:
         Generate cluster polygons and save to shapefile
         """
         geometry = [Point(xy) for xy in zip(meta.longitude, meta.latitude)]
-        gdf_points = gpd.GeoDataFrame(meta, geometry=geometry)
+        gdf_points = gpd.GeoDataFrame(meta, geometry=geometry,
+                                      crs={'init': 'epsg:4326'})
 
         clusters, mean_dist = RPMClusters._get_cluster_geom(gdf_points)
 
