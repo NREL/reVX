@@ -6,6 +6,7 @@ import gzip
 import logging
 import numpy as np
 import os
+import pandas as pd
 import pickle
 from reV.handlers.resource import Resource
 from scipy.spatial import cKDTree
@@ -201,3 +202,165 @@ class ResourceX(Resource):
         """
         gids = np.where(self.meta[region_col] == region)[0]
         return gids
+
+    def get_site_ts(self, ds_name, lat_lon):
+        """
+        Extract timeseries of nearest site(s) to given lat_lon
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        lat_lon : tuple | list
+            (lat, lon) coordinate of interest or pairs of coordinates
+
+        Return
+        ------
+        site_ts : ndarray
+            Time-series for given site(s) and dataset
+        """
+        gid = self._get_nearest(lat_lon)
+        site_ts = self[ds_name, :, gid]
+
+        return site_ts
+
+    def get_site_df(self, ds_name, lat_lon):
+        """
+        Extract timeseries of nearest site to given(s) lat_lon and return as
+        a DataFrame
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        lat_lon : tuple
+            (lat, lon) coordinate of interest
+
+        Return
+        ------
+        site_df : pandas.DataFrame
+            Time-series DataFrame for given site and dataset
+        """
+        gid = self._get_nearest(lat_lon)
+        if isinstance(gid, int):
+            site_df = pd.DataFrame(index=self.time_index)
+            site_df.name = gid
+            site_df.index.name = 'time_index'
+            site_df[ds_name] = self[ds_name, :, gid]
+        else:
+            site_df = pd.DataFrame(columns=gid, index=self.time_index)
+            site_df.name = ds_name
+            site_df.index.name = 'time_index'
+            site_df.loc[:, :] = self[ds_name, :, gid]
+
+        return site_df
+
+    def get_region_ts(self, ds_name, region, region_col='state'):
+        """
+        Extract timeseries of of all sites in given region
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        region : str
+            Region to search for
+        region_col : str
+            Region column to search
+
+        Return
+        ------
+        region_ts : ndarray
+            Time-series array of desired dataset for all sites in desired
+            region
+        """
+        gids = self._get_region(region, region_col=region_col)
+        region_ts = self[ds_name, :, gids]
+
+        return region_ts
+
+    def get_region_df(self, ds_name, region, region_col='state'):
+        """
+        Extract timeseries of of all sites in given region and return as a
+        DataFrame
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        region : str
+            Region to search for
+        region_col : str
+            Region column to search
+
+        Return
+        ------
+        region_df : pandas.DataFrame
+            Time-series array of desired dataset for all sites in desired
+            region
+        """
+        gids = self._get_region(region, region_col=region_col)
+        region_df = pd.DataFrame(columns=gids, index=self.time_index)
+        region_df.name = ds_name
+        region_df.index.name = 'time_index'
+        region_df.loc[:, :] = self[ds_name, :, gids]
+
+        return region_df
+
+    def get_region_df(self, ds_name, region, region_col='state'):
+        """
+        Extract timeseries of of all sites in given region and return as a
+        DataFrame
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        region : str
+            Region to search for
+        region_col : str
+            Region column to search
+
+        Return
+        ------
+        region_df : pandas.DataFrame
+            Time-series array of desired dataset for all sites in desired
+            region
+        """
+        gids = self._get_region(region, region_col=region_col)
+        region_df = pd.DataFrame(columns=gids, index=self.time_index)
+        region_df.name = ds_name
+        region_df.index.name = 'time_index'
+        region_df.loc[:, :] = self[ds_name, :, gids]
+
+        return region_df
+
+    def get_SAM_df(self, lat_lon):
+        """
+        Extract time-series of all variables needed to run SAM for nearest
+        site to given lat_lon
+
+        Parameters
+        ----------
+        lat_lon : tuple
+            (lat, lon) coordinate of interest
+
+        Return
+        ------
+        SAM_df : pandas.DataFrame | list
+            Time-series DataFrame for given site and dataset
+            If multiple lat, lon pairs are given a list of DatFrames is
+            returned
+        """
+        gids = self._get_nearest(lat_lon)
+        if isinstance(gids, int):
+            gids = [gids, ]
+
+        SAM_df = []
+        for gid in gids:
+            SAM_df.append(self['SAM', gid])
+
+        if len(SAM_df) == 1:
+            SAM_df = SAM_df[0]
+
+        return SAM_df
