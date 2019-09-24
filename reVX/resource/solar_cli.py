@@ -49,7 +49,7 @@ def main(ctx, solar_h5, out_dir, verbose):
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
               required=True, help='(lat, lon) coordinates of interest')
 @click.pass_context
-def SAM(ctx, lat_lon):
+def sam(ctx, lat_lon):
     """
     Extract all datasets needed for SAM for the nearest pixel to the given
     (lat, lon) coordinates

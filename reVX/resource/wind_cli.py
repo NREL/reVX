@@ -60,7 +60,7 @@ def site(ctx, dataset, lat_lon):
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
               required=True, help='(lat, lon) coordinates of interest')
 @click.pass_context
-def SAM(ctx, hub_height, lat_lon):
+def sam(ctx, hub_height, lat_lon):
     """
     Extract all datasets at the given hub height needed for SAM for
     the nearest pixel to the given (lat, lon) coordinates
