@@ -4,8 +4,7 @@ Renewable Energy Potential(V) EXchange Tool (reVX)
 """
 from __future__ import print_function, division, absolute_import
 import os
-from reVX.resource.nsrdb import NSRDBX
-from reVX.resource.wtk import WTKX
+from reVX.resource.resource import NSRDBX, WindX
 import reVX.rpm as rev_rpm
 from reVX.version import __version__
 
