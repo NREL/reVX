@@ -34,7 +34,8 @@ def cli(ctx, wind_h5, out_dir, verbose):
 
     name = os.path.splitext(os.path.basename(wind_h5))[0]
     init_mult(name, out_dir, verbose=verbose, node=True,
-              modules=[__name__, 'reVX.resource', 'reV.handlers.resource'])
+              modules=[__name__, 'reVX.resource.resource',
+                       'reV.handlers.resource'])
 
     logger.info('Extracting Wind data from {}'.format(wind_h5))
     logger.info('Outputs to be stored in: {}'.format(out_dir))
