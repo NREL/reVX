@@ -4,7 +4,6 @@ Resource Extraction Tools
 """
 import gzip
 import logging
-import numpy as np
 import os
 import pandas as pd
 import pickle
@@ -200,7 +199,7 @@ class ResourceX(Resource):
         gids : ndarray
             Vector of gids in given region
         """
-        gids = np.where(self.meta[region_col] == region)[0]
+        gids = (self.meta[region_col] == region).index.values
         return gids
 
     def get_site_ts(self, ds_name, lat_lon):
