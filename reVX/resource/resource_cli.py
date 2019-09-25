@@ -99,5 +99,30 @@ def region(ctx, dataset, region, region_col):
     region_df.to_csv(out_path)
 
 
+@main.command()
+@click.option('--timestep', '-ts', type=str, required=True,
+              help='Timestep to extract')
+@click.option('--dataset', '-d', type=str, required=True,
+              help='Dataset to extract')
+@click.option('--region_col', '-col', type=str, default='state',
+              help='Meta column to search for region')
+@click.option('--region', '-r', type=str, default=None,
+              help='Region to extract')
+@click.pass_context
+def map(ctx, timestep, dataset, region_col, region):
+    """
+    Extract a single dataset for a single timestep
+    Extract only pixels in region if given.
+    """
+    with ctx.obj['CLS'](ctx.obj['H5']) as f:
+        map_df = f.get_timestep_map(dataset, timestep, region=region,
+                                    region_col=region_col)
+
+    out_path = "{}-{}.csv".format(dataset, timestep)
+    out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
+    logger.info('Saving data to {}'.format(out_path))
+    map_df.to_csv(out_path)
+
+
 if __name__ == '__main__':
     main(obj={})

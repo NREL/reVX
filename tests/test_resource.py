@@ -59,7 +59,7 @@ def extract_site(res_cls, ds_name):
 
 def extract_region(res_cls, ds_name, region, region_col='county'):
     """
-    Run tests extracting a single site
+    Run tests extracting all gids in a region
     """
     time_index = res_cls['time_index']
     meta = res_cls['meta']
@@ -80,6 +80,29 @@ def extract_region(res_cls, ds_name, region, region_col='county'):
 
     region_df = res_cls.get_region_df(ds_name, region, region_col=region_col)
     assert region_df.equals(truth_df)
+
+
+def extract_map(res_cls, ds_name, timestep, region=None, region_col='county'):
+    """
+    Run tests extracting a single timestep
+    """
+    time_index = res_cls['time_index']
+    meta = res_cls['meta']
+    lat_lon = meta[['latitude', 'longitude']].values
+    idx = np.where(time_index == pd.to_datetime(timestep))[0][0]
+    gids = slice(None)
+    if region is not None:
+        gids = (meta[region_col] == region).index.values
+        lat_lon = lat_lon[gids]
+
+    truth = res_cls[ds_name, idx, gids]
+    truth = pd.DataFrame({'longitude': lat_lon[:, 1],
+                          'latitude': lat_lon[:, 0],
+                          ds_name: truth})
+
+    ts_map = res_cls.get_timestep_map(ds_name, timestep, region=region,
+                                      region_col=region_col)
+    assert ts_map.equals(truth)
 
 
 class TestNSRDBX:
@@ -111,6 +134,26 @@ class TestNSRDBX:
         extract_region(NSRDBX_cls, ds_name, region, region_col=region_col)
         NSRDBX_cls.close()
 
+    @staticmethod
+    def test_full_map(NSRDBX_cls, ds_name='ghi',
+                      timestep='2012-07-04 12:00:00'):
+        """
+        test map data extraction for all gids
+        """
+        extract_map(NSRDBX_cls, ds_name, timestep)
+        NSRDBX_cls.close()
+
+    @staticmethod
+    def test_region_map(NSRDBX_cls, ds_name='dhi',
+                        timestep='2012-12-25 12:00:00',
+                        region='Washington', region_col='county'):
+        """
+        test map data extraction for all gids
+        """
+        extract_map(NSRDBX_cls, ds_name, timestep, region=region,
+                    region_col=region_col)
+        NSRDBX_cls.close()
+
 
 class TestWindX:
     """
@@ -139,4 +182,24 @@ class TestWindX:
         test region data extraction
         """
         extract_region(WindX_cls, ds_name, region, region_col=region_col)
+        WindX_cls.close()
+
+    @staticmethod
+    def test_full_map(WindX_cls, ds_name='windspeed_100m',
+                      timestep='2012-07-04 12:00:00'):
+        """
+        test map data extraction for all gids
+        """
+        extract_map(WindX_cls, ds_name, timestep)
+        WindX_cls.close()
+
+    @staticmethod
+    def test_region_map(WindX_cls, ds_name='windspeed_50m',
+                        timestep='2012-12-25 12:00:00',
+                        region='Providence', region_col='county'):
+        """
+        test map data extraction for all gids
+        """
+        extract_map(WindX_cls, ds_name, timestep, region=region,
+                    region_col=region_col)
         WindX_cls.close()

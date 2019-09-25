@@ -4,6 +4,7 @@ Resource Extraction Tools
 """
 import gzip
 import logging
+import numpy as np
 import os
 import pandas as pd
 import pickle
@@ -202,6 +203,25 @@ class ResourceX(Resource):
         gids = (self.meta[region_col] == region).index.values
         return gids
 
+    def _get_timestep_idx(self, timestep):
+        """
+        Get the index of the desired timestep
+
+        Parameters
+        ----------
+        timestep : str
+            Timestep of interest
+
+        Returns
+        -------
+        ts_idx : int
+            Time index value
+        """
+        timestep = pd.to_datetime(timestep)
+        idx = np.where(self.time_index == timestep)[0][0]
+
+        return idx
+
     def get_site_ts(self, ds_name, lat_lon):
         """
         Extract timeseries of nearest site(s) to given lat_lon
@@ -288,7 +308,7 @@ class ResourceX(Resource):
         ds_name : str
             Dataset to extract
         region : str
-            Region to search for
+            Region to extract all pixels for
         region_col : str
             Region column to search
 
@@ -335,6 +355,42 @@ class ResourceX(Resource):
             SAM_df = SAM_df[0]
 
         return SAM_df
+
+    def get_timestep_map(self, ds_name, timestep, region=None,
+                         region_col='state'):
+        """
+        Extract a map of the given dataset at the given timestep for the
+        given region if supplied
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        timestep : str
+            Timestep of interest
+        region : str
+            Region to extract all pixels for
+        region_col : str
+            Region column to search
+
+        Returns
+        -------
+        ts_map : pandas.DataFrame
+            DataFrame of map values
+        """
+        lat_lons = self.meta[['latitude', 'longitude']].values
+        ts_idx = self._get_timestep_idx(timestep)
+        gids = slice(None)
+        if region is not None:
+            gids = self._get_region(region, region_col=region_col)
+            lat_lons = lat_lons[gids]
+
+        ts_map = self[ds_name, ts_idx, gids]
+        ts_map = pd.DataFrame({'longitude': lat_lons[:, 1],
+                               'latitude': lat_lons[:, 0],
+                               ds_name: ts_map})
+
+        return ts_map
 
 
 class SolarX(SolarResource, ResourceX):

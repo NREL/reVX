@@ -8,6 +8,7 @@ import os
 
 from reVX.utilities.loggers import init_mult
 from reVX.resource.resource import WindX
+from reVX.resource.resource_cli import map as map_cmd
 from reVX.resource.resource_cli import region as region_cmd
 from reVX.resource.resource_cli import site as site_cmd
 
@@ -42,20 +43,6 @@ def cli(ctx, wind_h5, out_dir, verbose):
 
 
 @cli.command()
-@click.option('--dataset', '-d', type=str, required=True,
-              help='Dataset to extract')
-@click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
-              required=True, help='(lat, lon) coordinates of interest')
-@click.pass_context
-def site(ctx, dataset, lat_lon):
-    """
-    Extract a single dataset for the nearest pixel to the given (lat, lon)
-    coordinates
-    """
-    ctx.invoke(site_cmd, dataset=dataset, lat_lon=lat_lon)
-
-
-@cli.command()
 @click.option('--hub_height', '-h', type=int, required=True,
               help='Hub height to extract SAM variables at')
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
@@ -73,6 +60,39 @@ def sam(ctx, hub_height, lat_lon):
     out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
     logger.info('Saving data to {}'.format(out_path))
     SAM_df.to_csv(out_path)
+
+
+@cli.command()
+@click.option('--dataset', '-d', type=str, required=True,
+              help='Dataset to extract')
+@click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
+              required=True, help='(lat, lon) coordinates of interest')
+@click.pass_context
+def site(ctx, dataset, lat_lon):
+    """
+    Extract a single dataset for the nearest pixel to the given (lat, lon)
+    coordinates
+    """
+    ctx.invoke(site_cmd, dataset=dataset, lat_lon=lat_lon)
+
+
+@cli.command()
+@click.option('--dataset', '-d', type=str, required=True,
+              help='Dataset to extract')
+@click.option('--timestep', '-ts', type=str, required=True,
+              help='Timestep to extract')
+@click.option('--region', '-r', type=str, default=None,
+              help='Region to extract')
+@click.option('--region_col', '-col', type=str, default='state',
+              help='Meta column to search for region')
+@click.pass_context
+def map(ctx, dataset, timestep, region, region_col):
+    """
+    Extract a single dataset for a single timestep
+    Extract only pixels in region if given.
+    """
+    ctx.invoke(map_cmd, dataset=dataset, timestep=timestep, region=region,
+               region_col=region_col)
 
 
 @cli.command()

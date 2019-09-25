@@ -8,6 +8,7 @@ import os
 
 from reVX.utilities.loggers import init_mult
 from reVX.resource.resource import NSRDBX, SolarX
+from reVX.resource.resource_cli import map as map_cmd
 from reVX.resource.resource_cli import region as region_cmd
 from reVX.resource.resource_cli import SAM as SAM_cmd
 from reVX.resource.resource_cli import site as site_cmd
@@ -85,6 +86,25 @@ def region(ctx, dataset, region, region_col):
     Extract a single dataset for all pixels in the given region
     """
     ctx.invoke(region_cmd, dataset=dataset, region=region,
+               region_col=region_col)
+
+
+@main.command()
+@click.option('--timestep', '-ts', type=str, required=True,
+              help='Timestep to extract')
+@click.option('--dataset', '-d', type=str, required=True,
+              help='Dataset to extract')
+@click.option('--region', '-r', type=str, default=None,
+              help='Region to extract')
+@click.option('--region_col', '-col', type=str, default='state',
+              help='Meta column to search for region')
+@click.pass_context
+def map(ctx, timestep, dataset, region, region_col):
+    """
+    Extract a single dataset for a single timestep
+    Extract only pixels in region if given.
+    """
+    ctx.invoke(map_cmd, dataset=dataset, timestep=timestep, region=region,
                region_col=region_col)
 
 
