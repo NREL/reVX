@@ -92,11 +92,18 @@ def region(ctx, dataset, region, region_col):
     """
     with ctx.obj['CLS'](ctx.obj['H5']) as f:
         region_df = f.get_region_df(dataset, region, region_col=region_col)
+        meta = f['meta']
 
     out_path = "{}-{}.csv".format(dataset, region)
     out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
     logger.info('Saving data to {}'.format(out_path))
     region_df.to_csv(out_path)
+
+    out_path = "{}-meta.csv".format(region)
+    out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
+    meta = meta.loc[region_df.columns]
+    logger.info('Saving meta data to {}'.format(out_path))
+    meta.to_csv(out_path, index=False)
 
 
 @main.command()
