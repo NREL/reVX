@@ -1,5 +1,5 @@
 reVX
-=====
+====
 
 .. toctree::
    :maxdepth: 4
