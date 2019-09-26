@@ -50,10 +50,10 @@ def extract_site(res_cls, ds_name):
     truth_ts = res_cls[ds_name, :, site]
     truth_df = pd.DataFrame({ds_name: truth_ts}, index=time_index)
 
-    site_ts = res_cls.get_site_ts(ds_name, lat_lon)
+    site_ts = res_cls.get_lat_lon_ts(ds_name, lat_lon)
     assert np.allclose(truth_ts, site_ts)
 
-    site_df = res_cls.get_site_df(ds_name, lat_lon)
+    site_df = res_cls.get_lat_lon_df(ds_name, lat_lon)
     assert site_df.equals(truth_df)
 
 
@@ -65,14 +65,13 @@ def extract_region(res_cls, ds_name, region, region_col='county'):
     meta = res_cls['meta']
     sites = (meta[region_col] == region).index.values
     truth_ts = res_cls[ds_name, :, sites]
-    truth_df = pd.DataFrame(columns=sites, index=time_index)
-    truth_df.loc[:, :] = truth_ts
+    truth_df = pd.DataFrame(truth_ts, columns=sites, index=time_index)
 
     lat_lon = meta.loc[sites, ['latitude', 'longitude']].values
-    region_ts = res_cls.get_site_ts(ds_name, lat_lon)
+    region_ts = res_cls.get_lat_lon_ts(ds_name, lat_lon)
     assert np.allclose(truth_ts, region_ts)
 
-    region_df = res_cls.get_site_df(ds_name, lat_lon)
+    region_df = res_cls.get_lat_lon_df(ds_name, lat_lon)
     assert region_df.equals(truth_df)
 
     region_ts = res_cls.get_region_ts(ds_name, region, region_col=region_col)
