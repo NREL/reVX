@@ -168,7 +168,7 @@ class PlexosNode:
 
             buildout -= to_build
 
-            res_built.append(np.round(to_build, decimals=1))
+            res_built.append(np.round(to_build, decimals=2))
 
             if self._forecast_map is None:
                 gen_gid = sc_meta.loc[j, 'gen_gids']
@@ -503,6 +503,15 @@ class PlexosAggregation:
         rev_sc, reeds_build = self._check_rev_reeds_coordinates(
             rev_sc, reeds_build, rev_join_on, reeds_join_on)
 
+        check_isin = np.isin(reeds_build[reeds_join_on].values,
+                             rev_sc[rev_join_on].values)
+        if not all(check_isin):
+            wmsg = ('There are REEDS buildout GIDs that are not in the reV '
+                    'supply curve table: {} out of {} total REEDS buildout '
+                    'sites.'.format(np.sum(~check_isin), len(reeds_build)))
+            warn(wmsg)
+            logger.warning(wmsg)
+
         table = pd.merge(rev_sc, reeds_build, how='inner', left_on=rev_join_on,
                          right_on=reeds_join_on)
 
@@ -750,6 +759,17 @@ class DataCleaner:
                         'voltage', 'interconnect', 'built_capacity')
 
     def __init__(self, plexos_meta, profiles):
+        """
+        Parameters
+        ----------
+        plexos_meta : pd.DataFrame
+            Plexos meta data including the built capacity at each plexos node.
+        profiles : np.ndarray
+            2D timeseries array of generation profiles. Number of columns must
+            match the length of the meta data.
+        """
+        if profiles.shape[1] != len(plexos_meta):
+            raise ValueError('Plexos profiles shape does not match meta.')
         self._plexos_meta = plexos_meta
         self._profiles = profiles
 
@@ -787,9 +807,8 @@ class DataCleaner:
             Dataframe with only cols if the input df had all cols.
         """
 
-        if all([c in df for c in cols]):
-            df = df[list(cols)]
-        return df
+        cols = [c for c in cols if c in df]
+        return df[cols]
 
     @staticmethod
     def pre_filter_plexos_meta(plexos_meta):
@@ -887,9 +906,7 @@ class DataCleaner:
         big = (self._plexos_meta['built_capacity'] >= capacity_threshold)
 
         n_nodes = np.sum(big)
-
-        if (n_nodes == len(self._plexos_meta) or n_nodes == 0
-                or len(self._plexos_meta) < 10):
+        if (n_nodes == len(self._plexos_meta) or n_nodes == 0):
             meta = None
             profiles = None
 
@@ -941,7 +958,7 @@ class DataCleaner:
             if any(lookup):
                 i_self = np.where(lookup)[0]
                 if len(i_self) > 1:
-                    warn('Duplicate PLEXOS node GIDs!')
+                    warn('Duplicate PLEXOS node GIDs in base plexos meta!')
                 else:
                     i_self = i_self[0]
 
