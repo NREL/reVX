@@ -301,7 +301,8 @@ class DpvPlexosAggregation:
 
     @classmethod
     def run(cls, node_buildout, cf_fpath, out_fpath):
-        """
+        """Aggregate dpv reV gen data to a buildout nodes and save to h5.
+
         Parameters
         ----------
         node_buildout : str | pd.DataFrame
