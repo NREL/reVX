@@ -163,7 +163,7 @@ def sam(ctx, hub_height):
         if lat_lon is not None:
             SAM_df = f.get_SAM_lat_lon(hub_height, lat_lon)
         elif gid is not None:
-            SAM_df = f.get_SAM_gid(hub_height, lat_lon)
+            SAM_df = f.get_SAM_gid(hub_height, gid)
 
     name = ctx.obj['NAME']
     gids = []

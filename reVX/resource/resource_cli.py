@@ -235,7 +235,7 @@ def sam(ctx):
         if lat_lon is not None:
             SAM_df = f.get_SAM_lat_lon(lat_lon)
         elif gid is not None:
-            SAM_df = f.get_SAM_gid(lat_lon)
+            SAM_df = f.get_SAM_gid(gid)
 
     name = ctx.obj['NAME']
     gids = []
