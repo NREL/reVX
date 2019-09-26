@@ -396,7 +396,7 @@ class ResourceX(Resource):
     def get_SAM_gid(self, gid):
         """
         Extract time-series of all variables needed to run SAM for nearest
-        site to given lat_lon
+        site to given resource gid
 
         Parameters
         ----------
@@ -546,17 +546,17 @@ class WindX(WindResource, ResourceX):
         super().__init__(wind_h5, **kwargs)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
-    def get_SAM_df(self, hub_height, lat_lon, **kwargs):
+    def get_SAM_gid(self, hub_height, gid, **kwargs):
         """
         Extract time-series of all variables needed to run SAM for nearest
-        site to given lat_lon and hub height
+        site to given resource gid and hub height
 
         Parameters
         ----------
         hub_height : int
             Hub height of interest
-        lat_lon : tuple
-            (lat, lon) coordinate of interest
+        gid : int | list
+            Resource gid(s) of interset
         kwargs : dict
             Internal kwargs for _get_SAM_df:
             - require_wind_dir
@@ -570,15 +570,42 @@ class WindX(WindResource, ResourceX):
             returned
         """
         ds_name = 'SAM_{}m'.format(hub_height)
-        gids = self._get_nearest(lat_lon)
-        if isinstance(gids, int):
-            gids = [gids, ]
+        if isinstance(gid, int):
+            gid = [gid, ]
 
         SAM_df = []
-        for gid in gids:
-            SAM_df.append(self._get_SAM_df(ds_name, gid, **kwargs))
+        for id in gid:
+            SAM_df.append(self._get_SAM_df(ds_name, id, **kwargs))
 
         if len(SAM_df) == 1:
             SAM_df = SAM_df[0]
+
+        return SAM_df
+
+    def get_SAM_lat_lon(self, hub_height, lat_lon):
+        """
+        Extract time-series of all variables needed to run SAM for nearest
+        site to given lat_lon and hub height
+
+        Parameters
+        ----------
+        hub_height : int
+            Hub height of interest
+        gid : int | list
+            Resource gid(s) of interset
+        kwargs : dict
+            Internal kwargs for _get_SAM_df:
+            - require_wind_dir
+            - icing
+
+        Return
+        ------
+        SAM_df : pandas.DataFrame | list
+            Time-series DataFrame for given site and dataset
+            If multiple lat, lon pairs are given a list of DatFrames is
+            returned
+        """
+        gid = self._get_nearest(lat_lon)
+        SAM_df = self.get_SAM_gid(hub_height, gid)
 
         return SAM_df

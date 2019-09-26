@@ -23,10 +23,12 @@ logger = logging.getLogger(__name__)
               help=('Path to Resource .h5 file'))
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
+@click.option('--compute_tree', '-t', is_flag=True,
+              help='Flag to force the computation of the cKDTree')
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def main(ctx, wind_h5, out_dir, verbose):
+def main(ctx, wind_h5, out_dir, compute_tree, verbose):
     """
     WindX Command Line Interface
     """
@@ -34,6 +36,7 @@ def main(ctx, wind_h5, out_dir, verbose):
     ctx.obj['H5'] = wind_h5
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['CLS'] = WindX
+    ctx.obj['TREE'] = compute_tree
 
     name = os.path.splitext(os.path.basename(wind_h5))[0]
     init_mult(name, out_dir, verbose=verbose, node=True,
@@ -146,17 +149,6 @@ def multi_site(ctx, sites):
 
 
 @multi_site.command()
-@click.option('--dataset', '-d', type=str, required=True,
-              help='Dataset to extract')
-@click.pass_context
-def dataset(ctx, dataset):
-    """
-    Extract given dataset for all sites
-    """
-    ctx.invoke(dataset_cmd, dataset=dataset)
-
-
-@multi_site.command()
 @click.option('--hub_height', '-h', type=int, required=True,
               help='Hub height to extract SAM variables at')
 @click.pass_context
@@ -188,6 +180,17 @@ def sam(ctx, hub_height):
     meta = meta.loc[gids]
     logger.info('Saving meta data to {}'.format(out_path))
     meta.to_csv(out_path, index=False)
+
+
+@multi_site.command()
+@click.option('--dataset', '-d', type=str, required=True,
+              help='Dataset to extract')
+@click.pass_context
+def dataset(ctx, dataset):
+    """
+    Extract given dataset for all sites
+    """
+    ctx.invoke(dataset_cmd, dataset=dataset)
 
 
 if __name__ == '__cli__':
