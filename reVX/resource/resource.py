@@ -27,7 +27,7 @@ class ResourceX(Resource):
         res_h5 : str
             Path to resource .h5 file of interest
         tree : str
-            path to .pgz file containing pickled cKDTree of lat, lon
+            Path to .pgz file containing pickled cKDTree of lat, lon
             coordinates
         kwargs : dict
             Kwargs for Resource
@@ -127,7 +127,7 @@ class ResourceX(Resource):
 
         return tree
 
-    def _init_tree(self, tree=None):
+    def _init_tree(self, tree=None, compute_tree=False):
         """
         Inititialize cKDTree of lat, lon coordinates
 
@@ -137,29 +137,34 @@ class ResourceX(Resource):
             Path to .pgz file containing pre-computed tree
             If None search bin for .pgz file matching h5 file
             else compute tree
+        compute_tree : bool
+            Force the computation of the cKDTree
 
         Returns
         -------
         tree : cKDTree
             cKDTree of lat, lon coordinate from wtk .h5 file
         """
-        if not isinstance(tree, (cKDTree, str, type(None))):
+        if compute_tree:
             tree = None
-            logger.warning('Precomputed tree must be supplied as a pickle '
-                           'file or a cKDTree, not a {}'
-                           .format(type(tree)))
+        else:
+            if not isinstance(tree, (cKDTree, str, type(None))):
+                tree = None
+                logger.warning('Precomputed tree must be supplied as a pickle '
+                               'file or a cKDTree, not a {}'
+                               .format(type(tree)))
 
-        if tree is None:
-            pgz_files = [file for file in os.listdir(BIN)
-                         if file.endswith('.pgz')]
-            for pgz in pgz_files:
-                prefix = pgz.split('_tree')[0]
-                if self._h5_file.startswith(prefix):
-                    tree = os.path.join(BIN, pgz)
-                    break
+            if tree is None:
+                pgz_files = [file for file in os.listdir(BIN)
+                             if file.endswith('.pgz')]
+                for pgz in pgz_files:
+                    prefix = pgz.split('_tree')[0]
+                    if self._h5_file.startswith(prefix):
+                        tree = os.path.join(BIN, pgz)
+                        break
 
-        if isinstance(tree, str):
-            tree = self._load_tree(tree)
+            if isinstance(tree, str):
+                tree = self._load_tree(tree)
 
         if tree is None:
             lat_lon = self.meta[['latitude', 'longitude']].values
@@ -222,9 +227,29 @@ class ResourceX(Resource):
 
         return idx
 
-    def get_site_ts(self, ds_name, lat_lon):
+    def get_gid_ts(self, ds_name, gid):
         """
-        Extract timeseries of nearest site(s) to given lat_lon
+        Extract timeseries of site(s) neareset to given lat_lon(s)
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        gid : int | list
+            Resource gid(s) of interset
+
+        Return
+        ------
+        site_ts : ndarray
+            Time-series for given site(s) and dataset
+        """
+        site_ts = self[ds_name, :, gid]
+
+        return site_ts
+
+    def get_lat_lon_ts(self, ds_name, lat_lon):
+        """
+        Extract timeseries of site(s) neareset to given lat_lon(s)
 
         Parameters
         ----------
@@ -243,10 +268,61 @@ class ResourceX(Resource):
 
         return site_ts
 
-    def get_site_df(self, ds_name, lat_lon):
+    def get_gid_df(self, ds_name, gid):
         """
-        Extract timeseries of nearest site to given(s) lat_lon and return as
-        a DataFrame
+        Extract timeseries of site(s) nearest to given lat_lon(s) and return
+        as a DataFrame
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        gid : int | list
+            Resource gid(s) of interset
+
+        Return
+        ------
+        site_df : pandas.DataFrame
+            Time-series DataFrame for given site and dataset
+        """
+        if isinstance(gid, int):
+            site_df = pd.DataFrame({ds_name: self[ds_name, :, gid]},
+                                   index=self.time_index)
+            site_df.name = gid
+            site_df.index.name = 'time_index'
+        else:
+            site_df = pd.DataFrame(self[ds_name, :, gid], columns=gid,
+                                   index=self.time_index)
+            site_df.name = ds_name
+            site_df.index.name = 'time_index'
+
+        return site_df
+
+    def get_lat_lon_ts(self, ds_name, lat_lon):
+        """
+        Extract timeseries of site(s) neareset to given lat_lon(s)
+
+        Parameters
+        ----------
+        ds_name : str
+            Dataset to extract
+        lat_lon : tuple | list
+            (lat, lon) coordinate of interest or pairs of coordinates
+
+        Return
+        ------
+        site_ts : ndarray
+            Time-series for given site(s) and dataset
+        """
+        gid = self._get_nearest(lat_lon)
+        site_ts = self.get_gid_ts(ds_name, gid)
+
+        return site_ts
+
+    def get_lat_lon_df(self, ds_name, lat_lon):
+        """
+        Extract timeseries of site(s) nearest to given lat_lon(s) and return
+        as a DataFrame
 
         Parameters
         ----------
@@ -261,16 +337,7 @@ class ResourceX(Resource):
             Time-series DataFrame for given site and dataset
         """
         gid = self._get_nearest(lat_lon)
-        if isinstance(gid, int):
-            site_df = pd.DataFrame(index=self.time_index)
-            site_df.name = gid
-            site_df.index.name = 'time_index'
-            site_df[ds_name] = self[ds_name, :, gid]
-        else:
-            site_df = pd.DataFrame(columns=gid, index=self.time_index)
-            site_df.name = ds_name
-            site_df.index.name = 'time_index'
-            site_df.loc[:, :] = self[ds_name, :, gid]
+        site_df = self.get_site_df(ds_name, gid)
 
         return site_df
 
@@ -319,14 +386,43 @@ class ResourceX(Resource):
             region
         """
         gids = self._get_region(region, region_col=region_col)
-        region_df = pd.DataFrame(columns=gids, index=self.time_index)
+        region_df = pd.DataFrame(self[ds_name, :, gids], columns=gids,
+                                 index=self.time_index)
         region_df.name = ds_name
         region_df.index.name = 'time_index'
-        region_df.loc[:, :] = self[ds_name, :, gids]
 
         return region_df
 
-    def get_SAM_df(self, lat_lon):
+    def get_SAM_gid(self, gid):
+        """
+        Extract time-series of all variables needed to run SAM for nearest
+        site to given lat_lon
+
+        Parameters
+        ----------
+        gid : int | list
+            Resource gid(s) of interset
+
+        Return
+        ------
+        SAM_df : pandas.DataFrame | list
+            Time-series DataFrame for given site and dataset
+            If multiple lat, lon pairs are given a list of DatFrames is
+            returned
+        """
+        if isinstance(gid, int):
+            gid = [gid, ]
+
+        SAM_df = []
+        for id in gid:
+            SAM_df.append(self['SAM', id])
+
+        if len(SAM_df) == 1:
+            SAM_df = SAM_df[0]
+
+        return SAM_df
+
+    def get_SAM_lat_lon(self, lat_lon):
         """
         Extract time-series of all variables needed to run SAM for nearest
         site to given lat_lon
@@ -343,16 +439,8 @@ class ResourceX(Resource):
             If multiple lat, lon pairs are given a list of DatFrames is
             returned
         """
-        gids = self._get_nearest(lat_lon)
-        if isinstance(gids, int):
-            gids = [gids, ]
-
-        SAM_df = []
-        for gid in gids:
-            SAM_df.append(self['SAM', gid])
-
-        if len(SAM_df) == 1:
-            SAM_df = SAM_df[0]
+        gid = self._get_nearest(lat_lon)
+        SAM_df = self.get_SAM_gid(gid)
 
         return SAM_df
 
@@ -397,7 +485,7 @@ class SolarX(SolarResource, ResourceX):
     """
     Solar Resource extraction class
     """
-    def __init__(self, solar_h5, tree=None, **kwargs):
+    def __init__(self, solar_h5, tree=None, compute_tree=False, **kwargs):
         """
         Parameters
         ----------
@@ -406,18 +494,20 @@ class SolarX(SolarResource, ResourceX):
         tree : str
             path to .pgz file containing pickled cKDTree of lat, lon
             coordinates
+        compute_tree : bool
+            Force the computation of the cKDTree
         kwargs : dict
             Kwargs for Resource
         """
         super().__init__(solar_h5, **kwargs)
-        self._tree = self._init_tree(tree=tree)
+        self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
 
 class NSRDBX(NSRDB, ResourceX):
     """
     NSRDB extraction class
     """
-    def __init__(self, nsrdb_h5, tree=None, **kwargs):
+    def __init__(self, nsrdb_h5, tree=None, compute_tree=False, **kwargs):
         """
         Parameters
         ----------
@@ -426,18 +516,20 @@ class NSRDBX(NSRDB, ResourceX):
         tree : str
             path to .pgz file containing pickled cKDTree of lat, lon
             coordinates
+        compute_tree : bool
+            Force the computation of the cKDTree
         kwargs : dict
             Kwargs for Resource
         """
         super().__init__(nsrdb_h5, **kwargs)
-        self._tree = self._init_tree(tree=tree)
+        self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
 
 class WindX(WindResource, ResourceX):
     """
     Wind Resource extraction class
     """
-    def __init__(self, wind_h5, tree=None, **kwargs):
+    def __init__(self, wind_h5, tree=None, compute_tree=False, **kwargs):
         """
         Parameters
         ----------
@@ -446,11 +538,13 @@ class WindX(WindResource, ResourceX):
         tree : str
             path to .pgz file containing pickled cKDTree of lat, lon
             coordinates
+        compute_tree : bool
+            Force the computation of the cKDTree
         kwargs : dict
             Kwargs for Resource
         """
         super().__init__(wind_h5, **kwargs)
-        self._tree = self._init_tree(tree)
+        self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
     def get_SAM_df(self, hub_height, lat_lon, **kwargs):
         """

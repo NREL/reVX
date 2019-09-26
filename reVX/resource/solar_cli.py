@@ -8,10 +8,13 @@ import os
 
 from reVX.utilities.loggers import init_mult
 from reVX.resource.resource import NSRDBX, SolarX
-from reVX.resource.resource_cli import map as map_cmd
+from reVX.resource.resource_cli import dataset as dataset_cmd
+from reVX.resource.resource_cli import multi_site as multi_site_grp
 from reVX.resource.resource_cli import region as region_cmd
-from reVX.resource.resource_cli import SAM as SAM_cmd
+from reVX.resource.resource_cli import sam as sam_cmd
+from reVX.resource.resource_cli import sam_file as sam_file_cmd
 from reVX.resource.resource_cli import site as site_cmd
+from reVX.resource.resource_cli import timestep as timestep_cmd
 
 logger = logging.getLogger(__name__)
 
@@ -49,28 +52,34 @@ def main(ctx, solar_h5, out_dir, verbose):
 
 @main.command()
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
-              required=True, help='(lat, lon) coordinates of interest')
+              default=None,
+              help='(lat, lon) coordinates of interest')
+@click.option('--gid', '-g', type=int, default=None,
+              help='Resource gid of interest')
 @click.pass_context
-def sam(ctx, lat_lon):
+def sam_file(ctx, lat_lon, gid):
     """
     Extract all datasets needed for SAM for the nearest pixel to the given
-    (lat, lon) coordinates
+    (lat, lon) coordinates OR the given resource gid
     """
-    ctx.invoke(SAM_cmd, lat_lon=lat_lon)
+    ctx.invoke(sam_file_cmd, lat_lon=lat_lon, gid=gid)
 
 
 @main.command()
 @click.option('--dataset', '-d', type=str, required=True,
               help='Dataset to extract')
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
-              required=True, help='(lat, lon) coordinates of interest')
+              default=None,
+              help='(lat, lon) coordinates of interest')
+@click.option('--gid', '-g', type=int, default=None,
+              help='Resource gid of interest')
 @click.pass_context
-def site(ctx, dataset, lat_lon):
+def site(ctx, dataset, lat_lon, gid):
     """
     Extract a single dataset for the nearest pixel to the given (lat, lon)
-    coordinates
+    coordinates OR the given resource gid
     """
-    ctx.invoke(site_cmd, dataset=dataset, lat_lon=lat_lon)
+    ctx.invoke(site_cmd, dataset=dataset, lat_lon=lat_lon, gid=gid)
 
 
 @main.command()
@@ -99,13 +108,46 @@ def region(ctx, dataset, region, region_col):
 @click.option('--region_col', '-col', type=str, default='state',
               help='Meta column to search for region')
 @click.pass_context
-def map(ctx, timestep, dataset, region, region_col):
+def timestep(ctx, timestep, dataset, region, region_col):
     """
     Extract a single dataset for a single timestep
     Extract only pixels in region if given.
     """
-    ctx.invoke(map_cmd, dataset=dataset, timestep=timestep, region=region,
-               region_col=region_col)
+    ctx.invoke(timestep_cmd, dataset=dataset, timestep=timestep,
+               region=region, region_col=region_col)
+
+
+@main.group()
+@click.option('--sites', '-s', type=click.Path(exists=True), required=True,
+              help=('.csv or .json file with columns "latitude", "longitude" '
+                    'OR "gid"'))
+@click.pass_context
+def multi_site(ctx, sites):
+    """
+    Extract multiple sites given in '--sites' .csv or .json as
+    "latitude", "longitude" pairs OR "gid"s
+    """
+    ctx.invoke(multi_site_grp, sites=sites)
+
+
+@multi_site.command()
+@click.option('--dataset', '-d', type=str, required=True,
+              help='Dataset to extract')
+@click.pass_context
+def dataset(ctx, dataset):
+    """
+    Extract given dataset for all sites
+    """
+    ctx.invoke(dataset_cmd, dataset=dataset)
+
+
+@multi_site.command()
+@click.pass_context
+def sam(ctx):
+    """
+    Extract SAM variables
+    """
+    ctx.invoke(sam_cmd)
 
 
 if __name__ == '__main__':

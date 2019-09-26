@@ -8,9 +8,11 @@ import os
 
 from reVX.utilities.loggers import init_mult
 from reVX.resource.resource import WindX
-from reVX.resource.resource_cli import map as map_cmd
+from reVX.resource.resource_cli import dataset as dataset_cmd
+from reVX.resource.resource_cli import multi_site as multi_site_grp
 from reVX.resource.resource_cli import region as region_cmd
 from reVX.resource.resource_cli import site as site_cmd
+from reVX.resource.resource_cli import timestep as timestep_cmd
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +26,7 @@ logger = logging.getLogger(__name__)
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def cli(ctx, wind_h5, out_dir, verbose):
+def main(ctx, wind_h5, out_dir, verbose):
     """
     WindX Command Line Interface
     """
@@ -42,19 +44,35 @@ def cli(ctx, wind_h5, out_dir, verbose):
     logger.info('Outputs to be stored in: {}'.format(out_dir))
 
 
-@cli.command()
+@main.command()
 @click.option('--hub_height', '-h', type=int, required=True,
               help='Hub height to extract SAM variables at')
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
-              required=True, help='(lat, lon) coordinates of interest')
+              default=None,
+              help='(lat, lon) coordinates of interest')
+@click.option('--gid', '-g', type=int, default=None,
+              help='Resource gid of interest')
 @click.pass_context
-def sam(ctx, hub_height, lat_lon):
+def sam_file(ctx, hub_height, lat_lon, gid):
     """
     Extract all datasets at the given hub height needed for SAM for
-    the nearest pixel to the given (lat, lon) coordinates
+    nearest pixel to the given (lat, lon) coordinates OR the given
+    resource gid
     """
-    with ctx.obj['CLS'](ctx.obj['H5']) as f:
-        SAM_df = f.get_SAM_df(hub_height, lat_lon)
+    if lat_lon is None and gid is None:
+        click.echo("Must supply '--lat-lon' OR '--gid'!")
+        raise click.Abort()
+    elif lat_lon and gid:
+        click.echo("You must only supply '--lat-lon' OR '--gid'!")
+        raise click.Abort()
+
+    with ctx.obj['CLS'](ctx.obj['H5'], compute_tree=ctx.obj['TREE']) as f:
+        if lat_lon is not None:
+            SAM_df = f.get_SAM_lat_lon(hub_height, lat_lon)
+        elif gid is not None:
+            SAM_df = f.get_SAM_gid(hub_height, lat_lon)
+
+    SAM_df['winddirection_{}m'.format(hub_height)] = 0
 
     out_path = "{}.csv".format(SAM_df.name)
     out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
@@ -62,21 +80,24 @@ def sam(ctx, hub_height, lat_lon):
     SAM_df.to_csv(out_path)
 
 
-@cli.command()
+@main.command()
 @click.option('--dataset', '-d', type=str, required=True,
               help='Dataset to extract')
+@click.option('--gid', '-g', type=int, default=None,
+              help='Resource gid of interest')
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
-              required=True, help='(lat, lon) coordinates of interest')
+              default=None,
+              help='(lat, lon) coordinates of interest')
 @click.pass_context
-def site(ctx, dataset, lat_lon):
+def site(ctx, dataset, gid, lat_lon):
     """
     Extract a single dataset for the nearest pixel to the given (lat, lon)
-    coordinates
+    coordinates OR the given resource gid
     """
-    ctx.invoke(site_cmd, dataset=dataset, lat_lon=lat_lon)
+    ctx.invoke(site_cmd, dataset=dataset, lat_lon=lat_lon, gid=gid)
 
 
-@cli.command()
+@main.command()
 @click.option('--dataset', '-d', type=str, required=True,
               help='Dataset to extract')
 @click.option('--timestep', '-ts', type=str, required=True,
@@ -86,16 +107,16 @@ def site(ctx, dataset, lat_lon):
 @click.option('--region_col', '-col', type=str, default='state',
               help='Meta column to search for region')
 @click.pass_context
-def map(ctx, dataset, timestep, region, region_col):
+def timestep(ctx, dataset, timestep, region, region_col):
     """
     Extract a single dataset for a single timestep
     Extract only pixels in region if given.
     """
-    ctx.invoke(map_cmd, dataset=dataset, timestep=timestep, region=region,
+    ctx.invoke(timestep_cmd, dataset=dataset, timestep=timestep, region=region,
                region_col=region_col)
 
 
-@cli.command()
+@main.command()
 @click.option('--dataset', '-d', type=str, required=True,
               help='Dataset to extract')
 @click.option('--region', '-r', type=str, required=True,
@@ -111,5 +132,60 @@ def region(ctx, dataset, region, region_col):
                region_col=region_col)
 
 
+@main.group()
+@click.pass_context
+def multi_site(ctx, sites):
+    """
+    Extract multiple sites given in '--sites' .csv or .json as
+    "latitude", "longitude" pairs OR "gid"s
+    """
+    ctx.invoke(multi_site_grp, sites=sites)
+
+
+@multi_site.command()
+@click.option('--dataset', '-d', type=str, required=True,
+              help='Dataset to extract')
+@click.pass_context
+def dataset(ctx, dataset):
+    """
+    Extract given dataset for all sites
+    """
+    ctx.invoke(dataset_cmd, dataset=dataset)
+
+
+@multi_site.command()
+@click.option('--hub_height', '-h', type=int, required=True,
+              help='Hub height to extract SAM variables at')
+@click.pass_context
+def sam(ctx, hub_height):
+    """
+    Extract SAM variables
+    """
+    gid = ctx.obj['GID']
+    lat_lon = ctx.obj['LAT_LON']
+    with ctx.obj['CLS'](ctx.obj['H5'], compute_tree=ctx.obj['TREE']) as f:
+        meta = f['meta']
+        if lat_lon is not None:
+            SAM_df = f.get_SAM_lat_lon(hub_height, lat_lon)
+        elif gid is not None:
+            SAM_df = f.get_SAM_gid(hub_height, lat_lon)
+
+    name = ctx.obj['NAME']
+    gids = []
+    for df in SAM_df:
+        df['winddirection_{}m'.format(hub_height)] = 0
+        gids.append(int(df.name.split('-')[-1]))
+        out_path = "{}-{}.csv".format(df.name, name)
+        out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
+        logger.info('Saving data to {}'.format(out_path))
+        df.to_csv(out_path)
+
+    out_path = "{}-meta.csv".format(name)
+    out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
+    meta = meta.loc[gids]
+    logger.info('Saving meta data to {}'.format(out_path))
+    meta.to_csv(out_path, index=False)
+
+
 if __name__ == '__cli__':
-    cli(obj={})
+    main(obj={})
