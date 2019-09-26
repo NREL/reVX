@@ -168,18 +168,19 @@ def sam(ctx, hub_height):
     name = ctx.obj['NAME']
     gids = []
     for df in SAM_df:
-        df['winddirection_{}m'.format(hub_height)] = 0
-        gids.append(int(df.name.split('-')[-1]))
         out_path = "{}-{}.csv".format(df.name, name)
         out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
+        df['winddirection_{}m'.format(hub_height)] = 0
+        gids.append(int(df.name.split('-')[-1]))
         logger.info('Saving data to {}'.format(out_path))
         df.to_csv(out_path)
 
     out_path = "{}-meta.csv".format(name)
     out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
     meta = meta.loc[gids]
+    meta.index.name = 'gid'
     logger.info('Saving meta data to {}'.format(out_path))
-    meta.to_csv(out_path, index=False)
+    meta.to_csv(out_path)
 
 
 @multi_site.command()

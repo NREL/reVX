@@ -99,7 +99,7 @@ def site(ctx, dataset, lat_lon, gid):
         if lat_lon is not None:
             site_df = f.get_lat_lon_df(dataset, lat_lon)
         elif gid is not None:
-            site_df = f.get_site_df(dataset, gid)
+            site_df = f.get_gid_df(dataset, gid)
 
     gid = site_df.name
     out_path = "{}-{}.csv".format(dataset, gid)
@@ -132,8 +132,9 @@ def region(ctx, dataset, region, region_col):
     out_path = "{}-meta.csv".format(region)
     out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
     meta = meta.loc[region_df.columns]
+    meta.index.name = 'gid'
     logger.info('Saving meta data to {}'.format(out_path))
-    meta.to_csv(out_path, index=False)
+    meta.to_csv(out_path)
 
 
 @cli.command()
@@ -207,7 +208,7 @@ def dataset(ctx, dataset):
         if lat_lon is not None:
             site_df = f.get_lat_lon_df(dataset, lat_lon)
         elif gid is not None:
-            site_df = f.get_site_df(dataset, gid)
+            site_df = f.get_gid_df(dataset, gid)
 
     name = ctx.obj['NAME']
     out_path = "{}-{}.csv".format(dataset, name)
@@ -218,8 +219,9 @@ def dataset(ctx, dataset):
     out_path = "{}-meta.csv".format(name)
     out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
     meta = meta.loc[site_df.columns]
+    meta.index.name = 'gid'
     logger.info('Saving meta data to {}'.format(out_path))
-    meta.to_csv(out_path, index=False)
+    meta.to_csv(out_path)
 
 
 @multi_site.command()
@@ -249,8 +251,9 @@ def sam(ctx):
     out_path = "{}-meta.csv".format(name)
     out_path = os.path.join(ctx.obj['OUT_DIR'], out_path)
     meta = meta.loc[gids]
+    meta.index.name = 'gid'
     logger.info('Saving meta data to {}'.format(out_path))
-    meta.to_csv(out_path, index=False)
+    meta.to_csv(out_path)
 
 
 if __name__ == '__main__':

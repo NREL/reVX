@@ -337,7 +337,7 @@ class ResourceX(Resource):
             Time-series DataFrame for given site and dataset
         """
         gid = self._get_nearest(lat_lon)
-        site_df = self.get_site_df(ds_name, gid)
+        site_df = self.get_gid_df(ds_name, gid)
 
         return site_df
 
