@@ -133,6 +133,9 @@ def region(ctx, dataset, region, region_col):
 
 
 @main.group()
+@click.option('--sites', '-s', type=click.Path(exists=True), required=True,
+              help=('.csv or .json file with columns "latitude", "longitude" '
+                    'OR "gid"'))
 @click.pass_context
 def multi_site(ctx, sites):
     """
