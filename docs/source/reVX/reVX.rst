@@ -6,12 +6,11 @@ Subpackages
 
 .. toctree::
 
-   reVX.nsrdb
    reVX.plexos
    reVX.reeds
+   reVX.resource
    reVX.rpm
    reVX.utilities
-   reVX.wtk
 
 Submodules
 ----------
