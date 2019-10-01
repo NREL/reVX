@@ -5,24 +5,26 @@ import os
 import pytest
 import pandas as pd
 import numpy as np
+from reVX import TESTDATADIR
 from reV.handlers.resource import Resource
 from reVX.plexos.dpv_plexos import DpvResource, DpvPlexosAggregation
+
+ROOT_DIR = os.path.join(TESTDATADIR, 'reV_gen/')
 
 
 def test_merge():
     """Test dpv tech merge against simple calc"""
-    root_dir = 'C:/sandbox/reV/reVX/tests/data/reV_gen/'
 
     job_frac_map = {'dgen_a90_t28': 0.5,
                     'dgen_a135_t28': 0.5,
                     }
     sub_dirs = list(job_frac_map.keys())
 
-    dpv = DpvResource(root_dir, sub_dirs, 2007)
+    dpv = DpvResource(ROOT_DIR, sub_dirs, 2007)
     arr = dpv._merge_data('cf_mean', job_frac_map)
 
-    fn1 = os.path.join(root_dir, 'dgen_a90_t28/dgen_a90_t28_gen_2007.h5')
-    fn2 = os.path.join(root_dir, 'dgen_a135_t28/dgen_a135_t28_gen_2007.h5')
+    fn1 = os.path.join(ROOT_DIR, 'dgen_a90_t28/dgen_a90_t28_gen_2007.h5')
+    fn2 = os.path.join(ROOT_DIR, 'dgen_a135_t28/dgen_a135_t28_gen_2007.h5')
     with Resource(fn1) as res1:
         with Resource(fn2) as res2:
             truth = (res1['cf_mean'] + res2['cf_mean']) / 2
@@ -32,7 +34,6 @@ def test_merge():
 
 def test_merge_baseline():
     """Test dpv tech merge against baseline file"""
-    root_dir = 'C:/sandbox/reV/reVX/tests/data/reV_gen/'
 
     job_frac_map = {'dgen_a90_t28': 0.13,
                     'dgen_a135_t28': 0.09,
@@ -43,10 +44,10 @@ def test_merge_baseline():
                     }
     sub_dirs = list(job_frac_map.keys())
 
-    dpv = DpvResource(root_dir, sub_dirs, 2007)
+    dpv = DpvResource(ROOT_DIR, sub_dirs, 2007)
     arr = dpv._merge_data('cf_mean', job_frac_map)
 
-    with Resource(os.path.join(root_dir, 'naris_rev_dpv_2007.h5')) as res:
+    with Resource(os.path.join(ROOT_DIR, 'naris_rev_dpv_2007.h5')) as res:
         truth = res['cf_mean']
 
     assert np.allclose(arr, truth, rtol=0.01)
@@ -54,7 +55,7 @@ def test_merge_baseline():
 
 def test_dpv_agg():
     """Test aggregation of DPV rev results to plexos nodes"""
-    cf = 'C:/sandbox/reV/reVX/tests/data/reV_gen/naris_rev_dpv_2007.h5'
+    cf = os.path.join(ROOT_DIR, 'naris_rev_dpv_2007.h5')
     with Resource(cf) as res:
         meta = res.meta
         truth = res['cf_profile', :, [0, 1]]
