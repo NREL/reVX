@@ -111,13 +111,7 @@ class PlexosNode:
             Total REEDS requested buildout associated with SC point i.
         """
 
-        capacity = float(self._sc_build.loc[i, 'potential_capacity'])
         buildout = float(self._sc_build.loc[i, 'built_capacity'])
-
-        if buildout > 1.1 * capacity:
-            raise ValueError('REEDS buildout is significantly greater '
-                             'than reV capacity: {} (REEDS), {} (reV).'
-                             .format(buildout, capacity))
 
         res_gids = self._sc_build.loc[i, 'res_gids']
         gid_counts = self._sc_build.loc[i, 'gid_counts']
@@ -290,7 +284,6 @@ class PlexosAggregation:
         self.build_year = build_year
         self.exclusion_area = exclusion_area
         self._cf_res_gids = None
-        self._sc_res_gids = None
         self._power_density = None
         self._plexos_meta = None
         self._time_index = None
@@ -306,9 +299,11 @@ class PlexosAggregation:
                              .format(build_year))
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build)
+        missing = self._check_gids()
+        self._handle_missing_resource_gids(missing)
+
         self._node_map = self._make_node_map()
         self._forecast_map = self._make_forecast_map()
-        self._check_gids()
 
     @property
     def time_index(self):
@@ -377,18 +372,17 @@ class PlexosAggregation:
             Array of resource GIDs associated with this REEDS buildout.
         """
 
-        if self._sc_res_gids is None:
-            gid_col = self._sc_build['res_gids'].values
+        gid_col = self._sc_build['res_gids'].values
 
-            if isinstance(gid_col[0], str):
-                gid_col = [json.loads(s) for s in gid_col]
-            else:
-                gid_col = list(gid_col)
+        if isinstance(gid_col[0], str):
+            gid_col = [json.loads(s) for s in gid_col]
+        else:
+            gid_col = list(gid_col)
 
-            res_gids = [g for sub in gid_col for g in sub]
-            self._sc_res_gids = np.array(sorted(list(set(res_gids))))
+        res_gids = [g for sub in gid_col for g in sub]
+        sc_res_gids = np.array(sorted(list(set(res_gids))))
 
-        return self._sc_res_gids
+        return sc_res_gids
 
     @property
     def available_res_gids(self):
@@ -424,13 +418,79 @@ class PlexosAggregation:
         return self._power_density
 
     def _check_gids(self):
-        """Ensure that the SC buildout GIDs are available in the cf file."""
+        """Ensure that the SC buildout GIDs are available in the cf file.
 
+        Returns
+        -------
+        bad_sc_points : list
+            List of missing supply curve gids
+            (in reeds but not in reV resource).
+        """
+
+        bad_sc_points = []
         missing = list(set(self.sc_res_gids) - set(self.available_res_gids))
         if any(missing):
-            raise RuntimeError('The CF file is missing gids that were built '
-                               'in the REEDS-reV SC build out: {}'
-                               .format(missing))
+            wmsg = ('The CF file is missing {} gids that were built '
+                    'in the REEDS-reV SC build out: {}'
+                    .format(len(missing), missing))
+            warn(wmsg)
+            logger.warning(wmsg)
+
+            gid_col = self._sc_build['res_gids'].values
+            if isinstance(gid_col[0], str):
+                gid_col = [json.loads(s) for s in gid_col]
+            else:
+                gid_col = list(gid_col)
+            for i, sc_gids in enumerate(gid_col):
+                if any([m in sc_gids for m in missing]):
+                    bad_sc_points.append(self._sc_build.iloc[i]['gid'])
+
+            wmsg = ('There are {} SC points with missing gids: {}'
+                    .format(len(bad_sc_points), bad_sc_points))
+            warn(wmsg)
+            logger.warning(wmsg)
+
+        return bad_sc_points
+
+    def _handle_missing_resource_gids(self, bad_sc_points):
+        """Merge requested capacity in missing SC gids into nearest good pixels
+
+        Parameters
+        ----------
+        bad_sc_points : list
+            List of missing supply curve gids
+            (in reeds but not in reV resource).
+        """
+        if any(bad_sc_points):
+            bad_bool = self._sc_build['gid'].isin(bad_sc_points)
+            good_bool = ~self._sc_build['gid'].isin(bad_sc_points)
+            bad_cap = self._sc_build.loc[bad_bool, 'built_capacity'].sum()
+            wmsg = ('{} MW of capacity is being merged from bad SC points.'
+                    .format(bad_cap))
+            warn(wmsg)
+            logger.warning(wmsg)
+
+            clabels = self._get_coord_labels(self._sc_build)
+            good_tree = cKDTree(self._sc_build.loc[good_bool, clabels])
+            _, i = good_tree.query(self._sc_build.loc[bad_bool, clabels])
+            bad_cap_arr = self._sc_build.loc[bad_bool, 'built_capacity'].values
+
+            ilen = len(self._sc_build)
+            icap = self._sc_build['built_capacity'].sum()
+
+            add_index = self._sc_build.index.values[good_bool][i]
+            self._sc_build.loc[add_index, 'built_capacity'] += bad_cap_arr
+            bad_ind = self._sc_build.index.values[bad_bool]
+            self._sc_build = self._sc_build.drop(bad_ind, axis=0)
+
+            olen = len(self._sc_build)
+            ocap = self._sc_build['built_capacity'].sum()
+
+            wmsg = ('SC build table reduced from {} to {} rows, '
+                    'reduced capacity from {} to {}.'
+                    .format(ilen, olen, icap, ocap))
+            warn(wmsg)
+            logger.warning(wmsg)
 
     def _init_output(self):
         """Init the output array of aggregated PLEXOS profiles.
