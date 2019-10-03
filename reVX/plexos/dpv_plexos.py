@@ -18,24 +18,51 @@ logger = logging.getLogger(__name__)
 class DpvResource:
     """Framework to handle and merge multiple reV distributed PV runs."""
 
-    def __init__(self, root_dir, sub_dirs, year):
+    def __init__(self, root_dir, year, sub_dirs=None):
         """
         Parameters
         ----------
         root_dir : str
             Root directory containing sub directories containing reV dpv job
             files.
+        year : int | str
+            Year of interest.
         sub_dirs : list
             List of strings of directory names in root_dir. Each sub_dir is a
             job directory.
-        year : int | str
-            Year of interest.
         """
 
         self._root_dir = root_dir
-        self._sub_dirs = sub_dirs
         self._year = year
+        self._sub_dirs = self._parse_sub_dirs(self._root_dir,
+                                              sub_dirs=sub_dirs)
         self._fpaths = self._get_all_fpaths()
+
+    @staticmethod
+    def _parse_sub_dirs(root_dir, sub_dirs=None):
+        """Get a list of strings of directory names in root_dir.
+
+        Parameters
+        ----------
+        root_dir : str
+            Root directory containing sub directories containing reV dpv job
+            files.
+        sub_dirs : list | None
+            List of strings of directory names in root_dir. Each sub_dir is a
+            job directory. None to parse dirs.
+
+        Returns
+        -------
+        sub_dirs : list
+            List of strings of directory names in root_dir. Each sub_dir is a
+            job directory.
+        """
+
+        if sub_dirs is None:
+            sub_dirs = os.listdir(root_dir)
+            sub_dirs = [s for s in sub_dirs if
+                        os.path.isdir(os.path.join(root_dir, s))]
+        return sub_dirs
 
     def _get_sub_dir_fpath(self, sub_dir):
         """Get the full h5 filepath of the job in the target sub dir.
@@ -51,14 +78,22 @@ class DpvResource:
             Full filepath to the h5 job file in root_dir/sub_dir/
         """
 
-        if not sub_dir.endswith('/'):
-            sub_dir += '/'
+        fpaths = []
+
         d = os.path.join(self._root_dir, sub_dir)
+
         for fn in os.listdir(d):
             if (fn.endswith('.h5') and str(self._year) in fn
                     and 'node' not in fn):
-                fpath = os.path.join(d, fn)
-                break
+                fpaths.append(os.path.join(d, fn))
+
+        fpath = fpaths[0]
+
+        if len(fpaths) > 1:
+            wmsg = 'More than one h5 filepath found. Using: {}'.format(fpath)
+            logger.warning(wmsg)
+            warn(wmsg)
+
         return fpath
 
     def _get_all_fpaths(self):
@@ -77,6 +112,10 @@ class DpvResource:
 
     def _merge_data(self, dset, job_frac_map):
         """Merge reV data from multiple dpv jobs based on relative fractions.
+
+        Example: batch job to run multiple DPV jobs at different tilt/azimuths,
+        this method will combine all of the different jobs based on respective
+        fractions in the job_frac_map into a single composite DPV result.
 
         Parameters
         ----------
@@ -123,8 +162,35 @@ class DpvResource:
 
         return arr
 
+    def _merge_dpv_files(self, fn_out, job_frac_map):
+        """Merge multiple DPV reV runs into a single result based on fractional
+        contributions.
+
+        Parameters
+        ----------
+        fn_out : str
+            Filename for merged results, to be saved in root_dir.
+        job_frac_map : dict
+            Lookup of the fractional contribution for each job.
+            The keys are job names (string tags found in the sub_dirs and
+            job h5 files), and the values are fractions for the
+            respective jobs.
+        """
+
+        fpath_out = os.path.join(self._root_dir, fn_out)
+        shutil.copy(self._fpaths[0], fpath_out)
+        with Outputs(fpath_out) as out:
+            dsets = [d for d in out.dsets if d not in ['time_index', 'meta']]
+
+        for dset in dsets:
+            arr = self._merge_data(dset, job_frac_map)
+            logger.debug('Writing "{}" to merged DPV output file.'
+                         .format(dset))
+            with Outputs(fpath_out, mode='a') as out:
+                out[dset] = arr
+
     @classmethod
-    def merge(cls, root_dir, sub_dirs, year, fn_out, job_frac_map):
+    def merge(cls, root_dir, year, fn_out, job_frac_map):
         """Merge multiple DPV reV runs into a single result based on fractional
         contributions.
 
@@ -133,9 +199,6 @@ class DpvResource:
         root_dir : str
             Root directory containing sub directories containing reV dpv job
             files.
-        sub_dirs : list
-            List of strings of directory names in root_dir. Each sub_dir is a
-            job directory.
         year : int | str
             Year of interest.
         fn_out : str
@@ -146,18 +209,9 @@ class DpvResource:
             job h5 files), and the values are fractions for the
             respective jobs.
         """
-        dpv = cls(root_dir, sub_dirs, year)
-        fpath_out = os.path.join(dpv._root_dir, fn_out)
-        shutil.copy(dpv._fpaths[0], fpath_out)
-        with Outputs(fpath_out) as out:
-            dsets = [d for d in out.dsets if d not in ['time_index', 'meta']]
 
-        for dset in dsets:
-            arr = dpv._merge_data(dset, job_frac_map)
-            logger.debug('Writing "{}" to merged DPV output file.'
-                         .format(dset))
-            with Outputs(fpath_out, mode='a') as out:
-                out[dset] = arr
+        dpv = cls(root_dir, year, sub_dirs=list(job_frac_map.keys()))
+        dpv._merge_dpv_files(fn_out, job_frac_map)
 
 
 class DpvPlexosAggregation:
@@ -181,7 +235,7 @@ class DpvPlexosAggregation:
         self._time_index = None
         self._kdtree = None
 
-        logger.info('Using CF file: {}'.format(self._cf_fpath))
+        logger.debug('Using CF file: {}'.format(self._cf_fpath))
 
     def _parse_node_buildout(self, node_buildout,
                              req=('plexos_id', 'latitude', 'longitude',
@@ -197,7 +251,7 @@ class DpvPlexosAggregation:
         """
 
         if isinstance(node_buildout, str):
-            logger.info('Using PLEXOS node file: {}'.format(node_buildout))
+            logger.debug('Using PLEXOS node file: {}'.format(node_buildout))
             self._node_buildout = pd.read_csv(node_buildout)
         elif isinstance(node_buildout, pd.DataFrame):
             self._node_buildout = node_buildout
@@ -253,21 +307,26 @@ class DpvPlexosAggregation:
             self._kdtree = cKDTree(self.cf_meta[['latitude', 'longitude']])
         return self._kdtree
 
-    def _run_nn(self):
+    def _run_nn(self, query):
         """Run KDTree query, getting CF index values matching the node buildout
+
+        Parameters
+        ----------
+        query : np.ndarray
+            Query the kdtree attribute with this argument.
 
         Returns
         -------
         i : np.ndarray
             1D array of CF index values.
         """
-        d, i = self.kdtree.query(
-            self._node_buildout[['latitude', 'longitude']], k=1)
+
+        d, i = self.kdtree.query(query, k=1)
         logger.info('KDTree distance min / mean / max: {} / {} / {}'
                     .format(np.round(d.min(), decimals=3),
                             np.round(d.mean(), decimals=3),
                             np.round(d.max(), decimals=3)))
-        return i.flatten()
+        return i
 
     def get_mapped_node_data(self, dset='cf_profile'):
         """Get the CF dataset mapped to plexos nodes via NN results.
@@ -280,7 +339,7 @@ class DpvPlexosAggregation:
         """
         with Outputs(self._cf_fpath) as out:
             arr = out[dset]
-        i = self._run_nn()
+        i = self._run_nn(self._node_buildout[['latitude', 'longitude']])
         node_arr = arr[:, i]
         return node_arr
 
@@ -295,7 +354,7 @@ class DpvPlexosAggregation:
             node_buildout table.
         """
         node_arr = self.get_mapped_node_data(dset='cf_profile')
-        built_capacity = self._node_buildout['built_capacity'].values.flatten()
+        built_capacity = self._node_buildout['built_capacity'].values
         gen_profiles = node_arr * built_capacity
         return gen_profiles
 

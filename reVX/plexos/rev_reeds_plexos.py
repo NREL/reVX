@@ -123,7 +123,7 @@ class PlexosNode:
 
         return res_gids, gid_counts, buildout
 
-    def _build(self, i, profile):
+    def _build_sc_profile(self, i, profile):
         """Build a power generation profile based on SC point i.
 
         Parameters
@@ -189,10 +189,40 @@ class PlexosNode:
 
         return profile, res_gids, gen_gids, res_built
 
+    def _make_node_profile(self):
+        """Make an aggregated generation profile for a single plexos node.
+
+        Returns
+        -------
+        profile : np.ndarray
+            (t, ) array of generation in MW.
+        res_gids : list
+            List of resource GID's that were built for this plexos node.
+        gen_gids : list
+            List of generation GID's that were built for this plexos node.
+        res_built : list
+            List of built capacities at each resource GID for this plexos node.
+        """
+
+        profile = None
+        res_gids = []
+        gen_gids = []
+        res_built = []
+
+        for i in self._sc_build.index.values:
+
+            profile, i_res_gids, i_gen_gids, i_res_built = \
+                self._build_sc_profile(i, profile)
+
+            res_gids += i_res_gids
+            gen_gids += i_gen_gids
+            res_built += i_res_built
+
+        return profile, res_gids, gen_gids, res_built
+
     @classmethod
-    def make_profile(cls, sc_build, cf_fpath, cf_res_gids, power_density,
-                     exclusion_area=0.0081, forecast_fpath=None,
-                     forecast_map=None):
+    def run(cls, sc_build, cf_fpath, cf_res_gids, power_density,
+            exclusion_area=0.0081, forecast_fpath=None, forecast_map=None):
         """Make an aggregated generation profile for a single plexos node.
 
         Parameters
@@ -229,20 +259,11 @@ class PlexosNode:
             List of built capacities at each resource GID for this plexos node.
         """
 
-        profile = None
-        res_gids = []
-        gen_gids = []
-        res_built = []
-
         n = cls(sc_build, cf_fpath, cf_res_gids, power_density,
                 exclusion_area=exclusion_area, forecast_fpath=forecast_fpath,
                 forecast_map=forecast_map)
 
-        for i in sc_build.index.values:
-            profile, i_res_gids, i_gen_gids, i_res_built = n._build(i, profile)
-            res_gids += i_res_gids
-            gen_gids += i_gen_gids
-            res_built += i_res_built
+        profile, res_gids, gen_gids, res_built = n._make_node_profile()
 
         return profile, res_gids, gen_gids, res_built
 
@@ -619,9 +640,11 @@ class PlexosAggregation:
             diff = diff.flatten()
 
             if diff.max() > threshold:
-                warn('reV SC and REEDS Buildout coordinates do not match. '
-                     'Max, mean coord distance: {}, {}'
-                     .format(diff.max(), diff.mean()))
+                emsg = ('reV SC and REEDS Buildout coordinates do not match. '
+                        'Max, mean coord distance: {}, {}'
+                        .format(diff.max(), diff.mean()))
+                logger.exception(emsg)
+                raise ValueError(emsg)
 
             reeds_build = reeds_build.drop(labels=reeds_coord_labels, axis=1)
 
@@ -675,7 +698,12 @@ class PlexosAggregation:
         plexos_coord_labels = self._get_coord_labels(self._plexos_nodes)
         sc_coord_labels = self._get_coord_labels(self._sc_build)
         tree = cKDTree(self._plexos_nodes[plexos_coord_labels])
-        _, i = tree.query(self._sc_build[sc_coord_labels], k=k)
+        d, i = tree.query(self._sc_build[sc_coord_labels], k=k)
+        logger.info('Plexos Node KDTree distance min / mean / max: '
+                    '{} / {} / {}'
+                    .format(np.round(d.min(), decimals=3),
+                            np.round(d.mean(), decimals=3),
+                            np.round(d.max(), decimals=3)))
 
         if len(i.shape) == 1:
             i = i.reshape((len(i), 1))
@@ -725,13 +753,14 @@ class PlexosAggregation:
         """
 
         profiles = self._init_output()
+        progress = 0
 
         if self.parallel:
             futures = {}
             with ProcessPoolExecutor() as exe:
                 for i, inode in enumerate(np.unique(self._node_map)):
                     mask = (self._node_map == inode)
-                    f = exe.submit(PlexosNode.make_profile,
+                    f = exe.submit(PlexosNode.run,
                                    self._sc_build[mask], self._cf_fpath,
                                    self.available_res_gids, self.power_density,
                                    exclusion_area=self.exclusion_area,
@@ -740,18 +769,21 @@ class PlexosAggregation:
                     futures[f] = i
 
                 for n, f in enumerate(as_completed(futures)):
-                    if n % 50 == 0:
-                        logger.info('{} out of {} futures are complete.'
-                                    .format(n + 1, len(futures)))
                     i = futures[f]
                     profile, res_gids, gen_gids, res_built = f.result()
                     profiles[:, i] = profile
                     self._ammend_plexos_meta(i, res_gids, gen_gids, res_built)
 
+                    current_prog = (n + 1) // (len(futures) / 100)
+                    if current_prog > progress:
+                        progress = current_prog
+                        logger.info('{} % of plexos node profiles built.'
+                                    .format(progress))
+
         else:
             for i, inode in enumerate(np.unique(self._node_map)):
                 mask = (self._node_map == inode)
-                p = PlexosNode.make_profile(
+                p = PlexosNode.run(
                     self._sc_build[mask], self._cf_fpath,
                     self.available_res_gids, self.power_density,
                     exclusion_area=self.exclusion_area,
@@ -760,6 +792,13 @@ class PlexosAggregation:
                 profile, res_gids, gen_gids, res_built = p
                 profiles[:, i] = profile
                 self._ammend_plexos_meta(i, res_gids, gen_gids, res_built)
+
+                current_prog = ((i + 1)
+                                // (len(np.unique(self._node_map)) / 100))
+                if current_prog > progress:
+                    progress = current_prog
+                    logger.info('{} % of plexos node profiles built.'
+                                .format(progress))
 
         logger.info('Finished plexos node aggregation.')
 

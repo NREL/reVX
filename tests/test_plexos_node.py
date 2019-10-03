@@ -59,8 +59,8 @@ def test_plexos_node_build(sc_build, cf_fpath):
     """Test that a plexos node buildout has consistent results."""
     time_index, cf_res_gids = get_cf_attrs(cf_fpath)
     sc_build = sc_build.iloc[0:5]
-    x = PlexosNode.make_profile(sc_build, cf_fpath, cf_res_gids,
-                                power_density=3, exclusion_area=0.0081)
+    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids,
+                       power_density=3, exclusion_area=0.0081)
 
     profile, res_gids, gen_gids, res_built = x
 
@@ -79,8 +79,8 @@ def test_plexos_node_profile(sc_build, cf_fpath):
     """Test that a plexos node buildout profile matches source data"""
     _, cf_res_gids = get_cf_attrs(cf_fpath)
     sc_build = sc_build.iloc[100:102]
-    x = PlexosNode.make_profile(sc_build, cf_fpath, cf_res_gids,
-                                power_density=3, exclusion_area=0.0081)
+    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids,
+                       power_density=3, exclusion_area=0.0081)
 
     profile, _, gen_gids, res_built = x
 

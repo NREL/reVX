@@ -18,9 +18,8 @@ def test_merge():
     job_frac_map = {'dgen_a90_t28': 0.5,
                     'dgen_a135_t28': 0.5,
                     }
-    sub_dirs = list(job_frac_map.keys())
 
-    dpv = DpvResource(ROOT_DIR, sub_dirs, 2007)
+    dpv = DpvResource(ROOT_DIR, 2007)
     arr = dpv._merge_data('cf_mean', job_frac_map)
 
     fn1 = os.path.join(ROOT_DIR, 'dgen_a90_t28/dgen_a90_t28_gen_2007.h5')
@@ -42,9 +41,8 @@ def test_merge_baseline():
                     'dgen_a270_t28': 0.13,
                     'dgen_t0': 0.31,
                     }
-    sub_dirs = list(job_frac_map.keys())
 
-    dpv = DpvResource(ROOT_DIR, sub_dirs, 2007)
+    dpv = DpvResource(ROOT_DIR, 2007)
     arr = dpv._merge_data('cf_mean', job_frac_map)
 
     with Resource(os.path.join(ROOT_DIR, 'naris_rev_dpv_2007.h5')) as res:
