@@ -11,7 +11,7 @@ import psutil
 from warnings import warn
 
 from reV.handlers.outputs import Outputs
-from reV.handlers.geotiff import Geotiff
+from reVX.handlers.geotiff import Geotiff
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.utilities.exceptions import RPMRuntimeError, RPMTypeError
 
