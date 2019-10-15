@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Class to handle geotiff input files.
+"""
+Class to handle geotiff input files.
 
 Created on Thu Jun 20 09:43:34 2019
 
 @author: gbuster
 """
-
 import pandas as pd
 import numpy as np
-import xarray as xr
 from pyproj import transform, Proj
+import rasterio
+import xarray as xr
 
 from reV.handlers.parse_keys import parse_keys
 from reVX.utilities.exceptions import GeoTiffKeyError
@@ -27,10 +28,12 @@ class Geotiff:
         chunks : tuple
             GeoTIFF chunk (tile) shape/size.
         """
-
         self._fpath = fpath
         self._meta = None
         self._iarr = None
+        with rasterio.open(fpath, 'r') as f:
+            self._profile = f.profile
+
         self._src = xr.open_rasterio(self._fpath, chunks=chunks)
 
     def __enter__(self):
@@ -92,7 +95,6 @@ class Geotiff:
             1D array of the col indices corresponding to the lat/lon arrays
             once mesh-gridded and flattened
         """
-
         if y_slice.start is None:
             y_slice = slice(0, y_slice.stop)
         if x_slice.start is None:
@@ -121,7 +123,6 @@ class Geotiff:
         _meta : pd.DataFrame
             Flattened meta data with same format as reV resource meta data.
         """
-
         y_slice, x_slice = self._unpack_slices(*ds_slice)
 
         lon = self._src.coords['x'].values.astype(np.float32)[x_slice]
@@ -156,7 +157,6 @@ class Geotiff:
         data : np.ndarray
             1D array of flattened data corresponding to meta data.
         """
-
         y_slice, x_slice = self._unpack_slices(*ds_slice)
         data = self._src.data[ds, y_slice, x_slice].flatten().compute()
         return data
@@ -177,7 +177,6 @@ class Geotiff:
         x_slice : slice
             Col slice.
         """
-
         if len(yx_slice) == 1:
             y_slice = yx_slice[0]
             x_slice = slice(None, None, None)
@@ -188,6 +187,18 @@ class Geotiff:
             raise GeoTiffKeyError('Cannot do 3D slicing on GeoTiff meta.')
 
         return y_slice, x_slice
+
+    @property
+    def profile(self):
+        """
+        GeoTiff geospatial profile
+
+        Returns
+        -------
+        _profile : dict
+            Dictionary of geo-spatial attributes needed to create GeoTiff
+        """
+        return self._profile
 
     @property
     def iarr(self):
@@ -214,7 +225,6 @@ class Geotiff:
         shape : tuple
             2-entry tuple representing the full GeoTiff shape.
         """
-
         return (self.n_rows, self.n_cols)
 
     @property
@@ -238,6 +248,28 @@ class Geotiff:
             Number of column entries in the full geotiff.
         """
         return len(self._src.coords['x'])
+
+    @property
+    def meta(self):
+        """
+        Lat lon to y, x coordinate mapping
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+        return self['meta']
+
+    @property
+    def values(self):
+        """
+        Full DataArray in [bands, y, x] dimensions
+
+        Returns
+        -------
+        ndarray
+        """
+        return self._src.values
 
     def close(self):
         """Close the xarray-rasterio source object"""

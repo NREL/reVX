@@ -4,7 +4,6 @@ Handler to convert exclusion to/from .h5 and .geotiff
 """
 # import h5py
 import logging
-# import rasterio
 
 # from reVX.handlers.geotiff import Geotiff
 
