@@ -9,7 +9,6 @@ Created on Thu Jun 20 09:43:34 2019
 import pandas as pd
 import numpy as np
 from pyproj import transform, Proj
-import rasterio
 import xarray as xr
 
 from reV.handlers.parse_keys import parse_keys
@@ -18,6 +17,11 @@ from reVX.utilities.exceptions import GeoTiffKeyError
 
 class Geotiff:
     """GeoTIFF handler object."""
+    PROFILE = {'driver': 'GTiff', 'dtype': None, 'nodata': None,
+               'width': None, 'height': None, 'count': 1,
+               'crs': None, 'transform': None, 'blockxsize': 128,
+               'blockysize': 128, 'tiled': True, 'compress': 'lzw',
+               'interleave': 'band'}
 
     def __init__(self, fpath, chunks=(128, 128)):
         """
@@ -31,10 +35,8 @@ class Geotiff:
         self._fpath = fpath
         self._meta = None
         self._iarr = None
-        with rasterio.open(fpath, 'r') as f:
-            self._profile = f.profile
-
         self._src = xr.open_rasterio(self._fpath, chunks=chunks)
+        self._profile = self._create_profile(chunks=chunks)
 
     def __enter__(self):
         return self
@@ -189,6 +191,30 @@ class Geotiff:
         return y_slice, x_slice
 
     @property
+    def attrs(self):
+        """
+        Get geospatial attributes
+
+        Returns
+        -------
+        attrs : OrderedDict
+            Geospatial/GeoTiff attributes
+        """
+        return self._src.attrs
+
+    @property
+    def dtype(self):
+        """
+        GeoTiff array dtype
+
+        Returns
+        -------
+        dtype : str
+            Dtype of data in GeoTiff
+        """
+        return self._src.dtype
+
+    @property
     def profile(self):
         """
         GeoTiff geospatial profile
@@ -217,6 +243,18 @@ class Geotiff:
         return self._iarr
 
     @property
+    def tiff_shape(self):
+        """
+        Tiff array shape (bands, y, x)
+
+        Returns
+        -------
+        shape : tuple
+            (bands, y, x)
+        """
+        return self._src.shape
+
+    @property
     def shape(self):
         """Get the Geotiff shape tuple (n_rows, n_cols).
 
@@ -225,7 +263,7 @@ class Geotiff:
         shape : tuple
             2-entry tuple representing the full GeoTiff shape.
         """
-        return (self.n_rows, self.n_cols)
+        return self.tiff_shape[1:]
 
     @property
     def n_rows(self):
@@ -236,7 +274,7 @@ class Geotiff:
         n_rows : int
             Number of row entries in the full geotiff.
         """
-        return len(self._src.coords['y'])
+        return self.shape[1]
 
     @property
     def n_cols(self):
@@ -247,7 +285,17 @@ class Geotiff:
         n_cols : int
             Number of column entries in the full geotiff.
         """
-        return len(self._src.coords['x'])
+        return self.shape[2]
+
+    @property
+    def bands(self):
+        """
+        Get number of GeoTiff bands
+
+        Returns
+        -------
+        bands :
+        """
 
     @property
     def meta(self):
@@ -270,6 +318,42 @@ class Geotiff:
         ndarray
         """
         return self._src.values
+
+    def _create_profile(self, chunks=(128, 128)):
+        """
+        Create profile from profile template and GeoTiff data
+
+        Parameters
+        ----------
+        profile_template : dict
+            Template profile
+
+        Returns
+        -------
+        profile : dict
+            GeoTiff specific profile
+        """
+        profile = self.PROFILE.copy()
+        profile['dtype'] = self.dtype
+        profile['count'], profile['height'], profile['width'] = self.tiff_shape
+
+        if chunks is not None:
+            profile['blockysize'], profile['blockxsize'] = chunks
+        else:
+            del profile['blockysize']
+            del profile['blockxsize']
+
+        attrs = self.attrs
+        nodata = attrs['nodatavals'][0]
+        if np.isnan(nodata):
+            nodata = None
+
+        profile['nodata'] = nodata
+        profile['tiled'] = bool(attrs['is_tiled'])
+        profile['crs'] = attrs['crs']
+        profile['transform'] = attrs['transform']
+
+        return profile
 
     def close(self):
         """Close the xarray-rasterio source object"""
