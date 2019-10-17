@@ -335,7 +335,7 @@ class Geotiff:
             GeoTiff specific profile
         """
         profile = self.PROFILE.copy()
-        profile['dtype'] = self.dtype
+        profile['dtype'] = self.dtype.name
         profile['count'], profile['height'], profile['width'] = self.tiff_shape
 
         if chunks is not None:

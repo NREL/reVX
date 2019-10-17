@@ -5,6 +5,7 @@ Handler to convert exclusion to/from .h5 and .geotiff
 import h5py
 import json
 import logging
+import numpy as np
 import os
 import rasterio
 
@@ -82,6 +83,9 @@ class ExclusionsConverter:
         geotiff : str
             Path to GeoTiff to load data from
         """
+        if not os.path.exists(self._excl_h5):
+            self._init_h5(self._excl_h5, geotiff, chunks=self._chunks)
+
         if layer in self.layers:
             msg = "{} is already present in {}".format(layer, self._excl_h5)
             logger.error(msg)
@@ -120,22 +124,28 @@ class ExclusionsConverter:
         chunks : tuple
             Chunk size of exclusions in Geotiff
         """
-        if not os.path.exists(excl_h5):
-            logger.debug('\t- Initializing {} from {}'
-                         .format(excl_h5, geotiff))
-            with Geotiff(geotiff, chunks=chunks) as src:
-                profile = src.profile
-                shape = src.shape
-                meta = Outputs.to_records_array(src.meta)
+        logger.debug('\t- Initializing {} from {}'
+                     .format(excl_h5, geotiff))
+        with Geotiff(geotiff, chunks=chunks) as src:
+            profile = src.profile
+            shape = src.shape
+            meta = Outputs.to_records_array(src.meta)
+            logger.debug('\t- "profile", "meta", and "shape" extracted from {}'
+                         .format(geotiff))
 
+        try:
             with h5py.File(excl_h5, mode='w') as dst:
                 dst.attrs['profile'] = json.dumps(profile)
-                logger.debug('\t- Default profile:\n{}').format(profile)
+                logger.debug('\t- Default profile:\n{}'.format(profile))
                 dst.attrs['shape'] = shape
-                logger.debug('\t- Default shape:\n{}').format(shape)
+                logger.debug('\t- Default shape:\n{}'.format(shape))
                 dst.create_dataset('meta', shape=meta.shape, dtype=meta.dtype,
                                    data=meta)
                 logger.debug('\t- "meta" data created and loaded')
+        except Exception:
+            logger.exception("Error initilizing {}".format(excl_h5))
+            if os.path.exists(excl_h5):
+                os.remove(excl_h5)
 
     @staticmethod
     def _check_geotiff(excl_h5, geotiff, chunks=(128, 128)):
@@ -166,26 +176,33 @@ class ExclusionsConverter:
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
-                if not h5.shape == tif.shape:
+                if not np.array_equal(h5.shape, tif.shape):
                     error = ('Shape of exclusion data in {} and {} do not '
                              'match!'.format(geotiff, excl_h5))
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
                 profile = h5.profile
-                if not profile['crs'] == tif.profile['crs']:
-                    error = ('"crs" projection in {} and {} do not match!'
-                             .format(geotiff, excl_h5))
-                    logger.error(error)
-                    raise ExclusionsCheckError(error)
+                h5_crs = {k: v for k, v in
+                          [i.split("=") for i in profile['crs'].split(' ')]}
+                tif_crs = {k: v for k, v in
+                           [i.split("=") for i in
+                            tif.profile['crs'].split(' ')]}
+                for k in list(set(h5_crs) & set(tif_crs)):
+                    if h5_crs[k] != tif_crs[k]:
+                        error = ('"crs" values {} in {} and {} do not match!'
+                                 .format(k, geotiff, excl_h5))
+                        logger.error(error)
+                        raise ExclusionsCheckError(error)
 
-                if not profile['transform'] == tif.profile['transform']:
+                if not np.array_equal(profile['transform'],
+                                      tif.profile['transform']):
                     error = ('Geospatial "transform" in {} and {} do not '
                              'match!'.format(geotiff, excl_h5))
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
-                if not h5.meta.equals(tif.meta):
+                if not np.array_equal(h5.meta, tif.meta):
                     error = ('Meta data in {} and {} do not match!'
                              .format(geotiff, excl_h5))
                     logger.error(error)
@@ -209,6 +226,9 @@ class ExclusionsConverter:
         chunks : tuple
             Chunk size of dataset in .h5 file
         """
+        if len(chunks) < 3:
+            chunks = (1,) + chunks
+
         with h5py.File(excl_h5, mode='a') as f:
             ds = f.create_dataset(layer, shape=values.shape,
                                   dtype=values.dtype, chunks=chunks,
