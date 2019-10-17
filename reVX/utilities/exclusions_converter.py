@@ -311,7 +311,7 @@ class ExclusionsConverter:
 
         if geotiff is not None:
             logger.debug('\t- Writing {} to {}'.format(layer, geotiff))
-            ExclusionLayers._write_geotiff(geotiff, profile, values)
+            ExclusionsConverter._write_geotiff(geotiff, profile, values)
 
         return profile, values
 
