@@ -294,8 +294,9 @@ class Geotiff:
 
         Returns
         -------
-        bands :
+        bands : int
         """
+        return self.tiff_shape[0]
 
     @property
     def meta(self):
