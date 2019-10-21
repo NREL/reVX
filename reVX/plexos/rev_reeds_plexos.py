@@ -90,6 +90,10 @@ class PlexosNode:
         sc_meta = sc_meta.sort_values(by='cf_mean', ascending=False)
         sc_meta = sc_meta.reset_index(drop=True)
 
+        # infinite capacity in the last gid to make sure full buildout is done
+        j = sc_meta.columns.values.tolist().index('gid_capacity')
+        sc_meta.iloc[-1, j] = 1e6
+
         return sc_meta
 
     def _parse_sc_point(self, i):
@@ -451,7 +455,7 @@ class PlexosAggregation:
         bad_sc_points = []
         missing = list(set(self.sc_res_gids) - set(self.available_res_gids))
         if any(missing):
-            wmsg = ('The CF file is missing {} gids that were built '
+            wmsg = ('The CF file is missing {} resource gids that were built '
                     'in the REEDS-reV SC build out: {}'
                     .format(len(missing), missing))
             warn(wmsg)
@@ -484,7 +488,7 @@ class PlexosAggregation:
         """
         if any(bad_sc_points):
             bad_bool = self._sc_build['gid'].isin(bad_sc_points)
-            good_bool = ~self._sc_build['gid'].isin(bad_sc_points)
+            good_bool = ~bad_bool
             bad_cap = self._sc_build.loc[bad_bool, 'built_capacity'].sum()
             wmsg = ('{} MW of capacity is being merged from bad SC points.'
                     .format(bad_cap))
