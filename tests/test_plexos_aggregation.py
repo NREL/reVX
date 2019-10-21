@@ -113,6 +113,10 @@ def test_missing_gids(plexos_nodes, rev_sc, reeds, cf_fpath):
 
     assert icap == new_cap
 
+    profiles = pa._make_profiles()
+
+    assert profiles.max(axis=0).sum() / icap > 0.9
+
 
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
