@@ -329,7 +329,7 @@ class ExclusionsConverter:
 
         return profile, values
 
-    def layer_to_tiff(self, layer, geotiff):
+    def layer_to_geotiff(self, layer, geotiff):
         """
         Extract desired layer from .h5 file and write to geotiff .tif
 
@@ -383,4 +383,4 @@ class ExclusionsConverter:
         """
         excls = cls(excl_h5, chunks=chunks, hsds=hsds)
         for layer, geotiff in layers.items():
-            excls[layer, geotiff]
+            excls.layer_to_geotiff(layer, geotiff)
