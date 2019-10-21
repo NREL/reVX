@@ -515,10 +515,18 @@ class PlexosAggregation:
             ocap = self._sc_build['built_capacity'].sum()
 
             wmsg = ('SC build table reduced from {} to {} rows, '
-                    'reduced capacity from {} to {}.'
+                    'capacity from {} to {} (should be the same).'
                     .format(ilen, olen, icap, ocap))
             warn(wmsg)
             logger.warning(wmsg)
+
+            cap_error = (icap - ocap) / icap
+            if cap_error > 0.001:
+                msg = ('Too much capacity is being lost due to missing '
+                       'resource gids! Capacity difference is {}%. '
+                       'Cannot continue.'.format(cap_error * 100))
+                logger.error(msg)
+                raise RuntimeError(msg)
 
     def _init_output(self):
         """Init the output array of aggregated PLEXOS profiles.
