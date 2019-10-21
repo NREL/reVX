@@ -41,14 +41,12 @@ class ExclusionsConverter:
         msg = "{} for {}".format(self.__class__.__name__, self._excl_h5)
         return msg
 
-    def __getitem__(self, keys):
+    def __getitem__(self, layer):
         """
         Parameters
         ----------
-        keys : str | tuple
-            Either layer or (layer, geotiff) where layer is the layer to get
-            and geotiff is the path to the geotiff where the layer should
-            be written
+        layer : str
+            Layer to extract data for
 
         Returns
         -------
@@ -57,12 +55,6 @@ class ExclusionsConverter:
         values : ndarray
             Geotiff data
         """
-        if isinstance(keys, tuple):
-            layer = keys[0]
-            geotiff = keys[1]
-        else:
-            layer = keys
-            geotiff = None
 
         if layer not in self.layers:
             msg = "{} is not present in {}".format(layer, self._excl_h5)
@@ -70,7 +62,6 @@ class ExclusionsConverter:
             raise KeyError(msg)
 
         profile, values = self._extract_layer(self._excl_h5, layer,
-                                              geotiff=geotiff,
                                               hsds=self._hsds)
         return profile, values
 
@@ -337,6 +328,20 @@ class ExclusionsConverter:
             ExclusionsConverter._write_geotiff(geotiff, profile, values)
 
         return profile, values
+
+    def layer_to_tiff(self, layer, geotiff):
+        """
+        Extract desired layer from .h5 file and write to geotiff .tif
+
+        Parameters
+        ----------
+        layer : str
+            Layer to extract
+        geotiff : str
+            Path to geotiff file
+        """
+        self._extract_layer(self._excl_h5, layer, geotiff=geotiff,
+                            hsds=self._hsds)
 
     @classmethod
     def create_h5(cls, excl_h5, layers, chunks=(128, 128)):
