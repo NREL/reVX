@@ -92,6 +92,28 @@ def test_plexos_agg(plexos_nodes, rev_sc, reeds, cf_fpath):
     return plexos_meta, time_index, profiles
 
 
+def test_missing_gids(plexos_nodes, rev_sc, reeds, cf_fpath):
+    """Test that buildouts with missing resource gids are allocated correctly.
+    """
+
+    build_year = 2050
+    reeds = reeds[reeds.reeds_year == build_year].iloc[500:510]
+
+    # add missing SC points to requested buildout for test
+    n = 10
+    missing_test = pd.DataFrame({'gid': rev_sc.iloc[0:n]['gid'],
+                                 'reeds_year': [build_year] * n,
+                                 'built_capacity': [10] * n})
+
+    reeds = reeds.append(missing_test, ignore_index=False)
+    icap = reeds['built_capacity'].sum()
+
+    pa = PlexosAggregation(plexos_nodes, rev_sc, reeds, cf_fpath)
+    new_cap = pa._sc_build['built_capacity'].sum()
+
+    assert icap == new_cap
+
+
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 

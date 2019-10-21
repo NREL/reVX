@@ -488,8 +488,9 @@ class PlexosAggregation:
         """
         if any(bad_sc_points):
             bad_bool = self._sc_build['gid'].isin(bad_sc_points)
+            bad_cap_arr = self._sc_build.loc[bad_bool, 'built_capacity'].values
             good_bool = ~bad_bool
-            bad_cap = self._sc_build.loc[bad_bool, 'built_capacity'].sum()
+            bad_cap = bad_cap_arr.sum()
             wmsg = ('{} MW of capacity is being merged from bad SC points.'
                     .format(bad_cap))
             warn(wmsg)
@@ -498,13 +499,15 @@ class PlexosAggregation:
             clabels = self._get_coord_labels(self._sc_build)
             good_tree = cKDTree(self._sc_build.loc[good_bool, clabels])
             _, i = good_tree.query(self._sc_build.loc[bad_bool, clabels])
-            bad_cap_arr = self._sc_build.loc[bad_bool, 'built_capacity'].values
 
             ilen = len(self._sc_build)
             icap = self._sc_build['built_capacity'].sum()
 
             add_index = self._sc_build.index.values[good_bool][i]
-            self._sc_build.loc[add_index, 'built_capacity'] += bad_cap_arr
+
+            for i, ai in enumerate(add_index):
+                self._sc_build.loc[ai, 'built_capacity'] += bad_cap_arr[i]
+
             bad_ind = self._sc_build.index.values[bad_bool]
             self._sc_build = self._sc_build.drop(bad_ind, axis=0)
 
