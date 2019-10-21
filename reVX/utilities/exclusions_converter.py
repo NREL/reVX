@@ -160,13 +160,6 @@ class ExclusionsConverter:
             Path to geotiff file
         chunks : tuple
             Chunk size of exclusions in Geotiff
-
-        Returns
-        -------
-        profile : dict
-            Geotiff profile (attributes)
-        values : ndarray
-            Geotiff data
         """
         with Geotiff(geotiff, chunks=chunks) as tif:
             with ExclusionLayers(excl_h5) as h5:
@@ -208,6 +201,33 @@ class ExclusionsConverter:
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
+    @staticmethod
+    def _parse_tiff(geotiff, excl_h5=None, chunks=(128, 128)):
+        """
+        Extract exclusion layer from given geotiff, compare with excl_h5
+        if provided
+
+        Parameters
+        ----------
+        geotiff : str
+            Path to geotiff file
+        excl_h5 : str
+            Path to .h5 file containing exclusion layers
+        chunks : tuple
+            Chunk size of exclusions in Geotiff
+
+        Returns
+        -------
+        profile : dict
+            Geotiff profile (attributes)
+        values : ndarray
+            Geotiff data
+        """
+        if excl_h5 is not None:
+            ExclusionsConverter._check_geotiff(excl_h5, geotiff,
+                                               chunks=chunks)
+
+        with Geotiff(geotiff, chunks=chunks) as tif:
             return tif.profile, tif.values
 
     @staticmethod
@@ -219,6 +239,8 @@ class ExclusionsConverter:
         ----------
         excl_h5 : str
             Path to .h5 file containing exclusion layers
+        layer : str
+            Exclusion layer to extract
         profile : dict
             Geotiff profile (attributes)
         values : ndarray
@@ -256,8 +278,9 @@ class ExclusionsConverter:
         """
         logger.debug('\t- {} being extracted from {} and added to {}'
                      .format(layer, geotiff, os.path.basename(excl_h5)))
-        profile, values = ExclusionsConverter._check_geotiff(excl_h5, geotiff,
-                                                             chunks=chunks)
+        profile, values = ExclusionsConverter._parse_tiff(geotiff,
+                                                          excl_h5=excl_h5,
+                                                          chunks=chunks)
         ExclusionsConverter._write_layer(excl_h5, layer, profile, values,
                                          chunks=chunks)
 
