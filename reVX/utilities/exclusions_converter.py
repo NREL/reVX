@@ -367,20 +367,52 @@ class ExclusionsConverter:
             excls[layer] = geotiff
 
     @classmethod
-    def extract_all_layers(cls, excl_h5, layers, chunks=(128, 128),
-                           hsds=False):
+    def extract_layers(cls, excl_h5, layers, chunks=(128, 128),
+                       hsds=False):
         """
-        Create exclusions .h5 file from provided geotiffs
+        Extract given layers from exclusions .h5 file and save to disk
+        as GeoTiffs
 
         Parameters
         ----------
         excl_h5 : str
             Path to .h5 file containing or to contain exclusion layers
         layers : dict
-            Dictionary mapping goetiffs to the layers to load
+            Dictionary mapping layers to geotiffs to create
         chunks : tuple
             Chunk size of exclusions in .h5 and Geotiffs
+        hsds : bool
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
+            behind HSDS
         """
         excls = cls(excl_h5, chunks=chunks, hsds=hsds)
         for layer, geotiff in layers.items():
+            excls.layer_to_geotiff(layer, geotiff)
+
+    @classmethod
+    def extract_all_layers(cls, excl_h5, out_dir, chunks=(128, 128),
+                           hsds=False):
+        """
+        Extract all layers from exclusions .h5 file and save to disk
+        as GeoTiffs
+
+        Parameters
+        ----------
+        excl_h5 : str
+            Path to .h5 file containing or to contain exclusion layers
+        out_dir : str
+            Path to output directory into which layers should be saved as
+            GeoTiffs
+        chunks : tuple
+            Chunk size of exclusions in .h5 and Geotiffs
+        hsds : bool
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
+            behind HSDS
+        """
+        if not os.path.exists(out_dir):
+            os.makedirs(out_dir)
+
+        excls = cls(excl_h5, chunks=chunks, hsds=hsds)
+        for layer in excls.layers:
+            geotiff = os.path.join(out_dir, "{}.tif".format(layer))
             excls.layer_to_geotiff(layer, geotiff)
