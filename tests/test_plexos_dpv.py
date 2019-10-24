@@ -58,16 +58,16 @@ def test_dpv_agg():
         meta = res.meta
         truth = res['cf_profile', :, [0, 1]]
 
-    lats = [meta.latitude[0], meta.latitude[1]]
-    lons = [meta.longitude[0], meta.longitude[1]]
-    cap = [50, 100]
-    node_buildout = pd.DataFrame({'plexos_id': [0, 1],
+    lats = meta.latitude[0:3]
+    lons = meta.longitude[0:3]
+    cap = [50, 100, 0]
+    node_buildout = pd.DataFrame({'plexos_id': [0, 1, 2],
                                   'latitude': lats,
                                   'longitude': lons,
                                   'built_capacity': cap})
     pa = DpvPlexosAggregation(node_buildout, cf)
     profiles = pa.get_node_gen_profiles()
-    truth *= cap
+    truth *= cap[0:2]
     assert np.allclose(profiles, truth)
     return profiles, truth
 

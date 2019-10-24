@@ -266,6 +266,13 @@ class DpvPlexosAggregation:
             raise KeyError('Node buildout table is missing the following '
                            'columns: {}'.format(missing))
 
+        # drop node buildouts without capacity
+        bad = (pd.isnull(self._node_buildout['built_capacity'])
+               | (self._node_buildout['built_capacity'] == 0))
+        bad = self._node_buildout.index.values[bad]
+        self._node_buildout = self._node_buildout.drop(bad, axis=0)
+        self._node_buildout = self._node_buildout.reset_index(drop=True)
+
     @property
     def cf_meta(self):
         """Get the cf meta data.
