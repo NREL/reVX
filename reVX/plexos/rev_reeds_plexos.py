@@ -90,6 +90,9 @@ class PlexosNode:
         sc_meta = sc_meta.sort_values(by='cf_mean', ascending=False)
         sc_meta = sc_meta.reset_index(drop=True)
 
+        # infinite capacity in the last gid to make sure full buildout is done
+        sc_meta.loc[sc_meta.index[-1], 'gid_capacity'] = 1e6
+
         return sc_meta
 
     def _parse_sc_point(self, i):
@@ -451,7 +454,7 @@ class PlexosAggregation:
         bad_sc_points = []
         missing = list(set(self.sc_res_gids) - set(self.available_res_gids))
         if any(missing):
-            wmsg = ('The CF file is missing {} gids that were built '
+            wmsg = ('The CF file is missing {} resource gids that were built '
                     'in the REEDS-reV SC build out: {}'
                     .format(len(missing), missing))
             warn(wmsg)
@@ -484,8 +487,9 @@ class PlexosAggregation:
         """
         if any(bad_sc_points):
             bad_bool = self._sc_build['gid'].isin(bad_sc_points)
-            good_bool = ~self._sc_build['gid'].isin(bad_sc_points)
-            bad_cap = self._sc_build.loc[bad_bool, 'built_capacity'].sum()
+            bad_cap_arr = self._sc_build.loc[bad_bool, 'built_capacity'].values
+            good_bool = ~bad_bool
+            bad_cap = bad_cap_arr.sum()
             wmsg = ('{} MW of capacity is being merged from bad SC points.'
                     .format(bad_cap))
             warn(wmsg)
@@ -494,13 +498,15 @@ class PlexosAggregation:
             clabels = self._get_coord_labels(self._sc_build)
             good_tree = cKDTree(self._sc_build.loc[good_bool, clabels])
             _, i = good_tree.query(self._sc_build.loc[bad_bool, clabels])
-            bad_cap_arr = self._sc_build.loc[bad_bool, 'built_capacity'].values
 
             ilen = len(self._sc_build)
             icap = self._sc_build['built_capacity'].sum()
 
             add_index = self._sc_build.index.values[good_bool][i]
-            self._sc_build.loc[add_index, 'built_capacity'] += bad_cap_arr
+
+            for i, ai in enumerate(add_index):
+                self._sc_build.loc[ai, 'built_capacity'] += bad_cap_arr[i]
+
             bad_ind = self._sc_build.index.values[bad_bool]
             self._sc_build = self._sc_build.drop(bad_ind, axis=0)
 
@@ -508,10 +514,18 @@ class PlexosAggregation:
             ocap = self._sc_build['built_capacity'].sum()
 
             wmsg = ('SC build table reduced from {} to {} rows, '
-                    'reduced capacity from {} to {}.'
+                    'capacity from {} to {} (should be the same).'
                     .format(ilen, olen, icap, ocap))
             warn(wmsg)
             logger.warning(wmsg)
+
+            cap_error = (icap - ocap) / icap
+            if cap_error > 0.001:
+                msg = ('Too much capacity is being lost due to missing '
+                       'resource gids! Capacity difference is {}%. '
+                       'Cannot continue.'.format(cap_error * 100))
+                logger.error(msg)
+                raise RuntimeError(msg)
 
     def _init_output(self):
         """Init the output array of aggregated PLEXOS profiles.
