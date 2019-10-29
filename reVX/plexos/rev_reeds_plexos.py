@@ -91,8 +91,7 @@ class PlexosNode:
         sc_meta = sc_meta.reset_index(drop=True)
 
         # infinite capacity in the last gid to make sure full buildout is done
-        j = sc_meta.columns.values.tolist().index('gid_capacity')
-        sc_meta.iloc[-1, j] = 1e6
+        sc_meta.loc[sc_meta.index[-1], 'gid_capacity'] = 1e6
 
         return sc_meta
 
