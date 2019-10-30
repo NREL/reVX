@@ -222,9 +222,10 @@ class ExclusionsConverter:
             return tif.profile, tif.values
 
     @staticmethod
-    def _write_layer(excl_h5, layer, profile, values, chunks=(128, 128)):
+    def _write_layer(excl_h5, layer, profile, values, chunks=(128, 128),
+                     description=None):
         """
-        Extract given layer from exclusions .h5 file and write to geotiff .tif
+        Extract given layer from geotiff .tif and write to .h5 file
 
         Parameters
         ----------
@@ -238,6 +239,8 @@ class ExclusionsConverter:
             Geotiff data
         chunks : tuple
             Chunk size of dataset in .h5 file
+        description : str
+            Description of exclusion layer
         """
         if len(chunks) < 3:
             chunks = (1,) + chunks
@@ -250,9 +253,14 @@ class ExclusionsConverter:
             ds.attrs['profile'] = json.dumps(profile)
             logger.debug('\t- Unique profile for {} added:\n{}'
                          .format(layer, profile))
+            if description is not None:
+                ds.attrs['description'] = description
+                logger.debug('\t- Description for {} added:\n{}'
+                             .format(layer, description))
 
     @staticmethod
-    def _geotiff_to_h5(excl_h5, layer, geotiff, chunks=(128, 128)):
+    def _geotiff_to_h5(excl_h5, layer, geotiff, chunks=(128, 128),
+                       description=None):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
 
@@ -266,6 +274,8 @@ class ExclusionsConverter:
             Path to geotiff file
         chunks : tuple
             Chunk size of exclusions in .h5 and Geotiffs
+        description : str
+            Description of exclusion layer
         """
         logger.debug('\t- {} being extracted from {} and added to {}'
                      .format(layer, geotiff, os.path.basename(excl_h5)))
@@ -273,7 +283,8 @@ class ExclusionsConverter:
                                                           excl_h5=excl_h5,
                                                           chunks=chunks)
         ExclusionsConverter._write_layer(excl_h5, layer, profile, values,
-                                         chunks=chunks)
+                                         chunks=chunks,
+                                         description=description)
 
     @staticmethod
     def _write_geotiff(geotiff, profile, values):
@@ -329,6 +340,22 @@ class ExclusionsConverter:
 
         return profile, values
 
+    def geotiff_to_layer(self, layer, geotiff, description=None):
+        """
+        Transfer geotiff exclusions to h5 confirming they match existing layers
+
+        Parameters
+        ----------
+        layer : str
+            Layer to extract
+        geotiff : str
+            Path to geotiff file
+        description : str
+            Description of exclusion layer
+        """
+        self._geotiff_to_h5(self._excl_h5, layer, geotiff,
+                            chunks=self._chunks, description=description)
+
     def layer_to_geotiff(self, layer, geotiff):
         """
         Extract desired layer from .h5 file and write to geotiff .tif
@@ -344,7 +371,8 @@ class ExclusionsConverter:
                             hsds=self._hsds)
 
     @classmethod
-    def create_h5(cls, excl_h5, layers, chunks=(128, 128)):
+    def create_h5(cls, excl_h5, layers, chunks=(128, 128),
+                  descriptions=None):
         """
         Create exclusions .h5 file from provided geotiffs
 
@@ -357,14 +385,20 @@ class ExclusionsConverter:
             or dictionary mapping goetiffs to the layers to load
         chunks : tuple
             Chunk size of exclusions in .h5 and Geotiffs
+        descriptions : dict | NoneType
+            Descriptions for layers to be writen to .h5
         """
         if isinstance(layers, list):
             layers = {os.path.basename(l).split('.')[0]: l
                       for l in layers}
 
+        if descriptions is None:
+            descriptions = {}
+
         excls = cls(excl_h5, chunks=chunks)
         for layer, geotiff in layers.items():
-            excls[layer] = geotiff
+            description = descriptions.get(layer, None)
+            excls.geotiff_to_layer(layer, geotiff, description=description)
 
     @classmethod
     def extract_layers(cls, excl_h5, layers, chunks=(128, 128),
