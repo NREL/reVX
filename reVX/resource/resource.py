@@ -160,7 +160,7 @@ class ResourceX(Resource):
                              if file.endswith('.pgz')]
                 for pgz in pgz_files:
                     prefix = pgz.split('_tree')[0]
-                    if self._h5_file.startswith(prefix):
+                    if self.h5_file.startswith(prefix):
                         tree = os.path.join(BIN, pgz)
                         break
 
