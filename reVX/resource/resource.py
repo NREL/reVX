@@ -8,7 +8,8 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
-from reV.handlers.resource import NSRDB, Resource, SolarResource, WindResource
+from reV.handlers.resource import (FiveMinWTK, MultiFileNSRDB, NSRDB,
+                                   Resource, SolarResource, WindResource)
 from scipy.spatial import cKDTree
 
 BIN = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -519,9 +520,31 @@ class NSRDBX(NSRDB, ResourceX):
         compute_tree : bool
             Force the computation of the cKDTree
         kwargs : dict
-            Kwargs for Resource
+            Kwargs for NSRDB
         """
         super().__init__(nsrdb_h5, **kwargs)
+        self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
+
+
+class MultiFileNSRDBX(MultiFileNSRDB, ResourceX):
+    """
+    NSRDB extraction class
+    """
+    def __init__(self, nsrdb_dir, tree=None, compute_tree=False, **kwargs):
+        """
+        Parameters
+        ----------
+        nsrdb_dir : str
+            Path to directory containing NSRDB .h5 files
+        tree : str
+            path to .pgz file containing pickled cKDTree of lat, lon
+            coordinates
+        compute_tree : bool
+            Force the computation of the cKDTree
+        kwargs : dict
+            Kwargs for MultiFileNSRDB
+        """
+        super().__init__(nsrdb_dir, **kwargs)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
 
@@ -609,3 +632,25 @@ class WindX(WindResource, ResourceX):
         SAM_df = self.get_SAM_gid(hub_height, gid)
 
         return SAM_df
+
+
+class FiveMinWindX(FiveMinWTK, WindX):
+    """
+    Wind Resource extraction class
+    """
+    def __init__(self, wtk_dir, tree=None, compute_tree=False, **kwargs):
+        """
+        Parameters
+        ----------
+        wtk_dir : str
+            Path to directory containing five minute WTK .h5 files
+        tree : str
+            path to .pgz file containing pickled cKDTree of lat, lon
+            coordinates
+        compute_tree : bool
+            Force the computation of the cKDTree
+        kwargs : dict
+            Kwargs for Resource
+        """
+        super().__init__(wtk_dir, **kwargs)
+        self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
