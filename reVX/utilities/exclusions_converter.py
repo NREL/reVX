@@ -219,7 +219,9 @@ class ExclusionsConverter:
                                                chunks=chunks)
 
         with Geotiff(geotiff, chunks=chunks) as tif:
-            return tif.profile, tif.values
+            profile, values = tif.profile, tif.values
+
+        return profile, values
 
     @staticmethod
     def _write_layer(excl_h5, layer, profile, values, chunks=(128, 128),
@@ -353,6 +355,14 @@ class ExclusionsConverter:
         description : str
             Description of exclusion layer
         """
+        if not os.path.exists(self._excl_h5):
+            self._init_h5(self._excl_h5, geotiff, chunks=self._chunks)
+
+        if layer in self.layers:
+            msg = "{} is already present in {}".format(layer, self._excl_h5)
+            logger.error(msg)
+            raise KeyError(msg)
+
         self._geotiff_to_h5(self._excl_h5, layer, geotiff,
                             chunks=self._chunks, description=description)
 
