@@ -174,8 +174,10 @@ def extra_profiles(ctx, profiles, forecast_fpath):
     parallel = ctx.obj['PARALLEL']
     rpm_clusters = ctx.obj['RPM_CLUSTERS']
 
-    logger.info('Extracting extra representative profiles from:\n{}'
+    logger.info('Extracting extra representative profiles from: {}'
                 .format(rpm_clusters))
+    if forecast_fpath is not None:
+        logger.info('Using forecast file: {}'.format(forecast_fpath))
     rpm_o.extract_profiles(rpm_clusters, cf_fpath, out_dir,
                            n_profiles=profiles, job_tag=name,
                            parallel=parallel, forecast_fpath=forecast_fpath)

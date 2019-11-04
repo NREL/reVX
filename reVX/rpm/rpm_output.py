@@ -89,7 +89,7 @@ class RepresentativeProfiles:
 
     @staticmethod
     def _get_rep_profile(clusters, cf_fpath, irp=0, fpath_out=None,
-                         key='rank', cols=None):
+                         key='rank', forecast_fpath=None, cols=None):
         """Get a single representative profile timeseries dataframe.
 
         Parameters
@@ -104,15 +104,24 @@ class RepresentativeProfiles:
             Optional filepath to export files to.
         key : str
             Rank column to sort by to get the best ranked profile.
+        forecast_fpath : str
+            reV generation output file for forecast data. If this is input,
+            profiles will be taken from forecast fpath instead of fpath gen
+            based on a NN mapping.
         cols : list | None
             Columns headers for the rep profiles. None will use whatever
             cluster_ids are in clusters.
         """
+        if forecast_fpath is None:
+            with Outputs(cf_fpath) as f:
+                ti = f.time_index
+        else:
+            with Outputs(forecast_fpath) as f:
+                ti = f.time_index
 
-        with Outputs(cf_fpath) as f:
-            ti = f.time_index
         if cols is None:
             cols = clusters.cluster_id.unique()
+
         profile_df = pd.DataFrame(index=ti, columns=cols)
         profile_df.index.name = 'time_index'
 
@@ -123,16 +132,29 @@ class RepresentativeProfiles:
                 if irp < len(df_ranked):
                     rep = df_ranked.iloc[irp, :]
                     res_gid = rep['gid']
+                    gen_gid = rep['gen_gid']
 
-                    logger.info('Representative profile i #{} from cluster id '
-                                '{} is from res_gid {}'
-                                .format(irp, cid, res_gid))
+                    if forecast_fpath is None:
+                        logger.info('Representative profile i #{} from '
+                                    'cluster id {} is from gen_gid {}, '
+                                    'res_gid {}'
+                                    .format(irp, cid, gen_gid, res_gid))
 
-                    with Outputs(cf_fpath) as f:
-                        meta_gid = f.get_meta_arr('gid')
-                        gen_gid_arr = np.where(meta_gid == res_gid)[0]
-                        if gen_gid_arr.size > 0:
-                            gen_gid = gen_gid_arr[0]
+                        with Outputs(cf_fpath) as f:
+                            meta_gid = f.get_meta_arr('gid')
+                            gen_gid_arr = np.where(meta_gid == res_gid)[0]
+                            if gen_gid_arr.size > 0:
+                                gen_gid = gen_gid_arr[0]
+                                profile_df.loc[:, cid] = f['cf_profile', :,
+                                                           gen_gid]
+
+                    else:
+                        logger.info('Representative profile i #{} from '
+                                    'cluster id {} is from forecast '
+                                    'gen_gid {}.'
+                                    .format(irp, cid, gen_gid))
+
+                        with Outputs(forecast_fpath) as f:
                             profile_df.loc[:, cid] = f['cf_profile', :,
                                                        gen_gid]
 
@@ -216,10 +238,13 @@ class RepresentativeProfiles:
 
                 rp._get_rep_profile(df, cf_fpath, irp=irp,
                                     fpath_out=fpath_out_trg, key=rp.key,
+                                    forecast_fpath=rp._forecast_fpath,
                                     cols=cols)
         else:
             rp._get_rep_profile(rp.clusters, cf_fpath, irp=irp,
-                                fpath_out=fpath_out, key=rp.key, cols=cols)
+                                fpath_out=fpath_out, key=rp.key,
+                                forecast_fpath=rp._forecast_fpath,
+                                cols=cols)
 
 
 class RPMOutput:
