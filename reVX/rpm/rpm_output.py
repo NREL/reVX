@@ -8,6 +8,7 @@ import numpy as np
 import os
 import pandas as pd
 import psutil
+from scipy.spatial import cKDTree
 from warnings import warn
 
 from reV.handlers.outputs import Outputs
@@ -21,15 +22,21 @@ logger = logging.getLogger(__name__)
 class RepresentativeProfiles:
     """Methods to export representative generation profiles."""
 
-    def __init__(self, clusters, key=None):
+    def __init__(self, clusters, cf_fpath, key=None, forecast_fpath=None):
         """
         Parameters
         ----------
         clusters : pd.DataFrame
             Single DataFrame with (gid, gen_gid, cluster_id, rank).
+        cf_fpath : str
+            reV generation output file.
         key : str | None
             Rank column to sort by to get the best ranked profile.
             None will use implicit logic to select the rank key.
+        forecast_fpath : str
+            reV generation output file for forecast data. If this is input,
+            profiles will be taken from forecast fpath instead of fpath gen
+            based on a NN mapping.
         """
 
         if key is not None:
@@ -51,6 +58,34 @@ class RepresentativeProfiles:
                      .format(key))
 
         self.clusters = clusters
+        self._cf_fpath = cf_fpath
+        self._forecast_fpath = forecast_fpath
+        self._forecast_map = None
+
+        if self._forecast_fpath is not None:
+            self._make_forecast_nn_map()
+            self._replace_forecast_gen_gids()
+
+    def _make_forecast_nn_map(self):
+        """Make a mapping between the cf meta and the forecast meta."""
+        with Outputs(self._cf_fpath) as cf:
+            meta_cf = cf.meta
+        with Outputs(self._forecast_fpath) as forecast:
+            meta_forecast = forecast.meta
+        labels = ['latitude', 'longitude']
+        tree = cKDTree(meta_forecast[labels])
+        d, i, = tree.query(meta_cf[labels], k=1)
+        logger.info('Mapping reV gen file to forecast gen file, '
+                    'nearest neighbor min / mean / max: {} / {} / {}'
+                    .format(d.min(), d.mean(), d.max()))
+        self._forecast_map = i
+
+    def _replace_forecast_gen_gids(self):
+        """Replace gen_gid column in cluster table with forecast data."""
+        for i in self.clusters.index:
+            gen_gid = self.clusters.at[i, 'gen_gid']
+            forecast_gid = self._forecast_map[gen_gid]
+            self.clusters.at[i, 'gen_gid'] = forecast_gid
 
     @staticmethod
     def _get_rep_profile(clusters, cf_fpath, irp=0, fpath_out=None,
@@ -107,7 +142,7 @@ class RepresentativeProfiles:
 
     @classmethod
     def export_profiles(cls, n_profiles, clusters, cf_fpath, fn_pro,
-                        out_dir, max_workers=1, key=None):
+                        out_dir, max_workers=1, key=None, forecast_fpath=None):
         """Export representative profile files.
 
         Parameters
@@ -125,6 +160,10 @@ class RepresentativeProfiles:
         key : str | None
             Column in clusters to sort ranks by. None will allow for
             default logic.
+        forecast_fpath : str
+            reV generation output file for forecast data. If this is input,
+            profiles will be taken from forecast fpath instead of fpath gen
+            based on a NN mapping.
         """
 
         if max_workers == 1:
@@ -132,7 +171,8 @@ class RepresentativeProfiles:
                 fni = fn_pro.replace('.csv', '_rank{}.csv'.format(irp))
                 fpath_out_i = os.path.join(out_dir, fni)
                 cls.export_single(clusters, cf_fpath, irp=irp,
-                                  fpath_out=fpath_out_i, key=key)
+                                  fpath_out=fpath_out_i, key=key,
+                                  forecast_fpath=forecast_fpath)
         else:
             with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
                 for irp in range(n_profiles):
@@ -140,11 +180,11 @@ class RepresentativeProfiles:
                     fpath_out_i = os.path.join(out_dir, fni)
                     exe.submit(cls.export_single, clusters,
                                cf_fpath, irp=irp, fpath_out=fpath_out_i,
-                               key=key)
+                               key=key, forecast_fpath=forecast_fpath)
 
     @classmethod
     def export_single(cls, clusters, cf_fpath, irp=0, fpath_out=None,
-                      key=None):
+                      key=None, forecast_fpath=None):
         """Get a single representative profile timeseries dataframe.
 
         Parameters
@@ -160,12 +200,16 @@ class RepresentativeProfiles:
         key : str | None
             Rank column to sort by to get the best ranked profile.
             None will use implicit logic to select the rank key.
+        forecast_fpath : str
+            reV generation output file for forecast data. If this is input,
+            profiles will be taken from forecast fpath instead of fpath gen
+            based on a NN mapping.
         """
-        rp = cls(clusters, key=key)
+        rp = cls(clusters, cf_fpath, key=key, forecast_fpath=forecast_fpath)
         cols = clusters.cluster_id.unique()
 
         if rp.key == 'rank_included_trg':
-            for itrg, df in clusters.groupby('trg'):
+            for itrg, df in rp.clusters.groupby('trg'):
                 if fpath_out is not None:
                     fpath_out_trg = fpath_out.replace('.csv', '_trg{}.csv'
                                                       .format(itrg))
@@ -851,7 +895,8 @@ class RPMOutput:
 
     @classmethod
     def extract_profiles(cls, rpm_clusters, cf_fpath, out_dir, n_profiles=1,
-                         job_tag=None, parallel=True, key=None):
+                         job_tag=None, parallel=True, key=None,
+                         forecast_fpath=None):
         """Use pre-formatted RPM cluster outputs to generate profile outputs.
 
         Parameters
@@ -874,6 +919,10 @@ class RPMOutput:
         key : str | None
             Column in clusters to sort ranks by. None will allow for
             default logic.
+        forecast_fpath : str
+            reV generation output file for forecast data. If this is input,
+            profiles will be taken from forecast fpath instead of fpath gen
+            based on a NN mapping.
         """
 
         rpmo = cls(rpm_clusters, cf_fpath, None, None, None,
@@ -885,7 +934,8 @@ class RPMOutput:
 
         RepresentativeProfiles.export_profiles(
             rpmo.n_profiles, rpmo._clusters, rpmo._cf_fpath, fn_pro, out_dir,
-            max_workers=rpmo.max_workers, key=key)
+            max_workers=rpmo.max_workers, key=key,
+            forecast_fpath=forecast_fpath)
 
         logger.info('Finished extracting extra representative profiles!')
 
