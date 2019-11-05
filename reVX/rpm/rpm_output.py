@@ -62,30 +62,94 @@ class RepresentativeProfiles:
         self._forecast_fpath = forecast_fpath
         self._forecast_map = None
 
-        if self._forecast_fpath is not None:
-            self._make_forecast_nn_map()
-            self._replace_forecast_gen_gids()
+        if (self._forecast_fpath is not None
+                and 'forecast_gid' not in self.clusters.columns):
+            self.clusters = self.process_forecast_clusters(
+                self.clusters, self._cf_fpath, self._forecast_fpath)
 
-    def _make_forecast_nn_map(self):
-        """Make a mapping between the cf meta and the forecast meta."""
-        with Outputs(self._cf_fpath) as cf:
+    @classmethod
+    def process_forecast_clusters(cls, clusters, cf_fpath, forecast_fpath):
+        """Process the clusters dataframe with NN to forecast data.
+
+        Parameters
+        ----------
+        clusters : pd.DataFrame
+            Single DataFrame with (gid, gen_gid, cluster_id, rank).
+        cf_fpath : str
+            reV generation output file.
+        forecast_fpath : str
+            reV generation output file for forecast data. If this is input,
+            profiles will be taken from forecast fpath instead of fpath gen
+            based on a NN mapping.
+
+        Returns
+        -------
+        clusters : pd.DataFrame
+            Single DataFrame with additional forecast columns.
+        """
+        with Outputs(cf_fpath) as cf:
             meta_cf = cf.meta
-        with Outputs(self._forecast_fpath) as forecast:
+        with Outputs(forecast_fpath) as forecast:
             meta_forecast = forecast.meta
+        forecast_map = cls._make_forecast_nn_map(meta_cf, meta_forecast)
+        clusters = cls._add_forecast_gids(clusters, forecast_map,
+                                          meta_forecast)
+        return clusters
+
+    @staticmethod
+    def _make_forecast_nn_map(meta_cf, meta_forecast):
+        """Make a mapping between the cf meta and the forecast meta.
+
+        Parameters
+        ----------
+        meta_cf : pd.DataFrame
+            Meta data for reV gen CF file (actuals).
+        meta_forecast : pd.DataFrame
+            Meta data for reV gen CF file (forecast).
+
+        Returns
+        -------
+        i : np.ndarray
+            1D array of forecast gid's with length equal to meta_cf.
+        """
         labels = ['latitude', 'longitude']
         tree = cKDTree(meta_forecast[labels])
         d, i, = tree.query(meta_cf[labels], k=1)
         logger.info('Mapping reV gen file to forecast gen file, '
                     'nearest neighbor min / mean / max: {} / {} / {}'
                     .format(d.min(), d.mean(), d.max()))
-        self._forecast_map = i
+        return i
 
-    def _replace_forecast_gen_gids(self):
-        """Replace gen_gid column in cluster table with forecast data."""
-        for i in self.clusters.index:
-            gen_gid = self.clusters.at[i, 'gen_gid']
-            forecast_gid = self._forecast_map[gen_gid]
-            self.clusters.at[i, 'gen_gid'] = forecast_gid
+    @staticmethod
+    def _add_forecast_gids(clusters, forecast_map, meta_forecast):
+        """Add forecast_gid column in cluster table with forecast data.
+
+        Parameters
+        ----------
+        clusters : pd.DataFrame
+            Single DataFrame with (gid, gen_gid, cluster_id, rank).
+        forecast_map : np.ndarray
+            1D array of forecast gid's with length equal to meta_cf.
+        meta_forecast : pd.DataFrame
+            Meta data for reV gen CF file (forecast).
+
+        Returns
+        -------
+        clusters : pd.DataFrame
+            Single DataFrame with additional forecast columns.
+        """
+        clusters['forecast_gid'] = np.nan
+        clusters['forecast_latitude'] = np.nan
+        clusters['forecast_longitude'] = np.nan
+        lats = meta_forecast['latitude']
+        lons = meta_forecast['longitude']
+        for i in clusters.index:
+            gen_gid = clusters.at[i, 'gen_gid']
+            forecast_gid = forecast_map[gen_gid]
+            clusters.at[i, 'forecast_gid'] = forecast_gid
+            clusters.at[i, 'forecast_latitude'] = lats[forecast_gid]
+            clusters.at[i, 'forecast_longitude'] = lons[forecast_gid]
+        return clusters
 
     @staticmethod
     def _get_rep_profile(clusters, cf_fpath, irp=0, fpath_out=None,
@@ -149,14 +213,15 @@ class RepresentativeProfiles:
                                                            gen_gid]
 
                     else:
+                        for_gid = rep['forecast_gid']
                         logger.info('Representative profile i #{} from '
-                                    'cluster id {} is from forecast '
-                                    'gen_gid {}.'
-                                    .format(irp, cid, gen_gid))
+                                    'cluster id {} is from gen_gid {}, '
+                                    'forecast_gid {}.'
+                                    .format(irp, cid, for_gid, gen_gid))
 
                         with Outputs(forecast_fpath) as f:
                             profile_df.loc[:, cid] = f['cf_profile', :,
-                                                       gen_gid]
+                                                       for_gid]
 
         if fpath_out is not None:
             profile_df.to_csv(fpath_out)
@@ -187,6 +252,11 @@ class RepresentativeProfiles:
             profiles will be taken from forecast fpath instead of fpath gen
             based on a NN mapping.
         """
+        if forecast_fpath is not None:
+            clusters = cls.process_forecast_clusters(clusters, cf_fpath,
+                                                     forecast_fpath)
+            fn_fore = fn_pro.replace('.csv', '_meta.csv')
+            clusters.to_csv(os.path.join(out_dir, fn_fore))
 
         if max_workers == 1:
             for irp in range(n_profiles):
@@ -227,7 +297,8 @@ class RepresentativeProfiles:
             profiles will be taken from forecast fpath instead of fpath gen
             based on a NN mapping.
         """
-        rp = cls(clusters, cf_fpath, key=key, forecast_fpath=forecast_fpath)
+        rp = cls(clusters, cf_fpath, key=key, forecast_fpath=forecast_fpath,
+                 fpath_out=fpath_out)
         cols = clusters.cluster_id.unique()
 
         if rp.key == 'rank_included_trg':
