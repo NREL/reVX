@@ -33,7 +33,6 @@ class Geotiff:
             GeoTIFF chunk (tile) shape/size.
         """
         self._fpath = fpath
-        self._meta = None
         self._iarr = None
         self._src = xr.open_rasterio(self._fpath, chunks=chunks)
         self._profile = self._create_profile(chunks=chunks)
@@ -68,127 +67,14 @@ class Geotiff:
 
         if ds == 'meta':
             out = self._get_meta(*ds_slice)
+        elif 'lat' in ds.lower():
+            out = self._get_lat_lon(*ds_slice)[0]
+        elif 'lon' in ds.lower():
+            out = self._get_lat_lon(*ds_slice)[1]
         else:
             out = self._get_data(ds, *ds_slice)
 
         return out
-
-    @staticmethod
-    def _get_meta_inds(x_slice, y_slice, lon, lat):
-        """Get the row and column indices associated with lat/lon slices.
-
-        Parameters
-        ----------
-        x_slice : slice
-            Column slice corresponding to the extracted lon values.
-        y_slice : slice
-            Row slice corresponding to the extracted lat values.
-        lon : np.ndarray
-            Extracted lon values (pre-meshgrid) associated with the x_slice.
-        lat : np.ndarray
-            Extracted lat values (pre-meshgrid) associated with the y_slice.
-
-        Returns
-        -------
-        row_ind : np.ndarray
-            1D array of the row indices corresponding to the lat/lon arrays
-            once mesh-gridded and flattened
-        col_ind : np.ndarray
-            1D array of the col indices corresponding to the lat/lon arrays
-            once mesh-gridded and flattened
-        """
-        if y_slice.start is None:
-            y_slice = slice(0, y_slice.stop)
-        if x_slice.start is None:
-            x_slice = slice(0, x_slice.stop)
-
-        col_ind = np.arange(x_slice.start, x_slice.start + len(lon))
-        row_ind = np.arange(y_slice.start, y_slice.start + len(lat))
-        col_ind = col_ind.astype(np.uint32)
-        row_ind = row_ind.astype(np.uint32)
-        col_ind, row_ind = np.meshgrid(col_ind, row_ind)
-        col_ind = col_ind.flatten()
-        row_ind = row_ind.flatten()
-
-        return row_ind, col_ind
-
-    def _get_meta(self, *ds_slice):
-        """Get the geotiff meta dataframe in standard WGS84 projection.
-
-        Parameters
-        ----------
-        *ds_slice : tuple
-            Slicing args for meta data.
-
-        Returns
-        -------
-        _meta : pd.DataFrame
-            Flattened meta data with same format as reV resource meta data.
-        """
-        y_slice, x_slice = self._unpack_slices(*ds_slice)
-
-        lon = self._src.coords['x'].values.astype(np.float32)[x_slice]
-        lat = self._src.coords['y'].values.astype(np.float32)[y_slice]
-
-        row_ind, col_ind = self._get_meta_inds(x_slice, y_slice, lon, lat)
-
-        lon, lat = np.meshgrid(lon, lat)
-        lon = lon.flatten()
-        lat = lat.flatten()
-        lon, lat = transform(Proj(self._src.attrs['crs']),
-                             Proj({"init": "epsg:4326"}),
-                             lon, lat)
-
-        meta = pd.DataFrame({'latitude': lat.astype(np.float32),
-                             'longitude': lon.astype(np.float32),
-                             'row_ind': row_ind, 'col_ind': col_ind})
-        return meta
-
-    def _get_data(self, ds, *ds_slice):
-        """Get the flattened geotiff layer data.
-
-        Parameters
-        ----------
-        ds : int
-            Layer to get data from
-        *ds_slice : tuple
-            Slicing args for data
-
-        Returns
-        -------
-        data : np.ndarray
-            1D array of flattened data corresponding to meta data.
-        """
-        y_slice, x_slice = self._unpack_slices(*ds_slice)
-        data = self._src.data[ds, y_slice, x_slice].flatten().compute()
-        return data
-
-    @staticmethod
-    def _unpack_slices(*yx_slice):
-        """Get the flattened geotiff layer data.
-
-        Parameters
-        ----------
-        *yx_slice : tuple
-            Slicing args for data
-
-        Returns
-        -------
-        y_slice : slice
-            Row slice.
-        x_slice : slice
-            Col slice.
-        """
-        if len(yx_slice) == 1:
-            y_slice = yx_slice[0]
-            x_slice = slice(None, None, None)
-        elif len(yx_slice) == 2:
-            y_slice = yx_slice[0]
-            x_slice = yx_slice[1]
-        else:
-            raise GeoTiffKeyError('Cannot do 3D slicing on GeoTiff meta.')
-
-        return y_slice, x_slice
 
     @property
     def attrs(self):
@@ -299,6 +185,39 @@ class Geotiff:
         return self.tiff_shape[0]
 
     @property
+    def lat_lon(self):
+        """
+        Get latitude and longitude coordinate arrays
+
+        Returns
+        -------
+        tuple
+        """
+        return self._get_lat_lon(slice(None), slice(None))
+
+    @property
+    def latitude(self):
+        """
+        Get latitude coordinates array
+
+        Returns
+        -------
+        ndarray
+        """
+        return self['lat']
+
+    @property
+    def longitude(self):
+        """
+        Get longitude coordinates array
+
+        Returns
+        -------
+        ndarray
+        """
+        return self['lon']
+
+    @property
     def meta(self):
         """
         Lat lon to y, x coordinate mapping
@@ -319,6 +238,143 @@ class Geotiff:
         ndarray
         """
         return self._src.values
+
+    @staticmethod
+    def _unpack_slices(*yx_slice):
+        """Get the flattened geotiff layer data.
+
+        Parameters
+        ----------
+        *yx_slice : tuple
+            Slicing args for data
+
+        Returns
+        -------
+        y_slice : slice
+            Row slice.
+        x_slice : slice
+            Col slice.
+        """
+        if len(yx_slice) == 1:
+            y_slice = yx_slice[0]
+            x_slice = slice(None)
+        elif len(yx_slice) == 2:
+            y_slice = yx_slice[0]
+            x_slice = yx_slice[1]
+        else:
+            raise GeoTiffKeyError('Cannot do 3D slicing on GeoTiff meta.')
+
+        return y_slice, x_slice
+
+    @staticmethod
+    def _get_meta_inds(x_slice, y_slice):
+        """Get the row and column indices associated with lat/lon slices.
+
+        Parameters
+        ----------
+        x_slice : slice
+            Column slice corresponding to the extracted lon values.
+        y_slice : slice
+            Row slice corresponding to the extracted lat values.
+
+        Returns
+        -------
+        row_ind : np.ndarray
+            1D array of the row indices corresponding to the lat/lon arrays
+            once mesh-gridded and flattened
+        col_ind : np.ndarray
+            1D array of the col indices corresponding to the lat/lon arrays
+            once mesh-gridded and flattened
+        """
+        if y_slice.start is None:
+            y_slice = slice(0, y_slice.stop)
+        if x_slice.start is None:
+            x_slice = slice(0, x_slice.stop)
+
+        x_len = x_slice.stop - x_slice.start
+        y_len = y_slice.stop - y_slice.start
+
+        col_ind = np.arange(x_slice.start, x_slice.start + x_len)
+        row_ind = np.arange(y_slice.start, y_slice.start + y_len)
+        col_ind = col_ind.astype(np.uint32)
+        row_ind = row_ind.astype(np.uint32)
+        col_ind, row_ind = np.meshgrid(col_ind, row_ind)
+        col_ind = col_ind.flatten()
+        row_ind = row_ind.flatten()
+
+        return row_ind, col_ind
+
+    def _get_meta(self, *ds_slice):
+        """Get the geotiff meta dataframe in standard WGS84 projection.
+
+        Parameters
+        ----------
+        *ds_slice : tuple
+            Slicing args for meta data.
+
+        Returns
+        -------
+        meta : pd.DataFrame
+            Flattened meta data with same format as reV resource meta data.
+        """
+        y_slice, x_slice = self._unpack_slices(*ds_slice)
+        row_ind, col_ind = self._get_meta_inds(x_slice, y_slice)
+
+        lat, lon = self._get_lat_lon(*ds_slice)
+        lon = lon.flatten()
+        lat = lat.flatten()
+
+        meta = pd.DataFrame({'latitude': lat.astype(np.float32),
+                             'longitude': lon.astype(np.float32),
+                             'row_ind': row_ind, 'col_ind': col_ind})
+        return meta
+
+    def _get_lat_lon(self, *ds_slice):
+        """
+        Get the geotiff latitude and longitude coordinates
+
+        Parameters
+        ----------
+        *ds_slice : tuple
+            Slicing args for latitude and longitude arrays
+
+        Returns
+        -------
+        lat : ndarray
+            Projected latitude coordinates
+        lon : ndarray
+            Projected longitude coordinates
+        """
+        y_slice, x_slice = self._unpack_slices(*ds_slice)
+
+        lon = self._src.coords['x'].values.astype(np.float32)[x_slice]
+        lat = self._src.coords['y'].values.astype(np.float32)[y_slice]
+
+        lon, lat = np.meshgrid(lon, lat)
+        lon, lat = transform(Proj(self._src.attrs['crs']),
+                             Proj({"init": "epsg:4326"}),
+                             lon, lat)
+
+        return lat, lon
+
+    def _get_data(self, ds, *ds_slice):
+        """Get the flattened geotiff layer data.
+
+        Parameters
+        ----------
+        ds : int
+            Layer to get data from
+        *ds_slice : tuple
+            Slicing args for data
+
+        Returns
+        -------
+        data : np.ndarray
+            1D array of flattened data corresponding to meta data.
+        """
+        y_slice, x_slice = self._unpack_slices(*ds_slice)
+        data = self._src.data[ds, y_slice, x_slice].flatten().compute()
+        return data
 
     def _create_profile(self, chunks=(128, 128)):
         """

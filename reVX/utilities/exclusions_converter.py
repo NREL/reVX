@@ -10,7 +10,6 @@ import os
 import rasterio
 
 from reV.handlers.exclusions import ExclusionLayers
-from reV.handlers.outputs import Outputs
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.exceptions import ExclusionsCheckError
 
@@ -120,7 +119,7 @@ class ExclusionsConverter:
         with Geotiff(geotiff, chunks=chunks) as src:
             profile = src.profile
             shape = src.shape
-            meta = Outputs.to_records_array(src.meta)
+            lat, lon = src.lat_lon
             logger.debug('\t- "profile", "meta", and "shape" extracted from {}'
                          .format(geotiff))
 
@@ -130,9 +129,14 @@ class ExclusionsConverter:
                 logger.debug('\t- Default profile:\n{}'.format(profile))
                 dst.attrs['shape'] = shape
                 logger.debug('\t- Default shape:\n{}'.format(shape))
-                dst.create_dataset('meta', shape=meta.shape, dtype=meta.dtype,
-                                   data=meta)
-                logger.debug('\t- "meta" data created and loaded')
+                dst.create_dataset('latitude', shape=lat.shape,
+                                   dtype=lat.dtype, data=lat,
+                                   chunks=chunks)
+                logger.debug('\t- latitude coordiantes created')
+                dst.create_dataset('longitude', shape=lon.shape,
+                                   dtype=lon.dtype, data=lon,
+                                   chunks=chunks)
+                logger.debug('\t- longitude coordiantes created')
         except Exception:
             logger.exception("Error initilizing {}".format(excl_h5))
             if os.path.exists(excl_h5):
@@ -186,8 +190,15 @@ class ExclusionsConverter:
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
-                if not np.array_equal(h5.meta, tif.meta):
-                    error = ('Meta data in {} and {} do not match!'
+                lat, lon = tif.lat_lon
+                if not np.array_equal(h5.latitude, lat):
+                    error = ('Latitude coordinates {} and {} do not match!'
+                             .format(geotiff, excl_h5))
+                    logger.error(error)
+                    raise ExclusionsCheckError(error)
+
+                if not np.array_equal(h5.longitude, lon):
+                    error = ('Longitude coordinates {} and {} do not match!'
                              .format(geotiff, excl_h5))
                     logger.error(error)
                     raise ExclusionsCheckError(error)
