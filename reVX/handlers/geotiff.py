@@ -67,9 +67,9 @@ class Geotiff:
 
         if ds == 'meta':
             out = self._get_meta(*ds_slice)
-        elif 'lat' in ds.lower():
+        elif ds.lower().startswith('lat'):
             out = self._get_lat_lon(*ds_slice)[0]
-        elif 'lon' in ds.lower():
+        elif ds.lower().startswith('lon'):
             out = self._get_lat_lon(*ds_slice)[1]
         else:
             out = self._get_data(ds, *ds_slice)
