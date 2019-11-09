@@ -2,5 +2,5 @@
 """
 reV to RPM Pipeline
 """
-from reVX.rpm.rpm_manager import RPMClusterManager
-from reVX.rpm.rpm_output import RPMOutput
+from .rpm_manager import RPMClusterManager
+from .rpm_output import RPMOutput
