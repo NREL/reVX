@@ -10,6 +10,12 @@ class reVXError(Exception):
     """
 
 
+class ExclusionsCheckError(Exception):
+    """
+    Error during Exclusion layer checking
+    """
+
+
 class GeoTiffKeyError(Exception):
     """
     KeyError for GeoTiffHandler
