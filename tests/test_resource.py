@@ -6,7 +6,7 @@ import numpy as np
 import os
 import pandas as pd
 import pytest
-from reVX.resource.resource import (FiveMinWindX, MultiFileNSRDBX, NSRDBX,
+from reVX.resource.resource import (MultiFileWindX, MultiFileNSRDBX, NSRDBX,
                                     WindX)
 from reVX import TESTDATADIR
 
@@ -39,12 +39,12 @@ def WindX_cls():
 
 
 @pytest.fixture
-def FiveMinWindX_cls():
+def MultiFileWindX_cls():
     """
     Init WindResource resource handler
     """
     path = os.path.join(TESTDATADIR, 'wtk')
-    return FiveMinWindX(path, prefix='wtk', suffix='m.h5')
+    return MultiFileWindX(path, prefix='wtk', suffix='m.h5')
 
 
 def check_props(res_cls):
@@ -274,55 +274,55 @@ class TestWindX:
         WindX_cls.close()
 
 
-class TestFiveMinWindX:
+class TestMultiFileWindX:
     """
-    FiveMinWindX Resource Extractor
+    MultiFileWindX Resource Extractor
     """
     @staticmethod
-    def test_props(FiveMinWindX_cls):
+    def test_props(MultiFileWindX_cls):
         """
-        test FiveMinWindX properties
+        test MultiFileWindX properties
         """
-        check_props(FiveMinWindX_cls)
-        FiveMinWindX_cls.close()
+        check_props(MultiFileWindX_cls)
+        MultiFileWindX_cls.close()
 
     @staticmethod
-    def test_site(FiveMinWindX_cls, ds_name='windspeed_100m'):
+    def test_site(MultiFileWindX_cls, ds_name='windspeed_100m'):
         """
         test site data extraction
         """
-        extract_site(FiveMinWindX_cls, ds_name)
-        FiveMinWindX_cls.close()
+        extract_site(MultiFileWindX_cls, ds_name)
+        MultiFileWindX_cls.close()
 
     @staticmethod
-    def test_region(FiveMinWindX_cls, ds_name='windspeed_50m',
+    def test_region(MultiFileWindX_cls, ds_name='windspeed_50m',
                     region='Klamath', region_col='county'):
         """
         test region data extraction
         """
-        extract_region(FiveMinWindX_cls, ds_name, region,
+        extract_region(MultiFileWindX_cls, ds_name, region,
                        region_col=region_col)
-        FiveMinWindX_cls.close()
+        MultiFileWindX_cls.close()
 
     @staticmethod
-    def test_full_map(FiveMinWindX_cls, ds_name='windspeed_100m',
+    def test_full_map(MultiFileWindX_cls, ds_name='windspeed_100m',
                       timestep='2010-07-04 12:00:00'):
         """
         test map data extraction for all gids
         """
-        extract_map(FiveMinWindX_cls, ds_name, timestep)
-        FiveMinWindX_cls.close()
+        extract_map(MultiFileWindX_cls, ds_name, timestep)
+        MultiFileWindX_cls.close()
 
     @staticmethod
-    def test_region_map(FiveMinWindX_cls, ds_name='windspeed_50m',
+    def test_region_map(MultiFileWindX_cls, ds_name='windspeed_50m',
                         timestep='2010-12-25 12:00:00',
                         region='Klamath', region_col='county'):
         """
         test map data extraction for all gids
         """
-        extract_map(FiveMinWindX_cls, ds_name, timestep, region=region,
+        extract_map(MultiFileWindX_cls, ds_name, timestep, region=region,
                     region_col=region_col)
-        FiveMinWindX_cls.close()
+        MultiFileWindX_cls.close()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

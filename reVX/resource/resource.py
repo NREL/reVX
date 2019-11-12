@@ -8,7 +8,7 @@ import numpy as np
 import os
 import pandas as pd
 import pickle
-from reV.handlers.resource import (FiveMinWTK, MultiFileNSRDB, NSRDB,
+from reV.handlers.resource import (MultiFileWTK, MultiFileNSRDB, NSRDB,
                                    Resource, SolarResource, WindResource)
 from scipy.spatial import cKDTree
 
@@ -634,7 +634,7 @@ class WindX(WindResource, ResourceX):
         return SAM_df
 
 
-class FiveMinWindX(FiveMinWTK, WindX):
+class MultiFileWindX(MultiFileWTK, WindX):
     """
     Wind Resource extraction class
     """
