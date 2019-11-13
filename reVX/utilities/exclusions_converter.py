@@ -417,7 +417,9 @@ class ExclusionsConverter:
             descriptions = {}
 
         excls = cls(excl_h5, chunks=chunks)
+        logger.info('Creating {}'.format(excl_h5))
         for layer, geotiff in layers.items():
+            logger.info('- Transfering {}'.format(layer))
             description = descriptions.get(layer, None)
             excls.geotiff_to_layer(layer, geotiff, description=description)
 
@@ -441,7 +443,9 @@ class ExclusionsConverter:
             behind HSDS
         """
         excls = cls(excl_h5, chunks=chunks, hsds=hsds)
+        logger.info('Extracting layers from {}'.format(excl_h5))
         for layer, geotiff in layers.items():
+            logger.info('- Extracting {}'.format(geotiff))
             excls.layer_to_geotiff(layer, geotiff)
 
     @classmethod
@@ -468,6 +472,8 @@ class ExclusionsConverter:
             os.makedirs(out_dir)
 
         excls = cls(excl_h5, chunks=chunks, hsds=hsds)
+        logger.info('Extracting layers from {}'.format(excl_h5))
         for layer in excls.layers:
             geotiff = os.path.join(out_dir, "{}.tif".format(layer))
+            logger.info('- Extracting {}'.format(geotiff))
             excls.layer_to_geotiff(layer, geotiff)
