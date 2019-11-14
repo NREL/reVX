@@ -42,10 +42,10 @@ def buildout_params():
 
 
 @pytest.fixture
-def plexos_buildout():
+def plexos_buildout(plexos_nodes):
     """Get a three node plexos buildout meta data"""
     built_caps, gids, gid_builds = buildout_params()
-    plexos_buildout = plexos_nodes()
+    plexos_buildout = plexos_nodes
     plexos_buildout = plexos_buildout.iloc[0:3]
 
     plexos_buildout['built_capacity'] = built_caps
