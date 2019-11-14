@@ -67,35 +67,6 @@ class RepresentativeProfiles:
             self.clusters = self.process_forecast_clusters(
                 self.clusters, self._cf_fpath, self._forecast_fpath)
 
-    @classmethod
-    def process_forecast_clusters(cls, clusters, cf_fpath, forecast_fpath):
-        """Process the clusters dataframe with NN to forecast data.
-
-        Parameters
-        ----------
-        clusters : pd.DataFrame
-            Single DataFrame with (gid, gen_gid, cluster_id, rank).
-        cf_fpath : str
-            reV generation output file.
-        forecast_fpath : str
-            reV generation output file for forecast data. If this is input,
-            profiles will be taken from forecast fpath instead of fpath gen
-            based on a NN mapping.
-
-        Returns
-        -------
-        clusters : pd.DataFrame
-            Single DataFrame with additional forecast columns.
-        """
-        with Outputs(cf_fpath) as cf:
-            meta_cf = cf.meta
-        with Outputs(forecast_fpath) as forecast:
-            meta_forecast = forecast.meta
-        forecast_map = cls._make_forecast_nn_map(meta_cf, meta_forecast)
-        clusters = cls._add_forecast_gids(clusters, forecast_map,
-                                          meta_forecast)
-        return clusters
-
     @staticmethod
     def _make_forecast_nn_map(meta_cf, meta_forecast):
         """Make a mapping between the cf meta and the forecast meta.
@@ -228,6 +199,35 @@ class RepresentativeProfiles:
             logger.info('Saved {}'.format(fpath_out))
 
     @classmethod
+    def process_forecast_clusters(cls, clusters, cf_fpath, forecast_fpath):
+        """Process the clusters dataframe with NN to forecast data.
+
+        Parameters
+        ----------
+        clusters : pd.DataFrame
+            Single DataFrame with (gid, gen_gid, cluster_id, rank).
+        cf_fpath : str
+            reV generation output file.
+        forecast_fpath : str
+            reV generation output file for forecast data. If this is input,
+            profiles will be taken from forecast fpath instead of fpath gen
+            based on a NN mapping.
+
+        Returns
+        -------
+        clusters : pd.DataFrame
+            Single DataFrame with additional forecast columns.
+        """
+        with Outputs(cf_fpath) as cf:
+            meta_cf = cf.meta
+        with Outputs(forecast_fpath) as forecast:
+            meta_forecast = forecast.meta
+        forecast_map = cls._make_forecast_nn_map(meta_cf, meta_forecast)
+        clusters = cls._add_forecast_gids(clusters, forecast_map,
+                                          meta_forecast)
+        return clusters
+
+    @classmethod
     def export_profiles(cls, n_profiles, clusters, cf_fpath, fn_pro,
                         out_dir, max_workers=1, key=None, forecast_fpath=None):
         """Export representative profile files.
@@ -262,21 +262,21 @@ class RepresentativeProfiles:
             for irp in range(n_profiles):
                 fni = fn_pro.replace('.csv', '_rank{}.csv'.format(irp))
                 fpath_out_i = os.path.join(out_dir, fni)
-                cls.export_single(clusters, cf_fpath, irp=irp,
-                                  fpath_out=fpath_out_i, key=key,
-                                  forecast_fpath=forecast_fpath)
+                cls.export_single_profile(clusters, cf_fpath, irp=irp,
+                                          fpath_out=fpath_out_i, key=key,
+                                          forecast_fpath=forecast_fpath)
         else:
             with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
                 for irp in range(n_profiles):
                     fni = fn_pro.replace('.csv', '_rank{}.csv'.format(irp))
                     fpath_out_i = os.path.join(out_dir, fni)
-                    exe.submit(cls.export_single, clusters,
+                    exe.submit(cls.export_single_profile, clusters,
                                cf_fpath, irp=irp, fpath_out=fpath_out_i,
                                key=key, forecast_fpath=forecast_fpath)
 
     @classmethod
-    def export_single(cls, clusters, cf_fpath, irp=0, fpath_out=None,
-                      key=None, forecast_fpath=None):
+    def export_single_profile(cls, clusters, cf_fpath, irp=0, fpath_out=None,
+                              key=None, forecast_fpath=None):
         """Get a single representative profile timeseries dataframe.
 
         Parameters
