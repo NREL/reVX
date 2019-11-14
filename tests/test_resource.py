@@ -6,7 +6,8 @@ import numpy as np
 import os
 import pandas as pd
 import pytest
-from reVX.resource.resource import NSRDBX, WindX
+from reVX.resource.resource import (MultiFileWindX, MultiFileNSRDBX, NSRDBX,
+                                    WindX)
 from reVX import TESTDATADIR
 
 
@@ -20,12 +21,30 @@ def NSRDBX_cls():
 
 
 @pytest.fixture
+def MultiFileNSRDBX_cls():
+    """
+    Init NSRDB resource handler
+    """
+    path = os.path.join(TESTDATADIR, 'nsrdb')
+    return MultiFileNSRDBX(path, prefix='nsrdb', suffix='2018.h5')
+
+
+@pytest.fixture
 def WindX_cls():
     """
     Init WindResource resource handler
     """
     path = os.path.join(TESTDATADIR, 'wtk/ri_100_wtk_2012.h5')
     return WindX(path)
+
+
+@pytest.fixture
+def MultiFileWindX_cls():
+    """
+    Init WindResource resource handler
+    """
+    path = os.path.join(TESTDATADIR, 'wtk')
+    return MultiFileWindX(path, prefix='wtk', suffix='m.h5')
 
 
 def check_props(res_cls):
@@ -154,6 +173,57 @@ class TestNSRDBX:
         NSRDBX_cls.close()
 
 
+class TestMultiFileNSRDBX:
+    """
+    MultiFileNSRDBX Resource Extractor
+    """
+    @staticmethod
+    def test_props(MultiFileNSRDBX_cls):
+        """
+        test MultiFileNSRDBX properties
+        """
+        check_props(MultiFileNSRDBX_cls)
+        MultiFileNSRDBX_cls.close()
+
+    @staticmethod
+    def test_site(MultiFileNSRDBX_cls, ds_name='dni'):
+        """
+        test site data extraction
+        """
+        extract_site(MultiFileNSRDBX_cls, ds_name)
+        MultiFileNSRDBX_cls.close()
+
+    @staticmethod
+    def test_region(MultiFileNSRDBX_cls, ds_name='ghi', region='Clallam',
+                    region_col='county'):
+        """
+        test region data extraction
+        """
+        extract_region(MultiFileNSRDBX_cls, ds_name, region,
+                       region_col=region_col)
+        MultiFileNSRDBX_cls.close()
+
+    @staticmethod
+    def test_full_map(MultiFileNSRDBX_cls, ds_name='ghi',
+                      timestep='2018-07-04 12:00:00'):
+        """
+        test map data extraction for all gids
+        """
+        extract_map(MultiFileNSRDBX_cls, ds_name, timestep)
+        MultiFileNSRDBX_cls.close()
+
+    @staticmethod
+    def test_region_map(MultiFileNSRDBX_cls, ds_name='dhi',
+                        timestep='2018-12-25 12:00:00',
+                        region='Clallam', region_col='county'):
+        """
+        test map data extraction for all gids
+        """
+        extract_map(MultiFileNSRDBX_cls, ds_name, timestep, region=region,
+                    region_col=region_col)
+        MultiFileNSRDBX_cls.close()
+
+
 class TestWindX:
     """
     WindX Resource Extractor
@@ -202,3 +272,74 @@ class TestWindX:
         extract_map(WindX_cls, ds_name, timestep, region=region,
                     region_col=region_col)
         WindX_cls.close()
+
+
+class TestMultiFileWindX:
+    """
+    MultiFileWindX Resource Extractor
+    """
+    @staticmethod
+    def test_props(MultiFileWindX_cls):
+        """
+        test MultiFileWindX properties
+        """
+        check_props(MultiFileWindX_cls)
+        MultiFileWindX_cls.close()
+
+    @staticmethod
+    def test_site(MultiFileWindX_cls, ds_name='windspeed_100m'):
+        """
+        test site data extraction
+        """
+        extract_site(MultiFileWindX_cls, ds_name)
+        MultiFileWindX_cls.close()
+
+    @staticmethod
+    def test_region(MultiFileWindX_cls, ds_name='windspeed_50m',
+                    region='Klamath', region_col='county'):
+        """
+        test region data extraction
+        """
+        extract_region(MultiFileWindX_cls, ds_name, region,
+                       region_col=region_col)
+        MultiFileWindX_cls.close()
+
+    @staticmethod
+    def test_full_map(MultiFileWindX_cls, ds_name='windspeed_100m',
+                      timestep='2010-07-04 12:00:00'):
+        """
+        test map data extraction for all gids
+        """
+        extract_map(MultiFileWindX_cls, ds_name, timestep)
+        MultiFileWindX_cls.close()
+
+    @staticmethod
+    def test_region_map(MultiFileWindX_cls, ds_name='windspeed_50m',
+                        timestep='2010-12-25 12:00:00',
+                        region='Klamath', region_col='county'):
+        """
+        test map data extraction for all gids
+        """
+        extract_map(MultiFileWindX_cls, ds_name, timestep, region=region,
+                    region_col=region_col)
+        MultiFileWindX_cls.close()
+
+
+def execute_pytest(capture='all', flags='-rapP'):
+    """Execute module as pytest with detailed summary report.
+
+    Parameters
+    ----------
+    capture : str
+        Log or stdout/stderr capture option. ex: log (only logger),
+        all (includes stdout/stderr)
+    flags : str
+        Which tests to show logs and results for.
+    """
+
+    fname = os.path.basename(__file__)
+    pytest.main(['-q', '--show-capture={}'.format(capture), fname, flags])
+
+
+if __name__ == '__main__':
+    execute_pytest()
