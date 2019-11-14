@@ -159,8 +159,12 @@ def rep_profiles(ctx, rpm_clusters, exclusions, techmap, techmap_dset, trg):
 @rep_profiles.command()
 @click.option('--profiles', '-np', required=True, type=int,
               help=('Number of profiles per cluster to export.'))
+@click.option('--forecast_fpath', '-fo', type=STR, default=None,
+              help=('reV generation output file for forecast data. If this is '
+                    'input, profiles will be taken from forecast file instead '
+                    'of the cf file, based on a NN mapping.'))
 @click.pass_context
-def extra_profiles(ctx, profiles):
+def extra_profiles(ctx, profiles, forecast_fpath):
     """
     Cluster RPM Regions and extract representative profiles
     """
@@ -170,11 +174,13 @@ def extra_profiles(ctx, profiles):
     parallel = ctx.obj['PARALLEL']
     rpm_clusters = ctx.obj['RPM_CLUSTERS']
 
-    logger.info('Extracting extra representative profiles from:\n{}'
+    logger.info('Extracting extra representative profiles from: {}'
                 .format(rpm_clusters))
+    if forecast_fpath is not None:
+        logger.info('Using forecast file: {}'.format(forecast_fpath))
     rpm_o.extract_profiles(rpm_clusters, cf_fpath, out_dir,
                            n_profiles=profiles, job_tag=name,
-                           parallel=parallel)
+                           parallel=parallel, forecast_fpath=forecast_fpath)
 
 
 if __name__ == '__main__':
