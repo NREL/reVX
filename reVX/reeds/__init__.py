@@ -1,4 +1,4 @@
 # -*- coding: utf-8 -*-
 """
-reV to PLEXOS pipeline
+reV to ReEDS pipeline
 """
