@@ -70,6 +70,7 @@ setup(
     package_dir={"reVX": "reVX"},
     entry_points={
         "console_scripts": ["reVX=reVX.cli:main",
+                            "reV-ReEDS=reVX.reeds.reeds_cli:main"
                             "reV-rpm=reVX.rpm.rpm_cli:main",
                             "NSRDB=reVX.resource.solar_cli:main",
                             "WIND=reVX.resource.wind_cli:main"],
