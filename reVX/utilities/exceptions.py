@@ -30,11 +30,29 @@ class RPMValueError(Exception):
 
 class RPMTypeError(Exception):
     """
-    ValueError for RPM Pipeline
+    TypeError for RPM Pipeline
     """
 
 
 class RPMRuntimeError(Exception):
     """
-    ValueError for RPM Pipeline
+    RuntimeError for RPM Pipeline
+    """
+
+
+class ReEDSValueError(Exception):
+    """
+    ValueError for ReEDS Pipeline
+    """
+
+
+class ReEDSKeyError(Exception):
+    """
+    TypeError for ReEDS Pipeline
+    """
+
+
+class ReEDSRuntimeError(Exception):
+    """
+    RuntimeError for ReEDS Pipeline
     """
