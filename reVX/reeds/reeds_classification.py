@@ -7,36 +7,46 @@ import numpy as np
 import os
 import pandas as pd
 
-from reVX.utilities.exceptions import ReEDSValueError, ReEDSKeyError
+from reVX.rpm.rpm_clusters import RPMClusters
+from reVX.utilities.cluster_methods import ClusteringMethods
+from reVX.utilities.exceptions import ReedsValueError, ReedsKeyError
 
 logger = logging.getLogger(__name__)
 
 
-class ReEDSClasses:
+class ReedsClassifier:
     """
     Create ReEDS resource classes
     """
-    def __init__(self, rev_table, class_bins, region_map='reeds_region'):
+    def __init__(self, rev_table, bins, region_map='reeds_region', classes=3,
+                 cluster_kwargs={'cluster_on': 'trans_cap_cost',
+                                 'method': 'kmeans'}):
         """
         Parameters
         ----------
         rev_table : str | pandas.DataFrame
             reV supply curve or aggregation table,
             or path to file containing table
-        class_bins : str | pandas.DataFrame | pandas.Series | dict
-            Bins to use for creating classes, either provided in a .csv, .json
+        bins : str | pandas.DataFrame | pandas.Series | dict
+            Resource bins, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
+        classes : int
+            Number of classes (clusters) to create for each region-bin
+        cluster_kwargs : dict
+            kwargs for _cluster_classes
         """
         rev_table = self._parse_table(rev_table)
         rev_table = self._map_region(rev_table, region_map)
-        self._rev_table = self._bin_classes(rev_table, class_bins)
-        self._groups = self._rev_table.groupby(['region_id', 'class_bin'])
+        rev_table = self._resource_bins(rev_table, bins)
+        self._rev_table = self._cluster_classes(rev_table, classes,
+                                                **cluster_kwargs)
+        self._groups = self._rev_table.groupby(['region', 'bin', 'class'])
         self._i = 0
 
     def __repr__(self):
-        msg = ("{} contains {} region-class groups"
+        msg = ("{} contains {} region-bin-class groups"
                .format(self.__class__.__name__, len(self)))
         return msg
 
@@ -57,7 +67,7 @@ class ReEDSClasses:
             self._i = 0
             raise StopIteration
 
-        key = self.region_class_pairs[self._i]
+        key = self.region_bin_class_groups[self._i]
         group = self[key]
         self._i += 1
 
@@ -67,7 +77,7 @@ class ReEDSClasses:
         test = key in self._groups.groups
         if not test:
             msg = "{} does not exist in {}".format(key, self)
-            raise ReEDSKeyError(msg)
+            raise ReedsKeyError(msg)
 
         return test
 
@@ -80,18 +90,29 @@ class ReEDSClasses:
         -------
         ndarray
         """
-        return np.sort(self._rev_table['region_id'].unique())
+        return np.sort(self._rev_table['region'].unique())
 
     @property
-    def classes(self):
+    def bins(self):
         """
-        Unique ReEDS class bins
+        Unique ReEDS resource bins
 
         Returns
         -------
         ndarray
         """
-        return np.sort(self._rev_table['class_bin'].unique())
+        return np.sort(self._rev_table['bin'].unique())
+
+    @property
+    def classes(self):
+        """
+        Unique ReEDS classes (clusters)
+
+        Returns
+        -------
+        ndarray
+        """
+        return np.sort(self._rev_table['class'].unique())
 
     @property
     def table(self):
@@ -105,26 +126,15 @@ class ReEDSClasses:
         return self._rev_table
 
     @property
-    def region_class_pairs(self):
+    def region_bin_class_groups(self):
         """
-        All unique (region, class) pairs
+        All unique (region, bin, class) groups
 
         Returns
         -------
         list
         """
         return sorted(list(self._groups.groups.keys()))
-
-    @property
-    def region_class_groups(self):
-        """
-        Region class groupby object
-
-        Returns
-        -------
-        pandas.groupby
-        """
-        return self._groups
 
     @staticmethod
     def _parse_table(input_table):
@@ -177,19 +187,19 @@ class ReEDSClasses:
         """
         if isinstance(region_map, str):
             if os.path.isfile(region_map):
-                region_map = ReEDSClasses._parse_table(region_map)
+                region_map = ReedsClassifier._parse_table(region_map)
             elif region_map in rev_table:
                 region_map = rev_table[['sc_gid', region_map]].copy()
             else:
                 msg = ('{} is not a valid file path or reV table '
                        'column label'.format(type(region_map)))
                 logger.error(msg)
-                raise ReEDSValueError(msg)
+                raise ReedsValueError(msg)
         elif not isinstance(region_map, pd.DataFrame):
             msg = ('Cannot parse region map from type {}'
                    .format(type(region_map)))
             logger.error(msg)
-            raise ReEDSValueError(msg)
+            raise ReedsValueError(msg)
 
         return region_map
 
@@ -212,35 +222,36 @@ class ReEDSClasses:
             Updated table with region_id added
         """
         if region_map is None:
-            rev_table['region_id'] = 0
+            rev_table['region'] = 0
         else:
-            region_map = ReEDSClasses._parse_region_map(region_map, rev_table)
+            region_map = ReedsClassifier._parse_region_map(region_map,
+                                                           rev_table)
 
             if 'sc_gid' not in region_map:
                 msg = ('region map must contain a "sc_gid" column to allow '
                        'mapping to Supply Curve table')
                 logger.error(msg)
-                raise ReEDSValueError(msg)
+                raise ReedsValueError(msg)
 
             region_col = [c for c in region_map.columns if c != 'sc_gid']
-            rev_table['region_id'] = 0
+            rev_table['region'] = 0
             rev_table = rev_table.set_index('sc_gid')
             for i, (_, df) in enumerate(region_map.groupby(region_col)):
-                rev_table.loc[df['sc_gid'], 'region_id'] = i
+                rev_table.loc[df['sc_gid'], 'region'] = i
 
             rev_table = rev_table.reset_index()
 
         return rev_table
 
     @staticmethod
-    def _parse_class_bins(class_bins):
+    def _parse_bins(bins):
         """
         Parse bins needed to create classes
 
         Parameters
         ----------
-        class_bins : str | pandas.DataFrame | pandas.Series | dict
-            Bins to use for creating classes, either provided in a .csv, .json
+        bins : str | pandas.DataFrame | pandas.Series | dict
+            Resource bins, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary
 
         Returns
@@ -250,38 +261,38 @@ class ReEDSClasses:
         bins : ndarray | list
             List / vector of bins to create classes from
         """
-        if isinstance(class_bins, str):
-            class_bins = ReEDSClasses._parse_table(class_bins)
-        elif isinstance(class_bins, pd.Series):
-            if not class_bins.name:
+        if isinstance(bins, str):
+            bins = ReedsClassifier._parse_table(bins)
+        elif isinstance(bins, pd.Series):
+            if not bins.name:
                 msg = ('reV table attribute to bin not supplied as Series '
                        'name')
                 logger.error(msg)
-                raise ReEDSValueError(msg)
+                raise ReedsValueError(msg)
 
-            class_bins = class_bins.to_frame()
-        elif isinstance(class_bins, dict):
-            class_bins = pd.DataFrame(class_bins)
-        elif not isinstance(class_bins, pd.DataFrame):
+            bins = bins.to_frame()
+        elif isinstance(bins, dict):
+            bins = pd.DataFrame(bins)
+        elif not isinstance(bins, pd.DataFrame):
             msg = ('Cannot parse class bins from type {}'
-                   .format(type(class_bins)))
+                   .format(type(bins)))
             logger.error(msg)
-            raise ReEDSValueError(msg)
+            raise ReedsValueError(msg)
 
-        attr = class_bins.columns
+        attr = bins.columns
         if len(attr) > 1:
             msg = ('Can only bin classes on one attribute: {} were provided: '
                    '\n{}'.format(len(attr), attr))
             logger.error(msg)
-            raise ReEDSValueError(msg)
+            raise ReedsValueError(msg)
 
         attr = attr[0]
-        bins = class_bins[attr].values
+        bins = bins[attr].values
 
         return attr, bins
 
     @staticmethod
-    def _TRG_classes(rev_table, trg_bins, by_region=True):
+    def _TRG_bins(rev_table, trg_bins, by_region=True):
         """
         Create TRG (technical resource groups) using given cummulative
         capacity bin widths
@@ -304,67 +315,106 @@ class ReEDSClasses:
                                     axis=0)
         labels = [i + 1 for i in range(len(cap_breaks) - 1)]
 
-        cols = ['sc_gid', 'capacity', 'mean_lcoe', 'region_id']
+        cols = ['sc_gid', 'capacity', 'mean_lcoe', 'region']
         trg_table = rev_table[cols].copy()
         if by_region:
             classes = []
-            trg_table['class_bin'] = 0
-            for _, df in trg_table.groupby('region_id'):
+            trg_table['bin'] = 0
+            for _, df in trg_table.groupby('region'):
                 df = df.sort_values('mean_lcoe')
                 cum_sum = df['capacity'].cumsum()
-                df.loc[:, 'class_bin'] = pd.cut(x=cum_sum, bins=cap_breaks,
-                                                labels=labels)
+                df.loc[:, 'bin'] = pd.cut(x=cum_sum, bins=cap_breaks,
+                                          labels=labels)
                 classes.append(df)
 
             trg_table = pd.concat(classes)
         else:
             trg_table = trg_table.sort_values('mean_lcoe')
             cum_sum = trg_table['capacity'].cumsum()
-            trg_table.loc[:, 'class_bin'] = pd.cut(x=cum_sum, bins=cap_breaks,
-                                                   labels=labels)
+            trg_table.loc[:, 'bin'] = pd.cut(x=cum_sum, bins=cap_breaks,
+                                             labels=labels)
 
-        rev_table = rev_table.merge(trg_table[['sc_gid', 'class_bin']],
+        rev_table = rev_table.merge(trg_table[['sc_gid', 'bin']],
                                     on='sc_gid', how='left')
 
         return rev_table
 
     @staticmethod
-    def _bin_classes(rev_table, class_bins):
+    def _resource_bins(rev_table, bins):
         """
-        Bin sites in to classes
+        Create resource bins
 
         Parameters
         ----------
         rev_table : pandas.DataFrame
             reV supply curve or aggregation table
-        class_bins : str | pandas.DataFrame | pandas.Series | dict
-            Bins to use for creating classes, either provided in a .csv, .json
+        bins : str | pandas.DataFrame | pandas.Series | dict
+            Resource bins, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary
 
         Returns
         -------
         rev_table : pandas.DataFrame
-            Updated table with class bins added
+            Updated table with resource bins added
         """
-        attr, bins = ReEDSClasses._parse_class_bins(class_bins)
+        attr, bins = ReedsClassifier._parse_bins(bins)
 
         if "TRG" in attr:
-            rev_table = ReEDSClasses._TRG_classes(rev_table, bins)
+            rev_table = ReedsClassifier._TRG_bins(rev_table, bins)
         else:
             if attr not in rev_table:
                 msg = ('{} is not a valid rev table attribute '
                        '(column header)'.format(attr))
                 logger.error(msg)
-                raise ReEDSValueError(msg)
+                raise ReedsValueError(msg)
 
             labels = [i + 1 for i in range(len(bins) - 1)]
-            rev_table['class_bin'] = pd.cut(x=rev_table[attr],
-                                            bins=bins, labels=labels)
+            rev_table['bin'] = pd.cut(x=rev_table[attr],
+                                      bins=bins, labels=labels)
+
+        return rev_table
+
+    @staticmethod
+    def _cluster_classes(rev_table, classes, cluster_on='trans_cap_cost',
+                         method='kmeans', **kwargs):
+        """
+        Create classes in each region-bin group using given clustering method
+
+        Parameters
+        ----------
+        rev_table : pandas.DataFrame
+            reV supply curve or aggregation table
+        classes : int
+            Number of classes (clusters) to create for each region-bin
+        cluster_on : str | list
+            Columns in rev_table to cluster on
+        method : str
+            Clustering method to use for creating classes
+        kwargs : dict
+            kwargs for clustering method
+
+        Returns
+        -------
+        rev_table : pandas.DataFrame
+            Updated table with classes
+        """
+        c_func = getattr(ClusteringMethods, method)
+
+        if isinstance(cluster_on, str):
+            cluster_on = [cluster_on, ]
+
+        data = RPMClusters._normalize_values(rev_table[cluster_on].values,
+                                             **kwargs)
+        labels = c_func(data, n_clusters=classes,
+                        **kwargs)
+        rev_table['class'] = labels
 
         return rev_table
 
     @classmethod
-    def create(cls, rev_table, class_bins, region_map='reeds_region'):
+    def create(cls, rev_table, bins, region_map='reeds_region', classes=3,
+               cluster_kwargs={'cluster_on': 'trans_cap_cost',
+                               'method': 'kmeans'}):
         """
         Identify ReEDS regions and classes and dump and updated table
 
@@ -373,11 +423,15 @@ class ReEDSClasses:
         rev_table : str | pandas.DataFrame
             reV supply curve or aggregation table,
             or path to file containing table
-        class_bins : str | pandas.DataFrame | pandas.Series | dict
-            Bins to use for creating classes, either provided in a .csv, .json
+        bins : str | pandas.DataFrame | pandas.Series | dict
+            Resource bins, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
+        classes : int
+            Number of classes (clusters) to create for each region-bin
+        cluster_kwargs : dict
+            kwargs for _cluster_classes
 
         Returns
         -------
@@ -385,5 +439,6 @@ class ReEDSClasses:
             Updated table with region_id and class_bin columns
             added
         """
-        classes = cls(rev_table, class_bins, region_map=region_map)
+        classes = cls(rev_table, bins, rev_table, bins, region_map=region_map,
+                      classes=classes, cluster_kwargs=cluster_kwargs)
         return classes.table

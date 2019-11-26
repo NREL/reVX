@@ -40,19 +40,19 @@ class RPMRuntimeError(Exception):
     """
 
 
-class ReEDSValueError(Exception):
+class ReedsValueError(Exception):
     """
     ValueError for ReEDS Pipeline
     """
 
 
-class ReEDSKeyError(Exception):
+class ReedsKeyError(Exception):
     """
     TypeError for ReEDS Pipeline
     """
 
 
-class ReEDSRuntimeError(Exception):
+class ReedsRuntimeError(Exception):
     """
     RuntimeError for ReEDS Pipeline
     """
