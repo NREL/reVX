@@ -4,18 +4,19 @@ Extract representative profiles for ReEDS
 """
 import logging
 from reV.rep_profiles.rep_profiles import RepProfiles
-from reVX.reeds.reeds_classes import ReEDSClasses
+from reVX.reeds.reeds_classification import ReedsClassifier
 
 logger = logging.getLogger(__name__)
 
 
-class ReEDSProfiles(RepProfiles):
+class ReedsProfiles(RepProfiles):
     """
     Extract representative profile for ReEDS
     """
     def __init__(self, gen_fpath, rev_table, cf_dset='cf_profile',
                  rep_method='meanoid', err_method='rmse', n_profiles=1,
-                 class_bins=None, region_map='reeds_region'):
+                 bins=None, region_map='reeds_region', classes=3,
+                 **kwargs):
         """
         Parameters
         ----------
@@ -32,15 +33,21 @@ class ReEDSProfiles(RepProfiles):
             profile.
         n_profiles : int
             Number of representative profiles to save to fout.
-        class_bins : None | str | pandas.DataFrame | pandas.Series | dict
-            Bins to use for creating classes, either provided in a .csv, .json
+        bins : None | str | pandas.DataFrame | pandas.Series | dict
+            Resource bins, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary.
         region_map : str | pandas.DataFrame
-            Mapping of supply curve points to region to create classes for.
+            Mapping of supply curve points to region to create classes for
+        classes : int
+            Number of classes (clusters) to create for each region-bin
+        kwargs : dict
+            Kwargs for clustering classes
         """
-        if class_bins is not None:
-            rev_table = ReEDSClasses.create(rev_table, class_bins,
-                                            region_map=region_map)
+        if bins is not None:
+            rev_table = ReedsClassifier.create(rev_table, bins,
+                                               region_map=region_map,
+                                               classes=classes,
+                                               cluster_kwargs=kwargs)
 
         reg_cols = ['region_id', 'class_bin']
         super().__init__(gen_fpath, rev_table, reg_cols, cf_dset=cf_dset,
@@ -50,8 +57,8 @@ class ReEDSProfiles(RepProfiles):
     @classmethod
     def run(cls, gen_fpath, rev_table, cf_dset='cf_profile',
             rep_method='meanoid', err_method='rmse', n_profiles=1,
-            class_bins=None, region_map='reeds_region', parallel=True,
-            fout=None):
+            bins=None, region_map='reeds_region', classes=3, parallel=True,
+            fout=None, **kwargs):
         """Run representative profiles.
         Parameters
         ----------
@@ -68,15 +75,19 @@ class ReEDSProfiles(RepProfiles):
             profile.
         n_profiles : int
             Number of representative profiles to save to fout.
-        class_bins : None | str | pandas.DataFrame | pandas.Series | dict
-            Bins to use for creating classes, either provided in a .csv, .json
+        bins : None | str | pandas.DataFrame | pandas.Series | dict
+            Resource bins, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary.
         region_map : str | pandas.DataFrame
-            Mapping of supply curve points to region to create classes for.
+            Mapping of supply curve points to region to create classes for
+        classes : int
+            Number of classes (clusters) to create for each region-bin
         parallel : bool
             Flag to run in parallel.
         fout : None | str
             None or filepath to output h5 file.
+        kwargs : dict
+            Kwargs for clustering classes
 
         Returns
         -------
@@ -89,8 +100,8 @@ class ReEDSProfiles(RepProfiles):
         """
         rp = cls(gen_fpath, rev_table, cf_dset=cf_dset,
                  rep_method=rep_method, err_method=err_method,
-                 n_profiles=n_profiles, class_bins=class_bins,
-                 region_map=region_map)
+                 n_profiles=n_profiles, bins=bins,
+                 region_map=region_map, classes=classes, **kwargs)
         if parallel:
             rp._run_parallel()
         else:
