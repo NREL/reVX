@@ -10,3 +10,4 @@ rasterio=1.0.21
 scipy=1.2.1
 scikit-learn=0.21.3
 xarray=0.12.1
+dask=2.8.0

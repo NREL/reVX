@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 setup.py
 """
@@ -88,7 +89,7 @@ setup(
     test_suite="tests",
     install_requires=["click", "h5py", "geopandas", "numpy", "pandas",
                       "psutil", "pywavelets", "rasterio", "scipy",
-                      "scikit-learn"],
+                      "scikit-learn", "xarray", "dask"],
     extras_require={
         "test": test_requires,
         "dev": test_requires + ["pypandoc", "flake8", "pre-commit", "pylint"],
