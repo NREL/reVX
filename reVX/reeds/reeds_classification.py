@@ -136,6 +136,21 @@ class ReedsClassifier:
         """
         return sorted(list(self._groups.groups.keys()))
 
+    @property
+    def aggregate_table(self):
+        """
+        Region, bin, class aggregate table
+
+        Returns
+        -------
+        agg_table : pandas.DataFrame
+        """
+        cols = ['area_sq_km', 'capacity', 'latitude', 'longitude', 'mean_cf',
+                'mean_lcoe', 'mean_res', 'pct_slope', 'trans_capacity',
+                'trans_cap_cost', 'dist_mi', 'lcot', 'total_lcoe']
+        agg_table = self._groups.sum()
+        return agg_table[cols].reset_index()
+
     @staticmethod
     def _parse_table(input_table):
         """
@@ -439,6 +454,6 @@ class ReedsClassifier:
             Updated table with region_id and class_bin columns
             added
         """
-        classes = cls(rev_table, bins, rev_table, bins, region_map=region_map,
-                      classes=classes, cluster_kwargs=cluster_kwargs)
+        classes = cls(rev_table, bins, region_map=region_map, classes=classes,
+                      cluster_kwargs=cluster_kwargs)
         return classes.table
