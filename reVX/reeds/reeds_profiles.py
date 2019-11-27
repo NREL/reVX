@@ -16,7 +16,7 @@ class ReedsProfiles(RepProfiles):
     def __init__(self, gen_fpath, rev_table, cf_dset='cf_profile',
                  rep_method='meanoid', err_method='rmse', n_profiles=1,
                  bins=None, region_map='reeds_region', classes=3,
-                 **kwargs):
+                 reg_cols=('region', 'bin', 'class'), **kwargs):
         """
         Parameters
         ----------
@@ -40,6 +40,9 @@ class ReedsProfiles(RepProfiles):
             Mapping of supply curve points to region to create classes for
         classes : int
             Number of classes (clusters) to create for each region-bin
+        reg_cols : tuple
+            Label(s) for a categorical region column(s) to extract profiles
+            for.
         kwargs : dict
             Kwargs for clustering classes
         """
@@ -49,7 +52,6 @@ class ReedsProfiles(RepProfiles):
                                                classes=classes,
                                                cluster_kwargs=kwargs)
 
-        reg_cols = ['region_id', 'class_bin']
         super().__init__(gen_fpath, rev_table, reg_cols, cf_dset=cf_dset,
                          rep_method=rep_method, err_method=err_method,
                          n_profiles=n_profiles)
@@ -57,8 +59,9 @@ class ReedsProfiles(RepProfiles):
     @classmethod
     def run(cls, gen_fpath, rev_table, cf_dset='cf_profile',
             rep_method='meanoid', err_method='rmse', n_profiles=1,
-            bins=None, region_map='reeds_region', classes=3, parallel=True,
-            fout=None, **kwargs):
+            bins=None, region_map='reeds_region', classes=3,
+            reg_cols=('region', 'bin', 'class'), parallel=True, fout=None,
+            **kwargs):
         """Run representative profiles.
         Parameters
         ----------
@@ -82,6 +85,9 @@ class ReedsProfiles(RepProfiles):
             Mapping of supply curve points to region to create classes for
         classes : int
             Number of classes (clusters) to create for each region-bin
+        reg_cols : tuple
+            Label(s) for a categorical region column(s) to extract profiles
+            for.
         parallel : bool
             Flag to run in parallel.
         fout : None | str
@@ -101,7 +107,8 @@ class ReedsProfiles(RepProfiles):
         rp = cls(gen_fpath, rev_table, cf_dset=cf_dset,
                  rep_method=rep_method, err_method=err_method,
                  n_profiles=n_profiles, bins=bins,
-                 region_map=region_map, classes=classes, **kwargs)
+                 region_map=region_map, classes=classes, reg_cols=reg_cols,
+                 **kwargs)
         if parallel:
             rp._run_parallel()
         else:
