@@ -100,9 +100,11 @@ class ReedsProfiles(RepProfiles):
         profiles : dict
             dict of n_profile-keyed arrays with shape (time, n) for the
             representative profiles for each region.
-        out_meta : pd.DataFrame
+        meta : pd.DataFrame
             Meta dataframes recording the regions and the selected rep profile
             gid.
+        time_index : pd.DatatimeIndex
+            Datetime Index for represntative profiles
         """
         rp = cls(gen_fpath, rev_table, cf_dset=cf_dset,
                  rep_method=rep_method, err_method=err_method,
@@ -118,4 +120,4 @@ class ReedsProfiles(RepProfiles):
             rp.save_profiles(fout)
 
         logger.info('Representative profiles complete!')
-        return rp._profiles, rp._meta
+        return rp._profiles, rp._meta, rp._time_index
