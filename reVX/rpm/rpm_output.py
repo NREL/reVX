@@ -120,6 +120,7 @@ class RepresentativeProfiles:
             clusters.at[i, 'forecast_gid'] = forecast_gid
             clusters.at[i, 'forecast_latitude'] = lats[forecast_gid]
             clusters.at[i, 'forecast_longitude'] = lons[forecast_gid]
+
         return clusters
 
     @staticmethod
@@ -220,8 +221,10 @@ class RepresentativeProfiles:
         """
         with Outputs(cf_fpath) as cf:
             meta_cf = cf.meta
+
         with Outputs(forecast_fpath) as forecast:
             meta_forecast = forecast.meta
+
         forecast_map = cls._make_forecast_nn_map(meta_cf, meta_forecast)
         clusters = cls._add_forecast_gids(clusters, forecast_map,
                                           meta_forecast)
@@ -449,6 +452,7 @@ class RPMOutput:
         for c in required:
             if c not in df:
                 missing.append(c)
+
         if any(missing):
             raise RPMRuntimeError('Missing the following columns in RPM '
                                   'clusters input df: {}'.format(missing))
@@ -645,6 +649,7 @@ class RPMOutput:
         lon_range = (self._clusters.loc[mask, 'longitude'].min(),
                      self._clusters.loc[mask, 'longitude'].max())
         box = {'latitude': lat_range, 'longitude': lon_range}
+
         return box
 
     @property
@@ -661,6 +666,7 @@ class RPMOutput:
             with Outputs(self._excl_fpath) as f:
                 logger.debug('Importing Latitude data from techmap...')
                 self._excl_lat = f['latitude']
+
         return self._excl_lat
 
     @property
@@ -677,6 +683,7 @@ class RPMOutput:
             with Outputs(self._excl_fpath) as f:
                 logger.debug('Importing Longitude data from techmap...')
                 self._excl_lon = f['longitude']
+
         return self._excl_lon
 
     @staticmethod
@@ -761,7 +768,6 @@ class RPMOutput:
 
         futures = {}
         with cf.ProcessPoolExecutor(max_workers=self.max_workers) as exe:
-
             for i, cid in enumerate(unique_clusters):
 
                 lat_s, lon_s = slices[cid]
@@ -907,9 +913,7 @@ class RPMOutput:
         futures = {}
 
         with cf.ProcessPoolExecutor(max_workers=self.max_workers) as exe:
-
             for _, df in self._clusters.groupby(groupby):
-
                 if 'included_frac' in df:
                     mask = (df['included_frac'] >= self.include_threshold)
                 else:

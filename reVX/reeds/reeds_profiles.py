@@ -13,18 +13,18 @@ class ReedsProfiles(RepProfiles):
     """
     Extract representative profile for ReEDS
     """
-    def __init__(self, gen_fpath, rev_table, cf_dset='cf_profile',
+    def __init__(self, cf_profiles, rev_table, profiles_dset='cf_profile',
                  rep_method='meanoid', err_method='rmse', n_profiles=1,
                  bins=None, region_map='reeds_region', classes=3,
                  reg_cols=('region', 'bin', 'class'), **kwargs):
         """
         Parameters
         ----------
-        gen_fpath : str
+        cf_profiles : str
             Filepath to reV gen output file to extract "cf_profile" from.
         rev_table : str | pd.DataFrame
             Aggregated supply curve summary table or file containing table
-        cf_dset : str
+        profiles_dset : str
             Dataset name to pull generation profiles from.
         rep_method : str
             Method identifier for calculation of the representative profile.
@@ -52,12 +52,13 @@ class ReedsProfiles(RepProfiles):
                                                classes=classes,
                                                cluster_kwargs=kwargs)
 
-        super().__init__(gen_fpath, rev_table, reg_cols, cf_dset=cf_dset,
+        super().__init__(cf_profiles, rev_table, reg_cols,
+                         profiles_dset=profiles_dset,
                          rep_method=rep_method, err_method=err_method,
                          n_profiles=n_profiles)
 
     @classmethod
-    def run(cls, gen_fpath, rev_table, cf_dset='cf_profile',
+    def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
             rep_method='meanoid', err_method='rmse', n_profiles=1,
             bins=None, region_map='reeds_region', classes=3,
             reg_cols=('region', 'bin', 'class'), parallel=True, fout=None,
@@ -65,11 +66,11 @@ class ReedsProfiles(RepProfiles):
         """Run representative profiles.
         Parameters
         ----------
-        gen_fpath : str
+        cf_profiles : str
             Filepath to reV gen output file to extract "cf_profile" from.
         rev_table : str | pd.DataFrame
             Aggregated supply curve summary table or file containing table
-        cf_dset : str
+        profiles_dset : str
             Dataset name to pull generation profiles from.
         rep_method : str
             Method identifier for calculation of the representative profile.
@@ -106,7 +107,7 @@ class ReedsProfiles(RepProfiles):
         time_index : pd.DatatimeIndex
             Datetime Index for represntative profiles
         """
-        rp = cls(gen_fpath, rev_table, cf_dset=cf_dset,
+        rp = cls(cf_profiles, rev_table, profiles_dset=profiles_dset,
                  rep_method=rep_method, err_method=err_method,
                  n_profiles=n_profiles, bins=bins,
                  region_map=region_map, classes=classes, reg_cols=reg_cols,
