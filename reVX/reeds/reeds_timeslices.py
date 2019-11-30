@@ -299,7 +299,9 @@ class ReedsTimeslices:
             stdevs.append(stdev)
 
         means = pd.concat(means, axis=1).T
+        means.index.name = 'timeslice'
         stdevs = pd.concat(stdevs, axis=1).T
+        stdevs.index.name = 'timeslice'
 
         return means, stdevs
 

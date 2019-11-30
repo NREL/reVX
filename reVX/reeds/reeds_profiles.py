@@ -53,9 +53,8 @@ class ReedsProfiles(RepProfiles):
                                                cluster_kwargs=kwargs)
 
         super().__init__(cf_profiles, rev_table, reg_cols,
-                         profiles_dset=profiles_dset,
-                         rep_method=rep_method, err_method=err_method,
-                         n_profiles=n_profiles)
+                         cf_dset=profiles_dset, rep_method=rep_method,
+                         err_method=err_method, n_profiles=n_profiles)
 
     @classmethod
     def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
