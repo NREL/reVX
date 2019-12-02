@@ -5,6 +5,8 @@ Renewable Energy Potential(V) EXchange Tool (reVX)
 from __future__ import print_function, division, absolute_import
 import os
 
+import reVX.plexos as reV_plexos
+import reVX.reeds as rev_reeds
 from reVX.resource import NSRDBX, WindX
 import reVX.rpm as rev_rpm
 from reVX.version import __version__
