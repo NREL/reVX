@@ -7,6 +7,8 @@ import json
 import logging
 import numpy as np
 import os
+import pandas as pd
+from pandas.testing import assert_frame_equal
 import rasterio
 
 from reV.handlers.exclusions import ExclusionLayers
@@ -173,15 +175,18 @@ class ExclusionsConverter:
                 profile = h5.profile
                 h5_crs = {k: v for k, v in
                           [i.split("=") for i in profile['crs'].split(' ')]}
+                h5_crs = pd.DataFrame(h5_crs, index=[0, ])
+                h5_crs = h5_crs.apply(pd.to_numeric, errors='ignore')
+
                 tif_crs = {k: v for k, v in
                            [i.split("=") for i in
                             tif.profile['crs'].split(' ')]}
-                for k in list(set(h5_crs) & set(tif_crs)):
-                    if h5_crs[k] != tif_crs[k]:
-                        error = ('"crs" values {} in {} and {} do not match!'
-                                 .format(k, geotiff, excl_h5))
-                        logger.error(error)
-                        raise ExclusionsCheckError(error)
+                tif_crs = pd.DataFrame(tif_crs, index=[0, ])
+                tif_crs = tif_crs.apply(pd.to_numeric, errors='ignore')
+
+                cols = list(set(h5_crs.columns) & set(tif_crs.columns))
+                assert_frame_equal(h5_crs[cols], tif_crs[cols],
+                                   check_dtype=False, check_exact=False)
 
                 if not np.array_equal(profile['transform'],
                                       tif.profile['transform']):

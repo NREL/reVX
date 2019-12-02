@@ -5,6 +5,8 @@ pytests for exclusions converter
 import os
 import numpy as np
 import pytest
+import pandas as pd
+from pandas.testing import assert_frame_equal
 from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.handlers.geotiff import Geotiff
@@ -103,6 +105,9 @@ def test_geotiff_to_h5(tif):
         Tif to load into .h5
     """
     excl_h5 = os.path.join(DIR, tif.replace('.tif', '.h5'))
+    if os.path.isfile(excl_h5):
+        os.remove(excl_h5)
+
     converter = ExclusionsConverter(excl_h5)
     layer = tif.split('.')[0]
     converter.geotiff_to_layer(layer, os.path.join(DIR, tif))
@@ -111,7 +116,27 @@ def test_geotiff_to_h5(tif):
     test_values, test_profile = extract_layer(excl_h5, layer)
 
     assert np.allclose(true_values, test_values)
-    assert true_profile == test_profile
+
+    for profile_k, true_v in true_profile.items():
+        test_v = test_profile[profile_k]
+        if profile_k == 'crs':
+            true_crs = {k: v for k, v in
+                        [i.split("=") for i in true_v.split(' ')]}
+            true_crs = pd.DataFrame(true_crs, index=[0, ])
+            true_crs = true_crs.apply(pd.to_numeric, errors='ignore')
+
+            test_crs = {k: v for k, v in
+                        [i.split("=") for i in test_v.split(' ')]}
+            test_crs = pd.DataFrame(test_crs, index=[0, ])
+            test_crs = test_crs.apply(pd.to_numeric, errors='ignore')
+
+            cols = list(set(true_crs.columns) & set(test_crs.columns))
+            assert_frame_equal(true_crs[cols], test_crs[cols],
+                               check_dtype=False, check_exact=False)
+        else:
+            msg = ("Profile {} does not match: {} != {}"
+                   .format(profile_k, true_v, test_v))
+            assert true_v == test_v, msg
 
     if PURGE_OUT:
         os.remove(excl_h5)
