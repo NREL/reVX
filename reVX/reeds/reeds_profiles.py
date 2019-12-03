@@ -36,6 +36,7 @@ class ReedsProfiles(RepProfiles):
         bins : None | str | pandas.DataFrame | pandas.Series | dict
             Resource bins, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary.
+            If None, assumes rev_table is an output from ReedsClassifier
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
         classes : int
@@ -43,6 +44,7 @@ class ReedsProfiles(RepProfiles):
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
+            Defaulted to ReedsClassifier region and class
         kwargs : dict
             Kwargs for clustering classes
         """

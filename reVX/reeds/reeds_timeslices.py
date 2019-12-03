@@ -244,7 +244,7 @@ class ReedsTimeslices:
             raise ReedsValueError(msg)
 
         index_col = [c for c in timeslice_map.columns
-                     if 'time' in c.lower()]
+                     if 'datetime' in c.lower()]
         if not index_col:
             msg = ('Timeslice mapping does not contain a "datetime" column!')
             logger.error(msg)
@@ -289,7 +289,7 @@ class ReedsTimeslices:
         """
         means = []
         stdevs = []
-        for s, slice_map in timeslices.groupby('slice'):
+        for s, slice_map in timeslices.groupby():
             tslice = profiles.loc[slice_map.index]
             mean = tslice.stack().mean()
             mean.name = s
