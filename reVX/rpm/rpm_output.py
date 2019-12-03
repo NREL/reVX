@@ -11,8 +11,8 @@ import psutil
 from scipy.spatial import cKDTree
 from warnings import warn
 
+from reV.supply_curve.exclusions import ExclusionMask
 from reV.handlers.outputs import Outputs
-from reVX.handlers.geotiff import Geotiff
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.utilities.exceptions import RPMRuntimeError, RPMTypeError
 
@@ -321,7 +321,7 @@ class RepresentativeProfiles:
 class RPMOutput:
     """Framework to format and process RPM clustering results."""
 
-    def __init__(self, rpm_clusters, cf_fpath, excl_fpath, techmap_fpath,
+    def __init__(self, rpm_clusters, cf_fpath, excl_fpath, excl_dict,
                  techmap_dset, excl_area=0.0081, include_threshold=0.001,
                  n_profiles=1, rerank=True, cluster_kwargs=None,
                  parallel=True, trg=None):
@@ -336,11 +336,10 @@ class RPMOutput:
         excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
-        techmap_fpath : str | None
-            Filepath to tech mapping between exclusions and resource data.
-            None will not apply exclusions.
+        excl_dict : dict | None
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
         techmap_dset : str
-            Dataset name in the techmap file containing the
+            Dataset name in the exclusions file containing the
             exclusions-to-resource mapping data.
         excl_area : float
             Area in km2 of one exclusion pixel.
@@ -367,8 +366,13 @@ class RPMOutput:
         logger.info('Initializing RPM output processing...')
 
         self._clusters = self._parse_cluster_arg(rpm_clusters)
+
         self._excl_fpath = excl_fpath
-        self._techmap_fpath = techmap_fpath
+        self._excl_dict = excl_dict
+        if self._excl_dict is not None:
+            self._excl = ExclusionMask.from_dict(self._excl_fpath,
+                                                 self._excl_dict)
+
         self._techmap_dset = techmap_dset
         self._cf_fpath = cf_fpath
         self.excl_area = excl_area
@@ -399,6 +403,12 @@ class RPMOutput:
         self._full_lat_slice = None
         self._full_lon_slice = None
         self._init_lat_lon()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
 
     @staticmethod
     def _parse_cluster_arg(rpm_clusters):
@@ -456,7 +466,7 @@ class RPMOutput:
     def _init_lat_lon(self):
         """Initialize the lat/lon arrays and reduce their size."""
 
-        if self._techmap_fpath is not None:
+        if self._excl_fpath is not None:
 
             self._full_lat_slice, self._full_lon_slice = \
                 self._get_lat_lon_slices(cluster_id=None)
@@ -477,15 +487,15 @@ class RPMOutput:
                                  self.excl_lon.min(), self._excl_lon.max()))
 
     @staticmethod
-    def _get_tm_data(techmap_fpath, techmap_dset, lat_slice, lon_slice):
+    def _get_tm_data(excl, techmap_dset, lat_slice, lon_slice):
         """Get the techmap data.
 
         Parameters
         ----------
-        techmap_fpath : str
-            Filepath to tech mapping between exclusions and resource data.
+        excl : ExclusionMask
+            Pre-initialized exclusions mask object.
         techmap_dset : str
-            Dataset name in the techmap file containing the
+            Dataset name in the exclusions file containing the
             exclusions-to-resource mapping data.
         lat_slice : slice
             The latitude (row) slice to extract from the exclusions or
@@ -499,27 +509,31 @@ class RPMOutput:
         techmap : np.ndarray
             Techmap data mapping exclusions grid to resource gid (flattened).
         """
+        if isinstance(excl, ExclusionMask):
+            techmap = ExclusionMask.excl_h5[techmap_dset, lat_slice, lon_slice]
+        else:
+            e = 'Cannot recognize exclusion type: {}'.format(type(excl))
+            logger.error(e)
+            raise TypeError(e)
 
-        with Outputs(techmap_fpath) as tm:
-            techmap = tm[techmap_dset, lat_slice, lon_slice].astype(np.int32)
-        return techmap.flatten()
+        techmap = techmap.astype(np.int32).flatten()
+
+        return techmap
 
     @staticmethod
-    def _get_excl_data(excl_fpath, lat_slice, lon_slice, band=0):
+    def _get_excl_data(excl, lat_slice, lon_slice):
         """Get the exclusions data from a geotiff file.
 
         Parameters
         ----------
-        excl_fpath : str
-            Filepath to exclusions data (must match the techmap grid).
+        excl : ExclusionMask
+            Pre-initialized exclusions mask object.
         lat_slice : slice
             The latitude (row) slice to extract from the exclusions or
             techmap 2D datasets.
         lon_slice : slice
             The longitude (col) slice to extract from the exclusions or
             techmap 2D datasets.
-        band : int
-            Band (dataset integer) of the geotiff containing the relevant data.
 
         Returns
         -------
@@ -527,8 +541,12 @@ class RPMOutput:
             Exclusions data flattened and normalized from 0 to 1 (1 is incld).
         """
 
-        with Geotiff(excl_fpath) as excl:
-            excl_data = excl[band, lat_slice, lon_slice]
+        if isinstance(excl, ExclusionMask):
+            excl_data = excl[lat_slice, lon_slice]
+        else:
+            e = 'Cannot recognize exclusion type: {}'.format(type(excl))
+            logger.error(e)
+            raise TypeError(e)
 
         # infer exclusions that are scaled percentages from 0 to 100
         if excl_data.max() > 1:
@@ -639,6 +657,12 @@ class RPMOutput:
         box = {'latitude': lat_range, 'longitude': lon_range}
         return box
 
+    def close(self):
+        """
+        Close h5 instance
+        """
+        self._excl.close()
+
     @property
     def excl_lat(self):
         """Get the full 2D array of latitudes of the exclusion grid.
@@ -649,8 +673,8 @@ class RPMOutput:
             2D array representing the latitudes at each exclusion grid cell
         """
 
-        if self._excl_lat is None and self._techmap_fpath is not None:
-            with Outputs(self._techmap_fpath) as f:
+        if self._excl_lat is None and self._excl_fpath is not None:
+            with Outputs(self._excl_fpath) as f:
                 logger.debug('Importing Latitude data from techmap...')
                 self._excl_lat = f['latitude']
         return self._excl_lat
@@ -665,15 +689,15 @@ class RPMOutput:
             2D array representing the latitudes at each exclusion grid cell
         """
 
-        if self._excl_lon is None and self._techmap_fpath is not None:
-            with Outputs(self._techmap_fpath) as f:
+        if self._excl_lon is None and self._excl_fpath is not None:
+            with Outputs(self._excl_fpath) as f:
                 logger.debug('Importing Longitude data from techmap...')
                 self._excl_lon = f['longitude']
         return self._excl_lon
 
     @staticmethod
-    def _single_excl(cluster_id, clusters, excl_fpath, techmap_fpath,
-                     techmap_dset, lat_slice, lon_slice):
+    def _single_excl(cluster_id, clusters, excl, techmap_dset,
+                     lat_slice, lon_slice):
         """Calculate the exclusions for each resource GID in a cluster.
 
         Parameters
@@ -682,10 +706,8 @@ class RPMOutput:
             Single cluster ID of interest.
         clusters : pandas.DataFrame
             Single DataFrame with (gid, gen_gid, cluster_id, rank)
-        excl_fpath : str
-            Filepath to exclusions data (must match the techmap grid).
-        techmap_fpath : str
-            Filepath to tech mapping between exclusions and resource data.
+        excl : ExclusionMask
+            Pre-initialized exclusions mask object.
         techmap_dset : str
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data.
@@ -715,9 +737,9 @@ class RPMOutput:
         n_inclusions = np.zeros((len(locs), ), dtype=np.float32)
         n_points = np.zeros((len(locs), ), dtype=np.uint16)
 
-        techmap = RPMOutput._get_tm_data(techmap_fpath, techmap_dset,
+        techmap = RPMOutput._get_tm_data(excl, techmap_dset,
                                          lat_slice, lon_slice)
-        exclusions = RPMOutput._get_excl_data(excl_fpath, lat_slice, lon_slice)
+        exclusions = RPMOutput._get_excl_data(excl, lat_slice, lon_slice)
 
         for i, ind in enumerate(clusters.loc[mask, :].index.values):
             techmap_locs = np.where(
@@ -759,9 +781,8 @@ class RPMOutput:
             for i, cid in enumerate(unique_clusters):
 
                 lat_s, lon_s = slices[cid]
-                future = exe.submit(self._single_excl, cid,
-                                    static_clusters, self._excl_fpath,
-                                    self._techmap_fpath, self._techmap_dset,
+                future = exe.submit(self._single_excl, cid, static_clusters,
+                                    self._excl, self._techmap_dset,
                                     lat_s, lon_s)
                 futures[future] = cid
                 logger.debug('Kicked off exclusions for cluster "{}", {} out '
@@ -881,7 +902,7 @@ class RPMOutput:
 
         if ('included_frac' not in self._clusters
                 and self._excl_fpath is not None
-                and self._techmap_fpath is not None):
+                and self._excl_dict is not None):
             raise RPMRuntimeError('Exclusions must be applied before '
                                   'representative profiles can be determined.')
 
@@ -971,7 +992,7 @@ class RPMOutput:
 
         if ('included_frac' not in self._clusters
                 and self._excl_fpath is not None
-                and self._techmap_fpath is not None):
+                and self._excl_dict is not None):
             self.apply_exclusions()
 
         self.apply_trgs()
@@ -1037,7 +1058,7 @@ class RPMOutput:
 
     @classmethod
     def process_outputs(cls, rpm_clusters, cf_fpath, excl_fpath,
-                        techmap_fpath, techmap_dset, out_dir, job_tag=None,
+                        excl_dict, techmap_dset, out_dir, job_tag=None,
                         parallel=True, cluster_kwargs=None, **kwargs):
         """Perform output processing on clusters and write results to disk.
 
@@ -1051,9 +1072,8 @@ class RPMOutput:
         excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
-        techmap_fpath : str | None
-            Filepath to tech mapping between exclusions and resource data.
-            None will not apply exclusions.
+        excl_dict : dict | None
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
         techmap_dset : str
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data.
@@ -1069,7 +1089,7 @@ class RPMOutput:
             RPMClusters kwargs
         """
 
-        rpmo = cls(rpm_clusters, cf_fpath, excl_fpath, techmap_fpath,
-                   techmap_dset, cluster_kwargs=cluster_kwargs,
-                   parallel=parallel, **kwargs)
-        rpmo.export_all(out_dir, job_tag=job_tag)
+        with cls(rpm_clusters, cf_fpath, excl_fpath, excl_dict,
+                 techmap_dset, cluster_kwargs=cluster_kwargs,
+                 parallel=parallel, **kwargs) as rpmo:
+            rpmo.export_all(out_dir, job_tag=job_tag)

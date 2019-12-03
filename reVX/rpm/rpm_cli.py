@@ -2,6 +2,7 @@
 """
 RPM Command Line Interface
 """
+import json
 import click
 import logging
 from reV.utilities.cli_dtypes import STR
@@ -74,17 +75,19 @@ def cluster(ctx, rpm_meta, region_col):
               type=click.Path(exists=True),
               help=('Filepath to exclusions data (must match the techmap grid)'
                     ' None will not apply exclusions.'))
-@click.option('--techmap', '-tm', default=None,
-              type=click.Path(exists=True),
-              help=('Filepath to tech mapping between exclusions and resource '
-                    'data. None will not apply exclusions.'))
+@click.option('--excl_dict', '-exd', default=None, type=STR,
+              help='String representation of a dictionary of exclusion '
+              'LayerMask arguments {layer: {kwarg: value}} where layer is a '
+              'dataset in excl_fpath and kwarg can be "inclusion_range", '
+              '"exclude_values", "include_values", "use_as_weights", '
+              'or "weight".')
 @click.option('--techmap_dset', '-tmd', default=None, type=STR,
-              help=('Dataset name in the techmap file containing the '
+              help=('Dataset name in the exclusions file containing the '
                     'exclusions-to-resource mapping data.'))
 @click.option('--trg', '-trg', default=None, type=STR,
               help=('Filepath to TRG LCOE bins.'))
 @click.pass_context
-def and_profiles(ctx, exclusions, techmap, techmap_dset, trg):
+def and_profiles(ctx, exclusions, excl_dict, techmap_dset, trg):
     """
     Cluster RPM Regions and extract representative profiles
     """
@@ -101,13 +104,18 @@ def and_profiles(ctx, exclusions, techmap, techmap_dset, trg):
     logger.info('Extracting representative profiles using exclusions: {}'
                 .format(exclusions))
 
+    if isinstance(excl_dict, str):
+        excl_dict = excl_dict.replace('\'', '\"')
+        excl_dict = excl_dict.replace('None', 'null')
+        excl_dict = json.loads(excl_dict)
+
     output_kwargs = {}
     if trg is not None:
         output_kwargs = {'trg': trg}
         logger.info('Applying TRGs: {}'.format(trg))
 
     rpm_cm.run_clusters_and_profiles(cf_fpath, rpm_meta, exclusions,
-                                     techmap, techmap_dset, out_dir,
+                                     excl_dict, techmap_dset, out_dir,
                                      job_tag=name, rpm_region_col=region_col,
                                      parallel=parallel,
                                      output_kwargs=output_kwargs)
@@ -122,17 +130,19 @@ def and_profiles(ctx, exclusions, techmap, techmap_dset, trg):
               type=click.Path(exists=True),
               help=('Filepath to exclusions data (must match the techmap grid)'
                     ' None will not apply exclusions.'))
-@click.option('--techmap', '-tm', default=None,
-              type=click.Path(exists=True),
-              help=('Filepath to tech mapping between exclusions and resource '
-                    'data. None will not apply exclusions.'))
+@click.option('--excl_dict', '-exd', default=None, type=STR,
+              help='String representation of a dictionary of exclusion '
+              'LayerMask arguments {layer: {kwarg: value}} where layer is a '
+              'dataset in excl_fpath and kwarg can be "inclusion_range", '
+              '"exclude_values", "include_values", "use_as_weights", '
+              'or "weight".')
 @click.option('--techmap_dset', '-tmd', default=None, type=STR,
               help=('Dataset name in the techmap file containing the '
                     'exclusions-to-resource mapping data.'))
 @click.option('--trg', '-trg', default=None, type=STR,
               help=('Filepath to TRG LCOE bins.'))
 @click.pass_context
-def rep_profiles(ctx, rpm_clusters, exclusions, techmap, techmap_dset, trg):
+def rep_profiles(ctx, rpm_clusters, exclusions, excl_dict, techmap_dset, trg):
     """
     Extract representative profiles from existing RPM clusters
     """
@@ -151,8 +161,13 @@ def rep_profiles(ctx, rpm_clusters, exclusions, techmap, techmap_dset, trg):
         if trg is not None:
             logger.info('Applying TRGs: {}'.format(trg))
 
+        if isinstance(excl_dict, str):
+            excl_dict = excl_dict.replace('\'', '\"')
+            excl_dict = excl_dict.replace('None', 'null')
+            excl_dict = json.loads(excl_dict)
+
         rpm_o.process_outputs(rpm_clusters, cf_fpath, exclusions,
-                              techmap, techmap_dset, out_dir,
+                              excl_dict, techmap_dset, out_dir,
                               job_tag=name, parallel=parallel, trg=trg)
 
 

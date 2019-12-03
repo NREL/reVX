@@ -281,7 +281,7 @@ class RPMClusterManager:
 
     @classmethod
     def run_clusters_and_profiles(cls, cf_fpath, rpm_meta, excl_fpath,
-                                  techmap_fpath, techmap_dset, out_dir,
+                                  excl_dict, techmap_dset, out_dir,
                                   job_tag=None, rpm_region_col=None,
                                   parallel=True, output_kwargs=None,
                                   **cluster_kwargs):
@@ -303,11 +303,10 @@ class RPMClusterManager:
         excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
-        techmap_fpath : str | None
-            Filepath to tech mapping between exclusions and resource data.
-            None will not apply exclusions.
+        excl_dict : dict | None
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
         techmap_dset : str
-            Dataset name in the techmap file containing the
+            Dataset name in the exclusions file containing the
             exclusions-to-resource mapping data.
         out_dir : str
             Directory to dump output files.
@@ -351,7 +350,7 @@ class RPMClusterManager:
             output_kwargs = {}
 
         RPMOutput.process_outputs(rpm_clusters, cf_fpath, excl_fpath,
-                                  techmap_fpath, techmap_dset, out_dir,
+                                  excl_dict, techmap_dset, out_dir,
                                   job_tag=job_tag, parallel=parallel,
                                   cluster_kwargs=cluster_kwargs,
                                   **output_kwargs)
