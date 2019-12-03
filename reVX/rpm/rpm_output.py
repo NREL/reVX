@@ -297,8 +297,7 @@ class RepresentativeProfiles:
             profiles will be taken from forecast fpath instead of fpath gen
             based on a NN mapping.
         """
-        rp = cls(clusters, cf_fpath, key=key, forecast_fpath=forecast_fpath,
-                 fpath_out=fpath_out)
+        rp = cls(clusters, cf_fpath, key=key, forecast_fpath=forecast_fpath)
         cols = clusters.cluster_id.unique()
 
         if rp.key == 'rank_included_trg':
@@ -369,9 +368,6 @@ class RPMOutput:
 
         self._excl_fpath = excl_fpath
         self._excl_dict = excl_dict
-        if self._excl_dict is not None:
-            self._excl = ExclusionMask.from_dict(self._excl_fpath,
-                                                 self._excl_dict)
 
         self._techmap_dset = techmap_dset
         self._cf_fpath = cf_fpath
@@ -403,12 +399,6 @@ class RPMOutput:
         self._full_lat_slice = None
         self._full_lon_slice = None
         self._init_lat_lon()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.close()
 
     @staticmethod
     def _parse_cluster_arg(rpm_clusters):
@@ -510,7 +500,7 @@ class RPMOutput:
             Techmap data mapping exclusions grid to resource gid (flattened).
         """
         if isinstance(excl, ExclusionMask):
-            techmap = ExclusionMask.excl_h5[techmap_dset, lat_slice, lon_slice]
+            techmap = excl.excl_h5[techmap_dset, lat_slice, lon_slice]
         else:
             e = 'Cannot recognize exclusion type: {}'.format(type(excl))
             logger.error(e)
@@ -553,7 +543,7 @@ class RPMOutput:
             excl_data = excl_data.astype(np.float32)
             excl_data /= 100
 
-        return excl_data
+        return excl_data.flatten()
 
     def _get_lat_lon_slices(self, cluster_id=None, margin=0.1):
         """Get the slice args to locate exclusion/techmap data of interest.
@@ -657,12 +647,6 @@ class RPMOutput:
         box = {'latitude': lat_range, 'longitude': lon_range}
         return box
 
-    def close(self):
-        """
-        Close h5 instance
-        """
-        self._excl.close()
-
     @property
     def excl_lat(self):
         """Get the full 2D array of latitudes of the exclusion grid.
@@ -696,7 +680,7 @@ class RPMOutput:
         return self._excl_lon
 
     @staticmethod
-    def _single_excl(cluster_id, clusters, excl, techmap_dset,
+    def _single_excl(cluster_id, clusters, excl_fpath, excl_dict, techmap_dset,
                      lat_slice, lon_slice):
         """Calculate the exclusions for each resource GID in a cluster.
 
@@ -706,8 +690,11 @@ class RPMOutput:
             Single cluster ID of interest.
         clusters : pandas.DataFrame
             Single DataFrame with (gid, gen_gid, cluster_id, rank)
-        excl : ExclusionMask
-            Pre-initialized exclusions mask object.
+        excl_fpath : str | None
+            Filepath to exclusions data (must match the techmap grid).
+            None will not apply exclusions.
+        excl_dict : dict | None
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
         techmap_dset : str
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data.
@@ -737,9 +724,11 @@ class RPMOutput:
         n_inclusions = np.zeros((len(locs), ), dtype=np.float32)
         n_points = np.zeros((len(locs), ), dtype=np.uint16)
 
+        excl = ExclusionMask.from_dict(excl_fpath, excl_dict)
         techmap = RPMOutput._get_tm_data(excl, techmap_dset,
                                          lat_slice, lon_slice)
         exclusions = RPMOutput._get_excl_data(excl, lat_slice, lon_slice)
+        excl.close()
 
         for i, ind in enumerate(clusters.loc[mask, :].index.values):
             techmap_locs = np.where(
@@ -757,32 +746,29 @@ class RPMOutput:
 
         return inclusions, n_inclusions, n_points
 
-    def apply_exclusions(self):
-        """Calculate exclusions for clusters, adding data to self._clusters.
-        Returns
-        -------
-        self._clusters : pd.DataFrame
-            self._clusters with new columns for exclusions data.
+    def _apply_exclusions_parallel(self, unique_clusters, static_clusters,
+                                   slices):
+        """Calculate exclusions for clusters in parallel
+
+        Parameters
+        ----------
+        unique_clusters : np.ndarray
+            1D array of unique cluster id's.
+        static_clusters : pd.DataFrame
+            Static (non-changing deepcopy) version of self._clusters.
+        slices : dict
+            Dictionary of tuples - (lat, lon) slices keyed by cluster id.
         """
 
-        logger.info('Working on applying exclusions...')
-
-        unique_clusters = self._clusters['cluster_id'].unique()
-        static_clusters = self._clusters.copy()
-        self._clusters['included_frac'] = 0.0
-        self._clusters['included_area_km2'] = 0.0
-        self._clusters['n_excl_pixels'] = 0
         futures = {}
-
-        slices = self._get_all_lat_lon_slices()
-
         with cf.ProcessPoolExecutor(max_workers=self.max_workers) as exe:
 
             for i, cid in enumerate(unique_clusters):
 
                 lat_s, lon_s = slices[cid]
                 future = exe.submit(self._single_excl, cid, static_clusters,
-                                    self._excl, self._techmap_dset,
+                                    self._excl_fpath, self._excl_dict,
+                                    self._techmap_dset,
                                     lat_s, lon_s)
                 futures[future] = cid
                 logger.debug('Kicked off exclusions for cluster "{}", {} out '
@@ -803,6 +789,70 @@ class RPMOutput:
                 self._clusters.loc[mask, 'included_area_km2'] = \
                     n_incl * self.excl_area
                 self._clusters.loc[mask, 'n_excl_pixels'] = n_pix
+
+    def _apply_exclusions_serial(self, unique_clusters, static_clusters,
+                                 slices):
+        """Calculate exclusions for clusters in serial
+
+        Parameters
+        ----------
+        unique_clusters : np.ndarray
+            1D array of unique cluster id's.
+        static_clusters : pd.DataFrame
+            Static (non-changing deepcopy) version of self._clusters.
+        slices : dict
+            Dictionary of tuples - (lat, lon) slices keyed by cluster id.
+        """
+
+        for i, cid in enumerate(unique_clusters):
+
+            lat_s, lon_s = slices[cid]
+            incl, n_incl, n_pix = self._single_excl(cid, static_clusters,
+                                                    self._excl_fpath,
+                                                    self._excl_dict,
+                                                    self._techmap_dset,
+                                                    lat_s, lon_s)
+
+            mem = psutil.virtual_memory()
+            logger.info('Finished exclusions for cluster "{}", {} out '
+                        'of {} futures. '
+                        'Memory usage is {:.2f} out of {:.2f} GB.'
+                        .format(cid, i + 1, len(unique_clusters),
+                                mem.used / 1e9, mem.total / 1e9))
+
+            mask = (self._clusters['cluster_id'] == cid)
+
+            self._clusters.loc[mask, 'included_frac'] = incl
+            self._clusters.loc[mask, 'included_area_km2'] = \
+                n_incl * self.excl_area
+            self._clusters.loc[mask, 'n_excl_pixels'] = n_pix
+
+    def apply_exclusions(self):
+        """Calculate exclusions for clusters, adding data to self._clusters.
+
+        Returns
+        -------
+        self._clusters : pd.DataFrame
+            self._clusters with new columns for exclusions data.
+        """
+
+        logger.info('Working on applying exclusions with {} workers...'
+                    .format(self.max_workers))
+
+        unique_clusters = self._clusters['cluster_id'].unique()
+        static_clusters = self._clusters.copy()
+        self._clusters['included_frac'] = 0.0
+        self._clusters['included_area_km2'] = 0.0
+        self._clusters['n_excl_pixels'] = 0
+
+        slices = self._get_all_lat_lon_slices()
+
+        if self.max_workers > 1:
+            self._apply_exclusions_parallel(unique_clusters, static_clusters,
+                                            slices)
+        else:
+            self._apply_exclusions_serial(unique_clusters, static_clusters,
+                                          slices)
 
         logger.info('Finished applying exclusions.')
 
@@ -1089,7 +1139,7 @@ class RPMOutput:
             RPMClusters kwargs
         """
 
-        with cls(rpm_clusters, cf_fpath, excl_fpath, excl_dict,
-                 techmap_dset, cluster_kwargs=cluster_kwargs,
-                 parallel=parallel, **kwargs) as rpmo:
-            rpmo.export_all(out_dir, job_tag=job_tag)
+        rpmo = cls(rpm_clusters, cf_fpath, excl_fpath, excl_dict,
+                   techmap_dset, cluster_kwargs=cluster_kwargs,
+                   parallel=parallel, **kwargs)
+        rpmo.export_all(out_dir, job_tag=job_tag)

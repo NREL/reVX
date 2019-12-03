@@ -197,6 +197,7 @@ class RPMClusterManager:
                 gen_gids = region_map['gen_gids']
                 result = RPMClusters.cluster(self._cf_h5, gen_gids, clusters,
                                              **kwargs)
+#                print(result)
                 self._rpm_regions[region].update({'clusters': result})
 
     @staticmethod
