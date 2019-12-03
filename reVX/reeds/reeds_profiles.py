@@ -15,8 +15,8 @@ class ReedsProfiles(RepProfiles):
     """
     def __init__(self, cf_profiles, rev_table, profiles_dset='cf_profile',
                  rep_method='meanoid', err_method='rmse', n_profiles=1,
-                 bins=None, region_map='reeds_region', classes=3,
-                 reg_cols=('region', 'bin', 'class'), **kwargs):
+                 resource_classes=None, region_map='reeds_region',
+                 sc_bins=5, reg_cols=('region', 'class'), **kwargs):
         """
         Parameters
         ----------
@@ -33,14 +33,15 @@ class ReedsProfiles(RepProfiles):
             profile.
         n_profiles : int
             Number of representative profiles to save to fout.
-        bins : None | str | pandas.DataFrame | pandas.Series | dict
-            Resource bins, either provided in a .csv, .json
+        resource_classes : str | pandas.DataFrame | pandas.Series | dict
+            Resource classes, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary.
-            If None, assumes rev_table is an output from ReedsClassifier
+            If None, assumes rev_table has come from ReedsClassifier
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-        classes : int
-            Number of classes (clusters) to create for each region-bin
+         sc_bins : int
+            Number of supply curve bins (clusters) to create for each
+            region-class
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
@@ -48,22 +49,50 @@ class ReedsProfiles(RepProfiles):
         kwargs : dict
             Kwargs for clustering classes
         """
-        if bins is not None:
-            rev_table = ReedsClassifier.create(rev_table, bins,
-                                               region_map=region_map,
-                                               classes=classes,
-                                               cluster_kwargs=kwargs)
+        if resource_classes is not None:
+            rev_table, _ = ReedsClassifier.create(rev_table, resource_classes,
+                                                  region_map=region_map,
+                                                  sc_bins=sc_bins,
+                                                  cluster_kwargs=kwargs)
 
         super().__init__(cf_profiles, rev_table, reg_cols,
                          cf_dset=profiles_dset, rep_method=rep_method,
                          err_method=err_method, n_profiles=n_profiles)
 
+    @staticmethod
+    def _to_hourly(profiles, time_index):
+        """
+        Reduce profiles to hourly resolution
+
+        Parameters
+        ----------
+        profiles : dict
+            dict of n_profile-keyed arrays with shape (time, n) for the
+            representative profiles for each region.
+        time_index : pd.DatatimeIndex
+            Datetime Index for represntative profiles
+
+        Returns
+        ----------
+        profiles : dict
+            dict of n_profile-keyed arrays with shape (time, n) for the
+            representative profiles for each region at hourly resolutions
+        time_index : pd.DatatimeIndex
+            Datetime Index for represntative profiles reduced to hourly
+            resolution
+        """
+        mask = time_index.minute == 0
+        time_index = time_index[mask]
+        profiles = {k: v[mask] for k, v in profiles.items()}
+
+        return profiles, time_index
+
     @classmethod
     def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
             rep_method='meanoid', err_method='rmse', n_profiles=1,
-            bins=None, region_map='reeds_region', classes=3,
-            reg_cols=('region', 'bin', 'class'), parallel=True, fout=None,
-            **kwargs):
+            resource_classes=None, region_map='reeds_region', sc_bins=5,
+            reg_cols=('region', 'class'), parallel=True, fout=None,
+            hourly=True, **kwargs):
         """Run representative profiles.
         Parameters
         ----------
@@ -80,13 +109,15 @@ class ReedsProfiles(RepProfiles):
             profile.
         n_profiles : int
             Number of representative profiles to save to fout.
-        bins : None | str | pandas.DataFrame | pandas.Series | dict
-            Resource bins, either provided in a .csv, .json
+        resource_classes : str | pandas.DataFrame | pandas.Series | dict
+            Resource classes, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary.
+            If None, assumes rev_table has come from ReedsClassifier
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-        classes : int
-            Number of classes (clusters) to create for each region-bin
+         sc_bins : int
+            Number of supply curve bins (clusters) to create for each
+            region-class
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
@@ -110,16 +141,21 @@ class ReedsProfiles(RepProfiles):
         """
         rp = cls(cf_profiles, rev_table, profiles_dset=profiles_dset,
                  rep_method=rep_method, err_method=err_method,
-                 n_profiles=n_profiles, bins=bins,
-                 region_map=region_map, classes=classes, reg_cols=reg_cols,
+                 n_profiles=n_profiles, resource_classes=resource_classes,
+                 region_map=region_map, sc_bins=sc_bins, reg_cols=reg_cols,
                  **kwargs)
         if parallel:
             rp._run_parallel()
         else:
             rp._run_serial()
 
+        # pylint: disable=W0201
+        if hourly and (len(rp._time_index) > 8760):
+            rp._profiles, rp._time_index = rp._to_hourly(rp.profiles,
+                                                         rp.time_index)
+
         if fout is not None:
             rp.save_profiles(fout)
 
         logger.info('Representative profiles complete!')
-        return rp._profiles, rp._meta, rp._time_index
+        return rp.profiles, rp.meta, rp.time_index

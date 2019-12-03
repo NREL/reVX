@@ -51,15 +51,24 @@ def test_classifier():
     """
     Test ReedsClassifier
     """
-    truth = pd.read_csv(os.path.join(ROOT_DIR, 'ReEDS_Classifications.csv'))
+    path = os.path.join(ROOT_DIR, 'ReEDS_Classifications.csv')
+    truth_table = pd.read_csv(path)
+    path = os.path.join(ROOT_DIR, 'ReEDS_Aggregation.csv')
+    truth_agg = pd.read_csv(path)
 
     rev_table = os.path.join(TESTDATADIR, 'reV_sc', 'sc_table.csv')
-    bins = os.path.join(ROOT_DIR, 'inputs', 'trg_breakpoints_naris.csv')
+    resource_classes = os.path.join(ROOT_DIR, 'inputs',
+                                    'trg_breakpoints_naris.csv')
     kwargs = {'cluster_on': 'trans_cap_cost', 'method': 'kmeans'}
-    test = ReedsClassifier.create(rev_table, bins, region_map='reeds_region',
-                                  classes=3, cluster_kwargs=kwargs)
+    test_table, test_agg = ReedsClassifier.create(rev_table, resource_classes,
+                                                  region_map='reeds_region',
+                                                  sc_bins=5,
+                                                  cluster_kwargs=kwargs)
 
-    assert_frame_equal(truth, test, check_dtype=False, check_exact=False)
+    assert_frame_equal(truth_table, test_table, check_dtype=False,
+                       check_exact=False)
+    assert_frame_equal(truth_agg, test_agg, check_dtype=False,
+                       check_exact=False)
 
 
 def test_profiles():
@@ -73,7 +82,7 @@ def test_profiles():
     test = ReedsProfiles.run(cf_profiles, rev_table,
                              profiles_dset='cf_profile', rep_method='meanoid',
                              err_method='rmse', n_profiles=3,
-                             reg_cols=('region', 'bin', 'class'),
+                             reg_cols=('region', 'class'),
                              parallel=False)
     for k, v in truth[0].items():
         msg = 'Representative profiles {} do not match!'.format(k)
