@@ -55,6 +55,10 @@ class ReedsClassifier:
     def __getitem__(self, key):
         if key in self:
             group = self._groups.get_group(key)
+        else:
+            msg = "{} is an invalid group:\n{}".format(key, self.keys)
+            logger.error(msg)
+            raise ReedsKeyError(msg)
 
         return group
 
@@ -136,6 +140,28 @@ class ReedsClassifier:
         return sorted(list(self._groups.groups.keys()))
 
     @property
+    def keys(self):
+        """
+        All unique group keys
+
+        Returns
+        -------
+        list
+        """
+        return self.region_bin_class_groups
+
+    @property
+    def groups(self):
+        """
+        All unique group keys
+
+        Returns
+        -------
+        list
+        """
+        return self.region_bin_class_groups
+
+    @property
     def aggregate_table(self):
         """
         Region, bin, class aggregate table
@@ -144,11 +170,14 @@ class ReedsClassifier:
         -------
         agg_table : pandas.DataFrame
         """
-        cols = ['area_sq_km', 'capacity', 'latitude', 'longitude', 'mean_cf',
-                'mean_lcoe', 'mean_res', 'pct_slope', 'trans_capacity',
-                'trans_cap_cost', 'dist_mi', 'lcot', 'total_lcoe']
-        agg_table = self._groups.sum()
-        return agg_table[cols].reset_index()
+        cols = ['area_sq_km', 'capacity', 'trans_capacity', 'trans_cap_cost',
+                'dist_mi']
+        sum_table = self._groups[cols].sum()
+        cols = ['latitude', 'longitude', 'mean_cf', 'mean_lcoe', 'mean_res',
+                'pct_slope', 'lcot', 'total_lcoe']
+        mean_table = self._groups[cols].mean()
+        agg_table = sum_table.join(mean_table)
+        return agg_table.reset_index()
 
     @staticmethod
     def _parse_table(input_table):
