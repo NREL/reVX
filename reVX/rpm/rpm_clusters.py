@@ -51,7 +51,6 @@ import numpy as np
 import pywt
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
-from sklearn.preprocessing import normalize
 
 from reV.handlers.outputs import Outputs
 from reVX.utilities.cluster_methods import ClusteringMethods
@@ -236,43 +235,6 @@ class RPMClusters:
                         **kwargs)
         return labels
 
-    @staticmethod
-    def _normalize_values(arr, norm=None, axis=None):
-        """
-        Normalize values in array by column
-
-        Parameters
-        ----------
-        arr : ndarray
-            ndarray of values extracted from meta
-            shape (n samples, with m features)
-        norm : str
-            Normalization method to use, see sklearn.preprocessing.normalize
-
-        Returns
-        ---------
-        arr : ndarray
-            array with values normalized by column
-            shape (n samples, with m features)
-        """
-        if norm:
-            arr = normalize(arr, norm=norm, axis=axis)
-        else:
-            if np.issubdtype(arr.dtype, np.integer):
-                arr = arr.astype(float)
-
-            min_all = arr.min(axis=axis)
-            max_all = arr.max(axis=axis)
-            range_all = max_all - min_all
-            if axis is not None:
-                pos = range_all == 0
-                range_all[pos] = 1
-
-            arr -= min_all
-            arr /= range_all
-
-        return arr
-
     def _dist_rank_optimization(self, **kwargs):
         """
         Re-cluster data by minimizing the sum of the:
@@ -300,8 +262,8 @@ class RPMClusters:
             c_dist = np.linalg.norm(self.coordinates - centroid, axis=1)
             dist.append(c_dist)
 
-        rmse = self._normalize_values(np.array(rmse), **kwargs)
-        dist = self._normalize_values(np.array(dist), **kwargs)
+        rmse = ClusteringMethods._normalize_values(np.array(rmse), **kwargs)
+        dist = ClusteringMethods._normalize_values(np.array(dist), **kwargs)
         err = (dist**2 + rmse**2)
         new_labels = np.argmin(err, axis=0)
         return new_labels

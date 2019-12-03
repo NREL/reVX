@@ -7,7 +7,6 @@ import numpy as np
 import os
 import pandas as pd
 
-from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.utilities.cluster_methods import ClusteringMethods
 from reVX.utilities.exceptions import ReedsValueError, ReedsKeyError
 
@@ -418,8 +417,8 @@ class ReedsClassifier:
         if isinstance(cluster_on, str):
             cluster_on = [cluster_on, ]
 
-        data = RPMClusters._normalize_values(rev_table[cluster_on].values,
-                                             **kwargs)
+        func = ClusteringMethods._normalize_values
+        data = func(rev_table[cluster_on].values, **kwargs)
         labels = c_func(data, n_clusters=classes,
                         **kwargs)
         rev_table['class'] = labels
