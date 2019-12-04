@@ -4,8 +4,10 @@ Extract ReEDS timeslices from rep-profiles
 """
 import json
 import logging
+import numpy as np
 import os
 import pandas as pd
+from scipy.stats import mode
 from reV.handlers.resource import Resource
 
 from reVX.utilities.exceptions import ReedsValueError, ReedsRuntimeError
@@ -18,29 +20,28 @@ class ReedsTimeslices:
     Create ReEDS timeslices from region-bin-class groups and representative
     profiles
     """
-    def __init__(self, rep_profiles, timeslice_map, meta=None,
-                 time_index=None):
+    def __init__(self, profiles, timeslice_map, rev_table=None,
+                 reg_cols=('region', 'class')):
         """
         Parameters
         ----------
-        rep_profiles : str | dict
-            Path to .h5 file containing representative profiles,
-            or dictionary of representative profiles
+        rep_profiles : str
+            Path to .h5 file containing profiles (representative or cf)
         timeslice_map : str | pandas.DataFrame
             Path to timeslice mapping file or DataFrame with mapping
-        meta : Nonetype | pandas.DataFrame
-            Meta data table, must be supplied with rep_profiles
-            dictionary
-        time_index : Nonetype | pandas.DatetimeIndex
-            Datetime Index for profiles, must be supplied with rep_profiles
-            dictionary
+        rev_table : str | pandas.DataFrame
+            rev_table : str | pandas.DataFrame
+                reV supply curve or aggregation table,
+                or path to file containing table
+        reg_cols : tuple
+            Label(s) for a categorical region column(s) to create timeslices
+            for
         """
-        self._profiles = self._parse_profiles(rep_profiles, meta=meta,
-                                              time_index=time_index)
+        self._profiles, self._meta, self._time_index = \
+            self._check_profiles(profiles, rev_table=rev_table,
+                                 reg_cols=reg_cols)
         self._timeslices = self._parse_timeslices(timeslice_map,
-                                                  self._profiles.index)
-        self._means, self._stdevs = \
-            self._compute_timeslice_stats(self._profiles, self._timeslices)
+                                                  self._time_index)
 
     @property
     def profiles(self):
@@ -73,149 +74,159 @@ class ReedsTimeslices:
         -------
         pandas.DatetimeIndex
         """
-        return self._profiles.index
-
-    @property
-    def timeslice_means(self):
-        """
-        Mean CF for each timeslice and region
-
-        Returns
-        -------
-        pandas.DataFrame
-        """
-        return self._means
-
-    @property
-    def timeslice_stdevs(self):
-        """
-        CF standard deviations for each timeslice and region
-
-        Returns
-        -------
-        pandas.DataFrame
-        """
-        return self._stdevs
+        return self._time_index
 
     @staticmethod
-    def _read_h5(rep_profiles):
+    def _extract_meta_and_timeindex(profiles):
         """
-        Extract representative profiles, meta data, and time index from
-        the given .h5 file
+        Extract meta data, and time index from the profiles .h5 file
 
         Parameters
         ----------
-        rep_profiles : str
-            Path to .h5 file containg representative profiles
+        profiles : str
+            Path to .h5 file containing profiles (representative or cf)
 
         Returns
         -------
-        profiles : dict
-            Dictionary of representative profiles
         meta : pandas.DataFrame
-            Meta data table, must be supplied with rep_profiles
-            dictionary
+            Meta data table corresponding to profiles
         time_index : pandas.DatetimeIndex
-            Datetime Index for profiles, must be supplied with rep_profiles
-            dictionary
+            Datetime Index for profiles
         """
-        with Resource(rep_profiles) as f:
+        with Resource(profiles) as f:
             meta = f.meta
+            if 'rev_summary' in f.dsets:
+                table = f._get_meta('rev_summary', slice(None))
+                cols = list(meta.columns.drop(['rep_gen_gid', 'rep_res_gid']))
+                tz = table.groupby(cols)
+                tz = tz['timezone'].apply(lambda x: mode(x).mode[0])
+                meta = meta.merge(tz.reset_index(), on=cols)
+
+            if 'timezone' not in meta:
+                msg = ('Meta data must contain timzone to allow conversion '
+                       'to local time!')
+                logger.error(msg)
+                raise ReedsRuntimeError(msg)
+
             time_index = f.time_index
-            profiles = {}
-            for ds in f.dsets:
-                if 'rep_profiles' in ds:
-                    k = int(ds.split('_')[-1])
-                    profiles[k] = f[ds]
 
-        return profiles, meta, time_index
+        return meta, time_index
 
     @staticmethod
-    def _combine_profiles(profiles, meta, time_index):
+    def _unpack_list(col):
         """
-        Create a single DataFrame of all representative profiles by
-        'region'
+        Unpack lists stored in given column
 
         Parameters
         ----------
-        profiles : dict
-            Dictionary of representative profiles
+        col : pandas.DataFrame | pandas.Series
+            Column containing lists to unpack
+
+        Returns
+        ------
+        ndarray
+            Vector of values contained in lists
+        """
+        if isinstance(col.iloc[0], str):
+            col = col.apply(json.loads)
+
+        return np.concatenate(col.values)
+
+    @staticmethod
+    def _unpack_gen_gids(group_df):
+        """
+        Unpack gen gids and counts lists
+
+        Parameters
+        -----------
+        group_df : pandas.DataFrame
+            Group DataFrame to unpack gen gids and counts for
+
+        Returns
+        -------
+        pandas.DataFrame
+            DataFrame of unique gen gids and their associated counts
+        """
+        gen_df = {
+            'gid': ReedsTimeslices._unpack_list(group_df['gen_gids']),
+            'gid_count': ReedsTimeslices._unpack_list(group_df['gid_counts'])}
+
+        return pd.DataFrame(gen_df).groupby('gid').sum()
+
+    @staticmethod
+    def _add_reg_cols(meta, rev_table, reg_cols=('region', 'class')):
+        """
+        Add reg_cols to meta from rev_table
+
+        Parameters
+        ----------
         meta : pandas.DataFrame
-            Meta data table, must be supplied with rep_profiles
-            dictionary
-        time_index : pandas.DatetimeIndex
-            Datetime Index for profiles, must be supplied with rep_profiles
-            dictionary
+            Meta data table corresponding to profiles, must include timezone
+        rev_table : None | str | pandas.DataFrame
+            reV supply curve or aggregation table,
+            or path to file containing table
+        reg_cols : tuple
+            Label(s) for a categorical region column(s) to create timeslices
+            for
 
         Returns
         -------
-        profiles_df : pandas.DataFrame
-            Multi-index DataFrame of profiles for each 'region'
+        meta : pandas.DataFrame
+            Updated meta with reg_cols added to sites to be extract
+            timeslices from
         """
-        cols = meta.columns.drop(['rep_gen_gid', 'rep_res_gid'])
-        cols = [json.dumps([int(i) for i in c]) for c in meta[cols].values]
-        temp = pd.DataFrame(columns=cols, index=time_index)
-        profiles_df = []
-        for k, arr in profiles.items():
-            df = temp.copy()
-            df.loc[:] = arr
-            df.columns = pd.MultiIndex.from_product([[k], df.columns])
-            profiles_df.append(df.swaplevel(axis=1))
+        rev_table = rev_table.groupby(reg_cols)
+        rev_table = rev_table.apply(ReedsTimeslices._unpack_gen_gids)
 
-        profiles_df = pd.concat(profiles_df, axis=1).sort_index(axis=1,
-                                                                level=0)
-        return profiles_df
+        meta = meta.merge(rev_table.reset_index(), on='gid')
+
+        return meta
 
     @staticmethod
-    def _parse_profiles(profiles, meta=None, time_index=None):
+    def _check_profiles(profiles, rev_table=None,
+                        reg_cols=('region', 'class')):
         """
-        Extract representative profiles
+
 
         Parameters
         ----------
-        profiles : str | dict
-            Path to .h5 file containing representative profiles,
-            or dictionary of representative profiles
-        meta : Nonetype | pandas.DataFrame
-            Meta data table, must be supplied with rep_profiles
-            dictionary
-        time_index : Nonetype | pandas.DatetimeIndex
-            Datetime Index for profiles, must be supplied with rep_profiles
-            dictionary
+        profiles : str
+            Path to .h5 file containing profiles (representative or cf)
+        rev_table : None | str | pandas.DataFrame
+            reV supply curve or aggregation table,
+            or path to file containing table
+        reg_cols : tuple
+            Label(s) for a categorical region column(s) to create timeslices
+            for
 
         Returns
         -------
-        profiles : pandas.DataFrame
-            Multi-index DataFrame of representative profiles by ReEDS
-            (region, bin, class) w/ time_index
+        profiles : str
+            Path to .h5 file containing profiles (representative or cf)
+        meta : pandas.DataFrame
+            Meta data table corresponding to profiles, must include timezone
+        time_index : pandas.DatetimeIndex
+            Datetime Index for rep profiles
         """
-        if isinstance(profiles, str):
-            if not profiles.endswith('.h5'):
-                msg = ("Cannot parse {} must be a .h5 file!"
-                       .format(profiles))
-                logger.error(msg)
-                raise ReedsValueError(msg)
-
-            if not os.path.isfile(profiles):
-                msg = "{} is not a valid file path!".format(profiles)
-                logger.error(msg)
-                raise ReedsValueError(msg)
-
-            profiles, meta, time_index = ReedsTimeslices._read_h5(profiles)
-        elif not isinstance(profiles, dict):
-            msg = ('Cannot parse profiles from type: {}'
-                   .format(type(profiles)))
+        if not profiles.endswith('.h5'):
+            msg = ("Cannot parse {} must be a .h5 file!"
+                   .format(profiles))
             logger.error(msg)
             raise ReedsValueError(msg)
 
-        if meta is None or time_index is None:
-            msg = ('"meta" and "time_index" must be supplied with '
-                   'representative profiles dictionary!')
+        if not os.path.isfile(profiles):
+            msg = "{} is not a valid file path!".format(profiles)
+            logger.error(msg)
+            raise ReedsValueError(msg)
 
-        profiles = ReedsTimeslices._combine_profiles(profiles, meta,
-                                                     time_index)
+        meta, time_index = \
+            ReedsTimeslices._extract_meta_and_timeindex(profiles)
 
-        return profiles
+        if rev_table is not None:
+            meta = ReedsTimeslices._add_reg_cols(meta, rev_table,
+                                                 reg_cols=reg_cols)
+
+        return profiles, meta, time_index
 
     @staticmethod
     def _parse_timeslices(timeslice_map, time_index):
@@ -269,6 +280,73 @@ class ReedsTimeslices:
         return timeslice_map
 
     @staticmethod
+    def _roll_array(arr, shifts):
+        """
+        Roll array with unique shifts for each column
+        This converts timeseries to local time
+
+        Parameters
+        ----------
+        arr : ndarray
+            Input timeseries array of form (time, sites)
+        shifts : ndarray | list
+            Vector of shifts from UTC to local time
+
+        Returns
+        -------
+        local_arr : ndarray
+            Array shifted to local time
+        """
+        if arr.shape[1] != len(shifts):
+            msg = ('Number of timezone shifts ({}) does not match number of '
+                   'sites ({})'.format(len(shifts), arr.shape[1]))
+            logger.error(msg)
+            raise ReedsValueError(msg)
+
+        local_arr = np.empty(arr.shape, dtype=arr.dtype)
+        for i, s in enumerate(shifts):
+            local_arr[:, i] = np.roll(arr[:, i], s)
+
+        return local_arr
+
+    @staticmethod
+    def _rep_profiles(profiles, meta, time_index):
+        """
+        Create a single DataFrame of all representative profiles by
+        'region'
+
+        Parameters
+        ----------
+        profiles : dict
+            Dictionary of representative profiles
+        meta : pandas.DataFrame
+            Meta data table, must be supplied with rep_profiles
+            dictionary
+        time_index : pandas.DatetimeIndex
+            Datetime Index for profiles, must be supplied with rep_profiles
+            dictionary
+
+        Returns
+        -------
+        profiles_df : pandas.DataFrame
+            Multi-index DataFrame of profiles for each 'region'
+        """
+        cols = meta.columns.drop(['rep_gen_gid', 'rep_res_gid', 'timezone'])
+        cols = [json.dumps([int(i) for i in c]) for c in meta[cols].values]
+        tz = meta['timezone'].values
+        temp = pd.DataFrame(columns=cols, index=time_index)
+        profiles_df = []
+        for k, arr in profiles.items():
+            df = temp.copy()
+            df.loc[:] = ReedsTimeslices._roll_array(arr, tz)
+            df.columns = pd.MultiIndex.from_product([[k], df.columns])
+            profiles_df.append(df.swaplevel(axis=1))
+
+        profiles_df = pd.concat(profiles_df, axis=1).sort_index(axis=1,
+                                                                level=0)
+        return profiles_df
+
+    @staticmethod
     def _compute_timeslice_stats(profiles, timeslices):
         """
         Compute means and standard divations for each timeslice
@@ -306,8 +384,7 @@ class ReedsTimeslices:
         return means, stdevs
 
     @classmethod
-    def stats(cls, rep_profiles, timeslice_map, meta=None,
-              time_index=None):
+    def stats(cls, rep_profiles, timeslice_map):
         """
         Compute means and standar deviations for each region and timeslice
         from given representative profiles
@@ -319,12 +396,6 @@ class ReedsTimeslices:
             or dictionary of representative profiles
         timeslice_map : str | pandas.DataFrame
             Path to timeslice mapping file or DataFrame with mapping
-        meta : Nonetype | pandas.DataFrame
-            Meta data table, must be supplied with rep_profiles
-            dictionary
-        time_index : Nonetype | pandas.DatetimeIndex
-            Datetime Index for profiles, must be supplied with rep_profiles
-            dictionary
 
         Returns
         -------
@@ -333,7 +404,4 @@ class ReedsTimeslices:
         stdevs : pandas.DataFrame
             Standard deviation in CF for each region and timeslice
         """
-        tslice = cls(rep_profiles, timeslice_map, meta=meta,
-                     time_index=time_index)
-
-        return tslice.timeslice_means, tslice.timeslice_stdevs
+        cls(rep_profiles, timeslice_map)

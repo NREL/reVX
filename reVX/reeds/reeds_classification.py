@@ -280,8 +280,8 @@ class ReedsClassifier:
             region_col = [c for c in region_map.columns if c != 'sc_gid']
             rev_table['region'] = 0
             rev_table = rev_table.set_index('sc_gid')
-            for i, (_, df) in enumerate(region_map.groupby(region_col)):
-                rev_table.loc[df['sc_gid'], 'region'] = i
+            for r, df in region_map.groupby(region_col):
+                rev_table.loc[df['sc_gid'], 'region'] = r
 
             rev_table = rev_table.reset_index()
 
