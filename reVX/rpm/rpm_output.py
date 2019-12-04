@@ -11,7 +11,7 @@ import psutil
 from scipy.spatial import cKDTree
 from warnings import warn
 
-from reV.supply_curve.exclusions import ExclusionMask
+from reV.supply_curve.exclusions import ExclusionMask, ExclusionMaskFromDict
 from reV.handlers.outputs import Outputs
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.utilities.exceptions import RPMRuntimeError, RPMTypeError
@@ -482,7 +482,7 @@ class RPMOutput:
 
         Parameters
         ----------
-        excl : ExclusionMask
+        excl : ExclusionMask | ExclusionMaskFromDict
             Pre-initialized exclusions mask object.
         techmap_dset : str
             Dataset name in the exclusions file containing the
@@ -499,7 +499,7 @@ class RPMOutput:
         techmap : np.ndarray
             Techmap data mapping exclusions grid to resource gid (flattened).
         """
-        if isinstance(excl, ExclusionMask):
+        if isinstance(excl, (ExclusionMask, ExclusionMaskFromDict)):
             techmap = excl.excl_h5[techmap_dset, lat_slice, lon_slice]
         else:
             e = 'Cannot recognize exclusion type: {}'.format(type(excl))
@@ -516,7 +516,7 @@ class RPMOutput:
 
         Parameters
         ----------
-        excl : ExclusionMask
+        excl : ExclusionMask | ExclusionMaskFromDict
             Pre-initialized exclusions mask object.
         lat_slice : slice
             The latitude (row) slice to extract from the exclusions or
@@ -531,7 +531,7 @@ class RPMOutput:
             Exclusions data flattened and normalized from 0 to 1 (1 is incld).
         """
 
-        if isinstance(excl, ExclusionMask):
+        if isinstance(excl, (ExclusionMask, ExclusionMaskFromDict)):
             excl_data = excl[lat_slice, lon_slice]
         else:
             e = 'Cannot recognize exclusion type: {}'.format(type(excl))
@@ -724,11 +724,10 @@ class RPMOutput:
         n_inclusions = np.zeros((len(locs), ), dtype=np.float32)
         n_points = np.zeros((len(locs), ), dtype=np.uint16)
 
-        excl = ExclusionMask.from_dict(excl_fpath, excl_dict)
-        techmap = RPMOutput._get_tm_data(excl, techmap_dset,
-                                         lat_slice, lon_slice)
-        exclusions = RPMOutput._get_excl_data(excl, lat_slice, lon_slice)
-        excl.close()
+        with ExclusionMaskFromDict(excl_fpath, excl_dict) as excl:
+            techmap = RPMOutput._get_tm_data(excl, techmap_dset,
+                                             lat_slice, lon_slice)
+            exclusions = RPMOutput._get_excl_data(excl, lat_slice, lon_slice)
 
         for i, ind in enumerate(clusters.loc[mask, :].index.values):
             techmap_locs = np.where(
