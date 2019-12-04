@@ -65,7 +65,6 @@ class ClusteringMethods:
     @staticmethod
     def kmeans(data, **kwargs):
         """ Cluster based on kmeans methodology """
-
         kmeans = KMeans(random_state=0, **kwargs)
         results = kmeans.fit(data)
         return results.labels_
@@ -349,7 +348,7 @@ class RPMClusters:
                 c_centroids = clusters.cluster_coordinates
                 dist_i = np.linalg.norm(c_centroids - centroids)
                 rmse_i = np.mean((c_coeffs - coeffs) ** 2) ** 0.5
-                if (dist_i < dist and rmse_i < rmse):
+                if (dist_i <= dist and rmse_i <= rmse):
                     break
                 else:
                     dist, rmse = dist_i, rmse_i
