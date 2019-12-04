@@ -4,7 +4,7 @@
 import os
 import pytest
 import pandas as pd
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 
 from reV import TESTDATADIR as reV_TESTDATADIR
 from reVX import TESTDATADIR as reVX_TESTDATADIR
@@ -67,6 +67,31 @@ def test_rpm_serial():
     df_test = pd.read_csv(TEST)
 
     assert_frame_equal(df_baseline, df_test)
+
+    if PURGE_OUT:
+        for fn in os.listdir(OUT_DIR):
+            os.remove(os.path.join(OUT_DIR, fn))
+
+
+def test_rpm_no_exclusions():
+    """Test that the clustering works without exclusions."""
+
+    RPMClusterManager.run_clusters_and_profiles(CF_FPATH, RPM_META, None,
+                                                None, TECHMAP_DSET,
+                                                OUT_DIR, job_tag=JOB_TAG,
+                                                rpm_region_col=None,
+                                                parallel=True,
+                                                output_kwargs=None,
+                                                dist_rank_filter=True,
+                                                contiguous_filter=False)
+
+    df_baseline = pd.read_csv(BASELINE)
+    df_test = pd.read_csv(TEST)
+
+    assert 'cluster_id' in df_test
+    assert 'rank' in df_test
+    assert 'included_frac' not in df_test
+    assert_series_equal(df_baseline['cluster_id'], df_test['cluster_id'])
 
     if PURGE_OUT:
         for fn in os.listdir(OUT_DIR):
