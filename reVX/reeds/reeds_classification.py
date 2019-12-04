@@ -473,7 +473,7 @@ class ReedsClassifier:
             as a DataFrame or Series, or in a dictionary
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-         sc_bins : int
+        sc_bins : int
             Number of supply curve bins (clusters) to create for each
             region-class
         cluster_kwargs : dict

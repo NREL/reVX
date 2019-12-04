@@ -7,6 +7,7 @@ import logging
 import os
 from reV.utilities.cli_dtypes import STR, STRLIST
 
+from reVX.config.reeds import ReedsConfig
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
 from reVX.reeds.reeds_timeslices import ReedsTimeslices
@@ -19,23 +20,68 @@ logger = logging.getLogger(__name__)
 @click.group()
 @click.option('--name', '-n', default='ReEDS', type=STR,
               help='Job name. Default is "ReEDS".')
+@click.option('--verbose', '-v', is_flag=True,
+              help='Flag to turn on debug logging. Default is not verbose.')
+@click.pass_context
+def main(ctx, name, verbose):
+    """
+    ReEDS Command Line Interface
+    """
+    ctx.ensure_object(dict)
+    ctx.obj['NAME'] = name
+    ctx.obj['VERBOSE'] = verbose
+
+
+@main.group()
+@click.option('--config', '-c', required=True,
+              type=click.Path(exists=True),
+              help='Filepath to reVX-REEDS config json file.')
+def from_config(ctx, config):
+    """
+    Run reVX-REEDS from a config.
+    """
+    config = ReedsConfig(config)
+
+    if config.execution_control.option == 'local':
+        ctx.obj['TABLE'] = config.rev_table
+        ctx.obj['OUT_DIR'] = config.dirout
+
+        classify(config.resource_classes, config.regions, config.n_bins,
+                 config.cluster_on)
+
+        if config.profiles is not None:
+            profiles(config.profiles.cf_profiles,
+                     config.profiles.n_profiles,
+                     config.profiles.profiles_dset,
+                     config.profiles.rep_method,
+                     config.profiles.err_method,
+                     config.profiles.reg_cols,
+                     config.profiles.parallel)
+
+        if config.timeslices is not None:
+            timeslices(config.timeslices.timeslices,
+                       config.timeslices.profiles)
+
+    if config.execution_control.option == 'eagle':
+        eagle(config)
+
+
+@main.group()
 @click.option('--rev_table', '-rt', required=True,
               type=click.Path(exists=True),
               help=('Path to .csv containing reV aggregation or '
                     'supply curve table'))
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
-@click.option('--verbose', '-v', is_flag=True,
-              help='Flag to turn on debug logging. Default is not verbose.')
-@click.pass_context
-def main(ctx, name, rev_table, out_dir, verbose):
+def local(ctx, rev_table, out_dir):
     """
-    ReEDS Command Line Interface
+    Run reVX-REEDS on local hardware.
     """
-    ctx.ensure_object(dict)
-    ctx.obj['NAME'] = name
     ctx.obj['TABLE'] = rev_table
     ctx.obj['OUT_DIR'] = out_dir
+
+    name = ctx.obj['NAME']
+    verbose = ctx.obj['verbose']
 
     init_mult(name, out_dir, modules=[__name__, 'reVX.reeds'],
               verbose=verbose)
@@ -45,33 +91,38 @@ def main(ctx, name, rev_table, out_dir, verbose):
     logger.info('Outputs to be stored in: {}'.format(out_dir))
 
 
-@main.group(chain=True, invoke_without_command=True)
-@click.option('--bins', '-b', required=True, type=click.Path(exists=True),
-              help='.csv or .json containing resource bins')
+@local.group(chain=True, invoke_without_command=True)
+@click.option('--resource_classes', '-rc', required=True,
+              type=click.Path(exists=True),
+              help='.csv or .json containing resource class definitions')
 @click.option('--regions', '-r', type=str, default='reeds_region',
               help='Mapping of supply curve points to geographic region')
-@click.option('--classes', '-c', type=int, default=3,
-              help=('Number of classes (clusters) to create for each '
-                    'region-bin'))
-@click.option('--cluster_on', '-col', type=str, default=None,
-              help='Columns in rev_table to cluster on')
+@click.option('--n_bins', '-nb', type=int, default=3,
+              help=('Number of bins (clusters) to create for each '
+                    'region/resource bin combination'))
+@click.option('--cluster_on', '-col', type=str, default='trans_cap_cost',
+              help='Column(s) in rev_table to cluster on')
 @click.pass_context
-def classify(ctx, bins, regions, classes, cluster_on):
+def classify(ctx, resource_classes, regions, n_bins, cluster_on):
     """
     Extract ReEDS (region, bin, class) groups
     """
     name = ctx.obj['NAME']
-    table = ctx.obj['TABLE']
+    rev_table = ctx.obj['TABLE']
     out_dir = ctx.obj['OUT_DIR']
 
     logger.info('Extracting ReEDS (region, bin, class) groups'
                 .format())
     kwargs = {'cluster_on': cluster_on, 'method': 'kmeans'}
-    table = ReedsClassifier.create(table, bins, region_map=regions,
-                                   classes=classes, cluster_kwargs=kwargs)
+    table, agg_table = ReedsClassifier.create(rev_table, resource_classes,
+                                              region_map=regions,
+                                              sc_bins=n_bins,
+                                              cluster_kwargs=kwargs)
 
     out_path = os.path.join(out_dir, '{}_table.csv'.format(name))
     table.to_csv(out_path, index=False)
+    out_path = os.path.join(out_dir, '{}_agg_table.csv'.format(name))
+    agg_table.to_csv(out_path, index=False)
 
     ctx.obj['TABLE'] = table
 
@@ -83,6 +134,8 @@ def classify(ctx, bins, regions, classes, cluster_on):
                     'profiles'))
 @click.option('--n_profiles', '-np', type=int, default=1,
               help='Number of profiles to extract per "group".')
+@click.option('--profiles_dset', '-pd', type=str, default="cf_profile",
+              help='Profiles dataset name in cf_profiles file.')
 @click.option('--rep_method', '-rm', type=STR, default='meanoid',
               help=('Method identifier for calculation of the representative '
                     'profile.'))
@@ -90,7 +143,7 @@ def classify(ctx, bins, regions, classes, cluster_on):
               help=('Method identifier for calculation of error from the '
                     'representative profile.'))
 @click.option('--reg_cols', '-rcol', type=STRLIST,
-              default="('region', 'bin', 'class')",
+              default=('region', 'bin', 'class'),
               help=('Label(s) for a categorical region column(s) to extract '
                     'profiles for'))
 @click.option('--parallel', '-p', is_flag=True,
@@ -125,29 +178,29 @@ def profiles(ctx, cf_profiles, n_profiles, profiles_dset, rep_method,
 @click.option('--timeslices', '-ts', required=True,
               type=click.Path(exists=True),
               help='.csv containing timeslice mapping')
-@click.option('--rep_profiles', '-rp', type=click.Path(exists=True),
+@click.option('--profiles', '-pr', type=click.Path(exists=True),
               default=None,
-              help=('Path to .h5 file containing representative profiles, '
+              help=('Path to .h5 file containing (representative) profiles, '
                     'not needed if chained with profiles command'))
 @click.pass_context
-def timeslices(ctx, timeslices, rep_profiles):
+def timeslices(ctx, timeslices, profiles):
     """
     Extract timeslices from representative profiles
     """
     name = ctx.obj['NAME']
     out_dir = ctx.obj['OUT_DIR']
-    if rep_profiles is None:
+    if profiles is None:
         if 'PROFILES' not in ctx.obj:
             msg = ('You must run "profiles" or provide path to existing '
                    'profiles to extract timeslices!')
             logger.error(msg)
             raise ReedsRuntimeError(msg)
 
-        rep_profiles = ctx.obj['PROFILES']
+        profiles = ctx.obj['PROFILES']
 
-    logger.info('Extractin timeslices from {} using mapping {}'
-                .format(rep_profiles, timeslices))
-    timeslice_stats = ReedsTimeslices.stats(rep_profiles, timeslices)
+    logger.info('Extracting timeslices from {} using mapping {}'
+                .format(profiles, timeslices))
+    timeslice_stats = ReedsTimeslices.stats(profiles, timeslices)
 
     out_path = os.path.join(out_dir, '{}_timeslices-means.csv'.format(name))
     logger.info('Saving timeslice means to {}'.format(out_path))
@@ -156,6 +209,13 @@ def timeslices(ctx, timeslices, rep_profiles):
     out_path = os.path.join(out_dir, '{}_timeslices-stdevs.csv'.format(name))
     logger.info('Saving timeslice stdevs to {}'.format(out_path))
     timeslice_stats[1].to_csv(out_path)
+
+
+def eagle():
+    """
+    Run reVX-REEDS on Eagle HPC.
+    """
+    pass
 
 
 if __name__ == '__main__':
