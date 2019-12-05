@@ -50,8 +50,11 @@ class region_classifier():
         if self.regions_label not in regions.columns:
             self.regions_label = self.DEFAULT_REGIONS_LABEL
             regions[self.regions_label] = regions.index
-            logger.info('Setting meta label: {}'.format(self.meta_label))
-        regions.set_index(self.regions_label)
+            logger.warning('Setting meta label: ' + str(self.regions_label))
+        regions.set_index(self.regions_label, inplace=True, drop=False)
+        centroids = regions.geometry.centroid
+        regions[self.long_label] = centroids.x
+        regions[self.lat_label] = centroids.y
         return regions
 
     def get_meta(self):
@@ -60,11 +63,11 @@ class region_classifier():
         if self.meta_label not in meta.columns:
             self.meta_label = self.DEFAULT_META_LABEL
             meta[self.meta_label] = meta.index
-            logger.info('Setting regions label: {}'.format(self.regions_label))
+            logger.warning('Setting regions label: ' + str(self.meta_label))
         geometry = [Point(xy) for xy in zip(meta[self.long_label],
                                             meta[self.lat_label])]
         meta = gpd.GeoDataFrame(meta, crs=self.CRS, geometry=geometry)
-        meta.set_index(self.meta_label)
+        meta.set_index(self.meta_label, inplace=True, drop=False)
         return meta
 
     def classify(self, save_to=None):
@@ -85,26 +88,26 @@ class region_classifier():
             cols = [self.lat_label, self.long_label]
 
             # Lookup the nearest assigned points
-            lookup = self.meta.loc[meta_ids][cols]
+            lookup = self.regions[cols]
             target = self.meta.loc[outlier_ids][cols]
             inds = self.nearest(target, lookup)
 
             meta_ids += outlier_ids
-            region_ids += list(np.array(region_ids)[inds])
+            region_ids += list(self.regions.loc[inds, self.regions_label])
 
         # Build classification mapping
         data = np.array([meta_ids, region_ids]).T
         classified = pd.DataFrame(data=data, columns=[self.meta_label,
                                                       self.regions_label])
         classified.sort_values(self.meta_label, inplace=True)
+        classified.set_index(self.meta_label, inplace=True)
 
-        classified_meta = self.meta.sort_values(self.meta_label)
+        classified_meta = self.meta.loc[meta_ids].sort_values(self.meta_label)
         classified_meta[self.regions_label] = classified[self.regions_label]
-        del classified_meta['geometry']
 
         # Output
         if save_to:
-
+            del classified_meta['geometry']
             classified_meta.to_csv(save_to, index=False)
         return classified_meta
 
