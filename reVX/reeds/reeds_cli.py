@@ -6,6 +6,7 @@ import click
 import logging
 import os
 from reV.utilities.cli_dtypes import STR, STRLIST
+from reV.utilities.execution import SLURM
 
 from reVX.config.reeds import ReedsConfig
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -46,8 +47,8 @@ def from_config(ctx, config):
         ctx.obj['TABLE'] = config.rev_table
         ctx.obj['OUT_DIR'] = config.dirout
 
-        classify(config.resource_classes, config.regions, config.n_bins,
-                 config.cluster_on)
+        classify(config.classify.resource_classes, config.classify.regions,
+                 config.classify.n_bins, config.classify.cluster_on)
 
         if config.profiles is not None:
             profiles(config.profiles.cf_profiles,
@@ -100,7 +101,7 @@ def local(ctx, rev_table, out_dir):
 @click.option('--n_bins', '-nb', type=int, default=3,
               help=('Number of bins (clusters) to create for each '
                     'region/resource bin combination'))
-@click.option('--cluster_on', '-col', type=str, default='trans_cap_cost',
+@click.option('--cluster_on', '-cl', type=str, default='trans_cap_cost',
               help='Column(s) in rev_table to cluster on')
 @click.pass_context
 def classify(ctx, resource_classes, regions, n_bins, cluster_on):
@@ -211,11 +212,90 @@ def timeslices(ctx, timeslices, profiles):
     timeslice_stats[1].to_csv(out_path)
 
 
-def eagle():
+def get_node_cmd(config):
+    """
+    Get the node CLI call for the reVX-REEDS pipeline.
+
+    Parameters
+    ----------
+    config : reVX.config.reeds.ReedsConfig
+        reVX-REEDS config object.
+
+    Returns
+    -------
+    cmd : str
+        CLI call to submit to SLURM execution.
+    """
+
+    args = ('-n {name} local -rt {rev_table} -o {out_dir} '
+            .format(name=config.name,
+                    rev_table=config.rev_table,
+                    out_dir=config.dirout))
+
+    if config.logging_level.upper() == 'DEBUG':
+        args += '-v '
+
+    args += ('classify -rc {resource_classes} -r {regions} -nb {n_bins} '
+             '-cl {cluster_on} '
+             .format(resource_classes=config.classify.resource_classes,
+                     regions=config.classify.regions,
+                     n_bins=config.classify.n_bins,
+                     cluster_on=config.classify.cluster_on))
+
+    if config.profiles is not None:
+        args += ('profiles -cf {cf_profiles} -np {n_profiles} '
+                 '-pd {profiles_dset} -rm {rep_method} -em {err_method} '
+                 '-rcol {reg_cols} '
+                 .format(cf_profiles=config.profiles.cf_profiles,
+                         n_profiles=config.profiles.n_profiles,
+                         profiles_dset=config.profiles.profiles_dset,
+                         rep_method=config.profiles.rep_method,
+                         err_method=config.profiles.err_method,
+                         reg_cols=config.profiles.reg_cols))
+        if config.profiles.parallel:
+            args += '-p '
+
+    if config.timeslices is not None:
+        args += ('timeslices -ts {timeslices} -pr {profiles} '
+                 .format(timeslices=config.timeslices.timeslices,
+                         profiles=config.timeslices.profiles))
+
+    cmd = 'python -m reVX.reeds.reeds_cli {}'.format(args)
+    return cmd
+
+
+def eagle(config):
     """
     Run reVX-REEDS on Eagle HPC.
+
+    Parameters
+    ----------
+    config : reVX.config.reeds.ReedsConfig
+        reVX-REEDS config object.
     """
-    pass
+
+    cmd = get_node_cmd(config)
+    name = config.name
+    log_dir = config.logdir
+    stdout_path = os.path.join(log_dir, 'stdout/')
+
+    logger.info('Running reVX-REEDS pipeline on Eagle with '
+                'node name "{}"'.format(name))
+    slurm = SLURM(cmd, alloc=config.execution_control.alloc,
+                  memory=config.execution_control.node_mem,
+                  walltime=config.execution_control.walltime,
+                  feature=config.execution_control.feature,
+                  name=name, stdout_path=stdout_path)
+    if slurm.id:
+        msg = ('Kicked off reVX-REEDS pipeline job "{}" '
+               '(SLURM jobid #{}) on Eagle.'
+               .format(name, slurm.id))
+    else:
+        msg = ('Was unable to kick off reVX-REEDS pipeline job "{}". '
+               'Please see the stdout error messages'
+               .format(name))
+    click.echo(msg)
+    logger.info(msg)
 
 
 if __name__ == '__main__':
