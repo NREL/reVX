@@ -1,6 +1,6 @@
 """
 Region Classifier Module
-
+- Used to classify meta points with a label from a shapefile
 
 Sample Usage:
 ```
@@ -13,7 +13,6 @@ classifier = region_classifier(meta_path=meta_path, regions_path=regions_path,
                                regions_label=regions_label)
 classification = classifier.classify(save_to=save_to)
 ```
-
 """
 
 import numpy as np
@@ -28,12 +27,27 @@ logger = logging.getLogger(__name__)
 
 
 class region_classifier():
+    """ Base class of region classification """
 
     CRS = {'init': 'epsg:4326'}
     DEFAULT_REGIONS_LABEL = 'regions_index'
 
     def __init__(self, meta_path, regions_path, regions_label=None,
                  lat_label="LATITUDE", long_label="LONGITUDE"):
+        """
+        Parameters
+        ----------
+        meta_path : str
+            Path to meta CSV file containing lat/lon points
+        regions_path : str
+            Path to regions shapefile containing labeled geometries
+        regions_label : str
+            Attribute to use a label in the regions shapefile
+        lat_label : str
+            Latitude column name in meta CSV file
+        long_label : str
+            Longitude column name in meta CSV file
+        """
         self.meta_path = meta_path
         self.regions_path = regions_path
         self.lat_label = lat_label
@@ -44,7 +58,7 @@ class region_classifier():
         self.regions = self.get_regions()
 
     def get_regions(self):
-        """ """
+        """ Load the regions shapefile into geopandas dataframe """
         regions = gpd.read_file(self.regions_path).to_crs(self.CRS)
         if self.regions_label not in regions.columns:
             self.regions_label = self.DEFAULT_REGIONS_LABEL
@@ -56,7 +70,7 @@ class region_classifier():
         return regions
 
     def get_meta(self):
-        """ """
+        """ Load the meta csv file into geopandas dataframe """
         meta = pd.read_csv(self.meta_path)
         geometry = [Point(xy) for xy in zip(meta[self.long_label],
                                             meta[self.lat_label])]
@@ -64,9 +78,14 @@ class region_classifier():
         return meta
 
     def classify(self, save_to=None):
-        """ """
-        # Get intersection classifications
+        """ Classify the meta data with regions labels
+        Parameters
+        ----------
+        save_to : str
+            Optional output path for labeled meta CSV file
+        """
         try:
+            # Get intersection classifications
             meta_inds, region_inds, outlier_inds = self.intersect()
         except Exception as e:
             invalid_geom_ids = self.check_geometry()
@@ -104,7 +123,7 @@ class region_classifier():
         return classified_meta
 
     def intersect(self):
-        """ """
+        """ Join the meta points to regions by spatial intersection """
 
         joined = gpd.sjoin(self.meta, self.regions,
                            how='inner', op='intersects')
@@ -120,22 +139,28 @@ class region_classifier():
 
     @staticmethod
     def nearest(target, lookup):
-        """ """
+        """ Lookup the indices to the nearest point
+        Parameters
+        ----------
+        target : Pandas DataFrame
+            List of lat/lon points
+        lookup : Pandas DataFrame
+            List of lat/lon points
+        """
         tree = cKDTree(lookup)
         _, inds = tree.query(target, k=1)
         return inds
 
     @staticmethod
     def geom_is_valid(geom):
-        """ """
+        """ Check if individual geometry is valid """
         try:
             shape(geom)
             return 1
         except AttributeError:
             return 0
 
-    @classmethod
     def check_geometry(self):
-        """ """
+        """ Get index list of invalid geometries """
         isvalid = self.regions.geometry.apply(lambda x: self.geom_is_valid(x))
         return list(self.regions[isvalid == 0].index)
