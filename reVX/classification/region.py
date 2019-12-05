@@ -7,8 +7,10 @@ Sample Usage:
 meta_path = 'meta.csv'
 regions_path = 'us_states.shp'
 save_to = 'new_meta.csv'
+regions_label = 'NAME'
 
-classifier = region_classifier(meta_path=meta_path, regions_path=regions_path)
+classifier = region_classifier(meta_path=meta_path, regions_path=regions_path,
+                               regions_label=regions_label)
 classification = classifier.classify(save_to=save_to)
 ```
 
@@ -28,17 +30,14 @@ logger = logging.getLogger(__name__)
 class region_classifier():
 
     CRS = {'init': 'epsg:4326'}
-    DEFAULT_META_LABEL = 'meta_index'
     DEFAULT_REGIONS_LABEL = 'regions_index'
 
-    def __init__(self, meta_path, regions_path,
-                 meta_label=None, regions_label=None,
+    def __init__(self, meta_path, regions_path, regions_label=None,
                  lat_label="LATITUDE", long_label="LONGITUDE"):
         self.meta_path = meta_path
         self.regions_path = regions_path
         self.lat_label = lat_label
         self.long_label = long_label
-        self.meta_label = meta_label
         self.regions_label = regions_label
 
         self.meta = self.get_meta()
@@ -50,8 +49,7 @@ class region_classifier():
         if self.regions_label not in regions.columns:
             self.regions_label = self.DEFAULT_REGIONS_LABEL
             regions[self.regions_label] = regions.index
-            logger.warning('Setting meta label: ' + str(self.regions_label))
-        regions.set_index(self.regions_label, inplace=True, drop=False)
+            logger.warning('Setting regions label: ' + str(self.regions_label))
         centroids = regions.geometry.centroid
         regions[self.long_label] = centroids.x
         regions[self.lat_label] = centroids.y
@@ -60,55 +58,49 @@ class region_classifier():
     def get_meta(self):
         """ """
         meta = pd.read_csv(self.meta_path)
-        if self.meta_label not in meta.columns:
-            self.meta_label = self.DEFAULT_META_LABEL
-            meta[self.meta_label] = meta.index
-            logger.warning('Setting regions label: ' + str(self.meta_label))
         geometry = [Point(xy) for xy in zip(meta[self.long_label],
                                             meta[self.lat_label])]
         meta = gpd.GeoDataFrame(meta, crs=self.CRS, geometry=geometry)
-        meta.set_index(self.meta_label, inplace=True, drop=False)
         return meta
 
     def classify(self, save_to=None):
         """ """
         # Get intersection classifications
         try:
-            meta_ids, region_ids, outlier_ids = self.intersect()
+            meta_inds, region_inds, outlier_inds = self.intersect()
         except Exception as e:
-            logger.error(e)
             invalid_geom_ids = self.check_geometry()
-            logger.error('The following geometries are invalid:')
-            logger.error(invalid_geom_ids)
+            if len(invalid_geom_ids > 0):
+                logger.error('The following geometries are invalid:')
+                logger.error(invalid_geom_ids)
+            else:
+                raise e
 
-        # Handle the intersection outliers
-        if len(outlier_ids) > 0:
+        # Check for any intersection outliers
+        if len(outlier_inds) > 0:
+            # Lookup the nearest region geometry (by centroid)
             logger.warning('The following points are outliers:')
-            logger.warning(outlier_ids)
+            logger.warning(outlier_inds)
             cols = [self.lat_label, self.long_label]
-
-            # Lookup the nearest assigned points
             lookup = self.regions[cols]
-            target = self.meta.loc[outlier_ids][cols]
-            inds = self.nearest(target, lookup)
+            target = self.meta.loc[outlier_inds][cols]
+            meta_inds += outlier_inds
+            region_inds += list(self.nearest(target, lookup))
 
-            meta_ids += outlier_ids
-            region_ids += list(self.regions.loc[inds, self.regions_label])
-
+        region_labels = self.regions.loc[region_inds, self.regions_label]
         # Build classification mapping
-        data = np.array([meta_ids, region_ids]).T
-        classified = pd.DataFrame(data=data, columns=[self.meta_label,
+        data = np.array([meta_inds, region_labels]).T
+        classified = pd.DataFrame(data=data, columns=['meta_index',
                                                       self.regions_label])
-        classified.sort_values(self.meta_label, inplace=True)
-        classified.set_index(self.meta_label, inplace=True)
+        classified.set_index('meta_index', inplace=True)
 
-        classified_meta = self.meta.loc[meta_ids].sort_values(self.meta_label)
+        classified_meta = self.meta.loc[meta_inds]
         classified_meta[self.regions_label] = classified[self.regions_label]
 
         # Output
         if save_to:
-            del classified_meta['geometry']
-            classified_meta.to_csv(save_to, index=False)
+            output_meta = classified_meta.drop('geometry', axis=1)
+            output_meta.to_csv(save_to, index=False)
         return classified_meta
 
     def intersect(self):
@@ -116,12 +108,15 @@ class region_classifier():
 
         joined = gpd.sjoin(self.meta, self.regions,
                            how='inner', op='intersects')
-        joined = joined.drop_duplicates(self.meta_label, keep='last')
-        meta_ids = list(joined[self.meta_label])
-        region_ids = list(joined[self.regions_label])
-        outliers = self.meta.loc[~self.meta[self.meta_label].isin(meta_ids)]
-        outlier_ids = list(outliers[self.meta_label])
-        return meta_ids, region_ids, outlier_ids
+        if 'index_left' in joined.columns:
+            joined = joined.drop_duplicates('index_left', keep='last')
+            meta_inds = list(joined['index_left'])
+        else:
+            meta_inds = list(joined.index)
+        region_inds = list(joined['index_right'])
+        outliers = self.meta.loc[~self.meta.index.isin(meta_inds)]
+        outlier_inds = list(outliers.index)
+        return meta_inds, region_inds, outlier_inds
 
     @staticmethod
     def nearest(target, lookup):
