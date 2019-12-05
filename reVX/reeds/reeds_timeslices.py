@@ -10,6 +10,7 @@ import pandas as pd
 from scipy.stats import mode
 from reV.handlers.resource import Resource
 
+from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.utilities.exceptions import ReedsValueError, ReedsRuntimeError
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class ReedsTimeslices:
         """
         Parameters
         ----------
-        rep_profiles : str
+        profiles : str
             Path to .h5 file containing profiles (representative or cf)
         timeslice_map : str | pandas.DataFrame
             Path to timeslice mapping file or DataFrame with mapping
@@ -175,10 +176,12 @@ class ReedsTimeslices:
             Updated meta with reg_cols added to sites to be extract
             timeslices from
         """
+        rev_table = ReedsClassifier._parse_table(rev_table)
         rev_table = rev_table.groupby(reg_cols)
         rev_table = rev_table.apply(ReedsTimeslices._unpack_gen_gids)
 
         meta = meta.merge(rev_table.reset_index(), on='gid')
+        meta = meta.set_index(list(reg_cols))
 
         return meta
 
@@ -186,7 +189,8 @@ class ReedsTimeslices:
     def _check_profiles(profiles, rev_table=None,
                         reg_cols=('region', 'class')):
         """
-
+        Check profiles to ensure all needed data is available.
+        Extract meta and time_index
 
         Parameters
         ----------
@@ -310,30 +314,35 @@ class ReedsTimeslices:
         return local_arr
 
     @staticmethod
-    def _rep_profiles(profiles, meta, time_index):
+    def _extract_rep_profiles(profiles_h5, meta):
         """
-        Create a single DataFrame of all representative profiles by
-        'region'
+        Extract representative profiles and combine them with meta data
+        and time_index to create a single dataframe to extract stats from
 
         Parameters
         ----------
-        profiles : dict
-            Dictionary of representative profiles
+        profiles_h5 : str
+            Path to .h5 file containing representative profiles
         meta : pandas.DataFrame
-            Meta data table, must be supplied with rep_profiles
-            dictionary
-        time_index : pandas.DatetimeIndex
-            Datetime Index for profiles, must be supplied with rep_profiles
-            dictionary
+            Meta data table for representative profiles
 
         Returns
         -------
         profiles_df : pandas.DataFrame
             Multi-index DataFrame of profiles for each 'region'
         """
+        profiles = {}
+        with Resource(profiles_h5) as f:
+            time_index = f.time_index
+            for ds in f.dsets:
+                if 'rep_profiles' in ds:
+                    k = int(ds.split('_')[-1])
+                    profiles[k] = f[ds]
+
         cols = meta.columns.drop(['rep_gen_gid', 'rep_res_gid', 'timezone'])
         cols = [json.dumps([int(i) for i in c]) for c in meta[cols].values]
         tz = meta['timezone'].values
+        tz *= len(time_index) // 8760
         temp = pd.DataFrame(columns=cols, index=time_index)
         profiles_df = []
         for k, arr in profiles.items():
@@ -344,12 +353,14 @@ class ReedsTimeslices:
 
         profiles_df = pd.concat(profiles_df, axis=1).sort_index(axis=1,
                                                                 level=0)
+
         return profiles_df
 
     @staticmethod
-    def _compute_timeslice_stats(profiles, timeslices):
+    def _rep_profile_slices(profiles, timeslices):
         """
-        Compute means and standard divations for each timeslice
+        Compute means and standard divations for each timeslice from
+        representative profiles
 
         Parameters
         ----------
@@ -382,6 +393,30 @@ class ReedsTimeslices:
         stdevs.index.name = 'timeslice'
 
         return means, stdevs
+
+    @staticmethod
+    def _cf_group_stats(profiles_h5, region_meta, timeslices):
+        """
+        Compute means and standard deviations for each region
+        """
+        gids = region_meta['gid'].values
+        tz = region_meta['timezone'].values
+        counts = region_meta['gid_count'].values
+        with Resource(profiles_h5) as f:
+            time_index = f.time_index
+            tz *= len(time_index) // 8760
+            profiles = f['cf_profile', :, gids] * counts / np.sum(counts)
+
+        profiles = pd.DataFrame(ReedsTimeslices._roll_array(profiles, tz),
+                                index=time_index)
+        means = {}
+        stdevs = {}
+        for s, slice_map in timeslices.groupby(timeslices.columns[0]):
+            tslice = profiles.loc[slice_map.index]
+            means[s] = tslice.stack().mean()
+            stdevs[s] = tslice.stack().std()
+
+        return pd.Series(means), pd.Series(stdevs)
 
     @classmethod
     def stats(cls, rep_profiles, timeslice_map):
