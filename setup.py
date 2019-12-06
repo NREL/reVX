@@ -71,6 +71,7 @@ setup(
     entry_points={
         "console_scripts": ["reVX=reVX.cli:main",
                             "reV-rpm=reVX.rpm.rpm_cli:main",
+                            "reV-region=reVX.classification.region_cli:main",
                             "NSRDB=reVX.resource.solar_cli:main",
                             "WIND=reVX.resource.wind_cli:main"],
     },

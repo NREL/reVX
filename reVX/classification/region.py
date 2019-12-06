@@ -7,12 +7,12 @@ Sample Usage:
 meta_path = 'meta.csv'
 regions_path = 'us_states.shp'
 regions_label = 'NAME'
-lat_label = 'latitude'
-long_label = 'longitude'
+lat_label = 'LATITUDE'
+long_label = 'LONGITUDE'
 
 classifier = region_classifier(meta_path=meta_path, regions_path=regions_path,
-                               regions_label=regions_label,
-                               lat_label=lat_label, long_label=long_label)
+                               lat_label=lat_label, long_label=long_label,
+                               regions_label=regions_label)
 
 save_to = 'new_meta.csv'
 force = True
@@ -38,8 +38,8 @@ class region_classifier():
     CRS = {'init': 'epsg:4326'}
     DEFAULT_REGIONS_LABEL = 'regions_index'
 
-    def __init__(self, meta_path, regions_path, regions_label=None,
-                 lat_label="LATITUDE", long_label="LONGITUDE"):
+    def __init__(self, meta_path, regions_path, lat_label, long_label,
+                 regions_label=None):
         """
         Parameters
         ----------
@@ -83,7 +83,7 @@ class region_classifier():
         meta = gpd.GeoDataFrame(meta, crs=self.CRS, geometry=geometry)
         return meta
 
-    def classify(self, save_to=None, force=True):
+    def classify(self, save_to=None, force=False):
         """ Classify the meta data with regions labels
         Parameters
         ----------
@@ -97,7 +97,7 @@ class region_classifier():
             meta_inds, region_inds, outlier_inds = self._intersect()
         except Exception as e:
             invalid_geom_ids = self._check_geometry()
-            if len(invalid_geom_ids > 0):
+            if invalid_geom_ids:
                 logger.error('The following geometries are invalid:')
                 logger.error(invalid_geom_ids)
             else:
