@@ -87,12 +87,23 @@ class ReedsProfiles(RepProfiles):
 
         return profiles, time_index
 
+    def _save_reeds_profiles(self, fout):
+        """
+        Save .csv files for ReEDS
+
+        Parameters
+        ----------
+        fout : str
+            Directory to save ReEDS .csv files to
+        """
+        pass
+
     @classmethod
     def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
             rep_method='meanoid', err_method='rmse', n_profiles=1,
             resource_classes=None, region_map='reeds_region', sc_bins=5,
             reg_cols=('region', 'class'), parallel=True, fout=None,
-            hourly=True, **kwargs):
+            hourly=True, legacy_outputs=False, **kwargs):
         """Run representative profiles.
         Parameters
         ----------
@@ -125,6 +136,8 @@ class ReedsProfiles(RepProfiles):
             Flag to run in parallel.
         fout : None | str
             None or filepath to output h5 file.
+        legacy_fout : bool
+            Output ReEDS .csv files to disc
         kwargs : dict
             Kwargs for clustering classes
 
@@ -156,6 +169,8 @@ class ReedsProfiles(RepProfiles):
 
         if fout is not None:
             rp.save_profiles(fout)
+            if legacy_outputs:
+                rp._save_reeds_profiles(fout)
 
         logger.info('Representative profiles complete!')
         return rp.profiles, rp.meta, rp.time_index
