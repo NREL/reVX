@@ -401,6 +401,31 @@ class ReedsTimeslices:
         return profiles_df
 
     @staticmethod
+    def _compute_correlations(ts_profiles, cols):
+        """
+        Compute Pearson's Correlation Coefficient for timeslice means between
+        all combinations of regions
+
+        Parameters
+        ----------
+        ts_profiles : pandas.DataFrame
+            Timeseries profiles to compute correlations for
+
+        Returns
+        -------
+        corr_coeffs : pandas.DataFrame
+            Pearson's correlation coefficients between all combinations
+            of regions
+        """
+        corr_coeffs = pd.DataFrame(columns=cols, index=cols)
+        for i, j in itertools.combinations(cols, 2):
+            c = pearsonr(ts_profiles[i].values, ts_profiles[j].values)[0]
+            corr_coeffs.loc[i, j] = c
+            corr_coeffs.loc[j, i] = c
+
+        return corr_coeffs.fillna(1)
+
+    @staticmethod
     def _rep_profile_stats(profiles, timeslice_groups):
         """
         Compute means and standard divations for each timeslice from
@@ -419,16 +444,23 @@ class ReedsTimeslices:
             Mean CF for each region and timeslice
         stdevs : pandas.DataFrame
             Standard deviation in CF for each region and timeslice
+        corr_coeffs : dict
+            Correlation matrices for each timeslice
         """
         means = []
         stdevs = []
+        corr_coeffs = {}
+        cols = [c[0] for c in profiles.columns]
         for s, slice_map in timeslice_groups:
             tslice = profiles.loc[slice_map.index]
+            # coeffs = ReedsTimeslices._compute_correlations(tslice, cols)
+            # corr_coeffs[s] = coeffs
             mean = tslice.stack().mean()
             mean.name = s
+            means.append(mean)
+
             stdev = tslice.stack().std()
             stdev.name = s
-            means.append(mean)
             stdevs.append(stdev)
 
         means = pd.concat(means, axis=1).T
@@ -436,7 +468,7 @@ class ReedsTimeslices:
         stdevs = pd.concat(stdevs, axis=1).T
         stdevs.index.name = 'timeslice'
 
-        return means, stdevs
+        return means, stdevs, corr_coeffs
 
     @staticmethod
     def _cf_group_stats(profiles_h5, region_meta, timeslice_groups):
@@ -540,32 +572,6 @@ class ReedsTimeslices:
 
         return means, stdevs
 
-    @staticmethod
-    def _compute_correlations(means):
-        """
-        Compute Pearson's Correlation Coefficient for timeslice means between
-        all combinations of regions
-
-        Parameters
-        ----------
-        means : pandas.DataFrame
-            Mean CF for each region and timeslice
-
-        Returns
-        -------
-        corr_coeffs : pandas.DataFrame
-            Pearson's correlation coefficients between all combinations
-            of regions
-        """
-        cols = means.columns
-        corr_coeffs = pd.DataFrame(columns=cols, index=cols)
-        for i, j in itertools.combinations(cols, 2):
-            c = pearsonr(means.loc[:, i], means.loc[:, j])[0]
-            corr_coeffs.loc[i, j] = c
-            corr_coeffs.loc[j, i] = c
-
-        return corr_coeffs
-
     def compute_stats(self, max_workers=None):
         """
         Compute the mean and stdev CF for each timeslice for each "region"
@@ -586,26 +592,25 @@ class ReedsTimeslices:
             Mean CF for each region and timeslice
         stdevs : pandas.DataFrame
             Standard deviation in CF for each region and timeslice
-        corr_coeffs : pandas.DataFrame
-            Pearson's correlation coefficients between all combinations
-            of regions
+        corr_coeffs : dict
+            Correlation matrices for each timeslice
         """
         if self._cf_profiles:
             means, stdevs = self._cf_profile_stats(self._profiles, self._meta,
                                                    self._timeslice_groups,
                                                    max_workers=max_workers)
+            coeffs = None
         else:
             profiles = self._extract_rep_profiles(self._profiles, self._meta)
-            means, stdevs = self._rep_profile_stats(profiles,
-                                                    self._timeslice_groups)
+            means, stdevs, coeffs = \
+                self._rep_profile_stats(profiles, self._timeslice_groups)
 
-        corr_coeffs = self._compute_correlations(means)
-
-        return means, stdevs, corr_coeffs
+        return means, stdevs, coeffs
 
     @classmethod
     def run(cls, profiles, timeslice_map, rev_table=None,
-            reg_cols=('region', 'class'), max_workers=None):
+            reg_cols=('region', 'class'), max_workers=None,
+            legacy_outputs=False):
         """
         Compute means and standar deviations for each region and timeslice
         from given representative profiles
@@ -628,6 +633,8 @@ class ReedsTimeslices:
             and stdevs when using cf profiles.
             1 means run in serial
             None means use all available CPUs
+        legacy_outputs : bool
+            Format outputs into ReEDS legacy format
 
         Returns
         -------
@@ -635,11 +642,15 @@ class ReedsTimeslices:
             Mean CF for each region and timeslice
         stdevs : pandas.DataFrame
             Standard deviation in CF for each region and timeslice
-        corr_coeffs : pandas.DataFrame
-            Pearson's correlation coefficients between all combinations
-            of regions
+        corr_coeffs : dict
+            Correlation matrices for each timeslice
         """
         ts = cls(profiles, timeslice_map, rev_table=rev_table,
                  reg_cols=reg_cols)
 
-        return ts.compute_stats(max_workers=max_workers)
+        means, stdev, coeffs = ts.compute_stats(max_workers=max_workers)
+
+        if legacy_outputs:
+            pass
+
+        return means, stdev, coeffs
