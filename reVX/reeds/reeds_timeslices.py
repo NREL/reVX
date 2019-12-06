@@ -357,7 +357,7 @@ class ReedsTimeslices:
         return profiles_df
 
     @staticmethod
-    def _rep_profile_slices(profiles, timeslices):
+    def _rep_profile_stats(profiles, timeslices):
         """
         Compute means and standard divations for each timeslice from
         representative profiles
