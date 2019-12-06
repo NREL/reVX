@@ -2,12 +2,14 @@
 """
 Extract ReEDS timeslices from rep-profiles
 """
+import concurrent.futures as cf
+import itertools
 import json
 import logging
 import numpy as np
 import os
 import pandas as pd
-from scipy.stats import mode
+from scipy.stats import mode, pearsonr
 from reV.handlers.resource import Resource
 
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -41,8 +43,23 @@ class ReedsTimeslices:
         self._profiles, self._meta, self._time_index = \
             self._check_profiles(profiles, rev_table=rev_table,
                                  reg_cols=reg_cols)
-        self._timeslices = self._parse_timeslices(timeslice_map,
-                                                  self._time_index)
+        self._timeslice_groups = self._parse_timeslices(timeslice_map,
+                                                        self._time_index)
+        if rev_table is not None:
+            self._cf_profiles = True
+        else:
+            self._cf_profiles = False
+
+    def __repr__(self):
+        if self._cf_profiles:
+            profiles = 'cf profiles'
+        else:
+            profiles = 'representative profiles'
+
+        msg = ("{} with {} timeslices and {} region-class groups computed "
+               "from {}".format(self.__class__.__name__, len(self.timeslices),
+                                len(self.regions), profiles))
+        return msg
 
     @property
     def profiles(self):
@@ -56,15 +73,37 @@ class ReedsTimeslices:
         return self._profiles
 
     @property
-    def timeslices(self):
+    def meta(self):
         """
-        Timeslice mapping
+        Meta data for "region" groups
 
         Returns
         -------
         pandas.DataFrame
         """
-        return self._timeslices
+        return self._meta
+
+    @property
+    def regions(self):
+        """
+        Unique "regions" defaulted to region-class pairs
+
+        Returns
+        -------
+        list
+        """
+        return self._meta.index
+
+    @property
+    def timeslices(self):
+        """
+        Timeslice keys
+
+        Returns
+        -------
+        list
+        """
+        return sorted(list(self._timeslice_groups.keys()))
 
     @property
     def profile_datetimes(self):
@@ -98,10 +137,12 @@ class ReedsTimeslices:
             meta = f.meta
             if 'rev_summary' in f.dsets:
                 table = f._get_meta('rev_summary', slice(None))
-                cols = list(meta.columns.drop(['rep_gen_gid', 'rep_res_gid']))
-                tz = table.groupby(cols)
+                reg_cols = list(meta.columns.drop(['rep_gen_gid',
+                                                   'rep_res_gid']))
+                tz = table.groupby(reg_cols)
                 tz = tz['timezone'].apply(lambda x: mode(x).mode[0])
-                meta = meta.merge(tz.reset_index(), on=cols)
+                meta = meta.merge(tz.reset_index(), on=reg_cols)
+                meta = meta.set_index(reg_cols)
 
             if 'timezone' not in meta:
                 msg = ('Meta data must contain timzone to allow conversion '
@@ -177,7 +218,7 @@ class ReedsTimeslices:
             timeslices from
         """
         rev_table = ReedsClassifier._parse_table(rev_table)
-        rev_table = rev_table.groupby(reg_cols)
+        rev_table = rev_table.groupby(list(reg_cols))
         rev_table = rev_table.apply(ReedsTimeslices._unpack_gen_gids)
 
         meta = meta.merge(rev_table.reset_index(), on='gid')
@@ -247,8 +288,8 @@ class ReedsTimeslices:
 
         Returns
         ----------
-        timeslice_map : pandas.DataFrame
-            Mapping between timeslices of interest and profile timesteps
+        timeslice_map : pandas.GroupBy
+            Mapping of each timeslice to profiles time_index
         """
         if isinstance(timeslice_map, str):
             timeslice_map = pd.read_csv(timeslice_map)
@@ -281,7 +322,11 @@ class ReedsTimeslices:
             logger.error(msg)
             raise ReedsRuntimeError(msg)
 
-        return timeslice_map
+        cols = list(timeslice_map.columns)
+        if len(cols) == 1:
+            cols = cols[0]
+
+        return timeslice_map.groupby(cols)
 
     @staticmethod
     def _roll_array(arr, shifts):
@@ -339,8 +384,7 @@ class ReedsTimeslices:
                     k = int(ds.split('_')[-1])
                     profiles[k] = f[ds]
 
-        cols = meta.columns.drop(['rep_gen_gid', 'rep_res_gid', 'timezone'])
-        cols = [json.dumps([int(i) for i in c]) for c in meta[cols].values]
+        cols = [str([int(i) for i in c]) for c in meta.index]
         tz = meta['timezone'].values
         tz *= len(time_index) // 8760
         temp = pd.DataFrame(columns=cols, index=time_index)
@@ -357,7 +401,7 @@ class ReedsTimeslices:
         return profiles_df
 
     @staticmethod
-    def _rep_profile_stats(profiles, timeslices):
+    def _rep_profile_stats(profiles, timeslice_groups):
         """
         Compute means and standard divations for each timeslice from
         representative profiles
@@ -366,8 +410,8 @@ class ReedsTimeslices:
         ----------
         profiles : pandas.DataFrame
             Multi-index DataFrame of profiles for each 'region'
-        timeslices : pandas.DataFrame
-            Mapping between timeslices of interest and profile timesteps
+        timeslice_groups : pandas.GroupBy
+            Mapping of each timeslice to profiles time_index
 
         Returns
         -------
@@ -378,7 +422,7 @@ class ReedsTimeslices:
         """
         means = []
         stdevs = []
-        for s, slice_map in timeslices.groupby():
+        for s, slice_map in timeslice_groups:
             tslice = profiles.loc[slice_map.index]
             mean = tslice.stack().mean()
             mean.name = s
@@ -395,9 +439,25 @@ class ReedsTimeslices:
         return means, stdevs
 
     @staticmethod
-    def _cf_group_stats(profiles_h5, region_meta, timeslices):
+    def _cf_group_stats(profiles_h5, region_meta, timeslice_groups):
         """
         Compute means and standard deviations for each region
+
+        Parameters
+        ----------
+        profiles_h5 : str
+            Path to .h5 file containing profiles (representative or cf)
+        region_meta : pandas.DataFrame
+            Meta data table for subset of cf profiles in specific region
+        timeslice_groups : pandas.GroupBy
+            Mapping of each timeslice to profiles time_index
+
+        Returns
+        -------
+        means : pandas.Series
+            Mean CF for timeslices in specific region
+        stdevs : pandas.Series
+            Standard deviation in CF for timeslices in specific region
         """
         gids = region_meta['gid'].values
         tz = region_meta['timezone'].values
@@ -411,26 +471,26 @@ class ReedsTimeslices:
                                 index=time_index)
         means = {}
         stdevs = {}
-        for s, slice_map in timeslices.groupby(timeslices.columns[0]):
+        for s, slice_map in timeslice_groups:
             tslice = profiles.loc[slice_map.index]
             means[s] = tslice.stack().mean()
             stdevs[s] = tslice.stack().std()
 
         return pd.Series(means), pd.Series(stdevs)
 
-    @classmethod
-    def stats(cls, rep_profiles, timeslice_map):
+    @staticmethod
+    def _cf_profile_stats(profiles_h5, meta, timeslices, max_workers=None):
         """
-        Compute means and standar deviations for each region and timeslice
-        from given representative profiles
+        Compute timeslice mean and standard deviation from cf profiles
 
         Parameters
         ----------
-        rep_profiles : str | dict
-            Path to .h5 file containing representative profiles,
-            or dictionary of representative profiles
-        timeslice_map : str | pandas.DataFrame
-            Path to timeslice mapping file or DataFrame with mapping
+        profiles_h5 : str
+            Path to .h5 file containing profiles (representative or cf)
+        meta : pandas.DataFrame
+            Meta data table for cf profiles
+        timeslices : pandas.DataFrame
+            Mapping between timeslices of interest and profile timesteps
 
         Returns
         -------
@@ -439,4 +499,147 @@ class ReedsTimeslices:
         stdevs : pandas.DataFrame
             Standard deviation in CF for each region and timeslice
         """
-        cls(rep_profiles, timeslice_map)
+        reg_cols = meta.index.names
+        meta = meta.reset_index()
+
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        if max_workers > 1:
+            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
+                futures = {}
+                for group, df in meta.groupby(reg_cols):
+                    future = exe.submit(ReedsTimeslices._cf_group_stats,
+                                        profiles_h5, df, timeslices)
+                    futures[future] = group
+
+                means = []
+                stdevs = []
+                for future in cf.as_completed(futures):
+                    m, s = future.result()
+                    group = futures[future]
+                    m.name = str(group)
+                    s.name = str(group)
+                    means.append(m)
+                    stdevs.append(s)
+        else:
+            means = []
+            stdevs = []
+            for group, df in meta.groupby(reg_cols):
+                m, s = ReedsTimeslices._cf_group_stats(profiles_h5, df,
+                                                       timeslices)
+                m.name = str(list(group))
+                s.name = str(list(group))
+                means.append(m)
+                stdevs.append(s)
+
+        means = pd.concat(means, axis=1)
+        means.index.name = 'timeslice'
+        stdevs = pd.concat(stdevs, axis=1)
+        stdevs.index.name = 'timeslice'
+
+        return means, stdevs
+
+    @staticmethod
+    def _compute_correlations(means):
+        """
+        Compute Pearson's Correlation Coefficient for timeslice means between
+        all combinations of regions
+
+        Parameters
+        ----------
+        means : pandas.DataFrame
+            Mean CF for each region and timeslice
+
+        Returns
+        -------
+        corr_coeffs : pandas.DataFrame
+            Pearson's correlation coefficients between all combinations
+            of regions
+        """
+        cols = means.columns
+        corr_coeffs = pd.DataFrame(columns=cols, index=cols)
+        for i, j in itertools.combinations(cols, 2):
+            c = pearsonr(means.loc[:, i], means.loc[:, j])[0]
+            corr_coeffs.loc[i, j] = c
+            corr_coeffs.loc[j, i] = c
+
+        return corr_coeffs
+
+    def compute_stats(self, max_workers=None):
+        """
+        Compute the mean and stdev CF for each timeslice for each "region"
+        Compute the correlation coefficients between "regions" from
+        timeslice means
+
+        Parameters
+        ----------
+        max_workers : int
+            Number of workers to use for parallel computation of means
+            and stdevs when using cf profiles.
+            1 means run in serial
+            None means use all available CPUs
+
+        Returns
+        -------
+        means : pandas.DataFrame
+            Mean CF for each region and timeslice
+        stdevs : pandas.DataFrame
+            Standard deviation in CF for each region and timeslice
+        corr_coeffs : pandas.DataFrame
+            Pearson's correlation coefficients between all combinations
+            of regions
+        """
+        if self._cf_profiles:
+            means, stdevs = self._cf_profile_stats(self._profiles, self._meta,
+                                                   self._timeslice_groups,
+                                                   max_workers=max_workers)
+        else:
+            profiles = self._extract_rep_profiles(self._profiles, self._meta)
+            means, stdevs = self._rep_profile_stats(profiles,
+                                                    self._timeslice_groups)
+
+        corr_coeffs = self._compute_correlations(means)
+
+        return means, stdevs, corr_coeffs
+
+    @classmethod
+    def run(cls, profiles, timeslice_map, rev_table=None,
+            reg_cols=('region', 'class'), max_workers=None):
+        """
+        Compute means and standar deviations for each region and timeslice
+        from given representative profiles
+
+        Parameters
+        ----------
+        profiles : str
+            Path to .h5 file containing profiles (representative or cf)
+        timeslice_map : str | pandas.DataFrame
+            Path to timeslice mapping file or DataFrame with mapping
+        rev_table : str | pandas.DataFrame
+            rev_table : str | pandas.DataFrame
+                reV supply curve or aggregation table,
+                or path to file containing table
+        reg_cols : tuple
+            Label(s) for a categorical region column(s) to create timeslices
+            for
+        max_workers : int
+            Number of workers to use for parallel computation of means
+            and stdevs when using cf profiles.
+            1 means run in serial
+            None means use all available CPUs
+
+        Returns
+        -------
+        means : pandas.DataFrame
+            Mean CF for each region and timeslice
+        stdevs : pandas.DataFrame
+            Standard deviation in CF for each region and timeslice
+        corr_coeffs : pandas.DataFrame
+            Pearson's correlation coefficients between all combinations
+            of regions
+        """
+        ts = cls(profiles, timeslice_map, rev_table=rev_table,
+                 reg_cols=reg_cols)
+
+        return ts.compute_stats(max_workers=max_workers)
