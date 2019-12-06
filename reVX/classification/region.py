@@ -6,12 +6,18 @@ Sample Usage:
 ```
 meta_path = 'meta.csv'
 regions_path = 'us_states.shp'
-save_to = 'new_meta.csv'
 regions_label = 'NAME'
+lat_label = 'latitude'
+long_label = 'longitude'
 
 classifier = region_classifier(meta_path=meta_path, regions_path=regions_path,
-                               regions_label=regions_label)
-classification = classifier.classify(save_to=save_to)
+                               regions_label=regions_label,
+                               lat_label=lat_label, long_label=long_label)
+
+save_to = 'new_meta.csv'
+force = True
+
+classification = classifier.classify(save_to=save_to, force=force)
 ```
 """
 
@@ -48,47 +54,49 @@ class region_classifier():
         long_label : str
             Longitude column name in meta CSV file
         """
-        self.meta_path = meta_path
-        self.regions_path = regions_path
-        self.lat_label = lat_label
-        self.long_label = long_label
-        self.regions_label = regions_label
+        self._meta_path = meta_path
+        self._regions_path = regions_path
+        self._lat_label = lat_label
+        self._long_label = long_label
+        self._regions_label = regions_label
 
-        self.meta = self.get_meta()
-        self.regions = self.get_regions()
+        self._meta = self.get_meta()
+        self._regions = self.get_regions()
 
     def get_regions(self):
         """ Load the regions shapefile into geopandas dataframe """
-        regions = gpd.read_file(self.regions_path).to_crs(self.CRS)
-        if self.regions_label not in regions.columns:
-            self.regions_label = self.DEFAULT_REGIONS_LABEL
-            regions[self.regions_label] = regions.index
-            logger.warning('Setting regions label: ' + str(self.regions_label))
+        regions = gpd.read_file(self._regions_path).to_crs(self.CRS)
+        if self._regions_label not in regions.columns:
+            self._regions_label = self.DEFAULT_REGIONS_LABEL
+            regions[self._regions_label] = regions.index
+            logger.warning('Setting regions label: ' + self._regions_label)
         centroids = regions.geometry.centroid
-        regions[self.long_label] = centroids.x
-        regions[self.lat_label] = centroids.y
+        regions[self._long_label] = centroids.x
+        regions[self._lat_label] = centroids.y
         return regions
 
     def get_meta(self):
         """ Load the meta csv file into geopandas dataframe """
-        meta = pd.read_csv(self.meta_path)
-        geometry = [Point(xy) for xy in zip(meta[self.long_label],
-                                            meta[self.lat_label])]
+        meta = pd.read_csv(self._meta_path)
+        geometry = [Point(xy) for xy in zip(meta[self._long_label],
+                                            meta[self._lat_label])]
         meta = gpd.GeoDataFrame(meta, crs=self.CRS, geometry=geometry)
         return meta
 
-    def classify(self, save_to=None):
+    def classify(self, save_to=None, force=True):
         """ Classify the meta data with regions labels
         Parameters
         ----------
         save_to : str
             Optional output path for labeled meta CSV file
+        force : str
+            Force outlier classification by finding nearest
         """
         try:
             # Get intersection classifications
-            meta_inds, region_inds, outlier_inds = self.intersect()
+            meta_inds, region_inds, outlier_inds = self._intersect()
         except Exception as e:
-            invalid_geom_ids = self.check_geometry()
+            invalid_geom_ids = self._check_geometry()
             if len(invalid_geom_ids > 0):
                 logger.error('The following geometries are invalid:')
                 logger.error(invalid_geom_ids)
@@ -96,36 +104,45 @@ class region_classifier():
                 raise e
 
         # Check for any intersection outliers
-        if len(outlier_inds) > 0:
+        num_outliers = len(outlier_inds)
+        if ((num_outliers > 0) & (force is True)):
             # Lookup the nearest region geometry (by centroid)
             logger.warning('The following points are outliers:')
             logger.warning(outlier_inds)
-            cols = [self.lat_label, self.long_label]
-            lookup = self.regions[cols]
-            target = self.meta.loc[outlier_inds][cols]
-            meta_inds += outlier_inds
-            region_inds += list(self.nearest(target, lookup))
+            cols = [self._lat_label, self._long_label]
+            lookup = self._regions[cols]
+            target = self._meta.loc[outlier_inds][cols]
+            region_inds += list(self._nearest(target, lookup))
 
-        region_labels = self.regions.loc[region_inds, self.regions_label]
+        # Get full list of meta indices and region labels
+        meta_inds += outlier_inds
+        region_labels = list(self._regions.loc[region_inds,
+                                               self._regions_label])
+        if ((num_outliers > 0) & (force is False)):
+            # Fill unclassified labels
+            region_labels += [-999 for _ in range(num_outliers)]
+
         # Build classification mapping
-        data = np.array([meta_inds, region_labels]).T
-        classified = pd.DataFrame(data=data, columns=['meta_index',
-                                                      self.regions_label])
-        classified.set_index('meta_index', inplace=True)
-
-        classified_meta = self.meta.loc[meta_inds]
-        classified_meta[self.regions_label] = classified[self.regions_label]
+        region_labels = np.array(region_labels).astype(str)
+        classified_meta = self._meta.loc[meta_inds]
+        classified_meta[self._regions_label] = region_labels
+        classified_meta.sort_index(inplace=True)
 
         # Output
         if save_to:
-            output_meta = classified_meta.drop('geometry', axis=1)
-            output_meta.to_csv(save_to, index=False)
+            self.output_to_csv(classified_meta, save_to)
         return classified_meta
 
-    def intersect(self):
+    @staticmethod
+    def output_to_csv(gdf, path):
+        """ Export a geopandas dataframe to csv """
+        output_gdf = gdf.drop('geometry', axis=1)
+        output_gdf.to_csv(path, index=False)
+
+    def _intersect(self):
         """ Join the meta points to regions by spatial intersection """
 
-        joined = gpd.sjoin(self.meta, self.regions,
+        joined = gpd.sjoin(self._meta, self._regions,
                            how='inner', op='intersects')
         if 'index_left' in joined.columns:
             joined = joined.drop_duplicates('index_left', keep='last')
@@ -133,12 +150,12 @@ class region_classifier():
         else:
             meta_inds = list(joined.index)
         region_inds = list(joined['index_right'])
-        outliers = self.meta.loc[~self.meta.index.isin(meta_inds)]
+        outliers = self._meta.loc[~self._meta.index.isin(meta_inds)]
         outlier_inds = list(outliers.index)
         return meta_inds, region_inds, outlier_inds
 
     @staticmethod
-    def nearest(target, lookup):
+    def _nearest(target, lookup):
         """ Lookup the indices to the nearest point
         Parameters
         ----------
@@ -152,7 +169,7 @@ class region_classifier():
         return inds
 
     @staticmethod
-    def geom_is_valid(geom):
+    def _geom_is_valid(geom):
         """ Check if individual geometry is valid """
         try:
             shape(geom)
@@ -160,7 +177,8 @@ class region_classifier():
         except AttributeError:
             return 0
 
-    def check_geometry(self):
+    def _check_geometry(self):
         """ Get index list of invalid geometries """
-        isvalid = self.regions.geometry.apply(lambda x: self.geom_is_valid(x))
-        return list(self.regions[isvalid == 0].index)
+        geometry = self._regions.geometry
+        isvalid = geometry.apply(lambda x: self._geom_is_valid(x))
+        return list(self._regions[isvalid == 0].index)
