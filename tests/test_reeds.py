@@ -92,24 +92,55 @@ def test_profiles():
     assert truth[2].equals(test[2]), 'time_index does not match!'
 
 
-def test_timeslices():
+def test_rep_timeslices():
     """
-    Test ReedsTimeslices
+    Test ReedsTimeslices from representative profiles
     """
-    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_means.csv')
+    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_means.csv')
     truth_means = pd.read_csv(path, index_col=0)
-    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_stdevs.csv')
+    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_stdevs.csv')
     truth_stdevs = pd.read_csv(path, index_col=0)
+    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_coeffs.csv')
+    truth_coeffs = pd.read_csv(path, index_col=0)
 
     rep_profiles = os.path.join(ROOT_DIR, 'ReEDS_Profiles.h5')
     timeslice_map = os.path.join(ROOT_DIR, 'inputs',
                                  'timeslices.csv')
-    test_means, test_stdevs = ReedsTimeslices.stats(rep_profiles,
-                                                    timeslice_map)
+    test_means, test_stdevs, test_coeffs = ReedsTimeslices.run(rep_profiles,
+                                                               timeslice_map)
 
     assert_frame_equal(truth_means, test_means, check_dtype=False,
                        check_exact=False)
     assert_frame_equal(truth_stdevs, test_stdevs, check_dtype=False,
+                       check_exact=False)
+    assert_frame_equal(truth_coeffs, test_coeffs, check_dtype=False,
+                       check_exact=False)
+
+
+def test_cf_timeslices():
+    """
+    Test ReedsTimeslices from CF profiles
+    """
+    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_cf_means.csv')
+    truth_means = pd.read_csv(path, index_col=0)
+    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_cf_stdevs.csv')
+    truth_stdevs = pd.read_csv(path, index_col=0)
+    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_cf_coeffs.csv')
+    truth_coeffs = pd.read_csv(path, index_col=0)
+
+    cf_profiles = os.path.join(TESTDATADIR, 'reV_gen', 'gen_pv_2012.h5')
+    rev_table = os.path.join(ROOT_DIR, 'ReEDS_Classifications.csv')
+    timeslice_map = os.path.join(ROOT_DIR, 'inputs',
+                                 'timeslices.csv')
+    test_means, test_stdevs, test_coeffs = \
+        ReedsTimeslices.run(cf_profiles, timeslice_map, rev_table=rev_table,
+                            max_workers=1)
+
+    assert_frame_equal(truth_means, test_means, check_dtype=False,
+                       check_exact=False)
+    assert_frame_equal(truth_stdevs, test_stdevs, check_dtype=False,
+                       check_exact=False)
+    assert_frame_equal(truth_coeffs, test_coeffs, check_dtype=False,
                        check_exact=False)
 
 
