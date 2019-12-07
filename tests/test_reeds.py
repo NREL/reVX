@@ -83,7 +83,7 @@ def test_profiles():
                              profiles_dset='cf_profile', rep_method='meanoid',
                              err_method='rmse', n_profiles=3,
                              reg_cols=('region', 'class'),
-                             parallel=False)
+                             parallel=False, legacy_format=False)
     for k, v in truth[0].items():
         msg = 'Representative profiles {} do not match!'.format(k)
         assert np.allclose(v, test[0][k]), msg
@@ -100,21 +100,22 @@ def test_rep_timeslices():
     truth_means = pd.read_csv(path, index_col=0)
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_stdevs.csv')
     truth_stdevs = pd.read_csv(path, index_col=0)
-    # path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_coeffs.csv')
-    # truth_coeffs = pd.read_csv(path, index_col=0)
+    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_coeffs-ts2.csv')
+    truth_coeffs = pd.read_csv(path, index_col=0)
 
     rep_profiles = os.path.join(ROOT_DIR, 'ReEDS_Profiles.h5')
     timeslice_map = os.path.join(ROOT_DIR, 'inputs',
                                  'timeslices.csv')
-    test_means, test_stdevs, test_coeffs = ReedsTimeslices.run(rep_profiles,
-                                                               timeslice_map)
+    test_means, test_stdevs, test_coeffs = \
+        ReedsTimeslices.run(rep_profiles, timeslice_map,
+                            legacy_format=False)
 
     assert_frame_equal(truth_means, test_means, check_dtype=False,
                        check_exact=False)
     assert_frame_equal(truth_stdevs, test_stdevs, check_dtype=False,
                        check_exact=False)
-    # assert_frame_equal(truth_coeffs, test_coeffs, check_dtype=False,
-    #                    check_exact=False)
+    assert_frame_equal(truth_coeffs, test_coeffs[2], check_dtype=False,
+                       check_exact=False, check_like=True)
 
 
 def test_cf_timeslices():
@@ -132,7 +133,7 @@ def test_cf_timeslices():
                                  'timeslices.csv')
     test_means, test_stdevs, _ = \
         ReedsTimeslices.run(cf_profiles, timeslice_map, rev_table=rev_table,
-                            max_workers=1)
+                            max_workers=1, legacy_format=False)
 
     assert_frame_equal(truth_means, test_means, check_dtype=False,
                        check_exact=False)

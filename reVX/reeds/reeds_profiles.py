@@ -103,7 +103,7 @@ class ReedsProfiles(RepProfiles):
             rep_method='meanoid', err_method='rmse', n_profiles=1,
             resource_classes=None, region_map='reeds_region', sc_bins=5,
             reg_cols=('region', 'class'), parallel=True, fout=None,
-            hourly=True, legacy_outputs=False, **kwargs):
+            hourly=True, legacy_format=True, **kwargs):
         """Run representative profiles.
         Parameters
         ----------
@@ -169,7 +169,7 @@ class ReedsProfiles(RepProfiles):
 
         if fout is not None:
             rp.save_profiles(fout)
-            if legacy_outputs:
+            if legacy_format:
                 rp._save_reeds_profiles(fout)
 
         logger.info('Representative profiles complete!')

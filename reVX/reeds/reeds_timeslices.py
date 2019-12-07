@@ -419,7 +419,8 @@ class ReedsTimeslices:
         """
         corr_coeffs = pd.DataFrame(columns=cols, index=cols)
         for i, j in itertools.combinations(cols, 2):
-            c = pearsonr(ts_profiles[i].values, ts_profiles[j].values)[0]
+            c = pearsonr(ts_profiles[i].values[:, 0],
+                         ts_profiles[j].values[:, 0])[0]
             corr_coeffs.loc[i, j] = c
             corr_coeffs.loc[j, i] = c
 
@@ -450,11 +451,11 @@ class ReedsTimeslices:
         means = []
         stdevs = []
         corr_coeffs = {}
-        cols = [c[0] for c in profiles.columns]
+        cols = list(set(c[0] for c in profiles.columns))
         for s, slice_map in timeslice_groups:
             tslice = profiles.loc[slice_map.index]
-            # coeffs = ReedsTimeslices._compute_correlations(tslice, cols)
-            # corr_coeffs[s] = coeffs
+            coeffs = ReedsTimeslices._compute_correlations(tslice, cols)
+            corr_coeffs[s] = coeffs
             mean = tslice.stack().mean()
             mean.name = s
             means.append(mean)
@@ -572,6 +573,123 @@ class ReedsTimeslices:
 
         return means, stdevs
 
+    @staticmethod
+    def _flatten_timeslices(table, value_name, reg_cols):
+        """
+        Flatten timeslice table into legacy ReEDS Format
+
+        Parameters
+        ----------
+        table : pandas.DataFrame
+            Input means or stdev table to flatten
+        value_name : str
+            Name of values in table
+        reg_cols : list
+            List of names for "region" classifiers, default is region, class
+
+        Returns
+        -------
+        out : pandas.DataFrame
+            Flattened table
+        """
+        out = []
+        for r, region in table.iteritems():
+            region.name = value_name
+            region = region.to_frame()
+
+            for n, v in zip(reg_cols, json.loads(r)):
+                region[n] = v
+
+            out.append(region)
+
+        return pd.concat(out).reset_index()
+
+    @staticmethod
+    def _unpack_labels(row, reg_cols=('region', 'class')):
+        """
+        Unpack "region" labels from correlation matrix
+
+        Parameters
+        ----------
+        row : pandas.Series
+            Row from unstacked correlation matrix
+        reg_cols : list
+            List of names for "region" classifiers, default is region, class
+
+        Returns
+        -------
+        row : pandas.Series
+            Row with regions unpacked
+        """
+        for l in range(2):
+            key = 'level_{}'.format(l)
+            for n, v in zip(reg_cols, json.loads(row[key])):
+                if l > 0:
+                    n = "{}_{}".format(n, l)
+
+                row[n] = v
+
+        row = row.rename({0: 'coefficient'}).drop(['level_0', 'level_1'])
+
+        return row
+
+    @staticmethod
+    def _create_correlation_table(corr_coeffs, reg_cols):
+        """
+        Flatten and combine correlation matrixes for all timeslices
+
+        Parameters
+        ----------
+        coeffs : dict
+            Correlation matrices for each timeslice
+        reg_cols : list
+            List of names for "region" classifiers, default is region, class
+
+        Returns
+        -------
+        out : pandas.DataFrame
+            Flattened table of correlation coefficients for all timeslices
+        """
+        out = []
+        for k, v in corr_coeffs.items():
+            v = v.unstack().to_frame().reset_index()
+            v = v.apply(ReedsTimeslices._unpack_labels, reg_cols=reg_cols,
+                        axis=1)
+            v['timeslice'] = k
+            out.append(v)
+
+        return pd.concat(out)
+
+    def _to_legacy_format(self, means, stdevs, coeffs=None):
+        """
+        Convert outputs to legacy format
+
+        Parameters
+        ----------
+        means : pandas.DataFrame
+            Mean CF for each region and timeslice
+        stdevs : pandas.DataFrame
+            Standard deviation in CF for each region and timeslice
+        coeffs : dict
+            Correlation matrices for each timeslice, optional
+
+        Returns
+        -------
+        stats : pandas.DataFrame
+            Flattened timeslice table with means and sigma
+        coeffs : pandas.DataFrame
+            Flattened correlation
+        """
+        reg_cols = list(self._meta.index.names)
+        means = self._flatten_timeslices(means, 'cfmean', reg_cols)
+        stdevs = self._flatten_timeslices(stdevs, 'cfsigma', reg_cols)
+        merge_cols = reg_cols + ['timeslice', ]
+        stats = means.merge(stdevs, on=merge_cols)
+        if coeffs is not None:
+            coeffs = self._create_correlation_table(coeffs, reg_cols)
+
+        return stats, coeffs
+
     def compute_stats(self, max_workers=None):
         """
         Compute the mean and stdev CF for each timeslice for each "region"
@@ -610,7 +728,7 @@ class ReedsTimeslices:
     @classmethod
     def run(cls, profiles, timeslice_map, rev_table=None,
             reg_cols=('region', 'class'), max_workers=None,
-            legacy_outputs=False):
+            legacy_format=False):
         """
         Compute means and standar deviations for each region and timeslice
         from given representative profiles
@@ -633,7 +751,7 @@ class ReedsTimeslices:
             and stdevs when using cf profiles.
             1 means run in serial
             None means use all available CPUs
-        legacy_outputs : bool
+        legacy_format : bool
             Format outputs into ReEDS legacy format
 
         Returns
@@ -648,9 +766,10 @@ class ReedsTimeslices:
         ts = cls(profiles, timeslice_map, rev_table=rev_table,
                  reg_cols=reg_cols)
 
-        means, stdev, coeffs = ts.compute_stats(max_workers=max_workers)
+        means, stdevs, coeffs = ts.compute_stats(max_workers=max_workers)
 
-        if legacy_outputs:
-            pass
+        if legacy_format:
+            means, coeffs = ts._to_legacy_format(means, stdevs, coeffs)
+            stdevs = means.copy()
 
-        return means, stdev, coeffs
+        return means, stdevs, coeffs
