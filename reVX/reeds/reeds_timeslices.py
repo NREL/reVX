@@ -658,7 +658,7 @@ class ReedsTimeslices:
             v['timeslice'] = k
             out.append(v)
 
-        return pd.concat(out)
+        return pd.concat(out).reset_index(drop=True)
 
     def _to_legacy_format(self, means, stdevs, coeffs=None):
         """
@@ -690,7 +690,7 @@ class ReedsTimeslices:
 
         return stats, coeffs
 
-    def compute_stats(self, max_workers=None):
+    def compute_stats(self, max_workers=None, legacy_format=True):
         """
         Compute the mean and stdev CF for each timeslice for each "region"
         Compute the correlation coefficients between "regions" from
@@ -703,15 +703,19 @@ class ReedsTimeslices:
             and stdevs when using cf profiles.
             1 means run in serial
             None means use all available CPUs
+        legacy_format : bool
+            Format outputs into ReEDS legacy format
 
         Returns
         -------
-        means : pandas.DataFrame
-            Mean CF for each region and timeslice
-        stdevs : pandas.DataFrame
-            Standard deviation in CF for each region and timeslice
-        corr_coeffs : dict
-            Correlation matrices for each timeslice
+        stats : pandas.DataFrame | tuple
+            In legacy format: a DataFrame containing means and stdevs
+            (sigma), else a tuple of (means, stdevs) DataFrames
+        corr_coeffs : pandas.DataFrame | dict | NoneType
+            In legacy format: a DataFrame of correlation coefficients for
+            all pairs of "regions" for each timeslice, else:
+            a dictionary of correlation matrices for each timeslice.
+            None for CF profiles due to memory constraints
         """
         if self._cf_profiles:
             means, stdevs = self._cf_profile_stats(self._profiles, self._meta,
@@ -723,12 +727,17 @@ class ReedsTimeslices:
             means, stdevs, coeffs = \
                 self._rep_profile_stats(profiles, self._timeslice_groups)
 
-        return means, stdevs, coeffs
+        if legacy_format:
+            stats, coeffs = self._to_legacy_format(means, stdevs, coeffs)
+        else:
+            stats = (means, stdevs)
+
+        return stats, coeffs
 
     @classmethod
     def run(cls, profiles, timeslice_map, rev_table=None,
             reg_cols=('region', 'class'), max_workers=None,
-            legacy_format=False):
+            legacy_format=True):
         """
         Compute means and standar deviations for each region and timeslice
         from given representative profiles
@@ -756,20 +765,18 @@ class ReedsTimeslices:
 
         Returns
         -------
-        means : pandas.DataFrame
-            Mean CF for each region and timeslice
-        stdevs : pandas.DataFrame
-            Standard deviation in CF for each region and timeslice
-        corr_coeffs : dict
-            Correlation matrices for each timeslice
+        stats : pandas.DataFrame | tuple
+            In legacy format: a DataFrame containing means and stdevs
+            (sigma), else a tuple of (means, stdevs) DataFrames
+        corr_coeffs : pandas.DataFrame | dict | NoneType
+            In legacy format: a DataFrame of correlation coefficients for
+            all pairs of "regions" for each timeslice, else:
+            a dictionary of correlation matrices for each timeslice.
+            None for CF profiles due to memory constraints
         """
         ts = cls(profiles, timeslice_map, rev_table=rev_table,
                  reg_cols=reg_cols)
+        stats, coeffs = ts.compute_stats(max_workers=max_workers,
+                                         legacy_format=legacy_format)
 
-        means, stdevs, coeffs = ts.compute_stats(max_workers=max_workers)
-
-        if legacy_format:
-            means, coeffs = ts._to_legacy_format(means, stdevs, coeffs)
-            stdevs = means.copy()
-
-        return means, stdevs, coeffs
+        return stats, coeffs

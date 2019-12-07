@@ -3,7 +3,10 @@
 Extract representative profiles for ReEDS
 """
 import logging
+import os
+import pandas as pd
 from reV.rep_profiles.rep_profiles import RepProfiles
+
 from reVX.reeds.reeds_classification import ReedsClassifier
 
 logger = logging.getLogger(__name__)
@@ -94,9 +97,32 @@ class ReedsProfiles(RepProfiles):
         Parameters
         ----------
         fout : str
-            Directory to save ReEDS .csv files to
+            Output path for profiles .h5 file, save legacy .csvs in either
+            same directory using file name for prefix.
         """
-        pass
+        out_dir, f_name = os.path.split(fout)
+        f_name = os.path.splitext(f_name)[0]
+        reg_cols = list(self.meta.columns.drop(['rep_gen_gid',
+                                                'rep_res_gid']))
+        regions = self.meta[reg_cols].values
+        year_hour = (self.time_index.hour
+                     + (self.time_index.dayofyear - 1) * 24)
+
+        cols = reg_cols + ['hour', 'cf']
+        out_df = pd.DataFrame({'hour': year_hour}, columns=cols)
+        for p, arr in self.profiles.items():
+            for i, region in enumerate(regions):
+                region_name = '-'.join([str(i) for i in region])
+                out_path = "{}{}_{}".format(f_name, p, region_name)
+                out_path += '.csv'
+                out_path = os.path.join(out_dir, out_path)
+
+                region_df = out_df.copy()
+                region_df[reg_cols[0]] = region[0]
+                region_df[reg_cols[1]] = region[1]
+                region_df['cf'] = arr[:, i]
+
+                region_df.to_csv(out_path, index=False)
 
     @classmethod
     def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
