@@ -625,7 +625,7 @@ class ReedsTimeslices:
             key = 'level_{}'.format(l)
             for n, v in zip(reg_cols, json.loads(row[key])):
                 if l > 0:
-                    n = "{}_{}".format(n, l)
+                    n = "{}2".format(n)
 
                 row[n] = v
 
@@ -658,7 +658,11 @@ class ReedsTimeslices:
             v['timeslice'] = k
             out.append(v)
 
-        return pd.concat(out).reset_index(drop=True)
+        sort_cols = (reg_cols + ["{}2".format(c) for c in reg_cols]
+                     + ['timeslice', ])
+        out = pd.concat(out).sort_values(sort_cols).reset_index(drop=True)
+
+        return out
 
     def _to_legacy_format(self, means, stdevs, coeffs=None):
         """
@@ -685,6 +689,9 @@ class ReedsTimeslices:
         stdevs = self._flatten_timeslices(stdevs, 'cfsigma', reg_cols)
         merge_cols = reg_cols + ['timeslice', ]
         stats = means.merge(stdevs, on=merge_cols)
+        sort_cols = reg_cols + ['timeslice', ]
+        stats = stats.sort_values(sort_cols).reset_index(drop=True)
+
         if coeffs is not None:
             coeffs = self._create_correlation_table(coeffs, reg_cols)
 
