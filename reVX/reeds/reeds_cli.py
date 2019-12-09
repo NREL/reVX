@@ -178,8 +178,7 @@ def profiles(ctx, cf_profiles, n_profiles, profiles_dset, rep_method,
 
 
 @classify.command()
-@click.option('--profiles', '-pr', type=click.Path(exists=True),
-              default=None,
+@click.option('--profiles', '-pr', type=STR, default=None,
               help=('Path to .h5 file containing (representative) profiles, '
                     'not needed if chained with profiles command'))
 @click.option('--timeslices', '-ts', required=True,
@@ -199,6 +198,7 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
     """
     name = ctx.obj['NAME']
     out_dir = ctx.obj['OUT_DIR']
+
     if profiles is None:
         if 'PROFILES' not in ctx.obj:
             msg = ('You must run "profiles" or provide path to existing '
