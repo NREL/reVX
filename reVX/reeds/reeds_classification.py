@@ -174,7 +174,7 @@ class ReedsClassifier:
         cols = ['area_sq_km', 'capacity', 'trans_capacity']
         sum_table = self._groups[cols].sum()
         cols = ['latitude', 'longitude', 'mean_cf', 'mean_lcoe', 'mean_res',
-                'trans_cap_cost', 'dist_mi', 'pct_slope', 'lcot', 'total_lcoe']
+                'trans_cap_cost', 'dist_mi', 'lcot', 'total_lcoe']
         mean_table = self._groups[cols].mean()
         agg_table = sum_table.join(mean_table)
 

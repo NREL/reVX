@@ -2,7 +2,8 @@
 """
 Logging for reV_X
 """
-from reV.utilities.loggers import LoggingAttributes, setup_logger
+# pylint: disable-msg=W0611
+from reV.utilities.loggers import LoggingAttributes, setup_logger, init_mult
 
 REVX_LOGGERS = LoggingAttributes()
 

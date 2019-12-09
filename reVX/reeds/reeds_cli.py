@@ -6,7 +6,7 @@ import click
 import logging
 import os
 from reV.utilities.cli_dtypes import STR, STRLIST
-from reV.utilities.execution import SLURM
+from reV.utilities.execution import SLURM, SubprocessManager
 
 from reVX.config.reeds import ReedsConfig
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -33,15 +33,25 @@ def main(ctx, name, verbose):
     ctx.obj['VERBOSE'] = verbose
 
 
-@main.group()
+@main.command()
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
               help='Filepath to reVX-REEDS config json file.')
-def from_config(ctx, config):
+@click.option('--verbose', '-v', is_flag=True,
+              help='Flag to turn on debug logging. Default is not verbose.')
+@click.pass_context
+def from_config(ctx, config, verbose):
     """
     Run reVX-REEDS from a config.
     """
+
     config = ReedsConfig(config)
+
+    if 'verbose' in ctx.obj:
+        if any((ctx.obj['verbose'], verbose)):
+            config._logging_level = logging.DEBUG
+    elif verbose:
+        config._logging_level = logging.DEBUG
 
     if config.execution_control.option == 'local':
         ctx.obj['TABLE'] = config.rev_table
@@ -75,18 +85,28 @@ def from_config(ctx, config):
                     'supply curve table'))
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
-def local(ctx, rev_table, out_dir):
+@click.option('--log_dir', '-log', default=None, type=STR,
+              help='Directory to dump log files. Default is out_dir.')
+@click.option('--verbose', '-v', is_flag=True,
+              help='Flag to turn on debug logging. Default is not verbose.')
+@click.pass_context
+def local(ctx, rev_table, out_dir, log_dir, verbose):
     """
     Run reVX-REEDS on local hardware.
     """
     ctx.obj['TABLE'] = rev_table
     ctx.obj['OUT_DIR'] = out_dir
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    if log_dir is None:
+        log_dir = out_dir
 
     name = ctx.obj['NAME']
-    verbose = ctx.obj['verbose']
+    if 'verbose' in ctx.obj:
+        verbose = any((ctx.obj['verbose'], verbose))
 
-    init_mult(name, out_dir, modules=[__name__, 'reVX.reeds'],
-              verbose=verbose)
+    log_modules = [__name__, 'reVX.reeds', 'reV.rep_profiles']
+    init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
     logger.info('Running reV to ReEDS pipeline with reV table: {}'
                 .format(rev_table))
@@ -247,44 +267,47 @@ def get_node_cmd(config):
     cmd : str
         CLI call to submit to SLURM execution.
     """
+    s = SubprocessManager.s
 
-    args = ('-n {name} local -rt {rev_table} -o {out_dir} '
-            .format(name=config.name,
-                    rev_table=config.rev_table,
-                    out_dir=config.dirout))
+    args = ('-n {name} local -rt {rev_table} -o {out_dir} -log {log_dir} '
+            .format(name=s(config.name),
+                    rev_table=s(config.rev_table),
+                    out_dir=s(config.dirout),
+                    log_dir=s(config.logdir)))
 
-    if config.logging_level.upper() == 'DEBUG':
+    if config.logging_level == logging.DEBUG:
         args += '-v '
 
     args += ('classify -rc {resource_classes} -r {regions} -scb {sc_bins} '
              '-cl {cluster_on} '
-             .format(resource_classes=config.classify.resource_classes,
-                     regions=config.classify.regions,
-                     sc_bins=config.classify.sc_bins,
-                     cluster_on=config.classify.cluster_on))
+             .format(resource_classes=s(config.classify.resource_classes),
+                     regions=s(config.classify.regions),
+                     sc_bins=s(config.classify.sc_bins),
+                     cluster_on=s(config.classify.cluster_on)))
 
     if config.profiles is not None:
         args += ('profiles -cf {cf_profiles} -np {n_profiles} '
                  '-pd {profiles_dset} -rm {rep_method} -em {err_method} '
                  '-rcol {reg_cols} '
-                 .format(cf_profiles=config.profiles.cf_profiles,
-                         n_profiles=config.profiles.n_profiles,
-                         profiles_dset=config.profiles.profiles_dset,
-                         rep_method=config.profiles.rep_method,
-                         err_method=config.profiles.err_method,
-                         reg_cols=config.profiles.reg_cols))
+                 .format(cf_profiles=s(config.profiles.cf_profiles),
+                         n_profiles=s(config.profiles.n_profiles),
+                         profiles_dset=s(config.profiles.profiles_dset),
+                         rep_method=s(config.profiles.rep_method),
+                         err_method=s(config.profiles.err_method),
+                         reg_cols=s(config.profiles.reg_cols)))
         if config.profiles.parallel:
             args += '-p '
 
     if config.timeslices is not None:
         args += ('timeslices -pr {profiles} -ts {timeslices} -rcol {reg_cols} '
-                 .format(profiles=config.timeslices.profiles,
-                         timeslices=config.timeslices.timeslices,
-                         reg_cols=config.timeslices.reg_cols))
+                 .format(profiles=s(config.timeslices.profiles),
+                         timeslices=s(config.timeslices.timeslices),
+                         reg_cols=s(config.timeslices.reg_cols)))
         if config.timeslices.all_profiles:
             args += '-ap '
 
     cmd = 'python -m reVX.reeds.reeds_cli {}'.format(args)
+    logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
     return cmd
 
 

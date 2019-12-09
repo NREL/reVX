@@ -82,7 +82,7 @@ class ClassifyConfigGroup(ReedsConfigGroup):
         config : dict
             Dictionary with pre-extracted config input group.
         """
-        super().__init__()
+        super().__init__(config)
         self._default_regions = 'reeds_region'
         self._default_sc_bins = 3
         self._default_cluster_on = 'trans_cap_cost'
@@ -121,7 +121,7 @@ class ProfilesConfigGroup(ReedsConfigGroup):
         config : dict
             Dictionary with pre-extracted config input group.
         """
-        super().__init__()
+        super().__init__(config)
         self._default_n_profiles = 1
         self._default_profiles_dset = 'cf_profile'
         self._default_rep_method = 'meanoid'
@@ -175,7 +175,7 @@ class TimeslicesConfigGroup(ReedsConfigGroup):
         config : dict
             Dictionary with pre-extracted config input group.
         """
-        super().__init__()
+        super().__init__(config)
         self._default_reg_cols = ('region', 'class')
 
     @property
