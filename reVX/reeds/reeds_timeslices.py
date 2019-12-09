@@ -33,9 +33,9 @@ class ReedsTimeslices:
         timeslice_map : str | pandas.DataFrame
             Path to timeslice mapping file or DataFrame with mapping
         rev_table : str | pandas.DataFrame
-            rev_table : str | pandas.DataFrame
-                reV supply curve or aggregation table,
-                or path to file containing table
+            reV supply curve or aggregation table, or path to file containing
+            table. Only required if timeslice calc is based on all cf_profiles
+            instead of representative profiles.
         reg_cols : tuple
             Label(s) for a categorical region column(s) to create timeslices
             for
@@ -756,9 +756,9 @@ class ReedsTimeslices:
         timeslice_map : str | pandas.DataFrame
             Path to timeslice mapping file or DataFrame with mapping
         rev_table : str | pandas.DataFrame
-            rev_table : str | pandas.DataFrame
-                reV supply curve or aggregation table,
-                or path to file containing table
+            reV supply curve or aggregation table, or path to file containing
+            table. Only required if timeslice calc is based on all cf_profiles
+            instead of representative profiles.
         reg_cols : tuple
             Label(s) for a categorical region column(s) to create timeslices
             for

@@ -84,7 +84,7 @@ class ClassifyConfigGroup(ReedsConfigGroup):
         """
         super().__init__()
         self._default_regions = 'reeds_region'
-        self._default_n_bins = 3
+        self._default_sc_bins = 3
         self._default_cluster_on = 'trans_cap_cost'
 
     @property
@@ -99,10 +99,10 @@ class ClassifyConfigGroup(ReedsConfigGroup):
         return self.get('regions', self._default_regions)
 
     @property
-    def n_bins(self):
-        """Get the number of bins (clusters) to make per region/resource class
-        combination."""
-        return self.get('n_bins', self._default_n_bins)
+    def sc_bins(self):
+        """Get the number of supply curve bins (clusters) to make per
+        region/resource class combination."""
+        return self.get('sc_bins', self._default_sc_bins)
 
     @property
     def cluster_on(self):
@@ -176,6 +176,7 @@ class TimeslicesConfigGroup(ReedsConfigGroup):
             Dictionary with pre-extracted config input group.
         """
         super().__init__()
+        self._default_reg_cols = ('region', 'class')
 
     @property
     def timeslices(self):
@@ -186,3 +187,15 @@ class TimeslicesConfigGroup(ReedsConfigGroup):
     def profiles(self):
         """Get filepath to profiles file."""
         return self.get('profiles', None)
+
+    @property
+    def reg_cols(self):
+        """Get the label(s) for a categorical region column(s) to create
+        timeslice stats for."""
+        return self.get('reg_cols', self._default_reg_cols)
+
+    @property
+    def all_profiles(self):
+        """Get the boolean flag to calculate timeslice stats from all profiles
+        (default is from representative profiles)"""
+        return bool(self.get('all_profiles', False))
