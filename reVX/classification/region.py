@@ -10,14 +10,15 @@ regions_label = 'NAME'
 lat_label = 'LATITUDE'
 long_label = 'LONGITUDE'
 
-classifier = region_classifier(meta_path=meta_path, regions_path=regions_path,
-                               lat_label=lat_label, long_label=long_label,
-                               regions_label=regions_label)
+classifier = RegionClassifier(meta_path=meta_path, regions_path=regions_path,
+                              lat_label=lat_label, long_label=long_label,
+                              regions_label=regions_label)
 
-save_to = 'new_meta.csv'
 force = True
+fout = 'new_meta.csv'
 
-classification = classifier.classify(save_to=save_to, force=force)
+classification = classifier.classify(force=force)
+classifier.output_to_csv(classification, fout)
 ```
 """
 
@@ -32,7 +33,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class region_classifier():
+class RegionClassifier():
     """ Base class of region classification """
 
     CRS = {'init': 'epsg:4326'}
@@ -47,48 +48,53 @@ class region_classifier():
             Path to meta CSV file containing lat/lon points
         regions_path : str
             Path to regions shapefile containing labeled geometries
-        regions_label : str
-            Attribute to use a label in the regions shapefile
         lat_label : str
             Latitude column name in meta CSV file
         long_label : str
             Longitude column name in meta CSV file
+        regions_label : str
+            Attribute to use a label in the regions shapefile
         """
-        self._meta_path = meta_path
-        self._regions_path = regions_path
         self._lat_label = lat_label
         self._long_label = long_label
         self._regions_label = regions_label
 
-        self._meta = self.get_meta()
-        self._regions = self.get_regions()
+        self._meta = self._get_meta(meta_path)
+        self._regions = self._get_regions(regions_path)
 
-    def get_regions(self):
-        """ Load the regions shapefile into geopandas dataframe """
-        regions = gpd.read_file(self._regions_path).to_crs(self.CRS)
-        if self._regions_label not in regions.columns:
-            self._regions_label = self.DEFAULT_REGIONS_LABEL
-            regions[self._regions_label] = regions.index
-            logger.warning('Setting regions label: ' + self._regions_label)
-        centroids = regions.geometry.centroid
-        regions[self._long_label] = centroids.x
-        regions[self._lat_label] = centroids.y
-        return regions
+    @classmethod
+    def run(cls, meta_path, regions_path, lat_label, long_label,
+            regions_label=None, force=False, fout=None):
+        """ Run full classification
+        Parameters
+        ----------
+        meta_path : str
+            Path to meta CSV file containing lat/lon points
+        regions_path : str
+            Path to regions shapefile containing labeled geometries
+        lat_label : str
+            Latitude column name in meta CSV file
+        long_label : str
+            Longitude column name in meta CSV file
+        regions_label : str
+            Attribute to use a label in the regions shapefile
+        force : str
+            Force outlier classification by finding nearest
+        fout : str
+            Output CSV file path for labeled meta CSV file
+        """
+        classifier = cls(meta_path=meta_path, regions_path=regions_path,
+                         lat_label=lat_label, long_label=long_label,
+                         regions_label=regions_label)
+        classification = classifier.classify(force=force)
+        if fout:
+            cls.output_to_csv(classification, fout)
+        return classification
 
-    def get_meta(self):
-        """ Load the meta csv file into geopandas dataframe """
-        meta = pd.read_csv(self._meta_path)
-        geometry = [Point(xy) for xy in zip(meta[self._long_label],
-                                            meta[self._lat_label])]
-        meta = gpd.GeoDataFrame(meta, crs=self.CRS, geometry=geometry)
-        return meta
-
-    def classify(self, save_to=None, force=False):
+    def classify(self, force=False):
         """ Classify the meta data with regions labels
         Parameters
         ----------
-        save_to : str
-            Optional output path for labeled meta CSV file
         force : str
             Force outlier classification by finding nearest
         """
@@ -96,16 +102,17 @@ class region_classifier():
             # Get intersection classifications
             meta_inds, region_inds, outlier_inds = self._intersect()
         except Exception as e:
+            logger.error(e)
             invalid_geom_ids = self._check_geometry()
             if invalid_geom_ids:
                 logger.error('The following geometries are invalid:')
                 logger.error(invalid_geom_ids)
             else:
-                raise e
+                raise
 
         # Check for any intersection outliers
         num_outliers = len(outlier_inds)
-        if ((num_outliers > 0) & (force is True)):
+        if ((num_outliers > 0) & force):
             # Lookup the nearest region geometry (by centroid)
             logger.warning('The following points are outliers:')
             logger.warning(outlier_inds)
@@ -128,16 +135,40 @@ class region_classifier():
         classified_meta[self._regions_label] = region_labels
         classified_meta.sort_index(inplace=True)
 
-        # Output
-        if save_to:
-            self.output_to_csv(classified_meta, save_to)
         return classified_meta
 
     @staticmethod
     def output_to_csv(gdf, path):
-        """ Export a geopandas dataframe to csv """
+        """ Export a geopandas dataframe to csv
+        Parameters
+        ----------
+        gdf : GeoPandas DataFrame
+            Meta data to export
+        path : str
+            Output CSV file path for labeled meta CSV file
+        """
         output_gdf = gdf.drop('geometry', axis=1)
         output_gdf.to_csv(path, index=False)
+
+    def _get_regions(self, regions_path):
+        """ Load the regions shapefile into geopandas dataframe """
+        regions = gpd.read_file(regions_path).to_crs(self.CRS)
+        if self._regions_label not in regions.columns:
+            self._regions_label = self.DEFAULT_REGIONS_LABEL
+            regions[self._regions_label] = regions.index
+            logger.warning('Setting regions label: ' + self._regions_label)
+        centroids = regions.geometry.centroid
+        regions[self._long_label] = centroids.x
+        regions[self._lat_label] = centroids.y
+        return regions
+
+    def _get_meta(self, meta_path):
+        """ Load the meta csv file into geopandas dataframe """
+        meta = pd.read_csv(meta_path)
+        geometry = [Point(xy) for xy in zip(meta[self._long_label],
+                                            meta[self._lat_label])]
+        meta = gpd.GeoDataFrame(meta, crs=self.CRS, geometry=geometry)
+        return meta
 
     def _intersect(self):
         """ Join the meta points to regions by spatial intersection """

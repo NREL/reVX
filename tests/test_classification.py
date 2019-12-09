@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.testing import assert_series_equal
 
 from reVX import TESTDATADIR as reVX_TESTDATADIR
-from reVX.classification.region import region_classifier
+from reVX.classification.region import RegionClassifier
 
 
 META_PATH = os.path.join(reVX_TESTDATADIR, 'classification/meta.csv')
@@ -22,13 +22,12 @@ LONG_LABEL = 'LONGITUDE'
 def test_region_classification():
     """Test the rpm clustering pipeline and run a baseline validation."""
 
-    classifier = region_classifier(meta_path=META_PATH,
-                                   regions_path=REGIONS_PATH,
-                                   lat_label=LAT_LABEL,
-                                   long_label=LONG_LABEL,
-                                   regions_label=REGIONS_LABEL)
-
-    classification = classifier.classify(force=True)
+    classification = RegionClassifier.run(meta_path=META_PATH,
+                                          regions_path=REGIONS_PATH,
+                                          lat_label=LAT_LABEL,
+                                          long_label=LONG_LABEL,
+                                          regions_label=REGIONS_LABEL,
+                                          force=True)
 
     test_labels = classification[REGIONS_LABEL]
     valid_labels = pd.read_csv(RESULTS_PATH)[REGIONS_LABEL]

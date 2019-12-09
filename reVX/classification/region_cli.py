@@ -5,7 +5,7 @@ Classification Command Line Interface
 import click
 import logging
 from reV.utilities.cli_dtypes import STR
-from reVX.classification.region import region_classifier
+from reVX.classification.region import RegionClassifier
 
 logger = logging.getLogger(__name__)
 
@@ -25,22 +25,22 @@ logger = logging.getLogger(__name__)
               help=('Latitude column name in meta CSV file'))
 @click.option('--long_label', '-x', default='LONGITUDE', type=STR,
               help=('Longitude column name in meta CSV file'))
-@click.option('--save_to', '-o', required=True,
+@click.option('--fout', '-o', required=True,
               prompt='Output CSV file path',
               type=click.Path(exists=False),
               help=('Output CSV file path for labeled meta CSV file'))
 @click.option('--force', '-f', is_flag=True,
               help='Force outlier classification by finding nearest.')
 def main(meta_path, regions_path, lat_label, long_label, regions_label,
-         save_to, force):
+         fout, force):
     """
     Region Classifier
     - Used to classify meta points with a label from a shapefile
     """
 
-    classifier = region_classifier(meta_path=meta_path,
-                                   regions_path=regions_path,
-                                   lat_label=lat_label, long_label=long_label,
-                                   regions_label=regions_label)
-
-    classifier.classify(save_to=save_to, force=force)
+    RegionClassifier.run(meta_path=meta_path,
+                         regions_path=regions_path,
+                         lat_label=lat_label,
+                         long_label=long_label,
+                         regions_label=regions_label,
+                         force=force, fout=fout)
