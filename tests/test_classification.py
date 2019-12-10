@@ -7,7 +7,7 @@ import pandas as pd
 from pandas.testing import assert_series_equal
 
 from reVX import TESTDATADIR as reVX_TESTDATADIR
-from reVX.classification.region import RegionClassifier
+from reVX.utilities.region import RegionClassifier
 
 
 META_PATH = os.path.join(reVX_TESTDATADIR, 'classification/meta.csv')
@@ -15,8 +15,6 @@ REGIONS_PATH = os.path.join(reVX_TESTDATADIR, 'classification/us_states.shp')
 RESULTS_PATH = os.path.join(reVX_TESTDATADIR, 'classification/new_meta.csv')
 
 REGIONS_LABEL = 'NAME'
-LAT_LABEL = 'LATITUDE'
-LONG_LABEL = 'LONGITUDE'
 
 
 def test_region_classification():
@@ -24,8 +22,6 @@ def test_region_classification():
 
     classification = RegionClassifier.run(meta_path=META_PATH,
                                           regions_path=REGIONS_PATH,
-                                          lat_label=LAT_LABEL,
-                                          long_label=LONG_LABEL,
                                           regions_label=REGIONS_LABEL,
                                           force=True)
 

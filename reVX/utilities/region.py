@@ -7,11 +7,8 @@ Sample Usage:
 meta_path = 'meta.csv'
 regions_path = 'us_states.shp'
 regions_label = 'NAME'
-lat_label = 'LATITUDE'
-long_label = 'LONGITUDE'
 
 classifier = RegionClassifier(meta_path=meta_path, regions_path=regions_path,
-                              lat_label=lat_label, long_label=long_label,
                               regions_label=regions_label)
 
 force = True
@@ -39,8 +36,7 @@ class RegionClassifier():
     CRS = {'init': 'epsg:4326'}
     DEFAULT_REGIONS_LABEL = 'regions_index'
 
-    def __init__(self, meta_path, regions_path, lat_label, long_label,
-                 regions_label=None):
+    def __init__(self, meta_path, regions_path, regions_label=None):
         """
         Parameters
         ----------
@@ -48,23 +44,17 @@ class RegionClassifier():
             Path to meta CSV file containing lat/lon points
         regions_path : str
             Path to regions shapefile containing labeled geometries
-        lat_label : str
-            Latitude column name in meta CSV file
-        long_label : str
-            Longitude column name in meta CSV file
         regions_label : str
-            Attribute to use a label in the regions shapefile
+            Attribute to use as label in the regions shapefile
         """
-        self._lat_label = lat_label
-        self._long_label = long_label
         self._regions_label = regions_label
 
         self._meta = self._get_meta(meta_path)
-        self._regions = self._get_regions(regions_path)
+        self._regions = self._get_regions(regions_path, regions_label)
 
     @classmethod
-    def run(cls, meta_path, regions_path, lat_label, long_label,
-            regions_label=None, force=False, fout=None):
+    def run(cls, meta_path, regions_path, regions_label=None,
+            force=False, fout=None):
         """ Run full classification
         Parameters
         ----------
@@ -72,10 +62,6 @@ class RegionClassifier():
             Path to meta CSV file containing lat/lon points
         regions_path : str
             Path to regions shapefile containing labeled geometries
-        lat_label : str
-            Latitude column name in meta CSV file
-        long_label : str
-            Longitude column name in meta CSV file
         regions_label : str
             Attribute to use a label in the regions shapefile
         force : str
@@ -84,7 +70,6 @@ class RegionClassifier():
             Output CSV file path for labeled meta CSV file
         """
         classifier = cls(meta_path=meta_path, regions_path=regions_path,
-                         lat_label=lat_label, long_label=long_label,
                          regions_label=regions_label)
         classification = classifier.classify(force=force)
         if fout:
@@ -112,12 +97,12 @@ class RegionClassifier():
 
         # Check for any intersection outliers
         num_outliers = len(outlier_inds)
-        if ((num_outliers > 0) & force):
+        if (num_outliers and force):
             # Lookup the nearest region geometry (by centroid)
             logger.warning('The following points are outliers:')
             logger.warning(outlier_inds)
-            cols = [self._lat_label, self._long_label]
-            lookup = self._regions[cols]
+            cols = self._get_lat_lon_labels(self._meta)
+            lookup = self._regions[['lat', 'lon']]
             target = self._meta.loc[outlier_inds][cols]
             region_inds += list(self._nearest(target, lookup))
 
@@ -125,7 +110,7 @@ class RegionClassifier():
         meta_inds += outlier_inds
         region_labels = list(self._regions.loc[region_inds,
                                                self._regions_label])
-        if ((num_outliers > 0) & (force is False)):
+        if (num_outliers and not force):
             # Fill unclassified labels
             region_labels += [-999 for _ in range(num_outliers)]
 
@@ -150,25 +135,67 @@ class RegionClassifier():
         output_gdf = gdf.drop('geometry', axis=1)
         output_gdf.to_csv(path, index=False)
 
-    def _get_regions(self, regions_path):
-        """ Load the regions shapefile into geopandas dataframe """
-        regions = gpd.read_file(regions_path).to_crs(self.CRS)
-        if self._regions_label not in regions.columns:
-            self._regions_label = self.DEFAULT_REGIONS_LABEL
-            regions[self._regions_label] = regions.index
-            logger.warning('Setting regions label: ' + self._regions_label)
+    @classmethod
+    def _get_regions(cls, regions_path, regions_label):
+        """ Load the regions shapefile into geopandas dataframe
+        Parameters
+        ----------
+        regions_path : str
+            Path to regions shapefile containing labeled geometries
+        regions_label : str
+            Attribute to use as label in the regions shapefile
+        """
+        regions = gpd.read_file(regions_path).to_crs(cls.CRS)
+        if regions_label not in regions.columns:
+            regions_label = cls.DEFAULT_REGIONS_LABEL
+            regions[regions_label] = regions.index
+            logger.warning('Setting regions label: ' + regions_label)
         centroids = regions.geometry.centroid
-        regions[self._long_label] = centroids.x
-        regions[self._lat_label] = centroids.y
+        regions['lon'] = centroids.x
+        regions['lat'] = centroids.y
         return regions
 
-    def _get_meta(self, meta_path):
-        """ Load the meta csv file into geopandas dataframe """
+    @classmethod
+    def _get_meta(cls, meta_path):
+        """ Load the meta csv file into geopandas dataframe
+        Parameters
+        ----------
+        meta_path : str
+            Path to meta CSV file containing lat/lon points
+        """
         meta = pd.read_csv(meta_path)
-        geometry = [Point(xy) for xy in zip(meta[self._long_label],
-                                            meta[self._lat_label])]
-        meta = gpd.GeoDataFrame(meta, crs=self.CRS, geometry=geometry)
+        lat_label, long_label = cls._get_lat_lon_labels(meta)
+        geometry = [Point(xy) for xy in zip(meta[long_label],
+                                            meta[lat_label])]
+        meta = gpd.GeoDataFrame(meta, crs=cls.CRS, geometry=geometry)
         return meta
+
+    @staticmethod
+    def _get_lat_lon_labels(df):
+        """ Auto detect the latitude and longitude columns from DataFrame
+        Parameters
+        ----------
+        df : Pandas DataFrame
+            Meta data with the latitude/longitude columns to detect
+        """
+
+        # Latitude
+        lat_col = [c for c in df if c.lower().startswith('lat')]
+        if len(lat_col) > 1:
+            msg = "Multiple latitude columns found: {}".format(lat_col)
+            logger.error(msg)
+            raise RuntimeError(msg)
+        lat_col = lat_col[0]
+
+        # Longitude
+        lon_col = [c for c in df if c.lower().startswith('lon')]
+        if len(lon_col) > 1:
+            msg = "Multiple longitude columns found: {}".format(lon_col)
+            logger.error(msg)
+            raise RuntimeError(msg)
+        lon_col = lon_col[0]
+
+        return [lat_col, lon_col]
 
     def _intersect(self):
         """ Join the meta points to regions by spatial intersection """

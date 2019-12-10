@@ -2,3 +2,5 @@
 """
 reX utilities.
 """
+
+from .region import RegionClassifier
