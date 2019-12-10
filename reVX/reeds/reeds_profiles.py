@@ -118,8 +118,8 @@ class ReedsProfiles(RepProfiles):
                 out_path = os.path.join(out_dir, out_path)
 
                 region_df = out_df.copy()
-                region_df[reg_cols[0]] = region[0]
-                region_df[reg_cols[1]] = region[1]
+                for i, r in enumerate(region):
+                    region_df[reg_cols[i]] = r
                 region_df['cf'] = arr[:, i]
 
                 region_df.to_csv(out_path, index=False)
