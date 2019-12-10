@@ -28,6 +28,14 @@ reVX.utilities.loggers module
    :undoc-members:
    :show-inheritance:
 
+reVX.utilities.region module
+----------------------------
+
+.. automodule:: reVX.utilities.region
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 Module contents
 ---------------
