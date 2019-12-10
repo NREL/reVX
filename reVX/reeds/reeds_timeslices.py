@@ -271,6 +271,8 @@ class ReedsTimeslices:
             meta = ReedsTimeslices._add_reg_cols(meta, rev_table,
                                                  reg_cols=reg_cols)
 
+        logger.info('Profile data check complete.')
+
         return profiles, meta, time_index
 
     @staticmethod
@@ -325,6 +327,8 @@ class ReedsTimeslices:
         cols = list(timeslice_map.columns)
         if len(cols) == 1:
             cols = cols[0]
+
+        logger.info('Extracted timeslice map.')
 
         return timeslice_map.groupby(cols)
 
@@ -452,7 +456,9 @@ class ReedsTimeslices:
         stdevs = []
         corr_coeffs = {}
         cols = list(set(c[0] for c in profiles.columns))
-        for s, slice_map in timeslice_groups:
+        logger.info('Computing representative profile timeslice stats for '
+                    '{} timeslice groups.'.format(len(timeslice_groups)))
+        for i, (s, slice_map) in enumerate(timeslice_groups):
             tslice = profiles.loc[slice_map.index]
             coeffs = ReedsTimeslices._compute_correlations(tslice, cols)
             corr_coeffs[s] = coeffs
@@ -463,6 +469,10 @@ class ReedsTimeslices:
             stdev = tslice.stack().std()
             stdev.name = s
             stdevs.append(stdev)
+
+            logger.info('Completed {} out of {} representative profile '
+                        'timeslice stats.'
+                        .format(i + 1, len(timeslice_groups)))
 
         means = pd.concat(means, axis=1).T
         means.index.name = 'timeslice'
@@ -538,6 +548,9 @@ class ReedsTimeslices:
         if max_workers is None:
             max_workers = os.cpu_count()
 
+        logger.info('Computing timeslice stats with max_workers: {}'
+                    .format(max_workers))
+
         if max_workers > 1:
             with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
                 futures = {}
@@ -546,9 +559,13 @@ class ReedsTimeslices:
                                         profiles_h5, df, timeslices)
                     futures[future] = group
 
+                logger.debug('Submitted {} futures.'.format(len(futures)))
+
                 means = []
                 stdevs = []
-                for future in cf.as_completed(futures):
+                for i, future in enumerate(cf.as_completed(futures)):
+                    logger.info('Timeslice future {} out of {} completed.'
+                                .format(i + 1, len(futures)))
                     m, s = future.result()
                     group = futures[future]
                     m.name = str(group)
@@ -650,6 +667,7 @@ class ReedsTimeslices:
         out : pandas.DataFrame
             Flattened table of correlation coefficients for all timeslices
         """
+        logger.info('Creating timeslice correlation table.')
         out = []
         for k, v in corr_coeffs.items():
             v = v.unstack().to_frame().reset_index()
@@ -661,6 +679,7 @@ class ReedsTimeslices:
         sort_cols = (reg_cols + ["{}2".format(c) for c in reg_cols]
                      + ['timeslice', ])
         out = pd.concat(out).sort_values(sort_cols).reset_index(drop=True)
+        logger.info('Timeslice correlation table complete.')
 
         return out
 
@@ -684,6 +703,7 @@ class ReedsTimeslices:
         coeffs : pandas.DataFrame
             Flattened correlation
         """
+        logger.info('Performing legacy formatting operation.')
         reg_cols = list(self._meta.index.names)
         means = self._flatten_timeslices(means, 'cfmean', reg_cols)
         stdevs = self._flatten_timeslices(stdevs, 'cfsigma', reg_cols)
@@ -691,6 +711,7 @@ class ReedsTimeslices:
         stats = means.merge(stdevs, on=merge_cols)
         sort_cols = reg_cols + ['timeslice', ]
         stats = stats.sort_values(sort_cols).reset_index(drop=True)
+        logger.info('Legacy formatting complete.')
 
         if coeffs is not None:
             coeffs = self._create_correlation_table(coeffs, reg_cols)
@@ -733,6 +754,8 @@ class ReedsTimeslices:
             profiles = self._extract_rep_profiles(self._profiles, self._meta)
             means, stdevs, coeffs = \
                 self._rep_profile_stats(profiles, self._timeslice_groups)
+
+        logger.info('Finished timeslice stats computation.')
 
         if legacy_format:
             stats, coeffs = self._to_legacy_format(means, stdevs, coeffs)

@@ -233,10 +233,11 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
     if all_profiles:
         rev_table = ctx.obj['rev_table']
         logger.info('Extracting timeslice stats from all cf_profiles '
-                    'in rev_table')
+                    'in rev_table (and not just representative profiles).')
     else:
         rev_table = None
-        logger.info('Extracting timeslice stats from representative profiles.')
+        logger.info('Extracting timeslice stats from representative profiles '
+                    '(and not all cf_profiles).')
 
     stats, corr = ReedsTimeslices.run(profiles, timeslices,
                                       rev_table=rev_table,
