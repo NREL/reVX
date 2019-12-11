@@ -428,8 +428,8 @@ class ReedsTimeslices:
         n = len(cols)
         data = ts_profiles.loc[:, (slice(None), 0)][cols]
 
-        coeffs = pd.DataFrame(columns=cols, index=cols)
-        coeffs.loc[:, :] = np.corrcoef(data, data, rowvar=False)[:n, :n]
+        coeffs = np.corrcoef(data, data, rowvar=False)
+        coeffs = pd.DataFrame(coeffs[:n, :n], columns=cols, index=cols)
         coeffs = coeffs.fillna(1)
 
         means = ts_profiles.stack().mean()
