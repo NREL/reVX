@@ -246,12 +246,12 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
 
     out_path = os.path.join(out_dir, '{}_timeslices-stats.csv'.format(name))
     logger.info('Saving timeslice stats to {}'.format(out_path))
-    stats.to_csv(out_path)
+    stats.to_csv(out_path, index=False)
 
     out_path = os.path.join(out_dir, '{}_timeslices-correlations.csv'
                             .format(name))
     logger.info('Saving timeslice correlations to {}'.format(out_path))
-    corr.to_csv(out_path)
+    corr.to_csv(out_path, index=False)
 
 
 def get_node_cmd(config):
