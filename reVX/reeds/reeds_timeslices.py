@@ -458,7 +458,7 @@ class ReedsTimeslices:
         means = []
         stdevs = []
         corr_coeffs = {}
-        cols = list(set(c[0] for c in profiles.columns))
+        cols = sorted(list(set(c[0] for c in profiles.columns)))
         logger.info('Computing representative profile timeslice stats for '
                     '{} timeslice groups.'.format(len(timeslice_groups)))
         for i, (s, slice_map) in enumerate(timeslice_groups):
