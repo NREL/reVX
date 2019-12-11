@@ -150,6 +150,8 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on):
 
     ctx.obj['TABLE'] = table
 
+    logger.info('reVX - ReEDS classification methods complete.')
+
 
 @classify.command()
 @click.option('--cf_profiles', '-cf', required=True,
@@ -198,6 +200,8 @@ def profiles(ctx, cf_profiles, n_profiles, profiles_dset, rep_method,
 
     ctx.obj['PROFILES'] = out_path
 
+    logger.info('reVX - ReEDS representative profile methods complete.')
+
 
 @classify.command()
 @click.option('--profiles', '-pr', type=STR, default=None,
@@ -229,8 +233,8 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
             raise ReedsRuntimeError(msg)
         profiles = ctx.obj['PROFILES']
 
-    logger.info('Extracting timeslices from {} using mapping {}'
-                .format(profiles, timeslices))
+    logger.info('Extracting timeslices from {} using mapping {} and columns {}'
+                .format(profiles, timeslices, reg_cols))
 
     if all_profiles:
         rev_table = ctx.obj['rev_table']
@@ -254,6 +258,8 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
                             .format(name))
     logger.info('Saving timeslice correlations to {}'.format(out_path))
     corr.to_csv(out_path, index=False)
+
+    logger.info('reVX - ReEDS timeslice methods complete.')
 
 
 def get_node_cmd(config):
