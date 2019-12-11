@@ -667,35 +667,6 @@ class ReedsTimeslices:
         return pd.concat(out).reset_index()
 
     @staticmethod
-    def _unpack_labels(row, reg_cols=('region', 'class')):
-        """
-        Unpack "region" labels from correlation matrix
-
-        Parameters
-        ----------
-        row : pandas.Series
-            Row from unstacked correlation matrix
-        reg_cols : list
-            List of names for "region" classifiers, default is region, class
-
-        Returns
-        -------
-        row : pandas.Series
-            Row with regions unpacked
-        """
-        for l in range(2):
-            key = 'level_{}'.format(l)
-            for n, v in zip(reg_cols, json.loads(row[key])):
-                if l > 0:
-                    n = "{}2".format(n)
-
-                row[n] = v
-
-        row = row.rename({0: 'coefficient'}).drop(['level_0', 'level_1'])
-
-        return row
-
-    @staticmethod
     def _create_correlation_table(corr_coeffs, reg_cols):
         """
         Flatten and combine correlation matrixes for all timeslices
@@ -712,22 +683,41 @@ class ReedsTimeslices:
         out : pandas.DataFrame
             Flattened table of correlation coefficients for all timeslices
         """
-        print(reg_cols)
-        print(corr_coeffs)
-        logger.info('Creating timeslice correlation table.')
+
+        logger.info('Creating legacy timeslice correlation table.')
         out = []
         for k, v in corr_coeffs.items():
-            v = v.unstack().to_frame().reset_index()
-            v = v.apply(ReedsTimeslices._unpack_labels, reg_cols=reg_cols,
-                        axis=1)
-            v['timeslice'] = k
-            out.append(v)
+
+            ctable = pd.DataFrame({'coefficient': v.values.flatten()})
+
+            second_cols = []
+            for i, rc in enumerate(reg_cols):
+                r_label_0 = rc
+                r_label_1 = rc + '2'
+                second_cols.append(r_label_1)
+
+                r0 = [json.loads(c)[i] if isinstance(c, str) else c[i]
+                      for c in v.index]
+                r1 = [json.loads(c)[i] if isinstance(c, str) else c[i]
+                      for c in v.columns]
+
+                r0 = [[r0[i]] * len(r1) for i in range(len(r1))]
+                r0 = [item for sublist in r0 for item in sublist]
+                r1 *= len(v.index)
+
+                ctable[r_label_0] = r0
+                ctable[r_label_1] = r1
+
+            ctable['timeslice'] = k
+            corder = ['coefficient'] + reg_cols + second_cols + ['timeslice']
+            ctable = ctable[corder]
+
+            out.append(ctable)
 
         sort_cols = (reg_cols + ["{}2".format(c) for c in reg_cols]
                      + ['timeslice', ])
         out = pd.concat(out).sort_values(sort_cols).reset_index(drop=True)
-        logger.info('Timeslice correlation table complete.')
-        print(out)
+        logger.info('Legacy timeslice correlation table complete.')
         return out
 
     def _to_legacy_format(self, means, stdevs, coeffs=None):
