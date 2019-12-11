@@ -720,7 +720,7 @@ class ReedsTimeslices:
                 ctable[r_label_1] = r1
 
             ctable['timeslice'] = k
-            corder = ['coefficient'] + reg_cols + second_cols + ['timeslice']
+            corder = reg_cols + second_cols + ['timeslice', 'coefficient']
             ctable = ctable[corder]
 
             out.append(ctable)
