@@ -660,7 +660,7 @@ class ReedsTimeslices:
         """
         out = []
         for r, region in table.iteritems():
-            if not isinstance(r, str):
+            if isinstance(r, str):
                 r = json.loads(r)
 
             region.name = value_name
