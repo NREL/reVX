@@ -100,6 +100,7 @@ def test_rep_timeslices():
     timeslice_map = os.path.join(ROOT_DIR, 'inputs',
                                  'timeslices.csv')
     test_stats, test_coeffs = ReedsTimeslices.run(rep_profiles, timeslice_map,
+                                                  max_workers=None,
                                                   legacy_format=True)
 
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_stats.csv')
@@ -122,7 +123,7 @@ def test_cf_timeslices():
     timeslice_map = os.path.join(ROOT_DIR, 'inputs',
                                  'timeslices.csv')
     test, _ = ReedsTimeslices.run(cf_profiles, timeslice_map,
-                                  rev_table=rev_table, max_workers=1,
+                                  rev_table=rev_table, max_workers=None,
                                   legacy_format=True)
 
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_cf_stats.csv')
