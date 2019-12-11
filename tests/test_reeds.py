@@ -106,12 +106,12 @@ def test_rep_timeslices():
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_stats.csv')
     truth = pd.read_csv(path)
     assert_frame_equal(truth, test_stats, check_dtype=False,
-                       check_exact=False)
+                       check_exact=False, check_less_precise=True)
 
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_coeffs.csv')
     truth = pd.read_csv(path)
     assert_frame_equal(truth, test_coeffs, check_dtype=False,
-                       check_exact=False)
+                       check_exact=False, check_less_precise=True)
 
 
 def test_cf_timeslices():
@@ -129,7 +129,7 @@ def test_cf_timeslices():
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_cf_stats.csv')
     truth = pd.read_csv(path)
     assert_frame_equal(truth, test, check_dtype=False,
-                       check_exact=False)
+                       check_exact=False, check_less_precise=True)
 
 
 def execute_pytest(capture='all', flags='-rapP'):
