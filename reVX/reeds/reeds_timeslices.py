@@ -754,9 +754,9 @@ class ReedsTimeslices:
                                                    max_workers=max_workers)
             coeffs = None
         else:
-            profiles = self._extract_rep_profiles(self._profiles, self._meta)
             means, stdevs, coeffs = \
-                self._rep_profile_stats(profiles, self._timeslice_groups)
+                self._rep_profile_stats(self._profiles, self._meta,
+                                        self._timeslice_groups)
 
         logger.info('Finished timeslice stats computation.')
 
