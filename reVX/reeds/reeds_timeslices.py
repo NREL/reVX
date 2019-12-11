@@ -484,9 +484,10 @@ class ReedsTimeslices:
                     tslice = profiles.loc[slice_map.index]
                     future = exe.submit(ReedsTimeslices._rep_tslice_stats,
                                         tslice)
-                    futures[s] = future
+                    futures[future] = s
 
-                for i, (s, future) in futures.items():
+                for i, future in enumerate(cf.as_completed(futures)):
+                    s = futures[future]
                     mean, stdev, coeffs = future.result()
 
                     corr_coeffs[s] = coeffs
