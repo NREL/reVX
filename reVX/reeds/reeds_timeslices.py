@@ -426,9 +426,13 @@ class ReedsTimeslices:
         """
         cols = sorted(list(set(c[0] for c in ts_profiles.columns)))
         n = len(cols)
-        data = ts_profiles.loc[:, (slice(None), 0)][cols]
+        data = ts_profiles.loc[:, (slice(None), 0)][cols].values
 
-        coeffs = np.corrcoef(data, data, rowvar=False)
+        if not np.all(data):
+            coeffs = np.ones((n, n))
+        else:
+            coeffs = np.corrcoef(data, data, rowvar=False)
+
         coeffs = pd.DataFrame(coeffs[:n, :n], columns=cols, index=cols)
         coeffs = coeffs.fillna(1)
 
