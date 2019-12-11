@@ -138,6 +138,8 @@ class ReedsTimeslices:
                 table = f._get_meta('rev_summary', slice(None))
                 reg_cols = list(meta.columns.drop(['rep_gen_gid',
                                                    'rep_res_gid']))
+                logger.info('Found region column labels in profile meta for '
+                            'timeslice regions: {}'.format(reg_cols))
                 tz = table.groupby(reg_cols)
                 tz = tz['timezone'].apply(lambda x: mode(x).mode[0])
                 meta = meta.merge(tz.reset_index(), on=reg_cols)
@@ -269,6 +271,8 @@ class ReedsTimeslices:
         if rev_table is not None:
             meta = ReedsTimeslices._add_reg_cols(meta, rev_table,
                                                  reg_cols=reg_cols)
+            logger.info('Using input region column labels for timeslice '
+                        'regions: {}'.format(reg_cols))
 
         logger.info('Profile data check complete.')
 

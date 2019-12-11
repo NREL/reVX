@@ -233,8 +233,8 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
             raise ReedsRuntimeError(msg)
         profiles = ctx.obj['PROFILES']
 
-    logger.info('Extracting timeslices from {} using mapping {} and columns {}'
-                .format(profiles, timeslices, reg_cols))
+    logger.info('Extracting timeslices from {} using mapping {}'
+                .format(profiles, timeslices))
 
     if all_profiles:
         rev_table = ctx.obj['rev_table']
