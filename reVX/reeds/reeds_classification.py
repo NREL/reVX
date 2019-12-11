@@ -174,7 +174,7 @@ class ReedsClassifier:
         cols = ['area_sq_km', 'capacity', 'trans_capacity']
         sum_table = self._groups[cols].sum()
         cols = ['latitude', 'longitude', 'mean_cf', 'mean_lcoe', 'mean_res',
-                'trans_cap_cost', 'dist_mi', 'pct_slope', 'lcot', 'total_lcoe']
+                'trans_cap_cost', 'dist_mi', 'lcot', 'total_lcoe']
         mean_table = self._groups[cols].mean()
         agg_table = sum_table.join(mean_table)
 
@@ -473,7 +473,7 @@ class ReedsClassifier:
             as a DataFrame or Series, or in a dictionary
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-         sc_bins : int
+        sc_bins : int
             Number of supply curve bins (clusters) to create for each
             region-class
         cluster_kwargs : dict
