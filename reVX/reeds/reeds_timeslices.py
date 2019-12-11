@@ -432,7 +432,7 @@ class ReedsTimeslices:
         n = len(cols)
         data = ts_profiles.loc[:, (slice(None), 0)][cols].values
 
-        if not np.all(data):
+        if len(np.unique(data)) == 1:
             coeffs = np.ones((n, n))
         else:
             coeffs = np.corrcoef(data, data, rowvar=False)
