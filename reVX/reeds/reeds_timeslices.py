@@ -425,8 +425,11 @@ class ReedsTimeslices:
             of regions
         """
         cols = sorted(list(set(c[0] for c in ts_profiles.columns)))
+        n = len(cols)
         data = ts_profiles.loc[:, (slice(None), 0)][cols]
-        coeffs = np.corrcoef(data, data, rowvar=False)[:len(cols), :len(cols)]
+        coeffs = pd.DataFrame(columns=cols, index=cols)
+        coeffs.loc[:, :] = np.corrcoef(data, data, rowvar=False)[:n, :n]
+
         means = ts_profiles.stack().mean()
         stdevs = ts_profiles.stack().std()
 
