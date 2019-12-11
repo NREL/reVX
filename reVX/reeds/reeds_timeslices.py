@@ -656,10 +656,13 @@ class ReedsTimeslices:
         """
         out = []
         for r, region in table.iteritems():
+            if not isinstance(r, str):
+                r = json.loads(r)
+
             region.name = value_name
             region = region.to_frame()
 
-            for n, v in zip(reg_cols, json.loads(r)):
+            for n, v in zip(reg_cols, r):
                 region[n] = v
 
             out.append(region)
