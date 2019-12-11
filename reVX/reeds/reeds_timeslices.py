@@ -3,13 +3,12 @@
 Extract ReEDS timeslices from rep-profiles
 """
 import concurrent.futures as cf
-import itertools
 import json
 import logging
 import numpy as np
 import os
 import pandas as pd
-from scipy.stats import mode, pearsonr
+from scipy.stats import mode
 from reV.handlers.resource import Resource
 
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -405,37 +404,39 @@ class ReedsTimeslices:
         return profiles_df
 
     @staticmethod
-    def _compute_correlations(ts_profiles, cols):
+    def _rep_tslice_stats(ts_profiles):
         """
-        Compute Pearson's Correlation Coefficient for timeslice means between
-        all combinations of regions
+        Compute means and standard deviations and correlation coefficients
+        for each timeslice from representative profiles
 
         Parameters
         ----------
         ts_profiles : pandas.DataFrame
-            Timeseries profiles to compute correlations for
+            Timeseries profiles to compute stats for
 
         Returns
         -------
-        corr_coeffs : pandas.DataFrame
+        means : pandas.Series
+            CF means for each "region"
+        stdevs : pandas.Series
+            Standard deviations of CF for each "region"
+        coeffs : pandas.DataFrame
             Pearson's correlation coefficients between all combinations
             of regions
         """
-        corr_coeffs = pd.DataFrame(columns=cols, index=cols)
-        for i, j in itertools.combinations(cols, 2):
-            c = pearsonr(ts_profiles[i].values[:, 0],
-                         ts_profiles[j].values[:, 0])[0]
-            corr_coeffs.loc[i, j] = c
-            corr_coeffs.loc[j, i] = c
+        cols = sorted(list(set(c[0] for c in ts_profiles.columns)))
+        data = ts_profiles.loc[:, (slice(None), 0)][cols]
+        coeffs = np.corrcoef(data, data, rowvar=False)[:len(cols), :len(cols)]
+        means = ts_profiles.stack().mean()
+        stdevs = ts_profiles.stack().std()
 
-        return corr_coeffs.fillna(1)
+        return means, stdevs, coeffs
 
     @staticmethod
     def _rep_profile_stats(profiles_h5, meta, timeslice_groups):
         """
         Compute means and standard divations for each timeslice from
         representative profiles
-
         Parameters
         ----------
         profiles_h5 : str
@@ -444,7 +445,6 @@ class ReedsTimeslices:
             Meta data table for representative profiles
         timeslice_groups : pandas.GroupBy
             Mapping of each timeslice to profiles time_index
-
         Returns
         -------
         means : pandas.DataFrame
@@ -458,18 +458,15 @@ class ReedsTimeslices:
         means = []
         stdevs = []
         corr_coeffs = {}
-        cols = sorted(list(set(c[0] for c in profiles.columns)))
         logger.info('Computing representative profile timeslice stats for '
                     '{} timeslice groups.'.format(len(timeslice_groups)))
         for i, (s, slice_map) in enumerate(timeslice_groups):
             tslice = profiles.loc[slice_map.index]
-            coeffs = ReedsTimeslices._compute_correlations(tslice, cols)
+            mean, stdev, coeffs = ReedsTimeslices._rep_tslice_stats(tslice)
             corr_coeffs[s] = coeffs
-            mean = tslice.stack().mean()
             mean.name = s
             means.append(mean)
 
-            stdev = tslice.stack().std()
             stdev.name = s
             stdevs.append(stdev)
 
