@@ -431,15 +431,17 @@ class ReedsTimeslices:
         return corr_coeffs.fillna(1)
 
     @staticmethod
-    def _rep_profile_stats(profiles, timeslice_groups):
+    def _rep_profile_stats(profiles_h5, meta, timeslice_groups):
         """
         Compute means and standard divations for each timeslice from
         representative profiles
 
         Parameters
         ----------
-        profiles : pandas.DataFrame
-            Multi-index DataFrame of profiles for each 'region'
+        profiles_h5 : str
+            Path to .h5 file containing representative profiles
+        meta : pandas.DataFrame
+            Meta data table for representative profiles
         timeslice_groups : pandas.GroupBy
             Mapping of each timeslice to profiles time_index
 
@@ -452,6 +454,7 @@ class ReedsTimeslices:
         corr_coeffs : dict
             Correlation matrices for each timeslice
         """
+        profiles = ReedsTimeslices._extract_rep_profiles(profiles_h5, meta)
         means = []
         stdevs = []
         corr_coeffs = {}
