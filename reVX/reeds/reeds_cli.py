@@ -72,7 +72,9 @@ def from_config(ctx, config, verbose):
 
         if config.timeslices is not None:
             ctx.invoke(timeslices, config.timeslices.profiles,
-                       config.timeslices.timeslices)
+                       config.timeslices.timeslices,
+                       config.timeslices.reg_cols,
+                       config.timeslices.all_profiles)
 
     if config.execution_control.option == 'eagle':
         eagle(config)
@@ -164,7 +166,7 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on):
 @click.option('--err_method', '-em', type=STR, default='rmse',
               help=('Method identifier for calculation of error from the '
                     'representative profile.'))
-@click.option('--reg_cols', '-rcol', type=STRLIST,
+@click.option('--reg_cols', '-rcp', type=STRLIST,
               default=('region', 'bin', 'class'),
               help=('Label(s) for a categorical region column(s) to extract '
                     'profiles for (default is region, bin, class)'))
@@ -204,7 +206,7 @@ def profiles(ctx, cf_profiles, n_profiles, profiles_dset, rep_method,
 @click.option('--timeslices', '-ts', required=True,
               type=click.Path(exists=True),
               help='.csv containing timeslice mapping')
-@click.option('--reg_cols', '-rcol', type=STRLIST,
+@click.option('--reg_cols', '-rct', type=STRLIST,
               default=('region', 'class'),
               help=('Label(s) for a categorical region column(s) to create '
                     'timeslice stats for (default is region and class)'))
@@ -289,7 +291,7 @@ def get_node_cmd(config):
     if config.profiles is not None:
         args += ('profiles -cf {cf_profiles} -np {n_profiles} '
                  '-pd {profiles_dset} -rm {rep_method} -em {err_method} '
-                 '-rcol {reg_cols} '
+                 '-rcp {reg_cols} '
                  .format(cf_profiles=s(config.profiles.cf_profiles),
                          n_profiles=s(config.profiles.n_profiles),
                          profiles_dset=s(config.profiles.profiles_dset),
@@ -300,7 +302,7 @@ def get_node_cmd(config):
             args += '-p '
 
     if config.timeslices is not None:
-        args += ('timeslices -pr {profiles} -ts {timeslices} -rcol {reg_cols} '
+        args += ('timeslices -pr {profiles} -ts {timeslices} -rct {reg_cols} '
                  .format(profiles=s(config.timeslices.profiles),
                          timeslices=s(config.timeslices.timeslices),
                          reg_cols=s(config.timeslices.reg_cols)))
