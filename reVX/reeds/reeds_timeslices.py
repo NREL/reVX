@@ -436,7 +436,8 @@ class ReedsTimeslices:
         return means, stdevs, coeffs
 
     @staticmethod
-    def _rep_profile_stats(profiles_h5, meta, timeslice_groups):
+    def _rep_profile_stats(profiles_h5, meta, timeslice_groups,
+                           max_workers=None):
         """
         Compute means and standard divations for each timeslice from
         representative profiles
@@ -448,6 +449,12 @@ class ReedsTimeslices:
             Meta data table for representative profiles
         timeslice_groups : pandas.GroupBy
             Mapping of each timeslice to profiles time_index
+        max_workers : int
+            Number of workers to use for parallel computation of means
+            and stdevs when using cf profiles.
+            1 means run in serial
+            None means use all available CPUs
+
         Returns
         -------
         means : pandas.DataFrame
@@ -457,25 +464,57 @@ class ReedsTimeslices:
         corr_coeffs : dict
             Correlation matrices for each timeslice
         """
+
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
         profiles = ReedsTimeslices._extract_rep_profiles(profiles_h5, meta)
         means = []
         stdevs = []
         corr_coeffs = {}
         logger.info('Computing representative profile timeslice stats for '
                     '{} timeslice groups.'.format(len(timeslice_groups)))
-        for i, (s, slice_map) in enumerate(timeslice_groups):
-            tslice = profiles.loc[slice_map.index]
-            mean, stdev, coeffs = ReedsTimeslices._rep_tslice_stats(tslice)
-            corr_coeffs[s] = coeffs
-            mean.name = s
-            means.append(mean)
+        logger.info('Computing timeslice stats with max_workers: {}'
+                    .format(max_workers))
 
-            stdev.name = s
-            stdevs.append(stdev)
+        if max_workers > 1:
+            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
+                futures = {}
+                for s, slice_map in timeslice_groups:
+                    tslice = profiles.loc[slice_map.index]
+                    future = exe.submit(ReedsTimeslices._rep_tslice_stats,
+                                        tslice)
+                    futures[s] = future
 
-            logger.info('Completed {} out of {} representative profile '
-                        'timeslice stats.'
-                        .format(i + 1, len(timeslice_groups)))
+                for i, (s, future) in futures.items():
+                    mean, stdev, coeffs = future.result()
+
+                    corr_coeffs[s] = coeffs
+                    mean.name = s
+                    means.append(mean)
+
+                    stdev.name = s
+                    stdevs.append(stdev)
+
+                    logger.info('Completed {} out of {} representative '
+                                'profile timeslice stats futures.'
+                                .format(i + 1, len(futures)))
+
+        else:
+            for i, (s, slice_map) in enumerate(timeslice_groups):
+                tslice = profiles.loc[slice_map.index]
+                mean, stdev, coeffs = ReedsTimeslices._rep_tslice_stats(tslice)
+
+                corr_coeffs[s] = coeffs
+                mean.name = s
+                means.append(mean)
+
+                stdev.name = s
+                stdevs.append(stdev)
+
+                logger.info('Completed {} out of {} representative '
+                            'profile timeslice stats.'
+                            .format(i + 1, len(timeslice_groups)))
 
         means = pd.concat(means, axis=1).T
         means.index.name = 'timeslice'
@@ -756,7 +795,8 @@ class ReedsTimeslices:
         else:
             means, stdevs, coeffs = \
                 self._rep_profile_stats(self._profiles, self._meta,
-                                        self._timeslice_groups)
+                                        self._timeslice_groups,
+                                        max_workers=max_workers)
 
         logger.info('Finished timeslice stats computation.')
 
