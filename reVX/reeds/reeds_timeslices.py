@@ -427,8 +427,10 @@ class ReedsTimeslices:
         cols = sorted(list(set(c[0] for c in ts_profiles.columns)))
         n = len(cols)
         data = ts_profiles.loc[:, (slice(None), 0)][cols]
+
         coeffs = pd.DataFrame(columns=cols, index=cols)
         coeffs.loc[:, :] = np.corrcoef(data, data, rowvar=False)[:n, :n]
+        coeffs = coeffs.fillna(1)
 
         means = ts_profiles.stack().mean()
         stdevs = ts_profiles.stack().std()
@@ -710,6 +712,8 @@ class ReedsTimeslices:
         out : pandas.DataFrame
             Flattened table of correlation coefficients for all timeslices
         """
+        print(reg_cols)
+        print(corr_coeffs)
         logger.info('Creating timeslice correlation table.')
         out = []
         for k, v in corr_coeffs.items():
@@ -723,7 +727,7 @@ class ReedsTimeslices:
                      + ['timeslice', ])
         out = pd.concat(out).sort_values(sort_cols).reset_index(drop=True)
         logger.info('Timeslice correlation table complete.')
-
+        print(out)
         return out
 
     def _to_legacy_format(self, means, stdevs, coeffs=None):
