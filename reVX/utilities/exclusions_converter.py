@@ -392,8 +392,8 @@ class ExclusionsConverter:
                             hsds=self._hsds)
 
     @classmethod
-    def create_h5(cls, excl_h5, layers, chunks=(128, 128),
-                  descriptions=None):
+    def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128),
+                     descriptions=None):
         """
         Create exclusions .h5 file from provided geotiffs
 

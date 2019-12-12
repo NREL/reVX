@@ -4,7 +4,11 @@ reVX command line interface (CLI).
 """
 import click
 import logging
-from reV.utilities.cli_dtypes import STR
+import os
+from reV.utilities.cli_dtypes import STR, STRLIST
+from reV.utilities.utilities import safe_json_load
+
+from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.region import RegionClassifier
 
 logger = logging.getLogger(__name__)
@@ -37,16 +41,81 @@ def main(ctx, verbose):
               help=('Output CSV file path for labeled meta CSV file'))
 @click.option('--force', '-f', is_flag=True,
               help='Force outlier classification by finding nearest.')
-def region_classifier(meta_path, regions_path, regions_label, fout, force):
+def region_classifier(meta_path, regions_path, regions_label, fout,
+                      force):
     """
     Region Classifier
     - Used to classify meta points with a label from a shapefile
     """
-
     RegionClassifier.run(meta_path=meta_path,
                          regions_path=regions_path,
                          regions_label=regions_label,
                          force=force, fout=fout)
+
+
+@main.group()
+@click.option('--excl_h5', '-h5', required=True, type=click.Path(exists=False),
+              help=("Path to .h5 file containing or to contain exclusion "
+                    "layers"))
+@click.pass_context
+def exclusions(ctx, excl_h5):
+    """
+    Extract from or create exclusions .h5 file
+    """
+    ctx.obj['EXCl_H5'] = excl_h5
+
+
+@exclusions.command()
+@click.option('--layers', '-l', required=True, type=click.Path(exists=True),
+              help=(".json file containing list of geotiffs to load or "
+                    "mapping of layer names to geotiffs"))
+@click.option('--descriptions', '-d', default=None,
+              type=click.Path(exists=True),
+              help=(".json file containing layer descriptions as a list or "
+                    "mapping to layers"))
+@click.option('--purge', '-r', is_flag=True,
+              help="Remove existing .h5 file before loading layers")
+@click.pass_context
+def layers_to_h5(ctx, layers, descriptions, purge):
+    """
+    Add layers to exclusions .h5 file
+    """
+    excl_h5 = ctx.obj['EXCL_H5']
+    if purge and os.path.isfile(excl_h5):
+        os.remove(excl_h5)
+
+    layers = safe_json_load(layers)
+    if 'layers' in layers:
+        layers = layers['layers']
+
+    if descriptions is not None:
+        descriptions = safe_json_load(descriptions)
+        if 'descriptions' in descriptions:
+            descriptions = {os.path.basename(l).split('.')[0]: d
+                            for l, d in zip(layers, descriptions)}
+
+    ExclusionsConverter.layers_to_h5(excl_h5, layers,
+                                     descriptions=descriptions)
+
+
+@exclusions.command()
+@click.option('--out_dir', '-o', required=True, type=click.Path(exists=True),
+              help=("Output directory to save layers into"))
+@click.option('--layers', '-l', default=None, type=STRLIST,
+              help=("List of layers to extract, if None extract all"))
+@click.option('--hsds', '-hsds', is_flag=True,
+              help="Extract layers from HSDS")
+@click.pass_context
+def layers_from_h5(ctx, out_dir, layers, hsds):
+    """
+    Extract layers from excl .h5 file and save to disk as geotiffs
+    """
+    excl_h5 = ctx.obj['EXCL_H5']
+    if layers is not None:
+        layers = {l: os.path.join(out_dir, "{}.tif".format(l)) for l in layers}
+        ExclusionsConverter.extract_layers(excl_h5, layers, hsds=hsds)
+    else:
+        ExclusionsConverter.extract_all_layers(excl_h5, out_dir, hsds=hsds)
 
 
 if __name__ == '__main__':
