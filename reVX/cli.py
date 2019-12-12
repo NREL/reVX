@@ -62,7 +62,7 @@ def exclusions(ctx, excl_h5):
     """
     Extract from or create exclusions .h5 file
     """
-    ctx.obj['EXCl_H5'] = excl_h5
+    ctx.obj['EXCL_H5'] = excl_h5
 
 
 @exclusions.command()
