@@ -266,7 +266,7 @@ class ReedsClassifier:
             Updated table with region_id added
         """
         if region_map is None:
-            rev_table['region'] = 0
+            rev_table['region'] = None
         else:
             region_map = ReedsClassifier._parse_region_map(region_map,
                                                            rev_table)
@@ -278,7 +278,7 @@ class ReedsClassifier:
                 raise ReedsValueError(msg)
 
             region_col = [c for c in region_map.columns if c != 'sc_gid']
-            rev_table['region'] = 0
+            rev_table['region'] = None
             rev_table = rev_table.set_index('sc_gid')
             for r, df in region_map.groupby(region_col):
                 rev_table.loc[df['sc_gid'], 'region'] = r
