@@ -102,7 +102,7 @@ class ReedsTimeslices:
         -------
         list
         """
-        return sorted(list(self._timeslice_groups.keys()))
+        return sorted(list(self._timeslice_groups.groups.keys()))
 
     @property
     def profile_datetimes(self):
