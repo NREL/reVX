@@ -394,13 +394,13 @@ class ReedsTimeslices:
         cols = [str([int(i) for i in c]) for c in meta.index]
         tz = meta['timezone'].values
         tz *= len(time_index) // 8760
-        temp = pd.DataFrame(columns=cols, index=time_index)
         profiles_df = []
         for k, arr in profiles.items():
-            df = temp.copy()
-            df.loc[:] = ReedsTimeslices._roll_array(arr, tz)
+            arr = ReedsTimeslices._roll_array(arr, tz)
+            df = pd.DataFrame(arr, columns=cols, index=time_index)
             df.columns = pd.MultiIndex.from_product([[k], df.columns])
             profiles_df.append(df.swaplevel(axis=1))
+            profiles_df.append(df)
 
         profiles_df = pd.concat(profiles_df, axis=1).sort_index(axis=1,
                                                                 level=0)
@@ -441,17 +441,6 @@ class ReedsTimeslices:
         stdevs = ts_profiles.stack().std()
 
         return means, stdevs, coeffs
-
-    @staticmethod
-    def _set_mkl():
-        """
-        Set the mkl thread size to one to fix Numpy dot incompatibility with
-        """
-        try:
-            import mkl
-            mkl.set_num_threads_local(1)
-        except Exception:
-            pass
 
     @staticmethod
     def _rep_profile_stats(profiles_h5, meta, timeslice_groups,
@@ -496,9 +485,7 @@ class ReedsTimeslices:
                     .format(max_workers))
 
         if max_workers > 1:
-            EXE = cf.ProcessPoolExecutor
-            with EXE(max_workers=max_workers,
-                     initializer=ReedsTimeslices._set_mkl)as exe:
+            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
                 futures = {}
                 for s, slice_map in timeslice_groups:
                     tslice = profiles.loc[slice_map.index]
