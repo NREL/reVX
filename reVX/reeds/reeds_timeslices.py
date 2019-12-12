@@ -432,10 +432,7 @@ class ReedsTimeslices:
         n = len(cols)
         data = ts_profiles.loc[:, (slice(None), 0)][cols].values
 
-        if len(np.unique(data)) == 1:
-            coeffs = np.ones((n, n))
-        else:
-            coeffs = np.corrcoef(data, data, rowvar=False)
+        coeffs = np.corrcoef(data, data, rowvar=False)
 
         coeffs = pd.DataFrame(coeffs[:n, :n], columns=cols, index=cols)
         coeffs = coeffs.fillna(1)
@@ -444,6 +441,17 @@ class ReedsTimeslices:
         stdevs = ts_profiles.stack().std()
 
         return means, stdevs, coeffs
+
+    @staticmethod
+    def _set_mkl():
+        """
+        Set the mkl thread size to one to fix Numpy dot incompatibility with
+        """
+        try:
+            import mkl
+            mkl.set_num_threads_local(1)
+        except Exception:
+            pass
 
     @staticmethod
     def _rep_profile_stats(profiles_h5, meta, timeslice_groups,
@@ -488,7 +496,9 @@ class ReedsTimeslices:
                     .format(max_workers))
 
         if max_workers > 1:
-            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
+            EXE = cf.ProcessPoolExecutor
+            with EXE(max_workers=max_workers,
+                     initializer=ReedsTimeslices._set_mkl)as exe:
                 futures = {}
                 for s, slice_map in timeslice_groups:
                     tslice = profiles.loc[slice_map.index]
