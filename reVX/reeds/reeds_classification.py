@@ -363,7 +363,7 @@ class ReedsClassifier:
         trg_table = rev_table[cols].copy()
         if by_region:
             classes = []
-            trg_table['class'] = 0
+            trg_table['class'] = 1
             for _, df in trg_table.groupby('region'):
                 df = df.sort_values('mean_lcoe')
                 cum_sum = df['capacity'].cumsum()
@@ -452,6 +452,9 @@ class ReedsClassifier:
         data = func(rev_table[cluster_on].values, **kwargs)
         labels = c_func(data, n_clusters=sc_bins,
                         **kwargs)
+        if np.min(labels) == 0:
+            labels = np.array(labels) + 1
+
         rev_table['bin'] = labels
 
         return rev_table
