@@ -266,16 +266,21 @@ class ReedsClassifier:
             Updated table with region_id added
         """
         if region_map is None:
-            rev_table['region'] = None
+            rev_table['region'] = 1
         else:
             region_map = ReedsClassifier._parse_region_map(region_map,
                                                            rev_table)
 
             if 'sc_gid' not in region_map:
-                msg = ('region map must contain a "sc_gid" column to allow '
-                       'mapping to Supply Curve table')
-                logger.error(msg)
-                raise ReedsValueError(msg)
+                merge_cols = [c for c in region_map.columns if c in rev_table]
+                if not merge_cols:
+                    msg = ('region map must contain a "sc_gid" column or a '
+                           'column in common with the Supply Curve table.')
+                    logger.error(msg)
+                    raise ReedsValueError(msg)
+
+                region_map = pd.merge(rev_table[['sc_gid', ] + merge_cols],
+                                      region_map, on=merge_cols)
 
             region_col = [c for c in region_map.columns if c != 'sc_gid']
             rev_table['region'] = None
@@ -283,7 +288,8 @@ class ReedsClassifier:
             for r, df in region_map.groupby(region_col):
                 rev_table.loc[df['sc_gid'], 'region'] = r
 
-            rev_table = rev_table.reset_index()
+            mask = ~rev_table['region'].isnull()
+            rev_table = rev_table.loc[mask].reset_index()
 
         return rev_table
 
