@@ -106,7 +106,7 @@ class ReedsProfiles(RepProfiles):
         hour_of_year : ndarray
             Vector of the hour of the year for each timestep
         """
-        hour_of_year = (time_index.hour
+        hour_of_year = (time_index.hour + (time_index.minute / 60)
                         + (time_index.dayofyear - 1) * 24)
         if np.max(hour_of_year) > len(time_index):
             hour_of_year = np.arange(len(time_index), dtype='int32')
