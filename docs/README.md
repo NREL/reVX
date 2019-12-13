@@ -14,7 +14,7 @@ pip install sphinx
 
 - Make sure reVX is in your PYTHONPATH
 - Delete the contents of `source/reVX`.
-- Run `sphinx-apidoc -o source/reVX ..` from the `docs` folder.
+- Run `sphinx-apidoc -o source/reVX ../reVX` from the `docs` folder.
 - Compare `source/reVX/modules.rst` to `source/reVX.rst`.
 - `git push` changes to the documentation source code as needed.
 - Make the documentation per below
