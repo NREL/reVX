@@ -438,7 +438,6 @@ class ReedsTimeslices:
             df = pd.DataFrame(arr, columns=cols, index=time_index)
             df.columns = pd.MultiIndex.from_product([[k], df.columns])
             profiles_df.append(df.swaplevel(axis=1))
-            profiles_df.append(df)
 
         profiles_df = pd.concat(profiles_df, axis=1).sort_index(axis=1,
                                                                 level=0)
