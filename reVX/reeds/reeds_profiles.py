@@ -3,6 +3,7 @@
 Extract representative profiles for ReEDS
 """
 import logging
+import numpy as np
 import os
 import pandas as pd
 from reV.rep_profiles.rep_profiles import RepProfiles
@@ -90,6 +91,28 @@ class ReedsProfiles(RepProfiles):
 
         return profiles, time_index
 
+    @staticmethod
+    def _get_hour_of_year(time_index):
+        """
+        Compute the hour of the year from time_index
+
+        Parameters
+        ----------
+        time_index : pandas.DatatimeIndex
+            Datetime index to extract hours of the year from
+
+        Returns
+        -------
+        hour_of_year : ndarray
+            Vector of the hour of the year for each timestep
+        """
+        hour_of_year = (time_index.hour
+                        + (time_index.dayofyear - 1) * 24)
+        if np.max(hour_of_year) > len(time_index):
+            hour_of_year = np.arange(len(time_index), dtype='int32')
+
+        return hour_of_year
+
     def _save_reeds_profiles(self, fout):
         """
         Save .csv files for ReEDS
@@ -105,8 +128,7 @@ class ReedsProfiles(RepProfiles):
         reg_cols = list(self.meta.columns.drop(['rep_gen_gid',
                                                 'rep_res_gid']))
         regions = self.meta[reg_cols].values
-        year_hour = (self.time_index.hour
-                     + (self.time_index.dayofyear - 1) * 24)
+        year_hour = ReedsProfiles._get_hour_of_year(self.time_index)
 
         cols = reg_cols + ['hour', 'cf']
         out_df = pd.DataFrame({'hour': year_hour}, columns=cols)

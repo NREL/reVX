@@ -12,6 +12,7 @@ from scipy.stats import mode
 from reV.handlers.resource import Resource
 
 from reVX.reeds.reeds_classification import ReedsClassifier
+from reVX.reeds.reeds_profiles import ReedsProfiles
 from reVX.utilities.exceptions import ReedsValueError, ReedsRuntimeError
 
 logger = logging.getLogger(__name__)
@@ -42,8 +43,8 @@ class ReedsTimeslices:
         self._profiles, self._meta, self._time_index = \
             self._check_profiles(profiles, rev_table=rev_table,
                                  reg_cols=reg_cols)
-        self._timeslice_groups = self._parse_timeslices(timeslice_map,
-                                                        self._time_index)
+        self._timeslice_groups = self._map_timeslices(timeslice_map,
+                                                      self._time_index)
         if rev_table is not None:
             self._cf_profiles = True
         else:
@@ -279,9 +280,53 @@ class ReedsTimeslices:
         return profiles, meta, time_index
 
     @staticmethod
-    def _parse_timeslices(timeslice_map, time_index):
+    def _parse_timeslice_map(timeslice_map):
         """
         Extract timeslice mapping
+
+        Parameters
+        ----------
+        timeslice_map : str | pandas.DataFrame
+            Path to timeslice mapping file or DataFrame with mapping
+
+        Returns
+        ----------
+        timeslice_map : pandas.GroupBy
+            Mapping of each timeslice to a datetime stamp or hour
+        """
+        if isinstance(timeslice_map, str):
+            timeslice_map = pd.read_csv(timeslice_map)
+        elif not isinstance(timeslice_map, pd.DataFrame):
+            msg = ('Cannot parse timeslice mapping from : {}'
+                   .format(type(timeslice_map)))
+            logger.error(msg)
+            raise ReedsValueError(msg)
+
+        index_col = [c for c in timeslice_map.columns
+                     if c in ['datetime', 'hour']]
+        if not index_col:
+            msg = ('Timeslice mapping must contain a "datetime" or "hour" '
+                   'column to enable mapping to profiles datetime index!')
+            logger.error(msg)
+            raise ReedsRuntimeError(msg)
+
+        if len(index_col) > 1:
+            msg = ('Timeslice mapping can only be mapped to "datetime" OR '
+                   '"hour"')
+            logger.error(msg)
+            raise ReedsRuntimeError(msg)
+
+        index = index_col[0]
+        timeslice_map = timeslice_map.set_index(index).sort_index()
+        if index == 'datetime':
+            timeslice_map.index = pd.to_datetime(timeslice_map.index)
+
+        return timeslice_map
+
+    @staticmethod
+    def _map_timeslices(timeslice_map, time_index):
+        """
+        Map timeslices to profiles datetime index
 
         Parameters
         ----------
@@ -296,36 +341,29 @@ class ReedsTimeslices:
         timeslice_map : pandas.GroupBy
             Mapping of each timeslice to profiles time_index
         """
-        if isinstance(timeslice_map, str):
-            timeslice_map = pd.read_csv(timeslice_map)
-        elif not isinstance(timeslice_map, pd.DataFrame):
-            msg = ('Cannot parse timeslice mapping from : {}'
-                   .format(type(timeslice_map)))
-            logger.error(msg)
-            raise ReedsValueError(msg)
+        timeslice_map = ReedsTimeslices._parse_timeslice_map(timeslice_map)
 
-        index_col = [c for c in timeslice_map.columns
-                     if 'datetime' in c.lower()]
-        if not index_col:
-            msg = ('Timeslice mapping does not contain a "datetime" column!')
-            logger.error(msg)
-            raise ReedsRuntimeError(msg)
+        if timeslice_map.index.name == 'datetime':
+            mask = timeslice_map.index.isin(time_index)
+            if not mask.all():
+                msg = ("{} timesteps in the timeslice mapping do not exist "
+                       "in the representative profiles datetime index:"
+                       "\n{}".format((~mask).sum(),
+                                     timeslice_map.index[~mask]))
+                logger.error(msg)
+                raise ReedsRuntimeError(msg)
+        else:
+            hour_of_year = ReedsProfiles._get_hour_of_year(time_index)
+            hour_max = np.max(hour_of_year)
+            timeslice_hours = timeslice_map.index.values
+            if np.max(timeslice_hours) > hour_max:
+                mask = timeslice_hours > hour_max
+                timeslice_hours[mask] = np.abs(hour_max
+                                               - timeslice_hours[mask])
 
-        if len(index_col) > 1:
-            msg = ('Multiple possible "datetime" columns found!')
-            logger.error(msg)
-            raise ReedsRuntimeError(msg)
-
-        timeslice_map = timeslice_map.set_index(index_col[0])
-        timeslice_map.index = pd.to_datetime(timeslice_map.index)
-
-        mask = timeslice_map.index.isin(time_index)
-        if not mask.all():
-            msg = ("{} timesteps in the timeslice mapping do not exist "
-                   "in the representative profiles datetime index:"
-                   "\n{}".format((~mask).sum(), timeslice_map.index[~mask]))
-            logger.error(msg)
-            raise ReedsRuntimeError(msg)
+            hour_of_year = hour_of_year[np.argsort(hour_of_year)]
+            mask = np.searchsorted(hour_of_year, timeslice_hours)
+            timeslice_map.index = time_index[mask]
 
         cols = list(timeslice_map.columns)
         if len(cols) == 1:
