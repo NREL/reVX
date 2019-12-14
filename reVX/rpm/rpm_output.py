@@ -1171,7 +1171,9 @@ class RPMOutput:
     @classmethod
     def process_outputs(cls, rpm_clusters, cf_fpath, excl_fpath,
                         excl_dict, techmap_dset, out_dir, job_tag=None,
-                        parallel=True, cluster_kwargs=None, **kwargs):
+                        parallel=True, cluster_kwargs=None, excl_area=0.0081,
+                        include_threshold=0.001, n_profiles=1, rerank=True,
+                        trg=None):
         """Perform output processing on clusters and write results to disk.
 
         Parameters
@@ -1197,11 +1199,26 @@ class RPMOutput:
         parallel : bool | int
             Flag to apply exclusions in parallel. Integer is interpreted as
             max number of workers. True uses all available.
-        cluster_kwargs : dict
-            RPMClusters kwargs
+        excl_area : float
+            Area in km2 of one exclusion pixel.
+        include_threshold : float
+            Inclusion threshold. Resource pixels included more than this
+            threshold will be considered in the representative profiles.
+            Set to zero to find representative profile on all resource, not
+            just included.
+        n_profiles : int
+            Number of representative profiles to output.
+        rerank : bool
+            Flag to rerank representative generation profiles after removing
+            excluded generation pixels.
+        trg : pd.DataFrame | str | None
+            TRG bins or string to filepath containing TRG bins.
+            None will not analyze TRG bins.
         """
 
         rpmo = cls(rpm_clusters, cf_fpath, excl_fpath, excl_dict,
                    techmap_dset, cluster_kwargs=cluster_kwargs,
-                   parallel=parallel, **kwargs)
+                   parallel=parallel, excl_area=excl_area,
+                   include_threshold=include_threshold, n_profiles=n_profiles,
+                   rerank=rerank, trg=trg)
         rpmo.export_all(out_dir, job_tag=job_tag)

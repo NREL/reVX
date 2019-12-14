@@ -21,7 +21,10 @@ class ClusteringMethods:
             ndarray of values extracted from meta
             shape (n samples, with m features)
         norm : str
-            Normalization method to use, see sklearn.preprocessing.normalize
+            Normalization method to use (see sklearn.preprocessing.normalize)
+            if None range normalize
+        axis : int
+            Axis to normalize along
 
         Returns
         ---------

@@ -19,7 +19,7 @@ class ReedsClassifier:
     """
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
                  sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                            'method': 'kmeans'}):
+                                            'method': 'kmeans', 'norm': None}):
         """
         Parameters
         ----------
@@ -35,7 +35,7 @@ class ReedsClassifier:
             Number of supply curve bins (clusters) to create for each
             region-class
         cluster_kwargs : dict
-            kwargs for _cluster_classes
+            kwargs for _cluster_sc_bins and underlying clustering method
         """
         rev_table = self._parse_table(rev_table)
         rev_table = self._map_region(rev_table, region_map)
@@ -426,7 +426,7 @@ class ReedsClassifier:
 
     @staticmethod
     def _cluster_sc_bins(rev_table, sc_bins, cluster_on='trans_cap_cost',
-                         method='kmeans', **kwargs):
+                         method='kmeans', norm=None, **kwargs):
         """
         Create classes in each region-class group using given clustering method
 
@@ -441,6 +441,9 @@ class ReedsClassifier:
             Columns in rev_table to cluster on
         method : str
             Clustering method to use for creating classes
+        norm : str
+            Normalization method to use (see sklearn.preprocessing.normalize)
+            if None range normalize
         kwargs : dict
             kwargs for clustering method
 
@@ -455,7 +458,7 @@ class ReedsClassifier:
             cluster_on = [cluster_on, ]
 
         func = ClusteringMethods._normalize_values
-        data = func(rev_table[cluster_on].values, **kwargs)
+        data = func(rev_table[cluster_on].values, norm=norm)
         labels = c_func(data, n_clusters=sc_bins,
                         **kwargs)
         if np.min(labels) == 0:
@@ -468,7 +471,7 @@ class ReedsClassifier:
     @classmethod
     def create(cls, rev_table, resource_classes, region_map='reeds_region',
                sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                          'method': 'kmeans'}):
+                                          'method': 'kmeans', 'norm': None}):
         """
         Identify ReEDS regions and classes and dump and updated table
 

@@ -20,7 +20,9 @@ class ReedsProfiles(RepProfiles):
     def __init__(self, cf_profiles, rev_table, profiles_dset='cf_profile',
                  rep_method='meanoid', err_method='rmse', n_profiles=1,
                  resource_classes=None, region_map='reeds_region',
-                 sc_bins=5, reg_cols=('region', 'class'), **kwargs):
+                 sc_bins=5, reg_cols=('region', 'class'),
+                 cluster_kwargs={'cluster_on': 'trans_cap_cost',
+                                 'method': 'kmeans', 'norm': None}):
         """
         Parameters
         ----------
@@ -50,10 +52,11 @@ class ReedsProfiles(RepProfiles):
             Label(s) for a categorical region column(s) to extract profiles
             for.
             Defaulted to ReedsClassifier region and class
-        kwargs : dict
+        cluster_kwargs : dict
             Kwargs for clustering classes
         """
         if resource_classes is not None:
+            kwargs = cluster_kwargs
             rev_table, _ = ReedsClassifier.create(rev_table, resource_classes,
                                                   region_map=region_map,
                                                   sc_bins=sc_bins,
@@ -151,7 +154,9 @@ class ReedsProfiles(RepProfiles):
             rep_method='meanoid', err_method='rmse', n_profiles=1,
             resource_classes=None, region_map='reeds_region', sc_bins=5,
             reg_cols=('region', 'class'), parallel=True, fout=None,
-            hourly=True, legacy_format=True, **kwargs):
+            hourly=True, legacy_format=True,
+            cluster_kwargs={'cluster_on': 'trans_cap_cost',
+                            'method': 'kmeans', 'norm': None}):
         """Run representative profiles.
         Parameters
         ----------
@@ -186,7 +191,7 @@ class ReedsProfiles(RepProfiles):
             None or filepath to output h5 file.
         legacy_fout : bool
             Output ReEDS .csv files to disc
-        kwargs : dict
+        cluster_kwargs : dict
             Kwargs for clustering classes
 
         Returns
@@ -204,7 +209,7 @@ class ReedsProfiles(RepProfiles):
                  rep_method=rep_method, err_method=err_method,
                  n_profiles=n_profiles, resource_classes=resource_classes,
                  region_map=region_map, sc_bins=sc_bins, reg_cols=reg_cols,
-                 **kwargs)
+                 cluster_kwargs=cluster_kwargs)
         if parallel:
             rp._run_parallel()
         else:

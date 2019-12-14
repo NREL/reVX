@@ -21,7 +21,8 @@ class ResourceX(Resource):
     """
     Resource data extraction tool
     """
-    def __init__(self, res_h5, tree=None, **kwargs):
+    def __init__(self, res_h5, tree=None, unscale=True, hsds=False,
+                 str_decode=True, group=None):
         """
         Parameters
         ----------
@@ -30,10 +31,19 @@ class ResourceX(Resource):
         tree : str
             Path to .pgz file containing pickled cKDTree of lat, lon
             coordinates
-        kwargs : dict
-            Kwargs for Resource
+        unscale : bool
+            Boolean flag to automatically unscale variables on extraction
+        hsds : bool
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
+            behind HSDS
+        str_decode : bool
+            Boolean flag to decode the bytestring meta data into normal
+            strings. Setting this to False will speed up the meta data read.
+        group : str
+            Group within .h5 resource file to open
         """
-        super().__init__(res_h5, **kwargs)
+        super().__init__(res_h5, unscale=unscale, hsds=hsds,
+                         str_decode=str_decode, group=group)
         self._tree = tree
 
     @property
@@ -244,27 +254,6 @@ class ResourceX(Resource):
         site_ts : ndarray
             Time-series for given site(s) and dataset
         """
-        site_ts = self[ds_name, :, gid]
-
-        return site_ts
-
-    def get_lat_lon_ts(self, ds_name, lat_lon):
-        """
-        Extract timeseries of site(s) neareset to given lat_lon(s)
-
-        Parameters
-        ----------
-        ds_name : str
-            Dataset to extract
-        lat_lon : tuple | list
-            (lat, lon) coordinate of interest or pairs of coordinates
-
-        Return
-        ------
-        site_ts : ndarray
-            Time-series for given site(s) and dataset
-        """
-        gid = self._get_nearest(lat_lon)
         site_ts = self[ds_name, :, gid]
 
         return site_ts
@@ -486,7 +475,8 @@ class SolarX(SolarResource, ResourceX):
     """
     Solar Resource extraction class
     """
-    def __init__(self, solar_h5, tree=None, compute_tree=False, **kwargs):
+    def __init__(self, solar_h5, tree=None, compute_tree=False, unscale=True,
+                 hsds=False, str_decode=True, group=None):
         """
         Parameters
         ----------
@@ -497,10 +487,19 @@ class SolarX(SolarResource, ResourceX):
             coordinates
         compute_tree : bool
             Force the computation of the cKDTree
-        kwargs : dict
-            Kwargs for Resource
+        unscale : bool
+            Boolean flag to automatically unscale variables on extraction
+        hsds : bool
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
+            behind HSDS
+        str_decode : bool
+            Boolean flag to decode the bytestring meta data into normal
+            strings. Setting this to False will speed up the meta data read.
+        group : str
+            Group within .h5 resource file to open
         """
-        super().__init__(solar_h5, **kwargs)
+        super().__init__(solar_h5, unscale=unscale, hsds=hsds,
+                         str_decode=str_decode, group=group)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
 
@@ -508,7 +507,8 @@ class NSRDBX(NSRDB, ResourceX):
     """
     NSRDB extraction class
     """
-    def __init__(self, nsrdb_h5, tree=None, compute_tree=False, **kwargs):
+    def __init__(self, nsrdb_h5, tree=None, compute_tree=False, unscale=True,
+                 hsds=False, str_decode=True, group=None):
         """
         Parameters
         ----------
@@ -519,10 +519,19 @@ class NSRDBX(NSRDB, ResourceX):
             coordinates
         compute_tree : bool
             Force the computation of the cKDTree
-        kwargs : dict
-            Kwargs for NSRDB
+        unscale : bool
+            Boolean flag to automatically unscale variables on extraction
+        hsds : bool
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
+            behind HSDS
+        str_decode : bool
+            Boolean flag to decode the bytestring meta data into normal
+            strings. Setting this to False will speed up the meta data read.
+        group : str
+            Group within .h5 resource file to open
         """
-        super().__init__(nsrdb_h5, **kwargs)
+        super().__init__(nsrdb_h5, unscale=unscale, hsds=hsds,
+                         str_decode=str_decode, group=group)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
 
@@ -530,7 +539,8 @@ class MultiFileNSRDBX(MultiFileNSRDB, ResourceX):
     """
     NSRDB extraction class
     """
-    def __init__(self, nsrdb_dir, tree=None, compute_tree=False, **kwargs):
+    def __init__(self, nsrdb_dir, tree=None, compute_tree=False, prefix='',
+                 suffix='.h5', unscale=True, str_decode=True):
         """
         Parameters
         ----------
@@ -541,10 +551,18 @@ class MultiFileNSRDBX(MultiFileNSRDB, ResourceX):
             coordinates
         compute_tree : bool
             Force the computation of the cKDTree
-        kwargs : dict
-            Kwargs for MultiFileNSRDB
+        prefix : str
+            Prefix for resource .h5 files
+        suffix : str
+            Suffix for resource .h5 files
+        unscale : bool
+            Boolean flag to automatically unscale variables on extraction
+        str_decode : bool
+            Boolean flag to decode the bytestring meta data into normal
+            strings. Setting this to False will speed up the meta data read.
         """
-        super().__init__(nsrdb_dir, **kwargs)
+        super().__init__(nsrdb_dir, prefix=prefix, suffix=suffix,
+                         unscale=unscale, str_decode=str_decode)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
 
@@ -552,7 +570,8 @@ class WindX(WindResource, ResourceX):
     """
     Wind Resource extraction class
     """
-    def __init__(self, wind_h5, tree=None, compute_tree=False, **kwargs):
+    def __init__(self, wind_h5, tree=None, compute_tree=False, unscale=True,
+                 hsds=False, str_decode=True, group=None):
         """
         Parameters
         ----------
@@ -566,7 +585,8 @@ class WindX(WindResource, ResourceX):
         kwargs : dict
             Kwargs for Resource
         """
-        super().__init__(wind_h5, **kwargs)
+        super().__init__(wind_h5, unscale=unscale, hsds=hsds,
+                         str_decode=str_decode, group=group)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
     def get_SAM_gid(self, hub_height, gid, **kwargs):
@@ -638,7 +658,8 @@ class MultiFileWindX(MultiFileWTK, WindX):
     """
     Wind Resource extraction class
     """
-    def __init__(self, wtk_dir, tree=None, compute_tree=False, **kwargs):
+    def __init__(self, wtk_dir, tree=None, compute_tree=False, prefix='',
+                 suffix='.h5', unscale=True, str_decode=True):
         """
         Parameters
         ----------
@@ -649,8 +670,16 @@ class MultiFileWindX(MultiFileWTK, WindX):
             coordinates
         compute_tree : bool
             Force the computation of the cKDTree
-        kwargs : dict
-            Kwargs for Resource
+        prefix : str
+            Prefix for resource .h5 files
+        suffix : str
+            Suffix for resource .h5 files
+        unscale : bool
+            Boolean flag to automatically unscale variables on extraction
+        str_decode : bool
+            Boolean flag to decode the bytestring meta data into normal
+            strings. Setting this to False will speed up the meta data read.
         """
-        super().__init__(wtk_dir, **kwargs)
+        super().__init__(wtk_dir, prefix=prefix, suffix=suffix,
+                         unscale=unscale, str_decode=str_decode)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)

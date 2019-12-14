@@ -235,7 +235,7 @@ class RPMClusters:
                         **kwargs)
         return labels
 
-    def _dist_rank_optimization(self, **kwargs):
+    def _dist_rank_optimization(self, norm=None):
         """
         Re-cluster data by minimizing the sum of the:
         - distance between each point and each cluster centroid
@@ -243,8 +243,9 @@ class RPMClusters:
 
         Parameters
         ----------
-        kwargs : dict
-            _normalize_values kwargs
+        norm : str
+            Normalization method to use (see sklearn.preprocessing.normalize)
+            if None range normalize
 
         Returns
         -------
@@ -262,13 +263,13 @@ class RPMClusters:
             c_dist = np.linalg.norm(self.coordinates - centroid, axis=1)
             dist.append(c_dist)
 
-        rmse = ClusteringMethods._normalize_values(np.array(rmse), **kwargs)
-        dist = ClusteringMethods._normalize_values(np.array(dist), **kwargs)
+        rmse = ClusteringMethods._normalize_values(np.array(rmse), norm=norm)
+        dist = ClusteringMethods._normalize_values(np.array(dist), norm=norm)
         err = (dist**2 + rmse**2)
         new_labels = np.argmin(err, axis=0)
         return new_labels
 
-    def _dist_rank_filter(self, iterate=True, **kwargs):
+    def _dist_rank_filter(self, iterate=True, norm=None):
         """
         Re-cluster data by minimizing the sum of the:
         - distance between each point and each cluster centroid
@@ -279,8 +280,9 @@ class RPMClusters:
         iterate : bool
             Iterate on _dist_rank_optimization until cluster centroids and
             profiles start to converge
-        kwargs : dict
-            _normalize_values kwargs
+        norm : str
+            Normalization method to use (see sklearn.preprocessing.normalize)
+            if None range normalize
 
         Returns
         -------
@@ -292,7 +294,7 @@ class RPMClusters:
         centroids = clusters.cluster_coordinates
         dist, rmse = 0, 0
         while True:
-            new_labels = clusters._dist_rank_optimization(**kwargs)
+            new_labels = clusters._dist_rank_optimization(norm=norm)
             clusters._meta['cluster_id'] = new_labels
             if iterate:
                 c_coeffs = clusters.cluster_coefficients
@@ -463,7 +465,10 @@ class RPMClusters:
         self._calculate_ranks()
 
     @classmethod
-    def cluster(cls, cf_h5_path, region_gen_gids, n_clusters, **kwargs):
+    def cluster(cls, cf_h5_path, region_gen_gids, n_clusters, method='kmeans',
+                method_kwargs=None, dist_rank_filter=True,
+                dist_rmse_kwargs=None, contiguous_filter=True,
+                contiguous_kwargs=None):
         """
         Entry point for RPMCluster to get clusters for a given region
         defined as a list | array of gen_gids
@@ -476,8 +481,18 @@ class RPMClusters:
             List or vector of gen_gids to cluster on
         n_clusters : int
             Number of clusters to identify
-        kwargs : dict
-            Internal kwargs for clustering
+        method : str
+            Method to use to cluster coefficients
+        method_kwargs : dict
+            Kwargs for running _cluster_coefficients
+        dist_rank_filter : bool
+            Run _optimize_dist_rank
+        dist_rmse_kwargs : dict
+            Kwargs for running _dist_rank_optimization
+        contiguous_filter : bool
+            Run _contiguous_filter
+        contiguous_kwargs : dict
+            Kwargs for _contiguous_filter
 
         Returns
         -------
@@ -486,7 +501,11 @@ class RPMClusters:
         """
         clusters = cls(cf_h5_path, region_gen_gids, n_clusters)
         try:
-            clusters._cluster(**kwargs)
+            clusters._cluster(method=method, method_kwargs=method_kwargs,
+                              dist_rank_filter=dist_rank_filter,
+                              dist_rmse_kwargs=dist_rmse_kwargs,
+                              contiguous_filter=contiguous_filter,
+                              contiguous_kwargs=contiguous_kwargs)
         except Exception as e:
             logger.exception('Clustering failed on gen_gids {} through {}: {}'
                              .format(np.min(region_gen_gids),

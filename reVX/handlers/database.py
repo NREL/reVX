@@ -56,7 +56,9 @@ class Database:
         self._con.close()
 
     @classmethod
-    def get_table(cls, table, schema, db_name, wait=300, **kwargs):
+    def get_table(cls, table, schema, db_name, wait=300,
+                  db_host='gds_edit.nrel.gov', db_user=None, db_pass=None,
+                  db_port=5432):
         """Get a table using a database query.
 
         Parameters
@@ -70,16 +72,23 @@ class Database:
         wait : int
             Integer seconds to wait for DB connection to become available
             before raising exception.
-        **kwargs : dict
-            Additional keyword args to initialize the database connection.
+        db_host : str
+            Database host name.
+        db_user : str
+            Your database user name.
+        db_pass : str
+            Database password (None if your password is cached).
+        db_port : int
+            Database port.
 
         Returns
         -------
         df : pd.DataFrame
             Dataframe representation of schema.table.
         """
-
         sql = 'SELECT * FROM "{}"."{}"'.format(schema, table)
+        kwargs = {"db_host": db_host, "db_user": db_user,
+                  "db_pass": db_pass, "db_port": db_port}
 
         if wait > 0:
             waited = 0

@@ -159,15 +159,32 @@ class RPMClusterManager:
 
         return rpm_regions
 
-    def _cluster(self, **kwargs):
+    def _cluster(self, method='kmeans', method_kwargs=None,
+                 dist_rank_filter=True, dist_rmse_kwargs=None,
+                 contiguous_filter=True, contiguous_kwargs=None):
         """
         Cluster all RPM regions
 
         Parameters
         ----------
-        kwargs : dict
-            RPMCluster kwargs
+        method : str
+            Method to use to cluster coefficients
+        method_kwargs : dict
+            Kwargs for running _cluster_coefficients
+        dist_rank_filter : bool
+            Run _optimize_dist_rank
+        dist_rmse_kwargs : dict
+            Kwargs for running _dist_rank_optimization
+        contiguous_filter : bool
+            Run _contiguous_filter
+        contiguous_kwargs : dict
+            Kwargs for _contiguous_filter
         """
+        kwargs = {"method": method, "method_kwargs": method_kwargs,
+                  "dist_rank_filter": dist_rank_filter,
+                  "dist_rmse_kwargs": dist_rmse_kwargs,
+                  "contiguous_filter": contiguous_filter,
+                  "contiguous_kwargs": contiguous_kwargs}
         if self.max_workers > 1:
             future_to_region = {}
             mp_context = mpl.get_context('spawn')
