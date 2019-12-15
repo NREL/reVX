@@ -13,7 +13,7 @@ class TechPotential(ExclusionMaskFromDict):
     RED-E Tech Potential tool
     """
     def __init__(self, h5_path, cf_layer, power_density, layer_dict,
-                 hsds=False, **kwargs):
+                 hsds=False, min_area=None, kernel='queen'):
         """
         Parameters
         ----------
@@ -28,11 +28,14 @@ class TechPotential(ExclusionMaskFromDict):
         hsds : bool
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS
-        kwargs : dict
-            kwargs for ExclusionsMaskFromDict
+        min_area : float | NoneType
+            Minimum required contiguous area in sq-km
+        kernel : str
+            Contiguous filter method to use on final exclusion
         """
         layer_dict[cf_layer] = {"use_as_weights": True}
-        super().__init__(h5_path, layer_dict, hsds=hsds, **kwargs)
+        super().__init__(h5_path, layer_dict, hsds=hsds, min_area=min_area,
+                         kernel=kernel)
         self._pd = power_density
 
     @property
@@ -67,7 +70,7 @@ class TechPotential(ExclusionMaskFromDict):
 
     @classmethod
     def run(cls, h5_path, cf_layer, power_density, layer_dict,
-            hsds=False, **kwargs):
+            hsds=False, min_area=None, kernel='queen'):
         """
         compute tech-potential
 
@@ -84,8 +87,10 @@ class TechPotential(ExclusionMaskFromDict):
         hsds : bool
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS
-        kwargs : dict
-            kwargs for ExclusionsMaskFromDict
+        min_area : float | NoneType
+            Minimum required contiguous area in sq-km
+        kernel : str
+            Contiguous filter method to use on final exclusion
 
         Returns
         -------
@@ -93,7 +98,7 @@ class TechPotential(ExclusionMaskFromDict):
             Tech-potentail as generation
         """
         with cls(h5_path, cf_layer, power_density, layer_dict,
-                 hsds=hsds, **kwargs) as f:
+                 hsds=hsds, min_area=min_area, kernel=kernel) as f:
             gen = f.mask
 
         return gen
