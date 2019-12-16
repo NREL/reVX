@@ -5,4 +5,3 @@ reVX
    :maxdepth: 4
 
    reVX
-   setup
