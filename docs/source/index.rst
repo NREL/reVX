@@ -14,11 +14,11 @@ reVX provides a set of tools to extract data from reV model outputs, as
 well as interfaces between reV and other renewable energy focused models,
 for example, ReEDS, RPM, and PLEXOS.
 
+.. include:: ../../README.rst
+
 .. toctree::
   :maxdepth: 2
   :caption: Contents:
-
-  readme_link
   reVX
 
 Indices and tables
