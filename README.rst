@@ -11,23 +11,25 @@ If you would like to run reV on Eagle (NREL's HPC) you can use a pre-compiled mo
 
 reVX command line tools
 =======================
-::
-    reVX
-    reV-ReEDS
-    `reV-rpm <https://github.com/NREL/reVX/tree/master/examples/rpm/README.rst>`_
-    NSRDB
-    WIND
 
-## Setup to run revX
-## Install reV which is a required dependancy:
-``pip install git+ssh://git@github.com/NREL/reV.git`` or ``pip install git+https://github.com/NREL/reV.git``
+``reVX``
+``reV-ReEDS``
+`reV-rpm <https://github.com/NREL/reVX/tree/master/examples/rpm/README.rst>`_
+``NSRDB``
+``WIND``
 
-#### Option 1: PIP Install the most recent version of master (recommended for analysts):
+Setup to run revX
+*****************
+
+Option 1: PIP Install the most recent version of master (recommended for analysts):
+===================================================================================
 1. Create a new environment: ``conda create --name revx python=3.7``
 2. Activate directory: ``conda activate revx``
+3. Install reV which is a required dependancy: ``pip install git+ssh://git@github.com/NREL/reV.git`` or ``pip install git+https://github.com/NREL/reV.git``
 3. Install reVX: ``pip install git+ssh://git@github.com/NREL/reVX.git`` or ``pip install git+https://github.com/NREL/reVX.git``
 
-#### Option 2: Clone repo (recommended for developers)
+Option 2: Clone repo (recommended for developers)
+=================================================
 1. from home dir, ``git clone https://github.com/NREL/reVX.git``
     1) enter github username
     2) enter github password
@@ -41,6 +43,17 @@ reVX command line tools
     6) cd back to the reX repo (where setup.py is located)
     7) install pre-commit: ``pre-commit install``
     8) run ``pip install .`` (or ``pip install -e .`` if running a dev branch or working on the source code)
+
+3. from home dir, ``git clone https://github.com/NREL/reV.git``
+    1) enter github username
+    2) enter github password
+
+4. Install reV environment and modules (using conda)
+    1) cd into reV repo cloned above
+    2) prior to running ``pip`` below, make sure branch is correct (install from master!)
+    3) cd back to the reX repo (where setup.py is located)
+    4) install pre-commit: ``pre-commit install``
+    5) run ``pip install .`` (or ``pip install -e .`` if running a dev branch or working on the source code)
 
 3. Check that rev was installed successfully
     1) From any directory, run the following commands. This should return the help pages for the CLI's.
