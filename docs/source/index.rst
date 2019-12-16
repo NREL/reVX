@@ -3,14 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to reVX's documentation!
-====================================
+   reVX documentation
+   *******************
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   What is reVX?
+   =============
+   reVX stands for **Renewable Energy Potential(V) EXchange** tool.
 
-   reVX
+   reVX provides a set of tools to extract data from reV model outputs, as
+   well as interfaces between reV and other renewable energy focused models,
+   for example, ReEDS, RPM, and PLEXOS.
+
+   .. toctree::
+      :maxdepth: 2
+      :caption: Contents:
+
+      readme_link
+      reVX
 
 Indices and tables
 ==================
