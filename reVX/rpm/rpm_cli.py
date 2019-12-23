@@ -107,6 +107,8 @@ def and_profiles(ctx, exclusions, excl_dict, techmap_dset, trg):
     if isinstance(excl_dict, str):
         excl_dict = excl_dict.replace('\'', '\"')
         excl_dict = excl_dict.replace('None', 'null')
+        excl_dict = excl_dict.replace('True', 'true')
+        excl_dict = excl_dict.replace('False', 'false')
         excl_dict = json.loads(excl_dict)
 
     output_kwargs = {}
