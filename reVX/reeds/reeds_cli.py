@@ -189,14 +189,15 @@ def profiles(ctx, cf_profiles, n_profiles, profiles_dset, rep_method,
                 'from {}.'
                 .format(reg_cols, cf_profiles))
 
-    out_path = os.path.join(out_dir, '{}_profiles.h5'.format(name))
-    logger.info('Saving profiles to {}.'.format(out_path))
+    out_path = os.path.join(out_dir, '{}_hourly_cf.h5'.format(name))
+    logger.info('Saving representative hourly cf profiles to {}.'
+                .format(out_path))
 
     ReedsProfiles.run(cf_profiles, table, profiles_dset=profiles_dset,
                       rep_method=rep_method, err_method=err_method,
                       n_profiles=n_profiles, reg_cols=reg_cols,
                       parallel=parallel, fout=out_path,
-                      hourly=True, legacy_format=True)
+                      hourly=True)
 
     ctx.obj['PROFILES'] = out_path
 
@@ -250,11 +251,11 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
                                       reg_cols=reg_cols,
                                       legacy_format=True)
 
-    out_path = os.path.join(out_dir, '{}_timeslices-stats.csv'.format(name))
-    logger.info('Saving timeslice stats to {}'.format(out_path))
+    out_path = os.path.join(out_dir, '{}_performance.csv'.format(name))
+    logger.info('Saving timeslice performance stats to {}'.format(out_path))
     stats.to_csv(out_path, index=False)
 
-    out_path = os.path.join(out_dir, '{}_timeslices-correlations.csv'
+    out_path = os.path.join(out_dir, '{}_correlations.csv'
                             .format(name))
     logger.info('Saving timeslice correlations to {}'.format(out_path))
     corr.to_csv(out_path, index=False)

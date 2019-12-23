@@ -4,8 +4,6 @@ Extract representative profiles for ReEDS
 """
 import logging
 import numpy as np
-import os
-import pandas as pd
 from reV.rep_profiles.rep_profiles import RepProfiles
 
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -116,47 +114,13 @@ class ReedsProfiles(RepProfiles):
 
         return hour_of_year
 
-    def _save_reeds_profiles(self, fout):
-        """
-        Save .csv files for ReEDS
-
-        Parameters
-        ----------
-        fout : str
-            Output path for profiles .h5 file, save legacy .csvs in either
-            same directory using file name for prefix.
-        """
-        out_dir, f_name = os.path.split(fout)
-        f_name = os.path.splitext(f_name)[0]
-        reg_cols = list(self.meta.columns.drop(['rep_gen_gid',
-                                                'rep_res_gid']))
-        regions = self.meta[reg_cols].values
-        year_hour = ReedsProfiles._get_hour_of_year(self.time_index)
-
-        cols = reg_cols + ['hour', 'cf']
-        out_df = pd.DataFrame({'hour': year_hour}, columns=cols)
-        for p, arr in self.profiles.items():
-            for i, region in enumerate(regions):
-                region_name = '-'.join([str(i) for i in region])
-                out_path = "{}{}_{}".format(f_name, p, region_name)
-                out_path += '.csv'
-                out_path = os.path.join(out_dir, out_path)
-
-                region_df = out_df.copy()
-                for i, r in enumerate(region):
-                    region_df[reg_cols[i]] = r
-                region_df['cf'] = arr[:, i]
-
-                region_df.to_csv(out_path, index=False)
-
     @classmethod
     def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
             rep_method='meanoid', err_method='rmse', n_profiles=1,
             resource_classes=None, region_map='reeds_region', sc_bins=5,
             reg_cols=('region', 'class'), parallel=True, fout=None,
-            hourly=True, legacy_format=True,
-            cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                            'method': 'kmeans', 'norm': None}):
+            hourly=True, cluster_kwargs={'cluster_on': 'trans_cap_cost',
+                                         'method': 'kmeans', 'norm': None}):
         """Run representative profiles.
         Parameters
         ----------
@@ -221,9 +185,8 @@ class ReedsProfiles(RepProfiles):
                                                          rp.time_index)
 
         if fout is not None:
-            rp.save_profiles(fout)
-            if legacy_format:
-                rp._save_reeds_profiles(fout)
+            rp.save_profiles(fout, save_rev_summary=False,
+                             scaled_precision=True)
 
         logger.info('Representative profiles complete!')
         return rp.profiles, rp.meta, rp.time_index
