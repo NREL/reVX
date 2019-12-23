@@ -892,7 +892,8 @@ class RPMOutput:
             self.run_rerank(groupby=['cluster_id', 'trg'],
                             rank_col='rank_included_trg')
 
-    def run_rerank(self, groupby='cluster_id', rank_col='rank_included'):
+    def _run_rerank_parallel(self, groupby='cluster_id',
+                             rank_col='rank_included'):
         """Re-rank rep profiles for included resource in generic groups.
 
         Parameters
@@ -938,6 +939,58 @@ class RPMOutput:
                 new = future.result()
                 mask = self._clusters['gen_gid'].isin(gen_gid)
                 self._clusters.loc[mask, rank_col] = new['rank'].values
+
+    def _run_rerank_serial(self, groupby='cluster_id',
+                           rank_col='rank_included'):
+        """Re-rank rep profiles for included resource in generic groups.
+
+        Parameters
+        ----------
+        groupby : str | list
+            One or more columns in self._clusters to groupby and rank profiles
+            within each group.
+        rank_col : str
+            Column to add to self._clusters with new rankings.
+        """
+        init = False
+        for _, df in self._clusters.groupby(groupby):
+
+            if 'included_frac' in df:
+                mask = (df['included_frac'] >= self.include_threshold)
+            else:
+                mask = [True] * len(df)
+
+            if any(mask):
+                if not init:
+                    self._clusters[rank_col] = np.nan
+                    logger.info('Re-ranking representative profiles "{}" '
+                                'using groupby: {}'.format(rank_col, groupby))
+                    init = True
+
+                gen_gid = df.loc[mask, 'gen_gid']
+                self.cluster_kwargs['dist_rank_filter'] = False
+                self.cluster_kwargs['contiguous_filter'] = False
+                new = RPMClusters.cluster(self._cf_fpath, gen_gid, 1,
+                                          **self.cluster_kwargs)
+
+                mask = self._clusters['gen_gid'].isin(gen_gid)
+                self._clusters.loc[mask, rank_col] = new['rank'].values
+
+    def run_rerank(self, groupby='cluster_id', rank_col='rank_included'):
+        """Re-rank rep profiles for included resource in generic groups.
+
+        Parameters
+        ----------
+        groupby : str | list
+            One or more columns in self._clusters to groupby and rank profiles
+            within each group.
+        rank_col : str
+            Column to add to self._clusters with new rankings.
+        """
+        if self.max_workers > 1:
+            self._run_rerank_parallel(groupby=groupby, rank_col=rank_col)
+        else:
+            self._run_rerank_serial(groupby=groupby, rank_col=rank_col)
 
     @property
     def cluster_summary(self):
