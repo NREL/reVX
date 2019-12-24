@@ -3,6 +3,7 @@
 Extract ReEDS timeslices from rep-profiles
 """
 import concurrent.futures as cf
+import multiprocessing as mpl
 import json
 import logging
 import numpy as np
@@ -135,6 +136,12 @@ class ReedsTimeslices:
         """
         with Resource(profiles) as f:
             meta = f.meta
+            reg_cols = list(meta.columns.drop(['rep_gen_gid',
+                                               'rep_res_gid']))
+            logger.info('Found region column labels in profile meta for '
+                        'timeslice regions: {}'.format(reg_cols))
+            meta = meta.set_index(reg_cols)
+
             if 'rev_summary' in f.dsets:
                 table = f._get_meta('rev_summary', slice(None))
                 reg_cols = list(meta.columns.drop(['rep_gen_gid',
@@ -146,14 +153,19 @@ class ReedsTimeslices:
                 meta = meta.merge(tz.reset_index(), on=reg_cols)
                 meta = meta.set_index(reg_cols)
 
+            elif 'timezone' in f.dsets:
+                tz = f['timezone']
+                meta['timezone'] = tz
+
             if 'timezone' not in meta:
-                msg = ('Meta data must contain timzone to allow conversion '
-                       'to local time!')
+                msg = ('Rep profile data must contain timzone to allow '
+                       'conversion to local time!')
                 logger.error(msg)
                 raise ReedsRuntimeError(msg)
 
             time_index = f.time_index
 
+        logger.info('META: {}'.format(meta))
         return meta, time_index
 
     @staticmethod
@@ -397,9 +409,9 @@ class ReedsTimeslices:
             logger.error(msg)
             raise ReedsValueError(msg)
 
-        local_arr = np.empty(arr.shape, dtype=arr.dtype)
+        local_arr = np.zeros(arr.shape, dtype=arr.dtype)
         for i, s in enumerate(shifts):
-            local_arr[:, i] = np.roll(arr[:, i], s)
+            local_arr[:, i] = np.roll(arr[:, i], int(s))
 
         return local_arr
 
@@ -522,7 +534,9 @@ class ReedsTimeslices:
                     .format(max_workers))
 
         if max_workers > 1:
-            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
+            mp_context = mpl.get_context('spawn')
+            with cf.ProcessPoolExecutor(max_workers=max_workers,
+                                        mp_context=mp_context) as exe:
                 futures = {}
                 for s, slice_map in timeslice_groups:
                     tslice = profiles.loc[slice_map.index]
