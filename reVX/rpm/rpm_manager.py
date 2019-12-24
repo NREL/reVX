@@ -3,6 +3,7 @@
 Pipeline between reV and RPM
 """
 import concurrent.futures as cf
+import multiprocessing as mpl
 import logging
 import os
 import pandas as pd
@@ -169,7 +170,9 @@ class RPMClusterManager:
         """
         if self.max_workers > 1:
             future_to_region = {}
-            with cf.ProcessPoolExecutor(max_workers=self.max_workers) as exe:
+            mp_context = mpl.get_context('spawn')
+            with cf.ProcessPoolExecutor(max_workers=self.max_workers,
+                                        mp_context=mp_context) as exe:
                 for region, region_map in self._rpm_regions.items():
                     logger.info('Kicking off clustering for "{}".'
                                 .format(region))

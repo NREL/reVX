@@ -3,6 +3,7 @@
 RPM output handler.
 """
 import concurrent.futures as cf
+import multiprocessing as mpl
 import logging
 import numpy as np
 import os
@@ -266,7 +267,9 @@ class RepresentativeProfiles:
                                           fpath_out=fpath_out_i, key=key,
                                           forecast_fpath=forecast_fpath)
         else:
-            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
+            mp_context = mpl.get_context('spawn')
+            with cf.ProcessPoolExecutor(max_workers=max_workers,
+                                        mp_context=mp_context) as exe:
                 for irp in range(n_profiles):
                     fni = fn_pro.replace('.csv', '_rank{}.csv'.format(irp))
                     fpath_out_i = os.path.join(out_dir, fni)
@@ -760,7 +763,9 @@ class RPMOutput:
         """
 
         futures = {}
-        with cf.ProcessPoolExecutor(max_workers=self.max_workers) as exe:
+        mp_context = mpl.get_context('spawn')
+        with cf.ProcessPoolExecutor(max_workers=self.max_workers,
+                                    mp_context=mp_context) as exe:
 
             for i, cid in enumerate(unique_clusters):
 
@@ -906,8 +911,9 @@ class RPMOutput:
         """
 
         futures = {}
-
-        with cf.ProcessPoolExecutor(max_workers=self.max_workers) as exe:
+        mp_context = mpl.get_context('spawn')
+        with cf.ProcessPoolExecutor(max_workers=self.max_workers,
+                                    mp_context=mp_context) as exe:
 
             for _, df in self._clusters.groupby(groupby):
 
