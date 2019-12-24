@@ -9,7 +9,6 @@ import logging
 import numpy as np
 import os
 import pandas as pd
-from scipy.stats import mode
 from reV.handlers.resource import Resource
 
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -142,18 +141,7 @@ class ReedsTimeslices:
                         'timeslice regions: {}'.format(reg_cols))
             meta = meta.set_index(reg_cols)
 
-            if 'rev_summary' in f.dsets:
-                table = f._get_meta('rev_summary', slice(None))
-                reg_cols = list(meta.columns.drop(['rep_gen_gid',
-                                                   'rep_res_gid']))
-                logger.info('Found region column labels in profile meta for '
-                            'timeslice regions: {}'.format(reg_cols))
-                tz = table.groupby(reg_cols)
-                tz = tz['timezone'].apply(lambda x: mode(x).mode[0])
-                meta = meta.merge(tz.reset_index(), on=reg_cols)
-                meta = meta.set_index(reg_cols)
-
-            elif 'timezone' in f.dsets:
+            if 'timezone' in f.dsets:
                 tz = f['timezone']
                 meta['timezone'] = tz
 
@@ -165,7 +153,6 @@ class ReedsTimeslices:
 
             time_index = f.time_index
 
-        logger.info('META: {}'.format(meta))
         return meta, time_index
 
     @staticmethod

@@ -4,7 +4,6 @@ Extract representative profiles for ReEDS
 """
 import logging
 import numpy as np
-from scipy.stats import mode
 from reV.handlers.outputs import Outputs
 from reV.rep_profiles.rep_profiles import RepProfiles
 
@@ -125,8 +124,9 @@ class ReedsProfiles(RepProfiles):
             None or filepath to output h5 file.
         """
 
-        tz = self._rev_summary.groupby(self._reg_cols)
-        tz = tz['timezone'].apply(lambda x: mode(x).mode[0])
+        with Outputs(self._gen_fpath, mode='r') as out:
+            tz = np.array([out.meta.at[gen_gid, 'timezone']
+                           for gen_gid in self.meta['rep_gen_gid']])
 
         with Outputs(fout, mode='a') as out:
             out._create_dset('timezone', tz.shape, tz.dtype, data=tz)
