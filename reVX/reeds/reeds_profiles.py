@@ -4,6 +4,8 @@ Extract representative profiles for ReEDS
 """
 import logging
 import numpy as np
+from scipy.stats import mode
+from reV.handlers.outputs import Outputs
 from reV.rep_profiles.rep_profiles import RepProfiles
 
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -114,6 +116,21 @@ class ReedsProfiles(RepProfiles):
 
         return hour_of_year
 
+    def _write_timezone(self, fout):
+        """Write a timezone array to the output file.
+
+        Parameters
+        ----------
+        fout : str
+            None or filepath to output h5 file.
+        """
+
+        tz = self._rev_summary.groupby(self._reg_cols)
+        tz = tz['timezone'].apply(lambda x: mode(x).mode[0])
+
+        with Outputs(fout, mode='a') as out:
+            out._create_dset('timezone', tz.shape, tz.dtype, data=tz)
+
     @classmethod
     def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
             rep_method='meanoid', err_method='rmse', n_profiles=1,
@@ -187,6 +204,7 @@ class ReedsProfiles(RepProfiles):
         if fout is not None:
             rp.save_profiles(fout, save_rev_summary=False,
                              scaled_precision=True)
+            rp._write_timezone(fout)
 
         logger.info('Representative profiles complete!')
         return rp.profiles, rp.meta, rp.time_index
