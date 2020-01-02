@@ -143,7 +143,7 @@ class ExclusionsConverter:
                 os.remove(excl_h5)
 
     @staticmethod
-    def _check_geotiff(excl_h5, geotiff, chunks=(128, 128)):
+    def _check_geotiff(excl_h5, geotiff, chunks=(128, 128), coord_atol=0.001):
         """
         Compare geotiff with exclusion layer, raise any errors
 
@@ -155,6 +155,9 @@ class ExclusionsConverter:
             Path to geotiff file
         chunks : tuple
             Chunk size of exclusions in Geotiff
+        coord_atol : float
+            Absolute tolerance parameter when comparing new un-projected
+            geotiff coordinates against previous coordinates.
         """
         with Geotiff(geotiff, chunks=chunks) as tif:
             with ExclusionLayers(excl_h5) as h5:
@@ -191,20 +194,23 @@ class ExclusionsConverter:
                     raise ExclusionsCheckError(error)
 
                 lat, lon = tif.lat_lon
-                if not np.array_equal(h5.latitude, lat):
-                    error = ('Latitude coordinates {} and {} do not match!'
-                             .format(geotiff, excl_h5))
+                if not np.allclose(h5.latitude, lat, atol=coord_atol):
+                    error = ('Latitude coordinates {} and {} do not match to '
+                             'within {} degrees!'
+                             .format(geotiff, excl_h5, coord_atol))
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
-                if not np.array_equal(h5.longitude, lon):
-                    error = ('Longitude coordinates {} and {} do not match!'
-                             .format(geotiff, excl_h5))
+                if not np.allclose(h5.longitude, lon, atol=coord_atol):
+                    error = ('Longitude coordinates {} and {} do not match to '
+                             'within {} degrees!'
+                             .format(geotiff, excl_h5, coord_atol))
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
     @staticmethod
-    def _parse_tiff(geotiff, excl_h5=None, chunks=(128, 128)):
+    def _parse_tiff(geotiff, excl_h5=None, chunks=(128, 128),
+                    coord_atol=0.001):
         """
         Extract exclusion layer from given geotiff, compare with excl_h5
         if provided
@@ -217,6 +223,9 @@ class ExclusionsConverter:
             Path to .h5 file containing exclusion layers
         chunks : tuple
             Chunk size of exclusions in Geotiff
+        coord_atol : float
+            Absolute tolerance parameter when comparing new un-projected
+            geotiff coordinates against previous coordinates.
 
         Returns
         -------
@@ -227,7 +236,8 @@ class ExclusionsConverter:
         """
         if excl_h5 is not None:
             ExclusionsConverter._check_geotiff(excl_h5, geotiff,
-                                               chunks=chunks)
+                                               chunks=chunks,
+                                               coord_atol=coord_atol)
 
         with Geotiff(geotiff, chunks=chunks) as tif:
             profile, values = tif.profile, tif.values
@@ -273,7 +283,7 @@ class ExclusionsConverter:
 
     @staticmethod
     def _geotiff_to_h5(excl_h5, layer, geotiff, chunks=(128, 128),
-                       description=None):
+                       coord_atol=0.001, description=None):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
 
@@ -287,14 +297,16 @@ class ExclusionsConverter:
             Path to geotiff file
         chunks : tuple
             Chunk size of exclusions in .h5 and Geotiffs
+        coord_atol : float
+            Absolute tolerance parameter when comparing new un-projected
+            geotiff coordinates against previous coordinates.
         description : str
             Description of exclusion layer
         """
         logger.debug('\t- {} being extracted from {} and added to {}'
                      .format(layer, geotiff, os.path.basename(excl_h5)))
-        profile, values = ExclusionsConverter._parse_tiff(geotiff,
-                                                          excl_h5=excl_h5,
-                                                          chunks=chunks)
+        profile, values = ExclusionsConverter._parse_tiff(
+            geotiff, excl_h5=excl_h5, chunks=chunks, coord_atol=coord_atol)
         ExclusionsConverter._write_layer(excl_h5, layer, profile, values,
                                          chunks=chunks,
                                          description=description)
@@ -353,7 +365,8 @@ class ExclusionsConverter:
 
         return profile, values
 
-    def geotiff_to_layer(self, layer, geotiff, description=None):
+    def geotiff_to_layer(self, layer, geotiff, coord_atol=0.001,
+                         description=None):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
 
@@ -363,6 +376,9 @@ class ExclusionsConverter:
             Layer to extract
         geotiff : str
             Path to geotiff file
+        coord_atol : float
+            Absolute tolerance parameter when comparing new un-projected
+            geotiff coordinates against previous coordinates.
         description : str
             Description of exclusion layer
         """
@@ -375,7 +391,8 @@ class ExclusionsConverter:
             raise KeyError(msg)
 
         self._geotiff_to_h5(self._excl_h5, layer, geotiff,
-                            chunks=self._chunks, description=description)
+                            chunks=self._chunks, coord_atol=coord_atol,
+                            description=description)
 
     def layer_to_geotiff(self, layer, geotiff):
         """
@@ -393,7 +410,7 @@ class ExclusionsConverter:
 
     @classmethod
     def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128),
-                     descriptions=None):
+                     coord_atol=0.001, descriptions=None):
         """
         Create exclusions .h5 file from provided geotiffs
 
@@ -406,6 +423,9 @@ class ExclusionsConverter:
             or dictionary mapping goetiffs to the layers to load
         chunks : tuple
             Chunk size of exclusions in .h5 and Geotiffs
+        coord_atol : float
+            Absolute tolerance parameter when comparing new un-projected
+            geotiff coordinates against previous coordinates.
         descriptions : dict | NoneType
             Descriptions for layers to be writen to .h5
         """
@@ -421,7 +441,8 @@ class ExclusionsConverter:
         for layer, geotiff in layers.items():
             logger.info('- Transfering {}'.format(layer))
             description = descriptions.get(layer, None)
-            excls.geotiff_to_layer(layer, geotiff, description=description)
+            excls.geotiff_to_layer(layer, geotiff, coord_atol=coord_atol,
+                                   description=description)
 
     @classmethod
     def extract_layers(cls, excl_h5, layers, chunks=(128, 128),
