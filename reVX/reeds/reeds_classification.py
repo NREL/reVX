@@ -17,6 +17,13 @@ class ReedsClassifier:
     """
     Create ReEDS resource classes
     """
+
+    TABLE_OUT_COLS = ('sc_gid', 'region', 'class', 'bin', 'capacity',
+                      'mean_lcoe', 'trans_cap_cost', 'total_lcoe')
+
+    AGG_TABLE_OUT_COLS = ('region', 'class', 'bin', 'capacity',
+                          'trans_cap_cost', 'dist_mi')
+
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
                  sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
                                             'method': 'kmeans', 'norm': None}):
@@ -130,6 +137,18 @@ class ReedsClassifier:
         return self._rev_table
 
     @property
+    def table_slim(self):
+        """
+        Supply curve or aggregation table with only columns in TABLE_OUT_COLS
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+        cols = [c for c in self.TABLE_OUT_COLS if c in self.table]
+        return self.table[cols]
+
+    @property
     def keys(self):
         """
         All unique group keys
@@ -171,6 +190,7 @@ class ReedsClassifier:
         -------
         agg_table : pandas.DataFrame
         """
+
         cols = ['area_sq_km', 'capacity', 'trans_capacity']
         sum_table = self._groups[cols].sum()
         cols = ['latitude', 'longitude', 'mean_cf', 'mean_lcoe', 'mean_res',
@@ -179,6 +199,19 @@ class ReedsClassifier:
         agg_table = sum_table.join(mean_table)
 
         return agg_table.reset_index()
+
+    @property
+    def aggregate_table_slim(self):
+        """
+        Aggregate table with only columns in AGG_TABLE_OUT_COLS
+
+        Returns
+        -------
+        agg_table : pandas.DataFrame
+        """
+        agg_table = self.aggregate_table
+        cols = [c for c in agg_table if c in self.AGG_TABLE_OUT_COLS]
+        return agg_table[cols]
 
     @staticmethod
     def _parse_table(input_table):
@@ -493,13 +526,13 @@ class ReedsClassifier:
 
         Returns
         -------
-        .table : pandas.DataFrame
+        .table_slim : pandas.DataFrame
             Updated table with region_id and class_bin columns
-            added
-        .aggregate_table : pandas.DataFrame
-            Region, class, bin aggregate table
+            added. Only includes columns in TABLE_OUT_COLS.
+        .aggregate_table_slim : pandas.DataFrame
+            Region, class, bin aggregate table. Only inlcudes columns in
+            AGG_TABLE_OUT_COLS.
         """
         classes = cls(rev_table, resource_classes, region_map=region_map,
                       sc_bins=sc_bins, cluster_kwargs=cluster_kwargs)
-
-        return classes.table, classes.aggregate_table
+        return classes.table_slim, classes.aggregate_table_slim
