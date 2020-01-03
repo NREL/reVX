@@ -526,6 +526,9 @@ class ReedsClassifier:
 
         Returns
         -------
+        .table : pandas.DataFrame
+            Updated table with region_id and class_bin columns
+            added. Includes all columns.
         .table_slim : pandas.DataFrame
             Updated table with region_id and class_bin columns
             added. Only includes columns in TABLE_OUT_COLS.
@@ -535,4 +538,4 @@ class ReedsClassifier:
         """
         classes = cls(rev_table, resource_classes, region_map=region_map,
                       sc_bins=sc_bins, cluster_kwargs=cluster_kwargs)
-        return classes.table_slim, classes.aggregate_table_slim
+        return classes.table, classes.table_slim, classes.aggregate_table_slim

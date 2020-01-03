@@ -117,7 +117,7 @@ class ReedsTimeslices:
         return self._time_index
 
     @staticmethod
-    def _extract_meta_and_timeindex(profiles):
+    def _extract_meta_and_timeindex(profiles, reg_cols):
         """
         Extract meta data, and time index from the profiles .h5 file
 
@@ -125,6 +125,9 @@ class ReedsTimeslices:
         ----------
         profiles : str
             Path to .h5 file containing profiles (representative or cf)
+        reg_cols : tuple
+            Label(s) for a categorical region column(s) to create timeslices
+            for
 
         Returns
         -------
@@ -135,11 +138,14 @@ class ReedsTimeslices:
         """
         with Resource(profiles) as f:
             meta = f.meta
-            reg_cols = list(meta.columns.drop(['rep_gen_gid',
-                                               'rep_res_gid']))
-            logger.info('Found region column labels in profile meta for '
-                        'timeslice regions: {}'.format(reg_cols))
-            meta = meta.set_index(reg_cols)
+            ignore = ['rep_gen_gid', 'rep_res_gid']
+            cols = [c for c in meta.columns if c not in ignore]
+            meta = meta[cols]
+            isin = [(c in cols) for c in reg_cols]
+            if all(isin):
+                logger.info('Found region column labels in profile meta for '
+                            'timeslice regions: {}'.format(reg_cols))
+                meta = meta.set_index(list(reg_cols))
 
             if 'timezone' in f.dsets:
                 tz = f['timezone']
@@ -266,7 +272,8 @@ class ReedsTimeslices:
             raise ReedsValueError(msg)
 
         meta, time_index = \
-            ReedsTimeslices._extract_meta_and_timeindex(profiles)
+            ReedsTimeslices._extract_meta_and_timeindex(profiles,
+                                                        reg_cols)
 
         if rev_table is not None:
             meta = ReedsTimeslices._add_reg_cols(meta, rev_table,
@@ -427,7 +434,6 @@ class ReedsTimeslices:
                 if 'rep_profiles' in ds:
                     k = int(ds.split('_')[-1])
                     profiles[k] = f[ds]
-
         cols = [str([int(i) for i in c]) for c in meta.index]
         tz = meta['timezone'].values
         tz *= len(time_index) // 8760

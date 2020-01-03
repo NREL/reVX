@@ -52,6 +52,8 @@ def test_classifier():
     Test ReedsClassifier
     """
     path = os.path.join(ROOT_DIR, 'ReEDS_Classifications.csv')
+    truth_table_full = pd.read_csv(path)
+    path = os.path.join(ROOT_DIR, 'ReEDS_Classifications_Slim.csv')
     truth_table = pd.read_csv(path)
     path = os.path.join(ROOT_DIR, 'ReEDS_Aggregation.csv')
     truth_agg = pd.read_csv(path)
@@ -60,11 +62,12 @@ def test_classifier():
     resource_classes = os.path.join(ROOT_DIR, 'inputs',
                                     'trg_breakpoints_naris.csv')
     kwargs = {'cluster_on': 'trans_cap_cost', 'method': 'kmeans'}
-    test_table, test_agg = ReedsClassifier.create(rev_table, resource_classes,
-                                                  region_map='reeds_region',
-                                                  sc_bins=5,
-                                                  cluster_kwargs=kwargs)
-
+    out = ReedsClassifier.create(rev_table, resource_classes,
+                                 region_map='reeds_region',
+                                 sc_bins=5, cluster_kwargs=kwargs)
+    test_table_full, test_table, test_agg = out
+    assert_frame_equal(truth_table_full, test_table_full, check_dtype=False,
+                       check_exact=False)
     assert_frame_equal(truth_table, test_table, check_dtype=False,
                        check_exact=False)
     assert_frame_equal(truth_agg, test_agg, check_dtype=False,

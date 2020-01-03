@@ -138,17 +138,17 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on):
     logger.info('Extracting ReEDS (region, bin, class) groups'
                 .format())
     kwargs = {'cluster_on': cluster_on, 'method': 'kmeans'}
-    table, agg_table = ReedsClassifier.create(rev_table, resource_classes,
-                                              region_map=regions,
-                                              sc_bins=sc_bins,
-                                              cluster_kwargs=kwargs)
+    out = ReedsClassifier.create(rev_table, resource_classes,
+                                 region_map=regions, sc_bins=sc_bins,
+                                 cluster_kwargs=kwargs)
+    table_full, table, agg_table = out
 
     out_path = os.path.join(out_dir, '{}_table.csv'.format(name))
     table.to_csv(out_path, index=False)
     out_path = os.path.join(out_dir, '{}_agg_table.csv'.format(name))
     agg_table.to_csv(out_path, index=False)
 
-    ctx.obj['TABLE'] = table
+    ctx.obj['TABLE'] = table_full
 
     logger.info('reVX - ReEDS classification methods complete.')
 

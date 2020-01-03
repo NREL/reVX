@@ -2,6 +2,7 @@
 """
 Extract representative profiles for ReEDS
 """
+import json
 import logging
 import numpy as np
 from reV.handlers.outputs import Outputs
@@ -125,8 +126,15 @@ class ReedsProfiles(RepProfiles):
         """
 
         with Outputs(self._gen_fpath, mode='r') as out:
-            tz = np.array([out.meta.at[gen_gid, 'timezone']
-                           for gen_gid in self.meta['rep_gen_gid']])
+            tz = []
+            for gen_gid in self.meta['rep_gen_gid']:
+                if isinstance(gen_gid, str):
+                    gen_gid = json.loads(gen_gid)
+                if isinstance(gen_gid, (int, float)):
+                    tz.append(out.meta.at[gen_gid, 'timezone'])
+                elif isinstance(gen_gid, (list, tuple)):
+                    tz.append(out.meta.at[gen_gid[0], 'timezone'])
+            tz = np.array(tz)
 
         with Outputs(fout, mode='a') as out:
             out._create_dset('timezone', tz.shape, tz.dtype, data=tz)
