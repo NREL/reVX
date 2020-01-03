@@ -10,6 +10,7 @@ import numpy as np
 import os
 import pandas as pd
 from reV.handlers.resource import Resource
+from reV.handlers.outputs import Outputs
 
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
@@ -821,6 +822,64 @@ class ReedsTimeslices:
 
         return coeffs
 
+    @staticmethod
+    def save_correlation_dict(corr, reg_cols, fpath):
+        """Save a dictionary of correlation coefficient matrices to an h5 file.
+
+        Parameters
+        ----------
+        corr : dict
+            A dictionary of correlation matrices for each timeslice.
+            Each value is a square dataframe with index labels == column labels
+        reg_cols : list | tuple
+            Labels for the column/index values in the corr dataframe values.
+            The order must match the order of the correlation dataframe labels.
+        fpath : str
+            h5 destination filepath (will overwrite).
+        """
+        if not isinstance(corr, dict):
+            e = ('Tried to save non-dict correlation coefficient data. '
+                 'Maybe legacy formatting was still active.')
+            logger.error(e)
+            raise TypeError(e)
+
+        meta_dict = {c: [] for c in reg_cols}
+        corr_labels = corr[list(corr.keys())[0]].columns.values
+        for label in corr_labels:
+            if isinstance(label, str):
+                label = json.loads(label)
+            if len(label) != len(reg_cols):
+                e = ('Cannot save correlation dataframes. reg_cols was input '
+                     'as "{}" but the correlation table has column/index '
+                     'values with different label length: {}'
+                     .format(reg_cols, corr_labels))
+                logger.error(e)
+                raise ReedsRuntimeError(e)
+            for i, value in enumerate(label):
+                meta_dict[reg_cols[i]].append(value)
+        meta = pd.DataFrame(meta_dict)
+
+        for df in corr.values():
+            if (not all(df.columns.values == corr_labels)
+                    or not all(df.index.values == corr_labels)):
+                e = 'Correlation matrix labels did not match!'
+                logger.error(e)
+                raise ReedsRuntimeError(e)
+            if df.shape[0] != df.shape[1]:
+                e = ('Correlation matrix of shape {} is not square!'
+                     .format(df.shape))
+                logger.error(e)
+                raise ReedsRuntimeError(e)
+
+        with Outputs(fpath, mode='w') as out:
+            out['meta'] = meta
+            for k, v in corr.items():
+                ds_name = 'timeslice_{}'.format(k)
+                out._create_dset(ds_name,
+                                 shape=v.shape,
+                                 dtype=v.values.dtype,
+                                 data=v.values)
+
     def compute_stats(self, max_workers=None, legacy_format=True):
         """
         Compute the mean and stdev CF for each timeslice for each "region"
@@ -868,7 +927,7 @@ class ReedsTimeslices:
     @classmethod
     def run(cls, profiles, timeslice_map, rev_table=None,
             reg_cols=('region', 'class'), max_workers=None,
-            legacy_format=True):
+            legacy_format=False):
         """
         Compute means and standar deviations for each region and timeslice
         from given representative profiles

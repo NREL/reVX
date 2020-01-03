@@ -249,7 +249,7 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
     stats, corr = ReedsTimeslices.run(profiles, timeslices,
                                       rev_table=rev_table,
                                       reg_cols=reg_cols,
-                                      legacy_format=True)
+                                      legacy_format=False)
 
     out_path = os.path.join(out_dir, '{}_performance.csv'.format(name))
     logger.info('Saving timeslice performance stats to {}'.format(out_path))
@@ -258,7 +258,7 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
     out_path = os.path.join(out_dir, '{}_correlations.csv'
                             .format(name))
     logger.info('Saving timeslice correlations to {}'.format(out_path))
-    corr.to_csv(out_path, index=False)
+    ReedsTimeslices.save_correlation_dict(corr, reg_cols, out_path)
 
     logger.info('reVX - ReEDS timeslice methods complete.')
 

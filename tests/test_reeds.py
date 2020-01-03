@@ -135,6 +135,35 @@ def test_cf_timeslices():
                        check_exact=False, check_less_precise=True)
 
 
+def test_timeslice_h5_output():
+    """
+    Test h5 output for timeslice correlation table.
+    """
+
+    rep_profiles = os.path.join(ROOT_DIR, 'ReEDS_Profiles.h5')
+    timeslice_map = os.path.join(ROOT_DIR, 'inputs',
+                                 'timeslices.csv')
+    reg_cols = ('region', 'class')
+    fpath = os.path.join(ROOT_DIR, 'ReEDS_Corr_Coeffs.h5')
+    _, test_coeffs = ReedsTimeslices.run(rep_profiles, timeslice_map,
+                                         max_workers=1,
+                                         legacy_format=False,
+                                         reg_cols=reg_cols)
+
+    ReedsTimeslices.save_correlation_dict(test_coeffs, reg_cols, fpath)
+
+    from reV.handlers.outputs import Outputs
+    with Outputs(fpath) as out:
+        meta = out.meta
+        assert len(out.dsets) == len(test_coeffs) + 1
+        for k, v in test_coeffs.items():
+            dset = 'timeslice_{}'.format(k)
+            data = out[dset]
+            assert np.allclose(data, v)
+            assert len(meta) == len(data)
+    os.remove(fpath)
+
+
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 
