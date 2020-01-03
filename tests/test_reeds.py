@@ -8,6 +8,7 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 import pytest
 from reV.handlers.resource import Resource
+from reV.handlers.outputs import Outputs
 
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
@@ -152,14 +153,13 @@ def test_timeslice_h5_output():
 
     ReedsTimeslices.save_correlation_dict(test_coeffs, reg_cols, fpath)
 
-    from reV.handlers.outputs import Outputs
     with Outputs(fpath) as out:
         meta = out.meta
         assert len(out.dsets) == len(test_coeffs) + 1
         for k, v in test_coeffs.items():
             dset = 'timeslice_{}'.format(k)
             data = out[dset]
-            assert np.allclose(data, v)
+            assert np.allclose(data, np.round(v, decimals=3))
             assert len(meta) == len(data)
     os.remove(fpath)
 

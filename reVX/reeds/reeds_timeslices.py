@@ -877,8 +877,9 @@ class ReedsTimeslices:
                 ds_name = 'timeslice_{}'.format(k)
                 out._create_dset(ds_name,
                                  shape=v.shape,
-                                 dtype=v.values.dtype,
-                                 data=v.values)
+                                 dtype='int16',
+                                 attrs={'scale_factor': 1000})
+                out[ds_name] = v.values
 
     def compute_stats(self, max_workers=None, legacy_format=True):
         """
