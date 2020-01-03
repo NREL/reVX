@@ -155,13 +155,41 @@ def test_timeslice_h5_output():
 
     with Outputs(fpath) as out:
         meta = out.meta
-        assert len(out.dsets) == len(test_coeffs) + 1
+        indices = out['indices']
         for k, v in test_coeffs.items():
             dset = 'timeslice_{}'.format(k)
-            data = out[dset]
+            data = ReedsTimeslices.unsparsify_corr_matrix(out[dset], indices)
             assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
             assert len(meta) == len(data)
     os.remove(fpath)
+
+
+def test_sparse_matrix():
+    """Test matrix sparsification methods."""
+
+    x = np.arange(100).reshape((10, 10)) * 2 + 1
+    try:
+        ReedsTimeslices.sparsify_corr_matrix(x)
+    except ValueError:
+        pass
+    else:
+        raise Exception('Test failed, should have raised a value error')
+
+    for a in [10, 13, 30]:
+        n = a ** 2
+        x = np.arange(n).reshape((a, a)) * 2 + 1
+        for i in range(len(x)):
+            for j in range(len(x)):
+                x[i, j] = x[j, i]
+
+        out, indices = ReedsTimeslices.sparsify_corr_matrix(x)
+        temp = x.flatten()
+        for i, j in enumerate(indices):
+            assert out[i] == temp[j]
+        assert out[-1] == x[-1, -1]
+        assert out[-3] == x[-2, -2]
+        sym = ReedsTimeslices.unsparsify_corr_matrix(out, indices)
+        assert np.array_equal(x, sym)
 
 
 def execute_pytest(capture='all', flags='-rapP'):
