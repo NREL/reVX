@@ -823,8 +823,9 @@ class ReedsTimeslices:
         return coeffs
 
     @staticmethod
-    def save_correlation_dict(corr, reg_cols, fpath):
-        """Save a dictionary of correlation coefficient matrices to an h5 file.
+    def _get_correlation_meta(corr, reg_cols):
+        """Get the correlation meta data, which is a dataframe of labels for
+        the square correlation matrices.
 
         Parameters
         ----------
@@ -834,14 +835,13 @@ class ReedsTimeslices:
         reg_cols : list | tuple
             Labels for the column/index values in the corr dataframe values.
             The order must match the order of the correlation dataframe labels.
-        fpath : str
-            h5 destination filepath (will overwrite).
+
+        Returns
+        -------
+        meta : pd.DataFrame
+            Meta dataframe with a column for each reg col and a row entry for
+            each column/index in the corr dataframe values.
         """
-        if not isinstance(corr, dict):
-            e = ('Tried to save non-dict correlation coefficient data. '
-                 'Maybe legacy formatting was still active.')
-            logger.error(e)
-            raise TypeError(e)
 
         meta_dict = {c: [] for c in reg_cols}
         corr_labels = corr[list(corr.keys())[0]].columns.values
@@ -858,7 +858,20 @@ class ReedsTimeslices:
             for i, value in enumerate(label):
                 meta_dict[reg_cols[i]].append(value)
         meta = pd.DataFrame(meta_dict)
+        return meta
 
+    @staticmethod
+    def _check_correlation_dfs(corr):
+        """Check that all correlation tables have the same index and
+        column values.
+
+        Parameters
+        ----------
+        corr : dict
+            A dictionary of correlation matrices for each timeslice.
+            Each value is a square dataframe with index labels == column labels
+        """
+        corr_labels = corr[list(corr.keys())[0]].columns.values
         for df in corr.values():
             if (not all(df.columns.values == corr_labels)
                     or not all(df.index.values == corr_labels)):
@@ -871,15 +884,51 @@ class ReedsTimeslices:
                 logger.error(e)
                 raise ReedsRuntimeError(e)
 
+    @staticmethod
+    def save_correlation_dict(corr, reg_cols, fpath, compression='gzip'):
+        """Save a dictionary of correlation coefficient matrices to an h5 file.
+
+        Parameters
+        ----------
+        corr : dict
+            A dictionary of correlation matrices for each timeslice.
+            Each value is a square dataframe with index labels == column labels
+        reg_cols : list | tuple
+            Labels for the column/index values in the corr dataframe values.
+            The order must match the order of the correlation dataframe labels.
+        fpath : str
+            h5 destination filepath (will overwrite).
+        compression : str
+            H5py dataset compression argument. gzip or None.
+        """
+        if not isinstance(corr, dict):
+            e = ('Tried to save non-dict correlation coefficient data. '
+                 'Maybe legacy formatting was still active.')
+            logger.error(e)
+            raise TypeError(e)
+
+        meta = ReedsTimeslices._get_correlation_meta(corr, reg_cols)
+        ReedsTimeslices._check_correlation_dfs(corr)
+
         with Outputs(fpath, mode='w') as out:
             out['meta'] = meta
             for k, v in corr.items():
                 ds_name = 'timeslice_{}'.format(k)
-                out._create_dset(ds_name,
-                                 shape=v.shape,
-                                 dtype='int16',
-                                 attrs={'scale_factor': 1000})
-                out[ds_name] = v.values
+                if compression is not None:
+                    data = v.copy().values
+                    data *= 1000
+                    data = data.astype(np.int16)
+                    out.h5.create_dataset(ds_name,
+                                          shape=data.shape,
+                                          compression=compression,
+                                          data=data)
+                    out.h5[ds_name].attrs['scale_factor'] = 1000
+                else:
+                    out._create_dset(ds_name,
+                                     shape=v.shape,
+                                     dtype='int16',
+                                     attrs={'scale_factor': 1000})
+                    out[ds_name] = v.values
 
     def compute_stats(self, max_workers=None, legacy_format=True):
         """

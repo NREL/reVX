@@ -159,7 +159,7 @@ def test_timeslice_h5_output():
         for k, v in test_coeffs.items():
             dset = 'timeslice_{}'.format(k)
             data = out[dset]
-            assert np.allclose(data, np.round(v, decimals=3))
+            assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
             assert len(meta) == len(data)
     os.remove(fpath)
 
