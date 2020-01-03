@@ -772,9 +772,9 @@ class ReedsTimeslices:
         logger.info('Legacy timeslice correlation table complete.')
         return out
 
-    def _to_legacy_format(self, means, stdevs, coeffs=None):
+    def _stats_to_df(self, means, stdevs):
         """
-        Convert outputs to legacy format
+        Convert means and stdevs to single dataframe
 
         Parameters
         ----------
@@ -782,17 +782,12 @@ class ReedsTimeslices:
             Mean CF for each region and timeslice
         stdevs : pandas.DataFrame
             Standard deviation in CF for each region and timeslice
-        coeffs : dict
-            Correlation matrices for each timeslice, optional
 
         Returns
         -------
         stats : pandas.DataFrame
             Flattened timeslice table with means and sigma
-        coeffs : pandas.DataFrame
-            Flattened correlation
         """
-        logger.info('Performing legacy formatting operation.')
         reg_cols = list(self._meta.index.names)
         means = self._flatten_timeslices(means, 'cfmean', reg_cols)
         stdevs = self._flatten_timeslices(stdevs, 'cfsigma', reg_cols)
@@ -800,12 +795,31 @@ class ReedsTimeslices:
         stats = means.merge(stdevs, on=merge_cols)
         sort_cols = reg_cols + ['timeslice', ]
         stats = stats.sort_values(sort_cols).reset_index(drop=True)
-        logger.info('Legacy formatting complete.')
+        return stats
+
+    def _coeffs_to_legacy_format(self, coeffs):
+        """
+        Convert outputs to legacy format
+
+        Parameters
+        ----------
+        coeffs : dict
+            Correlation matrices for each timeslice, optional
+
+        Returns
+        -------
+        coeffs : pandas.DataFrame
+            Flattened correlation table.
+        """
+        logger.info('Performing legacy formatting operation.')
+        reg_cols = list(self._meta.index.names)
 
         if coeffs is not None:
             coeffs = self._create_correlation_table(coeffs, reg_cols)
 
-        return stats, coeffs
+        logger.info('Legacy formatting complete.')
+
+        return coeffs
 
     def compute_stats(self, max_workers=None, legacy_format=True):
         """
@@ -825,9 +839,8 @@ class ReedsTimeslices:
 
         Returns
         -------
-        stats : pandas.DataFrame | tuple
-            In legacy format: a DataFrame containing means and stdevs
-            (sigma), else a tuple of (means, stdevs) DataFrames
+        stats : pandas.DataFrame
+            A single DataFrame containing means and stdevs (sigma)
         corr_coeffs : pandas.DataFrame | dict | NoneType
             In legacy format: a DataFrame of correlation coefficients for
             all pairs of "regions" for each timeslice, else:
@@ -844,13 +857,11 @@ class ReedsTimeslices:
                 self._rep_profile_stats(self._profiles, self._meta,
                                         self._timeslice_groups,
                                         max_workers=max_workers)
-
+        stats = self._stats_to_df(means, stdevs)
         logger.info('Finished timeslice stats computation.')
 
         if legacy_format:
-            stats, coeffs = self._to_legacy_format(means, stdevs, coeffs)
-        else:
-            stats = (means, stdevs)
+            coeffs = self._coeffs_to_legacy_format(coeffs)
 
         return stats, coeffs
 
@@ -885,9 +896,8 @@ class ReedsTimeslices:
 
         Returns
         -------
-        stats : pandas.DataFrame | tuple
-            In legacy format: a DataFrame containing means and stdevs
-            (sigma), else a tuple of (means, stdevs) DataFrames
+        stats : pandas.DataFrame
+            A single DataFrame containing means and stdevs (sigma)
         corr_coeffs : pandas.DataFrame | dict | NoneType
             In legacy format: a DataFrame of correlation coefficients for
             all pairs of "regions" for each timeslice, else:
