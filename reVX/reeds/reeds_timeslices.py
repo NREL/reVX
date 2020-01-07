@@ -959,7 +959,7 @@ class ReedsTimeslices:
 
     @staticmethod
     def save_correlation_dict(corr, reg_cols, fpath, compression='gzip',
-                              sparsify=True):
+                              sparsify=False):
         """Save a dictionary of correlation coefficient matrices to an h5 file.
 
         Parameters

@@ -151,7 +151,8 @@ def test_timeslice_h5_output():
                                          legacy_format=False,
                                          reg_cols=reg_cols)
 
-    ReedsTimeslices.save_correlation_dict(test_coeffs, reg_cols, fpath)
+    ReedsTimeslices.save_correlation_dict(test_coeffs, reg_cols, fpath,
+                                          sparsify=True)
 
     with Outputs(fpath) as out:
         meta = out.meta
