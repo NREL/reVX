@@ -6,8 +6,8 @@ import json
 import click
 import logging
 from reV.utilities.cli_dtypes import STR
+from reV.utilities.loggers import init_mult
 
-from reVX.utilities.loggers import init_mult
 from reVX.rpm.rpm_manager import RPMClusterManager as rpm_cm
 from reVX.rpm.rpm_output import RPMOutput as rpm_o
 
@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
                     'profiles'))
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
-@click.option('-p', '--parallel', is_flag=True,
+@click.option('--parallel', '-p', is_flag=True,
               help='Run clustering in parallel by region. Default is serial.')
-@click.option('-v', '--verbose', is_flag=True,
+@click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def main(ctx, name, cf_profiles, out_dir, parallel, verbose):
@@ -195,6 +195,7 @@ def extra_profiles(ctx, profiles, forecast_fpath):
                 .format(rpm_clusters))
     if forecast_fpath is not None:
         logger.info('Using forecast file: {}'.format(forecast_fpath))
+
     rpm_o.extract_profiles(rpm_clusters, cf_fpath, out_dir,
                            n_profiles=profiles, job_tag=name,
                            parallel=parallel, forecast_fpath=forecast_fpath)

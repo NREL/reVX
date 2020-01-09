@@ -6,8 +6,8 @@ import click
 import logging
 import os
 import pandas as pd
+from reV.utilities.loggers import init_mult
 
-from reVX.utilities.loggers import init_mult
 from reVX.resource.resource import ResourceX
 
 logger = logging.getLogger(__name__)

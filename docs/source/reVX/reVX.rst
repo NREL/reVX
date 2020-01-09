@@ -6,6 +6,7 @@ Subpackages
 
 .. toctree::
 
+   reVX.config
    reVX.handlers
    reVX.plexos
    reVX.reeds

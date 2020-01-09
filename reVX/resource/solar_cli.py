@@ -5,8 +5,8 @@ SolarX Command Line Interface
 import click
 import logging
 import os
+from reV.utilities.loggers import init_mult
 
-from reVX.utilities.loggers import init_mult
 from reVX.resource.resource import NSRDBX, SolarX
 from reVX.resource.resource_cli import dataset as dataset_cmd
 from reVX.resource.resource_cli import multi_site as multi_site_grp

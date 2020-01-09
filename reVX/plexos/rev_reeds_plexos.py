@@ -820,7 +820,8 @@ class PlexosAggregation:
 
     @classmethod
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-            forecast_fpath=None, **kwargs):
+            forecast_fpath=None, build_year=2050, exclusion_area=0.0081,
+            parallel=True):
         """Run plexos aggregation.
 
         Parameters
@@ -837,6 +838,12 @@ class PlexosAggregation:
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
+        build_year : int
+            REEDS year of interest.
+        exclusion_area : float
+            Area in km2 of an exclusion pixel.
+        parallel : bool
+            Flag to do node aggregation on parallel workers.
 
         Returns
         -------
@@ -849,7 +856,8 @@ class PlexosAggregation:
         """
 
         pa = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 forecast_fpath=forecast_fpath, **kwargs)
+                 forecast_fpath=forecast_fpath, build_year=build_year,
+                 exclusion_area=exclusion_area, parallel=parallel)
         profiles = pa._make_profiles()
 
         return pa.plexos_meta, pa.time_index, profiles
@@ -1125,7 +1133,8 @@ class Manager:
     """Plexos job manager."""
 
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 forecast_fpath=None, **db_kwargs):
+                 forecast_fpath=None, wait=300, db_host='gds_edit.nrel.gov',
+                 db_user=None, db_pass=None, db_port=5432):
         """
         Parameters
         ----------
@@ -1140,15 +1149,30 @@ class Manager:
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
-        db_kwargs : dict
-            Optional additional kwargs for connecting to the database.
+        wait : int
+            Integer seconds to wait for DB connection to become available
+            before raising exception.
+        db_host : str
+            Database host name.
+        db_user : str
+            Your database user name.
+        db_pass : str
+            Database password (None if your password is cached).
+        db_port : int
+            Database port.
         """
-        self.plexos_nodes = self._parse_name(plexos_nodes, **db_kwargs)
+        self.plexos_nodes = self._parse_name(plexos_nodes, wait=wait,
+                                             db_host=db_host, db_user=db_user,
+                                             db_pass=db_pass, db_port=db_port)
         self.plexos_nodes = DataCleaner.pre_filter_plexos_meta(
             self.plexos_nodes)
 
-        self.rev_sc = self._parse_name(rev_sc, **db_kwargs)
-        self.reeds_build = self._parse_name(reeds_build, **db_kwargs)
+        self.rev_sc = self._parse_name(rev_sc, wait=wait,
+                                       db_host=db_host, db_user=db_user,
+                                       db_pass=db_pass, db_port=db_port)
+        self.reeds_build = self._parse_name(reeds_build, wait=wait,
+                                            db_host=db_host, db_user=db_user,
+                                            db_pass=db_pass, db_port=db_port)
 
         self.rev_sc = DataCleaner.rename_cols(self.rev_sc,
                                               DataCleaner.REV_NAME_MAP)
@@ -1167,13 +1191,25 @@ class Manager:
                                         .format(forecast_fpath))
 
     @staticmethod
-    def _parse_name(name, **kwargs):
+    def _parse_name(name, wait=300, db_host='gds_edit.nrel.gov',
+                    db_user=None, db_pass=None, db_port=5432):
         """Parse a dataframe from an input name.
 
         Parameters
         ----------
         name : str | pd.DataFrame
             CSV file path or database.schema.name
+        wait : int
+            Integer seconds to wait for DB connection to become available
+            before raising exception.
+        db_host : str
+            Database host name.
+        db_user : str
+            Your database user name.
+        db_pass : str
+            Database password (None if your password is cached).
+        db_port : int
+            Database port.
 
         Returns
         -------
@@ -1187,7 +1223,9 @@ class Manager:
             elif len(name.split('.')) == 3:
                 from reVX.handlers.database import Database
                 db, schema, table = name.split('.')
-                df = Database.get_table(table, schema, db, **kwargs)
+                df = Database.get_table(table, schema, db, wait=wait,
+                                        db_host=db_host, db_user=db_user,
+                                        db_pass=db_pass, db_port=db_port)
 
         elif isinstance(name, pd.DataFrame):
             df = name
@@ -1200,7 +1238,9 @@ class Manager:
 
     @classmethod
     def main(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-             forecast_fpath=None, agg_kwargs=None, **kwargs):
+             forecast_fpath=None, agg_kwargs=None, wait=300,
+             db_host='gds_edit.nrel.gov', db_user=None, db_pass=None,
+             db_port=5432):
         """Run the Plexos pipeline for a single extent.
 
         Parameters
@@ -1218,8 +1258,17 @@ class Manager:
             If not None, the generation profiles are sourced from this file.
         agg_kwargs : dict
             Optional additional kwargs for the aggregation run.
-        kwargs : dict
-            Optional additional kwargs for Manager class.
+        wait : int
+            Integer seconds to wait for DB connection to become available
+            before raising exception.
+        db_host : str
+            Database host name.
+        db_user : str
+            Your database user name.
+        db_pass : str
+            Database password (None if your password is cached).
+        db_port : int
+            Database port.
 
         Returns
         -------
@@ -1250,7 +1299,9 @@ class Manager:
                     .format(forecast_fpath))
 
         pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 forecast_fpath=forecast_fpath, **kwargs)
+                 forecast_fpath=forecast_fpath, wait=wait,
+                 db_host=db_host, db_user=db_user, db_pass=db_pass,
+                 db_port=db_port)
 
         try:
             meta, time_index, profiles = PlexosAggregation.run(
