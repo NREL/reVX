@@ -30,7 +30,6 @@ dependencies:
   - distributed=2.8.0
   - docutils=0.15.2
   - entrypoints=0.3
-  - expat=2.2.6
   - fiona=1.8.11
   - flake8=3.7.9
   - fontconfig=2.13.0
@@ -43,7 +42,6 @@ dependencies:
   - geotiff=1.5.1
   - gettext=0.19.8.1
   - giflib=5.1.4
-  - glib=2.63.1
   - h5py=2.9.0
   - hdf4=4.2.13
   - hdf5=1.10.4
@@ -63,8 +61,6 @@ dependencies:
   - lazy-object-proxy=1.4.3
   - libboost=1.67.0
   - libcurl=7.67.0
-  - libdap4=3.19.1
-  - libedit=3.1.20181209
   - libffi=3.2.1
   - libgdal=3.0.2
   - libiconv=1.15
@@ -88,7 +84,6 @@ dependencies:
   - more-itertools=7.2.0
   - msgpack-python=0.6.1
   - munch=2.5.0
-  - ncurses=6.1
   - numpy=1.17.3
   - numpy-base=1.17.3
   - olefile=0.46
@@ -103,7 +98,6 @@ dependencies:
   - pip=19.3.1
   - pixman=0.38.0
   - pluggy=0.13.0
-  - poppler=0.65.0
   - poppler-data=0.4.9
   - postgresql=11.2
   - proj=6.2.1
@@ -125,7 +119,6 @@ dependencies:
   - pywavelets=1.0.3
   - pyyaml=5.1.2
   - rasterio=1.1.0
-  - readline=7.0
   - requests=2.22.0
   - rtree=0.8.3
   - scikit-learn=0.21.3
