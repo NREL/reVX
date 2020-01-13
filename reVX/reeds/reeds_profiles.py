@@ -5,6 +5,7 @@ Extract representative profiles for ReEDS
 import json
 import logging
 import numpy as np
+import pandas as pd
 from reV.handlers.outputs import Outputs
 from reV.rep_profiles.rep_profiles import RepProfiles
 
@@ -95,6 +96,45 @@ class ReedsProfiles(RepProfiles):
         return profiles, time_index
 
     @staticmethod
+    def _to_hour_ending(profiles, time_index):
+        """
+        Shift profiles and time index to hour ending from instantaneous at
+        top of hour. First timestep will be at 01:00 in current year, last
+        timestep will be 00:00 in next year.
+
+        Parameters
+        ----------
+        profiles : dict
+            dict of n_profile-keyed arrays with shape (8760, n) for the
+            representative profiles for each region.
+        time_index : pd.DatatimeIndex
+            Datetime Index for represntative profiles
+
+        Returns
+        ----------
+        profiles : dict
+            dict of n_profile-keyed arrays with shape (8760, n) for the
+            representative profiles for each region, rolled to hour ending
+        time_index : pd.DatatimeIndex
+            Datetime Index for represntative profiles reduced to hourly
+            resolution
+        """
+        if len(time_index) != 8760:
+            e = ('ReedsProfiles cannot be shifted to hour ending unless they '
+                 'are hourly! Got time index with length {}'
+                 .format(len(time_index)))
+            logger.error(e)
+            raise ValueError(e)
+        year = time_index.year[0]
+        time_index = pd.date_range(start='{}0101'.format(year),
+                                   end='{}0101'.format(int(year + 1)),
+                                   freq='1h', closed='right')
+        mask = (time_index.month == 2) & (time_index.day == 29)
+        time_index = time_index[~mask]
+        profiles = {k: np.roll(v, -1, axis=0) for k, v in profiles.items()}
+        return profiles, time_index
+
+    @staticmethod
     def _get_hour_of_year(time_index):
         """
         Compute the hour of the year from time_index
@@ -144,8 +184,9 @@ class ReedsProfiles(RepProfiles):
             rep_method='meanoid', err_method='rmse', n_profiles=1,
             resource_classes=None, region_map='reeds_region', sc_bins=5,
             reg_cols=('region', 'class'), parallel=True, fout=None,
-            hourly=True, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                         'method': 'kmeans', 'norm': None}):
+            hourly=True, hour_ending=True,
+            cluster_kwargs={'cluster_on': 'trans_cap_cost',
+                            'method': 'kmeans', 'norm': None}):
         """Run representative profiles.
         Parameters
         ----------
@@ -178,8 +219,10 @@ class ReedsProfiles(RepProfiles):
             Flag to run in parallel.
         fout : None | str
             None or filepath to output h5 file.
-        legacy_fout : bool
-            Output ReEDS .csv files to disc
+        hourly : bool
+            Flag to get hourly data (top of hour) instead of native resolution.
+        hour_ending : bool
+            Flag to shift instantaneous profiles and time index to hour ending.
         cluster_kwargs : dict
             Kwargs for clustering classes
 
@@ -208,6 +251,10 @@ class ReedsProfiles(RepProfiles):
         if hourly and (len(rp._time_index) > 8760):
             rp._profiles, rp._time_index = rp._to_hourly(rp.profiles,
                                                          rp.time_index)
+
+        if hourly and hour_ending:
+            rp._profiles, rp._time_index = rp._to_hour_ending(rp._profiles,
+                                                              rp._time_index)
 
         if fout is not None:
             rp.save_profiles(fout, save_rev_summary=False,

@@ -88,6 +88,7 @@ def test_profiles():
                              err_method='rmse', n_profiles=3,
                              reg_cols=('region', 'class'),
                              parallel=False)
+
     for k, v in truth[0].items():
         msg = 'Representative profiles {} do not match!'.format(k)
         assert np.allclose(v, test[0][k]), msg
@@ -125,7 +126,7 @@ def test_cf_timeslices():
     cf_profiles = os.path.join(TESTDATADIR, 'reV_gen', 'gen_pv_2012.h5')
     rev_table = os.path.join(ROOT_DIR, 'ReEDS_Classifications.csv')
     timeslice_map = os.path.join(ROOT_DIR, 'inputs',
-                                 'timeslices.csv')
+                                 'timeslices_hb.csv')
     test, _ = ReedsTimeslices.run(cf_profiles, timeslice_map,
                                   rev_table=rev_table, max_workers=1,
                                   legacy_format=True)
