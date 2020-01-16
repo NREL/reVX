@@ -130,7 +130,10 @@ class ReedsProfiles(RepProfiles):
                                    end='{}0101'.format(int(year + 1)),
                                    freq='1h', closed='right')
         mask = (time_index.month == 2) & (time_index.day == 29)
-        time_index = time_index[~mask]
+        # drop 12/31 on leap years
+        if any(mask):
+            mask = (time_index.month == 12) & (time_index.day == 31)
+            time_index = time_index[~mask]
         profiles = {k: np.roll(v, -1, axis=0) for k, v in profiles.items()}
         return profiles, time_index
 
