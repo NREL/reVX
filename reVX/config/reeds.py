@@ -12,16 +12,6 @@ class ReedsConfig(AnalysisConfig):
     NAME = 'ReEDS'
     REQUIREMENTS = ('rev_table', )
 
-    def __init__(self, config):
-        """
-        Parameters
-        ----------
-        config : str | dict
-            File path to config json (str), serialized json object (str),
-            or dictionary with pre-extracted config.
-        """
-        super().__init__(config)
-
     @property
     def rev_table(self):
         """Get the reV aggregation or SC table (required)."""
