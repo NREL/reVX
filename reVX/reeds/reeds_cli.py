@@ -149,10 +149,15 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on):
     out = ReedsClassifier.create(rev_table, resource_classes,
                                  region_map=regions, sc_bins=sc_bins,
                                  cluster_kwargs=kwargs)
-    table_full, table, agg_table = out
+    table_full, table, agg_table_full, agg_table = out
 
+    out_path = os.path.join(out_dir,
+                            '{}_supply_curve_raw_full.csv'.format(name))
+    table_full.to_csv(out_path, index=False)
     out_path = os.path.join(out_dir, '{}_supply_curve_raw.csv'.format(name))
     table.to_csv(out_path, index=False)
+    out_path = os.path.join(out_dir, '{}_supply_curve_full.csv'.format(name))
+    agg_table_full.to_csv(out_path, index=False)
     out_path = os.path.join(out_dir, '{}_supply_curve.csv'.format(name))
     agg_table.to_csv(out_path, index=False)
 

@@ -532,10 +532,14 @@ class ReedsClassifier:
         .table_slim : pandas.DataFrame
             Updated table with region_id and class_bin columns
             added. Only includes columns in TABLE_OUT_COLS.
+        .aggregate_table : pandas.DataFrame
+            Region, class, bin aggregate table. Includes all columns.
         .aggregate_table_slim : pandas.DataFrame
             Region, class, bin aggregate table. Only inlcudes columns in
             AGG_TABLE_OUT_COLS.
         """
         classes = cls(rev_table, resource_classes, region_map=region_map,
                       sc_bins=sc_bins, cluster_kwargs=cluster_kwargs)
-        return classes.table, classes.table_slim, classes.aggregate_table_slim
+        out = (classes.table, classes.table_slim, classes.aggregate_table,
+               classes.aggregate_table_slim)
+        return out
