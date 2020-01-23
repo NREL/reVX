@@ -33,6 +33,37 @@ def main(ctx, name, verbose):
     ctx.obj['VERBOSE'] = verbose
 
 
+def run_local(ctx, config):
+    """
+    Run reV to ReEDs locally from config
+
+    Parameters
+    ----------
+    ctx : click.ctx
+        click ctx object
+    config : ReedsConfig
+        Reeds Config object
+    """
+    ctx.invoke(classify, config.classify.resource_classes,
+               config.classify.regions, config.classify.sc_bins,
+               config.classify.cluster_on, ctx.obj['OFFSHORE'])
+
+    if config.profiles is not None:
+        ctx.invoke(profiles, config.profiles.cf_profiles,
+                   config.profiles.n_profiles,
+                   config.profiles.profiles_dset,
+                   config.profiles.rep_method,
+                   config.profiles.err_method,
+                   config.profiles.reg_cols,
+                   config.profiles.parallel)
+
+    if config.timeslices is not None:
+        ctx.invoke(timeslices, config.timeslices.profiles,
+                   config.timeslices.timeslices,
+                   config.timeslices.reg_cols,
+                   config.timeslices.all_profiles)
+
+
 @main.command()
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
@@ -83,8 +114,8 @@ def from_config(ctx, config, verbose):
                        reg_cols=config.timeslices.reg_cols,
                        all_profiles=config.timeslices.all_profiles)
 
-    if config.execution_control.option == 'eagle':
-        eagle(config)
+        if config.execution_control.option == 'eagle':
+            eagle(config)
 
 
 @main.group()
@@ -134,8 +165,13 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
                     'region/resource bin combination'))
 @click.option('--cluster_on', '-cl', type=str, default='trans_cap_cost',
               help='Column(s) in rev_table to cluster on')
+@click.option('--offshore', '-off', type=bool, default=None,
+              help=('Flag to sort on offshore flag:'
+                    '\n- True: offshore == 1'
+                    '\n- False: offshore == 0'
+                    '\n- None: Do not sort'))
 @click.pass_context
-def classify(ctx, resource_classes, regions, sc_bins, cluster_on):
+def classify(ctx, resource_classes, regions, sc_bins, cluster_on, offshore):
     """
     Extract ReEDS (region, bin, class) groups
     """
@@ -301,11 +337,12 @@ def get_node_cmd(config):
         args += '-v '
 
     args += ('classify -rc {resource_classes} -r {regions} -scb {sc_bins} '
-             '-cl {cluster_on} '
+             '-cl {cluster_on} -off {offshore}'
              .format(resource_classes=s(config.classify.resource_classes),
                      regions=s(config.classify.regions),
                      sc_bins=s(config.classify.sc_bins),
-                     cluster_on=s(config.classify.cluster_on)))
+                     cluster_on=s(config.classify.cluster_on),
+                     offshore=s(config.offshore)))
 
     if config.profiles is not None:
         args += ('profiles -cf {cf_profiles} -np {n_profiles} '

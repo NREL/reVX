@@ -26,7 +26,8 @@ class ReedsClassifier:
 
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
                  sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                            'method': 'kmeans', 'norm': None}):
+                                            'method': 'kmeans', 'norm': None},
+                 offshore=None):
         """
         Parameters
         ----------
@@ -43,8 +44,22 @@ class ReedsClassifier:
             region-class
         cluster_kwargs : dict
             kwargs for _cluster_sc_bins and underlying clustering method
+        offshore : bool | NoneType
+            Flag to sort on offshore flag:
+            - True: offshore == 1
+            - False: offshore == 0
+            - None: Don't sort
         """
         rev_table = self._parse_table(rev_table)
+        if offshore is not None and 'offshore' in rev_table:
+            if offshore:
+                mask = 1
+            else:
+                mask = 0
+
+            mask = rev_table['offshore'] == mask
+            rev_table = rev_table.loc[mask]
+
         rev_table = self._map_region(rev_table, region_map)
         rev_table = self._resource_classes(rev_table, resource_classes)
         self._rev_table = self._cluster_sc_bins(rev_table, sc_bins,
@@ -504,7 +519,8 @@ class ReedsClassifier:
     @classmethod
     def create(cls, rev_table, resource_classes, region_map='reeds_region',
                sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                          'method': 'kmeans', 'norm': None}):
+                                          'method': 'kmeans', 'norm': None},
+               offshore=None):
         """
         Identify ReEDS regions and classes and dump and updated table
 
@@ -523,6 +539,11 @@ class ReedsClassifier:
             region-class
         cluster_kwargs : dict
             kwargs for _cluster_classes
+        offshore : bool | NoneType
+            Flag to sort on offshore flag:
+            - True: offshore == 1
+            - False: offshore == 0
+            - None: Don't sort
 
         Returns
         -------
