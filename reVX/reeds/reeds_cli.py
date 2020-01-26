@@ -3,6 +3,7 @@
 ReEDS Command Line Interface
 """
 import click
+import json
 import logging
 import os
 from reV.utilities.cli_dtypes import STR, STRLIST
@@ -44,9 +45,15 @@ def run_local(ctx, config):
     config : ReedsConfig
         Reeds Config object
     """
+    ctx.obj['NAME'] = config.name
+    ctx.invoke(local,
+               rev_table=config.rev_table,
+               out_dir=config.dirout,
+               log_dir=config.logdir)
+
     ctx.invoke(classify, config.classify.resource_classes,
                config.classify.regions, config.classify.sc_bins,
-               config.classify.cluster_on, ctx.obj['OFFSHORE'])
+               config.classify.cluster_on, config. classify.filter)
 
     if config.profiles is not None:
         ctx.invoke(profiles, config.profiles.cf_profiles,
@@ -85,37 +92,10 @@ def from_config(ctx, config, verbose):
         config._logging_level = logging.DEBUG
 
     if config.execution_control.option == 'local':
-        ctx.obj['NAME'] = config.name
-        ctx.invoke(local,
-                   rev_table=config.rev_table,
-                   out_dir=config.dirout,
-                   log_dir=config.logdir)
+        run_local(ctx, config)
 
-        ctx.invoke(classify,
-                   resource_classes=config.classify.resource_classes,
-                   regions=config.classify.regions,
-                   sc_bins=config.classify.sc_bins,
-                   cluster_on=config.classify.cluster_on)
-
-        if config.profiles is not None:
-            ctx.invoke(profiles,
-                       cf_profiles=config.profiles.cf_profiles,
-                       n_profiles=config.profiles.n_profiles,
-                       profiles_dset=config.profiles.profiles_dset,
-                       rep_method=config.profiles.rep_method,
-                       err_method=config.profiles.err_method,
-                       reg_cols=config.profiles.reg_cols,
-                       parallel=config.profiles.parallel)
-
-        if config.timeslices is not None:
-            ctx.invoke(timeslices,
-                       profiles=config.timeslices.profiles,
-                       timeslices=config.timeslices.timeslices,
-                       reg_cols=config.timeslices.reg_cols,
-                       all_profiles=config.timeslices.all_profiles)
-
-        if config.execution_control.option == 'eagle':
-            eagle(config)
+    if config.execution_control.option == 'eagle':
+        eagle(config)
 
 
 @main.group()
@@ -165,13 +145,10 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
                     'region/resource bin combination'))
 @click.option('--cluster_on', '-cl', type=str, default='trans_cap_cost',
               help='Column(s) in rev_table to cluster on')
-@click.option('--offshore', '-off', type=bool, default=None,
-              help=('Flag to sort on offshore flag:'
-                    '\n- True: offshore == 1'
-                    '\n- False: offshore == 0'
-                    '\n- None: Do not sort'))
+@click.option('--filter', '-f', type=STR, default=None,
+              help='Column value pair(s) to filter on. If None do not filter')
 @click.pass_context
-def classify(ctx, resource_classes, regions, sc_bins, cluster_on, offshore):
+def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
     """
     Extract ReEDS (region, bin, class) groups
     """
@@ -184,7 +161,8 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on, offshore):
     kwargs = {'cluster_on': cluster_on, 'method': 'kmeans'}
     out = ReedsClassifier.create(rev_table, resource_classes,
                                  region_map=regions, sc_bins=sc_bins,
-                                 cluster_kwargs=kwargs)
+                                 cluster_kwargs=kwargs,
+                                 filter=json.loads(filter))
     table_full, table, agg_table_full, agg_table = out
 
     out_path = os.path.join(out_dir,
@@ -337,12 +315,12 @@ def get_node_cmd(config):
         args += '-v '
 
     args += ('classify -rc {resource_classes} -r {regions} -scb {sc_bins} '
-             '-cl {cluster_on} -off {offshore}'
+             '-cl {cluster_on} -f {filter}'
              .format(resource_classes=s(config.classify.resource_classes),
                      regions=s(config.classify.regions),
                      sc_bins=s(config.classify.sc_bins),
                      cluster_on=s(config.classify.cluster_on),
-                     offshore=s(config.offshore)))
+                     filter=s(config.classify.filter)))
 
     if config.profiles is not None:
         args += ('profiles -cf {cf_profiles} -np {n_profiles} '

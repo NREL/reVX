@@ -18,35 +18,6 @@ class ReedsConfig(AnalysisConfig):
         return self['rev_table']
 
     @property
-    def split_offshore(self):
-        """Run reV to ReEDS for offshore and onshore seperately"""
-        return self.get('split_offshore', False)
-
-    @property
-    def offshore(self):
-        """
-        Flag to sort on offshore flag:
-        - True: offshore == 1
-        - False: offshore == 0
-        - None: Don't sort
-        """
-        return self.get('offshore', None)
-
-    @offshore.setter
-    def offshore(self, offshore):
-        """
-        set offshore value
-
-        Parameters
-        ----------
-        offshore : bool
-            Set offshore
-            - True: offshore == 1
-            - False: offshore == 0
-        """
-        self['offshore'] = offshore
-
-    @property
     def classify(self):
         """Get the classify input group in the config dict."""
         classify = self.get('classify', None)
@@ -81,13 +52,12 @@ class ReedsConfigGroup(dict):
         config : dict
             Dictionary with pre-extracted config input group.
         """
-
         if not isinstance(config, dict):
             raise TypeError('Config input must be a dict but received: {}'
                             .format(type(config)))
-        else:
-            super().__init__()
-            self.update(config)
+
+        super().__init__()
+        self.update(config)
 
 
 class ClassifyConfigGroup(ReedsConfigGroup):
@@ -127,6 +97,13 @@ class ClassifyConfigGroup(ReedsConfigGroup):
     def cluster_on(self):
         """Get default string column label to cluster on."""
         return self.get('cluster_on', self._default_cluster_on)
+
+    @property
+    def filter(self):
+        """
+        Column value pair(s) to filter on. If None don't filter
+        """
+        return self.get('filter', None)
 
 
 class ProfilesConfigGroup(ReedsConfigGroup):

@@ -27,7 +27,7 @@ class ReedsClassifier:
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
                  sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
                                             'method': 'kmeans', 'norm': None},
-                 offshore=None):
+                 filter=None):
         """
         Parameters
         ----------
@@ -44,21 +44,14 @@ class ReedsClassifier:
             region-class
         cluster_kwargs : dict
             kwargs for _cluster_sc_bins and underlying clustering method
-        offshore : bool | NoneType
-            Flag to sort on offshore flag:
-            - True: offshore == 1
-            - False: offshore == 0
-            - None: Don't sort
+        filter : dict | NoneType
+            Column value pair(s) to filter on. If None don't filter
         """
         rev_table = self._parse_table(rev_table)
-        if offshore is not None and 'offshore' in rev_table:
-            if offshore:
-                mask = 1
-            else:
-                mask = 0
-
-            mask = rev_table['offshore'] == mask
-            rev_table = rev_table.loc[mask]
+        if filter is not None:
+            for col, v in filter.items():
+                mask = rev_table[col] == v
+                rev_table = rev_table.loc[mask]
 
         rev_table = self._map_region(rev_table, region_map)
         rev_table = self._resource_classes(rev_table, resource_classes)
@@ -520,7 +513,7 @@ class ReedsClassifier:
     def create(cls, rev_table, resource_classes, region_map='reeds_region',
                sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
                                           'method': 'kmeans', 'norm': None},
-               offshore=None):
+               filter=None):
         """
         Identify ReEDS regions and classes and dump and updated table
 
@@ -539,11 +532,8 @@ class ReedsClassifier:
             region-class
         cluster_kwargs : dict
             kwargs for _cluster_classes
-        offshore : bool | NoneType
-            Flag to sort on offshore flag:
-            - True: offshore == 1
-            - False: offshore == 0
-            - None: Don't sort
+        filter : dict | NoneType
+            Column value pair(s) to filter on. If None don't filter
 
         Returns
         -------
@@ -560,7 +550,9 @@ class ReedsClassifier:
             AGG_TABLE_OUT_COLS.
         """
         classes = cls(rev_table, resource_classes, region_map=region_map,
-                      sc_bins=sc_bins, cluster_kwargs=cluster_kwargs)
+                      sc_bins=sc_bins, cluster_kwargs=cluster_kwargs,
+                      filter=filter)
         out = (classes.table, classes.table_slim, classes.aggregate_table,
                classes.aggregate_table_slim)
+
         return out
