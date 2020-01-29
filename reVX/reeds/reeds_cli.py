@@ -54,6 +54,7 @@ def from_config(ctx, config, verbose):
         config._logging_level = logging.DEBUG
 
     if config.execution_control.option == 'local':
+        ctx.obj['NAME'] = config.name
         ctx.obj['TABLE'] = config.rev_table
         ctx.obj['OUT_DIR'] = config.dirout
 

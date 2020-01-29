@@ -9,7 +9,7 @@ from reV.config.base_analysis_config import AnalysisConfig
 class ReedsConfig(AnalysisConfig):
     """Config framework for REEDS jobs."""
 
-    NAME = 'revx_reeds'
+    NAME = 'ReEDS'
     REQUIREMENTS = ('rev_table', )
 
     def __init__(self, config):
