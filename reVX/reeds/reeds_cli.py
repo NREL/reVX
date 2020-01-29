@@ -58,7 +58,7 @@ def from_config(ctx, config, verbose):
         ctx.invoke(local,
                    rev_table=config.rev_table,
                    out_dir=config.dirout,
-                   local_dir=config.logdir)
+                   log_dir=config.logdir)
 
         ctx.invoke(classify,
                    resource_classes=config.classify.resource_classes,
