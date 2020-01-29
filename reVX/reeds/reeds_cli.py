@@ -47,16 +47,18 @@ def from_config(ctx, config, verbose):
 
     config = ReedsConfig(config)
 
-    if 'verbose' in ctx.obj:
-        if any((ctx.obj['verbose'], verbose)):
+    if 'VERBOSE' in ctx.obj:
+        if any((ctx.obj['VERBOSE'], verbose)):
             config._logging_level = logging.DEBUG
     elif verbose:
         config._logging_level = logging.DEBUG
 
     if config.execution_control.option == 'local':
         ctx.obj['NAME'] = config.name
-        ctx.obj['TABLE'] = config.rev_table
-        ctx.obj['OUT_DIR'] = config.dirout
+        ctx.invoke(local,
+                   rev_table=config.rev_table,
+                   out_dir=config.dirout,
+                   local_dir=config.logdir)
 
         ctx.invoke(classify,
                    resource_classes=config.classify.resource_classes,
@@ -105,6 +107,7 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
     ctx.obj['OUT_DIR'] = out_dir
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
+
     if log_dir is None:
         log_dir = out_dir
 
