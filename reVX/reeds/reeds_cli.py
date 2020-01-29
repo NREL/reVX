@@ -112,8 +112,8 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
         log_dir = out_dir
 
     name = ctx.obj['NAME']
-    if 'verbose' in ctx.obj:
-        verbose = any((ctx.obj['verbose'], verbose))
+    if 'VERBOSE' in ctx.obj:
+        verbose = any((ctx.obj['VERBOSE'], verbose))
 
     log_modules = [__name__, 'reVX.reeds', 'reV.rep_profiles']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
