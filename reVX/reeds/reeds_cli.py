@@ -3,11 +3,11 @@
 ReEDS Command Line Interface
 """
 import click
-import json
 import logging
 import os
 from reV.utilities.cli_dtypes import STR, STRLIST
 from reV.utilities.execution import SLURM, SubprocessManager
+from reV.utilities.utilities import dict_str_load
 
 from reVX.config.reeds import ReedsConfig
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -159,10 +159,13 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
     logger.info('Extracting ReEDS (region, bin, class) groups'
                 .format())
     kwargs = {'cluster_on': cluster_on, 'method': 'kmeans'}
+    if isinstance(filter, str):
+        filter = dict_str_load(filter)
+
     out = ReedsClassifier.create(rev_table, resource_classes,
                                  region_map=regions, sc_bins=sc_bins,
                                  cluster_kwargs=kwargs,
-                                 filter=json.loads(filter))
+                                 filter=filter)
     table_full, table, agg_table_full, agg_table = out
 
     out_path = os.path.join(out_dir,
