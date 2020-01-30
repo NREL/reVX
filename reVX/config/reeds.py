@@ -12,16 +12,6 @@ class ReedsConfig(AnalysisConfig):
     NAME = 'ReEDS'
     REQUIREMENTS = ('rev_table', )
 
-    def __init__(self, config):
-        """
-        Parameters
-        ----------
-        config : str | dict
-            File path to config json (str), serialized json object (str),
-            or dictionary with pre-extracted config.
-        """
-        super().__init__(config)
-
     @property
     def rev_table(self):
         """Get the reV aggregation or SC table (required)."""
@@ -62,13 +52,12 @@ class ReedsConfigGroup(dict):
         config : dict
             Dictionary with pre-extracted config input group.
         """
-
         if not isinstance(config, dict):
             raise TypeError('Config input must be a dict but received: {}'
                             .format(type(config)))
-        else:
-            super().__init__()
-            self.update(config)
+
+        super().__init__()
+        self.update(config)
 
 
 class ClassifyConfigGroup(ReedsConfigGroup):
@@ -108,6 +97,13 @@ class ClassifyConfigGroup(ReedsConfigGroup):
     def cluster_on(self):
         """Get default string column label to cluster on."""
         return self.get('cluster_on', self._default_cluster_on)
+
+    @property
+    def filter(self):
+        """
+        Column value pair(s) to filter on. If None don't filter
+        """
+        return self.get('filter', None)
 
 
 class ProfilesConfigGroup(ReedsConfigGroup):

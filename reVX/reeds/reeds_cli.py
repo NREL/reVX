@@ -7,6 +7,7 @@ import logging
 import os
 from reV.utilities.cli_dtypes import STR, STRLIST
 from reV.utilities.execution import SLURM, SubprocessManager
+from reV.utilities.utilities import dict_str_load
 
 from reVX.config.reeds import ReedsConfig
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -33,6 +34,43 @@ def main(ctx, name, verbose):
     ctx.obj['VERBOSE'] = verbose
 
 
+def run_local(ctx, config):
+    """
+    Run reV to ReEDs locally from config
+
+    Parameters
+    ----------
+    ctx : click.ctx
+        click ctx object
+    config : ReedsConfig
+        Reeds Config object
+    """
+    ctx.obj['NAME'] = config.name
+    ctx.invoke(local,
+               rev_table=config.rev_table,
+               out_dir=config.dirout,
+               log_dir=config.logdir)
+
+    ctx.invoke(classify, config.classify.resource_classes,
+               config.classify.regions, config.classify.sc_bins,
+               config.classify.cluster_on, config. classify.filter)
+
+    if config.profiles is not None:
+        ctx.invoke(profiles, config.profiles.cf_profiles,
+                   config.profiles.n_profiles,
+                   config.profiles.profiles_dset,
+                   config.profiles.rep_method,
+                   config.profiles.err_method,
+                   config.profiles.reg_cols,
+                   config.profiles.parallel)
+
+    if config.timeslices is not None:
+        ctx.invoke(timeslices, config.timeslices.profiles,
+                   config.timeslices.timeslices,
+                   config.timeslices.reg_cols,
+                   config.timeslices.all_profiles)
+
+
 @main.command()
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
@@ -54,34 +92,7 @@ def from_config(ctx, config, verbose):
         config._logging_level = logging.DEBUG
 
     if config.execution_control.option == 'local':
-        ctx.obj['NAME'] = config.name
-        ctx.invoke(local,
-                   rev_table=config.rev_table,
-                   out_dir=config.dirout,
-                   log_dir=config.logdir)
-
-        ctx.invoke(classify,
-                   resource_classes=config.classify.resource_classes,
-                   regions=config.classify.regions,
-                   sc_bins=config.classify.sc_bins,
-                   cluster_on=config.classify.cluster_on)
-
-        if config.profiles is not None:
-            ctx.invoke(profiles,
-                       cf_profiles=config.profiles.cf_profiles,
-                       n_profiles=config.profiles.n_profiles,
-                       profiles_dset=config.profiles.profiles_dset,
-                       rep_method=config.profiles.rep_method,
-                       err_method=config.profiles.err_method,
-                       reg_cols=config.profiles.reg_cols,
-                       parallel=config.profiles.parallel)
-
-        if config.timeslices is not None:
-            ctx.invoke(timeslices,
-                       profiles=config.timeslices.profiles,
-                       timeslices=config.timeslices.timeslices,
-                       reg_cols=config.timeslices.reg_cols,
-                       all_profiles=config.timeslices.all_profiles)
+        run_local(ctx, config)
 
     if config.execution_control.option == 'eagle':
         eagle(config)
@@ -134,8 +145,10 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
                     'region/resource bin combination'))
 @click.option('--cluster_on', '-cl', type=str, default='trans_cap_cost',
               help='Column(s) in rev_table to cluster on')
+@click.option('--filter', '-f', type=STR, default=None,
+              help='Column value pair(s) to filter on. If None do not filter')
 @click.pass_context
-def classify(ctx, resource_classes, regions, sc_bins, cluster_on):
+def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
     """
     Extract ReEDS (region, bin, class) groups
     """
@@ -146,13 +159,22 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on):
     logger.info('Extracting ReEDS (region, bin, class) groups'
                 .format())
     kwargs = {'cluster_on': cluster_on, 'method': 'kmeans'}
+    if isinstance(filter, str):
+        filter = dict_str_load(filter)
+
     out = ReedsClassifier.create(rev_table, resource_classes,
                                  region_map=regions, sc_bins=sc_bins,
-                                 cluster_kwargs=kwargs)
-    table_full, table, agg_table = out
+                                 cluster_kwargs=kwargs,
+                                 filter=filter)
+    table_full, table, agg_table_full, agg_table = out
 
+    out_path = os.path.join(out_dir,
+                            '{}_supply_curve_raw_full.csv'.format(name))
+    table_full.to_csv(out_path, index=False)
     out_path = os.path.join(out_dir, '{}_supply_curve_raw.csv'.format(name))
     table.to_csv(out_path, index=False)
+    out_path = os.path.join(out_dir, '{}_supply_curve_full.csv'.format(name))
+    agg_table_full.to_csv(out_path, index=False)
     out_path = os.path.join(out_dir, '{}_supply_curve.csv'.format(name))
     agg_table.to_csv(out_path, index=False)
 
@@ -296,11 +318,12 @@ def get_node_cmd(config):
         args += '-v '
 
     args += ('classify -rc {resource_classes} -r {regions} -scb {sc_bins} '
-             '-cl {cluster_on} '
+             '-cl {cluster_on} -f {filter}'
              .format(resource_classes=s(config.classify.resource_classes),
                      regions=s(config.classify.regions),
                      sc_bins=s(config.classify.sc_bins),
-                     cluster_on=s(config.classify.cluster_on)))
+                     cluster_on=s(config.classify.cluster_on),
+                     filter=s(config.classify.filter)))
 
     if config.profiles is not None:
         args += ('profiles -cf {cf_profiles} -np {n_profiles} '

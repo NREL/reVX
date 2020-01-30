@@ -26,7 +26,8 @@ class ReedsClassifier:
 
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
                  sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                            'method': 'kmeans', 'norm': None}):
+                                            'method': 'kmeans', 'norm': None},
+                 filter=None):
         """
         Parameters
         ----------
@@ -43,8 +44,15 @@ class ReedsClassifier:
             region-class
         cluster_kwargs : dict
             kwargs for _cluster_sc_bins and underlying clustering method
+        filter : dict | NoneType
+            Column value pair(s) to filter on. If None don't filter
         """
         rev_table = self._parse_table(rev_table)
+        if filter is not None:
+            for col, v in filter.items():
+                mask = rev_table[col] == v
+                rev_table = rev_table.loc[mask]
+
         rev_table = self._map_region(rev_table, region_map)
         rev_table = self._resource_classes(rev_table, resource_classes)
         self._rev_table = self._cluster_sc_bins(rev_table, sc_bins,
@@ -504,7 +512,8 @@ class ReedsClassifier:
     @classmethod
     def create(cls, rev_table, resource_classes, region_map='reeds_region',
                sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                          'method': 'kmeans', 'norm': None}):
+                                          'method': 'kmeans', 'norm': None},
+               filter=None):
         """
         Identify ReEDS regions and classes and dump and updated table
 
@@ -523,6 +532,8 @@ class ReedsClassifier:
             region-class
         cluster_kwargs : dict
             kwargs for _cluster_classes
+        filter : dict | NoneType
+            Column value pair(s) to filter on. If None don't filter
 
         Returns
         -------
@@ -532,10 +543,16 @@ class ReedsClassifier:
         .table_slim : pandas.DataFrame
             Updated table with region_id and class_bin columns
             added. Only includes columns in TABLE_OUT_COLS.
+        .aggregate_table : pandas.DataFrame
+            Region, class, bin aggregate table. Includes all columns.
         .aggregate_table_slim : pandas.DataFrame
             Region, class, bin aggregate table. Only inlcudes columns in
             AGG_TABLE_OUT_COLS.
         """
         classes = cls(rev_table, resource_classes, region_map=region_map,
-                      sc_bins=sc_bins, cluster_kwargs=cluster_kwargs)
-        return classes.table, classes.table_slim, classes.aggregate_table_slim
+                      sc_bins=sc_bins, cluster_kwargs=cluster_kwargs,
+                      filter=filter)
+        out = (classes.table, classes.table_slim, classes.aggregate_table,
+               classes.aggregate_table_slim)
+
+        return out
