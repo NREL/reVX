@@ -18,7 +18,7 @@ pip install sphinx-click
 
 - Make sure reV is in your PYTHONPATH
 - Run `sphinx-apidoc -eM -o source/reVX ../reVX` from the `docs` folder.
-- Add the following to any CLI modules:
+- Add the following to the top of any CLI module's .rst file:
 ```
 .. click:: module_path:main
    :prog: CLI-Alias # e.g. reVX
