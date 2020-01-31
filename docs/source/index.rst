@@ -19,7 +19,7 @@ for example, ReEDS, RPM, and PLEXOS.
 .. toctree::
   :maxdepth: 2
   :caption: Contents:
-  reVX
+  reVX/modules
 
 Indices and tables
 ==================

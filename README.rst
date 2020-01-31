@@ -2,6 +2,15 @@ reVX
 ####
 Renewable Energy Potential(V) eXchange Tool: reVX
 
+reVX command line tools
+***********************
+
+- ``reVX``
+- ``reV-ReEDS``
+- `reV-rpm <https://github.com/NREL/reVX/tree/master/examples/rpm/README.rst>`_
+- ``NSRDB``
+- ``WIND``
+
 Using Eagle Module
 ******************
 
@@ -9,15 +18,6 @@ If you would like to run reV on Eagle (NREL's HPC) you can use a pre-compiled mo
 ::
     module use /shared-projects/rev/modulefiles
     module load reVX
-
-reVX command line tools
-=======================
-
-``reVX``
-``reV-ReEDS``
-`reV-rpm <https://github.com/NREL/reVX/tree/master/examples/rpm/README.rst>`_
-``NSRDB``
-``WIND``
 
 Setup to run revX
 *****************
@@ -29,7 +29,7 @@ Option 1: PIP Install the most recent version of master (recommended for analyst
 
 2. Activate directory: ``conda activate revx``
 
-3. Install reV which is a required dependancy: ``pip install git+ssh://git@github.com/NREL/reV.git`` or ``pip install git+https://github.com/NREL/reV.git``
+3. Install reV which is a required dependency: ``pip install git+ssh://git@github.com/NREL/reV.git`` or ``pip install git+https://github.com/NREL/reV.git``
 
 4. Install reVX: ``pip install git+ssh://git@github.com/NREL/reVX.git`` or ``pip install git+https://github.com/NREL/reVX.git``
 
