@@ -1,46 +1,17 @@
 reVX.rpm package
 ================
 
-Submodules
-----------
-
-reVX.rpm.rpm\_cli module
-------------------------
-
-.. automodule:: reVX.rpm.rpm_cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-reVX.rpm.rpm\_clusters module
------------------------------
-
-.. automodule:: reVX.rpm.rpm_clusters
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-reVX.rpm.rpm\_manager module
-----------------------------
-
-.. automodule:: reVX.rpm.rpm_manager
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-reVX.rpm.rpm\_output module
----------------------------
-
-.. automodule:: reVX.rpm.rpm_output
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Module contents
----------------
-
 .. automodule:: reVX.rpm
    :members:
    :undoc-members:
    :show-inheritance:
+
+Submodules
+----------
+
+.. toctree::
+
+   reVX.rpm.rpm_cli
+   reVX.rpm.rpm_clusters
+   reVX.rpm.rpm_manager
+   reVX.rpm.rpm_output

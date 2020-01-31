@@ -1,6 +1,11 @@
 reVX package
 ============
 
+.. automodule:: reVX
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Subpackages
 -----------
 
@@ -17,27 +22,7 @@ Subpackages
 Submodules
 ----------
 
-reVX.cli module
----------------
+.. toctree::
 
-.. automodule:: reVX.cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-reVX.version module
--------------------
-
-.. automodule:: reVX.version
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-Module contents
----------------
-
-.. automodule:: reVX
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   reVX.cli
+   reVX.version

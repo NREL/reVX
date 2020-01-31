@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def cli(ctx, resource_h5, out_dir, compute_tree, verbose):
+def main(ctx, resource_h5, out_dir, compute_tree, verbose):
     """
     ResourceX Command Line Interface
     """
@@ -43,7 +43,7 @@ def cli(ctx, resource_h5, out_dir, compute_tree, verbose):
     logger.info('Outputs to be stored in: {}'.format(out_dir))
 
 
-@cli.command()
+@main.command()
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
               default=None,
               help='(lat, lon) coordinates of interest')
@@ -74,7 +74,7 @@ def sam_file(ctx, lat_lon, gid):
     SAM_df.to_csv(out_path)
 
 
-@cli.command()
+@main.command()
 @click.option('--dataset', '-d', type=str, required=True,
               help='Dataset to extract')
 @click.option('--lat_lon', '-ll', nargs=2, type=click.Tuple([float, float]),
@@ -108,7 +108,7 @@ def site(ctx, dataset, lat_lon, gid):
     site_df.to_csv(out_path)
 
 
-@cli.command()
+@main.command()
 @click.option('--dataset', '-d', type=str, required=True,
               help='Dataset to extract')
 @click.option('--region', '-r', type=str, required=True,
@@ -137,7 +137,7 @@ def region(ctx, dataset, region, region_col):
     meta.to_csv(out_path)
 
 
-@cli.command()
+@main.command()
 @click.option('--timestep', '-ts', type=str, required=True,
               help='Timestep to extract')
 @click.option('--dataset', '-d', type=str, required=True,
@@ -162,7 +162,7 @@ def timestep(ctx, timestep, dataset, region_col, region):
     map_df.to_csv(out_path)
 
 
-@cli.group()
+@main.group()
 @click.option('--sites', '-s', type=click.Path(exists=True), required=True,
               help=('.csv or .json file with columns "latitude", "longitude" '
                     'OR "gid"'))
@@ -257,4 +257,4 @@ def sam(ctx):
 
 
 if __name__ == '__main__':
-    cli(obj={})
+    main(obj={})
