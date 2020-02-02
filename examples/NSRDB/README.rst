@@ -38,7 +38,7 @@ The following variables are provided by the NSRDB:
 Data Format
 ===========
 
-The data is provided in high density data file (.h5) separated by year.  The variables mentioned above are provided in 2 dimensional time-series arrays with dimensions (time x location). The temporal axis is defined by the 'time_index' dataset, while the positional axis is defined by the 'meta' dataset. For storage efficiency each variable has been scaled and stored as an integer. The scale-factor is provided in the ``psm_scale-factor`` attribute.  The units for the variable data is also provided as an attribute (``psm_units``).
+The data is provided in high density data file (.h5) separated by year.  The variables mentioned above are provided in 2 dimensional time-series arrays with dimensions (time x location). The temporal axis is defined by the ``time_index`` dataset, while the positional axis is defined by the ``meta`` dataset. For storage efficiency each variable has been scaled and stored as an integer. The scale-factor is provided in the ``psm_scale-factor`` attribute.  The units for the variable data is also provided as an attribute (``psm_units``).
 
 NSRDB Module
 ============
