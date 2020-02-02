@@ -17,7 +17,8 @@ Using Eagle Module
 ==================
 
 If you would like to run reV on Eagle (NREL's HPC) you can use a pre-compiled module:
-::
+.. code-block::
+
     module use /shared-projects/rev/modulefiles
     module load reVX
 

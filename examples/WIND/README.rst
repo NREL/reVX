@@ -34,12 +34,14 @@ WIND Module
 -----------
 
 An extraction utility for the WIND (WTK) data has been created with in `reVX <https://github.com/nrel/reVX>`_ and is available on Eagle as a module:
-::
+.. code-block::
+
     module use /datasets/modulefiles
     module load WIND
 
 The WIND module provides a `WIND <https://nrel.github.io/reVX/reVX/reVX.resource.wind_cli.html#wind>`_ command line utility with the following options and commands:
-::
+.. code-block::
+
     Usage: WIND [OPTIONS] COMMAND [ARGS]...
 
       WindX Command Line Interface
