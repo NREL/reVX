@@ -6,10 +6,13 @@ The National Solar Radiation Database (NSRDB) is a serially complete collection 
 The NSRDB provides time-series data at 30 minute resolution of resource averaged over surface cells of 0.038 degrees in both latitude and longitude, or nominally 4 km in size. The solar radiation values represent the resource available to solar energy systems. The data was created using cloud properties which are generated using the AVHRR Pathfinder Atmospheres-Extended (PATMOS-x) algorithms developed by the University of Wisconsin. Fast all-sky radiation model for solar applications (FARMS) in conjunction with the cloud properties, and aerosol optical depth (AOD) and precipitable water vapor (PWV) from ancillary source are used to estimate solar irradiance (GHI, DNI, and DHI). The Global Horizontal Irradiance (GHI) is computed for clear skies using the REST2 model. For cloud scenes identified by the cloud mask, FARMS is used to compute GHI. The Direct Normal Irradiance (DNI) for cloud scenes is then computed using the DISC model. The PATMOS-X model uses half-hourly radiance images in visible and infrared channels from the GOES series of geostationary weather satellites.  Ancillary variables needed to run REST2 and FARMS (e.g., aerosol optical depth, precipitable water vapor, and albedo) are derived from the the Modern Era-Retrospective Analysis (MERRA-2) dataset. Temperature and wind speed data are also derived from MERRA-2 and provided for use in SAM to compute PV generation.
 
 The following variables are provided by the NSRDB:
+
 - Irradiance:
+
     - Global Horizontal (ghi)
     - Direct Normal (dni)
     - Diffuse (dhi)
+
 - Clear-sky Irradiance
 - Cloud Type
 - Dew Point
@@ -70,4 +73,5 @@ References
 
 For more information about the NSRDB please see the `website <https://nsrdb.nrel.gov/>`_
 Users of the NSRDB should please cite:
+
 - `Sengupta, M., Y. Xie, A. Lopez, A. Habte, G. Maclaurin, and J. Shelby. 2018. "The National Solar Radiation Data Base (NSRDB)." Renewable and Sustainable Energy Reviews  89 (June): 51-60. <https://www.sciencedirect.com/science/article/pii/S136403211830087X?via%3Dihub>`_

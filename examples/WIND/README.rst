@@ -7,6 +7,7 @@ Model
 Wind resource data for North America was produced using the `Weather Research and Forecasting Model (WRF) <https://www.mmm.ucar.edu/weather-research-and-forecasting-model>`_. The WRF model was initialized with the European Centre for Medium Range Weather Forecasts Interim Reanalysis (ERA-Interm) data set with an initial grid spacing of 54 km.  Three internal nested domains were used to refine the spatial resolution to 18, 6, and finally 2 km.  The WRF model was run for years 2007 to 2014. While outputs were extracted from WRF at 5 minute time-steps, due to storage limitations instantaneous hourly time-step are provided for all variables while full 5 min resolution data is provided for wind speed and wind direction only.
 
 The following variables were extracted from the WRF model data:
+
 - Wind Speed at 10, 40, 60, 80, 100, 120, 140, 160, 200 m
 - Wind Direction at 10, 40, 60, 80, 100, 120, 140, 160, 200 m
 - Temperature at 2, 10, 40, 60, 80, 100, 120, 140, 160, 200 m
@@ -62,6 +63,7 @@ References
 
 For more information about the WIND Toolkit please see the `website. <https://www.nrel.gov/grid/wind-toolkit.html>`_
 Users of the WIND Toolkit should use the following citations:
+
 - `Draxl, C., B.M. Hodge, A. Clifton, and J. McCaa. 2015. Overview and Meteorological Validation of the Wind Integration National Dataset Toolkit (Technical Report, NREL/TP-5000-61740>`_. Golden, CO: National Renewable Energy Laboratory. <https://www.nrel.gov/docs/fy15osti/61740.pdf>`_
 - `Draxl, C., B.M. Hodge, A. Clifton, and J. McCaa. 2015. "The Wind Integration National Dataset (WIND>`_ Toolkit." Applied Energy 151: 355366. <https://www.sciencedirect.com/science/article/pii/S0306261915004237?via%3Dihub>`_
 - `Lieberman-Cribbin, W., C. Draxl, and A. Clifton. 2014. Guide to Using the WIND Toolkit Validation Code (Technical Report, NREL/TP-5000-62595>`_. Golden, CO: National Renewable Energy Laboratory. <https://www.nrel.gov/docs/fy15osti/62595.pdf>`_
