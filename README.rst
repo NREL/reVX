@@ -2,28 +2,30 @@ reVX
 ####
 Renewable Energy Potential(V) eXchange Tool: reVX
 
+.. inclusion-intro
 reVX command line tools
-***********************
+=======================
 
-- ``reVX``
-- ``reV-ReEDS``
-- `reV-rpm <https://github.com/NREL/reVX/tree/master/examples/rpm/README.rst>`_
-- ``NSRDB``
-- ``WIND``
+- `reVX <https://nrel.github.io/reVX/reVX/reVX.cli.html#revx>`_
+- `reV-ReEDS <https://nrel.github.io/reVX/reVX/reVX.reeds.reeds_cli.html#rev-reeds>`_
+- `reV-rpm <https://nrel.github.io/reVX/reVX/reVX.rpm.rpm_cli.html#rev-rpm>`_
+- `reV-plexos <https://nrel.github.io/reVX/reVX/reVX.plexos.plexos_cli.html#rev-plexos>`_
+- `NSRDB <https://nrel.github.io/reVX/reVX/reVX.resource.solar_cli.html#nsrdb>`_
+- `WIND <https://nrel.github.io/reVX/reVX/reVX.resource.wind_cli.html#wind>`_
 
 Using Eagle Module
-******************
+==================
 
 If you would like to run reV on Eagle (NREL's HPC) you can use a pre-compiled module:
 ::
     module use /shared-projects/rev/modulefiles
     module load reVX
 
-Setup to run revX
-*****************
+Installing reVX
+=================
 
 Option 1: PIP Install the most recent version of master (recommended for analysts):
-===================================================================================
+-----------------------------------------------------------------------------------
 
 1. Create a new environment: ``conda create --name revx python=3.7``
 
@@ -34,7 +36,7 @@ Option 1: PIP Install the most recent version of master (recommended for analyst
 4. Install reVX: ``pip install git+ssh://git@github.com/NREL/reVX.git`` or ``pip install git+https://github.com/NREL/reVX.git``
 
 Option 2: Clone repo (recommended for developers)
-=================================================
+-------------------------------------------------
 
 1. from home dir, ``git clone https://github.com/NREL/reVX.git``
     1) enter github username
@@ -64,4 +66,3 @@ Option 2: Clone repo (recommended for developers)
 3. Check that rev was installed successfully
     1) From any directory, run the following commands. This should return the help pages for the CLI's.
         - ``reVX``
-        - ``reV-rpm``
