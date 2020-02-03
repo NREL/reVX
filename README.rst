@@ -29,13 +29,19 @@ Installing reVX
 Option 1: PIP Install the most recent version of master (recommended for analysts):
 -----------------------------------------------------------------------------------
 
-1. Create a new environment: ``conda create --name revx python=3.7``
+1. Create a new environment:
+    ``conda create --name revx python=3.7``
 
-2. Activate directory: ``conda activate revx``
+2. Activate directory:
+    ``conda activate revx``
 
-3. Install reV which is a required dependency: ``pip install git+ssh://git@github.com/NREL/reV.git`` or ``pip install git+https://github.com/NREL/reV.git``
+3. Install reV which is a required dependency:
+    ``pip install git+ssh://git@github.com/NREL/reV.git``
+    or ``pip install git+https://github.com/NREL/reV.git``
 
-4. Install reVX: ``pip install git+ssh://git@github.com/NREL/reVX.git`` or ``pip install git+https://github.com/NREL/reVX.git``
+4. Install reVX:
+    ``pip install git+ssh://git@github.com/NREL/reVX.git``
+    or ``pip install git+https://github.com/NREL/reVX.git``
 
 Option 2: Clone repo (recommended for developers)
 -------------------------------------------------
