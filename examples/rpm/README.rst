@@ -1,7 +1,7 @@
 reV to RPM Pipeline
 ===================
 
-The reV to RPM pipeline can be fun from the command line using the ``reV-RPM``
+The reV to RPM pipeline can be run from the command line using the ``reV-RPM``
 command line interface (CLI), or using the rpm sub-package.
 
 reV-RPM CLI
@@ -50,7 +50,7 @@ This will extract 5 additional profiles.  NOTE: ``extra-profiles`` can only be r
 RPM sub-package
 ---------------
 
-The reV-RPM pipeline can also be run using the rpm sub-package of reX. The two main classes are
+The reV-RPM pipeline can also be run using the rpm sub-package of reVX. The two main classes are
 ``RPMClusterManager`` and ``RPMOutput``.
 
 ``RPMClusterManager`` manages the clustering of RPM regions and if desired can run ``RPMOutput`` to extract
