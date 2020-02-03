@@ -3,8 +3,7 @@
 Extract ReEDS timeslices from rep-profiles
 """
 from copy import deepcopy
-import concurrent.futures as cf
-import multiprocessing as mpl
+from concurrent.futures import as_completed
 import json
 import logging
 import numpy as np
@@ -12,6 +11,7 @@ import os
 import pandas as pd
 from reV.handlers.resource import Resource
 from reV.handlers.outputs import Outputs
+from reV.utilities.execution import SpawnProcessPool
 
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
@@ -529,9 +529,7 @@ class ReedsTimeslices:
                     .format(max_workers))
 
         if max_workers > 1:
-            mp_context = mpl.get_context('spawn')
-            with cf.ProcessPoolExecutor(max_workers=max_workers,
-                                        mp_context=mp_context) as exe:
+            with SpawnProcessPool(max_workers=max_workers) as exe:
                 futures = {}
                 for s, slice_map in timeslice_groups:
                     tslice = profiles.loc[slice_map.index]
@@ -539,7 +537,7 @@ class ReedsTimeslices:
                                         tslice)
                     futures[future] = s
 
-                for i, future in enumerate(cf.as_completed(futures)):
+                for i, future in enumerate(as_completed(futures)):
                     s = futures[future]
                     mean, stdev, coeffs = future.result()
 
@@ -648,7 +646,7 @@ class ReedsTimeslices:
                     .format(max_workers))
 
         if max_workers > 1:
-            with cf.ProcessPoolExecutor(max_workers=max_workers) as exe:
+            with SpawnProcessPool(max_workers=max_workers) as exe:
                 futures = {}
                 for group, df in meta.groupby(reg_cols):
                     future = exe.submit(ReedsTimeslices._cf_group_stats,
@@ -659,7 +657,7 @@ class ReedsTimeslices:
 
                 means = []
                 stdevs = []
-                for i, future in enumerate(cf.as_completed(futures)):
+                for i, future in enumerate(as_completed(futures)):
                     logger.info('Timeslice future {} out of {} completed.'
                                 .format(i + 1, len(futures)))
                     m, s = future.result()

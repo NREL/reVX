@@ -2,8 +2,7 @@
 """
 Pipeline between reV and RPM
 """
-import concurrent.futures as cf
-import multiprocessing as mpl
+from concurrent.futures import as_completed
 import logging
 import os
 import pandas as pd
@@ -11,6 +10,7 @@ import psutil
 from warnings import warn
 
 from reV.handlers.outputs import Outputs
+from reV.utilities.execution import SpawnProcessPool
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.rpm.rpm_output import RPMOutput
 from reVX.utilities.exceptions import RPMValueError, RPMRuntimeError
@@ -187,9 +187,7 @@ class RPMClusterManager:
                   "contiguous_kwargs": contiguous_kwargs}
         if self.max_workers > 1:
             future_to_region = {}
-            mp_context = mpl.get_context('spawn')
-            with cf.ProcessPoolExecutor(max_workers=self.max_workers,
-                                        mp_context=mp_context) as exe:
+            with SpawnProcessPool(max_workers=self.max_workers) as exe:
                 for region, region_map in self._rpm_regions.items():
                     logger.info('Kicking off clustering for "{}".'
                                 .format(region))
@@ -200,7 +198,7 @@ class RPMClusterManager:
                                         gen_gids, clusters, **kwargs)
                     future_to_region[future] = region
 
-                for i, future in enumerate(cf.as_completed(future_to_region)):
+                for i, future in enumerate(as_completed(future_to_region)):
                     mem = psutil.virtual_memory()
                     region = future_to_region[future]
                     logger.info('Finished clustering "{}", {} out of {}. '
@@ -217,7 +215,6 @@ class RPMClusterManager:
                 gen_gids = region_map['gen_gids']
                 result = RPMClusters.cluster(self._cf_h5, gen_gids, clusters,
                                              **kwargs)
-#                print(result)
                 self._rpm_regions[region].update({'clusters': result})
 
     @staticmethod

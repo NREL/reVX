@@ -2,8 +2,7 @@
 """
 RPM output handler.
 """
-import concurrent.futures as cf
-import multiprocessing as mpl
+from concurrent.futures import as_completed
 import logging
 import numpy as np
 import os
@@ -14,6 +13,7 @@ from warnings import warn
 
 from reV.supply_curve.exclusions import ExclusionMask, ExclusionMaskFromDict
 from reV.handlers.outputs import Outputs
+from reV.utilities.execution import SpawnProcessPool
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.utilities.exceptions import RPMRuntimeError, RPMTypeError
 
@@ -270,9 +270,7 @@ class RepresentativeProfiles:
                                           fpath_out=fpath_out_i, key=key,
                                           forecast_fpath=forecast_fpath)
         else:
-            mp_context = mpl.get_context('spawn')
-            with cf.ProcessPoolExecutor(max_workers=max_workers,
-                                        mp_context=mp_context) as exe:
+            with SpawnProcessPool(max_workers=max_workers) as exe:
                 for irp in range(n_profiles):
                     fni = fn_pro.replace('.csv', '_rank{}.csv'.format(irp))
                     fpath_out_i = os.path.join(out_dir, fni)
@@ -770,9 +768,7 @@ class RPMOutput:
         """
 
         futures = {}
-        mp_context = mpl.get_context('spawn')
-        with cf.ProcessPoolExecutor(max_workers=self.max_workers,
-                                    mp_context=mp_context) as exe:
+        with SpawnProcessPool(max_workers=self.max_workers) as exe:
             for i, cid in enumerate(unique_clusters):
 
                 lat_s, lon_s = slices[cid]
@@ -784,7 +780,7 @@ class RPMOutput:
                 logger.debug('Kicked off exclusions for cluster "{}", {} out '
                              'of {}.'.format(cid, i + 1, len(unique_clusters)))
 
-            for i, future in enumerate(cf.as_completed(futures)):
+            for i, future in enumerate(as_completed(futures)):
                 cid = futures[future]
                 mem = psutil.virtual_memory()
                 logger.info('Finished exclusions for cluster "{}", {} out '
@@ -917,9 +913,7 @@ class RPMOutput:
         """
 
         futures = {}
-        mp_context = mpl.get_context('spawn')
-        with cf.ProcessPoolExecutor(max_workers=self.max_workers,
-                                    mp_context=mp_context) as exe:
+        with SpawnProcessPool(max_workers=self.max_workers) as exe:
             for _, df in self._clusters.groupby(groupby):
                 if 'included_frac' in df:
                     mask = (df['included_frac'] >= self.include_threshold)
@@ -939,7 +933,7 @@ class RPMOutput:
                             'groupby: {}'.format(rank_col, groupby))
                 self._clusters[rank_col] = np.nan
 
-            for i, future in enumerate(cf.as_completed(futures)):
+            for i, future in enumerate(as_completed(futures)):
                 gen_gid = futures[future]
                 mem = psutil.virtual_memory()
                 logger.info('Finished re-ranking {} out of {}. '
