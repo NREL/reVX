@@ -1,48 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 RPM Clustering Module
-
-#### Sample usage:
-
-import h5py
-
-fname = '/projects/naris/extreme_events/generation/pv_ca_2012.h5'
-fname = '/projects/naris/extreme_events/generation/v90_full_ca_2012.h5'
-with h5py.File(fname, 'r') as f:
-    wind_meta = pd.DataFrame(f['meta'][...])
-    wind_gen_gids = wind_meta.iloc[::15].index.values
-
-# Initiate
-clusters = RPMClusters(fname, wind_gen_gids, n_clusters=6)
-
-# Cluster on wavelet coefficients
-labels = clusters._cluster_coefficients(**method_kwargs)
-
-# Optimize clusters by minimizing distance and rmse to cluster centers
-new_labels = clusters._dist_rank_optimization(**dist_rmse_kwargs)
-
-# Run multistep clustering
-clusters._cluster(**kwargs)
-
-# classmethod
-cluster_df = RPMClusters.cluster(fname, wind_gen_gids, n_clusters=6, **kwargs)
-
-# Shapefiles
-RPMClusters._generate_shapefile(clusters.meta, fpath='./test.shp')
-
-
-#### Testing:
-
-from reV.rpm.rpm import *
-import h5py
-
-fname = '/projects/naris/extreme_events/generation/pv_ca_2012.h5'
-with h5py.File(fname, 'r') as f:
-    wind_meta = pd.DataFrame(f['meta'][...])
-    wind_gen_gids = wind_meta.index.values
-
-cluster_df = RPMClusters.cluster(fname, wind_gen_gids, n_clusters=6)
-
 """
 from copy import deepcopy
 import geopandas as gpd
@@ -59,7 +17,36 @@ logger = logging.getLogger(__name__)
 
 
 class RPMClusters:
-    """ Base class for RPM clusters """
+    """
+    Base class for RPM clusters
+
+    Examples
+    --------
+    >>> from reV import Resource
+    >>>
+    >>> fname = '../gen_pv_2012.h5'
+    >>> with Resource(fname) as res:
+    >>>     gen_gids = f.meta.index.values
+    >>>
+    >>> clusters = RPMClusters(fname, gen_gids, n_clusters=6)
+    >>> clusters._cluster(**kwargs)
+    >>> clusters.meta
+            gen_gid   latitude  longitude  cluster_id   geometry
+    0         0  41.290001 -71.860001           0  POINT (-71.86000 41.29000)
+    1         1  41.290001 -71.820000           0  POINT (-71.82000 41.29000)
+    2         2  41.250000 -71.820000           4  POINT (-71.82000 41.25000)
+    3         3  41.330002 -71.820000           0  POINT (-71.82000 41.33000)
+    4         4  41.369999 -71.820000           0  POINT (-71.82000 41.37000)
+    ..      ...        ...        ...         ...                         ...
+    95       95  41.250000 -71.660004           4  POINT (-71.66000 41.25000)
+    96       96  41.889999 -71.660004           5  POINT (-71.66000 41.89000)
+    97       97  41.450001 -71.660004           3  POINT (-71.66000 41.45000)
+    98       98  41.610001 -71.660004           1  POINT (-71.66000 41.61000)
+    99       99  41.410000 -71.660004           3  POINT (-71.66000 41.41000)
+
+    Generate Shape File of Cluster
+    >>> RPMClusters._generate_shapefile(clusters.meta, fpath='./test.shp')
+    """
     def __init__(self, cf_fpath, gen_gids, n_clusters):
         """
         Parameters
@@ -498,6 +485,28 @@ class RPMClusters:
         -------
         out : pandas.DataFrame
             Cluster results: (gen_gid, lon, lat, cluster_id, rank)
+
+        Examples
+        --------
+        >>> from reV import Resource
+        >>>
+        >>> fname = '../gen_pv_2012.h5'
+        >>> with Resource(fname) as res:
+        >>>     gen_gids = f.meta.index.values
+        >>>
+        >>> RPMClusters.cluster(fname, gen_gids, n_clusters=6)
+                gen_gid   latitude  longitude  cluster_id   geometry
+        0         0  41.290001 -71.860001       0  POINT (-71.86000 41.29000)
+        1         1  41.290001 -71.820000       0  POINT (-71.82000 41.29000)
+        2         2  41.250000 -71.820000       4  POINT (-71.82000 41.25000)
+        3         3  41.330002 -71.820000       0  POINT (-71.82000 41.33000)
+        4         4  41.369999 -71.820000       0  POINT (-71.82000 41.37000)
+        ..      ...        ...        ...     ...                         ...
+        95       95  41.250000 -71.660004       4  POINT (-71.66000 41.25000)
+        96       96  41.889999 -71.660004       5  POINT (-71.66000 41.89000)
+        97       97  41.450001 -71.660004       3  POINT (-71.66000 41.45000)
+        98       98  41.610001 -71.660004       1  POINT (-71.66000 41.61000)
+        99       99  41.410000 -71.660004       3  POINT (-71.66000 41.41000)
         """
         clusters = cls(cf_h5_path, region_gen_gids, n_clusters)
         try:
@@ -522,11 +531,21 @@ class RPMWavelets:
         Collect wavelet coefficients for time series <x> using
         mother wavelet <wavelet> at levels <level>.
 
-        :param x: [ndarray] time series values
-        :param wavelet: [string] mother wavelet type
-        :param level: [int] optional wavelet computation level
-        :param indices: [(int, ...)] coefficient array levels to keep
-        :return: [list] stacked coefficients at <indices>
+        Parameters
+        ----------
+        x : ndarray
+            time series values
+        wavelet : string
+            mother wavelet type
+        level : int
+            optional wavelet computation level
+        indices : ndarray
+            coefficient array levels to keep
+
+        Returns
+        -------
+        list
+            stacked coefficients at <indices>
         """
 
         # set mother
@@ -546,10 +565,20 @@ class RPMWavelets:
     def _subset_coefficients(x, gid_count, indices=None):
         """
         Subset and stack wavelet coefficients
-        :param x: [(ndarray, ...)] coefficients arrays
-        :param gid_count: [int] number of area ID values
-        :param indices: [(int, ...)]
-        :return: [ndarray] stacked coefficients: converted to integers
+
+        Parameters
+        ----------
+        x : ndarray
+            coefficients arrays
+        gid_count : int
+            number of area ID values
+        indices : ndarray
+            coefficient array levels to keep
+
+        Returns
+        -------
+        ndarray
+            stacked coefficients: converted to integers
         """
 
         indices = indices or range(0, len(x))
