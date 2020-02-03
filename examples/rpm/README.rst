@@ -16,28 +16,32 @@ There are 3 steps to the reV to RPM pipeline:
     3) Extracting representative profiles from each region
 
 The entire pipeline can be run using the following CLI call:
-.. code-block::
+
+.. code-block:: bash
 
     reV-RPM --name="Job_name" --cf-profile="../cf_profiles.h5" --out-dir="../output_directory" -p cluster --rpm_meta="../rpm_meta.csv" and_profiles --exclusions="../exclusions.tiff" --techmap="../techmap.h5" --techmap_dset="wtk_conus"
 
 This will cluster the RPM profiles using the regions and number of clusters given in ``rpm_meta.csv`` and then return a representative profile for each region. NOTE: that the and_profiles options are all optional. If they are not given than exclusions will not be applied.  Also NOTE that -p is an optional flag to run the clustering and profiles in parallel.
 
 If you only want to create the clusters you can drop the and_profiles part of the command:
-.. code-block::
+
+.. code-block:: bash
 
     reV-RPM --name="Job_name" --cf-profile="../cf_profiles.h5" --out-dir="../output_directory" -p cluster --rpm_meta="../rpm_meta.csv"
 
 This will write a .csv with the cluster results to ``out_dir``
 
 If representative profiles are desired for an existing set of clusters (``rpm_clusters.csv``) the ``rep-profies`` sub-command can be used:
-.. code-block::
 
-    reV-RPM --name="Job_name" --cf-profile="../cf_profiles.h5" --out-dir="../output_directory"` -p and_profiles --rpm-clusters="../rpm_clusters.csv" --exclusions="../exclusions.tiff" --techmap="../techmap.h5" --techmap_dset="wtk_conus"
+.. code-block:: bash
+
+    reV-RPM --name="Job_name" --cf-profile="../cf_profiles.h5" --out-dir="../output_directory" -p and_profiles --rpm-clusters="../rpm_clusters.csv" --exclusions="../exclusions.tiff" --techmap="../techmap.h5" --techmap_dset="wtk_conus"
 
 Again --exclusions, --techmap, and --techmap-dset are optional if exclusions should be applied.
 
 If additional representative profiles are desired use the following call:
-.. code-block::
+
+.. code-block:: bash
 
     reV-RPM --name="Job_name" --cf-profile="../cf_profiles.h5" --out-dir="../output_directory" -p and_profiles --rpm-clusters="../rpm_clusters.csv" extra_profiles --profiles="5"
 
@@ -52,12 +56,14 @@ The reV-RPM pipeline can also be run using the rpm sub-package of reX. The two m
 ``RPMClusterManager`` manages the clustering of RPM regions and if desired can run ``RPMOutput`` to extract
 representative profiles.
 Extracting clusters:
+
 .. code-block:: python
 
     RPMClusterManager.run_clusters(cf_fpath, rpm_meta, out_dir, job_tag=name,
                                    rpm_region_col=region_col, parallel=parallel)
 
 Extracting clusters and profiles:
+
 .. code-block:: python
 
     RPMClusterManager.run_clusters_and_profiles(cf_fpath, rpm_meta, exclusions,
@@ -68,6 +74,7 @@ Extracting clusters and profiles:
 ``RPMOutput`` handles the application of exclusions and extraction of representative profiles from an
 existing set of clusters.
 Apply exclusions and extract profiles:
+
 .. code-block:: python
 
     RPMOutput.process_outputs(rpm_clusters, cf_fpath, exclusions,
@@ -77,6 +84,7 @@ Apply exclusions and extract profiles:
 As above NOTE that ``exclusions``, ``techmap``, and ``techmap_dset`` can be set to ``None``
 if representative profiles without exclusions are desired.
 Extra profiles can be extracted with:
+
 .. code-block:: python
 
     RPMOutput.extract_profiles(rpm_clusters, cf_fpath, out_dir,

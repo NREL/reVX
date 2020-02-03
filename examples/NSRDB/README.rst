@@ -44,13 +44,15 @@ NSRDB Module
 ------------
 
 An extraction utility for the NSRDB has been created with in `reVX <https://github.com/nrel/reVX>`_ and is available on Eagle as a module:
-.. code-block::
+
+.. code-block:: bash
 
     module use /datasets/modulefiles
     module load NSRDB
 
 The NSRDB module provides a `NSRDB <https://nrel.github.io/reVX/reVX/reVX.resource.solar_cli.html#nsrdb>`_ command line utility with the following options and commands:
-.. code-block::
+
+.. code-block:: bash
 
     Usage: NSRDB [OPTIONS] COMMAND [ARGS]...
 
