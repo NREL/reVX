@@ -66,7 +66,7 @@ def test_classifier():
     out = ReedsClassifier.create(rev_table, resource_classes,
                                  region_map='reeds_region',
                                  sc_bins=5, cluster_kwargs=kwargs)
-    test_table_full, test_table, test_agg = out
+    test_table_full, test_table, _, test_agg = out
     assert_frame_equal(truth_table_full, test_table_full, check_dtype=False,
                        check_exact=False)
     assert_frame_equal(truth_table, test_table, check_dtype=False,
