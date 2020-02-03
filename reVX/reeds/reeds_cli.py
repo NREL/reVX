@@ -51,24 +51,29 @@ def run_local(ctx, config):
                out_dir=config.dirout,
                log_dir=config.logdir)
 
-    ctx.invoke(classify, config.classify.resource_classes,
-               config.classify.regions, config.classify.sc_bins,
-               config.classify.cluster_on, config. classify.filter)
+    ctx.invoke(classify,
+               resource_classes=config.classify.resource_classes,
+               regions=config.classify.regions,
+               sc_bins=config.classify.sc_bins,
+               cluster_on=config.classify.cluster_on,
+               filter=config. classify.filter)
 
     if config.profiles is not None:
-        ctx.invoke(profiles, config.profiles.cf_profiles,
-                   config.profiles.n_profiles,
-                   config.profiles.profiles_dset,
-                   config.profiles.rep_method,
-                   config.profiles.err_method,
-                   config.profiles.reg_cols,
-                   config.profiles.parallel)
+        ctx.invoke(profiles,
+                   cf_profiles=config.profiles.cf_profiles,
+                   n_profiles=config.profiles.n_profiles,
+                   profiles_dset=config.profiles.profiles_dset,
+                   rep_method=config.profiles.rep_method,
+                   err_method=config.profiles.err_method,
+                   reg_cols=config.profiles.reg_cols,
+                   parallel=config.profiles.parallel)
 
     if config.timeslices is not None:
-        ctx.invoke(timeslices, config.timeslices.profiles,
-                   config.timeslices.timeslices,
-                   config.timeslices.reg_cols,
-                   config.timeslices.all_profiles)
+        ctx.invoke(timeslices,
+                   profiles=config.timeslices.profiles,
+                   timeslices=config.timeslices.timeslices,
+                   reg_cols=config.timeslices.reg_cols,
+                   all_profiles=config.timeslices.all_profiles)
 
 
 @main.command()
