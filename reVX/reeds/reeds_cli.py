@@ -323,7 +323,7 @@ def get_node_cmd(config):
         args += '-v '
 
     args += ('classify -rc {resource_classes} -r {regions} -scb {sc_bins} '
-             '-cl {cluster_on} -f {filter}'
+             '-cl {cluster_on} -f {filter} '
              .format(resource_classes=s(config.classify.resource_classes),
                      regions=s(config.classify.regions),
                      sc_bins=s(config.classify.sc_bins),
@@ -386,6 +386,7 @@ def eagle(config):
         msg = ('Was unable to kick off reVX-REEDS pipeline job "{}". '
                'Please see the stdout error messages'
                .format(name))
+
     click.echo(msg)
     logger.info(msg)
 
