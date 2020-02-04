@@ -24,7 +24,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'reVX'
-copyright = '2018, Michael Rossol'
+copyright = '2020, Alliance for Sustainable Energy, LLC'
 author = 'Michael Rossol'
 
 # The short X.Y version
