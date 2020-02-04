@@ -24,7 +24,7 @@ class RPMClusters:
     --------
     >>> from reV import Resource
     >>>
-    >>> fname = '../gen_pv_2012.h5'
+    >>> fname = '$TESTDATADIR/reV_gen/gen_pv_2012.h5'
     >>> with Resource(fname) as res:
     >>>     gen_gids = f.meta.index.values
     >>>
@@ -490,7 +490,7 @@ class RPMClusters:
         --------
         >>> from reV import Resource
         >>>
-        >>> fname = '../gen_pv_2012.h5'
+        >>> fname = '$TESTDATADIR/reV_ge/gen_pv_2012.h5'
         >>> with Resource(fname) as res:
         >>>     gen_gids = f.meta.index.values
         >>>
