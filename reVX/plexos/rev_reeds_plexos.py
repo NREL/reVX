@@ -5,7 +5,7 @@ Created on Wed Aug 21 13:47:43 2019
 @author: gbuster
 """
 import os
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import as_completed
 import json
 import numpy as np
 import pandas as pd
@@ -13,6 +13,7 @@ from scipy.spatial import cKDTree
 from warnings import warn
 import logging
 
+from reV.utilities.execution import SpawnProcessPool
 from reV.handlers.outputs import Outputs
 
 logger = logging.getLogger(__name__)
@@ -771,7 +772,7 @@ class PlexosAggregation:
 
         if self.parallel:
             futures = {}
-            with ProcessPoolExecutor() as exe:
+            with SpawnProcessPool() as exe:
                 for i, inode in enumerate(np.unique(self._node_map)):
                     mask = (self._node_map == inode)
                     f = exe.submit(PlexosNode.run,

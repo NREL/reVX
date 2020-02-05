@@ -18,8 +18,10 @@ EXCL_FPATH = os.path.join(reV_TESTDATADIR,
                           'ri_exclusions/ri_exclusions.h5')
 OUT_DIR = os.path.join(reVX_TESTDATADIR, 'rpm/test_outputs')
 TECHMAP_DSET = 'techmap_nsrdb_ri_truth'
-EXCL_DICT = {'ri_srtm_slope': {'inclusion_range': (None, 5)},
-             'ri_padus': {'exclude_values': [1]}}
+EXCL_DICT = {'ri_srtm_slope': {'inclusion_range': (None, 5),
+                               'exclude_nodata': True},
+             'ri_padus': {'exclude_values': [1],
+                          'exclude_nodata': True}}
 RPM_META = os.path.join(reVX_TESTDATADIR, 'rpm/rpm_meta.csv')
 BASELINE = os.path.join(reVX_TESTDATADIR,
                         'rpm/rpm_cluster_outputs_baseline.csv')
