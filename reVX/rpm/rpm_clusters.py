@@ -45,6 +45,7 @@ class RPMClusters:
     99       99  41.410000 -71.660004           3  POINT (-71.66000 41.41000)
 
     Generate Shape File of Cluster
+
     >>> RPMClusters._generate_shapefile(clusters.meta, fpath='./test.shp')
     """
     def __init__(self, cf_fpath, gen_gids, n_clusters):
