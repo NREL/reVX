@@ -75,7 +75,8 @@ def test_classifier():
                        check_exact=False)
 
 
-def test_profiles():
+@pytest.mark.parametrize('parallel', [True, False])
+def test_profiles(parallel):
     """
     Test ReedsProfiles
     """
@@ -87,7 +88,7 @@ def test_profiles():
                              profiles_dset='cf_profile', rep_method='meanoid',
                              err_method='rmse', n_profiles=3,
                              reg_cols=('region', 'class'),
-                             parallel=False)
+                             parallel=parallel)
 
     for k, v in truth[0].items():
         msg = 'Representative profiles {} do not match!'.format(k)
