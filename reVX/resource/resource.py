@@ -539,13 +539,16 @@ class MultiFileNSRDBX(MultiFileNSRDB, ResourceX):
     """
     NSRDB extraction class
     """
-    def __init__(self, nsrdb_dir, tree=None, compute_tree=False, prefix='',
-                 suffix='.h5', unscale=True, str_decode=True):
+    def __init__(self, nsrdb_path, tree=None, compute_tree=False,
+                 unscale=True, str_decode=True):
         """
         Parameters
         ----------
-        nsrdb_dir : str
-            Path to directory containing NSRDB .h5 files
+        nsrdb_path : str
+            Path to NSRDB .h5 files
+            Available formats:
+                /h5_dir/
+                /h5_dir/prefix*suffix
         tree : str
             path to .pgz file containing pickled cKDTree of lat, lon
             coordinates
@@ -561,8 +564,7 @@ class MultiFileNSRDBX(MultiFileNSRDB, ResourceX):
             Boolean flag to decode the bytestring meta data into normal
             strings. Setting this to False will speed up the meta data read.
         """
-        super().__init__(nsrdb_dir, prefix=prefix, suffix=suffix,
-                         unscale=unscale, str_decode=str_decode)
+        super().__init__(nsrdb_path, unscale=unscale, str_decode=str_decode)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)
 
 
@@ -658,13 +660,16 @@ class MultiFileWindX(MultiFileWTK, WindX):
     """
     Wind Resource extraction class
     """
-    def __init__(self, wtk_dir, tree=None, compute_tree=False, prefix='',
-                 suffix='.h5', unscale=True, str_decode=True):
+    def __init__(self, wtk_path, tree=None, compute_tree=False,
+                 unscale=True, str_decode=True):
         """
         Parameters
         ----------
-        wtk_dir : str
-            Path to directory containing five minute WTK .h5 files
+        wtk_path : str
+            Path to five minute WTK .h5 files
+            Available formats:
+                /h5_dir/
+                /h5_dir/prefix*suffix
         tree : str
             path to .pgz file containing pickled cKDTree of lat, lon
             coordinates
@@ -680,6 +685,5 @@ class MultiFileWindX(MultiFileWTK, WindX):
             Boolean flag to decode the bytestring meta data into normal
             strings. Setting this to False will speed up the meta data read.
         """
-        super().__init__(wtk_dir, prefix=prefix, suffix=suffix,
-                         unscale=unscale, str_decode=str_decode)
+        super().__init__(wtk_path, unscale=unscale, str_decode=str_decode)
         self._tree = self._init_tree(tree=tree, compute_tree=compute_tree)

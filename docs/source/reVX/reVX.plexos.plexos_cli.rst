@@ -1,7 +1,7 @@
 reVX.plexos.plexos\_cli module
 ==============================
 
-.. click:: reVX.plexoc.plexos_cli:main
+.. click:: reVX.plexos.plexos_cli:main
    :prog: reV-plexos
    :show-nested:
 
