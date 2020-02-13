@@ -76,8 +76,8 @@ def test_classifier():
                        check_categorical=False)
 
 
-@pytest.mark.parametrize('parallel', [True, False])
-def test_profiles(parallel):
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_profiles(max_workers):
     """
     Test ReedsProfiles
     """
@@ -88,8 +88,8 @@ def test_profiles(parallel):
     test = ReedsProfiles.run(cf_profiles, rev_table,
                              profiles_dset='cf_profile', rep_method='meanoid',
                              err_method='rmse', n_profiles=3,
-                             reg_cols=('region', 'class'),
-                             parallel=parallel)
+                             reg_cols=('region', 'class'), weight='gid_counts',
+                             max_workers=max_workers)
 
     for k, v in truth[0].items():
         msg = 'Representative profiles {} do not match!'.format(k)
@@ -167,6 +167,59 @@ def test_timeslice_h5_output():
             assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
             assert len(meta) == len(data)
     os.remove(fpath)
+
+
+def test_wind_farm_profiles():
+    """Integrated baseline test for REEDS representative profile calculation
+    from SC wind farm aggregate profiles"""
+
+    cf_profiles = os.path.join(ROOT_DIR, 'inputs/ri_wind_farm_profiles.h5')
+    rev_table = os.path.join(ROOT_DIR, 'inputs/ri_wind_farm_sc.csv')
+    resource_classes = pd.DataFrame({'mean_res': [0, 6, 7, 8, 100]})
+
+    rev_table = ReedsClassifier.create(
+        rev_table, resource_classes, region_map='reeds_region', sc_bins=2,
+        cluster_kwargs={'cluster_on': 'mean_lcoe',
+                        'method': 'kmeans', 'norm': None})[0]
+
+    f_baseline = os.path.join(ROOT_DIR, 'ReEDS_Wind_Farm_Profiles.h5')
+
+    gid_col = 'sc_gid'
+    profiles_dset = 'rep_profiles_0'
+    weight = 'capacity'
+
+    profiles, meta, _ = ReedsProfiles.run(cf_profiles, rev_table,
+                                          gid_col=gid_col,
+                                          profiles_dset=profiles_dset,
+                                          weight=weight,
+                                          max_workers=1)
+
+    with Resource(cf_profiles) as res:
+        raw_profiles = res[profiles_dset]
+
+    for i, row in meta.iterrows():
+
+        mask = None
+
+        for clabel in row.index:
+            if clabel not in ('rep_gen_gid', 'rep_res_gid'):
+                temp = rev_table[clabel] == row[clabel]
+                if mask is None:
+                    mask = temp
+                else:
+                    mask = mask & temp
+
+        sub = rev_table.loc[mask]
+        gids = sub[gid_col].values
+
+        assert row['rep_gen_gid'] in gids
+        assert np.allclose(np.roll(profiles[0][:, i], 1),
+                           raw_profiles[:, row['rep_gen_gid']])
+
+    with Resource(f_baseline) as res:
+        baseline = res[profiles_dset]
+
+    assert np.allclose(np.round(profiles[0], decimals=3), baseline)
 
 
 def test_sparse_matrix():

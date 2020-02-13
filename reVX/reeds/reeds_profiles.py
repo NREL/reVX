@@ -18,10 +18,12 @@ class ReedsProfiles(RepProfiles):
     """
     Extract representative profile for ReEDS
     """
-    def __init__(self, cf_profiles, rev_table, profiles_dset='cf_profile',
-                 rep_method='meanoid', err_method='rmse', n_profiles=1,
-                 resource_classes=None, region_map='reeds_region',
-                 sc_bins=5, reg_cols=('region', 'class'),
+    def __init__(self, cf_profiles, rev_table, gid_col='gen_gids',
+                 profiles_dset='cf_profile', rep_method='meanoid',
+                 err_method='rmse', weight='gid_counts',
+                 n_profiles=1, resource_classes=None,
+                 region_map='reeds_region', sc_bins=5,
+                 reg_cols=('region', 'class'),
                  cluster_kwargs={'cluster_on': 'trans_cap_cost',
                                  'method': 'kmeans', 'norm': None}):
         """
@@ -31,6 +33,9 @@ class ReedsProfiles(RepProfiles):
             Filepath to reV gen output file to extract "cf_profile" from.
         rev_table : str | pd.DataFrame
             Aggregated supply curve summary table or file containing table
+        gid_col : str
+            Column label in rev_summary that contains the generation gids
+            (data index in gen_fpath).
         profiles_dset : str
             Dataset name to pull generation profiles from.
         rep_method : str
@@ -38,6 +43,10 @@ class ReedsProfiles(RepProfiles):
         err_method : str
             Method identifier for calculation of error from the representative
             profile.
+        weight : str | None
+            Column in rev_summary used to apply weighted mean to profiles.
+            The supply curve table data in the weight column should have
+            weight values corresponding to the gid_col in the same row.
         n_profiles : int
             Number of representative profiles to save to fout.
         resource_classes : str | pandas.DataFrame | pandas.Series | dict
@@ -46,7 +55,7 @@ class ReedsProfiles(RepProfiles):
             If None, assumes rev_table has come from ReedsClassifier
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-         sc_bins : int
+        sc_bins : int
             Number of supply curve bins (clusters) to create for each
             region-class
         reg_cols : tuple
@@ -58,14 +67,15 @@ class ReedsProfiles(RepProfiles):
         """
         if resource_classes is not None:
             kwargs = cluster_kwargs
-            rev_table, _ = ReedsClassifier.create(rev_table, resource_classes,
-                                                  region_map=region_map,
-                                                  sc_bins=sc_bins,
-                                                  cluster_kwargs=kwargs)
+            rev_table = ReedsClassifier.create(rev_table, resource_classes,
+                                               region_map=region_map,
+                                               sc_bins=sc_bins,
+                                               cluster_kwargs=kwargs)[0]
 
-        super().__init__(cf_profiles, rev_table, reg_cols,
+        super().__init__(cf_profiles, rev_table, reg_cols, gid_col=gid_col,
                          cf_dset=profiles_dset, rep_method=rep_method,
-                         err_method=err_method, n_profiles=n_profiles)
+                         err_method=err_method, weight=weight,
+                         n_profiles=n_profiles)
 
     @staticmethod
     def _to_hourly(profiles, time_index):
@@ -183,11 +193,12 @@ class ReedsProfiles(RepProfiles):
             out._create_dset('timezone', tz.shape, tz.dtype, data=tz)
 
     @classmethod
-    def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
-            rep_method='meanoid', err_method='rmse', n_profiles=1,
-            resource_classes=None, region_map='reeds_region', sc_bins=5,
-            reg_cols=('region', 'class'), parallel=True, fout=None,
-            hourly=True, hour_ending=True,
+    def run(cls, cf_profiles, rev_table, gid_col='gen_gids',
+            profiles_dset='cf_profile', rep_method='meanoid',
+            err_method='rmse', weight='gid_counts',
+            n_profiles=1, resource_classes=None, region_map='reeds_region',
+            sc_bins=5, reg_cols=('region', 'class'), max_workers=None,
+            fout=None, hourly=True, hour_ending=True,
             cluster_kwargs={'cluster_on': 'trans_cap_cost',
                             'method': 'kmeans', 'norm': None}):
         """Run representative profiles.
@@ -197,6 +208,9 @@ class ReedsProfiles(RepProfiles):
             Filepath to reV gen output file to extract "cf_profile" from.
         rev_table : str | pd.DataFrame
             Aggregated supply curve summary table or file containing table
+        gid_col : str
+            Column label in rev_summary that contains the generation gids
+            (data index in gen_fpath).
         profiles_dset : str
             Dataset name to pull generation profiles from.
         rep_method : str
@@ -204,6 +218,10 @@ class ReedsProfiles(RepProfiles):
         err_method : str
             Method identifier for calculation of error from the representative
             profile.
+        weight : str | None
+            Column in rev_summary used to apply weighted mean to profiles.
+            The supply curve table data in the weight column should have
+            weight values corresponding to the gid_col in the same row.
         n_profiles : int
             Number of representative profiles to save to fout.
         resource_classes : str | pandas.DataFrame | pandas.Series | dict
@@ -218,8 +236,9 @@ class ReedsProfiles(RepProfiles):
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
-        parallel : bool
-            Flag to run in parallel.
+        max_workers : int | None
+            Number of parallel workers. 1 will run serial, None will use all
+            available.
         fout : None | str
             None or filepath to output h5 file.
         hourly : bool
@@ -240,15 +259,17 @@ class ReedsProfiles(RepProfiles):
         time_index : pd.DatatimeIndex
             Datetime Index for represntative profiles
         """
-        rp = cls(cf_profiles, rev_table, profiles_dset=profiles_dset,
-                 rep_method=rep_method, err_method=err_method,
+        rp = cls(cf_profiles, rev_table, gid_col=gid_col,
+                 profiles_dset=profiles_dset, rep_method=rep_method,
+                 err_method=err_method, weight=weight,
                  n_profiles=n_profiles, resource_classes=resource_classes,
                  region_map=region_map, sc_bins=sc_bins, reg_cols=reg_cols,
                  cluster_kwargs=cluster_kwargs)
-        if parallel:
-            rp._run_parallel()
-        else:
+
+        if max_workers == 1:
             rp._run_serial()
+        else:
+            rp._run_parallel(max_workers=max_workers)
 
         # pylint: disable=W0201
         if hourly and (len(rp._time_index) > 8760):
