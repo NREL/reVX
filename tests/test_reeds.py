@@ -86,9 +86,10 @@ def test_profiles(parallel):
     cf_profiles = os.path.join(TESTDATADIR, 'reV_gen', 'gen_pv_2012.h5')
     rev_table = os.path.join(ROOT_DIR, 'ReEDS_Classifications.csv')
     test = ReedsProfiles.run(cf_profiles, rev_table,
+                             fout=os.path.join(ROOT_DIR, 'ReEDS_Profiles.h5'),
                              profiles_dset='cf_profile', rep_method='meanoid',
                              err_method='rmse', n_profiles=3,
-                             reg_cols=('region', 'class'),
+                             reg_cols=('region', 'class'), weight='gid_counts',
                              parallel=parallel)
 
     for k, v in truth[0].items():
@@ -215,3 +216,4 @@ def execute_pytest(capture='all', flags='-rapP'):
 
 if __name__ == '__main__':
     execute_pytest()
+#    test_profiles(False)

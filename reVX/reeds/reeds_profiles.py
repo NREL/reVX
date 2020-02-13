@@ -19,9 +19,10 @@ class ReedsProfiles(RepProfiles):
     Extract representative profile for ReEDS
     """
     def __init__(self, cf_profiles, rev_table, profiles_dset='cf_profile',
-                 rep_method='meanoid', err_method='rmse', n_profiles=1,
-                 resource_classes=None, region_map='reeds_region',
-                 sc_bins=5, reg_cols=('region', 'class'),
+                 rep_method='meanoid', err_method='rmse', weight='gid_counts',
+                 n_profiles=1, resource_classes=None,
+                 region_map='reeds_region', sc_bins=5,
+                 reg_cols=('region', 'class'),
                  cluster_kwargs={'cluster_on': 'trans_cap_cost',
                                  'method': 'kmeans', 'norm': None}):
         """
@@ -38,6 +39,11 @@ class ReedsProfiles(RepProfiles):
         err_method : str
             Method identifier for calculation of error from the representative
             profile.
+        weight : str | None
+            Column in rev_summary used to apply weighted mean to profiles.
+            The supply curve table data in the weight column should have a
+            list of weight values corresponding to the gen_gids list in the
+            same row.
         n_profiles : int
             Number of representative profiles to save to fout.
         resource_classes : str | pandas.DataFrame | pandas.Series | dict
@@ -46,7 +52,7 @@ class ReedsProfiles(RepProfiles):
             If None, assumes rev_table has come from ReedsClassifier
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-         sc_bins : int
+        sc_bins : int
             Number of supply curve bins (clusters) to create for each
             region-class
         reg_cols : tuple
@@ -65,7 +71,8 @@ class ReedsProfiles(RepProfiles):
 
         super().__init__(cf_profiles, rev_table, reg_cols,
                          cf_dset=profiles_dset, rep_method=rep_method,
-                         err_method=err_method, n_profiles=n_profiles)
+                         err_method=err_method, weight=weight,
+                         n_profiles=n_profiles)
 
     @staticmethod
     def _to_hourly(profiles, time_index):
@@ -184,9 +191,9 @@ class ReedsProfiles(RepProfiles):
 
     @classmethod
     def run(cls, cf_profiles, rev_table, profiles_dset='cf_profile',
-            rep_method='meanoid', err_method='rmse', n_profiles=1,
-            resource_classes=None, region_map='reeds_region', sc_bins=5,
-            reg_cols=('region', 'class'), parallel=True, fout=None,
+            rep_method='meanoid', err_method='rmse', weight='gid_counts',
+            n_profiles=1, resource_classes=None, region_map='reeds_region',
+            sc_bins=5, reg_cols=('region', 'class'), parallel=True, fout=None,
             hourly=True, hour_ending=True,
             cluster_kwargs={'cluster_on': 'trans_cap_cost',
                             'method': 'kmeans', 'norm': None}):
@@ -204,6 +211,11 @@ class ReedsProfiles(RepProfiles):
         err_method : str
             Method identifier for calculation of error from the representative
             profile.
+        weight : str | None
+            Column in rev_summary used to apply weighted mean to profiles.
+            The supply curve table data in the weight column should have a
+            list of weight values corresponding to the gen_gids list in the
+            same row.
         n_profiles : int
             Number of representative profiles to save to fout.
         resource_classes : str | pandas.DataFrame | pandas.Series | dict
@@ -241,7 +253,7 @@ class ReedsProfiles(RepProfiles):
             Datetime Index for represntative profiles
         """
         rp = cls(cf_profiles, rev_table, profiles_dset=profiles_dset,
-                 rep_method=rep_method, err_method=err_method,
+                 rep_method=rep_method, err_method=err_method, weight=weight,
                  n_profiles=n_profiles, resource_classes=resource_classes,
                  region_map=region_map, sc_bins=sc_bins, reg_cols=reg_cols,
                  cluster_kwargs=cluster_kwargs)
