@@ -73,10 +73,17 @@ def exclusions(ctx, excl_h5):
               type=click.Path(exists=True),
               help=(".json file containing layer descriptions as a list or "
                     "mapping to layers"))
+@click.option('--transform_atol', '-tatol', default=0.01, type=float,
+              help=("Absolute tolerance parameter when comparing geotiff "
+                    "transform data."))
+@click.option('--coord_atol', '-catol', default=0.00001, type=float,
+              help=("Absolute tolerance parameter when comparing new "
+                    "un-projected geotiff coordinates against previous "
+                    "coordinates."))
 @click.option('--purge', '-r', is_flag=True,
               help="Remove existing .h5 file before loading layers")
 @click.pass_context
-def layers_to_h5(ctx, layers, descriptions, purge):
+def layers_to_h5(ctx, layers, descriptions, transform_atol, coord_atol, purge):
     """
     Add layers to exclusions .h5 file
     """
@@ -95,6 +102,8 @@ def layers_to_h5(ctx, layers, descriptions, purge):
                             for l, d in zip(layers, descriptions)}
 
     ExclusionsConverter.layers_to_h5(excl_h5, layers,
+                                     transform_atol=transform_atol,
+                                     coord_atol=coord_atol,
                                      descriptions=descriptions)
 
 
