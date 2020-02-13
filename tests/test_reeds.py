@@ -76,8 +76,8 @@ def test_classifier():
                        check_categorical=False)
 
 
-@pytest.mark.parametrize('parallel', [True, False])
-def test_profiles(parallel):
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_profiles(max_workers):
     """
     Test ReedsProfiles
     """
@@ -90,7 +90,7 @@ def test_profiles(parallel):
                              profiles_dset='cf_profile', rep_method='meanoid',
                              err_method='rmse', n_profiles=3,
                              reg_cols=('region', 'class'), weight='gid_counts',
-                             parallel=parallel)
+                             max_workers=max_workers)
 
     for k, v in truth[0].items():
         msg = 'Representative profiles {} do not match!'.format(k)
@@ -170,6 +170,28 @@ def test_timeslice_h5_output():
     os.remove(fpath)
 
 
+def _temp_test_wind_farm_profiles():
+    from reV.utilities.loggers import init_logger
+    init_logger('reV.rep_profiles', log_level='DEBUG')
+
+    cf_profiles = os.path.join(ROOT_DIR, 'inputs/ri_wind_farm_profiles.h5')
+    rev_table = os.path.join(ROOT_DIR, 'inputs/ri_wind_farm_sc.csv')
+    resource_classes = pd.DataFrame({'mean_res': [0, 6, 7, 8, 100]})
+
+    ReedsProfiles.run(cf_profiles, rev_table,
+                      gid_col='sc_gid',
+                      profiles_dset='rep_profiles_0',
+                      weight='capacity',
+                      rep_method='meanoid',
+                      err_method='rmse', n_profiles=1,
+                      reg_cols=('region', 'class'),
+                      resource_classes=resource_classes,
+                      max_workers=1,
+                      sc_bins=2,
+                      cluster_kwargs={'cluster_on': 'mean_lcoe',
+                                      'method': 'kmeans', 'norm': None})
+
+
 def test_sparse_matrix():
     """Test matrix sparsification methods."""
 
@@ -216,4 +238,3 @@ def execute_pytest(capture='all', flags='-rapP'):
 
 if __name__ == '__main__':
     execute_pytest()
-#    test_profiles(False)

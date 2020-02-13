@@ -61,10 +61,12 @@ def run_local(ctx, config):
     if config.profiles is not None:
         ctx.invoke(profiles,
                    cf_profiles=config.profiles.cf_profiles,
+                   gid_col=config.profiles.gid_col,
                    n_profiles=config.profiles.n_profiles,
                    profiles_dset=config.profiles.profiles_dset,
                    rep_method=config.profiles.rep_method,
                    err_method=config.profiles.err_method,
+                   weight=config.profiles.weight,
                    reg_cols=config.profiles.reg_cols,
                    parallel=config.profiles.parallel)
 
@@ -193,6 +195,9 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
               type=click.Path(exists=True),
               help=('Path to reV .h5 file containing desired capacity factor '
                     'profiles'))
+@click.option('--gid_col', '-gc', type=str, default='gen_gids',
+              help='Column label in rev_summary that contains the generation '
+              'gids (data index in cf_profiles file path).')
 @click.option('--n_profiles', '-np', type=int, default=1,
               help='Number of profiles to extract per "group".')
 @click.option('--profiles_dset', '-pd', type=str, default="cf_profile",
@@ -203,6 +208,11 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
 @click.option('--err_method', '-em', type=STR, default='rmse',
               help=('Method identifier for calculation of error from the '
                     'representative profile.'))
+@click.option('--weight', '-w', type=str, default='gid_counts',
+              help='Column in rev_summary used to apply weighted mean to '
+              'profiles. The supply curve table data in the weight column '
+              'should have weight values corresponding to the gid_col in '
+              'the same row.')
 @click.option('--reg_cols', '-rcp', type=STRLIST,
               default=('region', 'bin', 'class'),
               help=('Label(s) for a categorical region column(s) to extract '
@@ -211,8 +221,8 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
               help=('Extract profiles in parallel by "group". '
                     'Default is serial.'))
 @click.pass_context
-def profiles(ctx, cf_profiles, n_profiles, profiles_dset, rep_method,
-             err_method, reg_cols, parallel):
+def profiles(ctx, cf_profiles, gid_col, n_profiles, profiles_dset, rep_method,
+             err_method, weight, reg_cols, parallel):
     """
     Extract ReEDS represntative profiles
     """
@@ -228,10 +238,16 @@ def profiles(ctx, cf_profiles, n_profiles, profiles_dset, rep_method,
     logger.info('Saving representative hourly cf profiles to {}.'
                 .format(out_path))
 
-    ReedsProfiles.run(cf_profiles, table, profiles_dset=profiles_dset,
-                      rep_method=rep_method, err_method=err_method,
-                      n_profiles=n_profiles, reg_cols=reg_cols,
-                      parallel=parallel, fout=out_path,
+    ReedsProfiles.run(cf_profiles, table,
+                      gid_col=gid_col,
+                      profiles_dset=profiles_dset,
+                      rep_method=rep_method,
+                      err_method=err_method,
+                      n_profiles=n_profiles,
+                      weight=weight,
+                      reg_cols=reg_cols,
+                      parallel=parallel,
+                      fout=out_path,
                       hourly=True)
 
     ctx.obj['PROFILES'] = out_path
@@ -331,14 +347,16 @@ def get_node_cmd(config):
                      filter=s(config.classify.filter)))
 
     if config.profiles is not None:
-        args += ('profiles -cf {cf_profiles} -np {n_profiles} '
+        args += ('profiles -cf {cf_profiles} -gc {gid_col} -np {n_profiles} '
                  '-pd {profiles_dset} -rm {rep_method} -em {err_method} '
-                 '-rcp {reg_cols} '
+                 '-w {weight} -rcp {reg_cols} '
                  .format(cf_profiles=s(config.profiles.cf_profiles),
+                         gid_col=s(config.profiles.gid_col),
                          n_profiles=s(config.profiles.n_profiles),
                          profiles_dset=s(config.profiles.profiles_dset),
                          rep_method=s(config.profiles.rep_method),
                          err_method=s(config.profiles.err_method),
+                         weight=s(config.profiles.weight),
                          reg_cols=s(config.profiles.reg_cols)))
         if config.profiles.parallel:
             args += '-p '
