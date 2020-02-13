@@ -17,15 +17,10 @@ if py_version.major < 3:
 elif py_version.minor < 6:
     warn("You will the get best results by running reVX with python >= 3.6")
 
-try:
-    from pypandoc import convert_text
-except ImportError:
-    convert_text = lambda string, *args, **kwargs: string
-
 here = os.path.abspath(os.path.dirname(__file__))
 
 with open("README.rst", encoding="utf-8") as readme_file:
-    readme = convert_text(readme_file.read(), "rst", format="md")
+    readme = readme_file.read()
 
 with open(os.path.join(here, "reVX", "version.py"), encoding="utf-8") as f:
     version = f.read()
@@ -50,6 +45,9 @@ class PostDevelopCommand(develop):
 
         develop.run(self)
 
+
+with open("requirements.txt") as f:
+    install_requires = f.readlines()
 
 test_requires = ["pytest>=5.2", ]
 
