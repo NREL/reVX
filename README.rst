@@ -3,6 +3,7 @@ reVX
 Renewable Energy Potential(V) eXchange Tool: reVX
 
 .. inclusion-intro
+
 reVX command line tools
 =======================
 
