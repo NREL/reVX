@@ -15,9 +15,7 @@ Documentation config file
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
 import sphinx_rtd_theme
 
 
@@ -27,10 +25,18 @@ project = 'reVX'
 copyright = '2020, Alliance for Sustainable Energy, LLC'
 author = 'Michael Rossol'
 
+pkg = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
+pkg = os.path.dirname(pkg)
+
+with open(os.path.join(pkg, "reVX", "version.py"), encoding="utf-8") as f:
+    v = f.read()
+
+v = v.split('=')[-1].strip().strip('"').strip("'")
 # The short X.Y version
-version = '0.1.0'
+version = v
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = v
+
 
 
 # -- General configuration ---------------------------------------------------
