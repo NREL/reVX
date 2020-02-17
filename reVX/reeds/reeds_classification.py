@@ -27,7 +27,7 @@ class ReedsClassifier:
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
                  sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
                                             'method': 'kmeans', 'norm': None},
-                 filter=None):
+                 filter=None, trg_by_region=False):
         """
         Parameters
         ----------
@@ -46,6 +46,8 @@ class ReedsClassifier:
             kwargs for _cluster_sc_bins and underlying clustering method
         filter : dict | NoneType
             Column value pair(s) to filter on. If None don't filter
+        trg_by_region : bool
+            Groupby on region when computing TRGs
         """
         rev_table = self._parse_table(rev_table)
         if filter is not None:
@@ -54,7 +56,8 @@ class ReedsClassifier:
                 rev_table = rev_table.loc[mask]
 
         rev_table = self._map_region(rev_table, region_map)
-        rev_table = self._resource_classes(rev_table, resource_classes)
+        rev_table = self._resource_classes(rev_table, resource_classes,
+                                           trg_by_region=trg_by_region)
         self._rev_table = self._cluster_sc_bins(rev_table, sc_bins,
                                                 **cluster_kwargs)
         self._groups = self._rev_table.groupby(['region', 'class', 'bin'])
@@ -383,7 +386,7 @@ class ReedsClassifier:
         return attr, class_bins
 
     @staticmethod
-    def _TRG_bins(rev_table, trg_bins, by_region=True):
+    def _TRG_bins(rev_table, trg_bins, by_region=False):
         """
         Create TRG (technical resource groups) using given cummulative
         capacity bin widths
@@ -395,6 +398,8 @@ class ReedsClassifier:
         trg_bins : list | ndarray
             Cummulative capacity bin widths to create TRGs from
             (in GW)
+        by_region : bool
+            Groupby on region
 
         Returns
         -------
@@ -431,7 +436,7 @@ class ReedsClassifier:
         return rev_table
 
     @staticmethod
-    def _resource_classes(rev_table, resource_classes):
+    def _resource_classes(rev_table, resource_classes, trg_by_region=False):
         """
         Create resource classes
 
@@ -442,6 +447,8 @@ class ReedsClassifier:
         resource_classes : str | pandas.DataFrame | pandas.Series | dict
             Resource classes, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary
+        trg_by_region : bool
+            Groupby on region for TRGs
 
         Returns
         -------
@@ -451,7 +458,8 @@ class ReedsClassifier:
         attr, class_bins = ReedsClassifier._parse_class_bins(resource_classes)
 
         if "TRG" in attr:
-            rev_table = ReedsClassifier._TRG_bins(rev_table, class_bins)
+            rev_table = ReedsClassifier._TRG_bins(rev_table, class_bins,
+                                                  by_region=trg_by_region)
         else:
             if attr not in rev_table:
                 msg = ('{} is not a valid rev table attribute '
@@ -513,7 +521,7 @@ class ReedsClassifier:
     def create(cls, rev_table, resource_classes, region_map='reeds_region',
                sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
                                           'method': 'kmeans', 'norm': None},
-               filter=None):
+               filter=None, trg_by_region=False):
         """
         Identify ReEDS regions and classes and dump and updated table
 
@@ -534,6 +542,8 @@ class ReedsClassifier:
             kwargs for _cluster_classes
         filter : dict | NoneType
             Column value pair(s) to filter on. If None don't filter
+        trg_by_region : bool
+            Groupby on region when computing TRGs
 
         Returns
         -------
@@ -551,7 +561,7 @@ class ReedsClassifier:
         """
         classes = cls(rev_table, resource_classes, region_map=region_map,
                       sc_bins=sc_bins, cluster_kwargs=cluster_kwargs,
-                      filter=filter)
+                      filter=filter, trg_by_region=trg_by_region)
         out = (classes.table, classes.table_slim, classes.aggregate_table,
                classes.aggregate_table_slim)
 
