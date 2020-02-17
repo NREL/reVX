@@ -94,9 +94,9 @@ def from_config(ctx, config, verbose):
 
     if 'VERBOSE' in ctx.obj:
         if any((ctx.obj['VERBOSE'], verbose)):
-            config._logging_level = logging.DEBUG
+            config._log_level = logging.DEBUG
     elif verbose:
-        config._logging_level = logging.DEBUG
+        config._log_level = logging.DEBUG
 
     if config.execution_control.option == 'local':
         run_local(ctx, config)
@@ -335,7 +335,7 @@ def get_node_cmd(config):
                     out_dir=s(config.dirout),
                     log_dir=s(config.logdir)))
 
-    if config.logging_level == logging.DEBUG:
+    if config.log_level == logging.DEBUG:
         args += '-v '
 
     args += ('classify -rc {resource_classes} -r {regions} -scb {sc_bins} '
