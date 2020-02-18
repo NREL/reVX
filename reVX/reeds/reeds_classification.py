@@ -338,54 +338,6 @@ class ReedsClassifier:
         return rev_table
 
     @staticmethod
-    def _parse_class_bins(class_bins):
-        """
-        Parse resource class bins
-
-        Parameters
-        ----------
-        class_bins : str | pandas.DataFrame | pandas.Series | dict
-            Resource classes, either provided in a .csv, .json
-            as a DataFrame or Series, or in a dictionary
-
-        Returns
-        -------
-        attr : str
-            reV table attribute (column) to bin
-        class_bins : ndarray | list
-            List / vector of bins to create classes from
-        """
-        if isinstance(class_bins, str):
-            class_bins = ReedsClassifier._parse_table(class_bins)
-        elif isinstance(class_bins, pd.Series):
-            if not class_bins.name:
-                msg = ('reV table attribute to bin not supplied as Series '
-                       'name')
-                logger.error(msg)
-                raise ReedsValueError(msg)
-
-            class_bins = class_bins.to_frame()
-        elif isinstance(class_bins, dict):
-            class_bins = pd.DataFrame(class_bins)
-        elif not isinstance(class_bins, pd.DataFrame):
-            msg = ('Cannot parse class bins from type {}'
-                   .format(type(class_bins)))
-            logger.error(msg)
-            raise ReedsValueError(msg)
-
-        attr = class_bins.columns
-        if len(attr) > 1:
-            msg = ('Can only bin classes on one attribute: {} were provided: '
-                   '\n{}'.format(len(attr), attr))
-            logger.error(msg)
-            raise ReedsValueError(msg)
-
-        attr = attr[0]
-        class_bins = class_bins[attr].values
-
-        return attr, class_bins
-
-    @staticmethod
     def _TRG_bins(rev_table, trg_bins, by_region=False):
         """
         Create TRG (technical resource groups) using given cummulative
@@ -395,9 +347,9 @@ class ReedsClassifier:
         ----------
         rev_table : pandas.DataFrame
             reV supply curve or aggregation table
-        trg_bins : list | ndarray
-            Cummulative capacity bin widths to create TRGs from
-            (in GW)
+        trg_bins : pandas.DataFrame
+            Class labels and cummulative capacity bin widths to create
+            TRGs from (in GW).
         by_region : bool
             Groupby on region
 
@@ -406,10 +358,10 @@ class ReedsClassifier:
         rev_table : pandas.DataFrame
             Updated table with TRG classes added
         """
-        cap_breaks = np.cumsum(trg_bins) * 1000  # convert to MW
+        cap_breaks = np.cumsum(trg_bins['TRG_cap'].values) * 1000  # MW
         cap_breaks = np.concatenate(([0., ], cap_breaks, [float('inf')]),
                                     axis=0)
-        labels = [i + 1 for i in range(len(cap_breaks) - 1)]
+        labels = trg_bins.index.tolist()
 
         cols = ['sc_gid', 'capacity', 'mean_lcoe', 'region']
         trg_table = rev_table[cols].copy()
@@ -444,9 +396,8 @@ class ReedsClassifier:
         ----------
         rev_table : pandas.DataFrame
             reV supply curve or aggregation table
-        resource_classes : str | pandas.DataFrame | pandas.Series | dict
-            Resource classes, either provided in a .csv, .json
-            as a DataFrame or Series, or in a dictionary
+        resource_classes : str
+            Resource classes, provided as path to csv
         trg_by_region : bool
             Groupby on region for TRGs
 
@@ -455,21 +406,24 @@ class ReedsClassifier:
         rev_table : pandas.DataFrame
             Updated table with resource classes added
         """
-        attr, class_bins = ReedsClassifier._parse_class_bins(resource_classes)
+        class_bins = pd.read_csv(resource_classes, index_col=0)
 
-        if "TRG" in attr:
+        if "TRG_cap" in class_bins.columns:
             rev_table = ReedsClassifier._TRG_bins(rev_table, class_bins,
                                                   by_region=trg_by_region)
         else:
-            if attr not in rev_table:
-                msg = ('{} is not a valid rev table attribute '
-                       '(column header)'.format(attr))
-                logger.error(msg)
-                raise ReedsValueError(msg)
-
-            labels = [i + 1 for i in range(len(class_bins) - 1)]
-            rev_table['class'] = pd.cut(x=rev_table[attr],
-                                        bins=class_bins, labels=labels)
+            rev_table['class'] = 'NA'
+            for cname, row in class_bins.iterrows():
+                mask = True
+                for col, val in row.items():
+                    if '|' in val:
+                        rng = val.split('|')
+                        rng = [float(n) for n in rng]
+                        mask = mask & (rev_table[col] >= min(rng))
+                        mask = mask & (rev_table[col] < max(rng))
+                    else:
+                        mask = mask & (rev_table[col] == val)
+                rev_table.loc[mask, 'class'] = cname
 
         return rev_table
 
