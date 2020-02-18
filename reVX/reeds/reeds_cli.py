@@ -5,7 +5,7 @@ ReEDS Command Line Interface
 import click
 import logging
 import os
-from reV.utilities.cli_dtypes import STR, STRLIST
+from reV.utilities.cli_dtypes import STR, STRLIST, INT
 from reV.utilities.execution import SLURM, SubprocessManager
 from reV.utilities.utilities import dict_str_load
 
@@ -68,7 +68,7 @@ def run_local(ctx, config):
                    err_method=config.profiles.err_method,
                    weight=config.profiles.weight,
                    reg_cols=config.profiles.reg_cols,
-                   parallel=config.profiles.parallel)
+                   max_workers=config.profiles.max_workers)
 
     if config.timeslices is not None:
         ctx.invoke(timeslices,
@@ -217,12 +217,12 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
               default=('region', 'bin', 'class'),
               help=('Label(s) for a categorical region column(s) to extract '
                     'profiles for (default is region, bin, class)'))
-@click.option('--parallel', '-p', is_flag=True,
-              help=('Extract profiles in parallel by "group". '
-                    'Default is serial.'))
+@click.option('--max_workers', '-mw', type=INT, default=None,
+              help=('Number of parallel workers. 1 will run serial, '
+                    'None will use all available.'))
 @click.pass_context
 def profiles(ctx, cf_profiles, gid_col, n_profiles, profiles_dset, rep_method,
-             err_method, weight, reg_cols, parallel):
+             err_method, weight, reg_cols, max_workers):
     """
     Extract ReEDS represntative profiles
     """
@@ -246,7 +246,7 @@ def profiles(ctx, cf_profiles, gid_col, n_profiles, profiles_dset, rep_method,
                       n_profiles=n_profiles,
                       weight=weight,
                       reg_cols=reg_cols,
-                      parallel=parallel,
+                      max_workers=max_workers,
                       fout=out_path,
                       hourly=True)
 
@@ -349,7 +349,7 @@ def get_node_cmd(config):
     if config.profiles is not None:
         args += ('profiles -cf {cf_profiles} -gc {gid_col} -np {n_profiles} '
                  '-pd {profiles_dset} -rm {rep_method} -em {err_method} '
-                 '-w {weight} -rcp {reg_cols} '
+                 '-w {weight} -rcp {reg_cols} -mw {max_workers} '
                  .format(cf_profiles=s(config.profiles.cf_profiles),
                          gid_col=s(config.profiles.gid_col),
                          n_profiles=s(config.profiles.n_profiles),
@@ -357,9 +357,8 @@ def get_node_cmd(config):
                          rep_method=s(config.profiles.rep_method),
                          err_method=s(config.profiles.err_method),
                          weight=s(config.profiles.weight),
-                         reg_cols=s(config.profiles.reg_cols)))
-        if config.profiles.parallel:
-            args += '-p '
+                         reg_cols=s(config.profiles.reg_cols),
+                         max_workers=s(config.profiles.max_workers)))
 
     if config.timeslices is not None:
         args += ('timeslices -pr {profiles} -ts {timeslices} -rct {reg_cols} '

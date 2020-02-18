@@ -169,9 +169,9 @@ class ProfilesConfigGroup(ReedsConfigGroup):
         return self.get('reg_cols', self._default_reg_cols)
 
     @property
-    def parallel(self):
-        """Get a parallel flag."""
-        return self.get('parallel', True)
+    def max_workers(self):
+        """Get the max_workers input (None is parallel)."""
+        return self.get('max_workers', None)
 
 
 class TimeslicesConfigGroup(ReedsConfigGroup):
