@@ -468,6 +468,9 @@ class ReedsClassifier:
                 raise ReedsValueError(msg)
 
             labels = [i + 1 for i in range(len(class_bins) - 1)]
+            idx = np.argsort(class_bins)
+            class_bins = class_bins[idx]
+            labels = labels[idx]
             rev_table['class'] = pd.cut(x=rev_table[attr],
                                         bins=class_bins, labels=labels)
 
