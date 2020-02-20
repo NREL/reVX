@@ -35,9 +35,15 @@ class ReedsClassifier:
         rev_table : str | pandas.DataFrame
             reV supply curve or aggregation table,
             or path to file containing table
-        resource_classes : str | pandas.DataFrame | pandas.Series | dict
-            Resource classes, either provided in a .csv, .json
-            as a DataFrame or Series, or in a dictionary
+        resource_classes : str | pandas.DataFrame
+            Resource classes, either provided in a .csv, .json or a DataFrame
+            Allowable columns:
+            - 'class' -> class labels to use
+            - 'TRG_cap' -> TRG capacity bins to use to create TRG classes
+            - any column in 'rev_table' -> Used for categorical bins
+            - '*_min' and '*_max' where * is a numberical column in 'rev_table'
+              -> used for range binning
+            NOTE: 'TRG_cap' can only be combined with categorical bins
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
          sc_bins : int
@@ -476,13 +482,19 @@ class ReedsClassifier:
             logger.error(msg)
             raise ValueError(msg)
 
-        rev_cols = ['_'.join(c.split('_')[:-1]) for c in range_cols]
+        rev_cols = [c.rstrip('_min').rstrip('_max') for c in range_cols]
         rev_cols = list(set(rev_cols))
         for col in rev_cols:
             cols = ['{}_min'.format(col), '{}_max'.format(col)]
             class_bins[col] = list(class_bins[cols].values)
 
         class_bins = class_bins.drop(columns=range_cols)
+        missing = [c for c in class_bins if c not in rev_table]
+        if missing:
+            msg = "Bin columns {} are not in 'rev_table'!".format(missing)
+            logger.error(msg)
+            raise ValueError(msg)
+
         rev_table['class'] = None
         for label, bins in class_bins.iterrows():
             mask = True
@@ -590,9 +602,15 @@ class ReedsClassifier:
         rev_table : str | pandas.DataFrame
             reV supply curve or aggregation table,
             or path to file containing table
-        resource_classes : str | pandas.DataFrame | pandas.Series | dict
-            Resource classes, either provided in a .csv, .json
-            as a DataFrame or Series, or in a dictionary
+        resource_classes : str | pandas.DataFrame
+            Resource classes, either provided in a .csv, .json or a DataFrame
+            Allowable columns:
+            - 'class' -> class labels to use
+            - 'TRG_cap' -> TRG capacity bins to use to create TRG classes
+            - any column in 'rev_table' -> Used for categorical bins
+            - '*_min' and '*_max' where * is a numberical column in 'rev_table'
+              -> used for range binning
+            NOTE: 'TRG_cap' can only be combined with categorical bins
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
         sc_bins : int

@@ -144,7 +144,18 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
 @local.group(chain=True, invoke_without_command=True)
 @click.option('--resource_classes', '-rc', required=True,
               type=click.Path(exists=True),
-              help='.csv or .json containing resource class definitions')
+              help=("resource_classes: str | pandas.DataFrame\n"
+                    "Resource classes, either provided in a .csv, .json or a "
+                    "DataFrame\n"
+                    "Allowable columns:\n"
+                    "- 'class' -> class labels to use\n"
+                    "- 'TRG_cap' -> TRG capacity bins to use to create TRG "
+                    "classes\n"
+                    "- any column in 'rev_table' -> Categorical bins\n"
+                    "- '*_min' and '*_max' where * is a numberical column in "
+                    "'rev_table' -> Range binning\n"
+                    "NOTE: 'TRG_cap' can only be combined with categorical "
+                    "bins"))
 @click.option('--regions', '-r', type=str, default='reeds_region',
               help='Mapping of supply curve points to geographic region')
 @click.option('--sc_bins', '-scb', type=int, default=3,
