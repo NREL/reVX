@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import os
 import pandas as pd
+from warnings import warn
 
 from reVX.utilities.cluster_methods import ClusteringMethods
 from reVX.utilities.exceptions import ReedsValueError, ReedsKeyError
@@ -338,140 +339,7 @@ class ReedsClassifier:
         return rev_table
 
     @staticmethod
-    def _parse_class_bins(class_bins):
-        """
-        Parse resource class bins
-
-        Parameters
-        ----------
-        class_bins : str | pandas.DataFrame | pandas.Series | dict
-            Resource classes, either provided in a .csv, .json
-            as a DataFrame or Series, or in a dictionary
-
-        Returns
-        -------
-        class_bins : pandas.DataFrame
-            DataFrame of Resource classifiers:
-            - range bins
-            - TRG capacity bins
-            - numerical bins
-            - catagorical bins
-        """
-        class_bins = ReedsClassifier._parse_table(class_bins)
-
-        if 'class' in class_bins:
-            class_bins = class_bins.set_index('class')
-
-        return class_bins
-
-    # flake8: noqa
-    # noqa: C901
-    @staticmethod
-    def _parse_classifiers(class_bins):
-        """
-        [summary]
-
-        Parameters
-        ----------
-        class_bins : pandas.DataFrame
-            DataFrame of Resource classifiers:
-            - range bins
-            - TRG capacity bins
-            - numerical bins
-            - catagorical bins
-
-        Returns
-        -------
-        classifiers : list
-            List of classifiers to run. Each classifier is a dict:
-            {'group': group, 'bins': {method: input data}}
-        groupby : NoneType | list
-            Columns to run groupby on
-
-        Raises
-        ------
-        RuntimeError
-            Runtime error in input columns are not proper for binning
-            classes
-        """
-        cat_cols = [c for c, dtype in class_bins.dtypes.iteritems()
-                    if not np.issubdtype(dtype, np.number)]
-
-        bin_cols = [c for c in class_bins if c not in cat_cols]
-        range_cols = None
-        trg_col = None
-        bin_col = None
-        if cat_cols:
-            groupby = cat_cols
-        else:
-            groupby = None
-
-        n_bins = len(bin_cols)
-        if not n_bins and cat_cols:
-            if not len(np.unique(class_bins[cat_cols])) == len(class_bins):
-                groupby = None
-            else:
-                msg = ("Catagorical bins must have the same number of bins "
-                       "as classes: {}".format(class_bins[cat_cols]))
-                logger.error(msg)
-                raise RuntimeError(msg)
-
-        elif n_bins > 2:
-            msg = ("To many class bins have been provided: {}. "
-                   "Along with catagorical bins, only provide:"
-                   "\n a set of range bin (*_min, *_max), TRG_cap, "
-                   "or numerical bins".format(bin_cols))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        elif n_bins == 2:
-            if "TRG_cap" in bin_cols and len(bin_cols) > 1:
-                msg = ("TRG bins cannot be paired with other types of class "
-                       "bins: {}".format(bin_cols))
-                logger.error(msg)
-                raise RuntimeError(msg)
-
-            range_cols = ['_'.join(c.split('_')[:-1])
-                          for c in bin_cols if c.endswith(('min', 'max'))]
-            if len(range_cols) != 2:
-                msg = ("Minimun ({}_min) and maximum ({}_max) values must be "
-                       "provided for range bins".format(range_cols[0]))
-                logger.error(msg)
-                raise RuntimeError(msg)
-
-        else:
-            if 'TRG_cap' in bin_cols:
-                trg_col = ['TRG_cap']
-            else:
-                bin_col = bin_cols
-
-        if groupby is not None:
-            classifiers = []
-            for cat, df in class_bins.groupby(groupby):
-                if range_cols is not None:
-                    method = (ReedsClassifier._range_classes, df[range_cols])
-                elif trg_col is not None:
-                    method = (ReedsClassifier._TRG_classes, df[trg_col])
-                elif bin_col is not None:
-                    method = (ReedsClassifier._bin_classes, df[bin_col])
-
-                classifiers.append({'group': cat, 'bins': method})
-        else:
-            if range_cols is not None:
-                method = (ReedsClassifier._range_classes, class_bins)
-            elif trg_col is not None:
-                method = (ReedsClassifier._TRG_classes, class_bins)
-            elif bin_col is not None:
-                method = (ReedsClassifier._bin_classes, class_bins)
-            else:
-                method = (ReedsClassifier._catagorical_classes, class_bins)
-
-            classifiers = method
-
-        return classifiers, groupby
-
-    @staticmethod
-    def _TRG_classes(rev_table, trg_bins, by_region=False):
+    def _TRG_bins(rev_table, trg_bins, by_region=False):
         """
         Create TRG (technical resource groups) using given cummulative
         capacity bin widths
@@ -521,86 +389,118 @@ class ReedsClassifier:
         return rev_table
 
     @staticmethod
-    def _range_classes(rev_table, range_bins):
+    def _TRG_classes(rev_table, trg_bins, by_region=False):
         """
-        [summary]
+        Create TRG (technical resource groups) using given cummulative
+        capacity bin widths
 
         Parameters
         ----------
-        rev_table : [type]
-            [description]
-        range_bins : [type]
-            [description]
+        rev_table : pandas.DataFrame
+            reV supply curve or aggregation table
+        trg_bins : pandas.Series
+            Cummulative capacity bin widths to create TRGs from
+            (in GW)
+        by_region : bool
+            Groupby on region
 
         Returns
         -------
-        [type]
-            [description]
-        """
-        sc_col = '_'.join(range_bins.columns[0].split('_')[:-1])
-        cols = ['{}_min'.format(sc_col), '{}_max'.format(sc_col)]
-        bins = range_bins[cols].values
-        bins = pd.IntervalIndex.from_arrays(bins[:, 0], bins[:, 1])
-        labels = range_bins.index
+        rev_table : pandas.DataFrame
+            Updated table with TRG classes added
 
-        rev_table['class'] = pd.cut(x=rev_table[sc_col], bins=bins,
-                                    labels=labels)
+        Raises
+        ------
+        ValueError
+            If catagorical columns do not exist in rev_table
+        """
+        cat_cols = [c for c in trg_bins if c != 'TRG_cap']
+        if cat_cols:
+            missing = [c for c in cat_cols if c not in rev_table]
+            if missing:
+                msg = ("Catagorical column(s) supplied with 'TRG_cap' "
+                       "are not valid columns of 'rev_table': {}"
+                       .format(missing))
+                logger.error(msg)
+                raise ValueError(msg)
+            else:
+                msg = ("Additional columns were supplied with "
+                       "'TRG_cap'! \n TRG bins will be computed for all "
+                       "unique combinations of {}".format(cat_cols))
+                logger.warning(msg)
+                warn(msg)
+
+            tables = []
+            rev_groups = rev_table.groupby(cat_cols)
+            for grp, bins in trg_bins.groupby(cat_cols):
+                group_table = rev_groups.get_group(grp)
+                tables.append(ReedsClassifier._TRG_bins(group_table, bins,
+                                                        by_region=by_region))
+
+            rev_table = pd.concat(tables)
+        else:
+            rev_table = ReedsClassifier._TRG_bins(rev_table, trg_bins,
+                                                  by_region=by_region)
 
         return rev_table
 
     @staticmethod
     def _bin_classes(rev_table, class_bins):
         """
-        [summary]
+        Bin classes based on catagorical or range bins
 
         Parameters
         ----------
-        rev_table : [type]
-            [description]
-        class_bins : [type]
-            [description]
+        rev_table : pandas.DataFrame
+            reV supply curve or aggregation table
+        class_bins : pandas.DataFrame
+            Class bins to use:
+            - catagorical: single value
+            - range: *_min and *_max pair of values -> (min, max]
 
         Returns
         -------
-        [type]
-            [description]
-        """
-        sc_col = class_bins.columns[0]
-        bins = class_bins.values
-        idx = np.argsort(bins)
-        bins = bins[idx]
-        labels = class_bins.index.values[idx]
+        rev_table : pandas.DataFrame
+            Updated table with TRG classes added
 
-        rev_table['class'] = pd.cut(x=rev_table[sc_col],
-                                    bins=bins, labels=labels)
+        Raises
+        ------
+        ValueError
+            If range min and max are not supplied for range bins
+        """
+        range_cols = [c for c in class_bins if c.endswith(('min', 'max'))]
+
+        if len(range_cols) % 2 != 0:
+            msg = ("A '*_min' and a '*_max' value are neede for range bins! "
+                   "Values provided: {}".format(range_cols))
+            logger.error(msg)
+            raise ValueError(msg)
+
+        rev_cols = ['_'.join(c.split('_')[:-1]) for c in range_cols]
+        rev_cols = list(set(rev_cols))
+        for col in rev_cols:
+            cols = ['{}_min'.format(col), '{}_max'.format(col)]
+            class_bins[col] = list(class_bins[cols].values)
+
+        class_bins = class_bins.drop(columns=range_cols)
+        rev_table['class'] = None
+        for label, bins in class_bins.iterrows():
+            mask = True
+            for col, value in bins.iteritems():
+                if isinstance(value, list):
+                    mask = ((rev_table[col] > value[0])
+                            & (rev_table[col] < value[1]))
+                else:
+                    mask = rev_table[col] == value
+
+                mask *= mask
+
+            rev_table.loc[mask, 'class'] = label
 
         return rev_table
 
     @staticmethod
-    def _catagorical_classes(rev_table, cat_bins):
-        """
-        [summary]
-
-        Parameters
-        ----------
-        rev_table : [type]
-            [description]
-        cat_bins : [type]
-            [description]
-
-        Returns
-        -------
-        [type]
-            [description]
-        """
-        sc_col = cat_bins.columns[0]
-        cat_bins = cat_bins.reset_index()
-        rev_table = rev_table.merge(cat_bins, on=sc_col, how='left')
-
-        return rev_table
-
-    @staticmethod
-    def _resource_classes(rev_table, resource_classes):
+    def _resource_classes(rev_table, resource_classes, trg_by_region=False):
         """
         Create resource classes
 
@@ -619,25 +519,17 @@ class ReedsClassifier:
         rev_table : pandas.DataFrame
             Updated table with resource classes added
         """
-        classifiers = ReedsClassifier._parse_class_bins(resource_classes)
-        classifiers, groupby = ReedsClassifier._parse_classifiers(classifiers)
+        resource_classes = ReedsClassifier._parse_table(resource_classes)
+        if 'class' in resource_classes:
+            resource_classes = resource_classes.set_index('class')
 
-        if groupby is not None:
-            class_tables = []
-            groups = rev_table.groupby(groupby)
-            for classifier in classifiers:
-                group_table = groups.get_group(classifier['group'])
-                func, args = classifier['bins']
-                class_tables.append(func(group_table, args))
-
-            labels = np.array([i + 1 for i in range(len(class_bins) - 1)])
-            idx = np.argsort(class_bins)
-            class_bins = class_bins[idx]
-            idx = [i for i in idx if i < len(labels)]
-            labels = labels[idx]
-
-            rev_table['class'] = pd.cut(x=rev_table[attr],
-                                        bins=class_bins, labels=labels)
+        if 'TRG_cap' in resource_classes:
+            rev_table = ReedsClassifier._TRG_classes(rev_table,
+                                                     resource_classes,
+                                                     by_region=trg_by_region)
+        else:
+            rev_table = ReedsClassifier._bin_classes(rev_table,
+                                                     resource_classes)
 
         return rev_table
 
