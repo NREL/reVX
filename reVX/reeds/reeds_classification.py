@@ -412,13 +412,13 @@ class ReedsClassifier:
         Raises
         ------
         ValueError
-            If catagorical columns do not exist in rev_table
+            If categorical columns do not exist in rev_table
         """
         cat_cols = [c for c in trg_bins if c != 'TRG_cap']
         if cat_cols:
             missing = [c for c in cat_cols if c not in rev_table]
             if missing:
-                msg = ("Catagorical column(s) supplied with 'TRG_cap' "
+                msg = ("categorical column(s) supplied with 'TRG_cap' "
                        "are not valid columns of 'rev_table': {}"
                        .format(missing))
                 logger.error(msg)
@@ -447,7 +447,7 @@ class ReedsClassifier:
     @staticmethod
     def _bin_classes(rev_table, class_bins):
         """
-        Bin classes based on catagorical or range bins
+        Bin classes based on categorical or range bins
 
         Parameters
         ----------
@@ -455,7 +455,7 @@ class ReedsClassifier:
             reV supply curve or aggregation table
         class_bins : pandas.DataFrame
             Class bins to use:
-            - catagorical: single value
+            - categorical: single value
             - range: *_min and *_max pair of values -> (min, max]
 
         Returns
