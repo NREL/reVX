@@ -366,7 +366,7 @@ class ReedsClassifier:
             Updated table with TRG classes added
         """
         cap_breaks = np.cumsum(trg_bins['TRG_cap'].values) * 1000  # GW to MW
-        cap_breaks = np.concatenate(([0., ], cap_breaks, [float('inf')]),
+        cap_breaks = np.concatenate(([0., ], cap_breaks),
                                     axis=0)
         labels = trg_bins.index.values
 
@@ -443,7 +443,7 @@ class ReedsClassifier:
                 tables.append(ReedsClassifier._TRG_bins(group_table, bins,
                                                         by_region=by_region))
 
-            rev_table = pd.concat(tables)
+            rev_table = pd.concat(tables).reset_index(drop=True)
         else:
             rev_table = ReedsClassifier._TRG_bins(rev_table, trg_bins,
                                                   by_region=by_region)
@@ -499,13 +499,13 @@ class ReedsClassifier:
         for label, bins in class_bins.iterrows():
             mask = True
             for col, value in bins.iteritems():
-                if isinstance(value, list):
-                    mask = ((rev_table[col] > value[0])
-                            & (rev_table[col] < value[1]))
+                if isinstance(value, (list, np.ndarray)):
+                    bin_mask = ((rev_table[col] > value[0])
+                                & (rev_table[col] < value[1]))
                 else:
-                    mask = rev_table[col] == value
+                    bin_mask = rev_table[col] == value
 
-                mask *= mask
+                mask *= bin_mask
 
             rev_table.loc[mask, 'class'] = label
 
