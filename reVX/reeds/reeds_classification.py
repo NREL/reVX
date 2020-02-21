@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import os
 import pandas as pd
+from warnings import warn
 
 from reVX.utilities.cluster_methods import ClusteringMethods
 from reVX.utilities.exceptions import ReedsValueError, ReedsKeyError
@@ -34,9 +35,15 @@ class ReedsClassifier:
         rev_table : str | pandas.DataFrame
             reV supply curve or aggregation table,
             or path to file containing table
-        resource_classes : str | pandas.DataFrame | pandas.Series | dict
-            Resource classes, either provided in a .csv, .json
-            as a DataFrame or Series, or in a dictionary
+        resource_classes : str | pandas.DataFrame
+            Resource classes, either provided in a .csv, .json or a DataFrame
+            Allowable columns:
+            - 'class' -> class labels to use
+            - 'TRG_cap' -> TRG capacity bins to use to create TRG classes
+            - any column in 'rev_table' -> Used for categorical bins
+            - '*_min' and '*_max' where * is a numberical column in 'rev_table'
+              -> used for range binning
+            NOTE: 'TRG_cap' can only be combined with categorical bins
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
          sc_bins : int
@@ -338,54 +345,6 @@ class ReedsClassifier:
         return rev_table
 
     @staticmethod
-    def _parse_class_bins(class_bins):
-        """
-        Parse resource class bins
-
-        Parameters
-        ----------
-        class_bins : str | pandas.DataFrame | pandas.Series | dict
-            Resource classes, either provided in a .csv, .json
-            as a DataFrame or Series, or in a dictionary
-
-        Returns
-        -------
-        attr : str
-            reV table attribute (column) to bin
-        class_bins : ndarray | list
-            List / vector of bins to create classes from
-        """
-        if isinstance(class_bins, str):
-            class_bins = ReedsClassifier._parse_table(class_bins)
-        elif isinstance(class_bins, pd.Series):
-            if not class_bins.name:
-                msg = ('reV table attribute to bin not supplied as Series '
-                       'name')
-                logger.error(msg)
-                raise ReedsValueError(msg)
-
-            class_bins = class_bins.to_frame()
-        elif isinstance(class_bins, dict):
-            class_bins = pd.DataFrame(class_bins)
-        elif not isinstance(class_bins, pd.DataFrame):
-            msg = ('Cannot parse class bins from type {}'
-                   .format(type(class_bins)))
-            logger.error(msg)
-            raise ReedsValueError(msg)
-
-        attr = class_bins.columns
-        if len(attr) > 1:
-            msg = ('Can only bin classes on one attribute: {} were provided: '
-                   '\n{}'.format(len(attr), attr))
-            logger.error(msg)
-            raise ReedsValueError(msg)
-
-        attr = attr[0]
-        class_bins = class_bins[attr].values
-
-        return attr, class_bins
-
-    @staticmethod
     def _TRG_bins(rev_table, trg_bins, by_region=False):
         """
         Create TRG (technical resource groups) using given cummulative
@@ -395,7 +354,7 @@ class ReedsClassifier:
         ----------
         rev_table : pandas.DataFrame
             reV supply curve or aggregation table
-        trg_bins : list | ndarray
+        trg_bins : pandas.Series
             Cummulative capacity bin widths to create TRGs from
             (in GW)
         by_region : bool
@@ -406,32 +365,149 @@ class ReedsClassifier:
         rev_table : pandas.DataFrame
             Updated table with TRG classes added
         """
-        cap_breaks = np.cumsum(trg_bins) * 1000  # convert to MW
-        cap_breaks = np.concatenate(([0., ], cap_breaks, [float('inf')]),
+        cap_breaks = np.cumsum(trg_bins['TRG_cap'].values) * 1000  # GW to MW
+        cap_breaks = np.concatenate(([0., ], cap_breaks),
                                     axis=0)
-        labels = [i + 1 for i in range(len(cap_breaks) - 1)]
+        labels = trg_bins.index.values
 
         cols = ['sc_gid', 'capacity', 'mean_lcoe', 'region']
-        trg_table = rev_table[cols].copy()
+        trg_classes = rev_table[cols].copy()
         if by_region:
             classes = []
-            trg_table['class'] = 1
-            for _, df in trg_table.groupby('region'):
+            trg_classes['class'] = 1
+            for _, df in trg_classes.groupby('region'):
                 df = df.sort_values('mean_lcoe')
                 cum_sum = df['capacity'].cumsum()
                 df.loc[:, 'class'] = pd.cut(x=cum_sum, bins=cap_breaks,
                                             labels=labels)
                 classes.append(df)
 
-            trg_table = pd.concat(classes)
+            trg_classes = pd.concat(classes)
         else:
-            trg_table = trg_table.sort_values('mean_lcoe')
-            cum_sum = trg_table['capacity'].cumsum()
-            trg_table.loc[:, 'class'] = pd.cut(x=cum_sum, bins=cap_breaks,
-                                               labels=labels)
+            trg_classes = trg_classes.sort_values('mean_lcoe')
+            cum_sum = trg_classes['capacity'].cumsum()
+            trg_classes.loc[:, 'class'] = pd.cut(x=cum_sum, bins=cap_breaks,
+                                                 labels=labels)
 
-        rev_table = rev_table.merge(trg_table[['sc_gid', 'class']],
+        rev_table = rev_table.merge(trg_classes[['sc_gid', 'class']],
                                     on='sc_gid', how='left')
+
+        return rev_table
+
+    @staticmethod
+    def _TRG_classes(rev_table, trg_bins, by_region=False):
+        """
+        Create TRG (technical resource groups) using given cummulative
+        capacity bin widths
+
+        Parameters
+        ----------
+        rev_table : pandas.DataFrame
+            reV supply curve or aggregation table
+        trg_bins : pandas.Series
+            Cummulative capacity bin widths to create TRGs from
+            (in GW)
+        by_region : bool
+            Groupby on region
+
+        Returns
+        -------
+        rev_table : pandas.DataFrame
+            Updated table with TRG classes added
+
+        Raises
+        ------
+        ValueError
+            If categorical columns do not exist in rev_table
+        """
+        cat_cols = [c for c in trg_bins if c != 'TRG_cap']
+        if cat_cols:
+            missing = [c for c in cat_cols if c not in rev_table]
+            if missing:
+                msg = ("categorical column(s) supplied with 'TRG_cap' "
+                       "are not valid columns of 'rev_table': {}"
+                       .format(missing))
+                logger.error(msg)
+                raise ValueError(msg)
+            else:
+                msg = ("Additional columns were supplied with "
+                       "'TRG_cap'! \n TRG bins will be computed for all "
+                       "unique combinations of {}".format(cat_cols))
+                logger.warning(msg)
+                warn(msg)
+
+            tables = []
+            rev_groups = rev_table.groupby(cat_cols)
+            for grp, bins in trg_bins.groupby(cat_cols):
+                group_table = rev_groups.get_group(grp)
+                tables.append(ReedsClassifier._TRG_bins(group_table, bins,
+                                                        by_region=by_region))
+
+            rev_table = pd.concat(tables).reset_index(drop=True)
+        else:
+            rev_table = ReedsClassifier._TRG_bins(rev_table, trg_bins,
+                                                  by_region=by_region)
+
+        return rev_table
+
+    @staticmethod
+    def _bin_classes(rev_table, class_bins):
+        """
+        Bin classes based on categorical or range bins
+
+        Parameters
+        ----------
+        rev_table : pandas.DataFrame
+            reV supply curve or aggregation table
+        class_bins : pandas.DataFrame
+            Class bins to use:
+            - categorical: single value
+            - range: *_min and *_max pair of values -> (min, max]
+
+        Returns
+        -------
+        rev_table : pandas.DataFrame
+            Updated table with TRG classes added
+
+        Raises
+        ------
+        ValueError
+            If range min and max are not supplied for range bins
+        """
+        range_cols = [c for c in class_bins if c.endswith(('min', 'max'))]
+
+        if len(range_cols) % 2 != 0:
+            msg = ("A '*_min' and a '*_max' value are neede for range bins! "
+                   "Values provided: {}".format(range_cols))
+            logger.error(msg)
+            raise ValueError(msg)
+
+        rev_cols = [c.rstrip('_min').rstrip('_max') for c in range_cols]
+        rev_cols = list(set(rev_cols))
+        for col in rev_cols:
+            cols = ['{}_min'.format(col), '{}_max'.format(col)]
+            class_bins[col] = list(class_bins[cols].values)
+
+        class_bins = class_bins.drop(columns=range_cols)
+        missing = [c for c in class_bins if c not in rev_table]
+        if missing:
+            msg = "Bin columns {} are not in 'rev_table'!".format(missing)
+            logger.error(msg)
+            raise ValueError(msg)
+
+        rev_table['class'] = None
+        for label, bins in class_bins.iterrows():
+            mask = True
+            for col, value in bins.iteritems():
+                if isinstance(value, (list, np.ndarray)):
+                    bin_mask = ((rev_table[col] > value[0])
+                                & (rev_table[col] <= value[1]))
+                else:
+                    bin_mask = rev_table[col] == value
+
+                mask *= bin_mask
+
+            rev_table.loc[mask, 'class'] = label
 
         return rev_table
 
@@ -444,7 +520,7 @@ class ReedsClassifier:
         ----------
         rev_table : pandas.DataFrame
             reV supply curve or aggregation table
-        resource_classes : str | pandas.DataFrame | pandas.Series | dict
+        resource_classes : str | pandas.DataFrame
             Resource classes, either provided in a .csv, .json
             as a DataFrame or Series, or in a dictionary
         trg_by_region : bool
@@ -455,26 +531,17 @@ class ReedsClassifier:
         rev_table : pandas.DataFrame
             Updated table with resource classes added
         """
-        attr, class_bins = ReedsClassifier._parse_class_bins(resource_classes)
+        resource_classes = ReedsClassifier._parse_table(resource_classes)
+        if 'class' in resource_classes:
+            resource_classes = resource_classes.set_index('class')
 
-        if "TRG" in attr:
-            rev_table = ReedsClassifier._TRG_bins(rev_table, class_bins,
-                                                  by_region=trg_by_region)
+        if 'TRG_cap' in resource_classes:
+            rev_table = ReedsClassifier._TRG_classes(rev_table,
+                                                     resource_classes,
+                                                     by_region=trg_by_region)
         else:
-            if attr not in rev_table:
-                msg = ('{} is not a valid rev table attribute '
-                       '(column header)'.format(attr))
-                logger.error(msg)
-                raise ReedsValueError(msg)
-
-            labels = np.array([i + 1 for i in range(len(class_bins) - 1)])
-            idx = np.argsort(class_bins)
-            class_bins = class_bins[idx]
-            idx = [i for i in idx if i < len(labels)]
-            labels = labels[idx]
-
-            rev_table['class'] = pd.cut(x=rev_table[attr],
-                                        bins=class_bins, labels=labels)
+            rev_table = ReedsClassifier._bin_classes(rev_table,
+                                                     resource_classes)
 
         return rev_table
 
@@ -535,9 +602,15 @@ class ReedsClassifier:
         rev_table : str | pandas.DataFrame
             reV supply curve or aggregation table,
             or path to file containing table
-        resource_classes : str | pandas.DataFrame | pandas.Series | dict
-            Resource classes, either provided in a .csv, .json
-            as a DataFrame or Series, or in a dictionary
+        resource_classes : str | pandas.DataFrame
+            Resource classes, either provided in a .csv, .json or a DataFrame
+            Allowable columns:
+            - 'class' -> class labels to use
+            - 'TRG_cap' -> TRG capacity bins to use to create TRG classes
+            - any column in 'rev_table' -> Used for categorical bins
+            - '*_min' and '*_max' where * is a numberical column in 'rev_table'
+              -> used for range binning
+            NOTE: 'TRG_cap' can only be combined with categorical bins
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
         sc_bins : int
