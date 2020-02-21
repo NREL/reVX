@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-reVX PLEXOS unit test module
+reVX ReEDs unit test module
 """
 import numpy as np
 import os

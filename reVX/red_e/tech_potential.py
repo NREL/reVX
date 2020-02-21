@@ -12,19 +12,19 @@ class TechPotential(ExclusionMaskFromDict):
     """
     RED-E Tech Potential tool
     """
-    def __init__(self, h5_path, cf_layer, power_density, layer_dict,
+    def __init__(self, h5_path, base_layer, layer_dict, power_density=1,
                  hsds=False, min_area=None, kernel='queen'):
         """
         Parameters
         ----------
         h5_path : str
             Path to .h5 file containing CF means and exclusion layers
-        cf_layer : str
-            Name of dataset in .h5 file containing cf means
-        power_density : float
-            Multiplier to convert CF means to generation means
+        base_layer : str
+            Name of dataset in .h5 file containing base layer
         layers_dict : dcit
             Dictionary of LayerMask arugments {layer: {kwarg: value}}
+        power_density : float
+            Multiplier to convert CF means to generation means
         hsds : bool
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS
@@ -33,10 +33,23 @@ class TechPotential(ExclusionMaskFromDict):
         kernel : str
             Contiguous filter method to use on final exclusion
         """
-        layer_dict[cf_layer] = {"use_as_weights": True}
-        super().__init__(h5_path, layer_dict, hsds=hsds, min_area=min_area,
+        excl_dict = layer_dict.copy()
+        excl_dict[base_layer] = {"use_as_weights": True}
+        super().__init__(h5_path, excl_dict, hsds=hsds, min_area=min_area,
                          kernel=kernel)
         self._pd = power_density
+
+    @property
+    def profile(self):
+        """
+        GeoTiff profile for exclusions
+
+        Returns
+        -------
+        profile : dict
+            Generic GeoTiff profile for exclusions in .h5 file
+        """
+        return self.excl_h5.profile
 
     @property
     def generation(self):
@@ -48,28 +61,10 @@ class TechPotential(ExclusionMaskFromDict):
         gen : ndarray
         """
         gen = self[...]
-        return gen
-
-    def _generate_mask(self, *ds_slice):
-        """
-        Generate inclusion mask from exclusion layers
-
-        Parameters
-        ----------
-        ds_slice : int | slice | list | ndarray
-            What to extract from ds, each arg is for a sequential axis
-
-        Returns
-        -------
-        gen : ndarray
-            Tech-potential as generation
-        """
-        gen = super()._generate_mask(*ds_slice)
-        gen *= self._pd
-        return gen
+        return gen * self._pd
 
     @classmethod
-    def run(cls, h5_path, cf_layer, power_density, layer_dict,
+    def run(cls, h5_path, base_layer, layer_dict, power_density=1,
             hsds=False, min_area=None, kernel='queen'):
         """
         compute tech-potential
@@ -78,12 +73,47 @@ class TechPotential(ExclusionMaskFromDict):
         ----------
         h5_path : str
             Path to .h5 file containing CF means and exclusion layers
-        cf_layer : str
-            Name of dataset in .h5 file containing cf means
-        power_density : float
-            Multiplier to convert CF means to generation means
+        base_layer : str
+            Name of dataset in .h5 file containing base layer
         layers_dict : dcit
             Dictionary of LayerMask arugments {layer: {kwarg: value}}
+        power_density : float
+            Multiplier to convert CF means to generation means
+        hsds : bool
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
+            behind HSDS
+        min_area : float | NoneType
+            Minimum required contiguous area in sq-km
+        kernel : str
+            Contiguous filter method to use on final exclusion
+
+        Returns
+        -------
+        mask : ndarray
+            Base layer with exclusions masked out
+        """
+        with cls(h5_path, base_layer, layer_dict, power_density=power_density,
+                 hsds=hsds, min_area=min_area, kernel=kernel) as f:
+            mask = f.mask
+
+        return mask
+
+    @classmethod
+    def run_generation(cls, h5_path, base_layer, layer_dict, power_density=1,
+                       hsds=False, min_area=None, kernel='queen'):
+        """
+        compute tech-potential
+
+        Parameters
+        ----------
+        h5_path : str
+            Path to .h5 file containing CF means and exclusion layers
+        base_layer : str
+            Name of dataset in .h5 file containing base layer
+        layers_dict : dcit
+            Dictionary of LayerMask arugments {layer: {kwarg: value}}
+        power_density : float
+            Multiplier to convert CF means to generation means
         hsds : bool
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS
@@ -97,8 +127,8 @@ class TechPotential(ExclusionMaskFromDict):
         gen : ndarray
             Tech-potentail as generation
         """
-        with cls(h5_path, cf_layer, power_density, layer_dict,
+        with cls(h5_path, base_layer, layer_dict, power_density=power_density,
                  hsds=hsds, min_area=min_area, kernel=kernel) as f:
-            gen = f.mask
+            gen = f.generation
 
         return gen
