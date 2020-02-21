@@ -501,7 +501,7 @@ class ReedsClassifier:
             for col, value in bins.iteritems():
                 if isinstance(value, (list, np.ndarray)):
                     bin_mask = ((rev_table[col] > value[0])
-                                & (rev_table[col] < value[1]))
+                                & (rev_table[col] <= value[1]))
                 else:
                     bin_mask = rev_table[col] == value
 
