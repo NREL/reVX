@@ -259,7 +259,7 @@ def test_offshore_classifier():
 
     test_table = ReedsClassifier.create(rev_table, class_bins,
                                         region_map='reeds_region',
-                                        sc_bins=5, cluster_kwargs=kwargs,
+                                        sc_bins=3, cluster_kwargs=kwargs,
                                         filter={'offshore': 1},
                                         trg_by_region=True)[0]
     assert_frame_equal(truth_table, test_table, check_dtype=False,
@@ -274,7 +274,7 @@ def test_offshore_classifier():
 
     test_table = ReedsClassifier.create(rev_table, class_bins,
                                         region_map='reeds_region',
-                                        sc_bins=5, cluster_kwargs=kwargs,
+                                        sc_bins=3, cluster_kwargs=kwargs,
                                         filter={'offshore': 1})[0]
     assert_frame_equal(truth_table, test_table, check_dtype=False,
                        check_categorical=False)
