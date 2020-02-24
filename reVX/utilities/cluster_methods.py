@@ -61,7 +61,7 @@ class ClusteringMethods:
         # Create deterministic cluster labels based on size
         label_n, l_size = np.unique(labels, return_counts=True)
         idx = np.argsort(l_size)
-        l_mapping = {k: v for k, v in zip(label_n, label_n[idx])}
+        l_mapping = {k: v for k, v in zip(label_n[idx], label_n)}
 
         sorted_labels = labels.copy()
         for k, v in l_mapping.items():
