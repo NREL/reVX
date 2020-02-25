@@ -23,7 +23,7 @@ for example, `ReEDS <https://www.nrel.gov/analysis/reeds/>`_,
   :caption: Contents:
 
   misc/misc
-  reVX/modules
+  reVX/reVX
 
 Indices and tables
 ==================
