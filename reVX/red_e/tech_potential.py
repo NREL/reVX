@@ -13,7 +13,8 @@ class TechPotential(ExclusionMaskFromDict):
     RED-E Tech Potential tool
     """
     def __init__(self, h5_path, base_layer, layer_dict, power_density=1,
-                 hsds=False, min_area=None, kernel='queen'):
+                 hsds=False, min_area=None, kernel='queen',
+                 check_layers=False):
         """
         Parameters
         ----------
@@ -32,11 +33,14 @@ class TechPotential(ExclusionMaskFromDict):
             Minimum required contiguous area in sq-km
         kernel : str
             Contiguous filter method to use on final exclusion
+        check_layers : bool
+            Run a pre-flight check on each layer to ensure they contain
+            un-excluded values
         """
         excl_dict = layer_dict.copy()
         excl_dict[base_layer] = {"use_as_weights": True}
         super().__init__(h5_path, excl_dict, hsds=hsds, min_area=min_area,
-                         kernel=kernel)
+                         kernel=kernel, check_layers=check_layers)
         self._pd = power_density
 
     @property
@@ -65,7 +69,8 @@ class TechPotential(ExclusionMaskFromDict):
 
     @classmethod
     def run(cls, h5_path, base_layer, layer_dict, power_density=1,
-            hsds=False, min_area=None, kernel='queen'):
+            hsds=False, min_area=None, kernel='queen',
+            check_layers=False):
         """
         compute tech-potential
 
@@ -86,6 +91,9 @@ class TechPotential(ExclusionMaskFromDict):
             Minimum required contiguous area in sq-km
         kernel : str
             Contiguous filter method to use on final exclusion
+        check_layers : bool
+            Run a pre-flight check on each layer to ensure they contain
+            un-excluded values
 
         Returns
         -------
@@ -93,14 +101,16 @@ class TechPotential(ExclusionMaskFromDict):
             Base layer with exclusions masked out
         """
         with cls(h5_path, base_layer, layer_dict, power_density=power_density,
-                 hsds=hsds, min_area=min_area, kernel=kernel) as f:
+                 hsds=hsds, min_area=min_area, kernel=kernel,
+                 check_layers=check_layers) as f:
             mask = f.mask
 
         return mask
 
     @classmethod
     def run_generation(cls, h5_path, base_layer, layer_dict, power_density=1,
-                       hsds=False, min_area=None, kernel='queen'):
+                       hsds=False, min_area=None, kernel='queen',
+                       check_layers=False):
         """
         compute tech-potential
 
@@ -121,6 +131,9 @@ class TechPotential(ExclusionMaskFromDict):
             Minimum required contiguous area in sq-km
         kernel : str
             Contiguous filter method to use on final exclusion
+        check_layers : bool
+            Run a pre-flight check on each layer to ensure they contain
+            un-excluded values
 
         Returns
         -------
@@ -128,7 +141,8 @@ class TechPotential(ExclusionMaskFromDict):
             Tech-potentail as generation
         """
         with cls(h5_path, base_layer, layer_dict, power_density=power_density,
-                 hsds=hsds, min_area=min_area, kernel=kernel) as f:
+                 hsds=hsds, min_area=min_area, kernel=kernel,
+                 check_layers=check_layers) as f:
             gen = f.generation
 
         return gen
