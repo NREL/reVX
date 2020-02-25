@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""reVX PLEXOS unit test module
+"""reVX RPM unit test module
 """
 import os
 import pytest
