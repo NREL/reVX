@@ -14,6 +14,7 @@ Subpackages
    reVX.config
    reVX.handlers
    reVX.plexos
+   reVX.red_e
    reVX.reeds
    reVX.resource
    reVX.rpm
