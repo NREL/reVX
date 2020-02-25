@@ -1,0 +1,34 @@
+{
+  "directories": {
+    "log_directory": "./logs/",
+    "output_directory": "./output/"
+  },
+  "execution_control": {
+    "allocation": "rev",
+    "feature": "--qos=normal",
+    "option": "eagle",
+    "walltime": 4.0,
+    "module": "reVX"
+  },
+  "log_level": "DEBUG",
+  "name": "windons",
+  "rev_table": "/shared-projects/rev/projects/reeds_jan2019/land_offshore_wind/outputs_sc.csv",
+  "filter": {"offshore":0},
+  "classify": {
+    "resource_classes": "./onshore_wind_resource_classes.csv",
+    "regions": "model_region",
+    "sc_bins": 5,
+    "cluster_on": "trans_cap_cost"
+  },
+  "profiles": {
+    "cf_profiles": "/shared-projects/rev/projects/reeds_jan2019/land_offshore_wind/outputs_gen_2012.h5",
+    "n_profiles": 1,
+    "profiles_dset": "cf_profile",
+    "rep_method": "meanoid",
+    "err_method": "rmse",
+    "reg_cols": ["region", "class"]
+  },
+  "timeslices": {
+    "timeslices": "./timeslices.csv"
+  }
+}
