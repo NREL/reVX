@@ -13,11 +13,6 @@ class ReedsConfig(AnalysisConfig):
     REQUIREMENTS = ('rev_table', )
 
     @property
-    def rev_table(self):
-        """Get the reV aggregation or SC table (required)."""
-        return self['rev_table']
-
-    @property
     def classify(self):
         """Get the classify input group in the config dict."""
         classify = self.get('classify', None)
@@ -77,6 +72,11 @@ class ClassifyConfigGroup(ReedsConfigGroup):
         self._default_cluster_on = 'trans_cap_cost'
 
     @property
+    def rev_table(self):
+        """Get the reV aggregation or SC table (required)."""
+        return self['rev_table']
+
+    @property
     def resource_classes(self):
         """Get the filepath input to csv or json containing resource class
         definitions."""
@@ -125,6 +125,11 @@ class ProfilesConfigGroup(ReedsConfigGroup):
         self._default_err_method = 'rmse'
         self._default_weight = 'gid_counts'
         self._default_reg_cols = ('region', 'bin', 'class')
+
+    @property
+    def reeds_table(self):
+        """Get the ReEDS classification table (required)."""
+        return self['reeds_table']
 
     @property
     def cf_profiles(self):
