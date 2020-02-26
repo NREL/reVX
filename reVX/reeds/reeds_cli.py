@@ -47,19 +47,21 @@ def run_local(ctx, config):
     """
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
-               rev_table=config.rev_table,
                out_dir=config.dirout,
                log_dir=config.logdir)
 
-    ctx.invoke(classify,
-               resource_classes=config.classify.resource_classes,
-               regions=config.classify.regions,
-               sc_bins=config.classify.sc_bins,
-               cluster_on=config.classify.cluster_on,
-               filter=config. classify.filter)
+    if config.classify is not None:
+        ctx.invoke(classify,
+                   rev_table=config.classify.rev_table,
+                   resource_classes=config.classify.resource_classes,
+                   regions=config.classify.regions,
+                   sc_bins=config.classify.sc_bins,
+                   cluster_on=config.classify.cluster_on,
+                   filter=config. classify.filter)
 
     if config.profiles is not None:
         ctx.invoke(profiles,
+                   reeds_table=config.profiles.reeds_table,
                    cf_profiles=config.profiles.cf_profiles,
                    gid_col=config.profiles.gid_col,
                    n_profiles=config.profiles.n_profiles,
@@ -105,11 +107,7 @@ def from_config(ctx, config, verbose):
         eagle(config)
 
 
-@main.group()
-@click.option('--rev_table', '-rt', required=True,
-              type=click.Path(exists=True),
-              help=('Path to .csv containing reV aggregation or '
-                    'supply curve table'))
+@main.group(chain=True)
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
 @click.option('--log_dir', '-log', default=None, type=STR,
@@ -117,11 +115,10 @@ def from_config(ctx, config, verbose):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, rev_table, out_dir, log_dir, verbose):
+def local(ctx, out_dir, log_dir, verbose):
     """
     Run reVX-REEDS on local hardware.
     """
-    ctx.obj['TABLE'] = rev_table
     ctx.obj['OUT_DIR'] = out_dir
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -136,12 +133,15 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
     log_modules = [__name__, 'reVX.reeds', 'reV.rep_profiles']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
-    logger.info('Running reV to ReEDS pipeline with reV table: {}'
-                .format(rev_table))
-    logger.info('Outputs to be stored in: {}'.format(out_dir))
+    logger.info('Running reV to ReEDS pipeline/n'
+                'Outputs to be stored in: {}'.format(out_dir))
 
 
-@local.group(chain=True, invoke_without_command=True)
+@local.command()
+@click.option('--rev_table', '-rt', required=True,
+              type=click.Path(exists=True),
+              help=('Path to .csv containing reV aggregation or '
+                    'supply curve table'))
 @click.option('--resource_classes', '-rc', required=True,
               type=click.Path(exists=True),
               help=("resource_classes: str | pandas.DataFrame\n"
@@ -166,16 +166,16 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
 @click.option('--filter', '-f', type=STR, default=None,
               help='Column value pair(s) to filter on. If None do not filter')
 @click.pass_context
-def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
+def classify(ctx, rev_table, resource_classes, regions, sc_bins, cluster_on,
+             filter):
     """
     Extract ReEDS (region, bin, class) groups
     """
     name = ctx.obj['NAME']
-    rev_table = ctx.obj['TABLE']
     out_dir = ctx.obj['OUT_DIR']
 
-    logger.info('Extracting ReEDS (region, bin, class) groups'
-                .format())
+    logger.info('Extracting ReEDS (region, bin, class) groups using '
+                'reV sc table {}'.format(rev_table))
     kwargs = {'cluster_on': cluster_on, 'method': 'kmeans'}
     if isinstance(filter, str):
         filter = dict_str_load(filter)
@@ -201,7 +201,10 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
     logger.info('reVX - ReEDS classification methods complete.')
 
 
-@classify.command()
+@local.command()
+@click.option('--reeds_table', '-rt', type=STR, default=None,
+              help=('Path to .csv containing reeds classification table '
+                    'not needed if chained with classify command'))
 @click.option('--cf_profiles', '-cf', required=True,
               type=click.Path(exists=True),
               help=('Path to reV .h5 file containing desired capacity factor '
@@ -232,13 +235,15 @@ def classify(ctx, resource_classes, regions, sc_bins, cluster_on, filter):
               help=('Number of parallel workers. 1 will run serial, '
                     'None will use all available.'))
 @click.pass_context
-def profiles(ctx, cf_profiles, gid_col, n_profiles, profiles_dset, rep_method,
-             err_method, weight, reg_cols, max_workers):
+def profiles(ctx, reeds_table, cf_profiles, gid_col, n_profiles, profiles_dset,
+             rep_method, err_method, weight, reg_cols, max_workers):
     """
     Extract ReEDS represntative profiles
     """
     name = ctx.obj['NAME']
-    table = ctx.obj['TABLE']
+    if reeds_table is None:
+        reeds_table = ctx.obj['TABLE']
+
     out_dir = ctx.obj['OUT_DIR']
 
     logger.info('Extracting ReEDS representative profiles for {} groups, '
@@ -249,7 +254,7 @@ def profiles(ctx, cf_profiles, gid_col, n_profiles, profiles_dset, rep_method,
     logger.info('Saving representative hourly cf profiles to {}.'
                 .format(out_path))
 
-    ReedsProfiles.run(cf_profiles, table,
+    ReedsProfiles.run(cf_profiles, reeds_table,
                       gid_col=gid_col,
                       profiles_dset=profiles_dset,
                       rep_method=rep_method,
@@ -266,7 +271,7 @@ def profiles(ctx, cf_profiles, gid_col, n_profiles, profiles_dset, rep_method,
     logger.info('reVX - ReEDS representative profile methods complete.')
 
 
-@classify.command()
+@local.command()
 @click.option('--profiles', '-pr', type=STR, default=None,
               help=('Path to .h5 file containing (representative) profiles, '
                     'not needed if chained with profiles command'))

@@ -1,9 +1,31 @@
 National Solar Radiation Database (NSRDB)
 =========================================
 
-The National Solar Radiation Database (NSRDB) is a serially complete collection of meteorological and solar irradiance data sets for the United States and a growing list of international locations for 1998-2017. The NSRDB provides foundational information to support U.S. Department of Energy programs, research, and the general public.
+The National Solar Radiation Database (NSRDB) is a serially complete
+collection of meteorological and solar irradiance data sets for the
+United States and a growing list of international locations for 1998-2017. The
+NSRDB provides foundational information to support U.S. Department of Energy
+programs, research, and the general public.
 
-The NSRDB provides time-series data at 30 minute resolution of resource averaged over surface cells of 0.038 degrees in both latitude and longitude, or nominally 4 km in size. The solar radiation values represent the resource available to solar energy systems. The data was created using cloud properties which are generated using the AVHRR Pathfinder Atmospheres-Extended (PATMOS-x) algorithms developed by the University of Wisconsin. Fast all-sky radiation model for solar applications (FARMS) in conjunction with the cloud properties, and aerosol optical depth (AOD) and precipitable water vapor (PWV) from ancillary source are used to estimate solar irradiance (GHI, DNI, and DHI). The Global Horizontal Irradiance (GHI) is computed for clear skies using the REST2 model. For cloud scenes identified by the cloud mask, FARMS is used to compute GHI. The Direct Normal Irradiance (DNI) for cloud scenes is then computed using the DISC model. The PATMOS-X model uses half-hourly radiance images in visible and infrared channels from the GOES series of geostationary weather satellites.  Ancillary variables needed to run REST2 and FARMS (e.g., aerosol optical depth, precipitable water vapor, and albedo) are derived from the the Modern Era-Retrospective Analysis (MERRA-2) dataset. Temperature and wind speed data are also derived from MERRA-2 and provided for use in SAM to compute PV generation.
+The NSRDB provides time-series data at 30 minute resolution of resource
+averaged over surface cells of 0.038 degrees in both latitude and longitude,
+or nominally 4 km in size. The solar radiation values represent the resource
+available to solar energy systems. The data was created using cloud properties
+which are generated using the AVHRR Pathfinder Atmospheres-Extended (PATMOS-x)
+algorithms developed by the University of Wisconsin. Fast all-sky radiation
+model for solar applications (FARMS) in conjunction with the cloud properties,
+and aerosol optical depth (AOD) and precipitable water vapor (PWV) from
+ancillary source are used to estimate solar irradiance (GHI, DNI, and DHI).
+The Global Horizontal Irradiance (GHI) is computed for clear skies using the
+REST2 model. For cloud scenes identified by the cloud mask, FARMS is used to
+compute GHI. The Direct Normal Irradiance (DNI) for cloud scenes is then
+computed using the DISC model. The PATMOS-X model uses half-hourly radiance
+images in visible and infrared channels from the GOES series of geostationary
+weather satellites.  Ancillary variables needed to run REST2 and FARMS (e.g.,
+aerosol optical depth, precipitable water vapor, and albedo) are derived from
+the the Modern Era-Retrospective Analysis (MERRA-2) dataset. Temperature and
+wind speed data are also derived from MERRA-2 and provided for use in SAM to
+compute PV generation.
 
 The following variables are provided by the NSRDB:
 
@@ -38,7 +60,14 @@ The following variables are provided by the NSRDB:
 Data Format
 -----------
 
-The data is provided in high density data file (.h5) separated by year.  The variables mentioned above are provided in 2 dimensional time-series arrays with dimensions (time x location). The temporal axis is defined by the ``time_index`` dataset, while the positional axis is defined by the ``meta`` dataset. For storage efficiency each variable has been scaled and stored as an integer. The scale-factor is provided in the ``psm_scale-factor`` attribute.  The units for the variable data is also provided as an attribute (``psm_units``).
+The data is provided in high density data file (.h5) separated by year. The
+variables mentioned above are provided in 2 dimensional time-series arrays
+with dimensions (time x location). The temporal axis is defined by the
+``time_index`` dataset, while the positional axis is defined by the ``meta``
+dataset. For storage efficiency each variable has been scaled and stored as an
+integer. The scale-factor is provided in the ``psm_scale-factor`` attribute.
+The units for the variable data is also provided as an attribute
+(``psm_units``).
 
 NSRDB Module
 ------------

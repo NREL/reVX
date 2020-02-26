@@ -9,5 +9,6 @@ Examples
 .. toctree::
 
    examples.rpm
+   examples.reeds
    examples.nsrdb
    examples.wind

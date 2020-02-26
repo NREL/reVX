@@ -10,9 +10,10 @@ What is reVX?
 =============
 reVX stands for the **Renewable Energy Potential(V) EXchange** tool.
 
-reVX provides a set of tools to extract data from `reV <https://nrel.github.io/reV>`_
-model outputs, as well as interfaces between reV and other renewable energy focused models,
-for example, `ReEDS <https://www.nrel.gov/analysis/reeds/>`_,
+reVX provides a set of tools to extract data from
+`reV <https://nrel.github.io/reV>`_ model outputs, as well as interfaces
+between reV and other renewable energy focused models, for example,
+`ReEDS <https://www.nrel.gov/analysis/reeds/>`_,
 `RPM <https://www.nrel.gov/analysis/models-rpm.html>`_, and PLEXOS.
 
 .. include:: ../../README.rst
