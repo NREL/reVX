@@ -4,7 +4,15 @@ Wind Integration National Dataset (WIND) Toolkit
 Model
 -----
 
-Wind resource data for North America was produced using the `Weather Research and Forecasting Model (WRF) <https://www.mmm.ucar.edu/weather-research-and-forecasting-model>`_. The WRF model was initialized with the European Centre for Medium Range Weather Forecasts Interim Reanalysis (ERA-Interm) data set with an initial grid spacing of 54 km.  Three internal nested domains were used to refine the spatial resolution to 18, 6, and finally 2 km.  The WRF model was run for years 2007 to 2014. While outputs were extracted from WRF at 5 minute time-steps, due to storage limitations instantaneous hourly time-step are provided for all variables while full 5 min resolution data is provided for wind speed and wind direction only.
+Wind resource data for North America was produced using the `Weather Research and Forecasting Model (WRF) <https://www.mmm.ucar.edu/weather-research-and-forecasting-model>`_.
+The WRF model was initialized with the European Centre for Medium Range Weather
+Forecasts Interim Reanalysis (ERA-Interm) data set with an initial grid spacing
+of 54 km.  Three internal nested domains were used to refine the spatial
+resolution to 18, 6, and finally 2 km.  The WRF model was run for years 2007 to
+2014. While outputs were extracted from WRF at 5 minute time-steps, due to
+storage limitations instantaneous hourly time-step are provided for all
+variables while full 5 min resolution data is provided for wind speed and wind
+direction only.
 
 The following variables were extracted from the WRF model data:
 
@@ -19,7 +27,10 @@ The following variables were extracted from the WRF model data:
 Domains
 -------
 
-The wind resource was produce using three distinct WRF domains shown below. The CONUS domain for 2007-2013 was run by 3Tier while 2014 as well as all years of the Canada and Mexico domains were run under NARIS. The data is provided in three sets of files:
+The wind resource was produce using three distinct WRF domains shown below. The
+CONUS domain for 2007-2013 was run by 3Tier while 2014 as well as all years of
+the Canada and Mexico domains were run under NARIS. The data is provided in
+three sets of files:
 
 - CONUS: Extracted exclusively from the CONUS domain
 - Canada: Combined data from the Canada and CONUS domains
@@ -28,19 +39,27 @@ The wind resource was produce using three distinct WRF domains shown below. The 
 Data Format
 -----------
 
-The data is provided in high density data file (.h5) separated by year.  The variables mentioned above are provided in 2 dimensional time-series arrays with dimensions (time x location). The temporal axis is defined by the ``time_index`` dataset, while the positional axis is defined by the ``meta`` dataset. For storage efficiency each variable has been scaled and stored as an integer. The scale-factor is provided in the ``scale-factor`` attribute.  The units for the variable data is also provided as an attribute (``units``).
+The data is provided in high density data file (.h5) separated by year. The
+variables mentioned above are provided in 2 dimensional time-series arrays with
+dimensions (time x location). The temporal axis is defined by the
+``time_index`` dataset, while the positional axis is defined by the ``meta``
+dataset. For storage efficiency each variable has been scaled and stored as an
+integer. The scale-factor is provided in the ``scale-factor`` attribute.  The
+units for the variable data is also provided as an attribute (``units``).
 
 WIND Module
 -----------
 
-An extraction utility for the WIND (WTK) data has been created with in `reVX <https://github.com/nrel/reVX>`_ and is available on Eagle as a module:
+An extraction utility for the WIND (WTK) data has been created with in
+`reVX <https://github.com/nrel/reVX>`_ and is available on Eagle as a module:
 
 .. code-block:: bash
 
     module use /datasets/modulefiles
     module load WIND
 
-The WIND module provides a `WIND <https://nrel.github.io/reVX/reVX/reVX.resource.wind_cli.html#wind>`_ command line utility with the following options and commands:
+The WIND module provides a `WIND <https://nrel.github.io/reVX/reVX/reVX.resource.wind_cli.html#wind>`_
+command line utility with the following options and commands:
 
 .. code-block:: bash
 

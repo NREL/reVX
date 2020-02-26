@@ -22,9 +22,14 @@ The entire pipeline can be run using the following CLI call:
 
     reV-RPM --name="Job_name" --cf-profile="../cf_profiles.h5" --out-dir="../output_directory" -p cluster --rpm_meta="../rpm_meta.csv" and_profiles --exclusions="../exclusions.tiff" --techmap="../techmap.h5" --techmap_dset="wtk_conus"
 
-This will cluster the RPM profiles using the regions and number of clusters given in ``rpm_meta.csv`` and then return a representative profile for each region. NOTE: that the and_profiles options are all optional. If they are not given than exclusions will not be applied.  Also NOTE that -p is an optional flag to run the clustering and profiles in parallel.
+This will cluster the RPM profiles using the regions and number of clusters
+given in ``rpm_meta.csv`` and then return a representative profile for each
+region. NOTE: that the and_profiles options are all optional. If they are not
+given than exclusions will not be applied.  Also NOTE that -p is an optional
+flag to run the clustering and profiles in parallel.
 
-If you only want to create the clusters you can drop the and_profiles part of the command:
+If you only want to create the clusters you can drop the and_profiles part of
+the command:
 
 .. code-block:: bash
 
@@ -32,13 +37,15 @@ If you only want to create the clusters you can drop the and_profiles part of th
 
 This will write a .csv with the cluster results to ``out_dir``
 
-If representative profiles are desired for an existing set of clusters (``rpm_clusters.csv``) the ``rep-profies`` sub-command can be used:
+If representative profiles are desired for an existing set of clusters
+(``rpm_clusters.csv``) the ``rep-profies`` sub-command can be used:
 
 .. code-block:: bash
 
     reV-RPM --name="Job_name" --cf-profile="../cf_profiles.h5" --out-dir="../output_directory" -p and_profiles --rpm-clusters="../rpm_clusters.csv" --exclusions="../exclusions.tiff" --techmap="../techmap.h5" --techmap_dset="wtk_conus"
 
-Again --exclusions, --techmap, and --techmap-dset are optional if exclusions should be applied.
+Again --exclusions, --techmap, and --techmap-dset are optional if exclusions
+should be applied.
 
 If additional representative profiles are desired use the following call:
 
@@ -46,16 +53,19 @@ If additional representative profiles are desired use the following call:
 
     reV-RPM --name="Job_name" --cf-profile="../cf_profiles.h5" --out-dir="../output_directory" -p and_profiles --rpm-clusters="../rpm_clusters.csv" extra_profiles --profiles="5"
 
-This will extract 5 additional profiles.  NOTE: ``extra-profiles`` can only be run after ``rep-profiles```.
+This will extract 5 additional profiles.  NOTE: ``extra-profiles`` can only be
+run after ``rep-profiles```.
 
 RPM sub-package
 ---------------
 
-The reV-RPM pipeline can also be run using the rpm sub-package of reVX. The two main classes are
+The reV-RPM pipeline can also be run using the rpm sub-package of reVX. The
+two main classes are
 ``RPMClusterManager`` and ``RPMOutput``.
 
-``RPMClusterManager`` manages the clustering of RPM regions and if desired can run ``RPMOutput`` to extract
-representative profiles.
+``RPMClusterManager`` manages the clustering of RPM regions and if desired can
+run ``RPMOutput`` to extract representative profiles.
+
 Extracting clusters:
 
 .. code-block:: python
@@ -72,8 +82,9 @@ Extracting clusters and profiles:
                                                 job_tag=name, rpm_region_col=region_col,
                                                 parallel=parallel)
 
-``RPMOutput`` handles the application of exclusions and extraction of representative profiles from an
-existing set of clusters.
+``RPMOutput`` handles the application of exclusions and extraction of
+representative profiles from an existing set of clusters.
+
 Apply exclusions and extract profiles:
 
 .. code-block:: python
@@ -82,8 +93,9 @@ Apply exclusions and extract profiles:
                               techmap, techmap_dset, out_dir,
                               job_tag=name, parallel=parallel)
 
-As above NOTE that ``exclusions``, ``techmap``, and ``techmap_dset`` can be set to ``None``
-if representative profiles without exclusions are desired.
+As above NOTE that ``exclusions``, ``techmap``, and ``techmap_dset`` can be
+set to ``None`` if representative profiles without exclusions are desired.
+
 Extra profiles can be extracted with:
 
 .. code-block:: python
@@ -92,4 +104,5 @@ Extra profiles can be extracted with:
                                n_profiles=profiles, job_tag=name,
                                parallel=parallel)
 
-Again ``extra_profiles`` can only be run after ``process_outputs`` has been run.
+Again ``extra_profiles`` can only be run after ``process_outputs`` has been
+run.
