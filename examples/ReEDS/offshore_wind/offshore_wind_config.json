@@ -25,13 +25,15 @@
   "profiles": {
     "cf_profiles": "/shared-projects/rev/projects/reeds_jan2020/wind/reeds_wind_rep_profiles_2012.h5",
     "err_method": "rmse",
+    "gid_col": "sc_gid",
     "n_profiles": 1,
-    "profiles_dset": "cf_profile",
+    "profiles_dset": "rep_profiles_0",
     "reg_cols": [
       "region",
       "class"
     ],
-    "rep_method": "meanoid"
+    "rep_method": "meanoid",
+    "weight": "capacity"
   },
   "timeslices": {
     "timeslices": "./timeslices.csv"
