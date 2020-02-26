@@ -1,4 +1,10 @@
 {
+  "classify": {
+    "cluster_on": "trans_cap_cost",
+    "regions": "model_region",
+    "resource_classes": "./offshore_wind_resource_classes.csv",
+    "sc_bins": 5
+  },
   "directories": {
     "log_directory": "./logs/",
     "output_directory": "./output/"
@@ -6,28 +12,27 @@
   "execution_control": {
     "allocation": "rev",
     "feature": "--qos=normal",
+    "module": "reVX",
     "option": "eagle",
-    "walltime": 4.0,
-    "module": "reVX"
+    "walltime": 4.0
+  },
+  "filter": {
+    "offshore": 1
   },
   "log_level": "DEBUG",
   "name": "windoff",
-  "rev_table": "/shared-projects/rev/projects/reeds_jan2019/land_offshore_wind/outputs_sc.csv",
-  "filter": {"offshore":1},
-  "classify": {
-    "resource_classes": "./offshore_wind_resource_classes.csv",
-    "regions": "model_region",
-    "sc_bins": 5,
-    "cluster_on": "trans_cap_cost"
-  },
   "profiles": {
-    "cf_profiles": "/shared-projects/rev/projects/reeds_jan2019/land_offshore_wind/outputs_gen_2012.h5",
+    "cf_profiles": "/shared-projects/rev/projects/reeds_jan2020/wind/reeds_wind_rep_profiles_2012.h5",
+    "err_method": "rmse",
     "n_profiles": 1,
     "profiles_dset": "cf_profile",
-    "rep_method": "meanoid",
-    "err_method": "rmse",
-    "reg_cols": ["region", "class"]
+    "reg_cols": [
+      "region",
+      "class"
+    ],
+    "rep_method": "meanoid"
   },
+  "rev_table": "/shared-projects/rev/projects/reeds_jan2020/wind/reeds_wind_sc.csv",
   "timeslices": {
     "timeslices": "./timeslices.csv"
   }
