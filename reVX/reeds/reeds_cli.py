@@ -172,7 +172,6 @@ def classify(ctx, rev_table, resource_classes, regions, sc_bins, cluster_on,
     Extract ReEDS (region, bin, class) groups
     """
     name = ctx.obj['NAME']
-    ctx.obj['TABLE'] = rev_table
     out_dir = ctx.obj['OUT_DIR']
 
     logger.info('Extracting ReEDS (region, bin, class) groups using '
