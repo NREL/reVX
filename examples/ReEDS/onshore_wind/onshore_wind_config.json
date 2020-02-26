@@ -23,9 +23,11 @@
   "profiles": {
     "cf_profiles": "/shared-projects/rev/projects/reeds_jan2019/land_offshore_wind/outputs_gen_2012.h5",
     "n_profiles": 1,
-    "profiles_dset": "cf_profile",
+    "profiles_dset": "rep_profiles_0",
     "rep_method": "meanoid",
     "err_method": "rmse",
+    "weight": "capacity",
+    "gid_col": "sc_gid",
     "reg_cols": ["region", "class"]
   },
   "timeslices": {
