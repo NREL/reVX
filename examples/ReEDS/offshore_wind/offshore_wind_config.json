@@ -3,6 +3,7 @@
     "cluster_on": "trans_cap_cost",
     "regions": "model_region",
     "resource_classes": "./offshore_wind_resource_classes.csv",
+    "rev_table": "/shared-projects/rev/projects/reeds_jan2020/wind/reeds_wind_sc.csv",
     "sc_bins": 5
   },
   "directories": {
@@ -32,7 +33,6 @@
     ],
     "rep_method": "meanoid"
   },
-  "rev_table": "/shared-projects/rev/projects/reeds_jan2020/wind/reeds_wind_sc.csv",
   "timeslices": {
     "timeslices": "./timeslices.csv"
   }
