@@ -138,6 +138,7 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
     logger.info('Outputs to be stored in: {}'.format(out_dir))
 
 
+@local.command()
 @click.option('--rev_table', '-rt', required=True,
               type=click.Path(exists=True),
               help=('Path to .csv containing reV aggregation or '
