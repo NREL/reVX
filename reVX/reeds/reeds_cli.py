@@ -115,7 +115,7 @@ def from_config(ctx, config, verbose):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, rev_table, out_dir, log_dir, verbose):
+def local(ctx, out_dir, log_dir, verbose):
     """
     Run reVX-REEDS on local hardware.
     """
@@ -133,9 +133,8 @@ def local(ctx, rev_table, out_dir, log_dir, verbose):
     log_modules = [__name__, 'reVX.reeds', 'reV.rep_profiles']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
-    logger.info('Running reV to ReEDS pipeline with reV table: {}'
-                .format(rev_table))
-    logger.info('Outputs to be stored in: {}'.format(out_dir))
+    logger.info('Running reV to ReEDS pipeline/n'
+                'Outputs to be stored in: {}'.format(out_dir))
 
 
 @local.command()
@@ -176,8 +175,8 @@ def classify(ctx, rev_table, resource_classes, regions, sc_bins, cluster_on,
     ctx.obj['TABLE'] = rev_table
     out_dir = ctx.obj['OUT_DIR']
 
-    logger.info('Extracting ReEDS (region, bin, class) groups'
-                .format())
+    logger.info('Extracting ReEDS (region, bin, class) groups using '
+                'reV sc table {}'.format(rev_table))
     kwargs = {'cluster_on': cluster_on, 'method': 'kmeans'}
     if isinstance(filter, str):
         filter = dict_str_load(filter)
