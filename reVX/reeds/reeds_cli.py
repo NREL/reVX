@@ -353,20 +353,23 @@ def get_node_cmd(config):
     if config.log_level == logging.DEBUG:
         args += '-v '
 
-    args += ('classify -rt {rev_table} -rc {resource_classes} -r {regions} '
-             '-scb {sc_bins} -cl {cluster_on} -f {filter} '
-             .format(rev_table=s(config.classify.rev_table),
-                     resource_classes=s(config.classify.resource_classes),
-                     regions=s(config.classify.regions),
-                     sc_bins=s(config.classify.sc_bins),
-                     cluster_on=s(config.classify.cluster_on),
-                     filter=s(config.classify.filter)))
+    if config.classify is not None:
+        args += ('classify -rt {rev_table} -rc {resource_classes} '
+                 '-r {regions} -scb {sc_bins} -cl {cluster_on} -f {filter} '
+                 .format(rev_table=s(config.classify.rev_table),
+                         resource_classes=s(config.classify.resource_classes),
+                         regions=s(config.classify.regions),
+                         sc_bins=s(config.classify.sc_bins),
+                         cluster_on=s(config.classify.cluster_on),
+                         filter=s(config.classify.filter)))
 
     if config.profiles is not None:
-        args += ('profiles -cf {cf_profiles} -gc {gid_col} -np {n_profiles} '
-                 '-pd {profiles_dset} -rm {rep_method} -em {err_method} '
-                 '-w {weight} -rcp {reg_cols} -mw {max_workers} '
-                 .format(cf_profiles=s(config.profiles.cf_profiles),
+        args += ('profiles -rt {reeds_table} -cf {cf_profiles} -gc {gid_col} '
+                 '-np {n_profiles} -pd {profiles_dset} -rm {rep_method} '
+                 '-em {err_method} -w {weight} -rcp {reg_cols} '
+                 '-mw {max_workers} '
+                 .format(reeds_table=s(config.profile.reeds_table),
+                         cf_profiles=s(config.profiles.cf_profiles),
                          gid_col=s(config.profiles.gid_col),
                          n_profiles=s(config.profiles.n_profiles),
                          profiles_dset=s(config.profiles.profiles_dset),
