@@ -13,7 +13,6 @@
   "execution_control": {
     "allocation": "rev",
     "feature": "--partition=debug",
-    "module": "reVX",
     "option": "eagle",
     "walltime": 1.0
   },
