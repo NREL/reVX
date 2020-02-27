@@ -368,7 +368,7 @@ def get_node_cmd(config):
                  '-np {n_profiles} -pd {profiles_dset} -rm {rep_method} '
                  '-em {err_method} -w {weight} -rcp {reg_cols} '
                  '-mw {max_workers} '
-                 .format(reeds_table=s(config.profile.reeds_table),
+                 .format(reeds_table=s(config.profiles.reeds_table),
                          cf_profiles=s(config.profiles.cf_profiles),
                          gid_col=s(config.profiles.gid_col),
                          n_profiles=s(config.profiles.n_profiles),
