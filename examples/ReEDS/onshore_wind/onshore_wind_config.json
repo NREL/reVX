@@ -12,10 +12,10 @@
   },
   "execution_control": {
     "allocation": "rev",
-    "feature": "--qos=normal",
+    "feature": "--partition=debug",
     "module": "reVX",
     "option": "eagle",
-    "walltime": 4.0
+    "walltime": 1.0
   },
   "filter": {
     "offshore": 0
