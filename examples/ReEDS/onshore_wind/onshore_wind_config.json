@@ -19,7 +19,7 @@
   "filter": {
     "offshore": 0
   },
-  "log_level": "DEBUG",
+  "log_level": "INFO",
   "name": "windons",
   "profiles": {
     "cf_profiles": "/shared-projects/rev/projects/reeds_jan2020/wind/reeds_wind_rep_profiles_2012.h5",
