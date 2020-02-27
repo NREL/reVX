@@ -345,18 +345,18 @@ def get_node_cmd(config):
     """
     s = SubprocessManager.s
 
-    args = ('-n {name} local -rt {rev_table} -o {out_dir} -log {log_dir} '
+    args = ('-n {name} local -o {out_dir} -log {log_dir} '
             .format(name=s(config.name),
-                    rev_table=s(config.rev_table),
                     out_dir=s(config.dirout),
                     log_dir=s(config.logdir)))
 
     if config.log_level == logging.DEBUG:
         args += '-v '
 
-    args += ('classify -rc {resource_classes} -r {regions} -scb {sc_bins} '
-             '-cl {cluster_on} -f {filter} '
-             .format(resource_classes=s(config.classify.resource_classes),
+    args += ('classify -rt {rev_table} -rc {resource_classes} -r {regions} '
+             '-scb {sc_bins} -cl {cluster_on} -f {filter} '
+             .format(rev_table=s(config.classify.rev_table),
+                     resource_classes=s(config.classify.resource_classes),
                      regions=s(config.classify.regions),
                      sc_bins=s(config.classify.sc_bins),
                      cluster_on=s(config.classify.cluster_on),
