@@ -66,11 +66,11 @@ class ReedsTimeslices:
     @property
     def profiles(self):
         """
-        Representative profiles Multi-index DataFrame
+        .h5 file containing representative profiles
 
         Returns
         -------
-        pandas.DataFrame
+        str
         """
         return self._profiles
 
@@ -148,10 +148,6 @@ class ReedsTimeslices:
                 logger.info('Found region column labels in profile meta for '
                             'timeslice regions: {}'.format(reg_cols))
                 meta = meta.set_index(list(reg_cols))
-
-            if 'timezone' in f.dsets:
-                tz = f['timezone']
-                meta['timezone'] = tz
 
             if 'timezone' not in meta:
                 msg = ('Rep profile data must contain timzone to allow '
