@@ -133,7 +133,7 @@ def local(ctx, out_dir, log_dir, verbose):
     log_modules = [__name__, 'reVX.reeds', 'reV.rep_profiles']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
-    logger.info('Running reV to ReEDS pipeline/n'
+    logger.info('Running reV to ReEDS pipeline\n'
                 'Outputs to be stored in: {}'.format(out_dir))
 
 
