@@ -413,7 +413,9 @@ def eagle(config):
                   memory=config.execution_control.node_mem,
                   walltime=config.execution_control.walltime,
                   feature=config.execution_control.feature,
-                  name=name, stdout_path=stdout_path)
+                  name=name, stdout_path=stdout_path,
+                  conda_env=config.execution_control.conda_env,
+                  module=config.execution_control.module)
     if slurm.id:
         msg = ('Kicked off reVX-REEDS pipeline job "{}" '
                '(SLURM jobid #{}) on Eagle.'
