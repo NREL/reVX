@@ -2,11 +2,9 @@
 """
 Extract representative profiles for ReEDS
 """
-import json
 import logging
 import numpy as np
 import pandas as pd
-from reV.handlers.outputs import Outputs
 from reV.rep_profiles.rep_profiles import RepProfiles
 
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -135,6 +133,7 @@ class ReedsProfiles(RepProfiles):
                  .format(len(time_index)))
             logger.error(e)
             raise ValueError(e)
+
         year = time_index.year[0]
         time_index = pd.date_range(start='{}0101'.format(year),
                                    end='{}0101'.format(int(year + 1)),
@@ -144,7 +143,9 @@ class ReedsProfiles(RepProfiles):
         if any(mask):
             mask = (time_index.month == 12) & (time_index.day == 31)
             time_index = time_index[~mask]
+
         profiles = {k: np.roll(v, -1, axis=0) for k, v in profiles.items()}
+
         return profiles, time_index
 
     @staticmethod
@@ -169,39 +170,70 @@ class ReedsProfiles(RepProfiles):
 
         return hour_of_year
 
-    def _write_timezone(self, fout):
-        """Write a timezone array to the output file.
+    def _run(self, fout=None, hourly=True, hour_ending=True, max_workers=None):
+        """
+        Extract ReEDS representative profiles in serial or parallel
+        and save to disc if requested. Convert to hourly and hour_ending if
+        requested.
 
         Parameters
         ----------
-        fout : str
-            None or filepath to output h5 file.
+        fout : str, optional
+            filepath to output h5 file, by default None
+        hourly : bool, optional
+            Flag to get hourly data (top of hour) instead of native resolution,
+            by default True
+        hour_ending : bool, optional
+            Flag to shift instantaneous profiles and time index to hour ending,
+            by default True
+        max_workers : int, optional
+            Number of parallel workers. 1 will run serial, None will use all
+            available., by default None
+
+        Returns
+        -------
+        profiles : dict
+            dict of n_profile-keyed arrays with shape (time, n) for the
+            representative profiles for each region.
+        meta : pd.DataFrame
+            Meta dataframes recording the regions and the selected rep profile
+            gid.
+        time_index : pd.DatatimeIndex
+            Datetime Index for represntative profiles
         """
+        if max_workers == 1:
+            self._run_serial()
+        else:
+            self._run_parallel(max_workers=max_workers)
 
-        with Outputs(self._gen_fpath, mode='r') as out:
-            tz = []
-            for gen_gid in self.meta['rep_gen_gid']:
-                if isinstance(gen_gid, str):
-                    gen_gid = json.loads(gen_gid)
-                if isinstance(gen_gid, (int, float)):
-                    tz.append(out.meta.at[gen_gid, 'timezone'])
-                elif isinstance(gen_gid, (list, tuple)):
-                    tz.append(out.meta.at[gen_gid[0], 'timezone'])
-            tz = np.array(tz)
+        # pylint: disable=W0201
+        if hourly and (len(self._time_index) > 8760):
+            self._profiles, self._time_index = self._to_hourly(self.profiles,
+                                                               self.time_index)
 
-        with Outputs(fout, mode='a') as out:
-            out._create_dset('timezone', tz.shape, tz.dtype, data=tz)
+        if hourly and hour_ending:
+            self._profiles, self._time_index = \
+                self._to_hour_ending(self._profiles, self._time_index)
+
+        if fout is not None:
+            self.save_profiles(fout, save_rev_summary=False,
+                               scaled_precision=True)
+
+        logger.info('Representative profiles complete!')
+
+        return self.profiles, self.meta, self.time_index
 
     @classmethod
     def run(cls, cf_profiles, rev_table, gid_col='gen_gids',
             profiles_dset='cf_profile', rep_method='meanoid',
             err_method='rmse', weight='gid_counts',
             n_profiles=1, resource_classes=None, region_map='reeds_region',
-            sc_bins=5, reg_cols=('region', 'class'), max_workers=None,
-            fout=None, hourly=True, hour_ending=True,
+            sc_bins=5, reg_cols=('region', 'class'),
             cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                            'method': 'kmeans', 'norm': None}):
+                            'method': 'kmeans', 'norm': None},
+            fout=None, hourly=True, hour_ending=True, max_workers=None):
         """Run representative profiles.
+
         Parameters
         ----------
         cf_profiles : str
@@ -236,17 +268,19 @@ class ReedsProfiles(RepProfiles):
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
-        max_workers : int | None
-            Number of parallel workers. 1 will run serial, None will use all
-            available.
-        fout : None | str
-            None or filepath to output h5 file.
-        hourly : bool
-            Flag to get hourly data (top of hour) instead of native resolution.
-        hour_ending : bool
-            Flag to shift instantaneous profiles and time index to hour ending.
         cluster_kwargs : dict
             Kwargs for clustering classes
+        fout : str, optional
+            filepath to output h5 file, by default None
+        hourly : bool, optional
+            Flag to get hourly data (top of hour) instead of native resolution,
+            by default True
+        hour_ending : bool, optional
+            Flag to shift instantaneous profiles and time index to hour ending,
+            by default True
+        max_workers : int, optional
+            Number of parallel workers. 1 will run serial, None will use all
+            available., by default None
 
         Returns
         -------
@@ -266,24 +300,7 @@ class ReedsProfiles(RepProfiles):
                  region_map=region_map, sc_bins=sc_bins, reg_cols=reg_cols,
                  cluster_kwargs=cluster_kwargs)
 
-        if max_workers == 1:
-            rp._run_serial()
-        else:
-            rp._run_parallel(max_workers=max_workers)
+        rp._run(fout=fout, hourly=hourly, hour_ending=hour_ending,
+                max_workers=max_workers)
 
-        # pylint: disable=W0201
-        if hourly and (len(rp._time_index) > 8760):
-            rp._profiles, rp._time_index = rp._to_hourly(rp.profiles,
-                                                         rp.time_index)
-
-        if hourly and hour_ending:
-            rp._profiles, rp._time_index = rp._to_hour_ending(rp._profiles,
-                                                              rp._time_index)
-
-        if fout is not None:
-            rp.save_profiles(fout, save_rev_summary=False,
-                             scaled_precision=True)
-            rp._write_timezone(fout)
-
-        logger.info('Representative profiles complete!')
         return rp.profiles, rp.meta, rp.time_index
