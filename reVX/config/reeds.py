@@ -129,7 +129,7 @@ class ProfilesConfigGroup(ReedsConfigGroup):
     @property
     def reeds_table(self):
         """Get the ReEDS classification table (required)."""
-        return self['reeds_table']
+        return self.get('reeds_table', None)
 
     @property
     def cf_profiles(self):
