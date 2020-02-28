@@ -19,9 +19,6 @@ elif py_version.minor < 6:
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-with open("README.rst", encoding="utf-8") as readme_file:
-    readme = readme_file.read()
-
 with open(os.path.join(here, "reVX", "version.py"), encoding="utf-8") as f:
     version = f.read()
 
@@ -57,7 +54,7 @@ setup(
     name="NREL-reVX",
     version=version,
     description=description,
-    long_description=readme,
+    long_description="README.rst",
     author="Michael Rossol",
     author_email="michael.rossol@nrel.gov",
     url="https://nrel.github.io/reVX/",
