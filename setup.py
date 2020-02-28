@@ -50,15 +50,17 @@ with open("requirements.txt") as f:
     install_requires = f.readlines()
 
 test_requires = ["pytest>=5.2", ]
+description = ("National Renewable Energy Laboratory's (NREL's) Renewable "
+               "Energy Potential(V) eXchange Tool: reVX")
 
 setup(
-    name="reVX",
+    name="NREL-reVX",
     version=version,
-    description="Renewable Energy Potential(V) eXchange Tool: reVX",
+    description=description,
     long_description=readme,
     author="Michael Rossol",
     author_email="michael.rossol@nrel.gov",
-    url="https://github.com/NREL/reVX",
+    url="https://nrel.github.io/reVX/",
     packages=find_packages(),
     package_dir={"reVX": "reVX"},
     entry_points={
@@ -70,7 +72,7 @@ setup(
                             "WIND=reVX.resource.wind_cli:main"],
     },
     include_package_data=True,
-    license="BSD license",
+    license="BSD 3-Clause",
     zip_safe=False,
     keywords="reVX",
     classifiers=[

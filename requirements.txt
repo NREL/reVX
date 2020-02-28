@@ -12,3 +12,4 @@ rasterio>=1.0
 scikit-learn==0.21.3
 xarray>=0.12
 dask>=2.8
+NREL-reV >= 0.1.0
