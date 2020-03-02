@@ -9,10 +9,10 @@ import reVX.plexos as reV_plexos
 import reVX.reeds as rev_reeds
 from reVX.resource import NSRDBX, WindX
 import reVX.rpm as rev_rpm
-from reVX.version import __version__
 
 __author__ = """Michael Rossol"""
 __email__ = "michael.rossol@nrel.gov"
+__version__ = "0.1.1"
 
 REVXDIR = os.path.dirname(os.path.realpath(__file__))
 TESTDATADIR = os.path.join(os.path.dirname(REVXDIR), 'tests', 'data')

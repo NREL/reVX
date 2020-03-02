@@ -11,6 +11,8 @@ import shlex
 import sys
 from warnings import warn
 
+from reVX import __version__
+
 py_version = sys.version_info
 if py_version.major < 3:
     raise RuntimeError("reVX is not compatible with python 2!")
@@ -21,11 +23,6 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 with open(os.path.join(here, "README.rst"), encoding="utf-8") as f:
     readme = f.read()
-
-with open(os.path.join(here, "reVX", "version.py"), encoding="utf-8") as f:
-    version = f.read()
-
-version = version.split('=')[-1].strip().strip('"').strip("'")
 
 
 class PostDevelopCommand(develop):
@@ -55,7 +52,7 @@ description = ("National Renewable Energy Laboratory's (NREL's) Renewable "
 
 setup(
     name="NREL-reVX",
-    version=version,
+    version=__version__,
     description=description,
     long_description=readme,
     author="Michael Rossol",
