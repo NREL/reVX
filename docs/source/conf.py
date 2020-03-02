@@ -28,14 +28,15 @@ author = 'Michael Rossol'
 pkg = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 pkg = os.path.dirname(pkg)
 sys.path.append(pkg)
-from reVX import __version__
 
+with open(os.path.join(pkg, "reVX", "version.py"), encoding="utf-8") as f:
+    v = f.read()
+
+v = v.split('=')[-1].strip().strip('"').strip("'")
 # The short X.Y version
-version = __version__
+version = v
 # The full version, including alpha/beta/rc tags
-release = __version__
-
-
+release = v
 
 # -- General configuration ---------------------------------------------------
 
