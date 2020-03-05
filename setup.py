@@ -14,8 +14,8 @@ from warnings import warn
 py_version = sys.version_info
 if py_version.major < 3:
     raise RuntimeError("reVX is not compatible with python 2!")
-elif py_version.minor < 6:
-    warn("You will the get best results by running reVX with python >= 3.6")
+elif py_version.minor == 7:
+    warn("You will the get best results by running reVX with python == 3.7")
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -80,7 +80,6 @@ setup(
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
     ],
     test_suite="tests",
