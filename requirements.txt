@@ -8,7 +8,7 @@ NREL-PySAM==1.2.1
 geopandas>=0.4
 pyproj>=1.9
 pywavelets>=1.0
-rasterio>=1.0
+rasterio>=1.1
 scikit-learn==0.21.3
 xarray>=0.12
 dask>=2.8
