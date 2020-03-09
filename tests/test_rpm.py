@@ -6,24 +6,23 @@ import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal, assert_series_equal
 
-from reV import TESTDATADIR as reV_TESTDATADIR
-from reVX import TESTDATADIR as reVX_TESTDATADIR
+from reVX import TESTDATADIR as TESTDATADIR
 from reVX.rpm.rpm_manager import RPMClusterManager
 
 
 JOB_TAG = 'pytest'
-CF_FPATH = os.path.join(reV_TESTDATADIR,
-                        'gen_out/gen_ri_pv_2012_x000.h5')
-EXCL_FPATH = os.path.join(reV_TESTDATADIR,
-                          'ri_exclusions/ri_exclusions.h5')
-OUT_DIR = os.path.join(reVX_TESTDATADIR, 'rpm/test_outputs')
+CF_FPATH = os.path.join(TESTDATADIR, 'reV_gen',
+                        'gen_ri_pv_2012_x000.h5')
+EXCL_FPATH = os.path.join(TESTDATADIR, 'reV_excl',
+                          'ri_exclusions.h5')
+OUT_DIR = os.path.join(TESTDATADIR, 'rpm/test_outputs')
 TECHMAP_DSET = 'techmap_nsrdb_ri_truth'
 EXCL_DICT = {'ri_srtm_slope': {'inclusion_range': (None, 5),
                                'exclude_nodata': True},
              'ri_padus': {'exclude_values': [1],
                           'exclude_nodata': True}}
-RPM_META = os.path.join(reVX_TESTDATADIR, 'rpm/rpm_meta.csv')
-BASELINE = os.path.join(reVX_TESTDATADIR,
+RPM_META = os.path.join(TESTDATADIR, 'rpm/rpm_meta.csv')
+BASELINE = os.path.join(TESTDATADIR,
                         'rpm/rpm_cluster_outputs_baseline.csv')
 TEST = os.path.join(OUT_DIR, 'rpm_cluster_outputs_{}.csv'.format(JOB_TAG))
 
