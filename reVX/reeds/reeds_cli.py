@@ -55,8 +55,8 @@ def run_local(ctx, config):
                    rev_table=config.classify.rev_table,
                    resource_classes=config.classify.resource_classes,
                    regions=config.classify.regions,
-                   sc_bins=config.classify.sc_bins,
-                   cluster_on=config.classify.cluster_on,
+                   cap_bins=config.classify.cap_bins,
+                   sort_bins_by=config.classify.sort_bins_by,
                    filter=config. classify.filter)
 
     if config.profiles is not None:
@@ -158,15 +158,15 @@ def local(ctx, out_dir, log_dir, verbose):
                     "bins"))
 @click.option('--regions', '-r', type=str, default='reeds_region',
               help='Mapping of supply curve points to geographic region')
-@click.option('--sc_bins', '-scb', type=int, default=3,
-              help=('Number of bins (clusters) to create for each '
+@click.option('--cap_bins', '-cb', type=int, default=3,
+              help=('Number of capacity bins to create for each '
                     'region/resource bin combination'))
-@click.option('--cluster_on', '-cl', type=str, default='trans_cap_cost',
-              help='Column(s) in rev_table to cluster on')
+@click.option('--sort_bins_by', '-sb', type=str, default='trans_cap_cost',
+              help='Column(s) in rev_table to sort before binning')
 @click.option('--filter', '-f', type=STR, default=None,
               help='Column value pair(s) to filter on. If None do not filter')
 @click.pass_context
-def classify(ctx, rev_table, resource_classes, regions, sc_bins, cluster_on,
+def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
              filter):
     """
     Extract ReEDS (region, bin, class) groups
@@ -176,13 +176,12 @@ def classify(ctx, rev_table, resource_classes, regions, sc_bins, cluster_on,
 
     logger.info('Extracting ReEDS (region, bin, class) groups using '
                 'reV sc table {}'.format(rev_table))
-    kwargs = {'cluster_on': cluster_on, 'method': 'kmeans'}
     if isinstance(filter, str):
         filter = dict_str_load(filter)
 
     out = ReedsClassifier.create(rev_table, resource_classes,
-                                 region_map=regions, sc_bins=sc_bins,
-                                 cluster_kwargs=kwargs,
+                                 region_map=regions, cap_bins=cap_bins,
+                                 sort_bins_by=sort_bins_by,
                                  filter=filter)
     table_full, table, agg_table_full, agg_table = out
 
@@ -355,12 +354,12 @@ def get_node_cmd(config):
 
     if config.classify is not None:
         args += ('classify -rt {rev_table} -rc {resource_classes} '
-                 '-r {regions} -scb {sc_bins} -cl {cluster_on} -f {filter} '
+                 '-r {regions} -scb {cap_bins} -cl {sort_bins_by} -f {filter} '
                  .format(rev_table=s(config.classify.rev_table),
                          resource_classes=s(config.classify.resource_classes),
                          regions=s(config.classify.regions),
-                         sc_bins=s(config.classify.sc_bins),
-                         cluster_on=s(config.classify.cluster_on),
+                         cap_bins=s(config.classify.cap_bins),
+                         sort_bins_by=s(config.classify.sort_bins_by),
                          filter=s(config.classify.filter)))
 
     if config.profiles is not None:

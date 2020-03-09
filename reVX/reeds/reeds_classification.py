@@ -8,7 +8,6 @@ import os
 import pandas as pd
 from warnings import warn
 
-from reVX.utilities.cluster_methods import ClusteringMethods
 from reVX.utilities.exceptions import ReedsValueError, ReedsKeyError
 
 logger = logging.getLogger(__name__)
@@ -26,9 +25,8 @@ class ReedsClassifier:
                           'trans_cap_cost', 'dist_mi')
 
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
-                 sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                            'method': 'kmeans', 'norm': None},
-                 filter=None, trg_by_region=False):
+                 cap_bins=3, sort_bins_by='trans_cap_cost', filter=None,
+                 trg_by_region=False):
         """
         Parameters
         ----------
@@ -46,11 +44,11 @@ class ReedsClassifier:
             NOTE: 'TRG_cap' can only be combined with categorical bins
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-         sc_bins : int
-            Number of supply curve bins (clusters) to create for each
+        cap_bins : int
+            Number of equal capacity bins to create for each
             region-class
-        cluster_kwargs : dict
-            kwargs for _cluster_sc_bins and underlying clustering method
+        sort_bins_by : str | list
+            Column(s) to sort by before capacity binning
         filter : dict | NoneType
             Column value pair(s) to filter on. If None don't filter
         trg_by_region : bool
@@ -65,8 +63,8 @@ class ReedsClassifier:
         rev_table = self._map_region(rev_table, region_map)
         rev_table = self._resource_classes(rev_table, resource_classes,
                                            trg_by_region=trg_by_region)
-        self._rev_table = self._cluster_sc_bins(rev_table, sc_bins,
-                                                **cluster_kwargs)
+        self._rev_table = self._capacity_bins(rev_table, cap_bins,
+                                              sort_bins_by=sort_bins_by)
         self._groups = self._rev_table.groupby(['region', 'class', 'bin'])
         self._i = 0
 
@@ -377,16 +375,16 @@ class ReedsClassifier:
             trg_classes['class'] = 1
             for _, df in trg_classes.groupby('region'):
                 df = df.sort_values('mean_lcoe')
-                cum_sum = df['capacity'].cumsum()
-                df.loc[:, 'class'] = pd.cut(x=cum_sum, bins=cap_breaks,
+                cum_cap = df['capacity'].cumsum()
+                df.loc[:, 'class'] = pd.cut(x=cum_cap, bins=cap_breaks,
                                             labels=labels)
                 classes.append(df)
 
             trg_classes = pd.concat(classes)
         else:
             trg_classes = trg_classes.sort_values('mean_lcoe')
-            cum_sum = trg_classes['capacity'].cumsum()
-            trg_classes.loc[:, 'class'] = pd.cut(x=cum_sum, bins=cap_breaks,
+            cum_cap = trg_classes['capacity'].cumsum()
+            trg_classes.loc[:, 'class'] = pd.cut(x=cum_cap, bins=cap_breaks,
                                                  labels=labels)
 
         rev_table = rev_table.merge(trg_classes[['sc_gid', 'class']],
@@ -546,53 +544,52 @@ class ReedsClassifier:
         return rev_table
 
     @staticmethod
-    def _cluster_sc_bins(rev_table, sc_bins, cluster_on='trans_cap_cost',
-                         method='kmeans', norm=None, **kwargs):
+    def _capacity_bins(rev_table, cap_bins, sort_bins_by='trans_cap_cost'):
         """
-        Create classes in each region-class group using given clustering method
+        Create equal capacity bins in each region-class sorted by given
+        column(s)
 
         Parameters
         ----------
         rev_table : pandas.DataFrame
             reV supply curve or aggregation table
-        sc_bins : int
-            Number of supply curve bins (clusters) to create for each
+        cap_bins : int
+            Number of equal capacity bins to create for each
             region-class
-        cluster_on : str | list
-            Columns in rev_table to cluster on
-        method : str
-            Clustering method to use for creating classes
-        norm : str
-            Normalization method to use (see sklearn.preprocessing.normalize)
-            if None range normalize
-        kwargs : dict
-            kwargs for clustering method
+        sort_bins_by : str | list, optional
+            Column(s) to sort by before capacity binning,
+            by default 'mean_lcoe'
 
         Returns
         -------
         rev_table : pandas.DataFrame
             Updated table with classes
         """
-        c_func = getattr(ClusteringMethods, method)
+        if not isinstance(sort_bins_by, list):
+            sort_bins_by = [sort_bins_by]
 
-        if isinstance(cluster_on, str):
-            cluster_on = [cluster_on, ]
+        cols = ['sc_gid', 'capacity', 'region', 'class'] + sort_bins_by
+        capacity_bins = rev_table[cols].copy()
 
-        func = ClusteringMethods._normalize_values
-        data = func(rev_table[cluster_on].values, norm=norm)
-        labels = c_func(data, n_clusters=sc_bins,
-                        **kwargs)
-        if np.min(labels) == 0:
-            labels = np.array(labels) + 1
+        bins = []
+        capacity_bins['bin'] = 1
+        labels = list(range(1, cap_bins + 1))
+        for _, df in capacity_bins.groupby(['region', 'class']):
+            df = df.sort_values(sort_bins_by)
+            cum_cap = df['capacity'].cumsum()
+            df.loc[:, 'bin'] = pd.cut(x=cum_cap, bins=cap_bins,
+                                      labels=labels)
+            bins.append(df)
 
-        rev_table['bin'] = labels
+        capacity_bins = pd.concat(bins)
+        rev_table = rev_table.merge(capacity_bins[['sc_gid', 'bin']],
+                                    on='sc_gid', how='left')
 
         return rev_table
 
     @classmethod
     def create(cls, rev_table, resource_classes, region_map='reeds_region',
-               sc_bins=5, cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                          'method': 'kmeans', 'norm': None},
+               cap_bins=3, sort_bins_by='trans_cap_cost',
                filter=None, trg_by_region=False):
         """
         Identify ReEDS regions and classes and dump and updated table
@@ -613,11 +610,12 @@ class ReedsClassifier:
             NOTE: 'TRG_cap' can only be combined with categorical bins
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-        sc_bins : int
-            Number of supply curve bins (clusters) to create for each
+        cap_bins : int
+            Number of equal capacity bins to create for each
             region-class
-        cluster_kwargs : dict
-            kwargs for _cluster_classes
+        sort_bins_by : str | list, optional
+            Column(s) to sort by before capacity binning,
+            by default 'mean_lcoe'
         filter : dict | NoneType
             Column value pair(s) to filter on. If None don't filter
         trg_by_region : bool
@@ -638,7 +636,7 @@ class ReedsClassifier:
             AGG_TABLE_OUT_COLS.
         """
         classes = cls(rev_table, resource_classes, region_map=region_map,
-                      sc_bins=sc_bins, cluster_kwargs=cluster_kwargs,
+                      cap_bins=cap_bins, sort_bins_by=sort_bins_by,
                       filter=filter, trg_by_region=trg_by_region)
         out = (classes.table, classes.table_slim, classes.aggregate_table,
                classes.aggregate_table_slim)
