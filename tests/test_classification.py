@@ -8,13 +8,13 @@ from pandas.testing import assert_series_equal
 
 pytest.importorskip("rtree")
 
-from reVX import TESTDATADIR as reVX_TESTDATADIR
+from reVX import TESTDATADIR as TESTDATADIR
 from reVX.utilities.region import RegionClassifier
 
 
-META_PATH = os.path.join(reVX_TESTDATADIR, 'classification/meta.csv')
-REGIONS_PATH = os.path.join(reVX_TESTDATADIR, 'classification/us_states.shp')
-RESULTS_PATH = os.path.join(reVX_TESTDATADIR, 'classification/new_meta.csv')
+META_PATH = os.path.join(TESTDATADIR, 'classification/meta.csv')
+REGIONS_PATH = os.path.join(TESTDATADIR, 'classification/us_states.shp')
+RESULTS_PATH = os.path.join(TESTDATADIR, 'classification/new_meta.csv')
 
 REGIONS_LABEL = 'NAME'
 
