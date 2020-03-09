@@ -57,6 +57,8 @@ class ReedsClassifier:
         rev_table = self._parse_table(rev_table)
         if filter is not None:
             for col, v in filter.items():
+                logger.debug('Subsetting reV table to {} in {}'
+                             .format(v, col))
                 mask = rev_table[col] == v
                 rev_table = rev_table.loc[mask]
 

@@ -57,7 +57,7 @@ def run_local(ctx, config):
                    regions=config.classify.regions,
                    cap_bins=config.classify.cap_bins,
                    sort_bins_by=config.classify.sort_bins_by,
-                   filter=config. classify.filter)
+                   filter=config.classify.filter)
 
     if config.profiles is not None:
         ctx.invoke(profiles,
