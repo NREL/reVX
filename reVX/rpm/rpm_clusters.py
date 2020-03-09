@@ -10,7 +10,7 @@ import pywt
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
 
-from reV.handlers.outputs import Outputs
+from reVX.handlers.outputs import Outputs
 from reVX.utilities.cluster_methods import ClusteringMethods
 
 logger = logging.getLogger(__name__)

@@ -6,6 +6,8 @@ import pytest
 import pandas as pd
 from pandas.testing import assert_series_equal
 
+pytest.importorskip("rtree")
+
 from reVX import TESTDATADIR as reVX_TESTDATADIR
 from reVX.utilities.region import RegionClassifier
 

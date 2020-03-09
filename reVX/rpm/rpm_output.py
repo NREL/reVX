@@ -12,8 +12,8 @@ from scipy.spatial import cKDTree
 from warnings import warn
 
 from reV.supply_curve.exclusions import ExclusionMask, ExclusionMaskFromDict
-from reV.handlers.outputs import Outputs
 from reV.utilities.execution import SpawnProcessPool
+from reVX.handlers.outputs import Outputs
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.utilities.exceptions import RPMRuntimeError, RPMTypeError
 

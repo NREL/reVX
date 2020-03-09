@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""reX SQL Database handler.
+"""reVX SQL Database handler.
 
 Created on Thu Aug 22 08:58:37 2019
 
@@ -12,7 +12,7 @@ import time
 
 
 class Database:
-    """Framework to interact with the reV/reX database."""
+    """Framework to interact with the reV/reVX database."""
 
     def __init__(self, db_name, db_host='gds_edit.nrel.gov', db_user=None,
                  db_pass=None, db_port=5432):
