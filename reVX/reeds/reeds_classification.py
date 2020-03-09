@@ -579,8 +579,15 @@ class ReedsClassifier:
         for _, df in capacity_bins.groupby(['region', 'class']):
             df = df.sort_values(sort_bins_by)
             cum_cap = df['capacity'].cumsum()
-            df.loc[:, 'bin'] = pd.cut(x=cum_cap, bins=cap_bins,
-                                      labels=labels)
+            bin_labels = pd.cut(x=cum_cap, bins=cap_bins, labels=labels)
+            unique_l = np.unique(bin_labels)
+            if len(unique_l) < (cap_bins / 2):
+                msg = ("Only {} bins where filled: {}"
+                       .format(len(unique_l), unique_l))
+                warn(msg)
+                logger.warning(msg)
+
+            df.loc[:, 'bin'] = bin_labels
             bins.append(df)
 
         capacity_bins = pd.concat(bins)
