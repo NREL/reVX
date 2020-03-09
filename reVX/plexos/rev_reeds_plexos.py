@@ -14,7 +14,7 @@ from warnings import warn
 import logging
 
 from reV.utilities.execution import SpawnProcessPool
-from reV.handlers.outputs import Outputs
+from reVX.handlers.outputs import Outputs
 
 logger = logging.getLogger(__name__)
 

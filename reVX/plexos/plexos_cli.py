@@ -131,18 +131,18 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
                 cmd = get_node_cmd(node_name, job_input, out_dir, reeds_dir,
                                    cf_year, build_year, scenario, verbose)
 
-                logger.info('Running reX plexos aggregation on Eagle with '
+                logger.info('Running reVX plexos aggregation on Eagle with '
                             'node name "{}"'.format(node_name))
 
                 slurm = SLURM(cmd, alloc=alloc, memory=memory,
                               walltime=walltime, feature=feature,
                               name=node_name, stdout_path=stdout_path)
                 if slurm.id:
-                    msg = ('Kicked off reX plexos aggregation job "{}" '
+                    msg = ('Kicked off reVX plexos aggregation job "{}" '
                            '(SLURM jobid #{}) on Eagle.'
                            .format(node_name, slurm.id))
                 else:
-                    msg = ('Was unable to kick off reV generation job "{}". '
+                    msg = ('Was unable to kick off reVX generation job "{}". '
                            'Please see the stdout error messages'
                            .format(node_name))
                 click.echo(msg)

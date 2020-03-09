@@ -10,9 +10,9 @@ import numpy as np
 import os
 import pandas as pd
 from reV.handlers.resource import Resource
-from reV.handlers.outputs import Outputs
 from reV.utilities.execution import SpawnProcessPool
 
+from reVX.handlers.outputs import Outputs
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
 from reVX.utilities.exceptions import ReedsValueError, ReedsRuntimeError

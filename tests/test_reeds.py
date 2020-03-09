@@ -8,8 +8,8 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 import pytest
 from reV.handlers.resource import Resource
-from reV.handlers.outputs import Outputs
 
+from reVX.handlers.outputs import Outputs
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
 from reVX.reeds.reeds_timeslices import ReedsTimeslices

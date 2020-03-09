@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
 
-from reV.handlers.outputs import Outputs
+from reVX.handlers.outputs import Outputs
 
 logger = logging.getLogger(__name__)
 
