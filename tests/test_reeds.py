@@ -75,18 +75,17 @@ def test_bad_resource_classes(bad_trg_classes, bad_range_classes):
     Ensure ReedsClassifier failes with bad resource_class inputs
     """
     rev_table = os.path.join(TESTDATADIR, 'reV_sc', 'sc_table.csv')
-    kwargs = {'cluster_on': 'trans_cap_cost', 'method': 'kmeans'}
 
     with pytest.raises(ValueError):
         ReedsClassifier.create(rev_table, bad_trg_classes,
                                region_map='reeds_region',
-                               sc_bins=5, cluster_kwargs=kwargs,
+                               cap_bins=5, sort_bins_by='trans_cap_cost',
                                trg_by_region=True)
 
     with pytest.raises(ValueError):
         ReedsClassifier.create(rev_table, bad_range_classes,
                                region_map='reeds_region',
-                               sc_bins=5, cluster_kwargs=kwargs,
+                               cap_bins=5, sort_bins_by='trans_cap_cost',
                                trg_by_region=True)
 
 
@@ -113,10 +112,9 @@ def test_classifier(trg_classes):
     truth_agg = pd.read_csv(path)
 
     rev_table = os.path.join(TESTDATADIR, 'reV_sc', 'sc_table.csv')
-    kwargs = {'cluster_on': 'trans_cap_cost', 'method': 'kmeans', 'norm': None}
     out = ReedsClassifier.create(rev_table, trg_classes,
                                  region_map='reeds_region',
-                                 sc_bins=5, cluster_kwargs=kwargs,
+                                 cap_bins=5, sort_bins_by='trans_cap_cost',
                                  trg_by_region=False)
 
     test_table_full, test_table, _, test_agg = out
@@ -249,7 +247,6 @@ def test_offshore_classifier():
     rev_table = os.path.join(ROOT_DIR, 'inputs/ri_wind_farm_sc.csv')
     path = os.path.join(TESTDATADIR, 'reeds/inputs/reeds_class_bins.csv')
     resource_classes = pd.read_csv(path)
-    kwargs = {'cluster_on': 'mean_lcoe', 'method': 'kmeans', 'norm': None}
 
     # TRG Classes
     path = os.path.join(ROOT_DIR, 'ReEDS_Offshore_TRG_Classifications.csv')
@@ -259,7 +256,7 @@ def test_offshore_classifier():
 
     test_table = ReedsClassifier.create(rev_table, class_bins,
                                         region_map='reeds_region',
-                                        sc_bins=3, cluster_kwargs=kwargs,
+                                        cap_bins=3, sort_bins_by='mean_lcoe',
                                         filter={'offshore': 1},
                                         trg_by_region=True)[0]
     assert_frame_equal(truth_table, test_table, check_dtype=False,
@@ -274,7 +271,7 @@ def test_offshore_classifier():
 
     test_table = ReedsClassifier.create(rev_table, class_bins,
                                         region_map='reeds_region',
-                                        sc_bins=3, cluster_kwargs=kwargs,
+                                        cap_bins=3, sort_bins_by='mean_lcoe',
                                         filter={'offshore': 1})[0]
     assert_frame_equal(truth_table, test_table, check_dtype=False,
                        check_categorical=False)
@@ -290,10 +287,9 @@ def test_wind_farm_profiles():
     resource_classes = pd.read_csv(path)
     resource_classes = resource_classes[['class', 'TRG_cap', 'sub_type']]
 
-    kwargs = {'cluster_on': 'mean_lcoe', 'method': 'kmeans', 'norm': None}
     rev_table = ReedsClassifier.create(rev_table, resource_classes,
-                                       region_map='reeds_region', sc_bins=2,
-                                       cluster_kwargs=kwargs,
+                                       region_map='reeds_region',
+                                       cap_bins=2, sort_bins_by='mean_lcoe',
                                        filter={'offshore': 1})[0]
 
     f_baseline = os.path.join(ROOT_DIR, 'ReEDS_Wind_Farm_Profiles.h5')

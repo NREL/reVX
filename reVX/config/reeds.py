@@ -68,8 +68,8 @@ class ClassifyConfigGroup(ReedsConfigGroup):
         """
         super().__init__(config)
         self._default_regions = 'reeds_region'
-        self._default_sc_bins = 3
-        self._default_cluster_on = 'trans_cap_cost'
+        self._default_cap_bins = 3
+        self._default_sort_bins_by = 'trans_cap_cost'
 
     @property
     def rev_table(self):
@@ -88,15 +88,15 @@ class ClassifyConfigGroup(ReedsConfigGroup):
         return self.get('regions', self._default_regions)
 
     @property
-    def sc_bins(self):
-        """Get the number of supply curve bins (clusters) to make per
+    def cap_bins(self):
+        """Get the number of capacity bins to make per
         region/resource class combination."""
-        return self.get('sc_bins', self._default_sc_bins)
+        return self.get('cap_bins', self._default_cap_bins)
 
     @property
-    def cluster_on(self):
-        """Get default string column label to cluster on."""
-        return self.get('cluster_on', self._default_cluster_on)
+    def sort_bins_by(self):
+        """Get default string column label to sort on before binning."""
+        return self.get('sort_bins_by', self._default_sort_bins_by)
 
     @property
     def filter(self):

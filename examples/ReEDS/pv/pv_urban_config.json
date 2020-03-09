@@ -1,10 +1,10 @@
 {
   "classify": {
-    "cluster_on": "trans_cap_cost",
+    "cap_bins": 3,
     "regions": "model_region",
     "resource_classes": "/shared-projects/rev/projects/reeds_jan2020/pv_urban/pv_resource_classes.csv",
     "rev_table": "/shared-projects/rev/projects/reeds_jan2020/pv_urban/outputs_sc.csv",
-    "sc_bins": 5
+    "sort_bins_by": "trans_cap_cost"
   },
   "directories": {
     "log_directory": "/shared-projects/rev/projects/reeds_jan2020/pv_urban/logs/",
