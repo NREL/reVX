@@ -354,7 +354,7 @@ def get_node_cmd(config):
 
     if config.classify is not None:
         args += ('classify -rt {rev_table} -rc {resource_classes} '
-                 '-r {regions} -scb {cap_bins} -cl {sort_bins_by} -f {filter} '
+                 '-r {regions} -cb {cap_bins} -sb {sort_bins_by} -f {filter} '
                  .format(rev_table=s(config.classify.rev_table),
                          resource_classes=s(config.classify.resource_classes),
                          regions=s(config.classify.regions),
