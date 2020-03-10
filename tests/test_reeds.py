@@ -100,6 +100,24 @@ def trg_classes():
     return trg_classes[['class', 'TRG_cap']]
 
 
+def test_capacity_bins():
+    """
+    Test ReedsClassifier._capacity_bins to ensure uniform bin sizes
+    """
+    rev_table = os.path.join(TESTDATADIR, 'reV_sc', 'sc_table.csv')
+    rev_table = pd.read_csv(rev_table)
+    rev_table['region'] = 1
+    rev_table['class'] = 1
+
+    rev_table = ReedsClassifier._capacity_bins(rev_table, cap_bins=10,
+                                               sort_bins_by='trans_cap_cost')
+
+    bin_caps = rev_table.groupby('bin')['capacity'].sum().values
+    mean_cap = bin_caps.mean()
+    bin_error = np.abs(bin_caps - mean_cap) / mean_cap
+    assert np.all(bin_error < 0.2), 'Bin size varies > 20% from the mean'
+
+
 def test_classifier(trg_classes):
     """
     Test ReedsClassifier
