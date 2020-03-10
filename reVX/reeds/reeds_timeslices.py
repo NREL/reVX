@@ -392,7 +392,7 @@ class ReedsTimeslices:
         profiles = {}
         with Resource(profiles_h5) as f:
             time_index = f.time_index
-            for ds in f.dsets:
+            for ds in f.datasets:
                 if 'rep_profiles' in ds:
                     k = int(ds.split('_')[-1])
                     profiles[k] = f[ds]
@@ -956,7 +956,7 @@ class ReedsTimeslices:
                                           data=data)
                     out.h5[ds_name].attrs['scale_factor'] = 1000
 
-                    if 'indices' not in out.dsets and sparsify:
+                    if 'indices' not in out.datasets and sparsify:
                         out.h5.create_dataset('indices',
                                               shape=ind.shape,
                                               compression=compression,

@@ -871,7 +871,7 @@ class RPMOutput:
         """Apply TRG's if requested."""
 
         with Outputs(self._cf_fpath) as f:
-            dsets = f.dsets
+            dsets = f.datasets
 
         if self.trg is not None and 'lcoe_fcr' not in dsets:
             wmsg = ('TRGs requested but "lcoe_fcr" not in cf file: {}'
