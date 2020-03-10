@@ -14,4 +14,5 @@ class Outputs(RevOutputs):
 
     def set_version_attr(self):
         """Set the version attribute to the h5 file."""
-        self._h5.attrs['version'] = __version__
+        self.h5.attrs['version'] = __version__
+        self.h5.attrs['package'] = 'reVX'

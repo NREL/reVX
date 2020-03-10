@@ -560,7 +560,7 @@ class ReedsClassifier:
             region-class
         sort_bins_by : str | list, optional
             Column(s) to sort by before capacity binning,
-            by default 'mean_lcoe'
+            by default 'trans_cap_cost'
 
         Returns
         -------
@@ -576,14 +576,14 @@ class ReedsClassifier:
         bins = []
         capacity_bins['bin'] = 1
         labels = list(range(1, cap_bins + 1))
-        for _, df in capacity_bins.groupby(['region', 'class']):
+        for g, df in capacity_bins.groupby(['region', 'class']):
             df = df.sort_values(sort_bins_by)
             cum_cap = df['capacity'].cumsum()
             bin_labels = pd.cut(x=cum_cap, bins=cap_bins, labels=labels)
             unique_l = np.unique(bin_labels)
             if len(unique_l) < (cap_bins / 2):
-                msg = ("Only {} bins where filled: {}"
-                       .format(len(unique_l), unique_l))
+                msg = ("In {}: only {} bins where filled: {}"
+                       .format(g, len(unique_l), unique_l))
                 warn(msg)
                 logger.warning(msg)
 
@@ -624,7 +624,7 @@ class ReedsClassifier:
             region-class
         sort_bins_by : str | list, optional
             Column(s) to sort by before capacity binning,
-            by default 'mean_lcoe'
+            by default 'trans_cap_cost'
         filter : dict | NoneType
             Column value pair(s) to filter on. If None don't filter
         trg_by_region : bool

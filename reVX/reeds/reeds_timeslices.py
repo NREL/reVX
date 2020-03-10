@@ -149,12 +149,6 @@ class ReedsTimeslices:
                             'timeslice regions: {}'.format(reg_cols))
                 meta = meta.set_index(list(reg_cols))
 
-            if 'timezone' not in meta:
-                msg = ('Rep profile data must contain timzone to allow '
-                       'conversion to local time!')
-                logger.error(msg)
-                raise ReedsRuntimeError(msg)
-
             time_index = f.time_index
 
         return meta, time_index
@@ -208,7 +202,7 @@ class ReedsTimeslices:
         Parameters
         ----------
         meta : pandas.DataFrame
-            Meta data table corresponding to profiles, must include timezone
+            Meta data table corresponding to profiles
         rev_table : None | str | pandas.DataFrame
             reV supply curve or aggregation table,
             or path to file containing table
@@ -254,7 +248,7 @@ class ReedsTimeslices:
         profiles : str
             Path to .h5 file containing profiles (representative or cf)
         meta : pandas.DataFrame
-            Meta data table corresponding to profiles, must include timezone
+            Meta data table corresponding to profiles
         time_index : pandas.DatetimeIndex
             Datetime Index for rep profiles
         """
@@ -378,36 +372,6 @@ class ReedsTimeslices:
         return timeslice_map.groupby(cols)
 
     @staticmethod
-    def _roll_array(arr, shifts):
-        """
-        Roll array with unique shifts for each column
-        This converts timeseries to local time
-
-        Parameters
-        ----------
-        arr : ndarray
-            Input timeseries array of form (time, sites)
-        shifts : ndarray | list
-            Vector of shifts from UTC to local time
-
-        Returns
-        -------
-        local_arr : ndarray
-            Array shifted to local time
-        """
-        if arr.shape[1] != len(shifts):
-            msg = ('Number of timezone shifts ({}) does not match number of '
-                   'sites ({})'.format(len(shifts), arr.shape[1]))
-            logger.error(msg)
-            raise ReedsValueError(msg)
-
-        local_arr = np.zeros(arr.shape, dtype=arr.dtype)
-        for i, s in enumerate(shifts):
-            local_arr[:, i] = np.roll(arr[:, i], int(s))
-
-        return local_arr
-
-    @staticmethod
     def _extract_rep_profiles(profiles_h5, meta):
         """
         Extract representative profiles and combine them with meta data
@@ -432,12 +396,10 @@ class ReedsTimeslices:
                 if 'rep_profiles' in ds:
                     k = int(ds.split('_')[-1])
                     profiles[k] = f[ds]
+
         cols = [str([int(i) for i in c]) for c in meta.index]
-        tz = meta['timezone'].values
-        tz *= len(time_index) // 8760
         profiles_df = []
         for k, arr in profiles.items():
-            arr = ReedsTimeslices._roll_array(arr, tz)
             df = pd.DataFrame(arr, columns=cols, index=time_index)
             df.columns = pd.MultiIndex.from_product([[k], df.columns])
             profiles_df.append(df.swaplevel(axis=1))
@@ -593,14 +555,12 @@ class ReedsTimeslices:
             Standard deviation in CF for timeslices in specific region
         """
         gids = region_meta['gid'].values
-        tz = region_meta['timezone'].values
         counts = region_meta['gid_count'].values
         with Resource(profiles_h5) as f:
             time_index = f.time_index
-            tz *= len(time_index) // 8760
             profiles = f['cf_profile', :, gids] * counts / np.sum(counts)
 
-        profiles = pd.DataFrame(ReedsTimeslices._roll_array(profiles, tz),
+        profiles = pd.DataFrame(profiles,
                                 index=time_index)
         means = {}
         stdevs = {}
