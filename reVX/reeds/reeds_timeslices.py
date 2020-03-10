@@ -202,7 +202,7 @@ class ReedsTimeslices:
         Parameters
         ----------
         meta : pandas.DataFrame
-            Meta data table corresponding to profiles, must include timezone
+            Meta data table corresponding to profiles
         rev_table : None | str | pandas.DataFrame
             reV supply curve or aggregation table,
             or path to file containing table
@@ -248,7 +248,7 @@ class ReedsTimeslices:
         profiles : str
             Path to .h5 file containing profiles (representative or cf)
         meta : pandas.DataFrame
-            Meta data table corresponding to profiles, must include timezone
+            Meta data table corresponding to profiles
         time_index : pandas.DatetimeIndex
             Datetime Index for rep profiles
         """
@@ -555,11 +555,9 @@ class ReedsTimeslices:
             Standard deviation in CF for timeslices in specific region
         """
         gids = region_meta['gid'].values
-        tz = region_meta['timezone'].values
         counts = region_meta['gid_count'].values
         with Resource(profiles_h5) as f:
             time_index = f.time_index
-            tz *= len(time_index) // 8760
             profiles = f['cf_profile', :, gids] * counts / np.sum(counts)
 
         profiles = pd.DataFrame(profiles,
