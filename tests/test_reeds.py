@@ -323,7 +323,7 @@ def test_wind_farm_profiles():
         gids = sub[gid_col].values
 
         assert row['rep_gen_gid'] in gids
-        assert np.allclose(np.roll(profiles[0][:, i], 1),
+        assert np.allclose(np.roll(profiles[0][:, i], 1 - row['timezone']),
                            raw_profiles[:, row['rep_gen_gid']])
 
     with Resource(f_baseline) as res:

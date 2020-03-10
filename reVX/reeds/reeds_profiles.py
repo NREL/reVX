@@ -8,6 +8,7 @@ import pandas as pd
 from reV.rep_profiles.rep_profiles import RepProfiles
 
 from reVX.reeds.reeds_classification import ReedsClassifier
+from reVX.utilities.exceptions import ReedsRuntimeError, ReedsValueError
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +21,9 @@ class ReedsProfiles(RepProfiles):
                  profiles_dset='cf_profile', rep_method='meanoid',
                  err_method='rmse', weight='gid_counts',
                  n_profiles=1, resource_classes=None,
-                 region_map='reeds_region', sc_bins=5,
-                 reg_cols=('region', 'class'),
-                 cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                                 'method': 'kmeans', 'norm': None}):
+                 region_map='reeds_region', cap_bins=3,
+                 sort_bins_by='trans_cap_cost',
+                 reg_cols=('region', 'class')):
         """
         Parameters
         ----------
@@ -53,27 +53,33 @@ class ReedsProfiles(RepProfiles):
             If None, assumes rev_table has come from ReedsClassifier
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-        sc_bins : int
-            Number of supply curve bins (clusters) to create for each
+        cap_bins : int
+            Number of equal capacity bins to create for each
             region-class
+        sort_bins_by : str | list, optional
+            Column(s) to sort by before capacity binning,
+            by default 'trans_cap_cost'
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
             Defaulted to ReedsClassifier region and class
-        cluster_kwargs : dict
-            Kwargs for clustering classes
         """
         if resource_classes is not None:
-            kwargs = cluster_kwargs
             rev_table = ReedsClassifier.create(rev_table, resource_classes,
                                                region_map=region_map,
-                                               sc_bins=sc_bins,
-                                               cluster_kwargs=kwargs)[0]
+                                               cap_bins=cap_bins,
+                                               sort_bins_by=sort_bins_by)[0]
 
         super().__init__(cf_profiles, rev_table, reg_cols, gid_col=gid_col,
                          cf_dset=profiles_dset, rep_method=rep_method,
                          err_method=err_method, weight=weight,
                          n_profiles=n_profiles)
+
+        if 'timezone' not in self.meta:
+            msg = ('Meta data must contain timezone to enable '
+                   'conversion to local time!')
+            logger.error(msg)
+            raise ReedsRuntimeError(msg)
 
     @staticmethod
     def _to_hourly(profiles, time_index):
@@ -124,8 +130,7 @@ class ReedsProfiles(RepProfiles):
             dict of n_profile-keyed arrays with shape (8760, n) for the
             representative profiles for each region, rolled to hour ending
         time_index : pd.DatatimeIndex
-            Datetime Index for represntative profiles reduced to hourly
-            resolution
+            Datetime Index for represntative profiles shifted to hour ending
         """
         if len(time_index) != 8760:
             e = ('ReedsProfiles cannot be shifted to hour ending unless they '
@@ -170,6 +175,44 @@ class ReedsProfiles(RepProfiles):
 
         return hour_of_year
 
+    @staticmethod
+    def _roll_array(arr, shifts):
+        """
+        Roll array with unique shifts for each column
+        This converts timeseries to local time
+        Parameters
+        ----------
+        arr : ndarray
+            Input timeseries array of form (time, sites)
+        shifts : ndarray | list
+            Vector of shifts from UTC to local time
+        Returns
+        -------
+        local_arr : ndarray
+            Array shifted to local time
+        """
+        if arr.shape[1] != len(shifts):
+            msg = ('Number of timezone shifts ({}) does not match number of '
+                   'sites ({})'.format(len(shifts), arr.shape[1]))
+            logger.error(msg)
+            raise ReedsValueError(msg)
+
+        local_arr = np.zeros(arr.shape, dtype=arr.dtype)
+        for i, s in enumerate(shifts):
+            local_arr[:, i] = np.roll(arr[:, i], int(s))
+
+        return local_arr
+
+    def _to_local_time(self):
+        """
+        Shift profiles to local time from UTC
+        """
+        tz = self.meta['timezone'].values.copy()
+        tz *= len(self.time_index) // 8760
+        # pylint: disable=W0201
+        self._profiles = {k: self._roll_array(v, tz)
+                          for k, v in self.profiles.items()}
+
     def _run(self, fout=None, hourly=True, hour_ending=True, max_workers=None):
         """
         Extract ReEDS representative profiles in serial or parallel
@@ -206,6 +249,8 @@ class ReedsProfiles(RepProfiles):
         else:
             self._run_parallel(max_workers=max_workers)
 
+        self._to_local_time()
+
         # pylint: disable=W0201
         if hourly and (len(self._time_index) > 8760):
             self._profiles, self._time_index = self._to_hourly(self.profiles,
@@ -213,7 +258,7 @@ class ReedsProfiles(RepProfiles):
 
         if hourly and hour_ending:
             self._profiles, self._time_index = \
-                self._to_hour_ending(self._profiles, self._time_index)
+                self._to_hour_ending(self.profiles, self.time_index)
 
         if fout is not None:
             self.save_profiles(fout, save_rev_summary=False,
@@ -228,10 +273,9 @@ class ReedsProfiles(RepProfiles):
             profiles_dset='cf_profile', rep_method='meanoid',
             err_method='rmse', weight='gid_counts',
             n_profiles=1, resource_classes=None, region_map='reeds_region',
-            sc_bins=5, reg_cols=('region', 'class'),
-            cluster_kwargs={'cluster_on': 'trans_cap_cost',
-                            'method': 'kmeans', 'norm': None},
-            fout=None, hourly=True, hour_ending=True, max_workers=None):
+            cap_bins=3, sort_bins_by='trans_cap_cost',
+            reg_cols=('region', 'class'), fout=None, hourly=True,
+            hour_ending=True, max_workers=None):
         """Run representative profiles.
 
         Parameters
@@ -262,14 +306,15 @@ class ReedsProfiles(RepProfiles):
             If None, assumes rev_table has come from ReedsClassifier
         region_map : str | pandas.DataFrame
             Mapping of supply curve points to region to create classes for
-        sc_bins : int
-            Number of supply curve bins (clusters) to create for each
+         cap_bins : int
+            Number of equal capacity bins to create for each
             region-class
+        sort_bins_by : str | list, optional
+            Column(s) to sort by before capacity binning,
+            by default 'trans_cap_cost'
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
-        cluster_kwargs : dict
-            Kwargs for clustering classes
         fout : str, optional
             filepath to output h5 file, by default None
         hourly : bool, optional
@@ -297,8 +342,8 @@ class ReedsProfiles(RepProfiles):
                  profiles_dset=profiles_dset, rep_method=rep_method,
                  err_method=err_method, weight=weight,
                  n_profiles=n_profiles, resource_classes=resource_classes,
-                 region_map=region_map, sc_bins=sc_bins, reg_cols=reg_cols,
-                 cluster_kwargs=cluster_kwargs)
+                 region_map=region_map, cap_bins=cap_bins,
+                 sort_bins_by=sort_bins_by, reg_cols=reg_cols)
 
         rp._run(fout=fout, hourly=hourly, hour_ending=hour_ending,
                 max_workers=max_workers)
