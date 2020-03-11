@@ -23,6 +23,7 @@ class ReedsProfiles(RepProfiles):
                  n_profiles=1, resource_classes=None,
                  region_map='reeds_region', cap_bins=5,
                  sort_bins_by='trans_cap_cost',
+                 pre_filter=None, trg_by_region=False,
                  reg_cols=('region', 'class')):
         """
         Parameters
@@ -59,6 +60,10 @@ class ReedsProfiles(RepProfiles):
         sort_bins_by : str | list, optional
             Column(s) to sort by before capacity binning,
             by default 'trans_cap_cost'
+        pre_filter : dict | NoneType
+            Column value pair(s) to filter on. If None don't filter
+        trg_by_region : bool
+            Groupby on region when computing TRGs
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
@@ -68,7 +73,9 @@ class ReedsProfiles(RepProfiles):
             rev_table = ReedsClassifier.create(rev_table, resource_classes,
                                                region_map=region_map,
                                                cap_bins=cap_bins,
-                                               sort_bins_by=sort_bins_by)[0]
+                                               sort_bins_by=sort_bins_by,
+                                               pre_filter=pre_filter,
+                                               trg_by_region=trg_by_region)[0]
 
         super().__init__(cf_profiles, rev_table, reg_cols, gid_col=gid_col,
                          cf_dset=profiles_dset, rep_method=rep_method,
@@ -274,6 +281,7 @@ class ReedsProfiles(RepProfiles):
             err_method='rmse', weight='gid_counts',
             n_profiles=1, resource_classes=None, region_map='reeds_region',
             cap_bins=5, sort_bins_by='trans_cap_cost',
+            pre_filter=None, trg_by_region=False,
             reg_cols=('region', 'class'), fout=None, hourly=True,
             hour_ending=True, max_workers=None):
         """Run representative profiles.
@@ -312,6 +320,10 @@ class ReedsProfiles(RepProfiles):
         sort_bins_by : str | list, optional
             Column(s) to sort by before capacity binning,
             by default 'trans_cap_cost'
+        pre_filter : dict | NoneType
+            Column value pair(s) to filter on. If None don't filter
+        trg_by_region : bool
+            Groupby on region when computing TRGs
         reg_cols : tuple
             Label(s) for a categorical region column(s) to extract profiles
             for.
@@ -343,7 +355,8 @@ class ReedsProfiles(RepProfiles):
                  err_method=err_method, weight=weight,
                  n_profiles=n_profiles, resource_classes=resource_classes,
                  region_map=region_map, cap_bins=cap_bins,
-                 sort_bins_by=sort_bins_by, reg_cols=reg_cols)
+                 sort_bins_by=sort_bins_by, pre_filter=pre_filter,
+                 trg_by_region=trg_by_region, reg_cols=reg_cols)
 
         rp._run(fout=fout, hourly=hourly, hour_ending=hour_ending,
                 max_workers=max_workers)

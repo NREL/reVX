@@ -25,7 +25,7 @@ class ReedsClassifier:
                           'trans_cap_cost', 'dist_mi')
 
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
-                 cap_bins=5, sort_bins_by='trans_cap_cost', filter=None,
+                 cap_bins=5, sort_bins_by='trans_cap_cost', pre_filter=None,
                  trg_by_region=False):
         """
         Parameters
@@ -49,14 +49,14 @@ class ReedsClassifier:
             region-class
         sort_bins_by : str | list
             Column(s) to sort by before capacity binning
-        filter : dict | NoneType
+        pre_filter : dict | NoneType
             Column value pair(s) to filter on. If None don't filter
         trg_by_region : bool
             Groupby on region when computing TRGs
         """
         rev_table = self._parse_table(rev_table)
-        if filter is not None:
-            for col, v in filter.items():
+        if pre_filter is not None:
+            for col, v in pre_filter.items():
                 logger.debug('Subsetting reV table to {} in {}'
                              .format(v, col))
                 mask = rev_table[col] == v
@@ -599,7 +599,7 @@ class ReedsClassifier:
     @classmethod
     def create(cls, rev_table, resource_classes, region_map='reeds_region',
                cap_bins=5, sort_bins_by='trans_cap_cost',
-               filter=None, trg_by_region=False):
+               pre_filter=None, trg_by_region=False):
         """
         Identify ReEDS regions and classes and dump and updated table
 
@@ -625,7 +625,7 @@ class ReedsClassifier:
         sort_bins_by : str | list, optional
             Column(s) to sort by before capacity binning,
             by default 'trans_cap_cost'
-        filter : dict | NoneType
+        pre_filter : dict | NoneType
             Column value pair(s) to filter on. If None don't filter
         trg_by_region : bool
             Groupby on region when computing TRGs
@@ -646,7 +646,7 @@ class ReedsClassifier:
         """
         classes = cls(rev_table, resource_classes, region_map=region_map,
                       cap_bins=cap_bins, sort_bins_by=sort_bins_by,
-                      filter=filter, trg_by_region=trg_by_region)
+                      pre_filter=pre_filter, trg_by_region=trg_by_region)
         out = (classes.table, classes.table_slim, classes.aggregate_table,
                classes.aggregate_table_slim)
 

@@ -275,7 +275,7 @@ def test_offshore_classifier():
     test_table = ReedsClassifier.create(rev_table, class_bins,
                                         region_map='reeds_region',
                                         cap_bins=3, sort_bins_by='mean_lcoe',
-                                        filter={'offshore': 1},
+                                        pre_filter={'offshore': 1},
                                         trg_by_region=True)[0]
     assert_frame_equal(truth_table, test_table, check_dtype=False,
                        check_categorical=False)
@@ -290,7 +290,7 @@ def test_offshore_classifier():
     test_table = ReedsClassifier.create(rev_table, class_bins,
                                         region_map='reeds_region',
                                         cap_bins=3, sort_bins_by='mean_lcoe',
-                                        filter={'offshore': 1})[0]
+                                        pre_filter={'offshore': 1})[0]
     assert_frame_equal(truth_table, test_table, check_dtype=False,
                        check_categorical=False)
 
@@ -308,7 +308,7 @@ def test_wind_farm_profiles():
     rev_table = ReedsClassifier.create(rev_table, resource_classes,
                                        region_map='reeds_region',
                                        cap_bins=2, sort_bins_by='mean_lcoe',
-                                       filter={'offshore': 1})[0]
+                                       pre_filter={'offshore': 1})[0]
 
     f_baseline = os.path.join(ROOT_DIR, 'ReEDS_Wind_Farm_Profiles.h5')
 

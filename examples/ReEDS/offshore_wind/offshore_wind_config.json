@@ -1,6 +1,9 @@
 {
   "classify": {
     "cap_bins": 5,
+    "pre_filter": {
+      "offshore": 1
+    },
     "regions": "model_region",
     "resource_classes": "/shared-projects/rev/projects/reeds_jan2020/wind/offshore_wind/offshore_wind_resource_classes.csv",
     "rev_table": "/shared-projects/rev/projects/reeds_jan2020/wind/reeds_wind_sc.csv",
@@ -15,9 +18,6 @@
     "feature": "--partition=debug",
     "option": "eagle",
     "walltime": 1.0
-  },
-  "filter": {
-    "offshore": 1
   },
   "log_level": "INFO",
   "name": "windoff",

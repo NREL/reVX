@@ -99,11 +99,11 @@ class ClassifyConfigGroup(ReedsConfigGroup):
         return self.get('sort_bins_by', self._default_sort_bins_by)
 
     @property
-    def filter(self):
+    def pre_filter(self):
         """
         Column value pair(s) to filter on. If None don't filter
         """
-        return self.get('filter', None)
+        return self.get('pre_filter', None)
 
 
 class ProfilesConfigGroup(ReedsConfigGroup):

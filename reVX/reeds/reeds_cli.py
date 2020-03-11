@@ -57,7 +57,7 @@ def run_local(ctx, config):
                    regions=config.classify.regions,
                    cap_bins=config.classify.cap_bins,
                    sort_bins_by=config.classify.sort_bins_by,
-                   filter=config.classify.filter)
+                   pre_filter=config.classify.pre_filter)
 
     if config.profiles is not None:
         ctx.invoke(profiles,
@@ -163,11 +163,11 @@ def local(ctx, out_dir, log_dir, verbose):
                     'region/resource bin combination'))
 @click.option('--sort_bins_by', '-sb', type=str, default='trans_cap_cost',
               help='Column(s) in rev_table to sort before binning')
-@click.option('--filter', '-f', type=STR, default=None,
+@click.option('--pre_filter', '-f', type=STR, default=None,
               help='Column value pair(s) to filter on. If None do not filter')
 @click.pass_context
 def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
-             filter):
+             pre_filter):
     """
     Extract ReEDS (region, bin, class) groups
     """
@@ -176,13 +176,13 @@ def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
 
     logger.info('Extracting ReEDS (region, bin, class) groups using '
                 'reV sc table {}'.format(rev_table))
-    if isinstance(filter, str):
-        filter = dict_str_load(filter)
+    if isinstance(pre_filter, str):
+        pre_filter = dict_str_load(pre_filter)
 
     out = ReedsClassifier.create(rev_table, resource_classes,
                                  region_map=regions, cap_bins=cap_bins,
                                  sort_bins_by=sort_bins_by,
-                                 filter=filter)
+                                 pre_filter=pre_filter)
     table_full, table, agg_table_full, agg_table = out
 
     out_path = os.path.join(out_dir,
@@ -354,13 +354,14 @@ def get_node_cmd(config):
 
     if config.classify is not None:
         args += ('classify -rt {rev_table} -rc {resource_classes} '
-                 '-r {regions} -cb {cap_bins} -sb {sort_bins_by} -f {filter} '
+                 '-r {regions} -cb {cap_bins} -sb {sort_bins_by} '
+                 '-f {pre_filter} '
                  .format(rev_table=s(config.classify.rev_table),
                          resource_classes=s(config.classify.resource_classes),
                          regions=s(config.classify.regions),
                          cap_bins=s(config.classify.cap_bins),
                          sort_bins_by=s(config.classify.sort_bins_by),
-                         filter=s(config.classify.filter)))
+                         pre_filter=s(config.classify.pre_filter)))
 
     if config.profiles is not None:
         args += ('profiles -rt {reeds_table} -cf {cf_profiles} -gc {gid_col} '
