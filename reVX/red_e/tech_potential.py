@@ -12,7 +12,7 @@ class TechPotential(ExclusionMaskFromDict):
     """
     RED-E Tech Potential tool
     """
-    def __init__(self, h5_path, base_layer, layer_dict, power_density=1,
+    def __init__(self, h5_path, base_layer, excl_dict, power_density=1,
                  hsds=False, min_area=None, kernel='queen',
                  check_layers=False):
         """
@@ -22,8 +22,8 @@ class TechPotential(ExclusionMaskFromDict):
             Path to .h5 file containing CF means and exclusion layers
         base_layer : str
             Name of dataset in .h5 file containing base layer
-        layers_dict : dcit
-            Dictionary of LayerMask arugments {layer: {kwarg: value}}
+        excl_dict : dcit
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
         power_density : float
             Multiplier to convert CF means to generation means
         hsds : bool
@@ -37,10 +37,10 @@ class TechPotential(ExclusionMaskFromDict):
             Run a pre-flight check on each layer to ensure they contain
             un-excluded values
         """
-        excl_dict = layer_dict.copy()
         excl_dict[base_layer] = {"use_as_weights": True}
-        super().__init__(h5_path, excl_dict, hsds=hsds, min_area=min_area,
-                         kernel=kernel, check_layers=check_layers)
+        super().__init__(h5_path, layers_dict=excl_dict, hsds=hsds,
+                         min_area=min_area, kernel=kernel,
+                         check_layers=check_layers)
         self._pd = power_density
 
     @property
@@ -68,7 +68,7 @@ class TechPotential(ExclusionMaskFromDict):
         return gen * self._pd
 
     @classmethod
-    def run(cls, h5_path, base_layer, layer_dict, power_density=1,
+    def run(cls, h5_path, base_layer, excl_dict, power_density=1,
             hsds=False, min_area=None, kernel='queen',
             check_layers=False):
         """
@@ -80,8 +80,8 @@ class TechPotential(ExclusionMaskFromDict):
             Path to .h5 file containing CF means and exclusion layers
         base_layer : str
             Name of dataset in .h5 file containing base layer
-        layers_dict : dcit
-            Dictionary of LayerMask arugments {layer: {kwarg: value}}
+        excl_dict : dcit
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
         power_density : float
             Multiplier to convert CF means to generation means
         hsds : bool
@@ -100,7 +100,7 @@ class TechPotential(ExclusionMaskFromDict):
         mask : ndarray
             Base layer with exclusions masked out
         """
-        with cls(h5_path, base_layer, layer_dict, power_density=power_density,
+        with cls(h5_path, base_layer, excl_dict, power_density=power_density,
                  hsds=hsds, min_area=min_area, kernel=kernel,
                  check_layers=check_layers) as f:
             mask = f.mask
@@ -108,7 +108,7 @@ class TechPotential(ExclusionMaskFromDict):
         return mask
 
     @classmethod
-    def run_generation(cls, h5_path, base_layer, layer_dict, power_density=1,
+    def run_generation(cls, h5_path, base_layer, excl_dict, power_density=1,
                        hsds=False, min_area=None, kernel='queen',
                        check_layers=False):
         """
@@ -120,8 +120,8 @@ class TechPotential(ExclusionMaskFromDict):
             Path to .h5 file containing CF means and exclusion layers
         base_layer : str
             Name of dataset in .h5 file containing base layer
-        layers_dict : dcit
-            Dictionary of LayerMask arugments {layer: {kwarg: value}}
+        excl_dict : dcit
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
         power_density : float
             Multiplier to convert CF means to generation means
         hsds : bool
@@ -140,7 +140,7 @@ class TechPotential(ExclusionMaskFromDict):
         gen : ndarray
             Tech-potentail as generation
         """
-        with cls(h5_path, base_layer, layer_dict, power_density=power_density,
+        with cls(h5_path, base_layer, excl_dict, power_density=power_density,
                  hsds=hsds, min_area=min_area, kernel=kernel,
                  check_layers=check_layers) as f:
             gen = f.generation

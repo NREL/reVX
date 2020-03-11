@@ -732,7 +732,7 @@ class RPMOutput:
         n_inclusions = np.zeros((len(locs), ), dtype=np.float32)
         n_points = np.zeros((len(locs), ), dtype=np.uint16)
 
-        with ExclusionMaskFromDict(excl_fpath, excl_dict) as excl:
+        with ExclusionMaskFromDict(excl_fpath, layers_dict=excl_dict) as excl:
             techmap = RPMOutput._get_tm_data(excl, techmap_dset,
                                              lat_slice, lon_slice)
             exclusions = RPMOutput._get_excl_data(excl, lat_slice, lon_slice)
