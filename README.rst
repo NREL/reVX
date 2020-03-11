@@ -1,5 +1,15 @@
 reVX
-####
+****
+
+.. image:: https://badge.fury.io/py/NREL-reVX.svg
+    :target: https://badge.fury.io/py/NREL-reVX
+
+.. image:: https://github.com/NREL/reVX/workflows/Documentation/badge.svg
+    :target: https://nrel.github.io/reVX/
+
+.. image:: https://github.com/NREL/reVX/workflows/Pytests/badge.svg
+    :target: https://github.com/NREL/reVX/actions?query=workflow%3A%22Pytests%22
+
 Renewable Energy Potential(V) eXchange Tool: reVX
 
 .. inclusion-intro
