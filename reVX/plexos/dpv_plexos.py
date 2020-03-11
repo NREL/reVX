@@ -180,7 +180,8 @@ class DpvResource:
         fpath_out = os.path.join(self._root_dir, fn_out)
         shutil.copy(self._fpaths[0], fpath_out)
         with Outputs(fpath_out) as out:
-            dsets = [d for d in out.dsets if d not in ['time_index', 'meta']]
+            dsets = [d for d in out.datasets
+                     if d not in ['time_index', 'meta']]
 
         for dset in dsets:
             arr = self._merge_data(dset, job_frac_map)

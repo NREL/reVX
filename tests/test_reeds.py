@@ -36,7 +36,7 @@ def extract_profiles(profiles_h5):
     meta = None
     time_index = None
     with Resource(profiles_h5) as f:
-        for ds in f.dsets:
+        for ds in f.datasets:
             if 'profile' in ds:
                 n = int(ds.split('_')[-1])
                 profiles[n] = f[ds]
