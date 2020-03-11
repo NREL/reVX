@@ -25,7 +25,7 @@ class ReedsClassifier:
                           'trans_cap_cost', 'dist_mi')
 
     def __init__(self, rev_table, resource_classes, region_map='reeds_region',
-                 cap_bins=3, sort_bins_by='trans_cap_cost', filter=None,
+                 cap_bins=5, sort_bins_by='trans_cap_cost', filter=None,
                  trg_by_region=False):
         """
         Parameters
@@ -598,7 +598,7 @@ class ReedsClassifier:
 
     @classmethod
     def create(cls, rev_table, resource_classes, region_map='reeds_region',
-               cap_bins=3, sort_bins_by='trans_cap_cost',
+               cap_bins=5, sort_bins_by='trans_cap_cost',
                filter=None, trg_by_region=False):
         """
         Identify ReEDS regions and classes and dump and updated table

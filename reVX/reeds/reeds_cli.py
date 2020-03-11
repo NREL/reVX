@@ -158,7 +158,7 @@ def local(ctx, out_dir, log_dir, verbose):
                     "bins"))
 @click.option('--regions', '-r', type=str, default='reeds_region',
               help='Mapping of supply curve points to geographic region')
-@click.option('--cap_bins', '-cb', type=int, default=3,
+@click.option('--cap_bins', '-cb', type=int, default=5,
               help=('Number of capacity bins to create for each '
                     'region/resource bin combination'))
 @click.option('--sort_bins_by', '-sb', type=str, default='trans_cap_cost',

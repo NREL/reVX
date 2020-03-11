@@ -21,7 +21,7 @@ class ReedsProfiles(RepProfiles):
                  profiles_dset='cf_profile', rep_method='meanoid',
                  err_method='rmse', weight='gid_counts',
                  n_profiles=1, resource_classes=None,
-                 region_map='reeds_region', cap_bins=3,
+                 region_map='reeds_region', cap_bins=5,
                  sort_bins_by='trans_cap_cost',
                  reg_cols=('region', 'class')):
         """
@@ -273,7 +273,7 @@ class ReedsProfiles(RepProfiles):
             profiles_dset='cf_profile', rep_method='meanoid',
             err_method='rmse', weight='gid_counts',
             n_profiles=1, resource_classes=None, region_map='reeds_region',
-            cap_bins=3, sort_bins_by='trans_cap_cost',
+            cap_bins=5, sort_bins_by='trans_cap_cost',
             reg_cols=('region', 'class'), fout=None, hourly=True,
             hour_ending=True, max_workers=None):
         """Run representative profiles.
