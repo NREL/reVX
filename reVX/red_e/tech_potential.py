@@ -37,8 +37,9 @@ class TechPotential(ExclusionMaskFromDict):
             Run a pre-flight check on each layer to ensure they contain
             un-excluded values
         """
-        excl_dict[base_layer] = {"use_as_weights": True}
-        super().__init__(h5_path, layers_dict=excl_dict, hsds=hsds,
+        layers_dict = excl_dict.copy()
+        layers_dict[base_layer] = {"use_as_weights": True}
+        super().__init__(h5_path, layers_dict=layers_dict, hsds=hsds,
                          min_area=min_area, kernel=kernel,
                          check_layers=check_layers)
         self._pd = power_density
