@@ -2,7 +2,7 @@
 name: Feature request
 about: Request a new reVX feature
 title: ''
-labels: enhancement
+labels: feature
 assignees: ''
 
 ---
