@@ -62,9 +62,11 @@ Option 2: Clone repo (recommended for developers)
     2) cd into ``bin/$OS/``
     3) run the command: ``conda env create -f revx.yml``. If conda can't find
        any packages, try removing them from the yml file.
+
     4) run the command: ``conda activate revx``
     5) prior to running ``pip`` below, make sure branch is correct (install
        from master!)
+
     6) cd back to the reVX repo (where setup.py is located)
     7) install pre-commit: ``pre-commit install``
     8) run ``pip install .`` (or ``pip install -e .`` if running a dev branch
@@ -78,6 +80,7 @@ Option 2: Clone repo (recommended for developers)
     1) cd into reV repo cloned above
     2) prior to running ``pip`` below, make sure branch is correct (install
        from master!)
+
     3) cd back to the reV repo (where setup.py is located)
     4) install pre-commit: ``pre-commit install``
     5) run ``pip install .`` (or ``pip install -e .`` if running a dev branch
@@ -86,5 +89,6 @@ Option 2: Clone repo (recommended for developers)
 3. Check that reV and reVX were installed successfully
     1) From any directory, run the following commands. This should return the
        help pages for the CLI's.
+
         - ``reVX``
         - ``reV``
