@@ -5,6 +5,8 @@ ReEDS Command Line Interface
 import click
 import logging
 import os
+
+from reV.utilities.loggers import init_mult
 from reV.utilities.cli_dtypes import STR, STRLIST, INT
 from reV.utilities.execution import SLURM, SubprocessManager
 from reV.utilities.utilities import dict_str_load
@@ -14,7 +16,7 @@ from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
 from reVX.reeds.reeds_timeslices import ReedsTimeslices
 from reVX.utilities.exceptions import ReedsRuntimeError
-from reVX.utilities.loggers import init_mult
+
 
 logger = logging.getLogger(__name__)
 
