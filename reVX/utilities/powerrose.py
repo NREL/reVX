@@ -40,7 +40,7 @@ class SupplyCurvePowerRose(Aggregation):
         super().__init__(excl_fpath, power_rose_h5_fpath, tm_dset, agg_dset,
                          resolution=resolution)
 
-        self._dir_map = self._map_direction_pos(power_rose_h5_fpath)
+        self._dir_pos = self._map_direction_pos(power_rose_h5_fpath)
 
     @staticmethod
     def _map_direction_pos(power_rose_h5_fpath):
@@ -67,40 +67,44 @@ class SupplyCurvePowerRose(Aggregation):
         return dir_pos
 
     @staticmethod
-    def _get_point_neighbors(sc_point_gid, points):
+    def _compute_neighbors(sc_point_gids, points):
         """
-        Get all neighboring sc_points to given sc_point
+        Compute neighboring supply curve point gids in following order:
+        ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
 
         Parameters
         ----------
-        sc_point_gid : int
-            Supply curve point gid
+        sc_point_gids : list | ndarray
+            Supply curve point gids to get neighbors for
         points : pandas.DataFrame
-            Mapping of sc_point_gid to row_ind and col_ind
+            Supply curve point gid to row, col index mapping
 
         Returns
         -------
-        n_gids : list
-            list of neighboring sc_point_gids in the following order:
-            ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        neighbor_gids : ndarray
+            Neighboring supply curve point gids
         """
-        row, col = points.loc[sc_point_gid, ['row_ind', 'col_ind']].values
+        sc_points = points.loc[sc_point_gids]
+        rows, cols = sc_points.values.T
+        shape = points['row_ind'].max(), points['col_ind'].max()
+
         row_shifts = [-1, -1, 0, 1, 1, 1, 0, -1]
-        col_shifts = [0, 1, 1, 1, 0, -1, -1, -1]
-        n_gids = []
-        for r, c in zip(row_shifts, col_shifts):
-            row_ind = row + r
-            col_ind = col + c
-            mask = ((points['row_ind'] == row_ind)
-                    & (points['col_ind'] == col_ind))
-            try:
-                n_gid = points.loc[mask].index[0]
-            except IndexError:
-                n_gid = None
 
-            n_gids.append(n_gid)
+        rows = np.expand_dims(rows, axis=1) + row_shifts
+        mask = rows < 0
+        rows[mask] = 0
+        mask = rows > shape[0]
+        rows[mask] = shape[0]
 
-        return n_gids
+        cols = np.expand_dims(cols, axis=1) + row_shifts
+        mask = cols < 0
+        cols[mask] = 0
+        mask = cols > shape[1]
+        cols[mask] = shape[1]
+
+        neighbor_gids = rows * shape[1] + cols
+
+        return neighbor_gids
 
     @staticmethod
     def _get_neighbors(excl_fpath, sc_point_gids, resolution=64):
@@ -126,13 +130,11 @@ class SupplyCurvePowerRose(Aggregation):
         with SupplyCurveExtent(excl_fpath, resolution=resolution) as sc:
             points = sc.points
 
-        neighbor_gids = []
-        for gid in sc_point_gids:
-            neighbor_gids.append(
-                SupplyCurvePowerRose._get_point_neighbors(gid, points))
+        neighbor_gids = SupplyCurvePowerRose._compute_neighbors(sc_point_gids,
+                                                                points)
 
         directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-        neighbor_gids = pd.DataFrame(np.array(neighbor_gids),
+        neighbor_gids = pd.DataFrame(neighbor_gids,
                                      columns=directions,
                                      index=sc_point_gids)
 
@@ -157,6 +159,11 @@ class SupplyCurvePowerRose(Aggregation):
         agg_out = self.aggregate(excl_area=excl_area, max_workers=max_workers,
                                  chunk_point_len=chunk_point_len)
 
-        _ = agg_out.pop('meta')  # meta
-        # sc_powerrose
-        _ = agg_out.pop('powerrose_100m')[self._dir_map['dir_pos'].values]
+        meta = agg_out.pop('meta')
+        powerrose_gids = self._get_neighbors(self._excl_fpath,
+                                             meta['sc_point_gids'].values,
+                                             resolution=self._resolution)
+
+        sc_powerrose = agg_out.pop('powerrose_100m')[self._dir_pos]
+        pr_rank = np.argsort(sc_powerrose.T)
+        pr_rank = np.take_along_axis(powerrose_gids.values, pr_rank, axis=1)
