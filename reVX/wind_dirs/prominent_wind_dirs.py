@@ -22,12 +22,11 @@ class ProminentWindDirections(Aggregation):
         Parameters
         ----------
         power_rose_h5_fpath : str
-            Filepath to .h5 file containing powerrose
+            Filepath to .h5 file containing powerrose data
         excl_fpath : str
             Filepath to exclusions h5 with techmap dataset.
         agg_dset : str, optional
-            Dataset to aggreate, can supply multiple datasets,
-            by default 'powerrose_100m'
+            Powerrose dataset to aggreate, by default 'powerrose_100m'
         tm_dset : str, optional
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data,
@@ -200,12 +199,11 @@ class ProminentWindDirections(Aggregation):
         Parameters
         ----------
         power_rose_h5_fpath : str
-            Filepath to .h5 file containing powerrose
+            Filepath to .h5 file containing powerrose data
         excl_fpath : str
             Filepath to exclusions h5 with techmap dataset.
         agg_dset : str, optional
-            Dataset to aggreate, can supply multiple datasets,
-            by default 'powerrose_100m'
+            Powerrose dataset to aggreate, by default 'powerrose_100m'
         tm_dset : str, optional
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data,
