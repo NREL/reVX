@@ -15,6 +15,8 @@ class ProminentWindDirections(Aggregation):
     Aggregate PowerRose to Supply Curve points and sort directions in order
     of prominence. Then convert to equivalent sc_point_gid
     """
+    DIR_ORDER = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+
     def __init__(self, power_rose_h5_fpath, excl_fpath,
                  agg_dset='powerrose_100m', tm_dset='techmap_wtk',
                  resolution=64):
@@ -54,7 +56,7 @@ class ProminentWindDirections(Aggregation):
         list
             Pos of major cardinal directions in power rose data
         """
-        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        directions = ProminentWindDirections.DIR_ORDER
 
         with h5py.File(power_rose_h5_fpath, 'r') as f:
             cardinal_dirs = list(f['cardinal_directions'][...].astype(str))
@@ -64,7 +66,31 @@ class ProminentWindDirections(Aggregation):
         return dir_pos
 
     @staticmethod
-    def _compute_neighbors(sc_point_gids, points):
+    def _get_row_col_inds(sc_point_gids, row_length):
+        """
+        Convert supply curve point gids to row and col indices given row length
+
+        Parameters
+        ----------
+        sc_point_gids : int | list | ndarray
+            Supply curve point gid or list/array of gids
+        row_length : int
+            row length (shape[1])
+
+        Returns
+        -------
+        row : int | list | ndarray
+            row indices
+        col : int | list | ndarray
+            row indices
+        """
+        rows = sc_point_gids // row_length
+        cols = sc_point_gids % row_length
+
+        return rows, cols
+
+    @staticmethod
+    def _compute_neighbors(sc_point_gids, shape):
         """
         Compute neighboring supply curve point gids in following order:
         ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -73,27 +99,26 @@ class ProminentWindDirections(Aggregation):
         ----------
         sc_point_gids : list | ndarray
             Supply curve point gids to get neighbors for
-        points : pandas.DataFrame
-            Supply curve point gid to row, col index mapping
+        shape : tuple
+            Exclusions gid shape
 
         Returns
         -------
         neighbor_gids : ndarray
             Neighboring supply curve point gids
         """
-        sc_points = points.loc[sc_point_gids]
-        rows, cols = sc_points.values.T
-        shape = points['row_ind'].max(), points['col_ind'].max()
+        rows, cols = ProminentWindDirections._get_row_col_inds(sc_point_gids,
+                                                               shape[1])
 
         row_shifts = [-1, -1, 0, 1, 1, 1, 0, -1]
-
         rows = np.expand_dims(rows, axis=1) + row_shifts
         mask = rows < 0
         rows[mask] = 0
         mask = rows > shape[0]
         rows[mask] = shape[0]
 
-        cols = np.expand_dims(cols, axis=1) + row_shifts
+        col_shifts = [0, 1, 1, 1, 0, -1, -1, -1]
+        cols = np.expand_dims(cols, axis=1) + col_shifts
         mask = cols < 0
         cols[mask] = 0
         mask = cols > shape[1]
@@ -125,13 +150,13 @@ class ProminentWindDirections(Aggregation):
             Neighboring sc_point_gids by cardinal direction
         """
         with SupplyCurveExtent(excl_fpath, resolution=resolution) as sc:
-            points = sc.points
+            shape = sc.shape
 
         neighbor_gids = \
             ProminentWindDirections._compute_neighbors(sc_point_gids,
-                                                       points)
+                                                       shape)
 
-        directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        directions = ProminentWindDirections.DIR_ORDER
         neighbor_gids = pd.DataFrame(neighbor_gids,
                                      columns=directions,
                                      index=sc_point_gids)
@@ -141,7 +166,9 @@ class ProminentWindDirections(Aggregation):
     def _get_prominent_directions(self, excl_area=0.0081, max_workers=None,
                                   chunk_point_len=100):
         """
-        Aggregate power rose data to
+        Aggregate power rose data to supply curve points, find all neighboring
+        supply curve points, sort neighbors in order of prominent powerrose
+        directions
 
         Parameters
         ----------
@@ -158,8 +185,8 @@ class ProminentWindDirections(Aggregation):
         -------
         prominent_dirs : pandas.DataFrame
             Update meta data table with neighboring supply curve point gids
-            at each cardinal direction and in order of prominent power rose
-            direction
+            at each cardinal direction as well as in order of prominent
+            power rose direction
         """
         agg_out = self.aggregate(excl_area=excl_area, max_workers=max_workers,
                                  chunk_point_len=chunk_point_len)
@@ -199,7 +226,9 @@ class ProminentWindDirections(Aggregation):
         Parameters
         ----------
         power_rose_h5_fpath : str
-            Filepath to .h5 file containing powerrose data
+            Filepath to .h5 file containing power rose data, of same format as
+            WTK data with directions on axis 0 (rows) and sites on axis 1
+            (columns)
         excl_fpath : str
             Filepath to exclusions h5 with techmap dataset.
         agg_dset : str, optional
