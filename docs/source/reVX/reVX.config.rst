@@ -12,3 +12,4 @@ Submodules
 .. toctree::
 
    reVX.config.reeds
+   reVX.config.wind_dirs

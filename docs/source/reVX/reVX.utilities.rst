@@ -14,5 +14,4 @@ Submodules
    reVX.utilities.cluster_methods
    reVX.utilities.exceptions
    reVX.utilities.exclusions_converter
-   reVX.utilities.loggers
    reVX.utilities.region
