@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-reVX Configuration
+reVX ReEDS Configuration
 """
 
 from reV.config.base_analysis_config import AnalysisConfig
