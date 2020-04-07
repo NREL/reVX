@@ -3,11 +3,14 @@
 Aggregate powerrose and sort directions by dominance
 """
 import h5py
+import logging
 import numpy as np
 import pandas as pd
 
 from reV.supply_curve.aggregation import Aggregation
 from reV.supply_curve.points import SupplyCurveExtent
+
+logger = logging.getLogger(__name__)
 
 
 class ProminentWindDirections(Aggregation):
@@ -163,8 +166,8 @@ class ProminentWindDirections(Aggregation):
 
         return neighbor_gids
 
-    def _get_prominent_directions(self, excl_area=0.0081, max_workers=None,
-                                  chunk_point_len=100):
+    def prominent_directions(self, excl_area=0.0081, max_workers=None,
+                             chunk_point_len=100):
         """
         Aggregate power rose data to supply curve points, find all neighboring
         supply curve points, sort neighbors in order of prominent powerrose
@@ -193,7 +196,7 @@ class ProminentWindDirections(Aggregation):
 
         meta = agg_out.pop('meta')
         neighbor_gids = self._get_neighbors(self._excl_fpath,
-                                            meta['sc_point_gids'].values,
+                                            meta['sc_point_gid'].values,
                                             resolution=self._resolution)
 
         dir_pos = self._map_direction_pos(self._h5_fpath)
@@ -206,11 +209,14 @@ class ProminentWindDirections(Aggregation):
         columns = ['prominent_direction_{}'.format(i + 1)
                    for i in range(len(dir_pos))]
         prominent_dirs = pd.DataFrame(prominent_dirs,
-                                      index=meta['sc_point_gids'].values,
+                                      index=meta['sc_point_gid'].values,
                                       columns=columns)
         prominent_dirs = neighbor_gids.join(prominent_dirs)
         del neighbor_gids
-        prominent_dirs = meta.join(prominent_dirs)
+
+        prominent_dirs.index.name = 'sc_point_gid'
+        prominent_dirs = prominent_dirs.reset_index()
+        prominent_dirs = pd.merge(meta, prominent_dirs, on='sc_point_gid')
 
         return prominent_dirs
 
@@ -263,7 +269,7 @@ class ProminentWindDirections(Aggregation):
                  agg_dset=agg_dset, tm_dset=tm_dset,
                  resolution=resolution)
 
-        prominent_dirs = pr._get_prominent_directions(
+        prominent_dirs = pr.prominent_directions(
             excl_area=excl_area, max_workers=max_workers,
             chunk_point_len=chunk_point_len)
 
