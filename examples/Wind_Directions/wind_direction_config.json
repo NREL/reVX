@@ -1,0 +1,13 @@
+{
+  "dirout": "/scratch/mrossol/rev_dev/",
+  "excl_fpath": "/scratch/mrossol/rev_dev/wind_exclusions.h5",
+  "execution_control": {
+    "allocation": "rev",
+    "feature": "--partition=short",
+    "option": "eagle",
+    "walltime": 4.0
+  },
+  "log_level": "INFO",
+  "name": "WindDirections",
+  "powerrose_h5_fpath": "/scratch/mrossol/rev_dev/wtk_powerrose.h5"
+}
