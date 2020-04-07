@@ -13,7 +13,6 @@ from warnings import warn
 logger = logging.getLogger(__name__)
 
 
-@staticmethod
 def get_coord_labels(df):
     """Retrieve the coordinate labels from df.
 
@@ -38,7 +37,6 @@ def get_coord_labels(df):
     return df_coord_labels
 
 
-@staticmethod
 def parse_table_name(name, wait=300, db_host='gds_edit.nrel.gov',
                      db_user=None, db_pass=None, db_port=5432):
     """Parse a dataframe from an input name.
@@ -71,6 +69,8 @@ def parse_table_name(name, wait=300, db_host='gds_edit.nrel.gov',
         elif len(name.split('.')) == 3:
             from reVX.handlers.database import Database
             db, schema, table = name.split('.')
+            logger.debug('Retrieving "{}.{}" from database "{}"'
+                         .format(schema, table, db))
             df = Database.get_table(table, schema, db, wait=wait,
                                     db_host=db_host, db_user=db_user,
                                     db_pass=db_pass, db_port=db_port)
@@ -377,6 +377,11 @@ class ProjectGidHandler:
             Database password (None if your password is cached).
         db_port : int
             Database port.
+
+        Returns
+        -------
+        gids : list
+            Sorted list of unique integer resource gids build out.
         """
 
         sc_table = parse_table_name(sc_table, wait=wait,
@@ -395,12 +400,14 @@ class ProjectGidHandler:
                                               DataCleaner.REEDS_NAME_MAP)
 
         gid_table = pd.merge(reeds_build, sc_table, how='left', on='gid')
-        gids = [item for sublist in list(gid_table['res_gids'].values)
+        gids = [int(item) for sublist in list(gid_table['res_gids'].values)
                 for item in sublist]
         if not any(gids):
             e = 'No resource gids found!'
             logger.error(e)
             raise ValueError(e)
+
+        gids = sorted(list(set(gids)), key=float)
 
         return gids
 
@@ -420,6 +427,11 @@ class ProjectGidHandler:
             Config tab/label to write to the project points config column.
         db_kwargs : dict
             Optional database kwargs.
+
+        Returns
+        -------
+        pp : pd.DataFrame
+            Project points dataframe with gid and config columns..
         """
         tables = {}
         gids = []
@@ -431,14 +443,15 @@ class ProjectGidHandler:
             if rev_table not in tables:
                 tables[rev_table] = parse_table_name(rev_table, **db_kwargs)
 
-            gids.append(ProjectGidHandler.get_resource_gids(tables[rev_table],
-                        tables[reeds_table]))
+            gids += ProjectGidHandler.get_resource_gids(tables[rev_table],
+                                                        tables[reeds_table])
 
         gids = sorted(list(set(gids)), key=float)
         pp = pd.DataFrame({'config': [config_tag] * len(gids)}, index=gids)
         pp.index.name = 'gid'
 
         if fpath_out:
+            logger.debug('Writing project points: {}'.format(fpath_out))
             pp.to_csv(fpath_out)
 
         return pp
