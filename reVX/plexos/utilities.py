@@ -35,6 +35,7 @@ def get_coord_labels(df):
         df_coord_labels = ['lat', 'lon']
     elif 'latitude' in df and 'longitude' in df:
         df_coord_labels = ['latitude', 'longitude']
+
     return df_coord_labels
 
 
@@ -116,6 +117,7 @@ class DataCleaner:
         """
         if profiles.shape[1] != len(plexos_meta):
             raise ValueError('Plexos profiles shape does not match meta.')
+
         self._plexos_meta = plexos_meta
         self._profiles = profiles
 
@@ -215,8 +217,10 @@ class DataCleaner:
         for col in cols:
             val_final = meta_final.loc[i_final, col]
             val_orig = meta_orig.loc[i_orig, col]
+
             if not isinstance(val_final, type(val_orig)):
                 raise TypeError('Mismatch in column dtype for plexos meta!')
+
             if isinstance(val_final, str):
                 val_final = json.loads(val_final)
                 val_orig = json.loads(val_orig)
