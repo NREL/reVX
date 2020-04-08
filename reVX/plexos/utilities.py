@@ -2,6 +2,7 @@
 """
 reVX-plexos utilities
 """
+import copy
 import json
 import numpy as np
 import pandas as pd
@@ -87,6 +88,8 @@ def parse_table_name(name, wait=300, db_host='gds_edit.nrel.gov',
 
 class DataCleaner:
     """Class for custom Plexos data cleaning procedures."""
+
+    # Keys are bad values, values are corrected values
 
     REEDS_NAME_MAP = {'capacity_reV': 'built_capacity',
                       'capacity_rev': 'built_capacity',
@@ -395,13 +398,34 @@ class ProjectGidHandler:
                                        db_pass=db_pass,
                                        db_port=db_port)
 
-        sc_table = DataCleaner.rename_cols(sc_table, DataCleaner.REV_NAME_MAP)
-        reeds_build = DataCleaner.rename_cols(reeds_build,
-                                              DataCleaner.REEDS_NAME_MAP)
+        rev_name_map = copy.deepcopy(DataCleaner.REV_NAME_MAP)
+        reeds_name_map = copy.deepcopy(DataCleaner.REEDS_NAME_MAP)
+        rev_name_map['sc_gids'] = 'gid'
+        rev_name_map['sc_gid'] = 'gid'
+        rev_name_map['gids'] = 'gid'
+        reeds_name_map['sc_gids'] = 'gid'
+        reeds_name_map['gids'] = 'gid'
+        sc_table = DataCleaner.rename_cols(sc_table, rev_name_map)
+        reeds_build = DataCleaner.rename_cols(reeds_build, reeds_name_map)
+
+        reeds_gids = reeds_build['gid'].values.tolist()
+        rev_gids = sc_table['gid'].values.tolist()
+
+        missing = [gid for gid in reeds_gids if gid not in rev_gids]
+        if any(missing):
+            e = ('The following gids were built in reeds but not found in '
+                 'the reV sc table: {}'.format(missing))
+            logger.error(e)
+            raise RuntimeError(e)
 
         gid_table = pd.merge(reeds_build, sc_table, how='left', on='gid')
-        gids = [int(item) for sublist in list(gid_table['res_gids'].values)
-                for item in sublist]
+
+        gids = []
+        for res_gid_list in gid_table['res_gids'].values.tolist():
+            if isinstance(res_gid_list, str):
+                res_gid_list = json.loads(res_gid_list)
+            gids += [int(gid) for gid in res_gid_list]
+
         if not any(gids):
             e = 'No resource gids found!'
             logger.error(e)

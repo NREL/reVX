@@ -14,7 +14,7 @@ from warnings import warn
 import logging
 
 from reV.utilities.execution import SpawnProcessPool
-from reV.plexos.utilities import parse_table_name
+from reVX.plexos.utilities import parse_table_name
 from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import DataCleaner, get_coord_labels
 
