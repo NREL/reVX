@@ -11,5 +11,5 @@ Submodules
 
 .. toctree::
 
-   reVX.wind_dirs.prominent_wind_dirs
+   reVX.wind_dirs.wind_dirs
    reVX.wind_dirs.wind_dirs_cli
