@@ -46,7 +46,7 @@ def test_prominent_wind_directions():
     """
     baseline = pd.read_csv(BASELINE)
 
-    test = WindDirections.run(PR_H5, EXCL_H5)
+    test = WindDirections.run(PR_H5, EXCL_H5, resolution=64)
 
     for c in test:
         for c in ['source_gids', 'gid_counts']:

@@ -22,7 +22,7 @@ class WindDirections(Aggregation):
 
     def __init__(self, power_rose_h5_fpath, excl_fpath,
                  agg_dset='powerrose_100m', tm_dset='techmap_wtk',
-                 resolution=64):
+                 resolution=128):
         """
         Parameters
         ----------
