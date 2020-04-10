@@ -2,4 +2,4 @@
 """
 Compute prominent wind directions from PowerRose
 """
-from .prominent_wind_dirs import ProminentWindDirections
+from .wind_dirs import WindDirections

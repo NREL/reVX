@@ -13,7 +13,7 @@ from reV.supply_curve.points import SupplyCurveExtent
 logger = logging.getLogger(__name__)
 
 
-class ProminentWindDirections(Aggregation):
+class WindDirections(Aggregation):
     """
     Aggregate PowerRose to Supply Curve points and sort directions in order
     of prominence. Then convert to equivalent sc_point_gid
@@ -59,7 +59,7 @@ class ProminentWindDirections(Aggregation):
         list
             Pos of major cardinal directions in power rose data
         """
-        directions = ProminentWindDirections.DIR_ORDER
+        directions = WindDirections.DIR_ORDER
 
         with h5py.File(power_rose_h5_fpath, 'r') as f:
             cardinal_dirs = list(f['cardinal_directions'][...].astype(str))
@@ -110,8 +110,7 @@ class ProminentWindDirections(Aggregation):
         neighbor_gids : ndarray
             Neighboring supply curve point gids
         """
-        rows, cols = ProminentWindDirections._get_row_col_inds(sc_point_gids,
-                                                               shape[1])
+        rows, cols = WindDirections._get_row_col_inds(sc_point_gids, shape[1])
 
         row_shifts = [-1, -1, 0, 1, 1, 1, 0, -1]
         rows = np.expand_dims(rows, axis=1) + row_shifts
@@ -156,12 +155,12 @@ class ProminentWindDirections(Aggregation):
             shape = sc.shape
 
         neighbor_gids = \
-            ProminentWindDirections._compute_neighbors(sc_point_gids,
-                                                       shape)
+            WindDirections._compute_neighbors(sc_point_gids, shape)
 
-        directions = ProminentWindDirections.DIR_ORDER
+        directions = WindDirections.DIR_ORDER
+        columns = ['{}_gid'.format(d) for d in directions]
         neighbor_gids = pd.DataFrame(neighbor_gids,
-                                     columns=directions,
+                                     columns=columns,
                                      index=sc_point_gids)
 
         return neighbor_gids
@@ -186,10 +185,9 @@ class ProminentWindDirections(Aggregation):
 
         Returns
         -------
-        prominent_dirs : pandas.DataFrame
+        sc_pr : pandas.DataFrame
             Update meta data table with neighboring supply curve point gids
-            at each cardinal direction as well as in order of prominent
-            power rose direction
+            and power-rose value at each cardinal direction
         """
         agg_out = self.aggregate(excl_area=excl_area, max_workers=max_workers,
                                  chunk_point_len=chunk_point_len)
@@ -200,25 +198,20 @@ class ProminentWindDirections(Aggregation):
                                             resolution=self._resolution)
 
         dir_pos = self._map_direction_pos(self._h5_fpath)
-        prominent_dirs = agg_out.pop('powerrose_100m')[dir_pos]
-        prominent_dirs = np.argsort(prominent_dirs.T)
-        prominent_dirs = np.take_along_axis(neighbor_gids.values,
-                                            prominent_dirs,
-                                            axis=1)
+        sc_pr = agg_out.pop('powerrose_100m')[dir_pos].T
 
-        columns = ['prominent_direction_{}'.format(i + 1)
-                   for i in range(len(dir_pos))]
-        prominent_dirs = pd.DataFrame(prominent_dirs,
-                                      index=meta['sc_point_gid'].values,
-                                      columns=columns)
-        prominent_dirs = neighbor_gids.join(prominent_dirs)
+        columns = ['{}_pr'.format(d)
+                   for d in WindDirections.DIR_ORDER]
+        sc_pr = pd.DataFrame(sc_pr, index=meta['sc_point_gid'].values,
+                             columns=columns)
+        sc_pr = neighbor_gids.join(sc_pr)
         del neighbor_gids
 
-        prominent_dirs.index.name = 'sc_point_gid'
-        prominent_dirs = prominent_dirs.reset_index()
-        prominent_dirs = pd.merge(meta, prominent_dirs, on='sc_point_gid')
+        sc_pr.index.name = 'sc_point_gid'
+        sc_pr = sc_pr.reset_index()
+        sc_pr = pd.merge(meta, sc_pr, on='sc_point_gid')
 
-        return prominent_dirs
+        return sc_pr
 
     @classmethod
     def run(cls, power_rose_h5_fpath, excl_fpath,
@@ -260,20 +253,19 @@ class ProminentWindDirections(Aggregation):
 
         Returns
         -------
-        prominent_dirs : pandas.DataFrame
+        sc_pr : pandas.DataFrame
             Update meta data table with neighboring supply curve point gids
-            at each cardinal direction and in order of prominent power rose
-            direction
+            and power-rose value at each cardinal direction
         """
         pr = cls(power_rose_h5_fpath, excl_fpath,
                  agg_dset=agg_dset, tm_dset=tm_dset,
                  resolution=resolution)
 
-        prominent_dirs = pr.prominent_directions(
-            excl_area=excl_area, max_workers=max_workers,
-            chunk_point_len=chunk_point_len)
+        sc_pr = pr.prominent_directions(excl_area=excl_area,
+                                        max_workers=max_workers,
+                                        chunk_point_len=chunk_point_len)
 
         if out_fpath:
-            prominent_dirs.to_csv(out_fpath, index=False)
+            sc_pr.to_csv(out_fpath, index=False)
 
-        return prominent_dirs
+        return sc_pr

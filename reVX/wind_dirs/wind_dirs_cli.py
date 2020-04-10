@@ -11,7 +11,7 @@ from reV.utilities.cli_dtypes import STR, INT
 from reV.utilities.execution import SLURM, SubprocessManager
 
 from reVX.config.wind_dirs import WindDirsConfig
-from reVX.wind_dirs.prominent_wind_dirs import ProminentWindDirections
+from reVX.wind_dirs.wind_dirs import WindDirections
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def main(ctx, name, verbose):
 
 def run_local(ctx, config):
     """
-    Run ProminentWindDirections locally using config
+    Run WindDirections locally using config
 
     Parameters
     ----------
@@ -60,7 +60,7 @@ def run_local(ctx, config):
 @main.command()
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
-              help='Filepath to ProminentWIndDirections config json file.')
+              help='Filepath to WindDirections config json file.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
@@ -141,12 +141,12 @@ def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
     logger.info('Running reV to ReEDS pipeline\n'
                 'Outputs to be stored in: {}'.format(out_dir))
 
-    ProminentWindDirections.run(powerrose_h5_fpath, excl_fpath,
-                                agg_dset=agg_dset, tm_dset=tm_dset,
-                                resolution=resolution, excl_area=excl_area,
-                                max_workers=max_workers,
-                                chunk_point_len=chunk_point_len,
-                                out_fpath=out_fpath)
+    WindDirections.run(powerrose_h5_fpath, excl_fpath,
+                       agg_dset=agg_dset, tm_dset=tm_dset,
+                       resolution=resolution, excl_area=excl_area,
+                       max_workers=max_workers,
+                       chunk_point_len=chunk_point_len,
+                       out_fpath=out_fpath)
 
 
 def get_node_cmd(config):
