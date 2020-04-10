@@ -6,7 +6,7 @@ import pytest
 import pandas as pd
 import numpy as np
 import json
-from reVX.plexos.rev_reeds_plexos import DataCleaner
+from reVX.plexos.utilities import DataCleaner, ProjectGidHandler
 
 
 @pytest.fixture
@@ -140,6 +140,37 @@ def test_merge_extent(plexos_buildout):
                        2 * plexos_buildout.built_capacity.values)
     assert np.allclose(new_profiles, 2 * profiles)
     assert true_gids == list(new_meta.res_gids.values)
+
+
+def test_gid_handler():
+    """Test the plexos gid handler used to extract resource gids from sc"""
+    datadir = os.path.join(os.path.dirname(__file__), 'data/')
+
+    fp_r1 = os.path.join(datadir, 'tmp_reeds_build1.csv')
+    fp_r2 = os.path.join(datadir, 'tmp_reeds_build2.csv')
+    fpath_sc = os.path.join(datadir, 'reV_sc/sc_table.csv')
+
+    reeds_build1 = pd.DataFrame({'gid': np.arange(4)})
+    reeds_build2 = pd.DataFrame({'gid': np.arange(11, 15)})
+    sc_table = pd.read_csv(fpath_sc)
+    reeds_build1.to_csv(fp_r1)
+    reeds_build2.to_csv(fp_r2)
+
+    mapping = {fp_r1: fpath_sc,
+               fp_r2: fpath_sc}
+    pp = ProjectGidHandler.build_project_points(mapping)
+
+    for sc_gid in [1, 3, 11, 14]:
+        mask = sc_table['sc_gid'] == sc_gid
+        res_gids = sc_table.loc[mask, 'res_gids'].values[0]
+        if isinstance(res_gids, str):
+            res_gids = json.loads(res_gids)
+        for gid in res_gids:
+            e = 'error on sc gid {} res gid {}'.format(sc_gid, gid)
+            assert gid in pp.index, e
+
+    os.remove(fp_r1)
+    os.remove(fp_r2)
 
 
 def execute_pytest(capture='all', flags='-rapP'):
