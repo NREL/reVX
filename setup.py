@@ -61,7 +61,7 @@ setup(
                             "reV-ReEDS=reVX.reeds.reeds_cli:main",
                             "reV-rpm=reVX.rpm.rpm_cli:main",
                             "reV-plexos=reVX.plexos.plexos_cli:main",
-                            "wind-dirs=reVX.wind_dirs.wind_dirs.cli:main"
+                            "wind-dirs=reVX.wind_dirs.wind_dirs.cli:main",
                             "NSRDB=reVX.resource.solar_cli:main",
                             "WIND=reVX.resource.wind_cli:main"],
     },
