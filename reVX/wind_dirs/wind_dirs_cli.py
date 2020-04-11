@@ -98,7 +98,7 @@ def from_config(ctx, config, verbose):
 @click.option('--tm_dset', '-td', default='techmap_wtk', type=STR,
               help=("Dataset name in the techmap file containing the "
                     "exclusions-to-resource mapping data,"))
-@click.option('--resolution', '-res', default=64, type=INT,
+@click.option('--resolution', '-res', default=128, type=INT,
               help=("SC resolution, must be input in combination with gid. "
                     "Prefered option is to use the row / col slices to define "
                     "the SC point instead"))
@@ -125,7 +125,9 @@ def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
         os.makedirs(out_dir)
 
     out_fpath = os.path.basename(powerrose_h5_fpath)
-    out_fpath = out_fpath.replace('.h5', 'prominent_dir.csv')
+    out_fpath = out_fpath.replace('.h5',
+                                  '_prominent_dir_{}.csv'
+                                  .format(resolution))
     out_fpath = os.path.join(out_dir, out_fpath)
 
     if log_dir is None:

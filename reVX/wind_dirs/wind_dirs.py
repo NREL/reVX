@@ -131,7 +131,7 @@ class WindDirections(Aggregation):
         return neighbor_gids
 
     @staticmethod
-    def _get_neighbors(excl_fpath, sc_point_gids, resolution=64):
+    def _get_neighbors(excl_fpath, sc_point_gids, resolution=128):
         """
         Get neighboring sc_point_gids for all given supply curve points
 
@@ -216,7 +216,7 @@ class WindDirections(Aggregation):
     @classmethod
     def run(cls, power_rose_h5_fpath, excl_fpath,
             agg_dset='powerrose_100m', tm_dset='techmap_wtk',
-            resolution=64, excl_area=0.0081, max_workers=None,
+            resolution=128, excl_area=0.0081, max_workers=None,
             chunk_point_len=100, out_fpath=None):
         """
         Aggregate powerrose to supply curve points, find neighboring supply
