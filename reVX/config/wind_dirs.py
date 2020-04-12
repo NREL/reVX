@@ -29,12 +29,12 @@ class WindDirsConfig(AnalysisConfig):
     @property
     def powerrose_h5_fpath(self):
         """Get the powerrose .h5 file path (required)."""
-        return self['powerrose_h5_file']
+        return self['powerrose_h5_fpath']
 
     @property
     def powerrose_h5_fpath(self):
         """Get the exclusions .h5 file path (required)."""
-        return self['excl_file']
+        return self['excl_fpath']
 
     @property
     def agg_dset(self):
