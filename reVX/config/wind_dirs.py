@@ -32,7 +32,7 @@ class WindDirsConfig(AnalysisConfig):
         return self['powerrose_h5_fpath']
 
     @property
-    def powerrose_h5_fpath(self):
+    def excl_fpath(self):
         """Get the exclusions .h5 file path (required)."""
         return self['excl_fpath']
 
