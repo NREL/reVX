@@ -166,7 +166,7 @@ class WindDirections(Aggregation):
         return neighbor_gids
 
     def prominent_directions(self, excl_area=0.0081, max_workers=None,
-                             chunk_point_len=100):
+                             chunk_point_len=1000):
         """
         Aggregate power rose data to supply curve points, find all neighboring
         supply curve points, sort neighbors in order of prominent powerrose
@@ -217,7 +217,7 @@ class WindDirections(Aggregation):
     def run(cls, power_rose_h5_fpath, excl_fpath,
             agg_dset='powerrose_100m', tm_dset='techmap_wtk',
             resolution=128, excl_area=0.0081, max_workers=None,
-            chunk_point_len=100, out_fpath=None):
+            chunk_point_len=1000, out_fpath=None):
         """
         Aggregate powerrose to supply curve points, find neighboring supply
         curve point gids and rank them based on prominent powerrose direction

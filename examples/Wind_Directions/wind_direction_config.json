@@ -8,6 +8,7 @@
     "walltime": 4.0
   },
   "log_level": "INFO",
+  "max_workers": 16,
   "name": "WindDirections",
   "powerrose_h5_fpath": "/scratch/mrossol/rev_dev/wtk_powerrose.h5"
 }

@@ -24,7 +24,7 @@ class WindDirsConfig(AnalysisConfig):
         self._default_tm_dset = 'techmap_wtk'
         self._default_resolution = 64
         self._default_excl_area = 0.0081
-        self._default_chunk_point_len = 100
+        self._default_chunk_point_len = 1000
 
     @property
     def powerrose_h5_fpath(self):

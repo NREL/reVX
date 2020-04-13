@@ -107,7 +107,7 @@ def from_config(ctx, config, verbose):
 @click.option('--max_workers', '-mw', default=None, type=INT,
               help=("Number of cores to run summary on. None is all "
                     "available cpus"))
-@click.option('--chunk_point_len', '-cpl', default=100, type=INT,
+@click.option('--chunk_point_len', '-cpl', default=1000, type=INT,
               help="Number of SC points to process on each parallel worker")
 @click.option('--log_dir', '-log', default=None, type=STR,
               help='Directory to dump log files. Default is out_dir.')
