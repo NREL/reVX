@@ -1,6 +1,6 @@
 {
-  "dirout": "/scratch/mrossol/rev_dev/",
-  "excl_fpath": "/scratch/mrossol/rev_dev/wind_exclusions.h5",
+  "dirout": "/shared-projects/rev/exclusions/",
+  "excl_fpath": "/shared-projects/rev/exclusions/CONUS_Exclusions.h5",
   "execution_control": {
     "allocation": "rev",
     "feature": "--partition=short",
@@ -8,7 +8,6 @@
     "walltime": 4.0
   },
   "log_level": "INFO",
-  "max_workers": 16,
   "name": "WindDirections",
-  "powerrose_h5_fpath": "/scratch/mrossol/rev_dev/wtk_powerrose.h5"
+  "powerrose_h5_fpath": "/shared-projects/rev/exclusions/wtk_conus_powerrose.h5"
 }
