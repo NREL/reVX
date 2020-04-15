@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ReEDS Command Line Interface
+Wind Directions Command Line Interface
 """
 import click
 import logging
@@ -140,7 +140,7 @@ def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
     log_modules = [__name__, 'reVX.wind_dirs', 'reV']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
-    logger.info('Running reV to ReEDS pipeline\n'
+    logger.info('Aggregating Wind Directions \n'
                 'Outputs to be stored in: {}'.format(out_dir))
 
     WindDirections.run(powerrose_h5_fpath, excl_fpath,

@@ -22,7 +22,7 @@ class WindDirsConfig(AnalysisConfig):
         super().__init__(config)
         self._default_agg_dset = 'powerrose_100m'
         self._default_tm_dset = 'techmap_wtk'
-        self._default_resolution = 64
+        self._default_resolution = 128
         self._default_excl_area = 0.0081
         self._default_chunk_point_len = 1000
 
