@@ -6,12 +6,11 @@
   "excl_fpath": "/shared-projects/rev/exclusions/CONUS_Exclusions.h5",
   "execution_control": {
     "allocation": "rev",
-    "feature": "--partition=debug",
+    "feature": "--partition=short",
     "option": "eagle",
-    "walltime": 1.0
+    "walltime": 4.0
   },
   "log_level": "DEBUG",
-  "max_workers": 1,
   "name": "WindDirections",
   "powerrose_h5_fpath": "/shared-projects/rev/exclusions/wtk_conus_powerrose.h5"
 }
