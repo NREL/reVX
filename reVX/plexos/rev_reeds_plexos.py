@@ -1014,6 +1014,7 @@ class Manager:
 
         except Exception as e:
             logger.exception(e)
+            raise e
 
         return meta, time_index, profiles
 
@@ -1074,7 +1075,13 @@ class Manager:
                                           cf_fpath, agg_kwargs=agg_kwargs,
                                           forecast_fpath=forecast_fpath)
 
-            if meta is not None:
+            if meta is None:
+                e = ('Plexos aggregation manager failed. '
+                     'PlexosAggregation.run() '
+                     'failed to create a meta data object.')
+                logger.error(e)
+                raise RuntimeError(e)
+            else:
                 if dc is None:
                     dc = DataCleaner(meta, profiles)
                 else:
