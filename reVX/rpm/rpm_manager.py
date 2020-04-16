@@ -9,7 +9,8 @@ import pandas as pd
 import psutil
 from warnings import warn
 
-from reV.utilities.execution import SpawnProcessPool
+from rex.utilities.execution import SpawnProcessPool
+
 from reVX.handlers.outputs import Outputs
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.rpm.rpm_output import RPMOutput
@@ -187,7 +188,9 @@ class RPMClusterManager:
                   "contiguous_kwargs": contiguous_kwargs}
         if self.max_workers > 1:
             future_to_region = {}
-            with SpawnProcessPool(max_workers=self.max_workers) as exe:
+            loggers = [__name__, 'reVX.rpm.rpm_clusters']
+            with SpawnProcessPool(max_workers=self.max_workers,
+                                  loggers=loggers) as exe:
                 for region, region_map in self._rpm_regions.items():
                     logger.info('Kicking off clustering for "{}".'
                                 .format(region))

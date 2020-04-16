@@ -6,10 +6,10 @@ import click
 import logging
 import os
 
-from reV.utilities.loggers import init_mult
-from reV.utilities.cli_dtypes import STR, STRLIST, INT
-from reV.utilities.execution import SLURM, SubprocessManager
-from reV.utilities.utilities import dict_str_load
+from rex.utilities.loggers import init_mult
+from rex.utilities.cli_dtypes import STR, STRLIST, INT
+from rex.utilities.execution import SLURM, SubprocessManager
+from rex.utilities.utilities import dict_str_load
 
 from reVX.config.reeds import ReedsConfig
 from reVX.reeds.reeds_classification import ReedsClassifier

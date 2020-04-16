@@ -11,7 +11,7 @@ import numpy as np
 from pyproj import transform, Proj
 import xarray as xr
 
-from reV.handlers.parse_keys import parse_keys
+from rex.utilities.parse_keys import parse_keys
 from reVX.utilities.exceptions import GeoTiffKeyError
 
 

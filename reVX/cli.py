@@ -5,8 +5,9 @@ reVX command line interface (CLI).
 import click
 import logging
 import os
-from reV.utilities.cli_dtypes import STR, STRLIST
-from reV.utilities.utilities import safe_json_load
+
+from rex.utilities.cli_dtypes import STR, STRLIST
+from rex.utilities.utilities import safe_json_load
 
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.region import RegionClassifier

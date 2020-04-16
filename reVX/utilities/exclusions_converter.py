@@ -12,6 +12,7 @@ from pandas.testing import assert_frame_equal
 import rasterio
 
 from reV.handlers.exclusions import ExclusionLayers
+
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.exceptions import ExclusionsCheckError
 

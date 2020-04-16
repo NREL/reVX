@@ -11,8 +11,10 @@ import psutil
 from scipy.spatial import cKDTree
 from warnings import warn
 
+from rex.utilities.execution import SpawnProcessPool
+
 from reV.supply_curve.exclusions import ExclusionMask, ExclusionMaskFromDict
-from reV.utilities.execution import SpawnProcessPool
+
 from reVX.handlers.outputs import Outputs
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.utilities.exceptions import RPMRuntimeError, RPMTypeError
@@ -270,7 +272,9 @@ class RepresentativeProfiles:
                                           fpath_out=fpath_out_i, key=key,
                                           forecast_fpath=forecast_fpath)
         else:
-            with SpawnProcessPool(max_workers=max_workers) as exe:
+            loggers = __name__
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
                 for irp in range(n_profiles):
                     fni = fn_pro.replace('.csv', '_rank{}.csv'.format(irp))
                     fpath_out_i = os.path.join(out_dir, fni)
@@ -768,7 +772,9 @@ class RPMOutput:
         """
 
         futures = {}
-        with SpawnProcessPool(max_workers=self.max_workers) as exe:
+        loggers = __name__
+        with SpawnProcessPool(max_workers=self.max_workers,
+                              loggers=loggers) as exe:
             for i, cid in enumerate(unique_clusters):
 
                 lat_s, lon_s = slices[cid]
@@ -913,7 +919,9 @@ class RPMOutput:
         """
 
         futures = {}
-        with SpawnProcessPool(max_workers=self.max_workers) as exe:
+        loggers = [__name__, 'reVX.rpm.rpm_clusters']
+        with SpawnProcessPool(max_workers=self.max_workers,
+                              loggers=loggers) as exe:
             for _, df in self._clusters.groupby(groupby):
                 if 'included_frac' in df:
                     mask = (df['included_frac'] >= self.include_threshold)

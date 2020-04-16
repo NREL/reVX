@@ -9,8 +9,8 @@ import logging
 import numpy as np
 import os
 import pandas as pd
-from reV.handlers.resource import Resource
-from reV.utilities.execution import SpawnProcessPool
+from rex.resource import Resource
+from rex.utilities.execution import SpawnProcessPool
 
 from reVX.handlers.outputs import Outputs
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -487,7 +487,9 @@ class ReedsTimeslices:
                     .format(max_workers))
 
         if max_workers > 1:
-            with SpawnProcessPool(max_workers=max_workers) as exe:
+            loggers = __name__
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
                 futures = {}
                 for s, slice_map in timeslice_groups:
                     tslice = profiles.loc[slice_map.index]
@@ -602,7 +604,9 @@ class ReedsTimeslices:
                     .format(max_workers))
 
         if max_workers > 1:
-            with SpawnProcessPool(max_workers=max_workers) as exe:
+            loggers = __name__
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
                 futures = {}
                 for group, df in meta.groupby(reg_cols):
                     future = exe.submit(ReedsTimeslices._cf_group_stats,
