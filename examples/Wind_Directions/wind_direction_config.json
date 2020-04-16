@@ -10,7 +10,8 @@
     "option": "eagle",
     "walltime": 4.0
   },
-  "log_level": "DEBUG",
+  "log_level": "INFO",
+  "max_workers": 6,
   "name": "WindDirections",
   "powerrose_h5_fpath": "/shared-projects/rev/exclusions/wtk_conus_powerrose.h5"
 }
