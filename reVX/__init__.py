@@ -7,7 +7,6 @@ import os
 
 import reVX.plexos as reV_plexos
 import reVX.reeds as rev_reeds
-from reVX.resource import NSRDBX, WindX
 import reVX.rpm as rev_rpm
 
 __author__ = """Michael Rossol"""
