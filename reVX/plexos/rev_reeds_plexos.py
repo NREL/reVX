@@ -13,7 +13,8 @@ from scipy.spatial import cKDTree
 from warnings import warn
 import logging
 
-from reV.utilities.execution import SpawnProcessPool
+from rex.utilities.execution import SpawnProcessPool
+
 from reVX.plexos.utilities import parse_table_name
 from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import DataCleaner, get_coord_labels
@@ -770,7 +771,9 @@ class PlexosAggregation:
         profiles = self._init_output()
         progress = 0
         futures = {}
-        with SpawnProcessPool(max_workers=self.max_workers) as exe:
+        loggers = __name__
+        with SpawnProcessPool(max_workers=self.max_workers,
+                              loggers=loggers) as exe:
             for i, inode in enumerate(np.unique(self._node_map)):
                 mask = (self._node_map == inode)
                 f = exe.submit(PlexosNode.run,

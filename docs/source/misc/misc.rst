@@ -10,5 +10,3 @@ Examples
 
    examples.rpm
    examples.reeds
-   examples.nsrdb
-   examples.wind

@@ -7,9 +7,9 @@ import pandas as pd
 import click
 import logging
 
-from reV.utilities.execution import SLURM
-from reV.utilities.cli_dtypes import STR, INT, INTLIST
-from reV.utilities.loggers import init_mult
+from rex.utilities.execution import SLURM
+from rex.utilities.cli_dtypes import STR, INT, INTLIST
+from rex.utilities.loggers import init_mult
 
 from reVX.plexos.rev_reeds_plexos import Manager
 

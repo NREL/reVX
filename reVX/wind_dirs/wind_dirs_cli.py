@@ -6,9 +6,9 @@ import click
 import logging
 import os
 
-from reV.utilities.loggers import init_mult
-from reV.utilities.cli_dtypes import STR, INT
-from reV.utilities.execution import SLURM, SubprocessManager
+from rex.utilities.loggers import init_mult
+from rex.utilities.cli_dtypes import STR, INT
+from rex.utilities.execution import SLURM, SubprocessManager
 
 from reVX.config.wind_dirs import WindDirsConfig
 from reVX.wind_dirs.wind_dirs import WindDirections
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def main(ctx, name, verbose):
     """
-    ReEDS Command Line Interface
+    Prominent Wind Directions Command Line Interface
     """
     ctx.ensure_object(dict)
     ctx.obj['NAME'] = name
@@ -39,8 +39,8 @@ def run_local(ctx, config):
     ----------
     ctx : click.ctx
         click ctx object
-    config : ReedsConfig
-        Reeds Config object
+    config : reVX.config.wind_dirs.WindDirsConfig
+        Wind Directions config object.
     """
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
@@ -153,12 +153,12 @@ def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
 
 def get_node_cmd(config):
     """
-    Get the node CLI call for the reVX-REEDS pipeline.
+    Get the node CLI call for prominent wind direction computation.
 
     Parameters
     ----------
-    config : reVX.config.reeds.ReedsConfig
-        reVX-REEDS config object.
+    config : reVX.config.wind_dirs.WindDirsConfig
+        Wind Directions config object.
 
     Returns
     -------
@@ -192,12 +192,12 @@ def get_node_cmd(config):
 
 def eagle(config):
     """
-    Run reVX-REEDS on Eagle HPC.
+    Run prominent wind directions on Eagle HPC.
 
     Parameters
     ----------
-    config : reVX.config.reeds.ReedsConfig
-        reVX-REEDS config object.
+    config : reVX.config.wind_dirs.WindDirsConfig
+        Wind Directions config object.
     """
 
     cmd = get_node_cmd(config)
@@ -205,7 +205,7 @@ def eagle(config):
     log_dir = config.logdir
     stdout_path = os.path.join(log_dir, 'stdout/')
 
-    logger.info('Running reVX-REEDS pipeline on Eagle with '
+    logger.info('Running wind directions computation on Eagle with '
                 'node name "{}"'.format(name))
     slurm = SLURM(cmd, alloc=config.execution_control.alloc,
                   memory=config.execution_control.node_mem,

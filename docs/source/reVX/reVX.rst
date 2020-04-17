@@ -16,7 +16,6 @@ Subpackages
    reVX.plexos
    reVX.red_e
    reVX.reeds
-   reVX.resource
    reVX.rpm
    reVX.utilities
    reVX.wind_dirs

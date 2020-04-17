@@ -22,8 +22,6 @@ reVX command line tools
 - `reV-rpm <https://nrel.github.io/reVX/reVX/reVX.rpm.rpm_cli.html#rev-rpm>`_
 - `reV-plexos <https://nrel.github.io/reVX/reVX/reVX.plexos.plexos_cli.html#rev-plexos>`_
 - `wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.wind_dirs_cli.html#wind-dirs>`_
-- `NSRDB <https://nrel.github.io/reVX/reVX/reVX.resource.solar_cli.html#nsrdb>`_
-- `WIND <https://nrel.github.io/reVX/reVX/reVX.resource.wind_cli.html#wind>`_
 
 Using Eagle Module
 ==================

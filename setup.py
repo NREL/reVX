@@ -61,9 +61,8 @@ setup(
                             "reV-ReEDS=reVX.reeds.reeds_cli:main",
                             "reV-rpm=reVX.rpm.rpm_cli:main",
                             "reV-plexos=reVX.plexos.plexos_cli:main",
-                            "wind-dirs=reVX.wind_dirs.wind_dirs_cli:main",
-                            "NSRDB=reVX.resource.solar_cli:main",
-                            "WIND=reVX.resource.wind_cli:main"],
+                            "wind-dirs=reVX.wind_dirs.wind_dirs_cli:main"
+                            ],
     },
     include_package_data=True,
     license="BSD 3-Clause",
