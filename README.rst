@@ -51,7 +51,11 @@ Option 1: PIP Install (recommended for analysts):
     ``conda activate revx``
 
 3. Install reVX:
-    ``pip install NREL-reVX``
+    1) ``pip install NREL-reVX`` or
+    2) ``conda install nrel-revx --channel=nrel``
+
+       - NOTE: If you conda install and want to you HSDS you'll also need to
+         install h5pyd manually: ``pip install h5pyd``
 
 Option 2: Clone repo (recommended for developers)
 -------------------------------------------------

@@ -1,0 +1,40 @@
+package:
+    name: nrel-revx
+    version: {{ environ.get('GIT_DESCRIBE_TAG','').replace('v', '', 1) }}
+
+build:
+  number: 0
+
+source:
+    git_url: ../
+
+requirements:
+  build:
+    - python
+    - pip
+  run:
+    - python {{ python }}
+    - click
+    - dask
+    - geopandas
+    - h5py
+    - nrel-pysam==1.2.1
+    - nrel-rex
+    - nrel-rev
+    - numpy
+    - pandas
+    - psutil
+    - pyproj
+    - pywavelets
+    - rasterio
+    - scikit-learn
+    - scipy
+    - toolz
+    - xarray
+
+about:
+  home: "https://github.com/NREL/reVX"
+  license: BSD 3-Clause
+  summary: "Renewable Energy Potential(V) eXchange Tool: reVX"
+  doc_url: "https://nrel.github.io/reVX"
+  dev_url: "https://github.com/NREL/reVX"
