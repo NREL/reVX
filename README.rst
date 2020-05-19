@@ -2,9 +2,6 @@
 reVX
 ****
 
-.. image:: https://badge.fury.io/py/NREL-reVX.svg
-    :target: https://badge.fury.io/py/NREL-reVX
-
 .. image:: https://github.com/NREL/reVX/workflows/Documentation/badge.svg
     :target: https://nrel.github.io/reVX/
 
@@ -14,11 +11,11 @@ reVX
 .. image:: https://img.shields.io/pypi/pyversions/NREL-reVX.svg
     :target: https://pypi.org/project/NREL-reVX/
 
+.. image:: https://badge.fury.io/py/NREL-reVX.svg
+    :target: https://badge.fury.io/py/NREL-reVX
+
 .. image:: https://anaconda.org/nrel/nrel-revx/badges/version.svg
     :target: https://anaconda.org/nrel/nrel-revx
-
-.. image:: https://anaconda.org/nrel/nrel-revx/badges/installer/conda.svg
-    :target: https://conda.anaconda.org/nrel
 
 .. image:: https://anaconda.org/nrel/nrel-revx/badges/platforms.svg
     :target: https://anaconda.org/nrel/nrel-revx
