@@ -20,9 +20,6 @@ reVX
 .. image:: https://anaconda.org/nrel/nrel-revx/badges/platforms.svg
     :target: https://anaconda.org/nrel/nrel-revx
 
-.. image:: https://anaconda.org/nrel/nrel-revx/badges/downloads.svg
-    :target: https://anaconda.org/nrel/nrel-revx
-
 .. image:: https://anaconda.org/nrel/nrel-revx/badges/license.svg
     :target: https://anaconda.org/nrel/nrel-revx
 
