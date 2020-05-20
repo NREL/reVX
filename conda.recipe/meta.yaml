@@ -13,7 +13,7 @@ requirements:
     - python
     - pip
   run:
-    - python {{ python }}
+    - python
     - click
     - dask
     - geopandas
