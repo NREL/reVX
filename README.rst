@@ -51,8 +51,8 @@ module:
 Installing reVX
 =================
 
-Option 1: PIP Install (recommended for analysts):
--------------------------------------------------
+Option 1: Install from PIP or Conda (recommended for analysts):
+---------------------------------------------------------------
 
 1. Create a new environment:
     ``conda create --name revx python=3.7``
