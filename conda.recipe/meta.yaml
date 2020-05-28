@@ -18,9 +18,9 @@ requirements:
     - dask
     - geopandas
     - h5py
-    - nrel-pysam==1.2.1
-    - nrel-rex
-    - nrel-rev
+    - nrel-pysam>=2.1.1
+    - nrel-rex>=0.1.7
+    - nrel-rev>=0.4.0
     - numpy
     - pandas
     - psutil
