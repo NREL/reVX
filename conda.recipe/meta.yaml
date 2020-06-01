@@ -20,7 +20,7 @@ requirements:
     - h5py
     - nrel-pysam>=2.1.1
     - nrel-rex>=0.1.7
-    - nrel-rev>=0.4.0
+    - nrel-rev>=0.4.1
     - numpy
     - pandas
     - psutil
