@@ -18,8 +18,8 @@ requirements:
     - dask
     - geopandas
     - h5py
-    - nrel-rex
-    - nrel-rev
+    - nrel-rex>=0.1.10
+    - nrel-rev>=0.4.3
     - numpy
     - pandas
     - psutil
