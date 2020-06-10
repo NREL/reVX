@@ -37,16 +37,30 @@ reVX command line tools
 - `reV-plexos <https://nrel.github.io/reVX/reVX/reVX.plexos.plexos_cli.html#rev-plexos>`_
 - `wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.wind_dirs_cli.html#wind-dirs>`_
 
-Using Eagle Module
-==================
+Using Eagle Env / Module
+========================
 
-If you would like to run reV on Eagle (NREL's HPC) you can use a pre-compiled
-module:
+If you would like to run reVX on Eagle (NREL's HPC) you can use a pre-compiled
+conda env:
+
+.. code-block:: bash
+
+    conda activate /shared-projects/rev/modulefiles/conda_env
+
+or
+
+.. code-block:: bash
+
+    source activate /shared-projects/rev/modulefiles/conda_env
+
+or module:
 
 .. code-block:: bash
 
     module use /shared-projects/rev/modulefiles
     module load reVX
+
+**NOTE: Loading the reVX module can take several minutes**
 
 Installing reVX
 =================
