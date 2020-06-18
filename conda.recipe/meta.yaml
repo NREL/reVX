@@ -2,32 +2,54 @@ package:
     name: nrel-revx
     version: {{ environ.get('GIT_DESCRIBE_TAG','').replace('v', '', 1) }}
 
-build:
-  number: 0
-
 source:
     git_url: ../
 
+build:
+  number: 0
+  script: python setup.py install --single-version-externally-managed --record=record.txt
+
 requirements:
-  build:
+  host:
     - python
     - pip
+    - setuptools
+    - click
+    - dask
+    - geopandas
+    - h5py
+    - nrel-rex
+    - nrel-rev
+    - numpy>=1.16
+    - pandas
+    - psutil
+    - psycopg2
+    - pyproj
+    - pywavelets
+    - rasterio
+    - scikit-learn
+    - scipy
+    - shapely
+    - toolz
+    - xarray
   run:
     - python
     - click
     - dask
     - geopandas
     - h5py
-    - nrel-rex>=0.1.10
-    - nrel-rev>=0.4.3
-    - numpy
+    - nrel-rex
+    - nrel-rev
+    - {{ pin_compatible('numpy') }}
     - pandas
     - psutil
+    - psycopg2
     - pyproj
     - pywavelets
     - rasterio
     - scikit-learn
     - scipy
+    - shapely
     - toolz
     - xarray
 
