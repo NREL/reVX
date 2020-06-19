@@ -872,6 +872,7 @@ class ReedsTimeslices:
                 raise ValueError(e)
 
         n = arr.shape[0] * arr.shape[1]
+        # pylint: disable=no-member
         i_arr = np.triu(np.arange(n).reshape(arr.shape)).flatten()
         indices = i_arr[(i_arr != 0)]
         indices = np.hstack(([0], indices))

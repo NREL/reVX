@@ -212,7 +212,7 @@ class RegionClassifier():
         lookup : Pandas DataFrame
             List of lat/lon points
         """
-        tree = cKDTree(lookup)
+        tree = cKDTree(lookup)  # pylint: disable=not-callable
         _, inds = tree.query(target, k=1)
 
         return inds
@@ -229,7 +229,7 @@ class RegionClassifier():
     def _check_geometry(self):
         """ Get index list of invalid geometries """
         geometry = self._regions.geometry
-        isvalid = geometry.apply(lambda x: self._geom_is_valid(x))
+        isvalid = geometry.apply(self._geom_is_valid)
 
         return list(self._regions[isvalid == 0].index)
 

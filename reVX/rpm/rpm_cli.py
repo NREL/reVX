@@ -5,8 +5,8 @@ RPM Command Line Interface
 import json
 import click
 import logging
-from reV.utilities.cli_dtypes import STR
-from reV.utilities.loggers import init_mult
+from rex.utilities.cli_dtypes import STR
+from rex.utilities.loggers import init_mult
 
 from reVX.rpm.rpm_manager import RPMClusterManager as rpm_cm
 from reVX.rpm.rpm_output import RPMOutput as rpm_o

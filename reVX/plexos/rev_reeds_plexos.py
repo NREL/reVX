@@ -507,6 +507,7 @@ class PlexosAggregation:
             logger.warning(wmsg)
 
             clabels = get_coord_labels(self._sc_build)
+            # pylint: disable=not-callable
             good_tree = cKDTree(self._sc_build.loc[good_bool, clabels])
             _, i = good_tree.query(self._sc_build.loc[bad_bool, clabels])
 
@@ -671,7 +672,7 @@ class PlexosAggregation:
                 meta_fo = out.meta
 
             clabels = get_coord_labels(meta_cf)
-            tree = cKDTree(meta_fo[clabels])
+            tree = cKDTree(meta_fo[clabels])  # pylint: disable=not-callable
             d, fmap = tree.query(meta_cf[clabels])
             logger.info('Distance (min / mean / max) from generation pixels '
                         'to forecast pixels is: {} / {} / {}'
@@ -697,6 +698,7 @@ class PlexosAggregation:
 
         plexos_coord_labels = get_coord_labels(self._plexos_nodes)
         sc_coord_labels = get_coord_labels(self._sc_build)
+        # pylint: disable=not-callable
         tree = cKDTree(self._plexos_nodes[plexos_coord_labels])
         d, plx_node_index = tree.query(self._sc_build[sc_coord_labels], k=k)
         logger.info('Plexos Node KDTree distance min / mean / max: '
