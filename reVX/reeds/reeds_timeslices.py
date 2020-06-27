@@ -487,7 +487,7 @@ class ReedsTimeslices:
                     .format(max_workers))
 
         if max_workers > 1:
-            loggers = __name__
+            loggers = [__name__, 'reVX']
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 futures = {}

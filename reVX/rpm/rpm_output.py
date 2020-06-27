@@ -272,7 +272,7 @@ class RepresentativeProfiles:
                                           fpath_out=fpath_out_i, key=key,
                                           forecast_fpath=forecast_fpath)
         else:
-            loggers = __name__
+            loggers = [__name__, 'reVX']
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 for irp in range(n_profiles):
@@ -772,7 +772,7 @@ class RPMOutput:
         """
 
         futures = {}
-        loggers = __name__
+        loggers = [__name__, 'reVX']
         with SpawnProcessPool(max_workers=self.max_workers,
                               loggers=loggers) as exe:
             for i, cid in enumerate(unique_clusters):
@@ -919,7 +919,7 @@ class RPMOutput:
         """
 
         futures = {}
-        loggers = [__name__, 'reVX.rpm.rpm_clusters']
+        loggers = [__name__, 'reVX.rpm.rpm_clusters', 'reVX']
         with SpawnProcessPool(max_workers=self.max_workers,
                               loggers=loggers) as exe:
             for _, df in self._clusters.groupby(groupby):
