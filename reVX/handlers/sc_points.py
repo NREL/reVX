@@ -150,14 +150,19 @@ class Point:
 
         Returns
         -------
-        out : tuple
-            (sc_point, capacity, availability)
+        sc_point : pd.Series
+            Resource gids being allocated
+        capacity : float
+            Capacity being allocated
+        availability : bool
+            Whether Supply Curve point still has available capacity
         """
         drop_slice = slice(0, drop, None)
         sc_point = {'sc_gid': self.sc_gid,
                     'res_gids': self.resource_gids[drop_slice].tolist(),
                     'gid_counts': self.gid_counts[drop_slice].tolist()}
-        out = pd.Series(sc_point), np.sum(self.resource_capacity[drop_slice])
+        sc_point = pd.Series(sc_point)
+        capacity = np.sum(self.resource_capacity[drop_slice])
 
         if drop is None:
             self._res_gids = None
@@ -168,11 +173,11 @@ class Point:
             self._res_gids = np.delete(self._res_gids, drop)
             self._gid_counts = np.delete(self._gid_counts, drop)
             self._res_capacity = np.delete(self._res_capacity, drop)
-            self._capacity -= out[2]
+            self._capacity -= capacity
 
-        out += (self._capacity > 0, )
+        availability = self._capacity > 0
 
-        return out
+        return sc_point, capacity, availability
 
     def get_capacity(self, capacity):
         """
@@ -189,12 +194,14 @@ class Point:
             (sc_point, capacity, availability)
         """
         if self.capacity > 0:
-            drop = None
             if capacity < self.capacity:
+                drop = 0
                 for cap in self.resource_capacity:
                     if capacity > cap:
                         capacity -= cap
                         drop += 1
+            else:
+                drop = None
 
             out = self._drop(drop=drop)
         else:
