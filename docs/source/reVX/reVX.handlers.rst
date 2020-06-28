@@ -14,3 +14,4 @@ Submodules
    reVX.handlers.database
    reVX.handlers.geotiff
    reVX.handlers.outputs
+   reVX.handlers.sc_points
