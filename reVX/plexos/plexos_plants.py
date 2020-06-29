@@ -423,7 +423,7 @@ class PlexosPlants:
 
                 for plant_id in plant_ids:
                     capacity = self.plant_capacity[plant_id]
-                    if self.sc_points.check_sc_gid(sc_gid):
+                    if capacity > 0 and self.sc_points.check_sc_gid(sc_gid):
                         sc_point, sc_capacity = \
                             self.sc_points.get_capacity(sc_gid, capacity)
 
@@ -435,8 +435,9 @@ class PlexosPlants:
 
                         self[plant_id] = plant
                         self._capacity[plant_id] -= sc_capacity
-                        logger.info('Allocating {}MW to plant {} from sc_gid '
-                                    '{}'.format(sc_capacity, plant_id, sc_gid))
+                        logger.debug('Allocating {}MW to plant {} from sc_gid '
+                                     '{}'.format(sc_capacity, plant_id,
+                                                 sc_gid))
 
     def _fill_plants(self, plants):
         """
@@ -465,15 +466,19 @@ class PlexosPlants:
         i = 0
         total_cap = np.sum(self.plant_capacity)
         while np.any(self.plant_capacity > 0):
-            plant_cap = np.sum(self.plant_capacity)
+            i_cap = np.sum(self.plant_capacity[self.plant_capacity > 0])
             logger.info('Allocating sc_gids to plants round {}'
                         .format(i))
             sc_gids, dists, node_dists = self._get_sc_gids(plants, i)
             self._allocate_sc_gids(sc_gids, dists, node_dists)
+            cap = np.sum(self.plant_capacity[self.plant_capacity > 0])
+            logger.info('{} MW allocated in round {}'
+                        .format(i_cap - cap, i))
             i += 1
             logger.info('{} MW allocated out of {} MW'
-                        .format(plant_cap - np.sum(self.plant_capacity),
-                                total_cap))
+                        .format(total_cap - cap, total_cap))
+            logger.info('{} of {} plants have been filled'
+                        .format(np.sum(self.plant_capacity <= 0), len(self)))
 
     def fill_plants(self, dist_percentile=90, lcoe_col='total_lcoe',
                     lcoe_thresh=1.3, max_workers=None):
@@ -506,9 +511,42 @@ class PlexosPlants:
                                        max_workers=max_workers)
         self._fill_plants(plants)
 
-        plants = [pd.concat(plant) for plant in plants]
+        plants = [pd.concat(plant, axis=1).T for plant in self.plants]
 
         return plants
+
+    def plants_meta(self, plants):
+        """
+        Create plants meta data from filled plants DataFrames:
+            - Location (lat, lon)
+            - final capacity
+            - sc_gids
+            - res_gids
+            - res gid_counts
+
+        Parameters
+        ----------
+        plants : list
+            List of filled plant DataFrames
+
+        Returns
+        -------
+        plants_meta : pandas.DataFrame
+            Location (lat, lon), final capacity, and associated sc_gids,
+            res_gids, and res gid_counts for all plants
+        """
+        plants_meta = self.plexos_table.copy()
+        plants_meta['capacity'] -= self.plant_capacity
+        plants_meta['sc_gids'] = None
+        plants_meta['res_gids'] = None
+        plants_meta['gid_counts'] = None
+        for i, plant in enumerate(plants):
+            plants_meta.at[i, 'sc_gids'] = plant['sc_gid'].values.tolist()
+            plants_meta.at[i, 'res_gids'] = plant['res_gids'].values.tolist()
+            plants_meta.at[i, 'gid_counts'] = \
+                plant['gid_counts'].values.tolist()
+
+        return plants_meta
 
     @classmethod
     def fill(cls, plexos_table, sc_table, res_meta, dist_percentile=90,
@@ -543,7 +581,7 @@ class PlexosPlants:
         -------
         plants : list
             List of plant supply curve tables
-        plant_meta : pandas.DataFrame
+        plants_meta : pandas.DataFrame
             Plants meta data
         """
         pp = cls(plexos_table, sc_table, res_meta)
@@ -552,6 +590,6 @@ class PlexosPlants:
                                 lcoe_thresh=lcoe_thresh,
                                 max_workers=max_workers)
 
-        plants_meta = pp.plexos_table
+        plants_meta = pp.plants_meta(plants)
 
         return plants, plants_meta

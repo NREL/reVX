@@ -170,9 +170,9 @@ class Point:
             self._res_capacity = None
             self._capacity = 0
         else:
-            self._res_gids = np.delete(self._res_gids, drop)
-            self._gid_counts = np.delete(self._gid_counts, drop)
-            self._res_capacity = np.delete(self._res_capacity, drop)
+            self._res_gids = np.delete(self._res_gids, drop_slice)
+            self._gid_counts = np.delete(self._gid_counts, drop_slice)
+            self._res_capacity = np.delete(self._res_capacity, drop_slice)
             self._capacity -= capacity
 
         availability = self._capacity > 0
@@ -197,9 +197,10 @@ class Point:
             if capacity < self.capacity:
                 drop = 0
                 for cap in self.resource_capacity:
-                    if capacity > cap:
-                        capacity -= cap
-                        drop += 1
+                    drop += 1
+                    capacity -= cap
+                    if capacity <= 0:
+                        break
             else:
                 drop = None
 
