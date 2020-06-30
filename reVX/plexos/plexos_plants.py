@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Module to create wind and solar plants for PLEXOS nodes
+Module to create wind and solar plants for PLEXOS buses
 """
-from concurrent.futures import as_completed
 import logging
 import numpy as np
 import os
@@ -20,33 +19,52 @@ class PlexosPlants:
     """
     Identification and aggregation of renewable resource to Plexos "plants"
     """
-    def __init__(self, plexos_table, sc_table, res_meta):
+    PLEXOS_COLUMNS = ['generator', 'busid', 'busname', 'capacity', 'latitude',
+                      'longitude', 'system']
+
+    def __init__(self, plexos_table, sc_table, res_meta, max_workers=None,
+                 points_per_worker=400, offshore=False):
         """
         Parameters
         ----------
         plexos_table : str | pandas.DataFrame
-            PLEXOS table of node locations and capacity provided as a .csv,
+            PLEXOS table of bus locations and capacity provided as a .csv,
             .json, or pandas DataFrame
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
         res_meta : str | pandas.DataFrame
             Path to resource .h5, generation .h5, or pre-extracted .csv or
             pandas DataFrame
+        max_workers : int, optional
+            Number of workers to use for point and plant creation, 1 == serial,
+            > 1 == parallel, None == parallel using all available cpus,
+            by default None
+        points_per_worker : int, optional
+            Number of points to create on each worker, by default 100
+        offshore : bool, optional
+            Include offshore points, by default False
         """
-        self._plexos_table = self._parse_plexos_table(plexos_table)
-        self._sc_points = SupplyCurvePoints(sc_table, res_meta)
+        if max_workers is None:
+            max_workers = os.cpu_count()
 
-        self._capacity = self._plexos_table['capacity'].values
+        self._max_workers = max_workers
+        self._plexos_table = self._parse_plexos_table(plexos_table)
+        self._plant_table = None
+        self._sc_points = SupplyCurvePoints(
+            sc_table, res_meta, max_workers=max_workers,
+            points_per_worker=points_per_worker, offshore=offshore)
+
+        self._capacity = self.plant_table['plant_capacity'].values
         self._plants = np.full(len(self), None)
 
-        self._sc_node_dist = None
+        self._sc_bus_dist = None
 
     def __repr__(self):
         msg = "{} with {} plants".format(self.__class__.__name__, len(self))
         return msg
 
     def __len__(self):
-        return len(self._plexos_table)
+        return len(self.plant_table)
 
     def __getitem__(self, plant_id):
         return self._plants[plant_id]
@@ -57,13 +75,38 @@ class PlexosPlants:
     @property
     def plexos_table(self):
         """
-        Parsed and reduced PLEXOS table of node locations and capacities
+        PLEXOS table
 
         Returns
         -------
         pandas.DataFrame
         """
         return self._plexos_table
+
+    @property
+    def plant_table(self):
+        """
+        Table of unique PLEXOS plants
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+        if self._plant_table is None:
+            self._plant_table = self.plexos_table.drop_duplicates(
+                'plant_id').sort_values('plant_id')
+            rename = {}
+            for c in self._plant_table:
+                if c.lower() == 'latitude':
+                    rename[c] = 'latitude'
+                elif c.lower() == 'longitude':
+                    rename[c] = 'longitude'
+
+            self._plant_table = self._plant_table.rename(columns=rename)
+            cols = ['latitude', 'longitude', 'plant_id', 'plant_capacity']
+            self._plant_table = self._plant_table[cols].set_index('plant_id')
+
+        return self._plant_table
 
     @property
     def sc_table(self):
@@ -110,36 +153,33 @@ class PlexosPlants:
         return self._plants
 
     @property
-    def sc_node_dist(self):
+    def sc_bus_dist(self):
         """
-        Compute distance between every Supply Curve gid and every PLEXOS node
+        Compute distance between every Supply Curve gid and every PLEXOS bus
 
         Returns
         -------
         ndarray
         """
-        if self._sc_node_dist is None:
+        if self._sc_bus_dist is None:
             cols = ['latitude', 'longitude']
             plant_coords = self._plexos_table[cols].values.astype(float)
             sc_coords = self.sc_table[cols].values.astype(float)
 
-            self._sc_node_dist = PlexosPlants._haversine_dist(plant_coords,
-                                                              sc_coords).T
+            self._sc_bus_dist = PlexosPlants._haversine_dist(plant_coords,
+                                                             sc_coords).T
 
-        return self._sc_node_dist
+        return self._sc_bus_dist
 
-    @staticmethod
-    def _parse_plexos_table(plexos_table):
+    def _parse_plexos_table(self, plexos_table):
         """
-        Parse PLEXOS table from file and reduce table to neccesary columns:
-        - latitude
-        - longitude
-        - capacity
+        Parse PLEXOS table from file and reduce to PLEXOS_COLS
+        Combine buses at the same coordinates and add unique plant_ids
 
         Parameters
         ----------
         plexos_table : str | pandas.DataFrame
-            PLEXOS table of node locations and capacity provided as a .csv,
+            PLEXOS table of bus locations and capacity provided as a .csv,
             .json, or pandas DataFrame
 
         Returns
@@ -148,10 +188,22 @@ class PlexosPlants:
             Parsed and reduced PLEXOS table
         """
         plexos_table = parse_table(plexos_table)
-        plexos_table = \
-            plexos_table.groupby(['latitude', 'longitude'])['capacity'].sum()
+        cols = [c for c in plexos_table if c.lower() in self.PLEXOS_COLUMNS]
+        plexos_table = plexos_table[cols]
+        cap_col = [c for c in plexos_table if c.lower() == 'capacity'][0]
+        lat_lon_cols = sorted([c for c in plexos_table
+                               if c.lower() in ['latitude', 'longitude']])
+        mask = plexos_table[cap_col] > 0
+        plant_cap = \
+            plexos_table.loc[mask].groupby(lat_lon_cols)[cap_col].sum()
+        plant_cap = plant_cap.reset_index().reset_index()
+        plant_cap = plant_cap.rename(columns={'index': 'plant_id',
+                                              cap_col: 'plant_capacity'})
 
-        return plexos_table.reset_index()
+        plexos_table = plexos_table.merge(plant_cap, on=lat_lon_cols,
+                                          how='outer')
+
+        return plexos_table
 
     @staticmethod
     def _check_coords(coords):
@@ -231,16 +283,16 @@ class PlexosPlants:
         return np.percentile(dist, percentile)
 
     @staticmethod
-    def _get_plant_sc_dists(node_coords, sc_table, dist_percentile=90,
+    def _get_plant_sc_dists(bus_coords, sc_table, dist_percentile=90,
                             lcoe_col='total_lcoe', lcoe_thresh=1.3):
         """
         Extract Supply curve gids and distances for plant originating at
-        PLEXOS node coords
+        PLEXOS bus coords
 
         Parameters
         ----------
-        node_coords : ndarray
-            node (lat, lon) coordinates
+        bus_coords : ndarray
+            bus (lat, lon) coordinates
         sc_table : pandas.DataFrame
             Supply Curve Table
         dist_percentile : int, optional
@@ -257,12 +309,12 @@ class PlexosPlants:
         plant_sc : pandas.DataFrame
             Supply Curve for plant with distance to each sc_gid appended
         """
-        logger.debug("Extracting supply curve gids for node at {}"
-                     .format(node_coords))
+        logger.debug("Extracting supply curve gids for bus at {}"
+                     .format(bus_coords))
         sc_coords = np.radians(sc_table[['latitude', 'longitude']].values)
 
         # Filter SC table to points within 'dist_tresh' of coords
-        dist = PlexosPlants._haversine_dist(node_coords, sc_coords)
+        dist = PlexosPlants._haversine_dist(bus_coords, sc_coords)
         dist_thresh = \
             PlexosPlants._substation_distance(sc_table,
                                               percentile=dist_percentile)
@@ -283,7 +335,7 @@ class PlexosPlants:
         # Filter SC table to lcoe values within 'lcoe_thresh' of min LCOE value
         sc_cols = ['sc_gid', lcoe_col]
         plant_sc = sc_table[sc_cols].copy()
-        plant_sc["node_dist"] = dist
+        plant_sc["bus_dist"] = dist
         mask = plant_sc[lcoe_col] <= lcoe_thresh
         plant_sc = plant_sc.loc[mask]
         sc_coords = sc_coords[mask]
@@ -296,9 +348,9 @@ class PlexosPlants:
         return plant_sc.reset_index(drop=True)
 
     def _identify_plants(self, dist_percentile=90, lcoe_col='total_lcoe',
-                         lcoe_thresh=1.3, max_workers=None):
+                         lcoe_thresh=1.3):
         """
-        Identify plant associated with each node and return supply curve table
+        Identify plant associated with each bus and return supply curve table
 
         Parameters
         ----------
@@ -310,30 +362,23 @@ class PlexosPlants:
         lcoe_thresh : float, optional
             LCOE threshold multiplier, exclude sc_gids above threshold,
             by default 1.3
-        max_workers : int, optional
-            Number of workers to use for plant sc extraction, 1 == serial,
-            > 1 == parallel, None == parallel using all available cpus,
-            by default None
 
         Returns
         -------
         plants : list
             List of plant supply curve tables
         """
-        if max_workers is None:
-            max_workers = os.cpu_count()
-
         plants = []
-        if max_workers > 1:
+        if self._max_workers > 1:
             logger.info('Identifying supply curve points for plants in '
                         'parallel')
             loggers = [__name__, 'reVX']
-            with SpawnProcessPool(max_workers=max_workers,
+            with SpawnProcessPool(max_workers=self._max_workers,
                                   loggers=loggers) as exe:
                 futures = []
-                for i, node in self.plexos_table.iterrows():
+                for _, bus in self.plant_table.iterrows():
                     coords = \
-                        node[['latitude', 'longitude']].values.astype(float)
+                        bus[['latitude', 'longitude']].values.astype(float)
                     future = exe.submit(PlexosPlants._get_plant_sc_dists,
                                         coords, self.sc_table,
                                         dist_percentile=dist_percentile,
@@ -341,16 +386,16 @@ class PlexosPlants:
                                         lcoe_thresh=lcoe_thresh)
                     futures.append(future)
 
-                for i, future in enumerate(as_completed(futures)):
+                for i, future in enumerate(futures):
                     plants.append(future.result())
                     logger.debug('Completed {} out of {} plant futures.'
                                  .format(i + 1, len(futures)))
         else:
             logger.info('Identifying supply curve points for plants in '
                         'serial')
-            for i, node in self.plexos_table.iterrows():
+            for i, bus in self.plant_table.iterrows():
                 coords = \
-                    node[['latitude', 'longitude']].values.astype(float)
+                    bus[['latitude', 'longitude']].values.astype(float)
                 plant = PlexosPlants._get_plant_sc_dists(
                     coords, self.sc_table,
                     dist_percentile=dist_percentile,
@@ -365,7 +410,7 @@ class PlexosPlants:
     @staticmethod
     def _get_sc_gids(plants, idx):
         """
-        For all plants extract sc_gid, dist (to sc_gid), and node_dist from
+        For all plants extract sc_gid, dist (to sc_gid), and bus_dist from
         Supply Curve points
 
         Parameters
@@ -378,23 +423,23 @@ class PlexosPlants:
         Returns
         -------
         tuple
-            (sc_gids, dists, node_dists)
+            (sc_gids, dists, bus_dists)
         """
         sc_gids = []
-        node_dists = []
+        bus_dists = []
         dists = []
         for plant in plants:
             sc_point = plant.iloc[idx]
             sc_gids.append(sc_point['sc_gid'])
-            node_dists.append(sc_point['node_dist'])
+            bus_dists.append(sc_point['bus_dist'])
             dists.append(sc_point['dist'])
 
-        node_dists = np.array(node_dists)
+        bus_dists = np.array(bus_dists)
         dists = np.array(dists)
 
-        return sc_gids, dists, node_dists
+        return sc_gids, dists, bus_dists
 
-    def _allocate_sc_gids(self, sc_gids, dists, node_dists):
+    def _allocate_sc_gids(self, sc_gids, dists, bus_dists):
         """
         Allocate capacity from supply curve points to plants
 
@@ -404,8 +449,8 @@ class PlexosPlants:
             List of supply curve point gids to allocate capacity from
         dists : list
             List of distances from plants to sc_gids
-        node_dists : list
-            List of distances from nodes associated with plants to sc_gids
+        bus_dists : list
+            List of distances from bus associated with plants to sc_gids
         """
         unique_gids, plant_gids = np.unique(sc_gids, return_inverse=True)
         for i, sc_gid in enumerate(unique_gids):
@@ -415,7 +460,7 @@ class PlexosPlants:
                 if len(plant_ids) > 1:
                     sc_dists = dists[plant_ids]
                     if len(sc_dists) != len(np.unique(sc_dists)):
-                        idxs = np.argsort(node_dists[plant_ids])
+                        idxs = np.argsort(bus_dists[plant_ids])
                     else:
                         idxs = np.argsort(sc_dists)
 
@@ -469,8 +514,8 @@ class PlexosPlants:
             i_cap = np.sum(self.plant_capacity[self.plant_capacity > 0])
             logger.info('Allocating sc_gids to plants round {}'
                         .format(i))
-            sc_gids, dists, node_dists = self._get_sc_gids(plants, i)
-            self._allocate_sc_gids(sc_gids, dists, node_dists)
+            sc_gids, dists, bus_dists = self._get_sc_gids(plants, i)
+            self._allocate_sc_gids(sc_gids, dists, bus_dists)
             cap = np.sum(self.plant_capacity[self.plant_capacity > 0])
             logger.info('{} MW allocated in round {}'
                         .format(i_cap - cap, i))
@@ -481,7 +526,7 @@ class PlexosPlants:
                         .format(np.sum(self.plant_capacity <= 0), len(self)))
 
     def fill_plants(self, dist_percentile=90, lcoe_col='total_lcoe',
-                    lcoe_thresh=1.3, max_workers=None):
+                    lcoe_thresh=1.3):
         """
         Fill plants with capacity from supply curve points
 
@@ -495,10 +540,6 @@ class PlexosPlants:
         lcoe_thresh : float, optional
             LCOE threshold multiplier, exclude sc_gids above threshold,
             by default 1.3
-        max_workers : int, optional
-            Number of workers to use for plant sc extraction, 1 == serial,
-            > 1 == parallel, None == parallel using all available cpus,
-            by default None
 
         Returns
         -------
@@ -507,8 +548,7 @@ class PlexosPlants:
         """
         plants = self._identify_plants(dist_percentile=dist_percentile,
                                        lcoe_col=lcoe_col,
-                                       lcoe_thresh=lcoe_thresh,
-                                       max_workers=max_workers)
+                                       lcoe_thresh=lcoe_thresh)
         self._fill_plants(plants)
 
         plants = [pd.concat(plant, axis=1).T for plant in self.plants]
@@ -535,29 +575,39 @@ class PlexosPlants:
             Location (lat, lon), final capacity, and associated sc_gids,
             res_gids, and res gid_counts for all plants
         """
-        plants_meta = self.plexos_table.copy()
-        plants_meta['capacity'] -= self.plant_capacity
-        plants_meta['sc_gids'] = None
-        plants_meta['res_gids'] = None
-        plants_meta['gid_counts'] = None
+        plants_meta = {'sc_gids': None, 'res_gids': None, 'gid_counts': None,
+                       'sc_capacity': None, 'res_cf_means': None, 'cf_mean': 0,
+                       'build_capacity': 0}
+        plants_meta = pd.DataFrame(plants_meta, index=[0])
+        plants_meta.index.name = 'plant_id'
         for i, plant in enumerate(plants):
             plants_meta.at[i, 'sc_gids'] = plant['sc_gid'].values.tolist()
             plants_meta.at[i, 'res_gids'] = plant['res_gids'].values.tolist()
             plants_meta.at[i, 'gid_counts'] = \
                 plant['gid_counts'].values.tolist()
+            plants_meta.at[i, 'sc_capacity'] = \
+                plant['capacity'].values.tolist()
+            plants_meta.at[i, 'res_cf_means'] = \
+                plant['cf_means'].values.tolist()
+            plants_meta.at[i, 'cf_mean'] = plant['cf_means'].sum()
+            plants_meta.at[i, 'build_capacity'] = plant['capacity'].sum()
+
+        plants_meta = self.plexos_table.merge(plants_meta.reset_index(),
+                                              on='plant_id', how='outer')
 
         return plants_meta
 
     @classmethod
     def fill(cls, plexos_table, sc_table, res_meta, dist_percentile=90,
-             lcoe_col='total_lcoe', lcoe_thresh=1.3, max_workers=None):
+             lcoe_col='total_lcoe', lcoe_thresh=1.3, max_workers=None,
+             points_per_worker=400, offshore=False, out_fpath=None):
         """
         Fill plants with capacity from supply curve points
 
         Parameters
         ----------
         plexos_table : str | pandas.DataFrame
-            PLEXOS table of node locations and capacity provided as a .csv,
+            PLEXOS table of bus locations and capacity provided as a .csv,
             .json, or pandas DataFrame
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
@@ -573,9 +623,15 @@ class PlexosPlants:
             LCOE threshold multiplier, exclude sc_gids above threshold,
             by default 1.3
         max_workers : int, optional
-            Number of workers to use for plant sc extraction, 1 == serial,
+            Number of workers to use for point and plant creation, 1 == serial,
             > 1 == parallel, None == parallel using all available cpus,
             by default None
+        points_per_worker : int, optional
+            Number of points to create on each worker, by default 100
+        offshore : bool, optional
+            Include offshore points, by default False
+        out_fpath : str
+            .csv path to save plant meta data too
 
         Returns
         -------
@@ -584,12 +640,14 @@ class PlexosPlants:
         plants_meta : pandas.DataFrame
             Plants meta data
         """
-        pp = cls(plexos_table, sc_table, res_meta)
+        pp = cls(plexos_table, sc_table, res_meta, max_workers=max_workers,
+                 points_per_worker=points_per_worker, offshore=offshore)
         plants = pp.fill_plants(dist_percentile=dist_percentile,
                                 lcoe_col=lcoe_col,
-                                lcoe_thresh=lcoe_thresh,
-                                max_workers=max_workers)
+                                lcoe_thresh=lcoe_thresh)
 
         plants_meta = pp.plants_meta(plants)
+        if out_fpath:
+            plants_meta.to_csv(out_fpath, index=False)
 
         return plants, plants_meta
