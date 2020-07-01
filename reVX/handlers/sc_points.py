@@ -560,8 +560,11 @@ class SupplyCurvePoints:
         """
         sc_point = self.sc_points[sc_gid]
         sc_point, capacity, mask = sc_point.get_capacity(capacity)
+        logger.debug('Extracting {}MW from Point {}'.format(capacity, sc_gid))
 
         self._mask[sc_gid] = mask
         self._capacity[sc_gid] -= capacity
+        logger.debug('Point {} has {}MW available ({})'.format(
+            sc_gid, self._capacity[sc_gid], self._mask[sc_gid]))
 
         return sc_point, capacity
