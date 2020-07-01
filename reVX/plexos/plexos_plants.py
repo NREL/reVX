@@ -505,7 +505,7 @@ class PlexosPlants:
                         else:
                             msg = ('WARNING: sc_gid {} returned 0 capacity!'
                                    .format(sc_gid))
-                            logger.warning(warn)
+                            logger.warning(msg)
                             warn(msg)
 
     def _fill_plants(self, plants):
