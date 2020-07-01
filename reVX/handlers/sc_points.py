@@ -196,6 +196,9 @@ class Point:
             self._cf_means = np.delete(self._cf_means, drop_slice)
             self._capacity -= capacity
 
+        if np.isclose(self._capacity, 0):
+            self._capacity = 0
+
         availability = self._capacity > 0
 
         return sc_point, capacity, availability
