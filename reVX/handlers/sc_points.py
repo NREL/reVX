@@ -333,7 +333,6 @@ class Point:
                 slices = Point._create_worker_slices(
                     sc_table, points_per_worker=points_per_worker)
                 for sc_slice in slices:
-
                     future = exe.submit(cls.create_all,
                                         sc_table.iloc[sc_slice],
                                         res_cf_means,
@@ -381,6 +380,10 @@ class SupplyCurvePoints:
             Include offshore points, by default False
         """
         self._sc_table = parse_table(sc_table)
+        if 'offshore' in sc_table:
+            if not offshore:
+                self._sc_table = self._sc_table.loc[sc_table['offshore'] == 0]
+
         self._sc_points, self._capacity, self._mask = \
             self._parse_sc_points(self._sc_table, res_meta,
                                   max_workers=max_workers,
