@@ -512,10 +512,10 @@ class PlexosPlants:
 
                             self[plant_id] = plant
                             self._capacity[plant_id] -= sc_capacity
-                            logger.debug('Allocating {}MW to plant {} from '
-                                         'sc_gid {}'.format(sc_capacity,
-                                                            plant_id,
-                                                            sc_gid))
+                            logger.debug('Allocating {:.1f}MW to plant {} from'
+                                         ' sc_gid {}'.format(sc_capacity,
+                                                             plant_id,
+                                                             sc_gid))
                         else:
                             msg = ('WARNING: sc_gid {} returned 0 capacity!'
                                    .format(sc_gid))
@@ -555,10 +555,10 @@ class PlexosPlants:
             sc_gids, dists, bus_dists = self._get_sc_gids(plants, i)
             self._allocate_sc_gids(sc_gids, dists, bus_dists)
             cap = np.sum(self.plant_capacity[self.plant_capacity > 0])
-            logger.info('{} MW allocated in round {}'
+            logger.info('{:.1f} MW allocated in round {}'
                         .format(i_cap - cap, i))
             i += 1
-            logger.info('{} MW allocated out of {} MW'
+            logger.info('{:.1f} MW allocated out of {:.1f} MW'
                         .format(total_cap - cap, total_cap))
             logger.info('{} of {} plants have been filled'
                         .format(np.sum(self.plant_capacity <= 0), len(self)))

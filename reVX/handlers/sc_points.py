@@ -188,7 +188,7 @@ class Point:
             self._gid_counts = None
             self._res_capacity = None
             self._cf_means = None
-            self._capacity = 0
+            self._capacity = 0.0
         else:
             self._res_gids = np.delete(self._res_gids, drop_slice)
             self._gid_counts = np.delete(self._gid_counts, drop_slice)
@@ -197,7 +197,7 @@ class Point:
             self._capacity -= capacity
 
         if np.isclose(self._capacity, 0):
-            self._capacity = 0
+            self._capacity = 0.0
 
         availability = self._capacity > 0
 
@@ -566,11 +566,8 @@ class SupplyCurvePoints:
         """
         sc_point = self.sc_points[sc_gid]
         sc_point, capacity, mask = sc_point.get_capacity(capacity)
-        logger.debug('Extracting {}MW from Point {}'.format(capacity, sc_gid))
 
         self._mask[sc_gid] = mask
         self._capacity[sc_gid] -= capacity
-        logger.debug('Point {} has {}MW available ({})'.format(
-            sc_gid, self._capacity[sc_gid], self._mask[sc_gid]))
 
         return sc_point, capacity
