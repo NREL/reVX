@@ -317,6 +317,12 @@ class Point:
         if max_workers is None:
             max_workers = os.cpu_count()
 
+        if 'sc_gid' in sc_table:
+            sc_table = sc_table.set_index('sc_gid')
+
+        cols = ['capacity', 'res_gids', 'gid_counts']
+        sc_table = sc_table[cols]
+
         sc_points = {}
         if max_workers > 1:
             logger.info('Creating supply curve points in parallel')
