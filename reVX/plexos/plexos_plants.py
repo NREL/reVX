@@ -370,7 +370,7 @@ class PlexosPlants:
     @staticmethod
     def _identify_plants(plant_table, sc_table, dist_percentile=90,
                          lcoe_col='total_lcoe', lcoe_thresh=1.3,
-                         max_workers=None, plants_per_worker=20):
+                         max_workers=None, plants_per_worker=40):
         """
         Identify plant associated with each bus and return supply curve table
 
@@ -389,7 +389,7 @@ class PlexosPlants:
             > 1 == parallel, None == parallel using all available cpus,
             by default None
         plants_per_worker : int, optional
-            Number of plants to identify on each worker, by default 20
+            Number of plants to identify on each worker, by default 40
 
         Returns
         -------
@@ -397,6 +397,9 @@ class PlexosPlants:
             List of plant supply curve tables
         """
         plants = []
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
         if max_workers > 1:
             logger.info('Identifying plants in parallel')
             loggers = [__name__, 'reVX']
@@ -561,7 +564,7 @@ class PlexosPlants:
                         .format(np.sum(self.plant_capacity <= 0), len(self)))
 
     def fill_plants(self, dist_percentile=90, lcoe_col='total_lcoe',
-                    lcoe_thresh=1.3, plants_per_worker=20):
+                    lcoe_thresh=1.3, plants_per_worker=40):
         """
         Fill plants with capacity from supply curve points
 
@@ -576,7 +579,7 @@ class PlexosPlants:
             LCOE threshold multiplier, exclude sc_gids above threshold,
             by default 1.3
         plants_per_worker : int, optional
-            Number of plants to identify on each worker, by default 100
+            Number of plants to identify on each worker, by default 40
 
         Returns
         -------
@@ -642,7 +645,7 @@ class PlexosPlants:
     @classmethod
     def fill(cls, plexos_table, sc_table, res_meta, dist_percentile=90,
              lcoe_col='total_lcoe', lcoe_thresh=1.3, max_workers=None,
-             points_per_worker=400, plants_per_worker=20, offshore=False,
+             points_per_worker=400, plants_per_worker=40, offshore=False,
              out_fpath=None):
         """
         Fill plants with capacity from supply curve points
@@ -672,7 +675,7 @@ class PlexosPlants:
         points_per_worker : int, optional
             Number of points to create on each worker, by default 400
         plants_per_worker : int, optional
-            Number of plants to identify on each worker, by default 100
+            Number of plants to identify on each worker, by default 40
         offshore : bool, optional
             Include offshore points, by default False
         out_fpath : str
