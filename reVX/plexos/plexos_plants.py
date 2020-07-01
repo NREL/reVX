@@ -185,9 +185,9 @@ class PlexosPlants:
         cols = [c for c in plexos_table if c.lower() in self.PLEXOS_COLUMNS]
         plexos_table = plexos_table[cols]
         rename = {}
-        for c in self._plant_table:
+        for c in plexos_table:
             if c.lower() == 'capacity':
-                rename[c] = 'build_capacity'
+                rename[c] = 'capacity'
             elif c.lower() == 'latitude':
                 rename[c] = 'latitude'
             elif c.lower() == 'longitude':
@@ -206,12 +206,12 @@ class PlexosPlants:
             warn(msg)
             plexos_table = plexos_table.loc[~mask]
 
-        mask = plexos_table['build_capacity'] > 0
+        mask = plexos_table['capacity'] > 0
         cols = ['latitude', 'longitude']
         plant_cap = \
-            plexos_table.loc[mask].groupby(cols)['build_capacity'].sum()
+            plexos_table.loc[mask].groupby(cols)['capacity'].sum()
         plant_cap = plant_cap.reset_index().reset_index()
-        rename = {'index': 'plant_id', 'build_capacity': 'plant_capacity'}
+        rename = {'index': 'plant_id', 'capacity': 'plant_capacity'}
         plant_cap = plant_cap.rename(columns=rename)
 
         plexos_table = plexos_table.merge(plant_cap,
@@ -334,9 +334,14 @@ class PlexosPlants:
             PlexosPlants._substation_distance(sc_table,
                                               percentile=dist_percentile)
         logger.debug("- Using distance threshold of {} km".format(dist_thresh))
-        dist_thresh = dist <= dist_thresh
-        plant_sc = sc_table[['latitude', 'longitude', lcoe_col]].copy()
-        plant_sc = plant_sc.loc[dist_thresh]
+        while True:
+            mask = dist <= dist_thresh
+            plant_sc = sc_table[['latitude', 'longitude', lcoe_col]].copy()
+            plant_sc = plant_sc.loc[mask]
+            if len(plant_sc) > 1:
+                break
+            else:
+                dist_thresh *= 1.2
 
         # Find lowest lcoe site
         pos = np.argmin(plant_sc[lcoe_col])
@@ -484,18 +489,24 @@ class PlexosPlants:
                     if capacity > 0 and self.sc_points.check_sc_gid(sc_gid):
                         sc_point, sc_capacity = \
                             self.sc_points.get_capacity(sc_gid, capacity)
+                        if sc_capacity:
+                            plant = self[plant_id]
+                            if plant is None:
+                                plant = [sc_point]
+                            else:
+                                plant.append(sc_point)
 
-                        plant = self[plant_id]
-                        if plant is None:
-                            plant = [sc_point]
+                            self[plant_id] = plant
+                            self._capacity[plant_id] -= sc_capacity
+                            logger.debug('Allocating {}MW to plant {} from '
+                                         'sc_gid {}'.format(sc_capacity,
+                                                            plant_id,
+                                                            sc_gid))
                         else:
-                            plant.append(sc_point)
-
-                        self[plant_id] = plant
-                        self._capacity[plant_id] -= sc_capacity
-                        logger.debug('Allocating {}MW to plant {} from sc_gid '
-                                     '{}'.format(sc_capacity, plant_id,
-                                                 sc_gid))
+                            msg = ('WARNING: sc_gid {} returned 0 capacity!'
+                                   .format(sc_gid))
+                            logger.warning(warn)
+                            warn(msg)
 
     def _fill_plants(self, plants):
         """
@@ -597,6 +608,7 @@ class PlexosPlants:
                  'res_gids': plant['res_gids'].values.tolist(),
                  'gid_counts': plant['gid_counts'].values.tolist(),
                  'res_cf_means': plant['cf_means'].values.tolist(),
+                 'build_capacity': plant['build_capacity'].values.to_list(),
                  'cf_mean': np.hstack(plant['cf_means'].values).mean()},
                 name=i))
 

@@ -153,7 +153,7 @@ class Point:
 
         return out
 
-    def _drop(self, drop=None):
+    def _drop(self, build_capacity, drop=None):
         """
         Drop capacity from Supply Curve point
 
@@ -176,7 +176,8 @@ class Point:
         sc_point = {'sc_gid': self.sc_gid,
                     'res_gids': self.resource_gids[drop_slice].tolist(),
                     'gid_counts': self.gid_counts[drop_slice].tolist(),
-                    'cf_means': self.cf_means[drop_slice].tolist()}
+                    'cf_means': self.cf_means[drop_slice].tolist(),
+                    'build_capacity': build_capacity}
         sc_point = pd.Series(sc_point)
 
         if drop is None:
@@ -210,6 +211,7 @@ class Point:
         out : tuple
             (sc_point, capacity, availability)
         """
+        build_capacity = capacity.copy()
         if self.capacity > 0:
             if capacity < self.capacity:
                 drop = 0
@@ -221,7 +223,7 @@ class Point:
             else:
                 drop = None
 
-            out = self._drop(drop=drop)
+            out = self._drop(build_capacity, drop=drop)
         else:
             msg = "{} has no remaining capacity".format(self)
             logger.error(msg)
