@@ -5,7 +5,7 @@ import os
 import pytest
 import pandas as pd
 import numpy as np
-from reV.handlers.resource import Resource
+from rex.resource import Resource
 from reVX.plexos.rev_reeds_plexos import PlexosNode, DataCleaner
 
 
@@ -30,7 +30,8 @@ def sc_build():
 
     year_mask = (reeds.reeds_year == 2050)
     reeds = reeds[year_mask]
-    sc_build = pd.merge(rev_sc, reeds, how='inner', on='gid')
+    sc_build = pd.merge(rev_sc, reeds, how='inner', on='sc_gid')
+    sc_build.to_csv('/Users/mrossol/Downloads/sc_build.csv')
 
     return sc_build
 

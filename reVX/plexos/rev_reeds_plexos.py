@@ -308,7 +308,7 @@ class PlexosAggregation:
             Do node aggregation on max_workers.
         """
 
-        self._plexos_nodes = plexos_nodes
+        self._plexos_nodes = DataCleaner.rename_cols(plexos_nodes)
         self._cf_fpath = cf_fpath
         self._forecast_fpath = forecast_fpath
         self.build_year = build_year
@@ -478,7 +478,7 @@ class PlexosAggregation:
 
             for i, sc_gids in enumerate(gid_col):
                 if any([m in sc_gids for m in missing]):
-                    bad_sc_points.append(self._sc_build.iloc[i]['gid'])
+                    bad_sc_points.append(self._sc_build.iloc[i]['sc_gid'])
 
             wmsg = ('There are {} SC points with missing gids: {}'
                     .format(len(bad_sc_points), bad_sc_points))
@@ -497,7 +497,7 @@ class PlexosAggregation:
             (in reeds but not in reV resource).
         """
         if any(bad_sc_points):
-            bad_bool = self._sc_build['gid'].isin(bad_sc_points)
+            bad_bool = self._sc_build['sc_gid'].isin(bad_sc_points)
             bad_cap_arr = self._sc_build.loc[bad_bool, 'built_capacity'].values
             good_bool = ~bad_bool
             bad_cap = bad_cap_arr.sum()
@@ -577,9 +577,9 @@ class PlexosAggregation:
             rev_sc and reeds_build inner joined on supply curve gid.
         """
 
-        if 'gid' in rev_sc and 'gid' in reeds_build:
-            rev_join_on = 'gid'
-            reeds_join_on = 'gid'
+        if 'sc_gid' in rev_sc and 'sc_gid' in reeds_build:
+            rev_join_on = 'sc_gid'
+            reeds_join_on = 'sc_gid'
         else:
             raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
 
@@ -929,10 +929,10 @@ class Manager:
                                             db_pass=db_pass,
                                             db_port=db_port)
 
-        self.rev_sc = DataCleaner.rename_cols(self.rev_sc,
-                                              DataCleaner.REV_NAME_MAP)
-        self.reeds_build = DataCleaner.rename_cols(self.reeds_build,
-                                                   DataCleaner.REEDS_NAME_MAP)
+        self.rev_sc = DataCleaner.rename_cols(
+            self.rev_sc, name_map=DataCleaner.REV_NAME_MAP)
+        self.reeds_build = DataCleaner.rename_cols(
+            self.reeds_build, name_map=DataCleaner.REEDS_NAME_MAP)
 
         self.cf_fpath = cf_fpath
         if not os.path.exists(self.cf_fpath):

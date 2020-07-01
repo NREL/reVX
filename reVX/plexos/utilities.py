@@ -2,7 +2,6 @@
 """
 reVX-plexos utilities
 """
-import copy
 import json
 import numpy as np
 import pandas as pd
@@ -92,20 +91,22 @@ class DataCleaner:
 
     # Keys are bad values, values are corrected values
 
-    REEDS_NAME_MAP = {'capacity_reV': 'built_capacity',
+    REEDS_NAME_MAP = {'gid': 'sc_gid',
+                      'capacity_reV': 'built_capacity',
                       'capacity_rev': 'built_capacity',
                       'year': 'reeds_year',
                       'Year': 'reeds_year'}
 
-    REV_NAME_MAP = {'sq_km': 'area_sq_km',
+    REV_NAME_MAP = {'gid': 'sc_gid',
+                    'sq_km': 'area_sq_km',
                     'capacity': 'potential_capacity',
                     'resource_ids': 'res_gids',
                     'resource_ids_cnts': 'gid_counts'}
 
-    PLEXOS_META_COLS = ('gid', 'plexos_id', 'latitude', 'longitude',
+    PLEXOS_META_COLS = ('sc_gid', 'plexos_id', 'latitude', 'longitude',
                         'voltage', 'interconnect', 'built_capacity')
 
-    def __init__(self, plexos_meta, profiles):
+    def __init__(self, plexos_meta, profiles, name_map=None):
         """
         Parameters
         ----------
@@ -114,31 +115,38 @@ class DataCleaner:
         profiles : np.ndarray
             2D timeseries array of generation profiles. Number of columns must
             match the length of the meta data.
+        name_map : dictionary, optional
+            Column rename mapping, by default None -> {'gid': 'sc_gid'}
         """
         if profiles.shape[1] != len(plexos_meta):
             raise ValueError('Plexos profiles shape does not match meta.')
 
-        self._plexos_meta = plexos_meta
+        self._plexos_meta = self.rename_cols(plexos_meta, name_map=name_map)
         self._profiles = profiles
 
     @staticmethod
-    def rename_cols(df, name_map):
+    def rename_cols(df, name_map=None):
         """
         Parameters
         ----------
         df : pd.DataFrame
             Input df with bad or inconsistent column names.
+        name_map : dictionary, optional
+            Column rename mapping, by default None -> {'gid': 'sc_gid'}
 
         Parameters
         ----------
         df : pd.DataFrame
             Same as inputs but with better col names.
         """
+        if name_map is None:
+            name_map = {'gid': 'sc_gid'}
+
         df = df.rename(columns=name_map)
         return df
 
     @staticmethod
-    def reduce_df(df, cols):
+    def reduce_df(df, cols, name_map=None):
         """Reduce a df to just certain columns.
 
         Parameters
@@ -147,32 +155,36 @@ class DataCleaner:
             Dataframe to reduce.
         cols : list | tuple
             List of column names to keep.
+        name_map : dictionary, optional
+            Column rename mapping, by default None -> {'gid': 'sc_gid'}
 
         Returns
         -------
         df : pd.DataFrame
             Dataframe with only cols if the input df had all cols.
         """
-
+        df = DataCleaner.rename_cols(df, name_map=name_map)
         cols = [c for c in cols if c in df]
         return df[cols]
 
     @staticmethod
-    def pre_filter_plexos_meta(plexos_meta):
+    def pre_filter_plexos_meta(plexos_meta, name_map=None):
         """Pre-filter the plexos meta data to drop bad node names and
         duplicate lat/lons.
 
         Parameters
         ----------
-        meta_final : pd.DataFrame
+        plexos_meta : pd.DataFrame
             Plexos meta data.
+        name_map : dictionary, optional
+            Column rename mapping, by default None -> {'gid': 'sc_gid'}
 
         Returns
         -------
-        meta_final : pd.DataFrame
+        plexos_meta : pd.DataFrame
             Filtered plexos meta data.
         """
-
+        plexos_meta = DataCleaner.rename_cols(plexos_meta, name_map=name_map)
         # as of 8/2019 there were two erroneous plexos nodes with bad names
         mask = (plexos_meta['plexos_id'] != '#NAME?')
         plexos_meta = plexos_meta[mask]
@@ -182,7 +194,7 @@ class DataCleaner:
         plexos_meta = plexos_meta.sort_values(by='voltage', ascending=False)
         plexos_meta = plexos_meta.drop_duplicates(
             subset=['latitude', 'longitude'], keep='first')
-        plexos_meta = plexos_meta.sort_values(by='gid')
+        plexos_meta = plexos_meta.sort_values(by='sc_gid')
 
         return plexos_meta
 
@@ -282,7 +294,7 @@ class DataCleaner:
 
         return meta, profiles
 
-    def merge_extent(self, new_meta, new_profiles):
+    def merge_extent(self, new_meta, new_profiles, name_map=None):
         """Merge a new set of plexos node aggregation data into the self attr.
 
         Parameters
@@ -294,7 +306,10 @@ class DataCleaner:
             A new set of plexos node profiles corresponding to new_meta to be
             merged into the profiles in self where the meta data overlaps with
             common nodes.
+        name_map : dictionary, optional
+            Column rename mapping, by default None -> {'gid': 'sc_gid'}
         """
+        new_meta = self.rename_cols(new_meta, name_map=name_map)
 
         keep_index = []
 
@@ -303,7 +318,8 @@ class DataCleaner:
                             len(self._plexos_meta) + len(new_meta)))
 
         for i, ind in enumerate(new_meta.index.values):
-            lookup = (self._plexos_meta.gid.values == new_meta.loc[ind, 'gid'])
+            lookup = (self._plexos_meta['sc_gid'].values
+                      == new_meta.loc[ind, 'sc_gid'])
             if any(lookup):
                 i_self = np.where(lookup)[0]
                 if len(i_self) > 1:
@@ -315,8 +331,8 @@ class DataCleaner:
                              '(gids {} and {})'.format(
                                  self._plexos_meta.iloc[i_self]['plexos_id'],
                                  new_meta.iloc[i]['plexos_id'],
-                                 self._plexos_meta.iloc[i_self]['gid'],
-                                 new_meta.iloc[i]['gid']))
+                                 self._plexos_meta.iloc[i_self]['sc_gid'],
+                                 new_meta.iloc[i]['sc_gid']))
 
                 self._merge_plexos_meta(self._plexos_meta, new_meta, i_self, i)
                 self._profiles[:, i_self] += new_profiles[:, i]
@@ -333,7 +349,7 @@ class DataCleaner:
         logger.info('Merged extents. Output has {} nodes.'
                     .format(len(self._plexos_meta)))
 
-    def merge_multiple_extents(self, meta_list, profile_list):
+    def merge_multiple_extents(self, meta_list, profile_list, name_map=None):
         """Merge multiple plexos extents into the self attrs.
 
         Parameters
@@ -342,6 +358,8 @@ class DataCleaner:
             List of new meta data extents to merge into self.
         profile_list : list
             List of new gen profile to merge into self.
+        name_map : dictionary, optional
+            Column rename mapping, by default None -> {'gid': 'sc_gid'}
 
         Returns
         -------
@@ -352,7 +370,8 @@ class DataCleaner:
         """
 
         for i, meta in enumerate(meta_list):
-            self.merge_extent(meta, profile_list[i])
+            self.merge_extent(self.rename_cols(meta, name_map=name_map),
+                              profile_list[i])
 
         return self._plexos_meta, self._profiles
 
@@ -402,18 +421,13 @@ class ProjectGidHandler:
                                        db_pass=db_pass,
                                        db_port=db_port)
 
-        rev_name_map = copy.deepcopy(DataCleaner.REV_NAME_MAP)
-        reeds_name_map = copy.deepcopy(DataCleaner.REEDS_NAME_MAP)
-        rev_name_map['sc_gids'] = 'gid'
-        rev_name_map['sc_gid'] = 'gid'
-        rev_name_map['gids'] = 'gid'
-        reeds_name_map['sc_gids'] = 'gid'
-        reeds_name_map['gids'] = 'gid'
-        sc_table = DataCleaner.rename_cols(sc_table, rev_name_map)
-        reeds_build = DataCleaner.rename_cols(reeds_build, reeds_name_map)
+        sc_table = DataCleaner.rename_cols(
+            sc_table, name_map=DataCleaner.REV_NAME_MAP)
+        reeds_build = DataCleaner.rename_cols(
+            reeds_build, name_map=DataCleaner.REEDS_NAME_MAP)
 
-        reeds_gids = reeds_build['gid'].values.tolist()
-        rev_gids = sc_table['gid'].values.tolist()
+        reeds_gids = reeds_build['sc_gid'].values.tolist()
+        rev_gids = sc_table['sc_gid'].values.tolist()
 
         missing = [gid for gid in reeds_gids if gid not in rev_gids]
         if any(missing):
@@ -422,7 +436,7 @@ class ProjectGidHandler:
             logger.error(e)
             raise RuntimeError(e)
 
-        gid_table = pd.merge(reeds_build, sc_table, how='left', on='gid')
+        gid_table = pd.merge(reeds_build, sc_table, how='left', on='sc_gid')
 
         gids = []
         for res_gid_list in gid_table['res_gids'].values.tolist():
@@ -476,7 +490,7 @@ class ProjectGidHandler:
 
         gids = sorted(list(set(gids)), key=float)
         pp = pd.DataFrame({'config': [config_tag] * len(gids)}, index=gids)
-        pp.index.name = 'gid'
+        pp.index.name = 'sc_gid'
 
         if fpath_out:
             logger.debug('Writing project points: {}'.format(fpath_out))

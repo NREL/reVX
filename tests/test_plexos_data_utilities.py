@@ -68,7 +68,8 @@ def cf_fpath():
 
 def test_df_rename(rev_sc):
     """Test the dataframe column renaming method"""
-    rev_sc = DataCleaner.rename_cols(rev_sc, DataCleaner.REV_NAME_MAP)
+    rev_sc = DataCleaner.rename_cols(rev_sc,
+                                     name_map=DataCleaner.REV_NAME_MAP)
     for k, v in DataCleaner.REV_NAME_MAP.items():
         assert k not in rev_sc
         assert v in rev_sc
@@ -80,6 +81,8 @@ def test_df_reduce(plexos_nodes):
                                          DataCleaner.PLEXOS_META_COLS)
     assert 'the_geom_4326' not in plexos_nodes
     assert 'remove' not in plexos_nodes
+    assert 'gid' not in plexos_nodes
+    assert 'sc_gid' in plexos_nodes
 
 
 def test_plexos_pre_filter(plexos_nodes):
@@ -136,10 +139,10 @@ def test_merge_extent(plexos_buildout):
 
     true_gids = [str(2 * json.loads(g)) for g in gids]
 
-    assert np.allclose(new_meta.built_capacity.values,
-                       2 * plexos_buildout.built_capacity.values)
+    assert np.allclose(new_meta['built_capacity'].values,
+                       2 * plexos_buildout['built_capacity'].values)
     assert np.allclose(new_profiles, 2 * profiles)
-    assert true_gids == list(new_meta.res_gids.values)
+    assert true_gids == list(new_meta['res_gids'].values)
 
 
 def test_gid_handler():
@@ -150,8 +153,8 @@ def test_gid_handler():
     fp_r2 = os.path.join(datadir, 'tmp_reeds_build2.csv')
     fpath_sc = os.path.join(datadir, 'reV_sc/sc_table.csv')
 
-    reeds_build1 = pd.DataFrame({'gid': np.arange(4)})
-    reeds_build2 = pd.DataFrame({'gid': np.arange(11, 15)})
+    reeds_build1 = pd.DataFrame({'sc_gid': np.arange(4)})
+    reeds_build2 = pd.DataFrame({'sc_gid': np.arange(11, 15)})
     sc_table = pd.read_csv(fpath_sc)
     reeds_build1.to_csv(fp_r1)
     reeds_build2.to_csv(fp_r2)

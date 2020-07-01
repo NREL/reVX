@@ -96,14 +96,7 @@ class PlexosPlants:
         if self._plant_table is None:
             self._plant_table = self.plexos_table.drop_duplicates(
                 'plant_id').sort_values('plant_id')
-            rename = {}
-            for c in self._plant_table:
-                if c.lower() == 'latitude':
-                    rename[c] = 'latitude'
-                elif c.lower() == 'longitude':
-                    rename[c] = 'longitude'
 
-            self._plant_table = self._plant_table.rename(columns=rename)
             cols = ['latitude', 'longitude', 'plant_id', 'plant_capacity']
             self._plant_table = self._plant_table[cols].set_index('plant_id')
 
@@ -191,14 +184,21 @@ class PlexosPlants:
         plexos_table = parse_table(plexos_table)
         cols = [c for c in plexos_table if c.lower() in self.PLEXOS_COLUMNS]
         plexos_table = plexos_table[cols]
-        cap_col = [c for c in plexos_table if c.lower() == 'capacity'][0]
-        lat_lon_cols = sorted([c for c in plexos_table
-                               if c.lower() in ['latitude', 'longitude']])
+        rename = {}
+        for c in self._plant_table:
+            if c.lower() == 'capacity':
+                rename[c] = 'build_capacity'
+            elif c.lower() == 'latitude':
+                rename[c] = 'latitude'
+            elif c.lower() == 'longitude':
+                rename[c] = 'longitude'
 
-        mask = plexos_table[lat_lon_cols[0]] > 90
-        mask |= plexos_table[lat_lon_cols[0]] < -90
-        mask |= plexos_table[lat_lon_cols[1]] > 180
-        mask |= plexos_table[lat_lon_cols[1]] < -180
+        plexos_table = plexos_table.rename(columns=rename)
+
+        mask = plexos_table['latitude'] > 90
+        mask |= plexos_table['latitude'] < -90
+        mask |= plexos_table['longitude'] > 180
+        mask |= plexos_table['longitude'] < -180
         if np.any(mask):
             msg = ('WARNING: {} Buses have invalid coordinates:\n{}'
                    .format(np.sum(mask), plexos_table.loc[mask]))
@@ -206,14 +206,16 @@ class PlexosPlants:
             warn(msg)
             plexos_table = plexos_table.loc[~mask]
 
-        mask = plexos_table[cap_col] > 0
+        mask = plexos_table['build_capacity'] > 0
+        cols = ['latitude', 'longitude']
         plant_cap = \
-            plexos_table.loc[mask].groupby(lat_lon_cols)[cap_col].sum()
+            plexos_table.loc[mask].groupby(cols)['build_capacity'].sum()
         plant_cap = plant_cap.reset_index().reset_index()
-        plant_cap = plant_cap.rename(columns={'index': 'plant_id',
-                                              cap_col: 'plant_capacity'})
+        rename = {'index': 'plant_id', 'build_capacity': 'plant_capacity'}
+        plant_cap = plant_cap.rename(columns=rename)
 
-        plexos_table = plexos_table.merge(plant_cap, on=lat_lon_cols,
+        plexos_table = plexos_table.merge(plant_cap,
+                                          on=cols,
                                           how='outer')
 
         return plexos_table
@@ -566,7 +568,7 @@ class PlexosPlants:
 
         return plants
 
-    def plants_meta(self, plants):
+    def plants_meta(self, plants, out_fpath=None):
         """
         Create plants meta data from filled plants DataFrames:
             - Location (lat, lon)
@@ -579,6 +581,8 @@ class PlexosPlants:
         ----------
         plants : list
             List of filled plant DataFrames
+        out_fpath : str
+            .csv path to save plant meta data too
 
         Returns
         -------
@@ -586,25 +590,24 @@ class PlexosPlants:
             Location (lat, lon), final capacity, and associated sc_gids,
             res_gids, and res gid_counts for all plants
         """
-        plants_meta = {'sc_gids': None, 'res_gids': None, 'gid_counts': None,
-                       'sc_capacity': None, 'res_cf_means': None, 'cf_mean': 0,
-                       'build_capacity': 0}
-        plants_meta = pd.DataFrame(plants_meta, index=[0])
-        plants_meta.index.name = 'plant_id'
+        plants_meta = []
         for i, plant in enumerate(plants):
-            plants_meta.at[i, 'sc_gids'] = plant['sc_gid'].values.tolist()
-            plants_meta.at[i, 'res_gids'] = plant['res_gids'].values.tolist()
-            plants_meta.at[i, 'gid_counts'] = \
-                plant['gid_counts'].values.tolist()
-            plants_meta.at[i, 'sc_capacity'] = \
-                plant['capacity'].values.tolist()
-            plants_meta.at[i, 'res_cf_means'] = \
-                plant['cf_means'].values.tolist()
-            plants_meta.at[i, 'cf_mean'] = plant['cf_means'].sum()
-            plants_meta.at[i, 'build_capacity'] = plant['capacity'].sum()
+            plants_meta.append(pd.Series(
+                {'sc_gids': plant['sc_gid'].values.tolist(),
+                 'res_gids': plant['res_gids'].values.tolist(),
+                 'gid_counts': plant['gid_counts'].values.tolist(),
+                 'res_cf_means': plant['cf_means'].values.tolist(),
+                 'cf_mean': np.hstack(plant['cf_means'].values).mean()},
+                name=i))
+
+        plants_meta = pd.concat(plants_meta, axis=1).T
+        plants_meta.index.name = 'plant_id'
 
         plants_meta = self.plexos_table.merge(plants_meta.reset_index(),
                                               on='plant_id', how='outer')
+
+        if out_fpath:
+            plants_meta.to_csv(out_fpath, index=False)
 
         return plants_meta
 
@@ -657,8 +660,6 @@ class PlexosPlants:
                                 lcoe_col=lcoe_col,
                                 lcoe_thresh=lcoe_thresh)
 
-        plants_meta = pp.plants_meta(plants)
-        if out_fpath:
-            plants_meta.to_csv(out_fpath, index=False)
+        plants_meta = pp.plants_meta(plants, out_fpath=out_fpath)
 
         return plants, plants_meta

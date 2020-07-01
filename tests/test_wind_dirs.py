@@ -9,7 +9,7 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from reV.supply_curve.points import SupplyCurveExtent
 
-from reVX import TESTDATADIR as TESTDATADIR
+from reVX import TESTDATADIR
 from reVX.wind_dirs.wind_dirs import WindDirections
 
 

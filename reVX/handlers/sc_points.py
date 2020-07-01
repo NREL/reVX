@@ -176,8 +176,7 @@ class Point:
         sc_point = {'sc_gid': self.sc_gid,
                     'res_gids': self.resource_gids[drop_slice].tolist(),
                     'gid_counts': self.gid_counts[drop_slice].tolist(),
-                    'cf_means': self.cf_means[drop_slice].tolist(),
-                    'capacity': capacity}
+                    'cf_means': self.cf_means[drop_slice].tolist()}
         sc_point = pd.Series(sc_point)
 
         if drop is None:
