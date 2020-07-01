@@ -486,7 +486,7 @@ class PlexosPlants:
 
                 for plant_id in plant_ids:
                     capacity = self.plant_capacity[plant_id]
-                    if capacity > 0 and self.sc_points.check_sc_gid(sc_gid):
+                    if (capacity > 0) and self.sc_points.check_sc_gid(sc_gid):
                         sc_point, sc_capacity = \
                             self.sc_points.get_capacity(sc_gid, capacity)
                         if sc_capacity:
@@ -608,7 +608,7 @@ class PlexosPlants:
                  'res_gids': plant['res_gids'].values.tolist(),
                  'gid_counts': plant['gid_counts'].values.tolist(),
                  'res_cf_means': plant['cf_means'].values.tolist(),
-                 'build_capacity': plant['build_capacity'].values.to_list(),
+                 'build_capacity': plant['build_capacity'].values.tolist(),
                  'cf_mean': np.hstack(plant['cf_means'].values).mean()},
                 name=i))
 
