@@ -173,6 +173,9 @@ class Point:
         """
         drop_slice = slice(0, drop, None)
         capacity = np.sum(self.resource_capacity[drop_slice])
+        if capacity < build_capacity:
+            build_capacity = capacity
+
         sc_point = {'sc_gid': self.sc_gid,
                     'res_gids': self.resource_gids[drop_slice].tolist(),
                     'gid_counts': self.gid_counts[drop_slice].tolist(),
