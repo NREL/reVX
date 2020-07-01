@@ -22,7 +22,7 @@ class WindDirections(Aggregation):
 
     def __init__(self, power_rose_h5_fpath, excl_fpath,
                  agg_dset='powerrose_100m', tm_dset='techmap_wtk',
-                 resolution=128):
+                 resolution=128, excl_area=None):
         """
         Parameters
         ----------
@@ -39,10 +39,13 @@ class WindDirections(Aggregation):
         resolution : int, optional
             SC resolution, must be input in combination with gid. Prefered
             option is to use the row/col slices to define the SC point instead,
-            by default 64
+            by default 128
+        excl_area : float | None
+            Area of an exclusion pixel in km2. None will try to infer the area
+            from the profile transform attribute in excl_fpath.
         """
         super().__init__(excl_fpath, power_rose_h5_fpath, tm_dset, agg_dset,
-                         resolution=resolution)
+                         resolution=resolution, excl_area=excl_area)
 
     @staticmethod
     def _map_direction_pos(power_rose_h5_fpath):
@@ -165,7 +168,7 @@ class WindDirections(Aggregation):
 
         return neighbor_gids
 
-    def prominent_directions(self, excl_area=0.0081, max_workers=None,
+    def prominent_directions(self, max_workers=None,
                              chunk_point_len=1000):
         """
         Aggregate power rose data to supply curve points, find all neighboring
@@ -174,8 +177,6 @@ class WindDirections(Aggregation):
 
         Parameters
         ----------
-        excl_area : float, optional
-            Area of an exclusion cell (square km), by default 0.0081
         max_workers : int | None, optional
             Number of cores to run summary on. None is all
             available cpus, by default None
@@ -189,7 +190,7 @@ class WindDirections(Aggregation):
             Update meta data table with neighboring supply curve point gids
             and power-rose value at each cardinal direction
         """
-        agg_out = self.aggregate(excl_area=excl_area, max_workers=max_workers,
+        agg_out = self.aggregate(max_workers=max_workers,
                                  chunk_point_len=chunk_point_len)
 
         meta = agg_out.pop('meta')
@@ -216,7 +217,7 @@ class WindDirections(Aggregation):
     @classmethod
     def run(cls, power_rose_h5_fpath, excl_fpath,
             agg_dset='powerrose_100m', tm_dset='techmap_wtk',
-            resolution=128, excl_area=0.0081, max_workers=None,
+            resolution=128, excl_area=None, max_workers=None,
             chunk_point_len=1000, out_fpath=None):
         """
         Aggregate powerrose to supply curve points, find neighboring supply
@@ -239,9 +240,10 @@ class WindDirections(Aggregation):
         resolution : int, optional
             SC resolution, must be input in combination with gid. Prefered
             option is to use the row/col slices to define the SC point instead,
-            by default 64
-        excl_area : float, optional
-            Area of an exclusion cell (square km), by default 0.0081
+            by default 128
+        excl_area : float | None
+            Area of an exclusion pixel in km2. None will try to infer the area
+            from the profile transform attribute in excl_fpath.
         max_workers : int | None, optional
             Number of cores to run summary on. None is all
             available cpus, by default None
@@ -259,10 +261,9 @@ class WindDirections(Aggregation):
         """
         pr = cls(power_rose_h5_fpath, excl_fpath,
                  agg_dset=agg_dset, tm_dset=tm_dset,
-                 resolution=resolution)
+                 resolution=resolution, excl_area=excl_area)
 
-        sc_pr = pr.prominent_directions(excl_area=excl_area,
-                                        max_workers=max_workers,
+        sc_pr = pr.prominent_directions(max_workers=max_workers,
                                         chunk_point_len=chunk_point_len)
 
         if out_fpath:

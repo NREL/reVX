@@ -255,7 +255,7 @@ def offshore_mean_res():
     """
     path = os.path.join(TESTDATADIR, 'reeds/inputs/reeds_class_bins.csv')
     trg_classes = pd.read_csv(path)
-    return trg_classes[['class', 'mean_res_min', 'mean_res_max' 'sub_type']]
+    return trg_classes[['class', 'mean_res_min', 'mean_res_max', 'sub_type']]
 
 
 def test_offshore_classifier():
