@@ -7,6 +7,7 @@ import numpy as np
 import os
 import pandas as pd
 from sklearn.metrics.pairwise import haversine_distances
+from warnings import warn
 
 from rex.utilities import parse_table, SpawnProcessPool
 
@@ -193,6 +194,18 @@ class PlexosPlants:
         cap_col = [c for c in plexos_table if c.lower() == 'capacity'][0]
         lat_lon_cols = sorted([c for c in plexos_table
                                if c.lower() in ['latitude', 'longitude']])
+
+        mask = plexos_table[lat_lon_cols[0]] > 90
+        mask |= plexos_table[lat_lon_cols[0]] < -90
+        mask |= plexos_table[lat_lon_cols[1]] > 180
+        mask |= plexos_table[lat_lon_cols[1]] < -180
+        if np.any(mask):
+            msg = ('WARNING: {} Buses have invalid coordinates:\n{}'
+                   .format(np.sum(mask), plexos_table.loc[mask]))
+            logger.warning(msg)
+            warn(msg)
+            plexos_table = plexos_table.loc[~mask]
+
         mask = plexos_table[cap_col] > 0
         plant_cap = \
             plexos_table.loc[mask].groupby(lat_lon_cols)[cap_col].sum()
@@ -370,8 +383,7 @@ class PlexosPlants:
         """
         plants = []
         if self._max_workers > 1:
-            logger.info('Identifying supply curve points for plants in '
-                        'parallel')
+            logger.info('Identifying plants in parallel')
             loggers = [__name__, 'reVX']
             with SpawnProcessPool(max_workers=self._max_workers,
                                   loggers=loggers) as exe:
@@ -391,8 +403,7 @@ class PlexosPlants:
                     logger.debug('Completed {} out of {} plant futures.'
                                  .format(i + 1, len(futures)))
         else:
-            logger.info('Identifying supply curve points for plants in '
-                        'serial')
+            logger.info('Identifying plants in serial')
             for i, bus in self.plant_table.iterrows():
                 coords = \
                     bus[['latitude', 'longitude']].values.astype(float)
