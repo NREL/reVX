@@ -260,23 +260,23 @@ class Point:
         return cls(sc_gid, capacity, res_gids, gid_counts, res_cf)
 
     @staticmethod
-    def _create_worker_slices(sc_table, points_per_worker=400):
+    def _create_worker_slices(table, points_per_worker=400):
         """
         Compute the slice of sc_table to submit to each worker
 
         Parameters
         ----------
-        sc_table : pandas.DataFrame
-            Supply curve table
+        table : pandas.DataFrame
+            Table to split across workers
         points_per_worker : int, optional
-            Number of points to create on each worker, by default 100
+            Number of points to create on each worker, by default 400
 
         Returns
         -------
         slices : list
-            List of slices of sc_table to submit to each worker
+            List of slices of table to submit to each worker
         """
-        points = len(sc_table) + 1
+        points = len(table) + 1
         chunks = list(range(0, points, points_per_worker))
         if chunks[-1] < points:
             chunks += [points]
@@ -304,7 +304,7 @@ class Point:
             > 1 == parallel, None == parallel using all available cpus,
             by default None
         points_per_worker : int, optional
-            Number of points to create on each worker, by default 100
+            Number of points to create on each worker, by default 400
 
         Returns
         -------
@@ -367,7 +367,7 @@ class SupplyCurvePoints:
             > 1 == parallel, None == parallel using all available cpus,
             by default None
         points_per_worker : int, optional
-            Number of points to create on each worker, by default 100
+            Number of points to create on each worker, by default 400
         offshore : bool, optional
             Include offshore points, by default False
         """
@@ -502,7 +502,7 @@ class SupplyCurvePoints:
             > 1 == parallel, None == parallel using all available cpus,
             by default None
         points_per_worker : int, optional
-            Number of points to create on each worker, by default 100
+            Number of points to create on each worker, by default 400
         offshore : bool, optional
             Include offshore points, by default False
 

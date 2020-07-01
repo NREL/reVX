@@ -11,7 +11,7 @@ from warnings import warn
 
 from rex.utilities import parse_table, SpawnProcessPool
 
-from reVX.handlers.sc_points import SupplyCurvePoints
+from reVX.handlers.sc_points import Point, SupplyCurvePoints
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class PlexosPlants:
             > 1 == parallel, None == parallel using all available cpus,
             by default None
         points_per_worker : int, optional
-            Number of points to create on each worker, by default 100
+            Number of points to create on each worker, by default 400
         offshore : bool, optional
             Include offshore points, by default False
         """
@@ -367,8 +367,10 @@ class PlexosPlants:
 
         return plant_sc.reset_index(drop=True)
 
-    def _identify_plants(self, dist_percentile=90, lcoe_col='total_lcoe',
-                         lcoe_thresh=1.3):
+    @staticmethod
+    def _identify_plants(plant_table, sc_table, dist_percentile=90,
+                         lcoe_col='total_lcoe', lcoe_thresh=1.3,
+                         max_workers=None, plants_per_worker=20):
         """
         Identify plant associated with each bus and return supply curve table
 
@@ -382,6 +384,12 @@ class PlexosPlants:
         lcoe_thresh : float, optional
             LCOE threshold multiplier, exclude sc_gids above threshold,
             by default 1.3
+        max_workers : int, optional
+            Number of workers to use for plant identification, 1 == serial,
+            > 1 == parallel, None == parallel using all available cpus,
+            by default None
+        plants_per_worker : int, optional
+            Number of plants to identify on each worker, by default 20
 
         Returns
         -------
@@ -389,39 +397,42 @@ class PlexosPlants:
             List of plant supply curve tables
         """
         plants = []
-        if self._max_workers > 1:
+        if max_workers > 1:
             logger.info('Identifying plants in parallel')
             loggers = [__name__, 'reVX']
-            with SpawnProcessPool(max_workers=self._max_workers,
+            with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 futures = []
-                for _, bus in self.plant_table.iterrows():
-                    coords = \
-                        bus[['latitude', 'longitude']].values.astype(float)
-                    future = exe.submit(PlexosPlants._get_plant_sc_dists,
-                                        coords, self.sc_table,
+                slices = Point._create_worker_slices(
+                    plant_table, points_per_worker=plants_per_worker)
+                for table_slice in slices:
+                    future = exe.submit(PlexosPlants._identify_plants,
+                                        plant_table.iloc[table_slice],
+                                        sc_table,
                                         dist_percentile=dist_percentile,
                                         lcoe_col=lcoe_col,
-                                        lcoe_thresh=lcoe_thresh)
+                                        lcoe_thresh=lcoe_thresh,
+                                        max_workers=1)
                     futures.append(future)
 
                 for i, future in enumerate(futures):
-                    plants.append(future.result())
-                    logger.debug('Completed {} out of {} plant futures.'
-                                 .format(i + 1, len(futures)))
+                    plants.extend(future.result())
+                    logger.debug('Identified {} out of {} plants'
+                                 .format((i + 1) * plants_per_worker,
+                                         len(plant_table)))
         else:
             logger.info('Identifying plants in serial')
-            for i, bus in self.plant_table.iterrows():
+            for i, bus in plant_table.iterrows():
                 coords = \
                     bus[['latitude', 'longitude']].values.astype(float)
                 plant = PlexosPlants._get_plant_sc_dists(
-                    coords, self.sc_table,
+                    coords, sc_table,
                     dist_percentile=dist_percentile,
                     lcoe_col=lcoe_col,
                     lcoe_thresh=lcoe_thresh)
                 plants.append(plant)
-                logger.debug('Completed {} out of {} plant futures.'
-                             .format(i + 1, len(self)))
+                logger.debug('Identified {} out of {} plants.'
+                             .format(i + 1, len(plant_table)))
 
         return plants
 
@@ -550,7 +561,7 @@ class PlexosPlants:
                         .format(np.sum(self.plant_capacity <= 0), len(self)))
 
     def fill_plants(self, dist_percentile=90, lcoe_col='total_lcoe',
-                    lcoe_thresh=1.3):
+                    lcoe_thresh=1.3, plants_per_worker=20):
         """
         Fill plants with capacity from supply curve points
 
@@ -564,15 +575,20 @@ class PlexosPlants:
         lcoe_thresh : float, optional
             LCOE threshold multiplier, exclude sc_gids above threshold,
             by default 1.3
+        plants_per_worker : int, optional
+            Number of plants to identify on each worker, by default 100
 
         Returns
         -------
         plants : list
             List of plants being built
         """
-        plants = self._identify_plants(dist_percentile=dist_percentile,
+        plants = self._identify_plants(self.plant_table, self.sc_table,
+                                       dist_percentile=dist_percentile,
                                        lcoe_col=lcoe_col,
-                                       lcoe_thresh=lcoe_thresh)
+                                       lcoe_thresh=lcoe_thresh,
+                                       max_workers=self._max_workers,
+                                       plants_per_worker=plants_per_worker)
         self._fill_plants(plants)
 
         plants = [pd.concat(plant, axis=1).T for plant in self.plants]
@@ -626,7 +642,8 @@ class PlexosPlants:
     @classmethod
     def fill(cls, plexos_table, sc_table, res_meta, dist_percentile=90,
              lcoe_col='total_lcoe', lcoe_thresh=1.3, max_workers=None,
-             points_per_worker=400, offshore=False, out_fpath=None):
+             points_per_worker=400, plants_per_worker=20, offshore=False,
+             out_fpath=None):
         """
         Fill plants with capacity from supply curve points
 
@@ -653,7 +670,9 @@ class PlexosPlants:
             > 1 == parallel, None == parallel using all available cpus,
             by default None
         points_per_worker : int, optional
-            Number of points to create on each worker, by default 100
+            Number of points to create on each worker, by default 400
+        plants_per_worker : int, optional
+            Number of plants to identify on each worker, by default 100
         offshore : bool, optional
             Include offshore points, by default False
         out_fpath : str
@@ -670,7 +689,8 @@ class PlexosPlants:
                  points_per_worker=points_per_worker, offshore=offshore)
         plants = pp.fill_plants(dist_percentile=dist_percentile,
                                 lcoe_col=lcoe_col,
-                                lcoe_thresh=lcoe_thresh)
+                                lcoe_thresh=lcoe_thresh,
+                                plants_per_worker=plants_per_worker)
 
         plants_meta = pp.plants_meta(plants, out_fpath=out_fpath)
 
