@@ -521,10 +521,12 @@ class SupplyCurvePoints:
                 sc_table = sc_table.loc[sc_table['offshore'] == 0]
 
         if isinstance(sc_table.iloc[0]['res_gids'], str):
-            sc_table['res_gids'] = sc_table['res_gids'].apply(json.loads)
+            sc_table.loc[:, 'res_gids'] = \
+                sc_table['res_gids'].apply(json.loads).values
 
         if isinstance(sc_table.iloc[0]['gid_counts'], str):
-            sc_table['gid_counts'] = sc_table['gid_counts'].apply(json.loads)
+            sc_table.loc[:, 'gid_counts'] = \
+                sc_table['gid_ counts'].apply(json.loads).values
 
         return sc_table
 
