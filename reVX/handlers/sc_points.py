@@ -525,8 +525,8 @@ class SupplyCurvePoints:
                 sc_table['res_gids'].apply(json.loads).values
 
         if isinstance(sc_table.iloc[0]['gid_counts'], str):
-            sc_table.loc[:, 'gid_counts'] = \
-                sc_table['gid_ counts'].apply(json.loads).values
+            sc_table['gid_counts'] = \
+                sc_table['gid_counts'].apply(json.loads).values
 
         return sc_table
 
