@@ -338,8 +338,8 @@ class Point:
                     sc_table, points_per_worker=points_per_worker)
                 for sc_slice in slices:
                     table_slice = sc_table.iloc[sc_slice].copy()
-                    res_slice = res_cf_means.loc[np.hstack(
-                        table_slice['res_gids'].values)].copy()
+                    gids = np.unique(np.hstack(table_slice['res_gids'].values))
+                    res_slice = res_cf_means.loc[gids].copy()
                     future = exe.submit(cls.create_all,
                                         table_slice,
                                         res_slice,
