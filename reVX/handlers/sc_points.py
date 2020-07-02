@@ -180,6 +180,7 @@ class Point:
                     'res_gids': self.resource_gids[drop_slice].tolist(),
                     'gid_counts': self.gid_counts[drop_slice].tolist(),
                     'cf_means': self.cf_means[drop_slice].tolist(),
+                    'capacity': capacity,
                     'build_capacity': build_capacity}
         sc_point = pd.Series(sc_point)
 

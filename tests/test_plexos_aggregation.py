@@ -78,15 +78,16 @@ def test_plexos_agg(plexos_nodes, rev_sc, reeds, cf_fpath):
 
     if not os.path.exists(fpath_meta):
         plexos_meta.to_csv(fpath_meta)
+
     if not os.path.exists(fpath_profiles):
         pd.DataFrame(profiles).to_csv(fpath_profiles)
 
     baseline_meta = pd.read_csv(fpath_meta, index_col=0)
     baseline_profiles = pd.read_csv(fpath_profiles, index_col=0)
 
-    assert all(baseline_meta.gen_gids == plexos_meta.gen_gids)
-    assert np.allclose(baseline_meta.built_capacity,
-                       plexos_meta.built_capacity)
+    assert all(baseline_meta['gen_gids'] == plexos_meta['gen_gids'])
+    assert np.allclose(baseline_meta['built_capacity'],
+                       plexos_meta['built_capacity'])
     assert np.allclose(baseline_profiles.values, profiles)
 
     return plexos_meta, time_index, profiles

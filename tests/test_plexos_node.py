@@ -6,7 +6,8 @@ import pytest
 import pandas as pd
 import numpy as np
 from rex.resource import Resource
-from reVX.plexos.rev_reeds_plexos import PlexosNode, DataCleaner
+from reVX.plexos.plexos_node import PlexosNode
+from reVX.plexos.utilities import DataCleaner
 
 
 @pytest.fixture
@@ -60,8 +61,7 @@ def test_plexos_node_build(sc_build, cf_fpath):
     """Test that a plexos node buildout has consistent results."""
     time_index, cf_res_gids = get_cf_attrs(cf_fpath)
     sc_build = sc_build.iloc[0:5]
-    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids,
-                       power_density=3, exclusion_area=0.0081)
+    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids=cf_res_gids)
 
     profile, res_gids, gen_gids, res_built = x
 
@@ -80,8 +80,7 @@ def test_plexos_node_profile(sc_build, cf_fpath):
     """Test that a plexos node buildout profile matches source data"""
     _, cf_res_gids = get_cf_attrs(cf_fpath)
     sc_build = sc_build.iloc[100:102]
-    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids,
-                       power_density=3, exclusion_area=0.0081)
+    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids=cf_res_gids)
 
     profile, _, gen_gids, res_built = x
 
@@ -91,14 +90,25 @@ def test_plexos_node_profile(sc_build, cf_fpath):
     arr *= res_built
     arr = arr.sum(axis=1)
 
-    diff = np.abs(profile - arr) / profile
-    diff = np.nan_to_num(diff)
+    msg = 'Buildout profiles are inconsistent'
+    assert np.allclose(profile, arr, rtol=0.005, atol=0.01), msg
 
-    # small difference is attributed to rounding error in res_built values
-    assert diff.max() < 0.01, 'Buildout profiles are inconsistent'
-    assert diff.mean() < 0.005, 'Buildout profiles are inconsistent'
 
-    return x
+def test_plexos_node_gid_extraction(sc_build, cf_fpath):
+    """Test that a plexos node buildout profile matches source data"""
+    sc_build = sc_build.iloc[100:102]
+    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids=None)
+
+    profile, _, gen_gids, res_built = x
+
+    with Resource(cf_fpath) as res:
+        arr = res['cf_profile', :, gen_gids]
+
+    arr *= res_built
+    arr = arr.sum(axis=1)
+
+    msg = 'Buildout profiles are inconsistent'
+    assert np.allclose(profile, arr, rtol=0.005, atol=0.01), msg
 
 
 def execute_pytest(capture='all', flags='-rapP'):
