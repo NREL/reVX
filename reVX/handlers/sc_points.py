@@ -256,8 +256,8 @@ class Point:
         """
         sc_gid = sc_point.name
         capacity = sc_point['capacity']
-        res_gids = json.loads(sc_point['res_gids'])
-        gid_counts = json.loads(sc_point['gid_counts'])
+        res_gids = sc_point['res_gids']
+        gid_counts = sc_point['gid_counts']
         res_cf = res_cf_means.loc[res_gids].values
 
         return cls(sc_gid, capacity, res_gids, gid_counts, res_cf)
@@ -291,8 +291,8 @@ class Point:
         return slices
 
     @classmethod
-    def create_all(cls, sc_table, res_cf_means, max_workers=None,
-                   points_per_worker=400):
+    def create_all(cls, sc_table, res_cf_means, offshore=False,
+                   max_workers=None, points_per_worker=400):
         """
         Create Points from all supply curve points in table
 
@@ -302,6 +302,8 @@ class Point:
             Supply curve table
         res_cf_means : pandas.Series
             Resource cf_means by gid
+        offshore : bool, optional
+            Include offshore points, by default False
         max_workers : int, optional
             Number of workers to use for point creation, 1 == serial,
             > 1 == parallel, None == parallel using all available cpus,
@@ -317,6 +319,8 @@ class Point:
         if max_workers is None:
             max_workers = os.cpu_count()
 
+        sc_table = SupplyCurvePoints._parse_sc_table(sc_table,
+                                                     offshore=offshore)
         if 'sc_gid' in sc_table:
             sc_table = sc_table.set_index('sc_gid')
 
@@ -333,9 +337,12 @@ class Point:
                 slices = Point._create_worker_slices(
                     sc_table, points_per_worker=points_per_worker)
                 for sc_slice in slices:
+                    table_slice = sc_table.iloc[sc_slice]
+                    res_slice = res_cf_means.loc[np.hstack(
+                        table_slice['res_gids'].values)]
                     future = exe.submit(cls.create_all,
-                                        sc_table.iloc[sc_slice],
-                                        res_cf_means,
+                                        table_slice,
+                                        res_slice,
                                         max_workers=1)
                     futures.append(future)
 
@@ -376,13 +383,8 @@ class SupplyCurvePoints:
             by default None
         points_per_worker : int, optional
             Number of points to create on each worker, by default 400
-        offshore : bool, optional
-            Include offshore points, by default False
         """
-        self._sc_table = parse_table(sc_table)
-        if 'offshore' in sc_table:
-            if not offshore:
-                self._sc_table = self._sc_table.loc[sc_table['offshore'] == 0]
+        self._sc_table = self._parse_sc_table(sc_table, offshore=offshore)
 
         self._sc_points, self._capacity, self._mask = \
             self._parse_sc_points(self._sc_table, res_meta,
@@ -496,6 +498,37 @@ class SupplyCurvePoints:
         return res_meta.set_index('gid')['cf_mean']
 
     @staticmethod
+    def _parse_sc_table(sc_table, offshore=False):
+        """
+        Load and clean-up sc_table for use to create Point objects
+
+        Parameters
+        ----------
+        sc_table : str | pandas.DataFrame
+            Supply Curve table .csv or pre-loaded pandas DataFrame
+        offshore : bool, optional
+            Include offshore points, by default False
+
+        Returns
+        -------
+        sc_table : pandas.DataFrame
+            Parsed and cleaned supply curve table
+        """
+        sc_table = parse_table(sc_table)
+
+        if 'offshore' in sc_table:
+            if not offshore:
+                sc_table = sc_table.loc[sc_table['offshore'] == 0]
+
+        if isinstance(sc_table.iloc[0]['res_gids'], str):
+            sc_table['res_gids'] = sc_table['res_gids'].apply(json.loads)
+
+        if isinstance(sc_table.iloc[0]['gid_counts'], str):
+            sc_table['gid_counts'] = sc_table['gid_counts'].apply(json.loads)
+
+        return sc_table
+
+    @staticmethod
     def _parse_sc_points(sc_table, res_meta, max_workers=None,
                          points_per_worker=400, offshore=False):
         """
@@ -523,14 +556,15 @@ class SupplyCurvePoints:
         tuple
             (sc_points, capacity, mask)
         """
-        sc_table = parse_table(sc_table).set_index('sc_gid')
-        if 'offshore' in sc_table:
-            if not offshore:
-                sc_table = sc_table.loc[sc_table['offshore'] == 0]
+        sc_table = SupplyCurvePoints._parse_sc_table(sc_table,
+                                                     offshore=offshore)
+        if 'sc_gid' in sc_table:
+            sc_table = sc_table.set_index('sc_gid')
 
         res_meta = SupplyCurvePoints._parse_res_meta(res_meta,
                                                      offshore=offshore)
         sc_points = Point.create_all(sc_table, res_meta,
+                                     offshore=offshore,
                                      max_workers=max_workers,
                                      points_per_worker=points_per_worker)
 
