@@ -410,7 +410,7 @@ class PlexosPlants:
                     plant_table, points_per_worker=plants_per_worker)
                 for table_slice in slices:
                     future = exe.submit(PlexosPlants._identify_plants,
-                                        plant_table.iloc[table_slice],
+                                        plant_table.iloc[table_slice].copy(),
                                         sc_table,
                                         dist_percentile=dist_percentile,
                                         lcoe_col=lcoe_col,

@@ -337,9 +337,9 @@ class Point:
                 slices = Point._create_worker_slices(
                     sc_table, points_per_worker=points_per_worker)
                 for sc_slice in slices:
-                    table_slice = sc_table.iloc[sc_slice]
+                    table_slice = sc_table.iloc[sc_slice].copy()
                     res_slice = res_cf_means.loc[np.hstack(
-                        table_slice['res_gids'].values)]
+                        table_slice['res_gids'].values)].copy()
                     future = exe.submit(cls.create_all,
                                         table_slice,
                                         res_slice,
@@ -525,7 +525,7 @@ class SupplyCurvePoints:
                 sc_table['res_gids'].apply(json.loads).values
 
         if isinstance(sc_table.iloc[0]['gid_counts'], str):
-            sc_table['gid_counts'] = \
+            sc_table.loc[:, 'gid_counts'] = \
                 sc_table['gid_counts'].apply(json.loads).values
 
         return sc_table
