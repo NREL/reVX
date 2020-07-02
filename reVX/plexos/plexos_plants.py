@@ -628,6 +628,7 @@ class PlexosPlants:
                  'gid_counts': plant['gid_counts'].values.tolist(),
                  'res_cf_means': plant['cf_means'].values.tolist(),
                  'build_capacity': plant['build_capacity'].values.tolist(),
+                 'sc_capacity': plant['capacity'].value.tolist(),
                  'cf_mean': np.hstack(plant['cf_means'].values).mean()},
                 name=i))
 
