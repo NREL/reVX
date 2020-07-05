@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import haversine_distances
 from warnings import warn
 
+from rex.resource import Resource
 from rex.utilities import parse_table, SpawnProcessPool
 
 from reVX.handlers.sc_points import Point, SupplyCurvePoints
@@ -23,7 +24,7 @@ class PlexosPlants:
     PLEXOS_COLUMNS = ['generator', 'busid', 'busname', 'capacity', 'latitude',
                       'longitude', 'system']
 
-    def __init__(self, plexos_table, sc_table, res_meta, max_workers=None,
+    def __init__(self, plexos_table, sc_table, cf_fpath, max_workers=None,
                  points_per_worker=400, offshore=False):
         """
         Parameters
@@ -33,9 +34,8 @@ class PlexosPlants:
             .json, or pandas DataFrame
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
-        res_meta : str | pandas.DataFrame
-            Path to resource .h5, generation .h5, or pre-extracted .csv or
-            pandas DataFrame
+        cf_fpath : str
+            Path to reV generation output .h5 file
         max_workers : int, optional
             Number of workers to use for point and plant creation, 1 == serial,
             > 1 == parallel, None == parallel using all available cpus,
@@ -51,8 +51,9 @@ class PlexosPlants:
         self._max_workers = max_workers
         self._plexos_table = self._parse_plexos_table(plexos_table)
         self._plant_table = None
+        self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
         self._sc_points = SupplyCurvePoints(
-            sc_table, res_meta, max_workers=max_workers,
+            sc_table, cf_fpath, max_workers=max_workers,
             points_per_worker=points_per_worker, offshore=offshore)
 
         self._capacity = self.plant_table['plant_capacity'].values
@@ -101,6 +102,17 @@ class PlexosPlants:
             self._plant_table = self._plant_table[cols].set_index('plant_id')
 
         return self._plant_table
+
+    @property
+    def cf_gid_map(self):
+        """
+        Mapping of {res_gid: gen_gid}
+
+        Returns
+        -------
+        dictionary
+        """
+        return self._cf_gid_map
 
     @property
     def sc_table(self):
@@ -219,6 +231,31 @@ class PlexosPlants:
                                           how='outer')
 
         return plexos_table
+
+    @staticmethod
+    def _parse_cf_gid_map(cf_fpath):
+        """
+        Map resource gids to gen gids
+
+        Parameters
+        ----------
+        cf_fpath : str
+            Path to reV generation output .h5 file
+
+        Returns
+        -------
+        cf_gid_map : dictionary
+            Mapping of {res_gid: gen_gid}
+        """
+        with Resource(cf_fpath) as f:
+            res_gids = f.get_meta_arr('gid')
+
+        if not isinstance(res_gids, np.ndarray):
+            res_gids = np.array(list(res_gids))
+
+        cf_gid_map = {gid: i for i, gid in enumerate(res_gids)}
+
+        return cf_gid_map
 
     @staticmethod
     def _check_coords(coords):
@@ -622,17 +659,18 @@ class PlexosPlants:
         """
         plants_meta = []
         for i, plant in enumerate(plants):
+            res_gids = plant['res_gids'].values.tolist()
             plants_meta.append(pd.Series(
                 {'sc_gids': plant['sc_gid'].values.tolist(),
-                 'res_gids': plant['res_gids'].values.tolist(),
-                 'gid_counts': plant['gid_counts'].values.tolist(),
+                 'res_gids': res_gids,
+                 'gen_gids': [[self.cf_gid_map[gid] for gid in gids]
+                              for gids in res_gids],
                  'res_cf_means': plant['cf_means'].values.tolist(),
                  'build_capacity': plant['build_capacity'].values.tolist(),
-                 'sc_capacity': plant['capacity'].value.tolist(),
                  'cf_mean': np.hstack(plant['cf_means'].values).mean()},
                 name=i))
 
-        plants_meta = pd.concat(plants_meta, axis=1).T
+        plants_meta = pd.concat(plants_meta, axis=1).Ts
         plants_meta.index.name = 'plant_id'
 
         plants_meta = self.plexos_table.merge(plants_meta.reset_index(),
@@ -642,6 +680,58 @@ class PlexosPlants:
             plants_meta.to_csv(out_fpath, index=False)
 
         return plants_meta
+
+    def _make_plant_meta(self, bus_meta):
+        """
+        Create plant meta data for given bus
+
+        Parameters
+        ----------
+        bus_meta : pandas.Series
+            Meta data for desired bus to build plant for
+
+        Returns
+        -------
+        plant_meta : pandas.DataFrame
+            Meta data for plant associated with given bus, constructed from:
+            - Plant table
+            - Supply Curve table
+            - Bus capacity
+        """
+        plant_meta = pd.concat(self[bus_meta['plant_id']], axis=1).T
+        plant_meta['gen_gids'] = \
+            plant_meta['res_gids'].apply(lambda gids: [self.cf_gid_map[gid]
+                                                       for gid in gids])
+        plant_meta['plant_cf_mean'] = plant_meta['cf_means'].sum()
+
+        sc_cols = ['res_gids', 'gen_gids', 'gid_counts', 'capacity']
+        sc_cols = [c for c in self.sc_table if c not in sc_cols]
+        plant_meta = plant_meta.merge(self.sc_table[sc_cols],
+                                      on='sc_gid', how='left')
+
+        plant_capacity = plant_meta['build_capacity'].sum()
+        if plant_capacity != bus_meta['capacity']:
+            bulid_capacity = (plant_meta['build_capacity'] / plant_capacity
+                              * bus_meta['capacity'])
+            plant_meta.loc[:, 'build_capacity'] = bulid_capacity
+
+        return plant_meta
+
+    @staticmethod
+    def _make_profile(cf_fpath, sc_build):
+        profile = None
+        for _, row in sc_build.iterrows():
+            gen_gids = row['gen_gids']
+            build_capacity = row['build_capacity']
+            with Resource(cf_fpath) as f:
+                cf_profile = f['cf_profile', :, gen_gids]
+
+            if profile is None:
+                profile = cf_profile * build_capacity
+            else:
+                profile += cf_profile * build_capacity
+
+        return profile
 
     @classmethod
     def fill(cls, plexos_table, sc_table, res_meta, dist_percentile=90,
@@ -695,7 +785,7 @@ class PlexosPlants:
                                 lcoe_col=lcoe_col,
                                 lcoe_thresh=lcoe_thresh,
                                 plants_per_worker=plants_per_worker)
+        if out_fpath is not None:
+            pp.plants_meta(plants, out_fpath=out_fpath)
 
-        plants_meta = pp.plants_meta(plants, out_fpath=out_fpath)
-
-        return plants, plants_meta
+        return plants
