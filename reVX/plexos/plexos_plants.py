@@ -703,7 +703,6 @@ class PlexosPlants:
         plant_meta['gen_gids'] = \
             plant_meta['res_gids'].apply(lambda gids: [self.cf_gid_map[gid]
                                                        for gid in gids])
-        plant_meta['plant_cf_mean'] = plant_meta['cf_means'].sum()
 
         sc_cols = ['res_gids', 'gen_gids', 'gid_counts', 'capacity']
         sc_cols = [c for c in self.sc_table if c not in sc_cols]
