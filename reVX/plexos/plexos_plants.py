@@ -12,6 +12,7 @@ from warnings import warn
 from rex.resource import Resource
 from rex.utilities import parse_table, SpawnProcessPool
 
+from reVX.handlers.outputs import Outputs
 from reVX.handlers.sc_points import Point, SupplyCurvePoints
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ class PlexosPlants:
         self._max_workers = max_workers
         self._plexos_table = self._parse_plexos_table(plexos_table)
         self._plant_table = None
+        self._cf_fpath = cf_fpath
         self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
         self._sc_points = SupplyCurvePoints(
             sc_table, cf_fpath, max_workers=max_workers,
@@ -150,13 +152,13 @@ class PlexosPlants:
     @property
     def plants(self):
         """
-        PLEXOS Plants
+        PLEXOS Plant tables
 
         Returns
         -------
-        ndarray
+        list
         """
-        return self._plants
+        return [pd.concat(plant, axis=1).T for plant in self._plants]
 
     @property
     def sc_bus_dist(self):
@@ -631,11 +633,9 @@ class PlexosPlants:
                                        plants_per_worker=plants_per_worker)
         self._fill_plants(plants)
 
-        plants = [pd.concat(plant, axis=1).T for plant in self.plants]
+        return self.plants
 
-        return plants
-
-    def plants_meta(self, plants, out_fpath=None):
+    def plants_meta(self, out_fpath=None):
         """
         Create plants meta data from filled plants DataFrames:
             - Location (lat, lon)
@@ -658,7 +658,7 @@ class PlexosPlants:
             res_gids, and res gid_counts for all plants
         """
         plants_meta = []
-        for i, plant in enumerate(plants):
+        for i, plant in enumerate(self.plants):
             res_gids = plant['res_gids'].values.tolist()
             plants_meta.append(pd.Series(
                 {'sc_gids': plant['sc_gid'].values.tolist(),
@@ -670,7 +670,7 @@ class PlexosPlants:
                  'cf_mean': np.hstack(plant['cf_means'].values).mean()},
                 name=i))
 
-        plants_meta = pd.concat(plants_meta, axis=1).Ts
+        plants_meta = pd.concat(plants_meta, axis=1).T
         plants_meta.index.name = 'plant_id'
 
         plants_meta = self.plexos_table.merge(plants_meta.reset_index(),
@@ -718,9 +718,24 @@ class PlexosPlants:
         return plant_meta
 
     @staticmethod
-    def _make_profile(cf_fpath, sc_build):
+    def _make_profile(cf_fpath, plant_build):
+        """
+        Make generation profiles for given plant buildout
+
+        Parameters
+        ----------
+        cf_fpath : str
+            Path to reV Generation output .h5 file to pull CF profiles from
+        plant_build : pandas.DataFrame
+            DataFrame describing plant buildout
+
+        Returns
+        -------
+        profile: ndarray
+            Generation profile for plant as a vector
+        """
         profile = None
-        for _, row in sc_build.iterrows():
+        for _, row in plant_build.iterrows():
             gen_gids = row['gen_gids']
             build_capacity = row['build_capacity']
             with Resource(cf_fpath) as f:
@@ -731,7 +746,54 @@ class PlexosPlants:
             else:
                 profile += cf_profile * build_capacity
 
+        if len(profile.shape) != 1:
+            profile = profile.flatten()
+
         return profile
+
+    def aggregate_plants(self, out_fpath):
+        """
+        Aggregate plants from capacity factor profiles and save to given
+        output .h5 path
+
+        Parameters
+        ----------
+        out_fpath : str
+            Output .h5 path to save profiles to
+        """
+        with Outputs(out_fpath, mode='w') as f_out:
+            f_out.set_version_attr()
+            with Resource(self._cf_fpath) as f_in:
+                logger.info('Copying time_index')
+                f_out['time_index'] = f_in.time_index
+
+            logger.info('Writing meta data')
+            f_out['meta'] = self.plants_meta()
+
+            f_out.h5.create_group('plant_meta')
+            gen_profiles = []
+            for bus_id, bus_meta in self.plexos_table:
+                logger.info('Extracting profiles and writring meta for bus {}'
+                            .format(bus_id))
+                plant_meta = self._make_plant_meta(bus_meta)
+                gen_profiles.append(self._make_profile(self._cf_fpath,
+                                                       plant_meta.copy()))
+
+                plant_meta = f_out.to_records_array(plant_meta)
+                logger.debug('Writing plant_meta/{}'.format(bus_id))
+                f_out._create_dset('plant_meta/{}'.format(bus_id),
+                                   plant_meta.shape,
+                                   plant_meta.dtype,
+                                   chunks=None,
+                                   data=plant_meta)
+
+            logger.info('Writing Generation Profiles')
+            gen_profiles = np.dstack(gen_profiles)[0].astype('float32')
+            f_out._create_dset('gen_profiles',
+                               gen_profiles.shape,
+                               gen_profiles.dtype,
+                               chunks=(None, 100),
+                               data=gen_profiles)
 
     @classmethod
     def fill(cls, plexos_table, sc_table, res_meta, dist_percentile=90,
@@ -786,6 +848,6 @@ class PlexosPlants:
                                 lcoe_thresh=lcoe_thresh,
                                 plants_per_worker=plants_per_worker)
         if out_fpath is not None:
-            pp.plants_meta(plants, out_fpath=out_fpath)
+            pp.plants_meta(out_fpath=out_fpath)
 
         return plants
