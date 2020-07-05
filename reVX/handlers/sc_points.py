@@ -39,8 +39,9 @@ class Point:
         res_order = np.argsort(res_cf)[::-1]
         self._cf_means = res_cf[res_order]
         self._res_gids = self._parse_list(res_gids)[res_order]
-        gid_counts = self._parse_list(gid_counts)[res_order]
-        self._res_capacity = gid_counts / np.sum(gid_counts) * self._capacity
+        self._gid_counts = self._parse_list(gid_counts)[res_order]
+        self._res_capacity = \
+            self._gid_counts / np.sum(self._gid_counts) * self._capacity
 
     def __repr__(self):
         msg = "{} {}".format(self.__class__.__name__, self.sc_gid)
@@ -89,6 +90,17 @@ class Point:
         ndarray
         """
         return self._res_gids
+
+    @property
+    def gid_counts(self):
+        """
+        Resource gid exclusion pixel counts
+
+        Returns
+        -------
+        ndarray
+        """
+        return self._gid_counts
 
     @property
     def resource_capacity(self):
@@ -166,17 +178,20 @@ class Point:
 
         sc_point = {'sc_gid': self.sc_gid,
                     'res_gids': self.resource_gids[drop_slice].tolist(),
+                    'gid_counts': self.gid_counts[drop_slice].tolist(),
                     'cf_means': self.cf_means[drop_slice].tolist(),
                     'build_capacity': build_capacity}
         sc_point = pd.Series(sc_point)
 
         if drop is None:
             self._res_gids = None
+            self._gid_counts = None
             self._res_capacity = None
             self._cf_means = None
             self._capacity = 0.0
         else:
             self._res_gids = np.delete(self._res_gids, drop_slice)
+            self._gid_counts = np.delete(self._gid_counts, drop_slice)
             self._res_capacity = np.delete(self._res_capacity, drop_slice)
             self._cf_means = np.delete(self._cf_means, drop_slice)
             self._capacity -= capacity

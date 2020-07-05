@@ -734,17 +734,17 @@ class PlexosPlants:
         profile: ndarray
             Generation profile for plant as a vector
         """
-        profile = None
-        for _, row in plant_build.iterrows():
-            gen_gids = row['gen_gids']
-            build_capacity = row['build_capacity']
-            with Resource(cf_fpath) as f:
-                cf_profile = f['cf_profile', :, gen_gids]
-
-            if profile is None:
-                profile = cf_profile * build_capacity
-            else:
-                profile += cf_profile * build_capacity
+        with Resource(cf_fpath) as f:
+            profile = None
+            for _, row in plant_build.iterrows():
+                gid_capacities = (row['gid_counts'] / np.sum(row['gid_counts'])
+                                  * row['build_capacity'])
+                for gen_gid, gid_cap in zip(row['gen_gids'], gid_capacities):
+                    cf_profile = f['cf_profile', :, gen_gid]
+                    if profile is None:
+                        profile = cf_profile * gid_cap
+                    else:
+                        profile += cf_profile * gid_cap
 
         if len(profile.shape) != 1:
             profile = profile.flatten()
