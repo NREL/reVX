@@ -13,6 +13,7 @@ import pandas as pd
 from scipy.spatial import cKDTree
 from warnings import warn
 
+from rex.rechunk_h5 import to_records_array
 from rex.utilities.execution import SpawnProcessPool
 
 from reVX.handlers.outputs import Outputs
@@ -1147,7 +1148,7 @@ class Manager:
                                     .format(group, out_fpath))
 
                         with Outputs(out_fpath, mode='a') as out:
-                            meta = out.to_records_array(meta)
+                            meta = to_records_array(meta)
                             time_index = np.array(time_index.astype(str),
                                                   dtype='S20')
                             out._create_dset('{}/meta'.format(group),

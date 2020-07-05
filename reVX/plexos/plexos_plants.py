@@ -9,6 +9,7 @@ import pandas as pd
 from sklearn.metrics.pairwise import haversine_distances
 from warnings import warn
 
+from rex.rechunk_h5 import to_records_array
 from rex.resource import Resource
 from rex.utilities import parse_table, SpawnProcessPool
 
@@ -779,7 +780,7 @@ class PlexosPlants:
                 gen_profiles.append(self._make_profile(self._cf_fpath,
                                                        plant_meta.copy()))
 
-                plant_meta = f_out.to_records_array(plant_meta)
+                plant_meta = to_records_array(plant_meta)
                 logger.debug('Writing plant_meta/{}'.format(bus_id))
                 f_out._create_dset('plant_meta/{}'.format(bus_id),
                                    plant_meta.shape,
