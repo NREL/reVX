@@ -788,7 +788,7 @@ class PlexosPlants:
                                    data=plant_meta)
 
             logger.info('Writing Generation Profiles')
-            gen_profiles = np.dstack(gen_profiles)[0].astype('float32')
+            gen_profiles = np.round(np.dstack(gen_profiles)[0]).astype('uint8')
             f_out._create_dset('gen_profiles',
                                gen_profiles.shape,
                                gen_profiles.dtype,
