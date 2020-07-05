@@ -739,12 +739,12 @@ class PlexosPlants:
             for _, row in plant_build.iterrows():
                 gid_capacities = (row['gid_counts'] / np.sum(row['gid_counts'])
                                   * row['build_capacity'])
-                for gen_gid, gid_cap in zip(row['gen_gids'], gid_capacities):
-                    cf_profile = f['cf_profile', :, gen_gid]
+                cf_profiles = f['cf_profile', :, row['gen_gids']]
+                for i, cf_profile in enumerate(cf_profiles.T):
                     if profile is None:
-                        profile = cf_profile * gid_cap
+                        profile = cf_profile * gid_capacities[i]
                     else:
-                        profile += cf_profile * gid_cap
+                        profile += cf_profile * gid_capacities[i]
 
         if len(profile.shape) != 1:
             profile = profile.flatten()
