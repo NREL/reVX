@@ -772,7 +772,7 @@ class PlexosPlants:
 
             f_out.h5.create_group('plant_meta')
             gen_profiles = []
-            for bus_id, bus_meta in self.plexos_table:
+            for bus_id, bus_meta in self.plexos_table.iterrows():
                 logger.info('Extracting profiles and writring meta for bus {}'
                             .format(bus_id))
                 plant_meta = self._make_plant_meta(bus_meta)
