@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-PLEXOS command line interface (cli).
+reV-ReEDS-PLEXOS command line interface (cli).
 """
 import os
 import pandas as pd
@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def main(ctx, name, job_input, out_dir, reeds_dir, cf_years, build_years,
          scenario, verbose):
-    """PLEXOS Command Line Interface"""
+    """reV-ReEDS-PLEXOS Command Line Interface"""
 
     ctx.ensure_object(dict)
     ctx.obj['NAME'] = name
@@ -85,6 +85,7 @@ def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_year,
         args += '-v '
 
     cmd = 'python -m reVX.plexos.plexos_cli {}'.format(args)
+
     return cmd
 
 
@@ -142,9 +143,10 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
                            '(SLURM jobid #{}) on Eagle.'
                            .format(node_name, slurm.id))
                 else:
-                    msg = ('Was unable to kick off reVX generation job "{}". '
-                           'Please see the stdout error messages'
+                    msg = ('Was unable to kick off reVX plexos aggregation job'
+                           ' "{}". Please see the stdout error messages'
                            .format(node_name))
+
                 click.echo(msg)
                 logger.info(msg)
 

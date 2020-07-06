@@ -2,6 +2,7 @@
 """
 Module to create wind and solar plants for PLEXOS buses
 """
+import json
 import logging
 import numpy as np
 import os
@@ -26,8 +27,7 @@ class PlexosPlants:
     PLEXOS_COLUMNS = ['generator', 'busid', 'busname', 'capacity', 'latitude',
                       'longitude', 'system']
 
-    def __init__(self, plexos_table, sc_table, cf_fpath, max_workers=None,
-                 points_per_worker=400, offshore=False):
+    def __init__(self, plexos_table, sc_table, cf_fpath, offshore=False):
         """
         Parameters
         ----------
@@ -38,26 +38,17 @@ class PlexosPlants:
             Supply Curve table .csv or pre-loaded pandas DataFrame
         cf_fpath : str
             Path to reV generation output .h5 file
-        max_workers : int, optional
-            Number of workers to use for point and plant creation, 1 == serial,
-            > 1 == parallel, None == parallel using all available cpus,
-            by default None
-        points_per_worker : int, optional
-            Number of points to create on each worker, by default 400
         offshore : bool, optional
             Include offshore points, by default False
         """
-        if max_workers is None:
-            max_workers = os.cpu_count()
-
-        self._max_workers = max_workers
+        self._offshore = offshore
         self._plexos_table = self._parse_plexos_table(plexos_table)
         self._plant_table = None
         self._cf_fpath = cf_fpath
         self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
-        self._sc_points = SupplyCurvePoints(
-            sc_table, cf_fpath, max_workers=max_workers,
-            points_per_worker=points_per_worker, offshore=offshore)
+        self._sc_table = SupplyCurvePoints._parse_sc_table(sc_table,
+                                                           offshore=offshore)
+        self._sc_points = None
 
         self._capacity = self.plant_table['plant_capacity'].values
         self._plants = np.full(len(self), None)
@@ -126,7 +117,7 @@ class PlexosPlants:
         -------
         pandas.DataFrame
         """
-        return self._sc_points.sc_table
+        return self._sc_table
 
     @property
     def sc_points(self):
@@ -159,7 +150,8 @@ class PlexosPlants:
         -------
         list
         """
-        return [pd.concat(plant, axis=1).T for plant in self._plants]
+        return [pd.concat(plant, axis=1).T for plant in self._plants
+                if plant is not None]
 
     @property
     def sc_bus_dist(self):
@@ -511,6 +503,31 @@ class PlexosPlants:
 
         return sc_gids, dists, bus_dists
 
+    def _create_sc_points(self, max_workers=None, points_per_worker=400):
+        """
+        Create Supply Curve Point objects, used for filling plants
+
+        Parameters
+        ----------
+        max_workers : int, optional
+            Number of workers to use for point and plant creation, 1 == serial,
+            > 1 == parallel, None == parallel using all available cpus,
+            by default None
+        points_per_worker : int, optional
+            Number of points to create on each worker, by default 400
+
+        Returns
+        -------
+        sc_points : list
+            List of Supply Curve Point objects
+        """
+        sc_points = SupplyCurvePoints(self.sc_table, self._cf_fpath,
+                                      max_workers=max_workers,
+                                      points_per_worker=points_per_worker,
+                                      offshore=self._offshore)
+
+        return sc_points
+
     def _allocate_sc_gids(self, sc_gids, dists, bus_dists):
         """
         Allocate capacity from supply curve points to plants
@@ -603,13 +620,20 @@ class PlexosPlants:
             logger.info('{} of {} plants have been filled'
                         .format(np.sum(self.plant_capacity <= 0), len(self)))
 
-    def fill_plants(self, dist_percentile=90, lcoe_col='total_lcoe',
-                    lcoe_thresh=1.3, plants_per_worker=40):
+    def fill_plants(self, max_workers=None, points_per_worker=400,
+                    dist_percentile=90, lcoe_col='total_lcoe', lcoe_thresh=1.3,
+                    plants_per_worker=40):
         """
         Fill plants with capacity from supply curve points
 
         Parameters
         ----------
+        max_workers : int, optional
+            Number of workers to use for point and plant creation, 1 == serial,
+            > 1 == parallel, None == parallel using all available cpus,
+            by default None
+        points_per_worker : int, optional
+            Number of points to create on each worker, by default 400
         dist_percentile : int, optional
             Percentile to use to compute distance threshold using sc_gid to
             SubStation distance , by default 90
@@ -626,15 +650,21 @@ class PlexosPlants:
         plants : list
             List of plants being built
         """
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        if self.sc_points is None:
+            self._sc_points = \
+                self._create_sc_points(max_workers=max_workers,
+                                       points_per_worker=points_per_worker)
+
         plants = self._identify_plants(self.plant_table, self.sc_table,
                                        dist_percentile=dist_percentile,
                                        lcoe_col=lcoe_col,
                                        lcoe_thresh=lcoe_thresh,
-                                       max_workers=self._max_workers,
+                                       max_workers=max_workers,
                                        plants_per_worker=plants_per_worker)
         self._fill_plants(plants)
-
-        return self.plants
 
     def plants_meta(self, out_fpath=None):
         """
@@ -664,6 +694,7 @@ class PlexosPlants:
             plants_meta.append(pd.Series(
                 {'sc_gids': plant['sc_gid'].values.tolist(),
                  'res_gids': res_gids,
+                 'gid_counts': plant['gid_counts'].values.tolist(),
                  'gen_gids': [[self.cf_gid_map[gid] for gid in gids]
                               for gids in res_gids],
                  'res_cf_means': plant['cf_means'].values.tolist(),
@@ -797,7 +828,7 @@ class PlexosPlants:
                                data=gen_profiles)
 
     @classmethod
-    def fill(cls, plexos_table, sc_table, res_meta, dist_percentile=90,
+    def fill(cls, plexos_table, sc_table, cf_fpath, dist_percentile=90,
              lcoe_col='total_lcoe', lcoe_thresh=1.3, max_workers=None,
              points_per_worker=400, plants_per_worker=40, offshore=False,
              out_fpath=None):
@@ -811,9 +842,8 @@ class PlexosPlants:
             .json, or pandas DataFrame
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
-        res_meta : str | pandas.DataFrame
-            Path to resource .h5, generation .h5, or pre-extracted .csv or
-            pandas DataFrame
+        cf_fpath : str
+            Path to reV Generation output .h5 file to pull CF profiles from
         dist_percentile : int, optional
             Percentile to use to compute distance threshold using sc_gid to
             SubStation distance , by default 90
@@ -837,18 +867,140 @@ class PlexosPlants:
 
         Returns
         -------
-        plants : list
-            List of plant supply curve tables
         plants_meta : pandas.DataFrame
-            Plants meta data
+            Plants buildout meta data
         """
-        pp = cls(plexos_table, sc_table, res_meta, max_workers=max_workers,
-                 points_per_worker=points_per_worker, offshore=offshore)
-        plants = pp.fill_plants(dist_percentile=dist_percentile,
-                                lcoe_col=lcoe_col,
-                                lcoe_thresh=lcoe_thresh,
-                                plants_per_worker=plants_per_worker)
-        if out_fpath is not None:
-            pp.plants_meta(out_fpath=out_fpath)
+        pp = cls(plexos_table, sc_table, cf_fpath, offshore=offshore)
+        pp.fill_plants(max_workers=max_workers,
+                       points_per_worker=points_per_worker,
+                       dist_percentile=dist_percentile,
+                       lcoe_col=lcoe_col,
+                       lcoe_thresh=lcoe_thresh,
+                       plants_per_worker=plants_per_worker)
 
-        return plants
+        plants_meta = pp.plants_meta(out_fpath=out_fpath)
+
+        return plants_meta
+
+    @staticmethod
+    def _split_plant_builds(plant_builds):
+        """
+        Split plant_builds table into PLEXOS table and plant builds meta
+
+        Parameters
+        ----------
+        plant_builds : pandas.DataFrame | str
+            DataFrame of pre-computed plant builds, or path to .csv containing
+            pre-computed plant builds
+
+        Returns
+        -------
+        plexos_table : pandas.DataFrame
+            PLEXOS table
+        plant_builds : pandas.DataFrame
+            Buildout for each unique plant
+        """
+        plant_builds = parse_table(plant_builds)
+        plant_cols = ['plant_id', 'plant_capacity', 'sc_gids', 'res_gids',
+                      'gid_counts', 'gen_gids', 'res_cf_means',
+                      'build_capacity', 'cf_mean']
+        plexos_cols = [c for c in plant_builds if c not in plant_cols]
+        plexos_table = plant_builds[plexos_cols].copy()
+
+        plant_builds = plant_builds[plant_cols].drop_duplicates('plant_id')
+        plant_builds = \
+            plant_builds.sort_values('plant_id').set_index('plant_id')
+
+        list_cols = ['sc_gids', 'res_gids', 'gid_counts', 'res_cf_means',
+                     'build_capacity']
+        for c in list_cols:
+            if isinstance(plant_builds.iloc[0][c], str):
+                plant_builds.loc[:, c] = \
+                    plant_builds[c].apply(json.loads).values
+
+        return plexos_table, plant_builds
+
+    @classmethod
+    def aggregate(cls, plant_builds, sc_table, cf_fpath, out_fpath,
+                  offshore=False):
+        """
+        Aggregate pre-build plants
+
+        Parameters
+        ----------
+        plant_builds : [type]
+            [description]
+        sc_table : str | pandas.DataFrame
+            Supply Curve table .csv or pre-loaded pandas DataFrame
+        cf_fpath : str
+            Path to reV Generation output .h5 file to pull CF profiles from
+        out_fpath : str
+            .h5 path to save aggregated plant profiles to
+        offshore : bool, optional
+            Include offshore points, by default False
+        """
+        plexos_table, plant_builds = cls._split_plant_builds(plant_builds)
+        pp = cls(plexos_table, sc_table, cf_fpath, offshore=offshore)
+        # Add plants to PlexosPlant instance
+        for pid, build in plant_builds.iterrows():
+            plant = []
+            for i in range(len(build['sc_gids'])):
+                sc_point = \
+                    pd.Series({'sc_gid': build['sc_gids'][i],
+                               'res_gids': build['res_gids'][i],
+                               'gid_counts': build['gid_counts'][i],
+                               'cf_means': build['res_cf_means'][i],
+                               'build_capacity': build['build_capacity'][i]})
+                plant.append(sc_point)
+
+            pp[pid] = plant
+
+        pp.aggregate_plants(out_fpath)
+
+    @classmethod
+    def run(cls, plexos_table, sc_table, cf_fpath, out_fpath,
+            dist_percentile=90, lcoe_col='total_lcoe', lcoe_thresh=1.3,
+            max_workers=None, points_per_worker=400, plants_per_worker=40,
+            offshore=False):
+        """
+        Find, fill, and save profiles for Plants associated with given PLEXOS
+        buses
+
+        Parameters
+        ----------
+        plexos_table : str | pandas.DataFrame
+            PLEXOS table of bus locations and capacity provided as a .csv,
+            .json, or pandas DataFrame
+        sc_table : str | pandas.DataFrame
+            Supply Curve table .csv or pre-loaded pandas DataFrame
+        cf_fpath : str
+            Path to reV Generation output .h5 file to pull CF profiles from
+        out_fpath : str
+            .h5 path to save aggregated plant profiles to
+        dist_percentile : int, optional
+            Percentile to use to compute distance threshold using sc_gid to
+            SubStation distance , by default 90
+        lcoe_col : str, optional
+            LCOE column to sort by, by default 'total_lcoe'
+        lcoe_thresh : float, optional
+            LCOE threshold multiplier, exclude sc_gids above threshold,
+            by default 1.3
+        max_workers : int, optional
+            Number of workers to use for point and plant creation, 1 == serial,
+            > 1 == parallel, None == parallel using all available cpus,
+            by default None
+        points_per_worker : int, optional
+            Number of points to create on each worker, by default 400
+        plants_per_worker : int, optional
+            Number of plants to identify on each worker, by default 40
+        offshore : bool, optional
+            Include offshore points, by default False
+        """
+        pp = cls(plexos_table, sc_table, cf_fpath, offshore=offshore)
+        pp.fill_plants(max_workers=max_workers,
+                       points_per_worker=points_per_worker,
+                       dist_percentile=dist_percentile,
+                       lcoe_col=lcoe_col,
+                       lcoe_thresh=lcoe_thresh,
+                       plants_per_worker=plants_per_worker)
+        pp.aggregate_plants(out_fpath)
