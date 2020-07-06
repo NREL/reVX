@@ -20,7 +20,7 @@ requirements:
     - geopandas
     - h5py
     - nrel-rex>=0.1.13
-    - nrel-rev
+    - nrel-rev>=0.4.5
     - numpy>=1.16
     - pandas
     - psutil
@@ -41,7 +41,7 @@ requirements:
     - geopandas
     - h5py
     - nrel-rex>=0.1.13
-    - nrel-rev
+    - nrel-rev>=0.4.5
     - {{ pin_compatible('numpy') }}
     - pandas
     - psutil
