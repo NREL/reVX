@@ -199,7 +199,7 @@ class PlexosNode:
             res_built.append(np.round(to_build, decimals=5))
 
             if self._forecast_map is None:
-                gen_gid = row['gen_gids']
+                gen_gid = int(row['gen_gids'])
                 with Outputs(self._cf_fpath, mode='r') as cf_outs:
                     cf_profile = cf_outs['cf_profile', :, gen_gid]
             else:
