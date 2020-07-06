@@ -6,7 +6,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from rex.resource import Resource
-from reVX.plexos.plexos_node import PlexosNode
+from reVX.plexos.rev_reeds_plexos import PlexosNode
 from reVX.plexos.utilities import DataCleaner
 
 
