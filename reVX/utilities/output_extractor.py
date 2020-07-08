@@ -32,7 +32,7 @@ def output_extractor(my_fpath, out_fpath, year=None):
 
     logger.info('Transfering all datasets for {} from {} to {}'
                 .format(year, my_fpath, out_fpath))
-    with h5py.File(out_fpath, 'w') as f_out:
+    with h5py.File(out_fpath, 'w-') as f_out:
         with h5py.File(my_fpath, 'r') as f_src:
             logger.debug('Transfering global attrs')
             for k, v in f_src.attrs.items():
