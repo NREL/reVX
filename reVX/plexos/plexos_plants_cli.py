@@ -76,7 +76,8 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir, dist_percentile,
                   verbose=verbose)
         logger.info('Aggregating Plant for buses in PLEXOS table: {}'
                     .format(plexos_table))
-        out_fpath = os.path.basename(plexos_table).replace('.csv', '.h5')
+        out_fpath = os.path.basename(cf_fpath).split('_')[-1]
+        out_fpath = os.path.basename(plexos_table).replace('.csv', out_fpath)
         out_fpath = os.path.join(out_dir, out_fpath)
         PlexosPlants.run(plexos_table, sc_table, cf_fpath, out_fpath,
                          dist_percentile=dist_percentile, lcoe_col=lcoe_col,
