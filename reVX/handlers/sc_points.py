@@ -211,8 +211,6 @@ class Point:
 
         self._avail_cap[drop_slice] = 0.0
         availability = self.capacity > 0
-        if not availability:
-            print(self._avail_cap)
 
         return sc_point, capacity, availability
 
