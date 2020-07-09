@@ -680,7 +680,8 @@ class PlantProfileAggregation:
         self._sc_table = SupplyCurvePoints._parse_sc_table(sc_table,
                                                            offshore=offshore)
         if plants is None:
-            self._plants = PlexosPlants(plexos_table, sc_table, cf_fpath,
+            self._plants = PlexosPlants(self._plexos_table, self._sc_table,
+                                        cf_fpath,
                                         dist_percentile=dist_percentile,
                                         lcoe_col=lcoe_col,
                                         lcoe_thresh=lcoe_thresh,
