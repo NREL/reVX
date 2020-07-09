@@ -192,7 +192,8 @@ class Point:
             Whether Supply Curve point still has available capacity
         """
         drop_slice = slice(self.available_res_gids[0], drop, None)
-        capacity = np.sum(self.available_capacities)
+        print(drop_slice)
+        capacity = self.capacity
         if capacity < build_capacity:
             build_capacity = capacity
 
@@ -202,9 +203,11 @@ class Point:
                     'cf_means': self.cf_means[drop_slice].tolist(),
                     'build_capacity': build_capacity}
         sc_point = pd.Series(sc_point)
+        print(sc_point)
 
         self._avail_cap[drop_slice] = 0.0
         availability = self.capacity > 0
+        print(availability)
 
         return sc_point, capacity, availability
 
