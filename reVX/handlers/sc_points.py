@@ -198,7 +198,6 @@ class Point:
             e = drop
 
         drop_slice = slice(s, e, None)
-        print(drop_slice)
         capacity = self.capacity
         if capacity < build_capacity:
             build_capacity = capacity
@@ -209,11 +208,11 @@ class Point:
                     'cf_means': self.cf_means[drop_slice].tolist(),
                     'build_capacity': build_capacity}
         sc_point = pd.Series(sc_point)
-        print(sc_point)
 
         self._avail_cap[drop_slice] = 0.0
         availability = self.capacity > 0
-        print(availability)
+        if not availability:
+            print(self._avail_cap)
 
         return sc_point, capacity, availability
 
