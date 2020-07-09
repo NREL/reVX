@@ -191,7 +191,13 @@ class Point:
         availability : bool
             Whether Supply Curve point still has available capacity
         """
-        drop_slice = slice(self.available_res_gids[0], drop, None)
+        s = self.available_res_gids[0]
+        if drop is not None:
+            e = s + drop
+        else:
+            e = drop
+
+        drop_slice = slice(s, e, None)
         print(drop_slice)
         capacity = self.capacity
         if capacity < build_capacity:
