@@ -89,11 +89,11 @@ class Plants:
 
         Returns
         -------
-        list
+        dict
         """
-        plant_builds = [pd.concat(plant, axis=1).T
-                        for plant in self._plants.values()
-                        if plant is not None]
+        plant_builds = {pid: pd.concat(plant, axis=1).T
+                        for pid, plant in self.plants.items()
+                        if plant is not None}
 
         return plant_builds
 
@@ -778,7 +778,7 @@ class PlantProfileAggregation:
 
         Returns
         -------
-        list
+        dict
         """
         return self._plants.plant_builds
 
@@ -902,7 +902,7 @@ class PlantProfileAggregation:
             res_gids, and res gid_counts for all plants
         """
         plants_meta = []
-        for pid, plant in self.plants.items():
+        for pid, plant in self.plant_builds.items():
             res_gids = plant['res_gids'].values.tolist()
             plants_meta.append(pd.Series(
                 {'sc_gids': plant['sc_gid'].values.tolist(),
