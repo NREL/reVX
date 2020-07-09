@@ -74,13 +74,28 @@ class Plants:
     @property
     def plants(self):
         """
-        Plants
+        Dictionary matching plants to plant ids
+
+        Returns
+        -------
+        dict
+        """
+        return self._plants
+
+    @property
+    def plant_builds(self):
+        """
+        List of plant builds
 
         Returns
         -------
         list
         """
-        return list(self._plants.values())
+        plant_builds = [pd.concat(plant, axis=1).T
+                        for plant in self._plants.values()
+                        if plant is not None]
+
+        return plant_builds
 
     @classmethod
     def load(cls, plants_fpath):
@@ -585,14 +600,14 @@ class PlexosPlants(Plants):
             res_gids, and res gid_counts for all plants
         """
         plants_meta = []
-        for i, plant in self._plants:
+        for pid, plant in self.plants.items():
             plants_meta.append(pd.Series(
                 {'sc_gids': plant['sc_gid'].values.tolist(),
                  'res_gids': plant['res_gids'].values.tolist(),
                  'gid_counts': plant['gid_counts'].values.tolist(),
                  'res_cf_means': plant['cf_means'].values.tolist(),
                  'build_capacity': plant['build_capacity'].values.tolist()},
-                name=i))
+                name=pid))
 
         plants_meta = pd.concat(plants_meta, axis=1).T
         plants_meta.index.name = 'plant_id'
@@ -748,14 +763,24 @@ class PlantProfileAggregation:
     @property
     def plants(self):
         """
-        PLEXOS Plant tables
+        Dictionary matching plants to plant ids
+
+        Returns
+        -------
+        dict
+        """
+        return self._plants.plants
+
+    @property
+    def plant_builds(self):
+        """
+        PLEXOS Plant builds
 
         Returns
         -------
         list
         """
-        return [pd.concat(plant, axis=1).T for plant in self._plants
-                if plant is not None]
+        return self._plants.plant_builds
 
     @property
     def sc_bus_dist(self):
@@ -877,7 +902,7 @@ class PlantProfileAggregation:
             res_gids, and res gid_counts for all plants
         """
         plants_meta = []
-        for i, plant in enumerate(self.plants):
+        for pid, plant in self.plants.items():
             res_gids = plant['res_gids'].values.tolist()
             plants_meta.append(pd.Series(
                 {'sc_gids': plant['sc_gid'].values.tolist(),
@@ -888,7 +913,7 @@ class PlantProfileAggregation:
                  'res_cf_means': plant['cf_means'].values.tolist(),
                  'build_capacity': plant['build_capacity'].values.tolist(),
                  'cf_mean': np.hstack(plant['cf_means'].values).mean()},
-                name=i))
+                name=pid))
 
         plants_meta = pd.concat(plants_meta, axis=1).T
         plants_meta.index.name = 'plant_id'
@@ -915,7 +940,7 @@ class PlantProfileAggregation:
             - Supply Curve table
             - Bus capacity
         """
-        plant_meta = pd.concat(self.plants[bus_meta['plant_id']], axis=1).T
+        plant_meta = self.plant_builds[bus_meta['plant_id']]
         plant_meta['gen_gids'] = \
             plant_meta['res_gids'].apply(lambda gids: [self.cf_gid_map[gid]
                                                        for gid in gids])
