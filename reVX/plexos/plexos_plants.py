@@ -1013,7 +1013,7 @@ class PlantProfileAggregation:
 
             f_out.h5.create_group('plant_meta')
             gen_profiles = []
-            logger.info('Extracting profiles and writring meta for plants')
+            logger.info('Extracting profiles and writing meta for plants')
             for bus_id, bus_meta in self.plexos_table.iterrows():
                 logger.debug('Building plant for bus {}'.format(bus_id))
                 plant_meta = self._make_plant_meta(bus_meta)
