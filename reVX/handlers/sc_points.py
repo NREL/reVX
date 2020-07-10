@@ -313,10 +313,20 @@ class SupplyCurvePoints:
         return len(self._sc_points)
 
     def __getitem__(self, sc_gid):
-        return self._sc_points[sc_gid]
+        """
+        Extract the Point object for the given sc_gid
 
-    def __setitem__(self, sc_gid, sc_point):
-        self._sc_points[sc_gid] = sc_point
+        Parameters
+        ----------
+        sc_gid : int
+            Unique Supply Curve Gid
+
+        Returns
+        -------
+        Point : obj
+            Point object for given supply curve gid
+        """
+        return self._sc_points[sc_gid]
 
     @property
     def sc_points(self):

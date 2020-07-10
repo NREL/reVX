@@ -42,10 +42,35 @@ class Plants:
         return len(self._plants)
 
     def __getitem__(self, plant_id):
+        """
+        Get the plant build out for the given plant_id
+
+        Parameters
+        ----------
+        plant_id : int | str
+            Unique Id for plant of interest
+
+        Returns
+        -------
+        list
+            List of sc_gids' and thier associated resource gids to build plant
+            from
+        """
         return self._plants.get(plant_id, [])
 
-    def __setitem__(self, plant_id, plant_table):
-        self._plants[plant_id] = plant_table
+    def __setitem__(self, plant_id, plant_build):
+        """
+        Update plant build
+
+        Parameters
+        ----------
+        plant_id : int | str
+            Unique Id for plant to update
+        plant_build : list
+            List of sc_gids' and thier associated resource gids to build plant
+            from
+        """
+        self._plants[plant_id] = plant_build
 
     def __iter__(self):
         return self
@@ -968,7 +993,9 @@ class PlantProfileAggregation:
         cf_fpath : str
             Path to reV Generation output .h5 file to pull CF profiles from
         plant_build : pandas.DataFrame
-            DataFrame describing plant buildout
+            DataFrame describing plant buildout:
+                - Supply curve gids and the capacity to build at each
+                    - res_gids, gen_gids, gid_counts by sc_gid
 
         Returns
         -------
