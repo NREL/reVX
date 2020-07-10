@@ -209,6 +209,15 @@ class Point:
                     'build_capacity': build_capacity}
         sc_point = pd.Series(sc_point)
 
+        res_caps = self.resource_capacity[drop_slice]
+        capacity = np.sum(res_caps)
+        if capacity > build_capacity:
+            gid_counts = sc_point['gid_counts']
+            new_counts = np.round((res_caps[-1] - (capacity - build_capacity))
+                                  * np.sum(gid_counts) / capacity)
+            gid_counts[-1] = int(new_counts)
+            sc_point['gid_counts'] = gid_counts
+
         self._avail_cap[drop_slice] = 0.0
         availability = self.capacity > 0
 

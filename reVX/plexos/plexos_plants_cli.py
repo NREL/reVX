@@ -10,7 +10,7 @@ from rex.utilities.cli_dtypes import STR, INT
 from rex.utilities.execution import SLURM
 from rex.utilities.loggers import init_mult
 
-from reVX.plexos.plexos_plants import PlexosPlants
+from reVX.plexos.plexos_plants import PlantProfileAggregation
 
 logger = logging.getLogger(__name__)
 
@@ -72,19 +72,22 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir, dist_percentile,
     ctx.obj['VERBOSE'] = verbose
 
     if ctx.invoked_subcommand is None:
-        init_mult(name, out_dir, modules=[__name__, 'reVX.plexos'],
+        init_mult(name, out_dir, modules=[__name__,
+                                          'reVX.plexos.plexos_plants',
+                                          'reVX.handlers.sc_points'],
                   verbose=verbose)
         logger.info('Aggregating Plant for buses in PLEXOS table: {}'
                     .format(plexos_table))
         out_fpath = os.path.basename(cf_fpath).split('_')[-1]
         out_fpath = os.path.basename(plexos_table).replace('.csv', out_fpath)
         out_fpath = os.path.join(out_dir, out_fpath)
-        PlexosPlants.run(plexos_table, sc_table, cf_fpath, out_fpath,
-                         dist_percentile=dist_percentile, lcoe_col=lcoe_col,
-                         lcoe_thresh=lcoe_thresh, max_workers=max_workers,
-                         points_per_worker=points_per_worker,
-                         plants_per_worker=plants_per_worker,
-                         offshore=offshore)
+        PlantProfileAggregation.run(plexos_table, sc_table, cf_fpath,
+                                    out_fpath, dist_percentile=dist_percentile,
+                                    lcoe_col=lcoe_col, lcoe_thresh=lcoe_thresh,
+                                    max_workers=max_workers,
+                                    points_per_worker=points_per_worker,
+                                    plants_per_worker=plants_per_worker,
+                                    offshore=offshore)
 
 
 def get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,

@@ -2,6 +2,7 @@
 """
 Module to create wind and solar plants for PLEXOS buses
 """
+import json
 import logging
 import numpy as np
 import os
@@ -122,6 +123,26 @@ class Plants:
 
         return plant_builds
 
+    @staticmethod
+    def _parse_lists(column):
+        """
+        Check to see if list values are strings, if so parse with json.loads
+
+        Parameters
+        ----------
+        column : pandas.Series
+            Pandas DataFrame column to check
+
+        Returns
+        -------
+        column : pandas.Series
+            Pandas DataFrame column with values converted to lists if needed
+        """
+        if isinstance(column.iloc[0], str):
+            column = column.apply(json.loads).values
+
+        return column
+
     @classmethod
     def load(cls, plants_fpath):
         """
@@ -129,15 +150,20 @@ class Plants:
 
         Parameters
         ----------
-        plants_fpath : str
-            Path to .csv containing pre-filled plants
+        plants_fpath : str | DataFrame
+            DataFrame or path to .csv containing pre-filled plants
 
         Returns
         -------
         Plants
             Initialized Plants instance with pre-filled plants
         """
-        plant_builds = parse_table(plants_fpath).set_index('plant_id')
+        plant_builds = parse_table(plants_fpath)
+        if 'plant_id' in plant_builds:
+            plant_builds = plant_builds.set_index('plant_id')
+
+        plant_builds = plant_builds.apply(Plants._parse_lists)
+
         plants = {}
         for pid, build in plant_builds.iterrows():
             plant = []
@@ -206,7 +232,8 @@ class PlexosPlants(Plants):
                               points_per_worker=points_per_worker,
                               offshore=offshore)
 
-        plants = self._identify_plants(self.plant_table, sc_table,
+        plants = self._identify_plants(self.plant_table,
+                                       self._sc_points.sc_table,
                                        dist_percentile=dist_percentile,
                                        lcoe_col=lcoe_col,
                                        lcoe_thresh=lcoe_thresh,
@@ -266,6 +293,11 @@ class PlexosPlants(Plants):
         plant_table : pandas.DataFrame
         Table of unique plants from plexos table
         """
+        plexos_table = parse_table(plexos_table)
+        if 'plant_id' not in plexos_table:
+            plexos_table = \
+                PlantProfileAggregation._parse_plexos_table(plexos_table)
+
         plant_table = \
             plexos_table.drop_duplicates('plant_id').sort_values('plant_id')
 
@@ -625,7 +657,7 @@ class PlexosPlants(Plants):
             res_gids, and res gid_counts for all plants
         """
         plants_meta = []
-        for pid, plant in self.plants.items():
+        for pid, plant in self.plant_builds.items():
             plants_meta.append(pd.Series(
                 {'sc_gids': plant['sc_gid'].values.tolist(),
                  'res_gids': plant['res_gids'].values.tolist(),
@@ -694,9 +726,6 @@ class PlantProfileAggregation:
     """
     Aggregate renewable generation profiles to Plexos "plants"
     """
-    PLEXOS_COLUMNS = ['generator', 'busid', 'busname', 'capacity', 'latitude',
-                      'longitude', 'system']
-
     def __init__(self, plexos_table, sc_table, cf_fpath, plants=None,
                  dist_percentile=90, lcoe_col='total_lcoe',
                  lcoe_thresh=1.3, offshore=False, max_workers=None,
@@ -826,7 +855,8 @@ class PlantProfileAggregation:
 
         return self._sc_bus_dist
 
-    def _parse_plexos_table(self, plexos_table):
+    @staticmethod
+    def _parse_plexos_table(plexos_table):
         """
         Parse PLEXOS table from file and reduce to PLEXOS_COLS
         Combine buses at the same coordinates and add unique plant_ids
@@ -843,7 +873,9 @@ class PlantProfileAggregation:
             Parsed and clean PLEXOS table
         """
         plexos_table = parse_table(plexos_table)
-        cols = [c for c in plexos_table if c.lower() in self.PLEXOS_COLUMNS]
+        cols = ['generator', 'busid', 'busname', 'capacity', 'latitude',
+                'longitude', 'system']
+        cols = [c for c in plexos_table if c.lower() in cols]
         plexos_table = plexos_table[cols]
         rename = {}
         for c in plexos_table:
