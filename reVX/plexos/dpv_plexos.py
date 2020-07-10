@@ -312,6 +312,7 @@ class DpvPlexosAggregation:
             KDtree build from the reV CF meta data coordinates.
         """
         if self._kdtree is None:
+            # pylint: disable=not-callable
             self._kdtree = cKDTree(self.cf_meta[['latitude', 'longitude']])
         return self._kdtree
 

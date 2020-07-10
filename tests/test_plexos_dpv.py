@@ -5,8 +5,8 @@ import os
 import pytest
 import pandas as pd
 import numpy as np
+from rex.resource import Resource
 from reVX import TESTDATADIR
-from reV.handlers.resource import Resource
 from reVX.plexos.dpv_plexos import DpvResource, DpvPlexosAggregation
 
 ROOT_DIR = os.path.join(TESTDATADIR, 'reV_gen/')

@@ -180,14 +180,13 @@ class ExclusionsConverter:
                     raise ExclusionsCheckError(error)
 
                 profile = h5.profile
-                h5_crs = {k: v for k, v in
-                          [i.split("=") for i in profile['crs'].split(' ')]}
+                h5_crs = dict(i.split("=")
+                              for i in profile['crs'].split(' '))
                 h5_crs = pd.DataFrame(h5_crs, index=[0, ])
                 h5_crs = h5_crs.apply(pd.to_numeric, errors='ignore')
 
-                tif_crs = {k: v for k, v in
-                           [i.split("=") for i in
-                            tif.profile['crs'].split(' ')]}
+                tif_crs = dict(i.split("=")
+                               for i in tif.profile['crs'].split(' '))
                 tif_crs = pd.DataFrame(tif_crs, index=[0, ])
                 tif_crs = tif_crs.apply(pd.to_numeric, errors='ignore')
 

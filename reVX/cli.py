@@ -7,9 +7,11 @@ import logging
 import os
 
 from rex.utilities.cli_dtypes import STR, STRLIST
+from rex.utilities.loggers import init_logger
 from rex.utilities.utilities import safe_json_load
 
 from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region import RegionClassifier
 
 logger = logging.getLogger(__name__)
@@ -22,7 +24,12 @@ logger = logging.getLogger(__name__)
 def main(ctx, verbose):
     """reVX command line interface."""
     ctx.ensure_object(dict)
-    ctx.obj['VERBOSE'] = verbose
+    if verbose:
+        log_level = 'DEBUG'
+    else:
+        log_level = 'INFO'
+
+    init_logger('reVX', log_level=log_level)
 
 
 @main.command()
@@ -52,6 +59,22 @@ def region_classifier(meta_path, regions_path, regions_label, fout,
                          regions_path=regions_path,
                          regions_label=regions_label,
                          force=force, fout=fout)
+
+
+@main.command()
+@click.option('--my_fpath', '-src', required=True,
+              type=click.Path(exists=True),
+              help='Path to multi-year output .h5 file')
+@click.option('--out_fpath', '-out', required=True,
+              type=click.Path(),
+              help='Path to output .h5 file')
+@click.option('--year', '-yr', default=None, type=STR,
+              help='Year to extract, if None parse from out_fpath')
+def extract_output_year(my_fpath, out_fpath, year):
+    """
+    Extract all datasets for a give year from multi-year output file
+    """
+    output_extractor(my_fpath, out_fpath, year=year)
 
 
 @main.group()

@@ -8,6 +8,9 @@ reVX
 .. image:: https://github.com/NREL/reVX/workflows/Pytests/badge.svg
     :target: https://github.com/NREL/reVX/actions?query=workflow%3A%22Pytests%22
 
+.. image:: https://github.com/NREL/reVX/workflows/Lint%20Code%20Base/badge.svg
+    :target: https://github.com/NREL/reVX/actions?query=workflow%3A%22Lint+Code+Base%22
+
 .. image:: https://img.shields.io/pypi/pyversions/NREL-reVX.svg
     :target: https://pypi.org/project/NREL-reVX/
 

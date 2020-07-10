@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from warnings import warn
 
+from rex.utilities.utilities import parse_table
 from reVX.utilities.exceptions import ReedsValueError, ReedsKeyError
 
 logger = logging.getLogger(__name__)
@@ -246,20 +247,11 @@ class ReedsClassifier:
         table : pandas.DataFrame
             Parsed table
         """
-        table = input_table
-        if isinstance(table, str):
-            if table.endswith('.csv'):
-                table = pd.read_csv(table)
-            elif table.endwith('.json'):
-                table = pd.read_json(table)
-            else:
-                msg = 'Cannot parse {}'.format(table)
-                logger.error(msg)
-                raise ValueError(msg)
-        elif not isinstance(table, pd.DataFrame):
-            msg = 'Cannot parse table from type {}'.format(type(table))
-            logger.error(msg)
-            raise ValueError(msg)
+        try:
+            table = parse_table(input_table)
+        except ValueError as ex:
+            logger.error(ex)
+            raise
 
         return table
 

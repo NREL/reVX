@@ -60,7 +60,8 @@ setup(
         "console_scripts": ["reVX=reVX.cli:main",
                             "reV-ReEDS=reVX.reeds.reeds_cli:main",
                             "reV-rpm=reVX.rpm.rpm_cli:main",
-                            "reV-plexos=reVX.plexos.plexos_cli:main",
+                            "reV-plexos=reVX.plexos.rev_reeds_plexos_cli:main",
+                            "plexos-plants=reVX.plexos.plexos_plants_cli:main",
                             "wind-dirs=reVX.wind_dirs.wind_dirs_cli:main"
                             ],
     },

@@ -7,7 +7,7 @@ import os
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import pytest
-from reV.handlers.resource import Resource
+from rex.resource import Resource
 
 from reVX.handlers.outputs import Outputs
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -255,7 +255,7 @@ def offshore_mean_res():
     """
     path = os.path.join(TESTDATADIR, 'reeds/inputs/reeds_class_bins.csv')
     trg_classes = pd.read_csv(path)
-    return trg_classes[['class', 'mean_res_min', 'mean_res_max' 'sub_type']]
+    return trg_classes[['class', 'mean_res_min', 'mean_res_max', 'sub_type']]
 
 
 def test_offshore_classifier():
@@ -341,6 +341,7 @@ def test_wind_farm_profiles():
         gids = sub[gid_col].values
 
         assert row['rep_gen_gid'] in gids
+        # pylint: disable=unsubscriptable-object
         assert np.allclose(np.roll(profiles[0][:, i], 1 - row['timezone']),
                            raw_profiles[:, row['rep_gen_gid']])
 

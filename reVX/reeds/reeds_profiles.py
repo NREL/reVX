@@ -150,6 +150,7 @@ class ReedsProfiles(RepProfiles):
         time_index = pd.date_range(start='{}0101'.format(year),
                                    end='{}0101'.format(int(year + 1)),
                                    freq='1h', closed='right')
+        # pylint: disable=no-member
         mask = (time_index.month == 2) & (time_index.day == 29)
         # drop 12/31 on leap years
         if any(mask):
@@ -258,7 +259,8 @@ class ReedsProfiles(RepProfiles):
 
         self._to_local_time()
 
-        # pylint: disable=W0201
+        # pylint: disable=attribute-defined-outside-init
+        # pylint: disable=access-member-before-definition
         if hourly and (len(self._time_index) > 8760):
             self._profiles, self._time_index = self._to_hourly(self.profiles,
                                                                self.time_index)
