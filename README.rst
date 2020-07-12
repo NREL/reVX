@@ -34,7 +34,8 @@ reVX command line tools
 - `reVX <https://nrel.github.io/reVX/reVX/reVX.cli.html#revx>`_
 - `reV-ReEDS <https://nrel.github.io/reVX/reVX/reVX.reeds.reeds_cli.html#rev-reeds>`_
 - `reV-rpm <https://nrel.github.io/reVX/reVX/reVX.rpm.rpm_cli.html#rev-rpm>`_
-- `reV-plexos <https://nrel.github.io/reVX/reVX/reVX.plexos.plexos_cli.html#rev-plexos>`_
+- `reV-plexos <https://nrel.github.io/reVX/reVX/reVX.plexos.rev_reeds_plexos_cli.html#rev-plexos>`_
+- `plexos-plants <https://nrel.github.io/reVX/reVX/reVX.plexos.plexos_plants_cli.html#plexos-plants>`_
 - `wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.wind_dirs_cli.html#wind-dirs>`_
 
 Using Eagle Env / Module
