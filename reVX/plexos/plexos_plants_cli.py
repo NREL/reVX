@@ -81,6 +81,8 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir, dist_percentile,
         out_fpath = os.path.basename(cf_fpath).split('_')[-1]
         out_fpath = os.path.basename(plexos_table).replace('.csv', out_fpath)
         out_fpath = os.path.join(out_dir, out_fpath)
+        logger.info('Saving Aggregated Plant Profiles to {}'
+                    .format(out_fpath))
         PlantProfileAggregation.run(plexos_table, sc_table, cf_fpath,
                                     out_fpath, dist_percentile=dist_percentile,
                                     lcoe_col=lcoe_col, lcoe_thresh=lcoe_thresh,
