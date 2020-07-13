@@ -8,9 +8,12 @@ import logging
 import numpy as np
 import os
 import pandas as pd
+from warnings import warn
 
 from rex.resource import Resource
 from rex.utilities import parse_table, SpawnProcessPool
+
+from reVX.utilities.exceptions import SupplyCurvePointCapacityError
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +40,7 @@ class Point:
         self._sc_gid = int(sc_gid)
         res_order = np.argsort(res_cf)[::-1]
         self._cf_means = res_cf[res_order]
-        self._res_gids = self._parse_list(res_gids)[res_order]
+        self._res_gids = self._parse_list(res_gids, dtype=int)[res_order]
         self._gid_counts = self._parse_list(gid_counts)[res_order]
         self._res_capacity = \
             self._gid_counts / np.sum(self._gid_counts) * capacity
@@ -142,7 +145,7 @@ class Point:
         return self._cf_means
 
     @staticmethod
-    def _parse_list(list_in, dtype=int):
+    def _parse_list(list_in, dtype=None):
         """
         Parse json list if needed
 
@@ -150,8 +153,8 @@ class Point:
         ----------
         list_in : str | list
             List or jsonified list from supply curve table
-        dtype : np.dtype
-            dtype for output array
+        dtype : np.dtype, optional
+            dtype for output array, if None infer, by default None
 
         Returns
         -------
@@ -165,6 +168,9 @@ class Point:
                    .format(type(list_in)))
             logger.error(msg)
             raise ValueError(msg)
+
+        if dtype is None:
+            dtype = type(list_in[0])
 
         out = np.array(list_in, dtype=dtype)
 
@@ -254,7 +260,7 @@ class Point:
         else:
             msg = "{} has no remaining capacity".format(self)
             logger.error(msg)
-            raise RuntimeError(msg)
+            raise SupplyCurvePointCapacityError(msg)
 
         return out
 
@@ -642,9 +648,14 @@ class SupplyCurvePoints:
             sc_point, capacity
         """
         sc_point = self.sc_points[sc_gid]
-        sc_point, capacity, mask = sc_point.extract_capacity(capacity)
+        try:
+            sc_point, capacity, mask = sc_point.extract_capacity(capacity)
 
-        self._mask[sc_gid] = mask
-        self._capacity[sc_gid] -= capacity
+            self._mask[sc_gid] = mask
+            self._capacity[sc_gid] -= capacity
+        except SupplyCurvePointCapacityError as ex:
+            logger.warning('WARNING: {}'.format(ex))
+            warn(ex)
+            capacity = 0.0
 
         return sc_point, capacity

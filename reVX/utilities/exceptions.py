@@ -56,3 +56,9 @@ class ReedsRuntimeError(Exception):
     """
     RuntimeError for ReEDS Pipeline
     """
+
+
+class SupplyCurvePointCapacityError(Exception):
+    """
+    Error for supply curve point with zero capacity
+    """
