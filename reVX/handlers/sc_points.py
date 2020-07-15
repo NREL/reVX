@@ -41,7 +41,7 @@ class Point:
         res_order = np.argsort(res_cf)[::-1]
         self._cf_means = res_cf[res_order]
         self._res_gids = self._parse_list(res_gids, dtype=int)[res_order]
-        self._gid_counts = self._parse_list(gid_counts)[res_order]
+        self._gid_counts = self._parse_list(gid_counts, dtype=float)[res_order]
         self._res_capacity = \
             self._gid_counts / np.sum(self._gid_counts) * capacity
         self._avail_cap = self._res_capacity.copy()
