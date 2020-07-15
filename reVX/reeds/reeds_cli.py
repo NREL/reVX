@@ -9,9 +9,10 @@ import os
 from rex.utilities.loggers import init_mult
 from rex.utilities.cli_dtypes import STR, STRLIST, INT
 from rex.utilities.execution import SLURM, SubprocessManager
-from rex.utilities.utilities import dict_str_load
+from rex.utilities.utilities import dict_str_load, get_class_properties
 
-from reVX.config.reeds import ReedsConfig
+from reVX.config.reeds import (ReedsConfig, ClassifyConfigGroup,
+                               ProfilesConfigGroup, TimeslicesConfigGroup)
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
 from reVX.reeds.reeds_timeslices import ReedsTimeslices
@@ -34,6 +35,19 @@ def main(ctx, name, verbose):
     ctx.ensure_object(dict)
     ctx.obj['NAME'] = name
     ctx.obj['VERBOSE'] = verbose
+
+
+@main.command()
+def valid_config_keys():
+    """
+    Echo the valid ReEDS config keys
+    """
+    config_classes = [ReedsConfig, ClassifyConfigGroup,
+                      ProfilesConfigGroup, TimeslicesConfigGroup]
+    for cls in config_classes:
+        cls_name = str(cls).split('.')[-1].strip("'>")
+        click.echo("Valid keys for {}: {}"
+                   .format(cls_name, ', '.join(get_class_properties(cls))))
 
 
 def run_local(ctx, config):

@@ -2,7 +2,7 @@
 """
 reVX ReEDS Configuration
 """
-
+from reV.config.base_config import BaseConfig
 from reV.config.base_analysis_config import AnalysisConfig
 
 
@@ -10,7 +10,6 @@ class ReedsConfig(AnalysisConfig):
     """Config framework for REEDS jobs."""
 
     NAME = 'ReEDS'
-    REQUIREMENTS = ('rev_table', )
 
     @property
     def classify(self):
@@ -18,6 +17,7 @@ class ReedsConfig(AnalysisConfig):
         classify = self.get('classify', None)
         if classify is not None:
             classify = ClassifyConfigGroup(classify)
+
         return classify
 
     @property
@@ -26,6 +26,7 @@ class ReedsConfig(AnalysisConfig):
         profiles = self.get('profiles', None)
         if profiles is not None:
             profiles = ProfilesConfigGroup(profiles)
+
         return profiles
 
     @property
@@ -34,30 +35,14 @@ class ReedsConfig(AnalysisConfig):
         timeslices = self.get('timeslices', None)
         if timeslices is not None:
             timeslices = TimeslicesConfigGroup(timeslices)
+
         return timeslices
 
 
-class ReedsConfigGroup(dict):
-    """Super class for handling Reeds config input groups."""
-
-    def __init__(self, config):
-        """
-        Parameters
-        ----------
-        config : dict
-            Dictionary with pre-extracted config input group.
-        """
-        if not isinstance(config, dict):
-            raise TypeError('Config input must be a dict but received: {}'
-                            .format(type(config)))
-
-        super().__init__()
-        self.update(config)
-
-
-class ClassifyConfigGroup(ReedsConfigGroup):
+class ClassifyConfigGroup(BaseConfig):
     """Subclass for handling the Reeds config input group for the reVX-REEDS
     classify framework."""
+    REQUIREMENTS = ('rev_table', 'resource_classes')
 
     def __init__(self, config):
         """
@@ -106,9 +91,10 @@ class ClassifyConfigGroup(ReedsConfigGroup):
         return self.get('pre_filter', None)
 
 
-class ProfilesConfigGroup(ReedsConfigGroup):
+class ProfilesConfigGroup(BaseConfig):
     """Subclass for handling the Reeds config input group for the reVX-REEDS
     representative profiles framework."""
+    REQUIREMENTS = ('reeds_table', 'cf_profiles')
 
     def __init__(self, config):
         """
@@ -179,9 +165,10 @@ class ProfilesConfigGroup(ReedsConfigGroup):
         return self.get('max_workers', None)
 
 
-class TimeslicesConfigGroup(ReedsConfigGroup):
+class TimeslicesConfigGroup(BaseConfig):
     """Subclass for handling the Reeds config input group for the reVX-REEDS
     timeslices framework."""
+    REQUIREMENTS = ('timeslices', )
 
     def __init__(self, config):
         """
