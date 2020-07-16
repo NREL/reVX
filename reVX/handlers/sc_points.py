@@ -558,7 +558,7 @@ class SupplyCurvePoints:
                                  .format((i + 1) * points_per_worker,
                                          len(sc_table)))
         else:
-            logger.info('Creating supply curve points in serial')
+            logger.debug('Creating supply curve points in serial')
             for i, (sc_gid, sc_point) in enumerate(sc_table.iterrows()):
                 sc_gid = int(sc_gid)
                 sc_points[sc_gid] = Point.create(sc_point, res_cf_means)

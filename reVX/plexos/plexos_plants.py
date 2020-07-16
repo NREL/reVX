@@ -511,7 +511,7 @@ class PlexosPlants(Plants):
                                  .format((i + 1) * plants_per_worker,
                                          len(plant_table)))
         else:
-            logger.info('Identifying plants in serial')
+            logger.debug('Identifying plants in serial')
             for i, bus in plant_table.iterrows():
                 coords = \
                     bus[['latitude', 'longitude']].values.astype(float)
@@ -900,16 +900,16 @@ class PlantProfileAggregation:
             plexos_table = plexos_table.loc[~mask]
 
         mask = plexos_table['capacity'] > 0
+        plexos_table = plexos_table.loc[mask]
         cols = ['latitude', 'longitude']
-        plant_cap = \
-            plexos_table.loc[mask].groupby(cols)['capacity'].sum()
+        plant_cap = plexos_table.groupby(cols)['capacity'].sum()
         plant_cap = plant_cap.reset_index().reset_index()
         rename = {'index': 'plant_id', 'capacity': 'plant_capacity'}
         plant_cap = plant_cap.rename(columns=rename)
 
         plexos_table = plexos_table.merge(plant_cap,
                                           on=cols,
-                                          how='outer')
+                                          how='inner')
 
         return plexos_table
 
