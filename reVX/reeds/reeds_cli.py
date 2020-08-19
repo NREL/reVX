@@ -8,7 +8,7 @@ import os
 
 from rex.utilities.loggers import init_mult
 from rex.utilities.cli_dtypes import STR, STRLIST, INT
-from rex.utilities.execution import SLURM, SubprocessManager
+from rex.utilities.execution import SLURM
 from rex.utilities.utilities import dict_str_load, get_class_properties
 
 from reVX.config.reeds import (ReedsConfig, ClassifyConfigGroup,
@@ -358,53 +358,59 @@ def get_node_cmd(config):
     cmd : str
         CLI call to submit to SLURM execution.
     """
-    s = SubprocessManager.s
 
-    args = ('-n {name} local -o {out_dir} -log {log_dir} '
-            .format(name=s(config.name),
-                    out_dir=s(config.dirout),
-                    log_dir=s(config.logdir)))
+    args = ['-n {}'.format(SLURM.s(config.name)),
+            'local',
+            '-o {}'.format(SLURM.s(config.dirout)),
+            '-log {}'.format(SLURM.s(config.logdir)),
+            ]
 
     if config.log_level == logging.DEBUG:
-        args += '-v '
+        args.append('-v')
 
     if config.classify is not None:
-        args += ('classify -rt {rev_table} -rc {resource_classes} '
-                 '-r {regions} -cb {cap_bins} -sb {sort_bins_by} '
-                 '-f {pre_filter} '
-                 .format(rev_table=s(config.classify.rev_table),
-                         resource_classes=s(config.classify.resource_classes),
-                         regions=s(config.classify.regions),
-                         cap_bins=s(config.classify.cap_bins),
-                         sort_bins_by=s(config.classify.sort_bins_by),
-                         pre_filter=s(config.classify.pre_filter)))
+        classify = ['classify',
+                    '-rt {}'.format(SLURM.s(config.classify.rev_table)),
+                    '-rc {}'.format(SLURM.s(config.classify.resource_classes)),
+                    '-r {}'.format(SLURM.s(config.classify.regions)),
+                    '-cb {}'.format(SLURM.s(config.classify.cap_bins)),
+                    '-sb {}'.format(SLURM.s(config.classify.sort_bins_by)),
+                    '-f {}'.format(SLURM.s(config.classify.pre_filter)),
+                    ]
+
+        args.extend(classify)
 
     if config.profiles is not None:
-        args += ('profiles -rt {reeds_table} -cf {cf_profiles} -gc {gid_col} '
-                 '-np {n_profiles} -pd {profiles_dset} -rm {rep_method} '
-                 '-em {err_method} -w {weight} -rcp {reg_cols} '
-                 '-mw {max_workers} '
-                 .format(reeds_table=s(config.profiles.reeds_table),
-                         cf_profiles=s(config.profiles.cf_profiles),
-                         gid_col=s(config.profiles.gid_col),
-                         n_profiles=s(config.profiles.n_profiles),
-                         profiles_dset=s(config.profiles.profiles_dset),
-                         rep_method=s(config.profiles.rep_method),
-                         err_method=s(config.profiles.err_method),
-                         weight=s(config.profiles.weight),
-                         reg_cols=s(config.profiles.reg_cols),
-                         max_workers=s(config.profiles.max_workers)))
+        profiles = ['profiles',
+                    '-rt {}'.format(SLURM.s(config.profiles.reeds_table)),
+                    '-cf {}'.format(SLURM.s(config.profiles.cf_profiles)),
+                    '-gc {}'.format(SLURM.s(config.profiles.gid_col)),
+                    '-np {}'.format(SLURM.s(config.profiles.n_profiles)),
+                    '-pd {}'.format(SLURM.s(config.profiles.profiles_dset)),
+                    '-rm {}'.format(SLURM.s(config.profiles.rep_method)),
+                    '-em {}'.format(SLURM.s(config.profiles.err_method)),
+                    '-w {}'.format(SLURM.s(config.profiles.weight)),
+                    '-rcp {}'.format(SLURM.s(config.profiles.reg_cols)),
+                    '-mw {}'.format(SLURM.s(config.profiles.max_workers)),
+                    ]
+
+        args.extend(profiles)
 
     if config.timeslices is not None:
-        args += ('timeslices -pr {profiles} -ts {timeslices} -rct {reg_cols} '
-                 .format(profiles=s(config.timeslices.profiles),
-                         timeslices=s(config.timeslices.timeslices),
-                         reg_cols=s(config.timeslices.reg_cols)))
-        if config.timeslices.all_profiles:
-            args += '-ap '
+        timeslices = ['timeslices',
+                      '-pr {}'.format(SLURM.s(config.timeslices.profiles)),
+                      '-ts {}'.format(SLURM.s(config.timeslices.timeslices)),
+                      '-rct {}'.format(SLURM.s(config.timeslices.reg_cols)),
+                      ]
 
-    cmd = 'python -m reVX.reeds.reeds_cli {}'.format(args)
+        if config.timeslices.all_profiles:
+            timeslices.append('-ap')
+
+        args.extend(timeslices)
+
+    cmd = 'python -m reVX.reeds.reeds_cli {}'.format(' '.join(args))
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
+
     return cmd
 
 
