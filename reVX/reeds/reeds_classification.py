@@ -579,7 +579,7 @@ class ReedsClassifier:
                 warn(msg)
                 logger.warning(msg)
 
-            df.loc[:, 'bin'] = bin_labels
+            df['bin'] = bin_labels
             bins.append(df)
 
         capacity_bins = pd.concat(bins)
