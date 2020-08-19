@@ -97,37 +97,27 @@ def get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,
                  points_per_worker, plants_per_worker, offshore, verbose):
     """Build PLEXOS Plant CLI command."""
 
-    args = ('-n {name} '
-            '-pt {plexos_table} '
-            '-sc {sc_table} '
-            '-cf {cf_fpath} '
-            '-out {out_dir} '
-            '-dp {dist_percentile} '
-            '-lc {lcoe_col} '
-            '-lt {lcoe_thresh} '
-            '-mw {max_workers} '
-            '--points_per_worker={points_per_worker} '
-            '--plants_per_worker={plants_per_worker} ')
-
-    args = args.format(name=SLURM.s(name),
-                       plexos_table=SLURM.s(plexos_table),
-                       sc_table=SLURM.s(sc_table),
-                       cf_fpath=SLURM.s(cf_fpath),
-                       out_dir=SLURM.s(out_dir),
-                       dist_percentile=SLURM.s(dist_percentile),
-                       lcoe_col=SLURM.s(lcoe_col),
-                       lcoe_thresh=SLURM.s(lcoe_thresh),
-                       max_workers=SLURM.s(max_workers),
-                       points_per_worker=SLURM.s(points_per_worker),
-                       plants_per_worker=SLURM.s(plants_per_worker))
+    args = ['-n {}'.format(SLURM.s(name)),
+            '-pt {}'.format(SLURM.s(plexos_table)),
+            '-sc {}'.format(SLURM.s(sc_table)),
+            '-cf {}'.format(SLURM.s(cf_fpath)),
+            '-out {}'.format(SLURM.s(out_dir)),
+            '-dp {}'.format(SLURM.s(dist_percentile)),
+            '-lc {}'.format(SLURM.s(lcoe_col)),
+            '-lt {}'.format(SLURM.s(lcoe_thresh)),
+            '-mw {}'.format(SLURM.s(max_workers)),
+            '--points_per_worker={}'.format(SLURM.s(points_per_worker)),
+            '--plants_per_worker={}'.format(SLURM.s(plants_per_worker)),
+            ]
 
     if offshore:
-        args += '-o '
+        args.append('-o')
 
     if verbose:
-        args += '-v '
+        args.append('-v')
 
-    cmd = 'python -m reVX.plexos.plexos_plants_cli {}'.format(args)
+    cmd = 'python -m reVX.plexos.plexos_plants_cli {}'.format(' '.join(args))
+    logger.debug('Creating the following command line call:\n\t{}'.format(cmd))
 
     return cmd
 

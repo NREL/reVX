@@ -8,7 +8,7 @@ import os
 
 from rex.utilities.loggers import init_mult
 from rex.utilities.cli_dtypes import STR, INT
-from rex.utilities.execution import SLURM, SubprocessManager
+from rex.utilities.execution import SLURM
 from rex.utilities.utilities import get_class_properties
 
 from reVX.config.wind_dirs import WindDirsConfig
@@ -174,28 +174,27 @@ def get_node_cmd(config):
     cmd : str
         CLI call to submit to SLURM execution.
     """
-    s = SubprocessManager.s
 
-    args = ('-n {name} local -prh5 {pr_h5} -excl {excl_h5} -o {out_dir} '
-            '-ad {agg_dset} -td {tm_dset} -res {res} -ea {excl_area} '
-            '-mw {workers} -cpl {chunks} -log {log_dir} '
-            .format(name=s(config.name),
-                    pr_h5=s(config.powerrose_h5_fpath),
-                    excl_h5=s(config.excl_fpath),
-                    out_dir=s(config.dirout),
-                    agg_dset=s(config.agg_dset),
-                    tm_dset=s(config.tm_dset),
-                    res=s(config.resolution),
-                    excl_area=s(config.excl_area),
-                    workers=s(config.max_workers),
-                    chunks=s(config.chunk_point_len),
-                    log_dir=s(config.logdir)))
+    args = ['-n {}'.format(SLURM.s(config.name)),
+            'local',
+            '-prh5 {}'.format(SLURM.s(config.powerrose_h5_fpath)),
+            '-excl {}'.format(SLURM.s(config.excl_fpath)),
+            '-o {}'.format(SLURM.s(config.dirout)),
+            '-ad {}'.format(SLURM.s(config.agg_dset)),
+            '-td {}'.format(SLURM.s(config.tm_dset)),
+            '-res {}'.format(SLURM.s(config.resolution)),
+            '-ea {}'.format(SLURM.s(config.excl_area)),
+            '-mw {}'.format(SLURM.s(config.max_workers)),
+            '-cpl {}'.format(SLURM.s(config.chunk_point_len)),
+            '-log {}'.format(SLURM.s(config.logdir)),
+            ]
 
     if config.log_level == logging.DEBUG:
-        args += '-v '
+        args.append('-v')
 
-    cmd = 'python -m reVX.wind_dirs.wind_dirs_cli {}'.format(args)
+    cmd = 'python -m reVX.wind_dirs.wind_dirs_cli {}'.format(' '.join(args))
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
+
     return cmd
 
 

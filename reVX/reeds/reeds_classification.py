@@ -370,8 +370,7 @@ class ReedsClassifier:
             for _, df in trg_classes.groupby('region'):
                 df = df.sort_values('mean_lcoe')
                 cum_cap = df['capacity'].cumsum()
-                df.loc[:, 'class'] = pd.cut(x=cum_cap, bins=cap_breaks,
-                                            labels=labels)
+                df['class'] = pd.cut(x=cum_cap, bins=cap_breaks, labels=labels)
                 classes.append(df)
 
             trg_classes = pd.concat(classes)
@@ -579,7 +578,7 @@ class ReedsClassifier:
                 warn(msg)
                 logger.warning(msg)
 
-            df.loc[:, 'bin'] = bin_labels
+            df['bin'] = bin_labels
             bins.append(df)
 
         capacity_bins = pd.concat(bins)

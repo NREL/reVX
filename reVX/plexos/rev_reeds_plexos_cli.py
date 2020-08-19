@@ -65,26 +65,20 @@ def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_year,
                  scenario, verbose):
     """Get a CLI call command for the plexos CLI."""
 
-    args = ('-n {name} '
-            '-j {job} '
-            '-o {out} '
-            '-rd {reeds} '
-            '-y [{year}] '
-            '-by [{build}] '
-            '-s {scenario} ')
-
-    args = args.format(name=SLURM.s(name),
-                       job=SLURM.s(job_input),
-                       out=SLURM.s(out_dir),
-                       reeds=SLURM.s(reeds_dir),
-                       year=SLURM.s(cf_year),
-                       build=SLURM.s(build_year),
-                       scenario=SLURM.s(scenario))
+    args = ['-n {}'.format(SLURM.s(name)),
+            '-j {}'.format(SLURM.s(job_input)),
+            '-o {}'.format(SLURM.s(out_dir)),
+            '-rd {}'.format(SLURM.s(reeds_dir)),
+            '-y [{}]'.format(SLURM.s(cf_year)),
+            '-by [{}]'.format(SLURM.s(build_year)),
+            '-s {}'.format(SLURM.s(scenario)),
+            ]
 
     if verbose:
-        args += '-v '
+        args.append('-v')
 
-    cmd = 'python -m reVX.plexos.plexos_cli {}'.format(args)
+    cmd = 'python -m reVX.plexos.plexos_cli {}'.format(' '.join(args))
+    logger.debug('Creating the following command line call:\n\t{}'.format(cmd))
 
     return cmd
 
