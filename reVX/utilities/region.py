@@ -67,6 +67,9 @@ class RegionClassifier():
             Output CSV file path for labeled meta CSV file
         """
         output_gdf = gdf.drop('geometry', axis=1)
+        if output_gdf.index.name == 'gid':
+            output_gdf = output_gdf.reset_index()
+
         output_gdf.to_csv(path, index=False)
 
     @staticmethod
