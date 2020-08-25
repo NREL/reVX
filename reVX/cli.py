@@ -33,19 +33,20 @@ def main(ctx, verbose):
 
 
 @main.command()
-@click.option('--meta_path', '-i', required=True,
-              prompt='Path to meta CSV file',
+@click.option('--meta_path', '-mp', required=True,
+              prompt='Path to meta CSV file, resource .h5 file',
               type=click.Path(exists=True),
-              help=('Path to meta CSV file containing lat/lon points'))
-@click.option('--regions_path', '-r', required=True,
+              help=('Path to meta CSV file, resource .h5 file containing '
+                    'lat/lon points'))
+@click.option('--regions_path', '-rp', required=True,
               prompt='Path to regions shapefile',
               type=click.Path(exists=True),
               help=('Path to regions shapefile containing labeled geometries'))
-@click.option('--regions_label', '-l', default=None, type=STR,
+@click.option('--regions_label', '-rl', default=None, type=STR,
               help=('Attribute to use as label in the regions shapefile'))
 @click.option('--fout', '-o', required=True,
               prompt='Output CSV file path',
-              type=click.Path(exists=False),
+              type=click.Path(),
               help=('Output CSV file path for labeled meta CSV file'))
 @click.option('--force', '-f', is_flag=True,
               help='Force outlier classification by finding nearest.')
