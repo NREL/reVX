@@ -108,7 +108,7 @@ class RegionClassifier():
         if isinstance(meta_path, str):
             if meta_path.endswith('.csv'):
                 meta = pd.read_csv(meta_path)
-            elif meta_path.endwith('.h5'):
+            elif meta_path.endswith('.h5'):
                 with Resource(meta_path) as f:
                     meta = f.meta
             else:
