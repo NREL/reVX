@@ -164,6 +164,7 @@ def test_profiles(max_workers):
         msg = 'Representative profiles {} do not match!'.format(k)
         assert np.allclose(v, test[0][k]), msg
 
+    truth[1].index.name = None
     assert_frame_equal(truth[1], test[1], check_dtype=False,
                        check_categorical=False)
     assert truth[2].equals(test[2]), 'time_index does not match!'
