@@ -41,9 +41,9 @@ def extract_profiles(profiles_h5):
                 n = int(ds.split('_')[-1])
                 profiles[n] = f[ds]
             elif 'meta' in ds:
-                meta = f[ds]
+                meta = f.meta
             elif 'time_index' in ds:
-                time_index = f[ds]
+                time_index = f.time_index
 
     return profiles, meta, time_index
 
@@ -167,7 +167,9 @@ def test_profiles(max_workers):
     truth[1].index.name = None
     assert_frame_equal(truth[1], test[1], check_dtype=False,
                        check_categorical=False)
-    assert truth[2].equals(test[2]), 'time_index does not match!'
+
+    truth_ti = truth[2].tz_localize(None)
+    assert truth_ti.equals(test[2]), 'time_index does not match!'
 
 
 def test_rep_timeslices():

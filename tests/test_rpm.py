@@ -7,8 +7,9 @@ import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from reVX import TESTDATADIR as TESTDATADIR
+from reVX import TESTDATADIR
 from reVX.rpm.rpm_manager import RPMClusterManager
+from rex.utilities.utilities import check_tz
 
 
 JOB_TAG = 'pytest'
@@ -73,6 +74,27 @@ def check_clusters(baseline, test):
     assert np.allclose(baseline, test)
 
 
+def load_profiles(profiles):
+    """
+    Load profiles from .csv
+
+    Parameters
+    ----------
+    profiles : str
+        path to .csv
+
+    Returns
+    -------
+    profiles : pd.DataFrame
+    """
+    profiles = pd.read_csv(profiles)
+    if 'time_index' in profiles:
+        profiles = profiles.set_index('time_index')
+        profiles.index = check_tz(pd.to_datetime(profiles.index))
+
+    return profiles
+
+
 def check_profiles(baseline, test):
     """
     Compare representative profiles
@@ -84,8 +106,8 @@ def check_profiles(baseline, test):
     test : str
         Path to test representative profiles .csv
     """
-    baseline = pd.read_csv(baseline)
-    test = pd.read_csv(test)
+    baseline = load_profiles(baseline)
+    test = load_profiles(test)
 
     assert_frame_equal(baseline, test, check_dtype=False,
                        check_less_precise=True)

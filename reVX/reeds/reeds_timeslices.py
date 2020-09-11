@@ -11,6 +11,7 @@ import os
 import pandas as pd
 from rex.resource import Resource
 from rex.utilities.execution import SpawnProcessPool
+from rex.utilities.utilities import check_tz
 
 from reVX.handlers.outputs import Outputs
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -317,7 +318,7 @@ class ReedsTimeslices:
         index = index_col[0]
         timeslice_map = timeslice_map.set_index(index).sort_index()
         if index == 'datetime':
-            timeslice_map.index = pd.to_datetime(timeslice_map.index)
+            timeslice_map.index = check_tz(pd.to_datetime(timeslice_map.index))
 
         return timeslice_map
 
