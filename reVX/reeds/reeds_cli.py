@@ -431,17 +431,19 @@ def eagle(config):
 
     logger.info('Running reVX-REEDS pipeline on Eagle with '
                 'node name "{}"'.format(name))
-    slurm = SLURM(cmd, alloc=config.execution_control.alloc,
-                  memory=config.execution_control.node_mem,
-                  walltime=config.execution_control.walltime,
-                  feature=config.execution_control.feature,
-                  name=name, stdout_path=stdout_path,
-                  conda_env=config.execution_control.conda_env,
-                  module=config.execution_control.module)
-    if slurm.id:
+    slurm_manager = SLURM()
+    out = slurm_manager.sbatch(cmd,
+                               alloc=config.execution_control.alloc,
+                               memory=config.execution_control.node_mem,
+                               walltime=config.execution_control.walltime,
+                               feature=config.execution_control.feature,
+                               name=name, stdout_path=stdout_path,
+                               conda_env=config.execution_control.conda_env,
+                               module=config.execution_control.module)
+    if out:
         msg = ('Kicked off reVX-REEDS pipeline job "{}" '
                '(SLURM jobid #{}) on Eagle.'
-               .format(name, slurm.id))
+               .format(name, out))
     else:
         msg = ('Was unable to kick off reVX-REEDS pipeline job "{}". '
                'Please see the stdout error messages'
