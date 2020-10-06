@@ -27,7 +27,7 @@ class RPMClusterManager:
     - Save results to disk
     """
     def __init__(self, cf_fpath, rpm_meta, rpm_region_col=None,
-                 parallel=True):
+                 max_workers=None):
         """
         Parameters
         ----------
@@ -39,12 +39,11 @@ class RPMClusterManager:
             - Regions of interest
             - # of clusters per region
             - cf or resource GIDs if region is not in default meta data
-
         rpm_region_col : str | Nonetype
             If not None, the meta-data field to map RPM regions to
-        parallel : bool | int
-            Flag to apply exclusions in parallel. Integer is interpreted as
-            max number of workers. True uses all available.
+        max_workers : int, optional
+            Number of parallel workers. 1 will run serial, None will use all
+            available., by default None
         """
         if rpm_region_col is not None:
             logger.info('Initializing RPM clustering on regional column "{}".'
@@ -54,13 +53,10 @@ class RPMClusterManager:
         self._rpm_regions = self._map_rpm_regions(rpm_meta,
                                                   region_col=rpm_region_col)
 
-        self.parallel = parallel
-        if self.parallel is True:
-            self.max_workers = os.cpu_count()
-        elif self.parallel is False:
-            self.max_workers = 1
-        else:
-            self.max_workers = self.parallel
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        self.max_workers = max_workers
 
     @staticmethod
     def _parse_rpm_meta(rpm_meta):
@@ -253,7 +249,7 @@ class RPMClusterManager:
 
     @classmethod
     def run_clusters(cls, cf_fpath, rpm_meta, out_dir, job_tag=None,
-                     rpm_region_col=None, parallel=True, **cluster_kwargs):
+                     rpm_region_col=None, max_workers=True, **cluster_kwargs):
         """
         RPM Cluster Manager:
         - Extracts gen_gids for all RPM regions
@@ -276,9 +272,9 @@ class RPMClusterManager:
             Format is "rpm_cluster_output_{tag}.csv".
         rpm_region_col : str | Nonetype
             If not None, the meta-data field to map RPM regions to
-        parallel : bool | int
-            Flag to apply exclusions in parallel. Integer is interpreted as
-            max number of workers. True uses all available.
+        max_workers : int, optional
+            Number of parallel workers. 1 will run serial, None will use all
+            available., by default None
         output_kwargs : dict | None
             Kwargs for the RPM outputs manager.
         **cluster_kwargs : dict
@@ -289,7 +285,7 @@ class RPMClusterManager:
             f_out = f_out.replace('.csv', '_{}.csv'.format(job_tag))
 
         rpm = cls(cf_fpath, rpm_meta, rpm_region_col=rpm_region_col,
-                  parallel=parallel)
+                  max_workers=max_workers)
         rpm._cluster(**cluster_kwargs)
         rpm_clusters = rpm._combine_region_clusters(rpm._rpm_regions)
 
@@ -304,7 +300,7 @@ class RPMClusterManager:
     def run_clusters_and_profiles(cls, cf_fpath, rpm_meta, excl_fpath,
                                   excl_dict, techmap_dset, out_dir,
                                   job_tag=None, rpm_region_col=None,
-                                  parallel=True, output_kwargs=None,
+                                  max_workers=True, output_kwargs=None,
                                   **cluster_kwargs):
         """
         RPM Cluster Manager:
@@ -336,9 +332,9 @@ class RPMClusterManager:
             Format is "rpm_cluster_output_{tag}.csv".
         rpm_region_col : str | Nonetype
             If not None, the meta-data field to map RPM regions to
-        parallel : bool | int
-            Flag to apply exclusions in parallel. Integer is interpreted as
-            max number of workers. True uses all available.
+        max_workers : int, optional
+            Number of parallel workers. 1 will run serial, None will use all
+            available., by default None
         output_kwargs : dict | None
             Kwargs for the RPM outputs manager.
         **cluster_kwargs : dict
@@ -353,7 +349,7 @@ class RPMClusterManager:
 
         if not os.path.exists(f_cluster):
             rpm = cls(cf_fpath, rpm_meta, rpm_region_col=rpm_region_col,
-                      parallel=parallel)
+                      max_workers=max_workers)
             rpm._cluster(**cluster_kwargs)
             rpm_clusters = rpm._combine_region_clusters(rpm._rpm_regions)
 
@@ -372,8 +368,9 @@ class RPMClusterManager:
 
         RPMOutput.process_outputs(rpm_clusters, cf_fpath, excl_fpath,
                                   excl_dict, techmap_dset, out_dir,
-                                  job_tag=job_tag, parallel=parallel,
+                                  job_tag=job_tag, max_workers=max_workers,
                                   cluster_kwargs=cluster_kwargs,
                                   **output_kwargs)
         logger.info('reV-to-RPM processing is complete.')
+
         return rpm

@@ -8,7 +8,7 @@ import os
 
 from rex.utilities.loggers import init_mult
 from rex.utilities.cli_dtypes import STR, STRLIST, INT
-from rex.utilities.execution import SLURM
+from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import dict_str_load, get_class_properties
 
 from reVX.config.reeds import (ReedsConfig, ClassifyConfigGroup,
@@ -314,6 +314,7 @@ def timeslices(ctx, profiles, timeslices, reg_cols, all_profiles):
                    'profiles to extract timeslices!')
             logger.error(msg)
             raise ReedsRuntimeError(msg)
+
         profiles = ctx.obj['PROFILES']
 
     logger.info('Extracting timeslices from {} using mapping {}'
