@@ -19,7 +19,7 @@ requirements:
     - dask
     - geopandas
     - h5py
-    - nrel-rex>=0.2.21
+    - nrel-rex>=0.2.22
     - nrel-rev>=0.4.25
     - numpy>=1.16
     - pandas
@@ -40,7 +40,7 @@ requirements:
     - dask
     - geopandas
     - h5py
-    - nrel-rex>=0.2.21
+    - nrel-rex>=0.2.22
     - nrel-rev>=0.4.25
     - {{ pin_compatible('numpy') }}
     - pandas
