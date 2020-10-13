@@ -331,7 +331,7 @@ class RPMOutput:
     def __init__(self, rpm_clusters, cf_fpath, excl_fpath, excl_dict,
                  techmap_dset, excl_area=0.0081, include_threshold=0.001,
                  n_profiles=1, rerank=True, cluster_kwargs=None,
-                 parallel=True, trg=None):
+                 max_workers=None, trg=None):
         """
         Parameters
         ----------
@@ -362,9 +362,9 @@ class RPMOutput:
             excluded generation pixels.
         cluster_kwargs : dict
             RPMClusters kwargs
-        parallel : bool | int
-            Flag to apply exclusions in parallel. Integer is interpreted as
-            max number of workers. True uses all available.
+        max_workers : int, optional
+            Number of parallel workers. 1 will run serial, None will use all
+            available., by default None
         trg : pd.DataFrame | str | None
             TRG bins or string to filepath containing TRG bins.
             None will not analyze TRG bins.
@@ -384,13 +384,10 @@ class RPMOutput:
         self.n_profiles = n_profiles
         self.rerank = rerank
 
-        self.parallel = parallel
-        if self.parallel is True:
-            self.max_workers = os.cpu_count()
-        elif self.parallel is False:
-            self.max_workers = 1
-        else:
-            self.max_workers = self.parallel
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        self.max_workers = max_workers
 
         if cluster_kwargs is None:
             self.cluster_kwargs = {}
@@ -1126,7 +1123,7 @@ class RPMOutput:
 
     @classmethod
     def extract_profiles(cls, rpm_clusters, cf_fpath, out_dir, n_profiles=1,
-                         job_tag=None, parallel=True, key=None,
+                         job_tag=None, max_workers=None, key=None,
                          forecast_fpath=None):
         """Use pre-formatted RPM cluster outputs to generate profile outputs.
 
@@ -1144,9 +1141,9 @@ class RPMOutput:
         job_tag : str | None
             Optional name tag to add to the output files.
             Format is "rpm_cluster_output_{tag}.csv".
-        parallel : bool | int
-            Flag to apply exclusions in parallel. Integer is interpreted as
-            max number of workers. True uses all available.
+        max_workers : int, optional
+            Number of parallel workers. 1 will run serial, None will use all
+            available., by default None
         key : str | None
             Column in clusters to sort ranks by. None will allow for
             default logic.
@@ -1157,7 +1154,7 @@ class RPMOutput:
         """
 
         rpmo = cls(rpm_clusters, cf_fpath, None, None, None,
-                   n_profiles=n_profiles, parallel=parallel)
+                   n_profiles=n_profiles, max_workers=max_workers)
 
         _, fn_pro, _, _ = rpmo._get_fout_names(job_tag)
         if not os.path.exists(out_dir):
@@ -1173,9 +1170,9 @@ class RPMOutput:
     @classmethod
     def process_outputs(cls, rpm_clusters, cf_fpath, excl_fpath,
                         excl_dict, techmap_dset, out_dir, job_tag=None,
-                        parallel=True, cluster_kwargs=None, excl_area=0.0081,
-                        include_threshold=0.001, n_profiles=1, rerank=True,
-                        trg=None):
+                        max_workers=None, cluster_kwargs=None,
+                        excl_area=0.0081, include_threshold=0.001,
+                        n_profiles=1, rerank=True, trg=None):
         """Perform output processing on clusters and write results to disk.
 
         Parameters
@@ -1198,9 +1195,9 @@ class RPMOutput:
         job_tag : str | None
             Optional name tag to add to the output files.
             Format is "rpm_cluster_output_{tag}.csv".
-        parallel : bool | int
-            Flag to apply exclusions in parallel. Integer is interpreted as
-            max number of workers. True uses all available.
+        max_workers : int, optional
+            Number of parallel workers. 1 will run serial, None will use all
+            available., by default None
         excl_area : float
             Area in km2 of one exclusion pixel.
         include_threshold : float
@@ -1220,7 +1217,7 @@ class RPMOutput:
 
         rpmo = cls(rpm_clusters, cf_fpath, excl_fpath, excl_dict,
                    techmap_dset, cluster_kwargs=cluster_kwargs,
-                   parallel=parallel, excl_area=excl_area,
+                   max_workers=max_workers, excl_area=excl_area,
                    include_threshold=include_threshold, n_profiles=n_profiles,
                    rerank=rerank, trg=trg)
         rpmo.export_all(out_dir, job_tag=job_tag)
