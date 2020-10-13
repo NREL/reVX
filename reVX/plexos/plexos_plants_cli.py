@@ -167,7 +167,7 @@ def eagle(ctx, alloc, walltime, feature, stdout_path):
 
     out = slurm_manager.sbatch(cmd, alloc=alloc, walltime=walltime,
                                feature=feature, name=name,
-                               stdout_path=stdout_path)
+                               stdout_path=stdout_path)[0]
     if out:
         msg = ('Kicked off reVX plexos aggregation job "{}" '
                '(SLURM jobid #{}) on Eagle.'

@@ -140,7 +140,7 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
                                            walltime=walltime,
                                            feature=feature,
                                            name=node_name,
-                                           stdout_path=stdout_path)
+                                           stdout_path=stdout_path)[0]
                 if out:
                     msg = ('Kicked off reVX plexos aggregation job "{}" '
                            '(SLURM jobid #{}) on Eagle.'

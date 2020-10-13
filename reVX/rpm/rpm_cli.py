@@ -322,7 +322,7 @@ def eagle(config):
                                feature=config.execution_control.feature,
                                module=config.execution_control.module,
                                conda_env=config.execution_control.conda_env,
-                               )
+                               )[0]
     if out:
         msg = ('Kicked off reVX-RPM pipeline job "{}" '
                '(SLURM jobid #{}) on Eagle.'

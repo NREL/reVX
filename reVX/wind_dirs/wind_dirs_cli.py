@@ -224,7 +224,7 @@ def eagle(config):
                                feature=config.execution_control.feature,
                                name=name, stdout_path=stdout_path,
                                conda_env=config.execution_control.conda_env,
-                               module=config.execution_control.module)
+                               module=config.execution_control.module)[0]
     if out:
         msg = ('Kicked off prominent wind direction calculation "{}" '
                '(SLURM jobid #{}) on Eagle.'
