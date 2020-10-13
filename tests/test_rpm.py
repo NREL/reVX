@@ -119,7 +119,7 @@ def test_rpm():
                                                 EXCL_DICT, TECHMAP_DSET,
                                                 OUT_DIR, job_tag=JOB_TAG,
                                                 rpm_region_col=None,
-                                                parallel=True,
+                                                max_workers=None,
                                                 output_kwargs=None,
                                                 dist_rank_filter=True,
                                                 contiguous_filter=False)
@@ -140,7 +140,7 @@ def test_rpm_serial():
                                                 EXCL_DICT, TECHMAP_DSET,
                                                 OUT_DIR, job_tag=JOB_TAG,
                                                 rpm_region_col=None,
-                                                parallel=False,
+                                                max_workers=1,
                                                 output_kwargs=None,
                                                 dist_rank_filter=True,
                                                 contiguous_filter=False)
@@ -160,7 +160,7 @@ def test_rpm_no_exclusions():
                                                 None, TECHMAP_DSET,
                                                 OUT_DIR, job_tag=JOB_TAG,
                                                 rpm_region_col=None,
-                                                parallel=True,
+                                                max_workers=None,
                                                 output_kwargs=None,
                                                 dist_rank_filter=True,
                                                 contiguous_filter=False)

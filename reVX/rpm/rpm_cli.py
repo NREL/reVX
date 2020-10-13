@@ -2,54 +2,154 @@
 """
 RPM Command Line Interface
 """
-import json
 import click
 import logging
-from rex.utilities.cli_dtypes import STR
+import os
 from rex.utilities.loggers import init_mult
+from rex.utilities.cli_dtypes import STR, INT
+from rex.utilities.hpc import SLURM
+from rex.utilities.utilities import dict_str_load, get_class_properties
 
+from reVX.config.rpm import (RPMConfig, ClusterConfigGroup,
+                             RepProfilesConfigGroup)
 from reVX.rpm.rpm_manager import RPMClusterManager as rpm_cm
 from reVX.rpm.rpm_output import RPMOutput as rpm_o
+from reVX.utilities.exceptions import RPMRuntimeError
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option('--name', '-n', default='RPM', type=STR,
-              help='Job name. Default is "RPM".')
-@click.option('--cf_profiles', '-cf', required=True,
-              type=click.Path(exists=True),
-              help=('Path to reV .h5 file containing desired capacity factor '
-                    'profiles'))
-@click.option('--out_dir', '-o', required=True, type=click.Path(),
-              help='Directory to dump output files')
-@click.option('--parallel', '-p', is_flag=True,
-              help='Run clustering in parallel by region. Default is serial.')
+@click.option('--name', '-n', default='ReEDS', type=STR,
+              help='Job name. Default is "ReEDS".')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def main(ctx, name, cf_profiles, out_dir, parallel, verbose):
+def main(ctx, name, verbose):
     """
     RPM Command Line Interface
     """
     ctx.ensure_object(dict)
+    ctx.obj['VERBOSE'] = verbose
     ctx.obj['NAME'] = name
-    ctx.obj['CF_FPATH'] = cf_profiles
+
+
+@main.command()
+def valid_config_keys():
+    """
+    Echo the valid RPM config keys
+    """
+    config_classes = [RPMConfig, ClusterConfigGroup, RepProfilesConfigGroup]
+    for cls in config_classes:
+        cls_name = str(cls).split('.')[-1].strip("'>")
+        click.echo("Valid keys for {}: {}"
+                   .format(cls_name, ', '.join(get_class_properties(cls))))
+
+
+def run_local(ctx, config):
+    """
+    Run reV to ReEDs locally from config
+
+    Parameters
+    ----------
+    ctx : click.ctx
+        click ctx object
+    config : RPMConfig
+        RPM Config object
+    """
+    ctx.obj['NAME'] = config.name
+    ctx.invoke(local,
+               out_dir=config.dirout,
+               cf_profiles=config.cf_profiles,
+               log_dir=config.logdir,
+               max_workers=config.max_workers)
+
+    if config.cluster is not None:
+        ctx.invoke(cluster,
+                   rpm_meta=config.cluster.rpm_meta,
+                   region_col=config.classify.region_col)
+
+    if config.rep_profiles is not None:
+        ctx.invoke(rep_profiles,
+                   rpm_clusters=config.rep_profiles.rpm_clusters,
+                   exclusions=config.rep_profiles.exclusions,
+                   excl_dict=config.rep_profiles.excl_dict,
+                   techmap_dset=config.rep_profiles.techmap_dset,
+                   trg=config.rep_profiles.trg,
+                   n_profiles=config.rep_profiles.n_profiles,
+                   forecast_fpath=config.rep_profiles.forecast_fpath)
+
+
+@main.command()
+@click.option('--config', '-c', required=True,
+              type=click.Path(exists=True),
+              help='Filepath to reVX-rpm config json file.')
+@click.option('--verbose', '-v', is_flag=True,
+              help='Flag to turn on debug logging. Default is not verbose.')
+@click.pass_context
+def from_config(ctx, config, verbose):
+    """
+    Run reVX-rpm from a config.
+    """
+
+    config = RPMConfig(config)
+
+    if 'VERBOSE' in ctx.obj:
+        if any((ctx.obj['VERBOSE'], verbose)):
+            config._log_level = logging.DEBUG
+    elif verbose:
+        config._log_level = logging.DEBUG
+
+    if config.execution_control.option == 'local':
+        run_local(ctx, config)
+    elif config.execution_control.option == 'eagle':
+        eagle(config)
+
+
+@main.group(chain=True)
+@click.option('--out_dir', '-o', required=True, type=click.Path(),
+              help='Directory to dump output files')
+@click.option('--cf_profiles', '-cf', required=True,
+              type=click.Path(exists=True),
+              help=('Path to reV .h5 file containing desired capacity factor '
+                    'profiles'))
+@click.option('--log_dir', '-log', default=None, type=STR,
+              help='Directory to dump log files. Default is out_dir.')
+@click.option('--max_workers', '-mw', type=INT, default=None,
+              help=('Number of parallel workers. 1 will run serial, '
+                    'None will use all available.'))
+@click.option('--verbose', '-v', is_flag=True,
+              help='Flag to turn on debug logging. Default is not verbose.')
+@click.pass_context
+def local(ctx, out_dir, cf_profiles, log_dir, max_workers, verbose):
+    """
+    Run reVX-REEDS on local hardware.
+    """
     ctx.obj['OUT_DIR'] = out_dir
-    ctx.obj['PARALLEL'] = parallel
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
 
-    init_mult(name, out_dir, modules=[__name__, 'reVX.rpm'],
-              verbose=verbose)
+    if log_dir is None:
+        log_dir = out_dir
 
-    logger.info('Running reV to RPM pipeline using CF profiles: {}'
-                .format(cf_profiles))
-    logger.info('Outputs to be stored in: {}'.format(out_dir))
+    name = ctx.obj['NAME']
+    if 'VERBOSE' in ctx.obj:
+        verbose = any((ctx.obj['VERBOSE'], verbose))
+
+    log_modules = [__name__, 'reVX', 'reVX.rpm', 'reV', 'reV.rep_profiles']
+    init_mult(name, log_dir, modules=log_modules, verbose=verbose)
+
+    logger.info('Running reV to RPM pipeline\n'
+                'Outputs to be stored in: {}'.format(out_dir))
+
+    ctx.obj['CF_PROFILES'] = cf_profiles
+    ctx.obj['MAX_WORKERS'] = max_workers
 
 
-@main.group(invoke_without_command=True)
+@local.command()
 @click.option('--rpm_meta', '-m', required=True, type=click.Path(exists=True),
               help='.csv or .json containing the RPM meta data')
-@click.option('--region_col', '-rc', type=str, default=None,
+@click.option('--region_col', '-reg', type=str, default=None,
               help='The meta-data field to map RPM regions to')
 @click.pass_context
 def cluster(ctx, rpm_meta, region_col):
@@ -57,78 +157,24 @@ def cluster(ctx, rpm_meta, region_col):
     Cluster RPM Regions
     """
     name = ctx.obj['NAME']
-    cf_fpath = ctx.obj['CF_FPATH']
+    cf_profiles = ctx.obj['CF_PROFILES']
     out_dir = ctx.obj['OUT_DIR']
-    parallel = ctx.obj['PARALLEL']
-    ctx.obj['RPM_META'] = rpm_meta
-    ctx.obj['META_COL'] = region_col
+    max_workers = ctx.obj['MAX_WORKERS']
 
-    if ctx.invoked_subcommand is None:
-        logger.info('Clustering regions based on:\n{}'
-                    .format(rpm_meta))
-        rpm_cm.run_clusters(cf_fpath, rpm_meta, out_dir, job_tag=name,
-                            rpm_region_col=region_col, parallel=parallel)
+    logger.info('Clustering regions based on:\n{}'.format(rpm_meta))
+    rpm_clusters = rpm_cm.run_clusters(cf_profiles, rpm_meta, out_dir,
+                                       job_tag=name, rpm_region_col=region_col,
+                                       max_workers=max_workers)
 
-
-@cluster.command()
-@click.option('--exclusions', '-e', default=None,
-              type=click.Path(exists=True),
-              help=('Filepath to exclusions data (must match the techmap grid)'
-                    ' None will not apply exclusions.'))
-@click.option('--excl_dict', '-exd', default=None, type=STR,
-              help='String representation of a dictionary of exclusion '
-              'LayerMask arguments {layer: {kwarg: value}} where layer is a '
-              'dataset in excl_fpath and kwarg can be "inclusion_range", '
-              '"exclude_values", "include_values", "use_as_weights", '
-              'or "weight".')
-@click.option('--techmap_dset', '-tmd', default=None, type=STR,
-              help=('Dataset name in the exclusions file containing the '
-                    'exclusions-to-resource mapping data.'))
-@click.option('--trg', '-trg', default=None, type=STR,
-              help=('Filepath to TRG LCOE bins.'))
-@click.pass_context
-def and_profiles(ctx, exclusions, excl_dict, techmap_dset, trg):
-    """
-    Cluster RPM Regions and extract representative profiles
-    """
-    name = ctx.obj['NAME']
-    cf_fpath = ctx.obj['CF_FPATH']
-    out_dir = ctx.obj['OUT_DIR']
-    parallel = ctx.obj['PARALLEL']
-    rpm_meta = ctx.obj['RPM_META']
-    region_col = ctx.obj['META_COL']
-    out_dir = ctx.obj['OUT_DIR']
-    parallel = ctx.obj['PARALLEL']
-
-    logger.info('Clustering regions based on: {}'.format(rpm_meta))
-    logger.info('Extracting representative profiles using exclusions: {}'
-                .format(exclusions))
-
-    if isinstance(excl_dict, str):
-        excl_dict = excl_dict.replace('\'', '\"')
-        excl_dict = excl_dict.replace('None', 'null')
-        excl_dict = excl_dict.replace('True', 'true')
-        excl_dict = excl_dict.replace('False', 'false')
-        excl_dict = json.loads(excl_dict)
-
-    output_kwargs = {}
-    if trg is not None:
-        output_kwargs = {'trg': trg}
-        logger.info('Applying TRGs: {}'.format(trg))
-
-    rpm_cm.run_clusters_and_profiles(cf_fpath, rpm_meta, exclusions,
-                                     excl_dict, techmap_dset, out_dir,
-                                     job_tag=name, rpm_region_col=region_col,
-                                     parallel=parallel,
-                                     output_kwargs=output_kwargs)
+    logger.info('reVX - RPM clustering methods complete.')
+    ctx.obj['RPM_CLUSTERS'] = rpm_clusters
 
 
-@main.group(invoke_without_command=True)
-@click.option('--rpm_clusters', '-rc', required=True,
-              type=click.Path(exists=True),
-              help=('Pre-existing RPM cluster results .csv with '
+@local.command()
+@click.option('--rpm_clusters', '-rc', type=STR, default=None,
+              help=('Path to pre-existing RPM cluster results .csv with '
                     '(gid, gen_gid, cluster_id, rank)'))
-@click.option('--exclusions', '-e', default=None,
+@click.option('--exclusions', '-excl', default=None,
               type=click.Path(exists=True),
               help=('Filepath to exclusions data (must match the techmap grid)'
                     ' None will not apply exclusions.'))
@@ -143,62 +189,151 @@ def and_profiles(ctx, exclusions, excl_dict, techmap_dset, trg):
                     'exclusions-to-resource mapping data.'))
 @click.option('--trg', '-trg', default=None, type=STR,
               help=('Filepath to TRG LCOE bins.'))
-@click.pass_context
-def rep_profiles(ctx, rpm_clusters, exclusions, excl_dict, techmap_dset, trg):
-    """
-    Extract representative profiles from existing RPM clusters
-    """
-    name = ctx.obj['NAME']
-    cf_fpath = ctx.obj['CF_FPATH']
-    out_dir = ctx.obj['OUT_DIR']
-    parallel = ctx.obj['PARALLEL']
-    ctx.obj['RPM_CLUSTERS'] = rpm_clusters
-
-    if ctx.invoked_subcommand is None:
-        logger.info('Extracting representative profiles from RPM clusters: {}'
-                    .format(rpm_clusters))
-        logger.info('Extracting representative profiles using exclusions: {}'
-                    .format(exclusions))
-
-        if trg is not None:
-            logger.info('Applying TRGs: {}'.format(trg))
-
-        if isinstance(excl_dict, str):
-            excl_dict = excl_dict.replace('\'', '\"')
-            excl_dict = excl_dict.replace('None', 'null')
-            excl_dict = json.loads(excl_dict)
-
-        rpm_o.process_outputs(rpm_clusters, cf_fpath, exclusions,
-                              excl_dict, techmap_dset, out_dir,
-                              job_tag=name, parallel=parallel, trg=trg)
-
-
-@rep_profiles.command()
-@click.option('--profiles', '-np', required=True, type=int,
+@click.option('--n_profiles', '-np', type=INT, default=1,
               help=('Number of profiles per cluster to export.'))
-@click.option('--forecast_fpath', '-fo', type=STR, default=None,
+@click.option('--forecast_fpath', '-fcst', type=STR, default=None,
               help=('reV generation output file for forecast data. If this is '
                     'input, profiles will be taken from forecast file instead '
                     'of the cf file, based on a NN mapping.'))
 @click.pass_context
-def extra_profiles(ctx, profiles, forecast_fpath):
+def rep_profiles(ctx, rpm_clusters, exclusions, excl_dict, techmap_dset, trg,
+                 n_profiles, forecast_fpath):
     """
-    Cluster RPM Regions and extract representative profiles
+    Extract representative profiles from RPM clusters
     """
     name = ctx.obj['NAME']
-    cf_fpath = ctx.obj['CF_FPATH']
+    cf_profiles = ctx.obj['CF_PROFILES']
     out_dir = ctx.obj['OUT_DIR']
-    parallel = ctx.obj['PARALLEL']
-    rpm_clusters = ctx.obj['RPM_CLUSTERS']
+    max_workers = ctx.obj['MAX_WORKERS']
+    if rpm_clusters is None:
+        if 'RPM_CLUSTERS' not in ctx.obj:
+            msg = ('You must run "cluster" or provide path to existing '
+                   'RPM clusters to extract representative profiles!')
+            logger.error(msg)
+            raise RPMRuntimeError(msg)
 
-    logger.info('Extracting extra representative profiles from: {}'
+        rpm_clusters = ctx.obj['RPM_CLUSTERS']
+
+    logger.info('Extracting representative profiles from RPM clusters: {}'
                 .format(rpm_clusters))
-    if forecast_fpath is not None:
-        logger.info('Using forecast file: {}'.format(forecast_fpath))
+    logger.info('Extracting representative profiles using exclusions: {}'
+                .format(exclusions))
 
-    rpm_o.extract_profiles(rpm_clusters, cf_fpath, out_dir,
-                           n_profiles=profiles, job_tag=name,
-                           parallel=parallel, forecast_fpath=forecast_fpath)
+    if trg is not None:
+        logger.info('Applying TRGs: {}'.format(trg))
+
+    if isinstance(excl_dict, str):
+        excl_dict = dict_str_load(excl_dict)
+
+    rpm_o.process_outputs(rpm_clusters, cf_profiles, exclusions, excl_dict,
+                          techmap_dset, out_dir, job_tag=name,
+                          max_workers=max_workers, trg=trg)
+
+    if forecast_fpath is not None or n_profiles > 1:
+        logger.info('Extracting extra representative profiles from: {}'
+                    .format(rpm_clusters))
+        if forecast_fpath is not None:
+            logger.info('Using forecast file: {}'.format(forecast_fpath))
+
+        rpm_o.extract_profiles(rpm_clusters, cf_profiles, out_dir,
+                               n_profiles=n_profiles, job_tag=name,
+                               max_workers=max_workers,
+                               forecast_fpath=forecast_fpath)
+
+
+def get_node_cmd(config):
+    """
+    Get the node CLI call for the reVX-REEDS pipeline.
+
+    Parameters
+    ----------
+    config : reVX.config.reeds.ReedsConfig
+        reVX-REEDS config object.
+
+    Returns
+    -------
+    cmd : str
+        CLI call to submit to SLURM execution.
+    """
+
+    args = ['-n {}'.format(SLURM.s(config.name)),
+            'local',
+            '-o {}'.format(SLURM.s(config.dirout)),
+            '-cf {}'.format(SLURM.s(config.cf_profiles)),
+            '-mw {}'.format(SLURM.s(config.max_workers)),
+            '-log {}'.format(SLURM.s(config.logdir)),
+            ]
+
+    if config.log_level == logging.DEBUG:
+        args.append('-v')
+
+    if config.cluster is not None:
+        cluster = ['cluster',
+                   '-m {}'.format(SLURM.s(config.cluster.rpm_meta)),
+                   '-reg {}'.format(SLURM.s(config.cluster.region_col)),
+                   ]
+
+        args.extend(cluster)
+
+    if config.rep_profiles is not None:
+        rep_profiles = config.rep_profiles.copy()
+        profiles = ['rep_profiles',
+                    '-rc {}'.format(SLURM.s(rep_profiles.rpm_clusters)),
+                    '-excl {}'.format(SLURM.s(rep_profiles.exclusions)),
+                    '-exd {}'.format(SLURM.s(rep_profiles.excl_dict)),
+                    '-tmp {}'.format(SLURM.s(rep_profiles.techmap_dset)),
+                    '-trg {}'.format(SLURM.s(rep_profiles.trg)),
+                    '-np {}'.format(SLURM.s(rep_profiles.n_profiles)),
+                    '-fcst {}'.format(SLURM.s(rep_profiles.forecast_fpath)),
+                    ]
+
+        args.extend(profiles)
+
+    cmd = 'python -m reVX.rpm.rpm_cli {}'.format(' '.join(args))
+    logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
+
+    return cmd
+
+
+def eagle(config):
+    """
+    Run reVX-RPM on Eagle HPC.
+
+    Parameters
+    ----------
+    config : reVX.config.rpm.RPMConfig
+        reVX-RPM config object.
+    """
+
+    cmd = get_node_cmd(config)
+    name = config.name
+    log_dir = config.logdir
+    stdout_path = os.path.join(log_dir, 'stdout/')
+
+    logger.info('Running reVX-RPM pipeline on Eagle with '
+                'node name "{}"'.format(name))
+    slurm_manager = SLURM()
+    out = slurm_manager.sbatch(cmd,
+                               name=name,
+                               stdout_path=stdout_path,
+                               alloc=config.execution_control.alloc,
+                               memory=config.execution_control.node_mem,
+                               walltime=config.execution_control.walltime,
+                               feature=config.execution_control.feature,
+                               module=config.execution_control.module,
+                               conda_env=config.execution_control.conda_env,
+                               )[0]
+    if out:
+        msg = ('Kicked off reVX-RPM pipeline job "{}" '
+               '(SLURM jobid #{}) on Eagle.'
+               .format(name, out))
+    else:
+        msg = ('Was unable to kick off reVX-RPM pipeline job "{}". '
+               'Please see the stdout error messages'
+               .format(name))
+
+    click.echo(msg)
+    logger.info(msg)
 
 
 if __name__ == '__main__':

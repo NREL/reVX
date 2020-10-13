@@ -7,7 +7,7 @@ import pandas as pd
 import click
 import logging
 
-from rex.utilities.execution import SLURM
+from rex.utilities.hpc import SLURM
 from rex.utilities.cli_dtypes import STR, INT, INTLIST
 from rex.utilities.loggers import init_mult
 
@@ -117,6 +117,11 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
     else:
         scenarios = [scenario]
 
+    slurm_manager = ctx.obj.get('SLURM_MANAGER', None)
+    if slurm_manager is None:
+        slurm_manager = SLURM()
+        ctx.obj['SLURM_MANAGER'] = slurm_manager
+
     for scenario in scenarios:
         for cf_year in cf_years:
             for build_year in build_years:
@@ -129,13 +134,17 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
                 logger.info('Running reVX plexos aggregation on Eagle with '
                             'node name "{}"'.format(node_name))
 
-                slurm = SLURM(cmd, alloc=alloc, memory=memory,
-                              walltime=walltime, feature=feature,
-                              name=node_name, stdout_path=stdout_path)
-                if slurm.id:
+                out = slurm_manager.sbatch(cmd,
+                                           alloc=alloc,
+                                           memory=memory,
+                                           walltime=walltime,
+                                           feature=feature,
+                                           name=node_name,
+                                           stdout_path=stdout_path)[0]
+                if out:
                     msg = ('Kicked off reVX plexos aggregation job "{}" '
                            '(SLURM jobid #{}) on Eagle.'
-                           .format(node_name, slurm.id))
+                           .format(node_name, out))
                 else:
                     msg = ('Was unable to kick off reVX plexos aggregation job'
                            ' "{}". Please see the stdout error messages'

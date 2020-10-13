@@ -7,7 +7,7 @@ from reV.config.base_analysis_config import AnalysisConfig
 
 
 class ReedsConfig(AnalysisConfig):
-    """Config framework for REEDS jobs."""
+    """Config framework for ReEDS jobs."""
 
     NAME = 'ReEDS'
 
