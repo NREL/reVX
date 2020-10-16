@@ -771,7 +771,7 @@ class PlexosAggregation:
         profiles = self._init_output()
         progress = 0
         futures = {}
-        loggers = __name__
+        loggers = [__name__, 'reVX']
         with SpawnProcessPool(max_workers=self.max_workers,
                               loggers=loggers) as exe:
             for i, inode in enumerate(np.unique(self._node_map)):
