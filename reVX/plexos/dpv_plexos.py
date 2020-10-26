@@ -387,11 +387,8 @@ class DpvPlexosAggregation:
 
         logger.info('Writing results to file: {}'.format(out_fpath))
         with Outputs(out_fpath, mode='w') as out:
-            meta = out.to_records_array(pa._node_buildout)
-            time_index = np.array(pa.time_index.astype(str), dtype='S20')
-            out._create_dset('dpv/meta', meta.shape, meta.dtype, data=meta)
-            out._create_dset('dpv/time_index', time_index.shape,
-                             time_index.dtype, data=time_index)
+            out['dpv/meta'] = pa._node_buildout
+            out['dpv/time_index'] = pa.time_index
             out._create_dset('dpv/gen_profiles', profiles.shape,
                              profiles.dtype, chunks=(None, 100),
                              data=profiles)
