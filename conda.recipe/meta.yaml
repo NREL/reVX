@@ -18,8 +18,8 @@ requirements:
     - click
     - dask
     - geopandas
-    - h5py>=3.1.0
-    - nrel-rex>=0.2.28
+    - h5py>=2.10.0,!=3.0.0
+    - nrel-rex>=0.2.29
     - nrel-rev>=0.4.31
     - numpy>=1.16
     - pandas
@@ -39,8 +39,8 @@ requirements:
     - click
     - dask
     - geopandas
-    - h5py>=3.1.0
-    - nrel-rex>=0.2.28
+    - h5py>=2.10.0,!=3.0.0
+    - nrel-rex>=0.2.29
     - nrel-rev>=0.4.31
     - {{ pin_compatible('numpy') }}
     - pandas
