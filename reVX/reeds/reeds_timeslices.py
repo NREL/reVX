@@ -174,8 +174,8 @@ class ReedsTimeslices:
 
         return np.concatenate(col.values)
 
-    @staticmethod
-    def _unpack_gen_gids(group_df):
+    @classmethod
+    def _unpack_gen_gids(cls, group_df):
         """
         Unpack gen gids and counts lists
 
@@ -189,14 +189,13 @@ class ReedsTimeslices:
         pandas.DataFrame
             DataFrame of unique gen gids and their associated counts
         """
-        gen_df = {
-            'gid': ReedsTimeslices._unpack_list(group_df['gen_gids']),
-            'gid_count': ReedsTimeslices._unpack_list(group_df['gid_counts'])}
+        gen_df = {'gid': cls._unpack_list(group_df['gen_gids']),
+                  'gid_count': cls._unpack_list(group_df['gid_counts'])}
 
         return pd.DataFrame(gen_df).groupby('gid').sum()
 
-    @staticmethod
-    def _add_reg_cols(meta, rev_table, reg_cols=('region', 'class')):
+    @classmethod
+    def _add_reg_cols(cls, meta, rev_table, reg_cols=('region', 'class')):
         """
         Add reg_cols to meta from rev_table
 
@@ -219,15 +218,15 @@ class ReedsTimeslices:
         """
         rev_table = ReedsClassifier._parse_table(rev_table)
         rev_table = rev_table.groupby(list(reg_cols))
-        rev_table = rev_table.apply(ReedsTimeslices._unpack_gen_gids)
+        rev_table = rev_table.apply(cls._unpack_gen_gids)
 
         meta = meta.merge(rev_table.reset_index(), on='gid')
         meta = meta.set_index(list(reg_cols))
 
         return meta
 
-    @staticmethod
-    def _check_profiles(profiles, rev_table=None,
+    @classmethod
+    def _check_profiles(cls, profiles, rev_table=None,
                         reg_cols=('region', 'class')):
         """
         Check profiles to ensure all needed data is available.
@@ -264,13 +263,12 @@ class ReedsTimeslices:
             logger.error(msg)
             raise ReedsValueError(msg)
 
-        meta, time_index = \
-            ReedsTimeslices._extract_meta_and_timeindex(profiles,
-                                                        reg_cols)
+        meta, time_index = cls._extract_meta_and_timeindex(profiles,
+                                                           reg_cols)
 
         if rev_table is not None:
-            meta = ReedsTimeslices._add_reg_cols(meta, rev_table,
-                                                 reg_cols=reg_cols)
+            meta = cls._add_reg_cols(meta, rev_table,
+                                     reg_cols=reg_cols)
             logger.info('Using input region column labels for timeslice '
                         'regions: {}'.format(reg_cols))
 
@@ -322,8 +320,8 @@ class ReedsTimeslices:
 
         return timeslice_map
 
-    @staticmethod
-    def _map_timeslices(timeslice_map, time_index):
+    @classmethod
+    def _map_timeslices(cls, timeslice_map, time_index):
         """
         Map timeslices to profiles datetime index
 
@@ -340,7 +338,7 @@ class ReedsTimeslices:
         timeslice_map : pandas.GroupBy
             Mapping of each timeslice to profiles time_index
         """
-        timeslice_map = ReedsTimeslices._parse_timeslice_map(timeslice_map)
+        timeslice_map = cls._parse_timeslice_map(timeslice_map)
 
         if timeslice_map.index.name == 'datetime':
             mask = timeslice_map.index.isin(time_index)
@@ -445,8 +443,8 @@ class ReedsTimeslices:
 
         return means, stdevs, coeffs
 
-    @staticmethod
-    def _rep_profile_stats(profiles_h5, meta, timeslice_groups,
+    @classmethod
+    def _rep_profile_stats(cls, profiles_h5, meta, timeslice_groups,
                            max_workers=None):
         """
         Compute means and standard divations for each timeslice from
@@ -478,7 +476,7 @@ class ReedsTimeslices:
         if max_workers is None:
             max_workers = os.cpu_count()
 
-        profiles = ReedsTimeslices._extract_rep_profiles(profiles_h5, meta)
+        profiles = cls._extract_rep_profiles(profiles_h5, meta)
         means = []
         stdevs = []
         corr_coeffs = {}
@@ -494,8 +492,7 @@ class ReedsTimeslices:
                 futures = {}
                 for s, slice_map in timeslice_groups:
                     tslice = profiles.loc[slice_map.index]
-                    future = exe.submit(ReedsTimeslices._rep_tslice_stats,
-                                        tslice)
+                    future = exe.submit(cls._rep_tslice_stats, tslice)
                     futures[future] = s
 
                 for i, future in enumerate(as_completed(futures)):
@@ -516,7 +513,7 @@ class ReedsTimeslices:
         else:
             for i, (s, slice_map) in enumerate(timeslice_groups):
                 tslice = profiles.loc[slice_map.index]
-                mean, stdev, coeffs = ReedsTimeslices._rep_tslice_stats(tslice)
+                mean, stdev, coeffs = cls._rep_tslice_stats(tslice)
 
                 corr_coeffs[s] = coeffs
                 mean.name = s
@@ -574,8 +571,9 @@ class ReedsTimeslices:
 
         return pd.Series(means), pd.Series(stdevs)
 
-    @staticmethod
-    def _cf_profile_stats(profiles_h5, meta, timeslices, max_workers=None):
+    @classmethod
+    def _cf_profile_stats(cls, profiles_h5, meta, timeslices,
+                          max_workers=None):
         """
         Compute timeslice mean and standard deviation from cf profiles
 
@@ -610,8 +608,8 @@ class ReedsTimeslices:
                                   loggers=loggers) as exe:
                 futures = {}
                 for group, df in meta.groupby(reg_cols):
-                    future = exe.submit(ReedsTimeslices._cf_group_stats,
-                                        profiles_h5, df, timeslices)
+                    future = exe.submit(cls._cf_group_stats, profiles_h5, df,
+                                        timeslices)
                     futures[future] = group
 
                 logger.debug('Submitted {} futures.'.format(len(futures)))
@@ -631,8 +629,7 @@ class ReedsTimeslices:
             means = []
             stdevs = []
             for group, df in meta.groupby(reg_cols):
-                m, s = ReedsTimeslices._cf_group_stats(profiles_h5, df,
-                                                       timeslices)
+                m, s = cls._cf_group_stats(profiles_h5, df, timeslices)
                 m.name = str(list(group))
                 s.name = str(list(group))
                 means.append(m)
@@ -917,8 +914,8 @@ class ReedsTimeslices:
 
         return out
 
-    @staticmethod
-    def save_correlation_dict(corr, reg_cols, fpath, compression='gzip',
+    @classmethod
+    def save_correlation_dict(cls, corr, reg_cols, fpath, compression='gzip',
                               sparsify=False):
         """Save a dictionary of correlation coefficient matrices to an h5 file.
 
@@ -943,8 +940,8 @@ class ReedsTimeslices:
             logger.error(e)
             raise TypeError(e)
 
-        meta = ReedsTimeslices._get_correlation_meta(corr, reg_cols)
-        ReedsTimeslices._check_correlation_dfs(corr)
+        meta = cls._get_correlation_meta(corr, reg_cols)
+        cls._check_correlation_dfs(corr)
 
         with Outputs(fpath, mode='w') as out:
             out['meta'] = meta
@@ -955,7 +952,7 @@ class ReedsTimeslices:
                     data *= 1000
                     data = data.astype(np.int16)
                     if sparsify:
-                        data, ind = ReedsTimeslices.sparsify_corr_matrix(data)
+                        data, ind = cls.sparsify_corr_matrix(data)
                     out.h5.create_dataset(ds_name,
                                           shape=data.shape,
                                           compression=compression,

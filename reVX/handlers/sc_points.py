@@ -496,8 +496,8 @@ class SupplyCurvePoints:
 
         return slices
 
-    @staticmethod
-    def _create_points(sc_table, res_cf_means, offshore=False,
+    @classmethod
+    def _create_points(cls, sc_table, res_cf_means, offshore=False,
                        max_workers=None, points_per_worker=400):
         """
         Create Points from all supply curve points in table
@@ -525,8 +525,7 @@ class SupplyCurvePoints:
         if max_workers is None:
             max_workers = os.cpu_count()
 
-        sc_table = SupplyCurvePoints._parse_sc_table(sc_table,
-                                                     offshore=offshore)
+        sc_table = cls._parse_sc_table(sc_table, offshore=offshore)
         if 'sc_gid' in sc_table:
             sc_table = sc_table.set_index('sc_gid')
 
@@ -540,13 +539,13 @@ class SupplyCurvePoints:
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 futures = []
-                slices = SupplyCurvePoints._create_worker_slices(
+                slices = cls._create_worker_slices(
                     sc_table, points_per_worker=points_per_worker)
                 for sc_slice in slices:
                     table_slice = sc_table.iloc[sc_slice].copy()
                     gids = np.unique(np.hstack(table_slice['res_gids'].values))
                     res_slice = res_cf_means.loc[gids].copy()
-                    future = exe.submit(SupplyCurvePoints._create_points,
+                    future = exe.submit(cls._create_points,
                                         table_slice,
                                         res_slice,
                                         max_workers=1)
@@ -567,8 +566,8 @@ class SupplyCurvePoints:
 
         return sc_points
 
-    @staticmethod
-    def _parse_sc_points(sc_table, res_meta, max_workers=None,
+    @classmethod
+    def _parse_sc_points(cls, sc_table, res_meta, max_workers=None,
                          points_per_worker=400, offshore=False):
         """
         Create a Point instance for all Supply curve points in sc_table.
@@ -595,14 +594,12 @@ class SupplyCurvePoints:
         tuple
             (sc_points, capacity, mask)
         """
-        sc_table = SupplyCurvePoints._parse_sc_table(sc_table,
-                                                     offshore=offshore)
+        sc_table = cls._parse_sc_table(sc_table, offshore=offshore)
         if 'sc_gid' in sc_table:
             sc_table = sc_table.set_index('sc_gid')
 
-        res_meta = SupplyCurvePoints._parse_res_meta(res_meta,
-                                                     offshore=offshore)
-        sc_points = SupplyCurvePoints._create_points(
+        res_meta = cls._parse_res_meta(res_meta, offshore=offshore)
+        sc_points = cls._create_points(
             sc_table, res_meta,
             offshore=offshore,
             max_workers=max_workers,

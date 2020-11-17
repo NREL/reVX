@@ -162,7 +162,7 @@ class Plants:
         if 'plant_id' in plant_builds:
             plant_builds = plant_builds.set_index('plant_id')
 
-        plant_builds = plant_builds.apply(Plants._parse_lists)
+        plant_builds = plant_builds.apply(cls._parse_lists)
 
         plants = {}
         for pid, build in plant_builds.iterrows():
@@ -329,8 +329,8 @@ class PlexosPlants(Plants):
 
         return coords
 
-    @staticmethod
-    def _haversine_dist(plant_coords, sc_coords):
+    @classmethod
+    def _haversine_dist(cls, plant_coords, sc_coords):
         """
         Compute the haversine distance between the given plant(s) and given
         supply curve points
@@ -347,8 +347,8 @@ class PlexosPlants(Plants):
         dist : ndarray
             Vector of distances between plant and supply curve points in km
         """
-        plant_coords = PlexosPlants._check_coords(plant_coords)
-        sc_coords = PlexosPlants._check_coords(sc_coords)
+        plant_coords = cls._check_coords(plant_coords)
+        sc_coords = cls._check_coords(sc_coords)
 
         dist = haversine_distances(plant_coords, sc_coords)
         if plant_coords.shape[0] == 1:
@@ -383,8 +383,8 @@ class PlexosPlants(Plants):
 
         return np.percentile(dist, percentile)
 
-    @staticmethod
-    def _get_plant_sc_dists(bus_coords, sc_table, dist_percentile=90,
+    @classmethod
+    def _get_plant_sc_dists(cls, bus_coords, sc_table, dist_percentile=90,
                             lcoe_col='total_lcoe', lcoe_thresh=1.3):
         """
         Extract Supply curve gids and distances for plant originating at
@@ -415,10 +415,9 @@ class PlexosPlants(Plants):
         sc_coords = np.radians(sc_table[['latitude', 'longitude']].values)
 
         # Filter SC table to points within 'dist_tresh' of coords
-        dist = PlexosPlants._haversine_dist(bus_coords, sc_coords)
-        dist_thresh = \
-            PlexosPlants._substation_distance(sc_table,
-                                              percentile=dist_percentile)
+        dist = cls._haversine_dist(bus_coords, sc_coords)
+        dist_thresh = cls._substation_distance(sc_table,
+                                               percentile=dist_percentile)
         logger.debug("- Using distance threshold of {} km".format(dist_thresh))
         while True:
             mask = dist <= dist_thresh
@@ -447,14 +446,13 @@ class PlexosPlants(Plants):
         sc_coords = sc_coords[mask]
 
         # Sort by distance
-        plant_sc['dist'] = PlexosPlants._haversine_dist(plant_coords,
-                                                        sc_coords)
+        plant_sc['dist'] = cls._haversine_dist(plant_coords, sc_coords)
         plant_sc = plant_sc.sort_values('dist')
 
         return plant_sc.reset_index(drop=True)
 
-    @staticmethod
-    def _identify_plants(plant_table, sc_table, dist_percentile=90,
+    @classmethod
+    def _identify_plants(cls, plant_table, sc_table, dist_percentile=90,
                          lcoe_col='total_lcoe', lcoe_thresh=1.3,
                          max_workers=None, plants_per_worker=40):
         """
@@ -496,7 +494,7 @@ class PlexosPlants(Plants):
                 slices = SupplyCurvePoints._create_worker_slices(
                     plant_table, points_per_worker=plants_per_worker)
                 for table_slice in slices:
-                    future = exe.submit(PlexosPlants._identify_plants,
+                    future = exe.submit(cls._identify_plants,
                                         plant_table.iloc[table_slice].copy(),
                                         sc_table,
                                         dist_percentile=dist_percentile,
@@ -515,7 +513,7 @@ class PlexosPlants(Plants):
             for i, bus in plant_table.iterrows():
                 coords = \
                     bus[['latitude', 'longitude']].values.astype(float)
-                plant = PlexosPlants._get_plant_sc_dists(
+                plant = cls._get_plant_sc_dists(
                     coords, sc_table,
                     dist_percentile=dist_percentile,
                     lcoe_col=lcoe_col,

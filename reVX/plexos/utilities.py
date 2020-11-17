@@ -145,8 +145,8 @@ class DataCleaner:
         df = df.rename(columns=name_map)
         return df
 
-    @staticmethod
-    def reduce_df(df, cols, name_map=None):
+    @classmethod
+    def reduce_df(cls, df, cols, name_map=None):
         """Reduce a df to just certain columns.
 
         Parameters
@@ -163,12 +163,12 @@ class DataCleaner:
         df : pd.DataFrame
             Dataframe with only cols if the input df had all cols.
         """
-        df = DataCleaner.rename_cols(df, name_map=name_map)
+        df = cls.rename_cols(df, name_map=name_map)
         cols = [c for c in cols if c in df]
         return df[cols]
 
-    @staticmethod
-    def pre_filter_plexos_meta(plexos_meta, name_map=None):
+    @classmethod
+    def pre_filter_plexos_meta(cls, plexos_meta, name_map=None):
         """Pre-filter the plexos meta data to drop bad node names and
         duplicate lat/lons.
 
@@ -184,7 +184,7 @@ class DataCleaner:
         plexos_meta : pd.DataFrame
             Filtered plexos meta data.
         """
-        plexos_meta = DataCleaner.rename_cols(plexos_meta, name_map=name_map)
+        plexos_meta = cls.rename_cols(plexos_meta, name_map=name_map)
         # as of 8/2019 there were two erroneous plexos nodes with bad names
         mask = (plexos_meta['plexos_id'] != '#NAME?')
         plexos_meta = plexos_meta[mask]
@@ -453,9 +453,9 @@ class ProjectGidHandler:
 
         return gids
 
-    @staticmethod
-    def build_project_points(build_map, fpath_out=None, config_tag='default',
-                             **db_kwargs):
+    @classmethod
+    def build_project_points(cls, build_map, fpath_out=None,
+                             config_tag='default', **db_kwargs):
         """Build a project points CSV from a set of rev/reeds build files.
 
         Parameters
@@ -485,8 +485,8 @@ class ProjectGidHandler:
             if rev_table not in tables:
                 tables[rev_table] = parse_table_name(rev_table, **db_kwargs)
 
-            gids += ProjectGidHandler.get_resource_gids(tables[rev_table],
-                                                        tables[reeds_table])
+            gids += cls.get_resource_gids(tables[rev_table],
+                                          tables[reeds_table])
 
         gids = sorted(list(set(gids)), key=float)
         pp = pd.DataFrame({'config': [config_tag] * len(gids)}, index=gids)

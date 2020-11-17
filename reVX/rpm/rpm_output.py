@@ -405,8 +405,8 @@ class RPMOutput:
         self._full_lon_slice = None
         self._init_lat_lon()
 
-    @staticmethod
-    def _parse_cluster_arg(rpm_clusters):
+    @classmethod
+    def _parse_cluster_arg(cls, rpm_clusters):
         """Parse dataframe from cluster input arg.
 
         Parameters
@@ -435,7 +435,7 @@ class RPMOutput:
             raise RPMTypeError('Expected a DataFrame or str but received {}'
                                .format(type(rpm_clusters)))
 
-        RPMOutput._check_cluster_cols(clusters)
+        cls._check_cluster_cols(clusters)
 
         return clusters
 
@@ -688,9 +688,9 @@ class RPMOutput:
 
         return self._excl_lon
 
-    @staticmethod
-    def _single_excl(cluster_id, clusters, excl_fpath, excl_dict, techmap_dset,
-                     lat_slice, lon_slice):
+    @classmethod
+    def _single_excl(cls, cluster_id, clusters, excl_fpath, excl_dict,
+                     techmap_dset, lat_slice, lon_slice):
         """Calculate the exclusions for each resource GID in a cluster.
 
         Parameters
@@ -734,9 +734,9 @@ class RPMOutput:
         n_points = np.zeros((len(locs), ), dtype=np.uint16)
 
         with ExclusionMaskFromDict(excl_fpath, layers_dict=excl_dict) as excl:
-            techmap = RPMOutput._get_tm_data(excl, techmap_dset,
-                                             lat_slice, lon_slice)
-            exclusions = RPMOutput._get_excl_data(excl, lat_slice, lon_slice)
+            techmap = cls._get_tm_data(excl, techmap_dset, lat_slice,
+                                       lon_slice)
+            exclusions = cls._get_excl_data(excl, lat_slice, lon_slice)
 
         for i, ind in enumerate(clusters.loc[mask, :].index.values):
             techmap_locs = np.where(

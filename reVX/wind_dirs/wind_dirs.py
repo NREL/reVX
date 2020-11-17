@@ -47,8 +47,8 @@ class WindDirections(Aggregation):
         super().__init__(excl_fpath, power_rose_h5_fpath, tm_dset, agg_dset,
                          resolution=resolution, excl_area=excl_area)
 
-    @staticmethod
-    def _map_direction_pos(power_rose_h5_fpath):
+    @classmethod
+    def _map_direction_pos(cls, power_rose_h5_fpath):
         """
         Map powerrose directions to sc row and column shifts
 
@@ -62,7 +62,7 @@ class WindDirections(Aggregation):
         list
             Pos of major cardinal directions in power rose data
         """
-        directions = WindDirections.DIR_ORDER
+        directions = cls.DIR_ORDER
 
         with h5py.File(power_rose_h5_fpath, 'r') as f:
             cardinal_dirs = list(f['cardinal_directions'][...].astype(str))
@@ -95,8 +95,8 @@ class WindDirections(Aggregation):
 
         return rows, cols
 
-    @staticmethod
-    def _compute_neighbors(sc_point_gids, shape):
+    @classmethod
+    def _compute_neighbors(cls, sc_point_gids, shape):
         """
         Compute neighboring supply curve point gids in following order:
         ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -113,7 +113,7 @@ class WindDirections(Aggregation):
         neighbor_gids : ndarray
             Neighboring supply curve point gids
         """
-        rows, cols = WindDirections._get_row_col_inds(sc_point_gids, shape[1])
+        rows, cols = cls._get_row_col_inds(sc_point_gids, shape[1])
 
         row_shifts = [-1, -1, 0, 1, 1, 1, 0, -1]
         rows = np.expand_dims(rows, axis=1) + row_shifts
@@ -133,8 +133,8 @@ class WindDirections(Aggregation):
 
         return neighbor_gids
 
-    @staticmethod
-    def _get_neighbors(excl_fpath, sc_point_gids, resolution=128):
+    @classmethod
+    def _get_neighbors(cls, excl_fpath, sc_point_gids, resolution=128):
         """
         Get neighboring sc_point_gids for all given supply curve points
 
@@ -157,10 +157,9 @@ class WindDirections(Aggregation):
         with SupplyCurveExtent(excl_fpath, resolution=resolution) as sc:
             shape = sc.shape
 
-        neighbor_gids = \
-            WindDirections._compute_neighbors(sc_point_gids, shape)
+        neighbor_gids = cls._compute_neighbors(sc_point_gids, shape)
 
-        directions = WindDirections.DIR_ORDER
+        directions = cls.DIR_ORDER
         columns = ['{}_gid'.format(d) for d in directions]
         neighbor_gids = pd.DataFrame(neighbor_gids,
                                      columns=columns,
@@ -202,7 +201,7 @@ class WindDirections(Aggregation):
         sc_pr = agg_out.pop('powerrose_100m')[dir_pos].T
 
         columns = ['{}_pr'.format(d)
-                   for d in WindDirections.DIR_ORDER]
+                   for d in self.DIR_ORDER]
         sc_pr = pd.DataFrame(sc_pr, index=meta['sc_point_gid'].values,
                              columns=columns)
         sc_pr = neighbor_gids.join(sc_pr)

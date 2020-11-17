@@ -217,8 +217,8 @@ class ExclusionsConverter:
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
-    @staticmethod
-    def _parse_tiff(geotiff, excl_h5=None, chunks=(128, 128),
+    @classmethod
+    def _parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
                     transform_atol=0.01, coord_atol=0.00001):
         """
         Extract exclusion layer from given geotiff, compare with excl_h5
@@ -246,10 +246,9 @@ class ExclusionsConverter:
             Geotiff data
         """
         if excl_h5 is not None:
-            ExclusionsConverter._check_geotiff(excl_h5, geotiff,
-                                               chunks=chunks,
-                                               transform_atol=transform_atol,
-                                               coord_atol=coord_atol)
+            cls._check_geotiff(excl_h5, geotiff, chunks=chunks,
+                               transform_atol=transform_atol,
+                               coord_atol=coord_atol)
 
         with Geotiff(geotiff, chunks=chunks) as tif:
             profile, values = tif.profile, tif.values
@@ -293,8 +292,8 @@ class ExclusionsConverter:
                 logger.debug('\t- Description for {} added:\n{}'
                              .format(layer, description))
 
-    @staticmethod
-    def _geotiff_to_h5(excl_h5, layer, geotiff, chunks=(128, 128),
+    @classmethod
+    def _geotiff_to_h5(cls, excl_h5, layer, geotiff, chunks=(128, 128),
                        transform_atol=0.01, coord_atol=0.00001,
                        description=None):
         """
@@ -321,13 +320,12 @@ class ExclusionsConverter:
         logger.debug('\t- {} being extracted from {} and added to {}'
                      .format(layer, geotiff, os.path.basename(excl_h5)))
 
-        profile, values = ExclusionsConverter._parse_tiff(
+        profile, values = cls._parse_tiff(
             geotiff, excl_h5=excl_h5, chunks=chunks,
             transform_atol=transform_atol, coord_atol=coord_atol)
 
-        ExclusionsConverter._write_layer(excl_h5, layer, profile, values,
-                                         chunks=chunks,
-                                         description=description)
+        cls._write_layer(excl_h5, layer, profile, values,
+                         chunks=chunks, description=description)
 
     @staticmethod
     def _write_geotiff(geotiff, profile, values):
@@ -347,8 +345,8 @@ class ExclusionsConverter:
             f.write(values)
             logger.debug('\t- {} created'.format(geotiff))
 
-    @staticmethod
-    def _extract_layer(excl_h5, layer, geotiff=None, hsds=False):
+    @classmethod
+    def _extract_layer(cls, excl_h5, layer, geotiff=None, hsds=False):
         """
         Extract given layer from exclusions .h5 file and write to geotiff .tif
 
@@ -379,7 +377,7 @@ class ExclusionsConverter:
 
         if geotiff is not None:
             logger.debug('\t- Writing {} to {}'.format(layer, geotiff))
-            ExclusionsConverter._write_geotiff(geotiff, profile, values)
+            cls._write_geotiff(geotiff, profile, values)
 
         return profile, values
 

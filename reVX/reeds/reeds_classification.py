@@ -502,8 +502,9 @@ class ReedsClassifier:
 
         return rev_table
 
-    @staticmethod
-    def _resource_classes(rev_table, resource_classes, trg_by_region=False):
+    @classmethod
+    def _resource_classes(cls, rev_table, resource_classes,
+                          trg_by_region=False):
         """
         Create resource classes
 
@@ -522,17 +523,15 @@ class ReedsClassifier:
         rev_table : pandas.DataFrame
             Updated table with resource classes added
         """
-        resource_classes = ReedsClassifier._parse_table(resource_classes)
+        resource_classes = cls._parse_table(resource_classes)
         if 'class' in resource_classes:
             resource_classes = resource_classes.set_index('class')
 
         if 'TRG_cap' in resource_classes:
-            rev_table = ReedsClassifier._TRG_classes(rev_table,
-                                                     resource_classes,
-                                                     by_region=trg_by_region)
+            rev_table = cls._TRG_classes(rev_table, resource_classes,
+                                         by_region=trg_by_region)
         else:
-            rev_table = ReedsClassifier._bin_classes(rev_table,
-                                                     resource_classes)
+            rev_table = cls._bin_classes(rev_table, resource_classes)
 
         return rev_table
 

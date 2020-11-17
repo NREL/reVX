@@ -157,8 +157,8 @@ class RPMClusters:
         coords = self._meta[['longitude', 'latitude']].values
         return coords
 
-    @staticmethod
-    def _parse_data(cf_fpath, gen_gids):
+    @classmethod
+    def _parse_data(cls, cf_fpath, gen_gids):
         """
         Extract lat, lon coordinates for given gen_gids
         Extract and convert cf_profiles into wavelet coefficients
@@ -173,13 +173,13 @@ class RPMClusters:
 
         with Outputs(cf_fpath, mode='r', unscale=False) as cfs:
             meta = cfs.meta.loc[gen_gids, ['latitude', 'longitude']]
-            gid_slice, gid_idx = RPMClusters._gid_pos(gen_gids)
+            gid_slice, gid_idx = cls._gid_pos(gen_gids)
             coeff = cfs['cf_profile', :, gid_slice][:, gid_idx]
 
         meta['gen_gid'] = gen_gids
         cols = ['gen_gid', 'latitude', 'longitude']
         meta = meta[cols].reset_index(drop=True)
-        coeff = RPMClusters._calculate_wavelets(coeff.T)
+        coeff = cls._calculate_wavelets(coeff.T)
         return meta, coeff
 
     @staticmethod
@@ -315,8 +315,8 @@ class RPMClusters:
 
         return clusters, mean_dist
 
-    @staticmethod
-    def _generate_shapefile(meta, fpath, beautify=True):
+    @classmethod
+    def _generate_shapefile(cls, meta, fpath, beautify=True):
         """
         Generate cluster polygons and save to shapefile
         """
@@ -324,7 +324,7 @@ class RPMClusters:
         gdf_points = gpd.GeoDataFrame(meta, geometry=geometry,
                                       crs={'init': 'epsg:4326'})
 
-        clusters, mean_dist = RPMClusters._get_cluster_geom(gdf_points)
+        clusters, mean_dist = cls._get_cluster_geom(gdf_points)
 
         if beautify:
             clusters.geometry = clusters.geometry.buffer(-mean_dist)
