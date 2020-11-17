@@ -72,8 +72,8 @@ class RegionClassifier():
 
         output_gdf.to_csv(path, index=False)
 
-    @staticmethod
-    def _get_regions(regions_path, regions_label):
+    @classmethod
+    def _get_regions(cls, regions_path, regions_label):
         """ Load the regions shapefile into geopandas dataframe
 
         Parameters
@@ -83,9 +83,9 @@ class RegionClassifier():
         regions_label : str
             Attribute to use as label in the regions shapefile
         """
-        regions = gpd.read_file(regions_path).to_crs(RegionClassifier.CRS)
+        regions = gpd.read_file(regions_path).to_crs(cls.CRS)
         if regions_label not in regions.columns:
-            regions_label = RegionClassifier.DEFAULT_REGIONS_LABEL
+            regions_label = cls.DEFAULT_REGIONS_LABEL
             regions[regions_label] = regions.index
             logger.warning('Setting regions label: {}'.format(regions_label))
 
@@ -95,8 +95,8 @@ class RegionClassifier():
 
         return regions
 
-    @staticmethod
-    def _get_meta(meta_path):
+    @classmethod
+    def _get_meta(cls, meta_path):
         """ Load the meta csv file into geopandas dataframe
 
         Parameters
@@ -125,10 +125,10 @@ class RegionClassifier():
             logger.error(msg)
             raise RuntimeError(msg)
 
-        lat_label, long_label = RegionClassifier._get_lat_lon_labels(meta)
+        lat_label, long_label = cls._get_lat_lon_labels(meta)
         geometry = [Point(xy) for xy in zip(meta[long_label],
                                             meta[lat_label])]
-        meta = gpd.GeoDataFrame(meta, crs=RegionClassifier.CRS,
+        meta = gpd.GeoDataFrame(meta, crs=cls.CRS,
                                 geometry=geometry)
 
         return meta
