@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import os
 import shutil
+from warnings import warn
 
 from rex import Resource
 
@@ -233,17 +234,21 @@ class Forecasts:
             Slice of actuals timeseries needed to match forecast timeseries
         """
         with Resource(self.fcst_h5) as f:
-            shape = f.get_dset_properties(self.fcst_dset)[0]
-            time_index = f[self._make_time_index_name(self.fcst_dset)]
+            f_shape = f.get_dset_properties(self.fcst_dset)[0]
+            f_time_index = f[self._make_time_index_name(self.fcst_dset)]
 
         with Resource(self.actuals_h5) as f:
             a_shape = f.get_dset_properties(self.actuals_dset)[0]
             a_time_index = f[self._make_time_index_name(self.actuals_dset)]
 
-        a_slice = slice(None, None, a_shape[0] // shape[0])
-
-        if not time_index.equals(a_time_index[a_slice]):
-            a_slice = np.where(a_time_index.isin(time_index))[0]
+        a_slice = slice(None, None, a_shape[0] // f_shape[0])
+        if len(f_time_index) != f_shape[0]:
+            msg = ('Forecast time_index does not match forecast shape, '
+                   'actuals slice will be estimated!')
+            logger.warning(msg)
+            warn(msg)
+        elif not f_time_index.equals(a_time_index[a_slice]):
+            a_slice = np.where(a_time_index.isin(f_time_index))[0]
 
         return a_slice
 
@@ -263,7 +268,7 @@ class Forecasts:
                 logger.error(msg)
                 raise RuntimeError(msg)
             else:
-                shape = f.get_dset_properties(self.fcst_dset)[0]
+                f_shape = f.get_dset_properties(self.fcst_dset)[0]
 
         with Resource(self.actuals_h5) as f:
             if self.actuals_dset not in f:
@@ -274,11 +279,11 @@ class Forecasts:
             else:
                 a_shape = f.get_dset_properties(self.actuals_dset)[0]
                 a_slice = slice(None)
-                if a_shape != shape:
+                if a_shape != f_shape:
                     a_slice = self._get_actuals_slice()
                     logger.debug('Extracting {} sub-slice of {} to match {} '
                                  'shape: {}'.format(a_slice, self.actuals_dset,
-                                                    self.fcst_dset, shape))
+                                                    self.fcst_dset, f_shape))
 
         return a_slice
 
