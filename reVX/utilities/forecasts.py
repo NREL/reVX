@@ -276,6 +276,9 @@ class Forecasts:
                 a_slice = slice(None)
                 if a_shape != shape:
                     a_slice = self._get_actuals_slice()
+                    logger.debug('Extracting {} sub-slice of {} to match {} '
+                                 'shape: {}'.format(a_slice, self.actuals_dset,
+                                                    self.fcst_dset, shape))
 
         return a_slice
 
@@ -297,7 +300,7 @@ class Forecasts:
 
         with h5py.File(out_h5, 'a') as f_out:
             with Resource(self.actuals_h5, unscale=False) as f_in:
-                logger.info('Correcting {} forecates'.format(self.fcst_dset))
+                logger.info('Correcting {} forecasts'.format(self.fcst_dset))
                 actuals = f_in[self.actuals_dset, self._a_slice]
 
                 ds = f_out[self.fcst_dset]
