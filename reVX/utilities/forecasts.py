@@ -219,7 +219,7 @@ class Forecasts:
                 logger.error(msg)
                 raise RuntimeError(msg)
 
-    def correct_dsets(self, out_h5, fcst_perc=None):
+    def correct_dset(self, out_h5, fcst_perc=None):
         """
         Bias correct and blend (if requested) forecasts
 
@@ -268,7 +268,7 @@ class Forecasts:
         """
         fcst = cls(fcst_h5, fcst_dset, actuals_h5=actuals_h5,
                    actuals_dset=actuals_dset)
-        fcst.correct(out_h5, fcst_perc=fcst_perc)
+        fcst.correct_dset(out_h5, fcst_perc=fcst_perc)
 
     @classmethod
     def bias_correct(cls, fcst_h5, fcst_dset, out_h5,
