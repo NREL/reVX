@@ -42,7 +42,7 @@ class Forecasts:
 
         self._actuals_dset = actuals_dset
 
-        self._preflight_check()
+        self._a_slice = self._preflight_check()
 
     @property
     def fcst_h5(self):
@@ -201,9 +201,60 @@ class Forecasts:
 
         return agg_mae, ave_mae
 
+    @staticmethod
+    def _make_time_index_name(dset_name):
+        """
+        Make time_index name from dataset name
+
+        Parameters
+        ----------
+        dset_name : str
+            profiles dataset
+
+        Returns
+        -------
+        str
+            time_index name associated with profiles dataset
+        """
+        time_index_name = 'time_index'
+        if '/' in dset_name:
+            group = dset_name.split('/')[0]
+            time_index_name = "{}/{}".format(group, time_index_name)
+
+        return time_index_name
+
+    def _get_actuals_slice(self):
+        """
+        Create actuals slice needed to match fcst time-steps
+
+        Returns
+        -------
+        a_slice : slice
+            Slice of actuals timeseries needed to match forecast timeseries
+        """
+        with Resource(self.fcst_h5) as f:
+            shape = f.get_dset_properties(self.fcst_dset)[0]
+            time_index = f[self._make_time_index_name(self.fcst_dset)]
+
+        with Resource(self.actuals_h5) as f:
+            a_shape = f.get_dset_properties(self.actuals_dset)[0]
+            a_time_index = f[self._make_time_index_name(self.actuals_dset)]
+
+        a_slice = slice(None, None, a_shape[0] // shape[0])
+
+        if not time_index.equals(a_time_index[a_slice]):
+            a_slice = np.where(a_time_index.isin(time_index))[0]
+
+        return a_slice
+
     def _preflight_check(self):
         """
         Check to ensure dset is available in forecast and actuals .h5 files
+
+        Returns
+        -------
+        a_slice : slice
+            Slice of actuals timeseries needed to match forecast timeseries
         """
         with Resource(self.fcst_h5) as f:
             if self.fcst_dset not in f:
@@ -211,6 +262,8 @@ class Forecasts:
                        .format(self.fcst_dset, self.fcst_h5))
                 logger.error(msg)
                 raise RuntimeError(msg)
+            else:
+                shape = f.get_dset_properties(self.fcst_dset)[0]
 
         with Resource(self.actuals_h5) as f:
             if self.actuals_dset not in f:
@@ -218,6 +271,13 @@ class Forecasts:
                        .format(self.actuals_dset, self.actuals_h5))
                 logger.error(msg)
                 raise RuntimeError(msg)
+            else:
+                a_shape = f.get_dset_properties(self.actuals_dset)[0]
+                a_slice = slice(None)
+                if a_shape != shape:
+                    a_slice = self._get_actuals_slice()
+
+        return a_slice
 
     def correct_dset(self, out_h5, fcst_perc=None):
         """
@@ -238,7 +298,7 @@ class Forecasts:
         with h5py.File(out_h5, 'a') as f_out:
             with Resource(self.actuals_h5, unscale=False) as f_in:
                 logger.info('Correcting {} forecates'.format(self.fcst_dset))
-                actuals = f_in[self.actuals_dset]
+                actuals = f_in[self.actuals_dset, self._a_slice]
 
                 ds = f_out[self.fcst_dset]
                 fcst = ds[...]
