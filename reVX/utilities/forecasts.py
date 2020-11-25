@@ -183,7 +183,8 @@ class Forecasts:
     @staticmethod
     def compute_mae(actuals, fcsts):
         """
-        Compute aggregate and average MAE between actuals and forecasts
+        Compute aggregate and normalized average MAE between actuals and
+        forecasts. The MAE is normalized by the total actuals generation
 
         Parameters
         ----------
@@ -200,10 +201,10 @@ class Forecasts:
             Average MEA for all sites
         """
         time_steps = len(fcsts)
-        agg_mae = (np.abs(np.nansum(fcsts - actuals, axis=1)).sum()
-                   / np.nansum(np.nanmax(actuals, axis=0) * time_steps))
-        ave_mae = np.nanmean(np.abs(fcsts - actuals).sum(axis=0)
-                             / (actuals.max(axis=0) * time_steps))
+        site_mae = np.mean(np.abs(fcsts - actuals), axis=0)
+        site_rel_mae = site_mae / (np.max(actuals, axis=0) * time_steps)
+        ave_mae = np.nanmean(site_rel_mae)
+        agg_mae = np.nansum(site_rel_mae)
 
         return agg_mae, ave_mae
 
@@ -313,14 +314,15 @@ class Forecasts:
             shutil.copy(self.fcst_h5, out_h5)
 
         with h5py.File(out_h5, 'a') as f_out:
-            with Resource(self.actuals_h5, unscale=False) as f_in:
-                logger.info('Correcting {} forecasts'.format(self.fcst_dset))
-                actuals = f_in[self.actuals_dset, self._a_slice]
+            with Resource(self.fcst_h5, unscale=False) as f_fcst:
+                fcst = f_fcst[self.fcst_dset]
 
-                ds = f_out[self.fcst_dset]
-                fcst = ds[...]
+            with Resource(self.actuals_h5, unscale=False) as f_act:
+                actuals = f_act[self.actuals_dset, self._a_slice]
 
-                ds[...] = self._correct(fcst, actuals, fcst_perc=fcst_perc)
+            logger.info('Correcting {} forecasts'.format(self.fcst_dset))
+            f_out[self.fcst_dset][...] = self._correct(fcst, actuals,
+                                                       fcst_perc=fcst_perc)
 
     @classmethod
     def correct(cls, fcst_h5, fcst_dset, out_h5,

@@ -98,7 +98,11 @@ def extract_output_year(my_fpath, out_fpath, year):
 def correct_forecast(fcst_h5, fcst_dset, out_h5, actuals_h5, actuals_dset,
                      fcst_perc):
     """
-    Bias correct and blend (if requested) forecasts using actuals
+    Bias correct and blend (if requested) forecasts using actuals:
+    - Bias correct forecast data using bias correction factor:
+    total actual generation / total forecasted generation
+    - Blend fcst_perc of forecast generation with (1 - fcst_perc) of
+    actuals generation
     """
     Forecasts.correct(fcst_h5, fcst_dset, out_h5, actuals_h5=actuals_h5,
                       actuals_dset=actuals_dset, fcst_perc=fcst_perc)
