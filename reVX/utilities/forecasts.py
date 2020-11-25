@@ -200,9 +200,8 @@ class Forecasts:
         ave_mae : float
             Average MEA for all sites
         """
-        time_steps = len(fcsts)
         site_mae = np.mean(np.abs(fcsts - actuals), axis=0)
-        site_rel_mae = site_mae / (np.max(actuals, axis=0) * time_steps)
+        site_rel_mae = site_mae / np.max(actuals, axis=0)
         ave_mae = np.nanmean(site_rel_mae)
         agg_mae = np.nansum(site_rel_mae)
 
