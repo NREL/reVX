@@ -92,7 +92,8 @@ class Forecasts:
     @staticmethod
     def bias_correct_fcst(actuals, fcsts):
         """
-        Bias correct forecast data
+        Bias correct forecast data using bias correction factor:
+        total actual generation / total forecasted generation
 
         Parameters
         ----------
@@ -100,7 +101,6 @@ class Forecasts:
             Timeseries actuals (time x sites)
         fcsts : ndarray
             Timeseries forecats (time x sites)
-
 
         Returns
         -------
@@ -142,7 +142,11 @@ class Forecasts:
     @classmethod
     def _correct(cls, fcst, actuals, fcst_perc=None):
         """
-        Correct given data
+        Correct given data using following steps:
+        - Bias correct forecast data using bias correction factor:
+        total actual generation / total forecasted generation
+        - Blend fcst_perc of forecast generation with (1 - fcst_perc) of
+        actuals generation
 
         Parameters
         ----------
@@ -195,10 +199,11 @@ class Forecasts:
         ave_mae : float
             Average MEA for all sites
         """
+        time_steps = len(fcsts)
         agg_mae = (np.abs(np.nansum(fcsts - actuals, axis=1)).sum()
-                   / np.nansum(np.nanmax(actuals, axis=0) * 8760))
+                   / np.nansum(np.nanmax(actuals, axis=0) * time_steps))
         ave_mae = np.nanmean(np.abs(fcsts - actuals).sum(axis=0)
-                             / (actuals.max(axis=0) * 8760))
+                             / (actuals.max(axis=0) * time_steps))
 
         return agg_mae, ave_mae
 
@@ -289,7 +294,11 @@ class Forecasts:
 
     def correct_dset(self, out_h5, fcst_perc=None):
         """
-        Bias correct and blend (if requested) forecasts
+        Bias correct and blend (if requested) forecasts:
+        - Bias correct forecast data using bias correction factor:
+        total actual generation / total forecasted generation
+        - Blend fcst_perc of forecast generation with (1 - fcst_perc) of
+        actuals generation
 
         Parameters
         ----------
@@ -317,7 +326,11 @@ class Forecasts:
     def correct(cls, fcst_h5, fcst_dset, out_h5,
                 actuals_h5=None, actuals_dset=None, fcst_perc=None):
         """
-        Bias correct and blend (if requested) forecasts using actuals
+        Bias correct and blend (if requested) forecasts using actuals:
+        - Bias correct forecast data using bias correction factor:
+        total actual generation / total forecasted generation
+        - Blend fcst_perc of forecast generation with (1 - fcst_perc) of
+        actuals generation
 
         Parameters
         ----------
@@ -342,7 +355,8 @@ class Forecasts:
     def bias_correct(cls, fcst_h5, fcst_dset, out_h5,
                      actuals_h5=None, actuals_dset=None):
         """
-        Bias correct forecast using actuals
+        Bias correct forecast using actuals using bias correction factor:
+        total actual generation / total forecasted generation
 
         Parameters
         ----------
@@ -364,7 +378,11 @@ class Forecasts:
     def blend(cls, fcst_h5, fcst_dset, out_h5, fcst_perc,
               actuals_h5=None, actuals_dset=None):
         """
-        Bias correct and blend forecast using actuals
+        Bias correct and blend forecast using actuals:
+        - Bias correct forecast data using bias correction factor:
+        total actual generation / total forecasted generation
+        - Blend fcst_perc of forecast generation with (1 - fcst_perc) of
+        actuals generation
 
         Parameters
         ----------
