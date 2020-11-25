@@ -28,7 +28,7 @@ class Forecasts:
         actuals_h5 : str, optional
             Path to forecast to .h5 file, by default None
         actuals_dset : str, optional
-            Actuals dataset
+            Actuals dataset, by default None
         """
         self._fcst_h5 = fcst_h5
         if actuals_h5 is None:
@@ -330,7 +330,7 @@ class Forecasts:
         actuals_h5 : str, optional
             Path to forecast to .h5 file, by default None
         actuals_dset : str, optional
-            Actuals dataset
+            Actuals dataset, by default None
         fcst_perc : float, None
             Percentage of forecast to use for blending, by default None
         """
@@ -355,14 +355,14 @@ class Forecasts:
         actuals_h5 : str, optional
             Path to forecast to .h5 file, by default None
         actuals_dset : str, optional
-            Actuals dataset
+            Actuals dataset, by default None
         """
         cls.correct(fcst_h5, fcst_dset, out_h5,
                     actuals_h5=actuals_h5, actuals_dset=actuals_dset)
 
     @classmethod
-    def blend(cls, fcst_h5, fcst_dset, out_h5,
-              actuals_h5=None, actuals_dset=None, fcst_perc=None):
+    def blend(cls, fcst_h5, fcst_dset, out_h5, fcst_perc,
+              actuals_h5=None, actuals_dset=None):
         """
         Bias correct and blend forecast using actuals
 
@@ -374,12 +374,12 @@ class Forecasts:
             Dataset to correct
         out_h5 : str
             Output path for corrected .h5 file
+        fcst_perc : float
+            Percentage of forecast to use for blending
         actuals_h5 : str, optional
             Path to forecast to .h5 file, by default None
         actuals_dset : str, optional
-            Actuals dataset
-        fcst_perc : float
-            Percentage of forecast to use for blending
+            Actuals dataset, by default None
         """
         cls.correct(fcst_h5, fcst_dset, out_h5,
                     actuals_h5=actuals_h5, actuals_dset=actuals_dset,

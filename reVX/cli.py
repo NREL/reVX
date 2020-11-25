@@ -6,11 +6,12 @@ import click
 import logging
 import os
 
-from rex.utilities.cli_dtypes import STR, STRLIST
+from rex.utilities.cli_dtypes import STR, STRLIST, FLOAT
 from rex.utilities.loggers import init_logger
 from rex.utilities.utilities import safe_json_load
 
 from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities.forecasts import Forecasts
 from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region import RegionClassifier
 
@@ -76,6 +77,31 @@ def extract_output_year(my_fpath, out_fpath, year):
     Extract all datasets for a give year from multi-year output file
     """
     output_extractor(my_fpath, out_fpath, year=year)
+
+
+@main.group()
+@click.option('--fcst_h5', '-fcst', required=True,
+              type=click.Path(exists=True),
+              help="Path to forecast .h5 file")
+@click.option('--fcst_dset', '-fdset', required=True, type=str,
+              help="Dataset to correct")
+@click.option('--out_h5', '-out', required=True, type=click.Path(exists=True),
+              help="Output path for corrected .h5 file")
+@click.option('--actuals_h5', '-actuals', type=click.Path(exists=False),
+              default=None,
+              help="Path to forecast to .h5 file, by default None")
+@click.option('--actuals_dset', '-adset', default=None, type=STR,
+              help="Actuals dataset, by default None")
+@click.option('--fcst_perc', '-perc', default=None, type=FLOAT,
+              help=("Percentage of forecast to use for blending, by default "
+                    "None"))
+def correct_forecast(fcst_h5, fcst_dset, out_h5, actuals_h5, actuals_dset,
+                     fcst_perc):
+    """
+    Bias correct and blend (if requested) forecasts using actuals
+    """
+    Forecasts.correct(fcst_h5, fcst_dset, out_h5, actuals_h5=actuals_h5,
+                      actuals_dset=actuals_dset, fcst_perc=fcst_perc)
 
 
 @main.group()
