@@ -23,6 +23,9 @@ reVX
 .. image:: https://anaconda.org/nrel/nrel-revx/badges/license.svg
     :target: https://anaconda.org/nrel/nrel-revx
 
+.. image:: https://codecov.io/gh/nrel/reVX/branch/master/graph/badge.svg?token=3J5M44VAA9
+    :target: https://codecov.io/gh/nrel/reVX
+
 
 Renewable Energy Potential(V) eXchange Tool: reVX
 
