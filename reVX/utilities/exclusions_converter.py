@@ -132,10 +132,14 @@ class ExclusionsConverter:
                 logger.debug('\t- Default profile:\n{}'.format(profile))
                 dst.attrs['shape'] = shape
                 logger.debug('\t- Default shape:\n{}'.format(shape))
+                dst.attrs['chunks'] = chunks
+                logger.debug('\t- Default chunks:\n{}'.format(chunks))
+
                 dst.create_dataset('latitude', shape=lat.shape,
                                    dtype=lat.dtype, data=lat,
                                    chunks=chunks)
                 logger.debug('\t- latitude coordiantes created')
+
                 dst.create_dataset('longitude', shape=lon.shape,
                                    dtype=lon.dtype, data=lon,
                                    chunks=chunks)

@@ -1,0 +1,272 @@
+Abbr,State,County,Feature Type,Value Type,Value,Comment,STATE_FIPS,CNTY_FIPS,FIPS
+ND,North Dakota,Divide,Structures,Meters,4828.02,,38,023,38023
+ND,North Dakota,Divide,Roads,Rotor-Diameter Multiplier,5.0,,38,023,38023
+ND,North Dakota,Divide,Transmission,Rotor-Diameter Multiplier,5.0,,38,023,38023
+IL,Illinois,Kankakee,Iroquis River,Meters,3218.68,,17,091,17091
+IL,Illinois,Kankakee,Kankakee River,Meters,3218.68,,17,091,17091
+IL,Illinois,Kankakee,Structures,Meters,365.76,,17,091,17091
+IL,Illinois,Kankakee,Height,Meters,152.0952,Highest Hub-height is 135m,17,091,17091
+IL,Illinois,Kankakee,Transmission,Max-tip Height Multiplier,1.1,,17,091,17091
+IL,Illinois,Kankakee,Roads,Max-tip Height Multiplier,1.1,,17,091,17091
+MI,Michigan,Gratiot,Structures,Meters,3048.0,,26,057,26057
+MI,Michigan,Gratiot,Roads,Max-tip Height Multiplier,1.5,,26,057,26057
+MI,Michigan,Gratiot,Sound,dBA,55.0,,26,057,26057
+AZ,Arizona,Navajo,Sound,dBA,45.0,,04,017,04017
+AZ,Arizona,Navajo,Roads,Meters,402.335,,04,017,04017
+AZ,Arizona,Navajo,Railroads,Meters,402.335,,04,017,04017
+AZ,Arizona,Navajo,Transmission,Meters,402.335,,04,017,04017
+AZ,Arizona,Navajo,Structures,Meters,402.335,,04,017,04017
+NV,Nevada,Washoe,Structures,Meters,1609.34,,32,031,32031
+NV,Nevada,Washoe,Height,Meters,182.88,Highest Hub-height is 135m,32,031,32031
+NV,Nevada,Washoe,Railroads,Max-tip Height Multiplier,3.0,,32,031,32031
+NV,Nevada,Washoe,Roads,Max-tip Height Multiplier,3.0,,32,031,32031
+NV,Nevada,Washoe,Transmission,Max-tip Height Multiplier,3.0,,32,031,32031
+NV,Nevada,Washoe,Sound,dBA,50.0,,32,031,32031
+CA,California,Contra Costa,Sound,dBA,65.0,,06,013,06013
+CA,California,Contra Costa,Structures,Meters,305.0,,06,013,06013
+CA,California,El Dorado,Sound,dBA,70.0,55 Near Communities,06,017,06017
+IN,Indiana,Grant,Rivers,Meters,805.0,,18,053,18053
+IN,Indiana,Grant,Sound,dBA,60.0,,18,053,18053
+IN,Indiana,Grant,Roads,Max-tip Height Multiplier,1.1,,18,053,18053
+IN,Indiana,Tippecanoe,Rivers,Meters,805.0,,18,157,18157
+IN,Indiana,Tippecanoe,Structures,Meters,305.0,,18,157,18157
+IN,Indiana,Tippecanoe,Sound,dBA,55.0,,18,157,18157
+IN,Indiana,Tippecanoe,Roads,Max-tip Height Multiplier,1.1,,18,157,18157
+IN,Indiana,White,Rivers,Meters,805.0,,18,181,18181
+IN,Indiana,White,Structures,Meters,305.0,,18,181,18181
+IN,Indiana,White,Roads,Max-tip Height Multiplier,1.1,,18,181,18181
+KS,Kansas,Pratt,Structures,Meters,762.0,,20,151,20151
+KS,Kansas,Pratt,Sound,dBA,60.0,,20,151,20151
+KS,Kansas,Pratt,Roads,Max-tip Height Multiplier,1.1,,20,151,20151
+ND,North Dakota,Grant,Structures,Meters,609.6,,38,037,38037
+ND,North Dakota,Grant,Roads,Meters,60.96,,38,037,38037
+ND,North Dakota,Grant,Transmission,Meters,60.96,,38,037,38037
+ND,North Dakota,Stark,Structures,Meters,609.6,,38,089,38089
+ND,North Dakota,Stark,Roads,Meters,60.96,,38,089,38089
+ND,North Dakota,Stark,Transmission,Meters,60.96,,38,089,38089
+CA,California,Solano,Sound,dBA,50.0,,06,095,06095
+IA,Iowa,Palo Alto,Structures,Meters,457.2,,19,147,19147
+IA,Iowa,Palo Alto,Roads,Max-tip Height Multiplier,1.2,,19,147,19147
+IA,Iowa,Palo Alto,Transmission,Max-tip Height Multiplier,1.2,,19,147,19147
+ND,North Dakota,Williams,Structures,Meters,426.72,,38,105,38105
+ND,North Dakota,Williams,Roads,Meters,60.96,,38,105,38105
+MI,Michigan,Huron,Structures,Meters,402.336,,26,063,26063
+MI,Michigan,Huron,Roads,Max-tip Height Multiplier,1.5,,26,063,26063
+MI,Michigan,Huron,Sound,dBA,50.0,,26,063,26063
+CA,California,Marin,Sound,dBA,50.0,,06,041,06041
+CA,California,Marin,Height,Meters,80.0,Exclude County - shortest turbine is 88m,06,041,06041
+CA,California,Marin,Structures,Max-tip Height Multiplier,2.0,,06,041,06041
+IA,Iowa,Cherokee,Structures,Meters,381.0,,19,035,19035
+IA,Iowa,Cherokee,Sound,dBA,50.0,,19,035,19035
+IA,Iowa,Cherokee,Transmission,Max-tip Height Multiplier,1.1,,19,035,19035
+ND,North Dakota,Wells,Structures,Meters,381.0,,38,103,38103
+ND,North Dakota,Wells,Roads,Meters,60.96,,38,103,38103
+ND,North Dakota,Wells,Transmission,Meters,60.96,,38,103,38103
+IA,Iowa,O'Brien,Structures,Meters,365.76,,19,141,19141
+IA,Iowa,O'Brien,Roads,Max-tip Height Multiplier,1.2,,19,141,19141
+IA,Iowa,Greene,Structures,Meters,305.0,,19,073,19073
+IA,Iowa,Greene,Roads,Max-tip Height Multiplier,1.0,,19,073,19073
+IL,Illinois,Vermilion,Structures,Meters,305.0,,17,183,17183
+IL,Illinois,Vermilion,Transmission,Max-tip Height Multiplier,1.1,,17,183,17183
+IL,Illinois,Vermilion,Roads,Max-tip Height Multiplier,1.1,,17,183,17183
+IN,Indiana,Benton,Structures,Meters,305.0,,18,007,18007
+IN,Indiana,Benton,Roads,Max-tip Height Multiplier,1.1,,18,007,18007
+IN,Indiana,Benton,Railroads,Max-tip Height Multiplier,1.1,,18,007,18007
+IN,Indiana,Benton,Transmission,Max-tip Height Multiplier,1.1,,18,007,18007
+IN,Indiana,Carroll,Structures,Meters,305.0,,18,015,18015
+IN,Indiana,Carroll,Roads,Max-tip Height Multiplier,1.1,,18,015,18015
+IN,Indiana,Cass,Structures,Meters,305.0,,18,017,18017
+IN,Indiana,Cass,Sound,dBA,75.0,,18,017,18017
+IN,Indiana,Cass,Roads,Max-tip Height Multiplier,1.1,,18,017,18017
+IN,Indiana,Cass,Railroads,Max-tip Height Multiplier,1.1,,18,017,18017
+IN,Indiana,Cass,Transmission,Max-tip Height Multiplier,1.1,,18,017,18017
+IN,Indiana,Clinton,Structures,Meters,305.0,,18,023,18023
+IN,Indiana,Clinton,Roads,Max-tip Height Multiplier,1.1,,18,023,18023
+GA,Georgia,Floyd,Sound,dBA,55.0,,13,115,13115
+IN,Indiana,Jay,Structures,Meters,305.0,,18,075,18075
+IN,Indiana,Jay,Roads,Max-tip Height Multiplier,1.1,,18,075,18075
+IN,Indiana,Jay,Railroads,Max-tip Height Multiplier,1.1,,18,075,18075
+IN,Indiana,Jay,Transmission,Max-tip Height Multiplier,1.1,,18,075,18075
+IN,Indiana,Marshall,Structures,Meters,305.0,,18,099,18099
+IN,Indiana,Marshall,Sound,dBA,55.0,,18,099,18099
+IN,Indiana,Marshall,Roads,Max-tip Height Multiplier,1.5,,18,099,18099
+IN,Indiana,Marshall,Transmission,Max-tip Height Multiplier,1.5,,18,099,18099
+IN,Indiana,Randolph,Structures,Meters,305.0,,18,135,18135
+IN,Indiana,Randolph,Sound,dBA,60.0,,18,135,18135
+IN,Indiana,Randolph,Transmission,Max-tip Height Multiplier,1.1,,18,135,18135
+IN,Indiana,Randolph,Roads,Max-tip Height Multiplier,1.1,,18,135,18135
+IN,Indiana,Rush,Structures,Meters,305.0,,18,139,18139
+IN,Indiana,Rush,Roads,Max-tip Height Multiplier,1.1,,18,139,18139
+IN,Indiana,Tipton,Structures,Meters,305.0,,18,159,18159
+IN,Indiana,Tipton,Roads,Max-tip Height Multiplier,1.1,,18,159,18159
+IN,Indiana,Tipton,Railroads,Max-tip Height Multiplier,1.1,,18,159,18159
+IN,Indiana,Tipton,Transmission,Max-tip Height Multiplier,1.1,,18,159,18159
+KS,Kansas,Harper,Structures,Meters,305.0,,20,077,20077
+KS,Kansas,Harper,Roads,Meters,152.4,,20,077,20077
+KS,Kansas,Lyon,Structures,Meters,305.0,,20,111,20111
+KS,Kansas,Lyon,Roads,Meters,22.86,,20,111,20111
+KS,Kansas,Pawnee,Structures,Meters,305.0,,20,145,20145
+KS,Kansas,Pawnee,Roads,Meters,152.4,,20,145,20145
+KS,Kansas,Pottawatomie,Structures,Meters,305.0,,20,149,20149
+KS,Kansas,Pottawatomie,Roads,Max-tip Height Multiplier,1.0,,20,149,20149
+MN,Minnesota,Lyon,Structures,Meters,305.0,,27,083,27083
+MN,Minnesota,Wright,Rivers,Meters,305.0,,27,171,27171
+MN,Minnesota,Wright,Structures,Meters,228.6,,27,171,27171
+NM,New Mexico,Lincoln,Structures,Meters,305.0,,35,027,35027
+NM,New Mexico,Lincoln,Roads,Max-tip Height Multiplier,1.5,,35,027,35027
+NM,New Mexico,Lincoln,Sound,dBA,55.0,,35,027,35027
+SD,South Dakota,Brookings,Structures,Meters,305.0,,46,011,46011
+SD,South Dakota,Brookings,Sound,dBA,50.0,,46,011,46011
+SD,South Dakota,Brookings,Roads,Max-tip Height Multiplier,1.1,,46,011,46011
+SD,South Dakota,Brown,Structures,Meters,305.0,,46,013,46013
+SD,South Dakota,Brown,Sound,dBA,55.0,,46,013,46013
+SD,South Dakota,Brown,Roads,Max-tip Height Multiplier,1.1,,46,013,46013
+SD,South Dakota,Brown,Transmission,Max-tip Height Multiplier,1.1,,46,013,46013
+SD,South Dakota,Deuel,Structures,Meters,305.0,,46,039,46039
+SD,South Dakota,Deuel,Sound,dBA,50.0,,46,039,46039
+SD,South Dakota,Lawrence,Structures,Meters,305.0,,46,081,46081
+SD,South Dakota,Lawrence,Roads,Max-tip Height Multiplier,1.1,,46,081,46081
+VA,Virginia,Roanoke,Structures,Meters,305.0,,51,161,51161
+VA,Virginia,Roanoke,Sound,dBA,60.0,,51,161,51161
+CA,California,Riverside,Highway 111,Meters,305.0,,06,065,06065
+CA,California,Riverside,Structures,Max-tip Height Multiplier,3.0,,06,065,06065
+CA,California,Riverside,Transmission,Max-tip Height Multiplier,1.25,,06,065,06065
+CA,California,Riverside,Roads,Max-tip Height Multiplier,1.25,,06,065,06065
+VA,Virginia,Rockingham,Structures,Meters,243.84,,51,165,51165
+VA,Virginia,Rockingham,Sound,dBA,60.0,,51,165,51165
+VA,Virginia,Washington,Structures,Meters,243.84,,51,191,51191
+VA,Virginia,Washington,Sound,dBA,60.0,,51,191,51191
+MN,Minnesota,Fillmore,Structures,Meters,228.6,,27,045,27045
+MN,Minnesota,Otter Tail,Structures,Meters,228.6,,27,111,27111
+UT,Utah,Box Elder,Height,Meters,182.88,Highest Hub-height is 135m,49,003,49003
+UT,Utah,Box Elder,Sound,dBA,60.0,,49,003,49003
+UT,Utah,Box Elder,Structures,Max-tip Height Multiplier,1.1,,49,003,49003
+UT,Utah,Box Elder,Transmission,Max-tip Height Multiplier,1.1,,49,003,49003
+UT,Utah,Box Elder,Roads,Max-tip Height Multiplier,1.1,,49,003,49003
+IL,Illinois,Mason,Height,Meters,160.02,Highest Hub-height is 135m,17,125,17125
+IL,Illinois,Mason,Structures,Max-tip Height Multiplier,1.1,,17,125,17125
+IL,Illinois,Mason,Roads,Max-tip Height Multiplier,1.1,,17,125,17125
+IL,Illinois,Mason,Transmission,Max-tip Height Multiplier,1.1,,17,125,17125
+UT,Utah,Daggett,Height,Meters,137.16,Highest Hub-height is 135m,49,009,49009
+UT,Utah,Daggett,Sound,dBA,60.0,,49,009,49009
+UT,Utah,Daggett,Roads,Max-tip Height Multiplier,1.1,,49,009,49009
+UT,Utah,Daggett,Transmission,Max-tip Height Multiplier,1.1,,49,009,49009
+UT,Utah,Daggett,Structures,Max-tip Height Multiplier,1.1,,49,009,49009
+IL,Illinois,Lee,Roads,Meters,106.68,,17,103,17103
+IL,Illinois,Lee,Railroads,Meters,106.68,,17,103,17103
+IL,Illinois,Lee,Transmission,Meters,106.68,,17,103,17103
+CA,California,Kern,Height,Meters,80.0,Exclude County - shortest turbine is 88m,06,029,06029
+CA,California,Kern,Structures,Max-tip Height Multiplier,1.5,,06,029,06029
+CA,California,San Bernardino,Height,Meters,80.0,Exclude County - shortest turbine is 88m,06,071,06071
+CA,California,San Bernardino,Structures,Max-tip Height Multiplier,1.5,,06,071,06071
+NV,Nevada,Lyon,Height,Meters,80.0,Exclude County - shortest turbine is 88m,32,019,32019
+NV,Nevada,Lyon,Roads,Max-tip Height Multiplier,2.0,,32,019,32019
+NV,Nevada,Lyon,Transmission,Max-tip Height Multiplier,2.0,,32,019,32019
+NV,Nevada,Lyon,Railroads,Max-tip Height Multiplier,2.0,,32,019,32019
+NV,Nevada,Lyon,Sound,dBA,55.0,,32,019,32019
+ND,North Dakota,McLean,Transmission,Meters,76.2,,38,055,38055
+ND,North Dakota,McLean,Roads,Meters,76.2,,38,055,38055
+ND,North Dakota,McLean,Structures,Max-tip Height Multiplier,1.25,,38,055,38055
+VA,Virginia,Patrick,Height,Meters,30.48,Exclude County - shortest turbine is 88m,51,141,51141
+CA,California,San Diego,Height,Meters,24.384,Exclude County - shortest turbine is 88m,06,073,06073
+CA,California,San Diego,Roads,Max-tip Height Multiplier,1.1,,06,073,06073
+VA,Virginia,Tazewell,Height,Meters,12.192,Exclude County - shortest turbine is 88m,51,185,51185
+CA,California,Monterey,Roads,Max-tip Height Multiplier,5.0,,06,053,06053
+CA,California,Monterey,Structures,Max-tip Height Multiplier,1.25,,06,053,06053
+MN,Minnesota,Cottonwood,Structures,Rotor-Diameter Multiplier,5.0,,27,033,27033
+CA,California,Lassen,Structures,Meters,3.6576,,06,035,06035
+IL,Illinois,Carroll,Structures,Max-tip Height Multiplier,3.1,,17,015,17015
+IL,Illinois,Carroll,Roads,Max-tip Height Multiplier,1.25,,17,015,17015
+IL,Illinois,Carroll,Transmission,Max-tip Height Multiplier,1.25,,17,015,17015
+WI,Wisconsin,Calumet,Structures,Max-tip Height Multiplier,3.1,Occupied Community Buildings,55,015,55015
+WI,Wisconsin,Calumet,Transmission,Max-tip Height Multiplier,1.1,,55,015,55015
+WI,Wisconsin,Iowa,Structures,Max-tip Height Multiplier,3.1,Occupied Community Buildings,55,049,55049
+WI,Wisconsin,Iowa,Transmission,Max-tip Height Multiplier,1.1,,55,049,55049
+IN,Indiana,Steuben,Structures,Max-tip Height Multiplier,3.0,,18,151,18151
+IN,Indiana,Steuben,Transmission,Max-tip Height Multiplier,1.1,,18,151,18151
+IN,Indiana,Steuben,Rivers,Max-tip Height Multiplier,1.1,,18,151,18151
+VA,Virginia,Bland,Structures,Max-tip Height Multiplier,3.0,,51,021,51021
+WI,Wisconsin,Oconto,Transmission,Max-tip Height Multiplier,3.0,,55,083,55083
+IA,Iowa,Polk,Sound,dBA,55.0,,19,153,19153
+NC,North Carolina,Currituck,Highways,Max-tip Height Multiplier,2.5,,37,053,37053
+CA,California,Santa Barbara,Structures,Max-tip Height Multiplier,2.0,,06,083,06083
+IA,Iowa,Boone,Sound,dBA,50.0,,19,015,19015
+IA,Iowa,Boone,Roads,Max-tip Height Multiplier,1.0,,19,015,19015
+IA,Iowa,Boone,Structures,Max-tip Height Multiplier,1.0,,19,015,19015
+CA,California,Yolo,Structures,Max-tip Height Multiplier,2.0,,06,113,06113
+CO,Colorado,Cheyenne,Structures,Max-tip Height Multiplier,2.0,,08,017,08017
+CO,Colorado,Cheyenne,Transmission,Max-tip Height Multiplier,1.1,,08,017,08017
+CO,Colorado,Cheyenne,Roads,Max-tip Height Multiplier,1.1,,08,017,08017
+CO,Colorado,Cheyenne,Railroads,Max-tip Height Multiplier,1.1,,08,017,08017
+CO,Colorado,Yuma,Transmission,Max-tip Height Multiplier,2.0,,08,125,08125
+CO,Colorado,Yuma,Roads,Max-tip Height Multiplier,2.0,,08,125,08125
+CO,Colorado,Yuma,Structures,Max-tip Height Multiplier,2.0,,08,125,08125
+IA,Iowa,Delaware,Structures,Max-tip Height Multiplier,2.0,,19,055,19055
+IA,Iowa,Delaware,Sound,dBA,55.0,,19,055,19055
+IA,Iowa,Delaware,Transmission,Max-tip Height Multiplier,1.1,,19,055,19055
+IA,Iowa,Muscatine,Structures,Max-tip Height Multiplier,2.0,,19,139,19139
+IA,Iowa,Muscatine,Sound,dBA,60.0,,19,139,19139
+IA,Iowa,Muscatine,Transmission,Max-tip Height Multiplier,1.1,,19,139,19139
+IA,Iowa,Plymouth,Structures,Max-tip Height Multiplier,2.0,,19,149,19149
+IA,Iowa,Tama,Sound,dBA,60.0,,19,171,19171
+IA,Iowa,Tama,Structures,Max-tip Height Multiplier,2.0,,19,171,19171
+IA,Iowa,Tama,Transmission,Max-tip Height Multiplier,1.1,,19,171,19171
+IA,Iowa,Poweshiek,Structures,Max-tip Height Multiplier,2.0,,19,157,19157
+IA,Iowa,Poweshiek,Sound,dBA,50.0,,19,157,19157
+IA,Iowa,Poweshiek,Transmission,Max-tip Height Multiplier,1.1,,19,157,19157
+IA,Iowa,Story,Structures,Max-tip Height Multiplier,2.0,,19,169,19169
+IA,Iowa,Story,Sound,dBA,60.0,,19,169,19169
+IA,Iowa,Story,Transmission,Max-tip Height Multiplier,1.1,,19,169,19169
+KS,Kansas,Osage,Structures,Max-tip Height Multiplier,2.0,,20,139,20139
+NC,North Carolina,Iredell,Roads,Max-tip Height Multiplier,2.0,,37,097,37097
+NC,North Carolina,Iredell,Structures,Max-tip Height Multiplier,2.0,,37,097,37097
+NM,New Mexico,Santa Fe,Structures,Max-tip Height Multiplier,2.0,,35,049,35049
+NM,New Mexico,Santa Fe,Sound,dBA,55.0,,35,049,35049
+KS,Kansas,Sedgwick,Sound,dBA,60.0,,20,173,20173
+WI,Wisconsin,Door,Structures,Max-tip Height Multiplier,2.0,,55,029,55029
+WI,Wisconsin,Door,Transmission,Max-tip Height Multiplier,1.1,,55,029,55029
+WI,Wisconsin,Door,Roads,Max-tip Height Multiplier,1.1,,55,029,55029
+WI,Wisconsin,Door,Sound,dBA,50.0,,55,029,55029
+KS,Kansas,Miami,Sound,dBA,60.0,,20,121,20121
+NC,North Carolina,Hyde,Roads,Max-tip Height Multiplier,1.5,,37,095,37095
+NC,North Carolina,Hyde,Sound,dBA,55.0,,37,095,37095
+NC,North Carolina,Hyde,Structures,Max-tip Height Multiplier,1.1,,37,095,37095
+NC,North Carolina,Pasquotank,Roads,Max-tip Height Multiplier,1.5,,37,139,37139
+NC,North Carolina,Pasquotank,Sound,dBA,55.0,,37,139,37139
+NC,North Carolina,Pasquotank,Structures,Max-tip Height Multiplier,1.1,,37,139,37139
+NC,North Carolina,Tyrrell,Roads,Max-tip Height Multiplier,1.5,,37,177,37177
+NC,North Carolina,Tyrrell,Sound,dBA,55.0,,37,177,37177
+NC,North Carolina,Tyrrell,Structures,Max-tip Height Multiplier,1.1,,37,177,37177
+OR,Oregon,Wasco,Roads,Max-tip Height Multiplier,1.5,,41,065,41065
+VA,Virginia,Accomack,Structures,Max-tip Height Multiplier,1.5,,51,001,51001
+VA,Virginia,Accomack,Sound,dBA,60.0,,51,001,51001
+VA,Virginia,Augusta,Structures,Max-tip Height Multiplier,1.5,,51,015,51015
+VA,Virginia,Augusta,Sound,dBA,60.0,,51,015,51015
+VA,Virginia,Botetourt,Structures,Max-tip Height Multiplier,1.5,,51,023,51023
+VA,Virginia,Botetourt,Sound,dBA,60.0,,51,023,51023
+VA,Virginia,Page,Structures,Max-tip Height Multiplier,1.5,,51,139,51139
+VA,Virginia,Page,Sound,dBA,60.0,,51,139,51139
+VA,Virginia,Shenandoah,Structures,Max-tip Height Multiplier,1.5,,51,171,51171
+VA,Virginia,Shenandoah,Sound,dBA,60.0,,51,171,51171
+VA,Virginia,Wise,Structures,Max-tip Height Multiplier,1.5,,51,195,51195
+VA,Virginia,Wise,Sound,dBA,60.0,,51,195,51195
+VA,Virginia,Grayson,Roads,Max-tip Height Multiplier,1.25,,51,077,51077
+IL,Illinois,Coles,Roads,Max-tip Height Multiplier,1.1,,17,029,17029
+IL,Illinois,Coles,Transmission,Max-tip Height Multiplier,1.1,,17,029,17029
+IL,Illinois,Peoria,Transmission,Max-tip Height Multiplier,1.1,,17,143,17143
+IL,Illinois,Peoria,Structures,Max-tip Height Multiplier,1.1,,17,143,17143
+SC,South Carolina,Darlington,Sound,dBA,55.0,,45,031,45031
+SD,South Dakota,Pennington,Sound,dBA,55.0,,46,103,46103
+SD,South Dakota,Pennington,Transmission,Max-tip Height Multiplier,1.1,,46,103,46103
+SD,South Dakota,Pennington,Roads,Max-tip Height Multiplier,1.1,,46,103,46103
+SD,South Dakota,Pennington,Structures,Max-tip Height Multiplier,1.1,,46,103,46103
+MN,Minnesota,Clay,Structures,Max-tip Height Multiplier,1.1,,27,027,27027
+MN,Minnesota,Martin,Structures,Max-tip Height Multiplier,1.1,,27,091,27091
+VA,Virginia,Pulaski,Sound,dBA,55.0,,51,155,51155
+WI,Wisconsin,Monroe,Structures,Max-tip Height Multiplier,1.1,,55,081,55081
+WI,Wisconsin,Monroe,Transmission,Max-tip Height Multiplier,1.1,,55,081,55081
+WI,Wisconsin,Monroe,Roads,Max-tip Height Multiplier,1.1,,55,081,55081
+WI,Wisconsin,Monroe,Sound,dBA,55.0,,55,081,55081
+WI,Wisconsin,Racine,Sound,dBA,60.0,,55,101,55101
+ID,Idaho,Jefferson,Transmission,Max-tip Height Multiplier,1.0,,16,051,16051
+ID,Idaho,Jefferson,Roads,Max-tip Height Multiplier,1.0,,16,051,16051
