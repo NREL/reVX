@@ -40,6 +40,8 @@ requirements:
     - shapely
     - toolz
     - xarray
+  run-constrained:
+    - earthpy
 
 about:
   home: "https://github.com/NREL/reVX"

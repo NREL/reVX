@@ -1,37 +1,37 @@
-County,State,STATE_FIPS,CNTY_FIPS,FIPS,Abbr,Feature Type,Value Type,Value
-Worcester,Massachusetts,25,027,25027,MA,Structures,Max-tip Height Multiplier,2.0
-Plymouth,Massachusetts,25,023,25023,MA,Structures,Max-tip Height Multiplier,1.1
-Norfolk,Massachusetts,25,021,25021,MA,Structures,Meters,305.0
-Bristol,Massachusetts,25,005,25005,MA,Structures,Max-tip Height Multiplier,1.25
-Windham,Connecticut,09,015,09015,CT,Structures,Meters,305.0
-Providence,Rhode Island,44,007,44007,RI,Structures,Max-tip Height Multiplier,2.0
-Bristol,Rhode Island,44,001,44001,RI,Structures,Meters,305.0
-Kent,Rhode Island,44,003,44003,RI,Structures,Meters,228.6
-New London,Connecticut,09,011,09011,CT,Structures,Max-tip Height Multiplier,2.0
-Newport,Rhode Island,44,005,44005,RI,Structures,Meters,3.6576
-Washington,Rhode Island,44,009,44009,RI,Structures,Max-tip Height Multiplier,1.5
-Suffolk,New York,36,103,36103,NY,Structures,Meters,305.0
-Worcester,Massachusetts,25,027,25027,MA,Roads,Max-tip Height Multiplier,1.1
-Plymouth,Massachusetts,25,023,25023,MA,Roads,Max-tip Height Multiplier,1.5
-Norfolk,Massachusetts,25,021,25021,MA,Roads,Max-tip Height Multiplier,1.5
-Bristol,Massachusetts,25,005,25005,MA,Roads,Max-tip Height Multiplier,1.5
-Windham,Connecticut,09,015,09015,CT,Roads,Max-tip Height Multiplier,1.1
-Providence,Rhode Island,44,007,44007,RI,Roads,Max-tip Height Multiplier,1.1
-Bristol,Rhode Island,44,001,44001,RI,Roads,Meters,152.4
-Kent,Rhode Island,44,003,44003,RI,Roads,Max-tip Height Multiplier,1.1
-New London,Connecticut,09,011,09011,CT,Roads,Max-tip Height Multiplier,1.0
-Newport,Rhode Island,44,005,44005,RI,Roads,Max-tip Height Multiplier,1.1
-Washington,Rhode Island,44,009,44009,RI,Roads,Max-tip Height Multiplier,1.25
-Suffolk,New York,36,103,36103,NY,Roads,Max-tip Height Multiplier,1.1
-Worcester,Massachusetts,25,027,25027,MA,Transmission,Meters,402.335
-Plymouth,Massachusetts,25,023,25023,MA,Transmission,Max-tip Height Multiplier,1.1
-Norfolk,Massachusetts,25,021,25021,MA,Transmission,Max-tip Height Multiplier,1.1
-Bristol,Massachusetts,25,005,25005,MA,Transmission,Max-tip Height Multiplier,1.1
-Windham,Connecticut,09,015,09015,CT,Transmission,Meters,106.68
-Providence,Rhode Island,44,007,44007,RI,Transmission,Max-tip Height Multiplier,1.1
-Bristol,Rhode Island,44,001,44001,RI,Transmission,Max-tip Height Multiplier,2.0
-Kent,Rhode Island,44,003,44003,RI,Transmission,Max-tip Height Multiplier,1.1
-New London,Connecticut,09,011,09011,CT,Transmission,Max-tip Height Multiplier,3.0
-Newport,Rhode Island,44,005,44005,RI,Transmission,Max-tip Height Multiplier,1.1
-Washington,Rhode Island,44,009,44009,RI,Transmission,Max-tip Height Multiplier,1.25
-Suffolk,New York,36,103,36103,NY,Transmission,Max-tip Height Multiplier,1.5
+County,State,STATE_FIPS,CNTY_FIPS,FIPS,Abbr,Feature Type,Value Type,Value,Comment
+Worcester,Massachusetts,25,27,25027,MA,Structures,Max-tip Height Multiplier,2.0,None
+Plymouth,Massachusetts,25,23,25023,MA,Structures,Max-tip Height Multiplier,1.1,None
+Norfolk,Massachusetts,25,21,25021,MA,Structures,Meters,305.0,None
+Bristol,Massachusetts,25,5,25005,MA,Structures,Max-tip Height Multiplier,1.25,None
+Windham,Connecticut,9,15,9015,CT,Structures,Meters,305.0,None
+Providence,Rhode Island,44,7,44007,RI,Structures,Max-tip Height Multiplier,2.0,None
+Bristol,Rhode Island,44,1,44001,RI,Structures,Meters,305.0,None
+Kent,Rhode Island,44,3,44003,RI,Structures,Meters,228.6,None
+New London,Connecticut,9,11,9011,CT,Structures,Max-tip Height Multiplier,2.0,None
+Newport,Rhode Island,44,5,44005,RI,Structures,Meters,3.6576,None
+Washington,Rhode Island,44,9,44009,RI,Structures,Max-tip Height Multiplier,1.5,None
+Suffolk,New York,36,103,36103,NY,Structures,Meters,305.0,None
+Worcester,Massachusetts,25,27,25027,MA,Roads,Max-tip Height Multiplier,1.1,None
+Plymouth,Massachusetts,25,23,25023,MA,Roads,Max-tip Height Multiplier,1.5,None
+Norfolk,Massachusetts,25,21,25021,MA,Roads,Max-tip Height Multiplier,1.5,None
+Bristol,Massachusetts,25,5,25005,MA,Roads,Max-tip Height Multiplier,1.5,None
+Windham,Connecticut,9,15,9015,CT,Roads,Max-tip Height Multiplier,1.1,None
+Providence,Rhode Island,44,7,44007,RI,Roads,Max-tip Height Multiplier,1.1,None
+Bristol,Rhode Island,44,1,44001,RI,Roads,Meters,152.4,None
+Kent,Rhode Island,44,3,44003,RI,Roads,Max-tip Height Multiplier,1.1,None
+New London,Connecticut,9,11,9011,CT,Roads,Max-tip Height Multiplier,1.0,None
+Newport,Rhode Island,44,5,44005,RI,Roads,Max-tip Height Multiplier,1.1,None
+Washington,Rhode Island,44,9,44009,RI,Roads,Max-tip Height Multiplier,1.25,None
+Suffolk,New York,36,103,36103,NY,Roads,Max-tip Height Multiplier,1.1,None
+Worcester,Massachusetts,25,27,25027,MA,Transmission,Meters,402.335,None
+Plymouth,Massachusetts,25,23,25023,MA,Transmission,Max-tip Height Multiplier,1.1,None
+Norfolk,Massachusetts,25,21,25021,MA,Transmission,Max-tip Height Multiplier,1.1,None
+Bristol,Massachusetts,25,5,25005,MA,Transmission,Max-tip Height Multiplier,1.1,None
+Windham,Connecticut,9,15,9015,CT,Transmission,Meters,106.68,None
+Providence,Rhode Island,44,7,44007,RI,Transmission,Max-tip Height Multiplier,1.1,None
+Bristol,Rhode Island,44,1,44001,RI,Transmission,Max-tip Height Multiplier,2.0,None
+Kent,Rhode Island,44,3,44003,RI,Transmission,Max-tip Height Multiplier,1.1,None
+New London,Connecticut,9,11,9011,CT,Transmission,Max-tip Height Multiplier,3.0,None
+Newport,Rhode Island,44,5,44005,RI,Transmission,Max-tip Height Multiplier,1.1,None
+Washington,Rhode Island,44,9,44009,RI,Transmission,Max-tip Height Multiplier,1.25,None
+Suffolk,New York,36,103,36103,NY,Transmission,Max-tip Height Multiplier,1.5,None

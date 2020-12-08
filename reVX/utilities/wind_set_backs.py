@@ -2,8 +2,10 @@
 """
 Handler to convert exclusion to/from .h5 and .geotiff
 """
-from abc import ABC, abstractclassmethod, abstractstaticmethod
+from abc import ABC, abstractstaticmethod, abstractclassmethod
 from concurrent.futures import as_completed
+from earthpy import clip as cl
+import fiona
 import geopandas as gpd
 import h5py
 import json
@@ -21,7 +23,7 @@ from reV.handlers.exclusions import ExclusionLayers
 logger = logging.getLogger(__name__)
 
 
-class BaseWindSetBacks(ABC):
+class BaseWindSetbacks(ABC):
     """
     Create exclusions layers for wind setbacks
     """
@@ -189,8 +191,32 @@ class BaseWindSetBacks(ABC):
 
         return shape, chunks, profile
 
-    @staticmethod
-    def _parse_regs(regs_fpath, excl_h5):
+    @abstractstaticmethod
+    def _parse_regs(regs_fpath):
+        """
+        Parse wind regulations
+
+        Parameters
+        ----------
+        regs_fpath : str
+            Path to wind regulations .csv file
+
+        Returns
+        -------
+        regs : pandas.DataFrame
+            Wind regulations table
+        """
+        regs = parse_table(regs_fpath)
+        if 'FIPS' not in regs:
+            msg = ('Wind regulations does not have county FIPS! Please add a '
+                   '"FIPS" columns with the unique county FIPS values.')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        return regs
+
+    @classmethod
+    def _parse_county_regs(cls, regs_fpath, excl_h5):
         """
         Parse wind regulations, combine with county geometries from
         exclusions .h5 file. The county geometries are intersected with
@@ -211,12 +237,7 @@ class BaseWindSetBacks(ABC):
             GeoDataFrame with county level wind setback regulations merged
             with county geometries, use for intersecting with setback features
         """
-        regs = parse_table(regs_fpath)
-        if 'FIPS' not in regs:
-            msg = ('Wind regulations does not have county FIPS! Please add a '
-                   '"FIPS" columns with the unique county FIPS values.')
-            logger.error(msg)
-            raise RuntimeError(msg)
+        regs = cls._parse_regs(regs_fpath)
 
         with ExclusionLayers(excl_h5) as exc:
             fips = exc['cnty_fips']
@@ -282,16 +303,81 @@ class BaseWindSetBacks(ABC):
 
         return setback
 
-    @abstractclassmethod
-    def _existing_state_setbacks(cls, state_features, state_regs,
-                                 tip_height, rotor_diameter):
+    @abstractstaticmethod
+    def _parse_features(features_fpath, crs):
         """
-        Abstract method to compute existing state setbacks
+        Abstract method to parse features
 
         Parameters
         ----------
-        state_features : geopandas.GeoDataFrame
-            Features to setback from
+        features_fpath : str
+            Path to file containing features to setback from
+        crs : str
+            Coordinate reference system to convert structures geometries into
+
+        Returns
+        -------
+        features : geopandas.GeoDataFrame
+            Geometries of features to setback from in exclusion coordinate
+            system
+        """
+
+    @abstractclassmethod
+    def _map_features_dir(cls, features_dir):
+        """
+        Map features files to state based on file name
+
+        Parameters
+        ----------
+        features_dir : str
+            Path to directory containing features files. Used
+            to identify features to build setbacks from. Files should be
+            by state
+
+        Returns
+        -------
+        features_state_map : dict
+            Dictionary mapping state to features file path
+        """
+
+    @classmethod
+    def _general_state_setbacks(cls, features_fpath, crs, setback):
+        """
+        Abstract method to compute general state setbacks
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to file containing features to setback from
+        crs : str
+            Coordinate reference system to convert structures geometries into
+        setback : float
+            Generic set back distance in meters
+
+        Returns
+        -------
+        setbacks : list
+            List of setback geometries for given state
+        """
+        state_features = cls._parse_features(features_fpath, crs)
+
+        state_features['geometry'] = state_features.buffer(setback)
+        setbacks = [(geom, 1) for geom in state_features['geometry']]
+
+        return setbacks
+
+    @classmethod
+    def _existing_state_setbacks(cls, features_fpath, crs, state_regs,
+                                 tip_height, rotor_diameter):
+        """
+        Compute existing state features setbacks
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to file containg feature to setback from for in a given state
+        crs : str
+            Coordinate reference system to convert structures geometries into
         state_regs : pandas.DataFrame
             Wind regulations for same state as geojson
         tip_height : float
@@ -304,6 +390,8 @@ class BaseWindSetBacks(ABC):
         setbacks : list
             List of setback geometries for given state
         """
+        state_features = cls._parse_features(features_fpath, crs)
+
         setbacks = []
         for _, cnty in state_regs.iterrows():
             setback = cls._get_setback(cnty, tip_height, rotor_diameter)
@@ -313,28 +401,6 @@ class BaseWindSetBacks(ABC):
                 tmp['geometry'] = tmp.buffer(setback)
 
                 setbacks.extend((geom, 1) for geom in tmp['geometry'])
-
-        return setbacks
-
-    @abstractstaticmethod
-    def _general_state_setbacks(state_features, setback):
-        """
-        Abstract method to compute general state setbacks
-
-        Parameters
-        ----------
-        state_features : geopandas.GeoDataFrame
-            Features to setback from
-        setback : float
-            Generic set back distance in meters
-
-        Returns
-        -------
-        setbacks : list
-            List of setback geometries for given state
-        """
-        state_features['geometry'] = state_features.buffer(setback)
-        setbacks = [(geom, 1) for geom in state_features['geometry']]
 
         return setbacks
 
@@ -372,7 +438,7 @@ class BaseWindSetBacks(ABC):
                 warn(msg)
 
             multiplier = None
-            regs = self._parse_regs(regs_fpath, self._excl_h5)
+            regs = self._parse_county_regs(regs_fpath, self._excl_h5)
 
         elif multiplier:
             regs = None
@@ -408,7 +474,7 @@ class BaseWindSetBacks(ABC):
 
         return np.expand_dims(arr, axis=0)
 
-    def _compute_general_setbacks(self, features, *args, max_workers=None):
+    def _compute_general_setbacks(self, features, crs, max_workers=None):
         """
         Compute general setbacks for all states either in serial or parallel
 
@@ -416,9 +482,8 @@ class BaseWindSetBacks(ABC):
         ----------
         features : list
             list of feature files to compute setbacks from
-        args : obj
-            Additional arguments to pass to _general_state_setbacks
-            along with each entry in the features list
+        crs : str
+            Coordinate reference system to convert structures geometries into
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
@@ -443,7 +508,7 @@ class BaseWindSetBacks(ABC):
                 futures = []
                 for state_features in features:
                     future = exe.submit(self._general_state_setbacks,
-                                        state_features, *args)
+                                        state_features, crs)
                     futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
@@ -454,11 +519,122 @@ class BaseWindSetBacks(ABC):
             logger.info('Computing general setbacks in serial')
             for i, state_features in enumerate(features):
                 setbacks.extend(self._general_state_setbacks(
-                    state_features, *args))
+                    state_features, crs))
                 logger.debug('Computed setbacks for {} of {} states'
                              .format((i + 1), len(features)))
 
         setbacks = self._rasterize_setbacks(setbacks)
+
+        return setbacks
+
+    def _compute_existing_setbacks(self, features_state_map, groupby='State',
+                                   max_workers=None):
+        """
+        Compute existing setbacks for all states either in serial or parallel
+
+        Parameters
+        ----------
+        features_state_map : list
+            Dictionary mapping features files to states
+        groupby : str, optional
+            Column to groupby regulations on and map to features files,
+            by default in 'State'
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+
+        Returns
+        -------
+        setbacks : ndarray
+            Raster array of setbacks, ready to be written to the exclusions
+            .h5 file as a new exclusion layer
+        """
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        regs = self._regs.groupby(groupby)
+        crs = self._profile['crs']
+
+        setbacks = []
+        if max_workers > 1:
+            logger.info('Computing existing setbacks in parallel using {} '
+                        'workers'.format(max_workers))
+            loggers = [__name__, 'reVX']
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
+                futures = []
+                for state, state_regs in regs:
+                    features_fpath = features_state_map[state]
+                    future = exe.submit(self._existing_state_setbacks,
+                                        features_fpath, crs, state_regs,
+                                        self.tip_height, self.rotor_diameter)
+                    futures.append(future)
+
+                for i, future in enumerate(as_completed(futures)):
+                    setbacks.extend(future.result())
+                    logger.debug('Computed setbacks for {} of {} states'
+                                 .format((i + 1), len(regs)))
+        else:
+            logger.info('Computing existing setbacks in serial')
+            for i, (state, state_regs) in enumerate(regs):
+                features_fpath = features_state_map[state]
+                setbacks.extend(self._existing_state_setbacks(
+                    features_fpath, crs, state_regs,
+                    self.tip_height, self.rotor_diameter))
+                logger.debug('Computed setbacks for {} of {} states'
+                             .format((i + 1), len(regs)))
+
+        setbacks = self._rasterize_setbacks(setbacks)
+
+        return setbacks
+
+    def compute_setbacks(self, features_dir, groupby='State', max_workers=None,
+                         layer=None, description=None):
+        """
+        Compute setbacks for all states either in serial or parallel.
+        Existing setbacks are computed if a wind regulations file was supplied
+        during class initialization, otherwise general setbacks are computed
+
+        Parameters
+        ----------
+        features_dir : str
+            Path to directory containing features files. Used
+            to identify features to build setbacks from. Files should be
+            by state
+        groupby : str, optional
+            Column to groupby regulations on and map to features files,
+            by default in 'State'
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+        layer : str, optional
+            Name of new layer to write to exclusions .h5 file containing
+            computed setbacks, if None do not write to disc, by default None
+        description : str, optional
+            Description of exclusion layer (set as an attribute),
+            by default None
+
+        Returns
+        -------
+        setbacks : ndarray
+            Raster array of setbacks, ready to be written to the exclusions
+            .h5 file as a new exclusion layer
+        """
+        features_state_map = self._map_features_dir(features_dir)
+        if self._regs is not None:
+            setbacks = self._compute_existing_setbacks(features_state_map,
+                                                       groupby=groupby,
+                                                       max_workers=max_workers)
+        else:
+            crs = self._profile['crs']
+            setbacks = self._compute_general_setbacks(
+                features_state_map.values(), crs, self.generic_setback,
+                max_workers=max_workers)
+
+        if layer is not None:
+            self._write_layer(layer, setbacks, description=description)
 
         return setbacks
 
@@ -496,10 +672,33 @@ class BaseWindSetBacks(ABC):
                              .format(layer, description))
 
 
-class StructureWindSetBacks(BaseWindSetBacks):
+class StructureWindSetbacks(BaseWindSetbacks):
     """
     Structure Wind setbacks
     """
+    @staticmethod
+    def _parse_regs(regs_fpath):
+        """
+        Parse wind regulations, reduce table to just structures
+
+        Parameters
+        ----------
+        regs_fpath : str
+            Path to wind regulations .csv file
+
+        Returns
+        -------
+        regs : pandas.DataFrame
+            Wind regulations table
+        """
+        regs = super()._parse_regs(regs_fpath)
+
+        mask = ((regs['Feature Type'] == 'Structures')
+                & ~(regs['Comment'] == 'Occupied Community Buildings'))
+        regs = regs.loc[mask]
+
+        return regs
+
     @staticmethod
     def _split_state_name(state_name):
         """
@@ -524,7 +723,7 @@ class StructureWindSetBacks(BaseWindSetBacks):
         return state_name
 
     @classmethod
-    def _map_structures_dir(cls, structure_dir):
+    def _map_features_dir(cls, structures_dir):
         """
         Map structures .geojson files to state based on file name
 
@@ -540,17 +739,17 @@ class StructureWindSetBacks(BaseWindSetBacks):
         structure_state_map : dict
             Dictionary mapping state to geojson file path
         """
-        structure_state_map = {}
-        for file in os.listdir(structure_dir):
+        features_state_map = {}
+        for file in os.listdir(structures_dir):
             if file.endswith('.geojson'):
                 state = file.split('.')[0]
                 state = cls._split_state_name(state)
-                structure_state_map[state] = os.path.join(structure_dir, file)
+                features_state_map[state] = os.path.join(structures_dir, file)
 
-        return structure_state_map
+        return features_state_map
 
     @staticmethod
-    def _parse_structures(structure_fpath, crs):
+    def _parse_features(structure_fpath, crs):
         """
         Load structures from geojson, convert to exclusions coordinate system
 
@@ -571,133 +770,18 @@ class StructureWindSetBacks(BaseWindSetBacks):
 
         return structures.to_crs(crs)
 
-    @classmethod
-    def _existing_state_setbacks(cls, structure_fpath, crs, state_regs,
-                                 tip_height, rotor_diameter):
-        """
-        Compute existing state structure setbacks
-
-        Parameters
-        ----------
-        structure_fpath : str
-            Path to Microsoft .geojson of structures in a given state
-        crs : str
-            Coordinate reference system to convert structures geometries into
-        state_regs : pandas.DataFrame
-            Wind regulations for same state as geojson
-        tip_height : float
-            Turbine blade tip height in meters
-        rotor_diameter : float
-            Turbine rotor diameter in meters
-
-        Returns
-        -------
-        setbacks : list
-            List of setback geometries for given state
-        """
-        structures = cls._parse_structures(structure_fpath, crs)
-        setbacks = super()._existing_state_setbacks(structures,
-                                                    state_regs,
-                                                    tip_height,
-                                                    rotor_diameter)
-
-        return setbacks
-
-    @classmethod
-    def _general_state_setbacks(cls, structure_fpath, crs, setback):
-        """
-        Compute general state setbacks
-
-        Parameters
-        ----------
-        structure_fpath : str
-            Path to Microsoft .geojson of structures in a given state
-        crs : str
-            Coordinate reference system to convert structures geometries into
-        setback : float
-            Generic set back distance in meters
-
-        Returns
-        -------
-        setbacks : list
-            List of setback geometries for given state
-        """
-        structures = cls._parse_structures(structure_fpath, crs)
-        setbacks = super()._general_state_setbacks(structures, setback)
-
-        return setbacks
-
-    def _compute_existing_setbacks(self, structures_state_map,
-                                   max_workers=None):
-        """
-        Compute existing setbacks for all states either in serial or parallel
-
-        Parameters
-        ----------
-        structures_state_map : list
-            Dictionary mapping structure .geojson files to state names
-        max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run in
-            serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
-
-        Returns
-        -------
-        setbacks : ndarray
-            Raster array of setbacks, ready to be written to the exclusions
-            .h5 file as a new exclusion layer
-        """
-        if max_workers is None:
-            max_workers = os.cpu_count()
-
-        regs = self._regs.groupby('State')
-        crs = self._profile['crs']
-
-        setbacks = []
-        if max_workers > 1:
-            logger.info('Computing existing setbacks in parallel using {} '
-                        'workers'.format(max_workers))
-            loggers = [__name__, 'reVX']
-            with SpawnProcessPool(max_workers=max_workers,
-                                  loggers=loggers) as exe:
-                futures = []
-                for state, state_regs in regs:
-                    structure_fpath = structures_state_map[state]
-                    future = exe.submit(self._existing_state_setbacks,
-                                        structure_fpath, crs, state_regs,
-                                        self.tip_height, self.rotor_diameter)
-                    futures.append(future)
-
-                for i, future in enumerate(as_completed(futures)):
-                    setbacks.extend(future.result())
-                    logger.debug('Computed setbacks for {} of {} states'
-                                 .format((i + 1), len(regs)))
-        else:
-            logger.info('Computing existing setbacks in serial')
-            for i, (state, state_regs) in enumerate(regs):
-                structure_fpath = structures_state_map[state]
-                setbacks.extend(self._existing_state_setbacks(
-                    structure_fpath, crs, state_regs,
-                    self.tip_height, self.rotor_diameter))
-                logger.debug('Computed setbacks for {} of {} states'
-                             .format((i + 1), len(regs)))
-
-        setbacks = self._rasterize_setbacks(setbacks)
-
-        return setbacks
-
-    def compute_setbacks(self, structures_dir, max_workers=None,
+    def compute_setbacks(self, structure_fpath, max_workers=None,
                          layer=None, description=None):
         """
-        Compute setbacks for all states either in serial or parallel.
+        Compute structure setbacks for all states either in serial or parallel.
         Existing setbacks are computed if a wind regulations file was supplied
         during class initialization, otherwise general setbacks are computed
 
         Parameters
         ----------
-        structure_dir : str
-            Path to directory containing microsoft strucutes *.geojsons. Used
-            to identify structures to build setbacks from. Files should be
+        features_dir : str
+            Path to directory containing features files. Used
+            to identify features to build setbacks from. Files should be
             by state
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
@@ -716,18 +800,10 @@ class StructureWindSetBacks(BaseWindSetBacks):
             Raster array of setbacks, ready to be written to the exclusions
             .h5 file as a new exclusion layer
         """
-        structures_state_map = self._map_structures_dir(structures_dir)
-        if self._regs is not None:
-            setbacks = self._compute_existing_setbacks(structures_state_map,
-                                                       max_workers=max_workers)
-        else:
-            crs = self._profile['crs']
-            setbacks = self._compute_general_setbacks(
-                structures_state_map.values(), crs, self.generic_setback,
-                max_workers=max_workers)
-
-        if layer is not None:
-            self._write_layer(layer, setbacks, description=description)
+        setbacks = super().compute_setbacks(structure_fpath, groupby='State',
+                                            max_workers=max_workers,
+                                            layer=layer,
+                                            description=description)
 
         return setbacks
 
@@ -783,3 +859,482 @@ class StructureWindSetBacks(BaseWindSetBacks):
         setbacks.compute_setbacks(structures_dir, layer=layer_name,
                                   max_workers=max_workers,
                                   description=description)
+
+
+class RoadWindSetbacks(BaseWindSetbacks):
+    """
+    Road Wind setbacks
+    """
+    @staticmethod
+    def _parse_regs(regs_fpath):
+        """
+        Parse wind regulations, reduce table to just roads
+
+        Parameters
+        ----------
+        regs_fpath : str
+            Path to wind regulations .csv file
+
+        Returns
+        -------
+        regs : pandas.DataFrame
+            Wind regulations table
+        """
+        regs = super()._parse_regs(regs_fpath)
+
+        mask = regs['Feature Type'].isin(['Roads', 'Highways', 'Highways 111'])
+        regs = regs.loc[mask]
+
+        return regs
+
+    @classmethod
+    def _map_features_dir(cls, roads_dir):
+        """
+        Map roads .gdb files to state based on file name
+
+        Parameters
+        ----------
+        roads_dir : str
+            Path to directory containing here streets *.gdb files. Used
+            to identify roads to build setbacks from. Files should be
+            by state
+
+        Returns
+        -------
+        roads_state_map : dict
+            Dictionary mapping state to gdb file path
+        """
+        roads_state_map = {}
+        for file in os.listdir(roads_dir):
+            if file.endswith('.gdb') and file.startswith('Streets_USA'):
+                state = file.split('.')[0].split('_')[-1]
+                roads_state_map[state] = os.path.join(roads_dir, file)
+
+        return roads_state_map
+
+    @staticmethod
+    def _parse_features(roads_fpath, crs):
+        """
+        Load roads from gdb file, convert to exclusions coordinate system
+
+        Parameters
+        ----------
+        roads_fpath : str
+            Path to here streets gdb file for given state
+        crs : str
+            Coordinate reference system to convert structures geometries into
+
+        Returns
+        -------
+        roads : geopandas.GeoDataFrame.sindex
+            Geometries for roads in gdb file, in exclusion coordinate
+            system
+        """
+        lyr = fiona.listlayers(roads_fpath)[0]
+        roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr)
+
+        return roads.to_crs(crs)
+
+    @classmethod
+    def _existing_state_setbacks(cls, roads_fpath, crs, state_regs,
+                                 tip_height, rotor_diameter):
+        """
+        Compute existing state road setbacks
+
+        Parameters
+        ----------
+        roads_fpath : str
+            Path to here streets gdb file for given state
+        crs : str
+            Coordinate reference system to convert structures geometries into
+        state_regs : pandas.DataFrame
+            Wind regulations for same state as geojson
+        tip_height : float
+            Turbine blade tip height in meters
+        rotor_diameter : float
+            Turbine rotor diameter in meters
+
+        Returns
+        -------
+        setbacks : list
+            List of setback geometries for given state
+        """
+        state_features = cls._parse_features(roads_fpath, crs)
+        state_features = state_features[['StreetName', 'geometry']]
+        si = state_features.sindex
+
+        setbacks = []
+        for _, cnty in state_regs.iterrows():
+            setback = cls._get_setback(cnty, tip_height, rotor_diameter)
+            if setback is not None:
+                # spatial index bounding box and intersection
+                bb_index = \
+                    list(si.intersection(cnty.geometry.bounds.values[0]))
+                bb_pos = state_features.iloc[bb_index]
+                tmp = bb_pos.intersection(cnty.geometry.values[0])
+                tmp = gpd.GeoDataFrame(geometry=tmp)
+                tmp = tmp[~tmp.is_empty]
+                # Buffer setback
+                tmp['geometry'] = tmp.buffer(setback)
+
+                setbacks.extend((geom, 1) for geom in tmp['geometry'])
+
+        return setbacks
+
+    def compute_setbacks(self, roads_dir, max_workers=None,
+                         layer=None, description=None):
+        """
+        Compute road setbacks for all states either in serial or parallel.
+        Existing setbacks are computed if a wind regulations file was supplied
+        during class initialization, otherwise general setbacks are computed
+
+        Parameters
+        ----------
+        roads_dir : str
+            Path to directory containing here streets *.gdb files. Used
+            to identify roads to build setbacks from. Files should be
+            by state
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+        layer : str, optional
+            Name of new layer to write to exclusions .h5 file containing
+            computed setbacks, if None do not write to disc, by default None
+        description : str, optional
+            Description of exclusion layer (set as an attribute),
+            by default None
+
+        Returns
+        -------
+        setbacks : ndarray
+            Raster array of setbacks, ready to be written to the exclusions
+            .h5 file as a new exclusion layer
+        """
+        setbacks = super().compute_setbacks(roads_dir, groupby='Abbr',
+                                            max_workers=max_workers,
+                                            layer=layer,
+                                            description=description)
+
+        return setbacks
+
+    @classmethod
+    def run(cls, excl_h5, roads_dir, layer_name, hub_height,
+            rotor_diameter, regs_fpath=None, multiplier=None,
+            chunks=(128, 128), max_workers=None, description=None):
+        """
+        Compute road setbacks and write them as a new layer to the
+        exclusions .h5 file. If a wind regulations file is given compute
+        existing setbacks, otherwise compute general setbacks using the given
+        multiplier and the turbine tip-height. File must be locally on disc to
+        allow for writing of new layer.
+
+        Parameters
+        ----------
+        excl_h5 : str
+            Path to .h5 file containing or to contain exclusion layers
+        roads_dir : str
+            Path to directory containing here streets *.gdb files. Used
+            to identify roads to build setbacks from. Files should be
+            by state
+        layer_name : str
+            Name of new layer to write to exclusions .h5 file containing
+            computed setbacks
+        hub_height : float | int
+            Turbine hub height (m), used along with rotor diameter to compute
+            blade tip height which is used to determine setback distance
+        rotor_diameter : float | int
+            Turbine rotor diameter (m), used along with hub height to compute
+            blade tip height which is used to determine setback distance
+        regs_fpath : str | None, optional
+            Path to wind regulations .csv file, if None create global
+            setbacks, by default None
+        multiplier : int | float | str | None, optional
+            setback multiplier to use if wind regulations are not supplied,
+            if str, must one of {'high': 3, 'moderate': 1.1},
+            by default None
+        chunks : tuple, optional
+            Chunk size to use for setback layers, if None use default chunk
+            size in excl_h5, by default (128, 128)
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+        description : str, optional
+            Description of exclusion layer (set as an attribute),
+            by default None
+        """
+        setbacks = cls(excl_h5, hub_height, rotor_diameter,
+                       regs_fpath=regs_fpath, multiplier=multiplier,
+                       hsds=False, chunk=chunks)
+        setbacks.compute_setbacks(roads_dir, layer=layer_name,
+                                  max_workers=max_workers,
+                                  description=description)
+
+
+class TransmissionWindSetbacks(BaseWindSetbacks):
+    """
+    Transmission Wind setbacks
+    """
+    @staticmethod
+    def _parse_regs(regs_fpath):
+        """
+        Parse wind regulations, reduce table to just transmission
+
+        Parameters
+        ----------
+        regs_fpath : str
+            Path to wind regulations .csv file
+
+        Returns
+        -------
+        regs : pandas.DataFrame
+            Wind regulations table
+        """
+        regs = super()._parse_regs(regs_fpath)
+
+        mask = regs['Feature Type'] == 'Transmission'
+        regs = regs.loc[mask]
+
+        return regs
+
+    @staticmethod
+    def _parse_features(transmission_fpath, crs):
+        """
+        Load transmission shape file, convert to exclusions coordinate system
+
+        Parameters
+        ----------
+        transmission_fpath : str
+            Path to transmission shape file
+        crs : str
+            Coordinate reference system to convert structures geometries into
+
+        Returns
+        -------
+        trans : geopandas.GeoDataFrame.sindex
+            Geometries for transmission features, in exclusion coordinate
+            system
+        """
+        trans = gpd.read_file(transmission_fpath)
+        mask = (~(trans['Proposed'] == 'Proposed')
+                & ~(trans['Undergroun'] == 'T'))
+        trans = trans.loc[mask]
+
+        return trans.to_crs(crs)
+
+    @classmethod
+    def _existing_cnty_setbacks(cls, features_fpath, crs, cnty,
+                                tip_height, rotor_diameter):
+        """
+        Compute existing county setbacks
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to shape file with features to compute setbacks from
+        crs : str
+            Coordinate reference system to convert structures geometries into
+        cnty : pandas.Series
+            Wind regulations for a single county
+        tip_height : float
+            Turbine blade tip height in meters
+        rotor_diameter : float
+            Turbine rotor diameter in meters
+
+        Returns
+        -------
+        setbacks : list
+            List of setback geometries for given state
+        """
+        features = cls._parse_features(features_fpath, crs)
+
+        setbacks = []
+        setback = cls._get_setback(cnty, tip_height, rotor_diameter)
+        if setback is not None:
+            # clip the transmission lines to county geometry
+            # pylint: disable=assignment-from-no-return
+            tmp = cl.clip_shp(features, cnty)
+            tmp = tmp[~tmp.is_empty]
+
+            # Buffer setback
+            tmp['geometry'] = tmp.buffer(setback)
+
+            setbacks.extend((geom, 1) for geom in tmp['geometry'])
+
+        return setbacks
+
+    def compute_setbacks(self, features_fpath, max_workers=None,
+                         layer=None, description=None):
+        """
+        Compute setbacks for all states either in serial or parallel.
+        Existing setbacks are computed if a wind regulations file was supplied
+        during class initialization, otherwise general setbacks are computed
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to shape file with features to compute setbacks from
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+        layer : str, optional
+            Name of new layer to write to exclusions .h5 file containing
+            computed setbacks, if None do not write to disc, by default None
+        description : str, optional
+            Description of exclusion layer (set as an attribute),
+            by default None
+
+        Returns
+        -------
+        setbacks : ndarray
+            Raster array of setbacks, ready to be written to the exclusions
+            .h5 file as a new exclusion layer
+        """
+        crs = self._profile['crs']
+        setbacks = []
+        if self._regs is not None:
+            if max_workers is None:
+                max_workers = os.cpu_count()
+
+            if max_workers > 1:
+                logger.info('Computing existing setbacks in parallel using {} '
+                            'workers'.format(max_workers))
+                loggers = [__name__, 'reVX']
+                with SpawnProcessPool(max_workers=max_workers,
+                                      loggers=loggers) as exe:
+                    futures = []
+                    for _, cnty_regs in self._regs.iterrows():
+                        future = exe.submit(self._existing_cnty_setbacks,
+                                            features_fpath, crs, cnty_regs,
+                                            self.tip_height,
+                                            self.rotor_diameter)
+                        futures.append(future)
+
+                    for i, future in enumerate(as_completed(futures)):
+                        setbacks.extend(future.result())
+                        logger.debug('Computed setbacks for {} of {} states'
+                                     .format((i + 1), len(self._regs)))
+            else:
+                logger.info('Computing existing setbacks in serial')
+                for i, (_, cnty_regs) in enumerate(self._regs.iterrows()):
+                    setbacks.extend(self._existing_cnty_setbacks(
+                        features_fpath, crs, cnty_regs,
+                        self.tip_height, self.rotor_diameter))
+                    logger.debug('Computed setbacks for {} of {} states'
+                                 .format((i + 1), len(self._regs)))
+        else:
+            logger.info('Computing general setbacks')
+            setbacks.extend(self._general_state_setbacks(features_fpath, crs,
+                                                         self.generic_setback))
+
+        setbacks = self._rasterize_setbacks(setbacks)
+
+        if layer is not None:
+            self._write_layer(layer, setbacks, description=description)
+
+        return setbacks
+
+    @classmethod
+    def run(cls, excl_h5, features_fpath, layer_name, hub_height,
+            rotor_diameter, regs_fpath=None, multiplier=None,
+            chunks=(128, 128), max_workers=None, description=None):
+        """
+        Compute setbacks and write them as a new layer to the
+        exclusions .h5 file. If a wind regulations file is given compute
+        existing setbacks, otherwise compute general setbacks using the given
+        multiplier and the turbine tip-height. File must be locally on disc to
+        allow for writing of new layer.
+
+        Parameters
+        ----------
+        excl_h5 : str
+            Path to .h5 file containing or to contain exclusion layers
+        features_fpath : str
+            Path to shape file with features to compute setbacks from
+        layer_name : str
+            Name of new layer to write to exclusions .h5 file containing
+            computed setbacks
+        hub_height : float | int
+            Turbine hub height (m), used along with rotor diameter to compute
+            blade tip height which is used to determine setback distance
+        rotor_diameter : float | int
+            Turbine rotor diameter (m), used along with hub height to compute
+            blade tip height which is used to determine setback distance
+        regs_fpath : str | None, optional
+            Path to wind regulations .csv file, if None create global
+            setbacks, by default None
+        multiplier : int | float | str | None, optional
+            setback multiplier to use if wind regulations are not supplied,
+            if str, must one of {'high': 3, 'moderate': 1.1},
+            by default None
+        chunks : tuple, optional
+            Chunk size to use for setback layers, if None use default chunk
+            size in excl_h5, by default (128, 128)
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+        description : str, optional
+            Description of exclusion layer (set as an attribute),
+            by default None
+        """
+        setbacks = cls(excl_h5, hub_height, rotor_diameter,
+                       regs_fpath=regs_fpath, multiplier=multiplier,
+                       hsds=False, chunk=chunks)
+        setbacks.compute_setbacks(features_fpath, layer=layer_name,
+                                  max_workers=max_workers,
+                                  description=description)
+
+
+class RailWindSetbacks(TransmissionWindSetbacks):
+    """
+    Rail Wind setbacks
+    """
+    @staticmethod
+    def _parse_regs(regs_fpath):
+        """
+        Parse wind regulations, reduce table to just rail
+
+        Parameters
+        ----------
+        regs_fpath : str
+            Path to wind regulations .csv file
+
+        Returns
+        -------
+        regs : pandas.DataFrame
+            Wind regulations table
+        """
+        regs = super()._parse_regs(regs_fpath)
+
+        mask = regs['Feature Type'] == 'Railroads'
+        regs = regs.loc[mask]
+
+        return regs
+
+    @staticmethod
+    def _parse_features(rail_fpath, crs):
+        """
+        Load rail shape file, convert to exclusions coordinate system
+
+        Parameters
+        ----------
+        transmission_fpath : str
+            Path to transmission shape file
+        crs : str
+            Coordinate reference system to convert structures geometries into
+
+        Returns
+        -------
+        rail : geopandas.GeoDataFrame.sindex
+            Geometries for rail features, in exclusion coordinate
+            system
+        """
+        rail = gpd.read_file(rail_fpath)
+        # remove out of service and abandoned
+        mask = ~rail['STATUS'].isin(['X', 'A', 'R'])
+        rail = rail.loc[mask]
+
+        return rail.to_crs(crs)
