@@ -62,7 +62,9 @@ setup(
                             "reV-rpm=reVX.rpm.rpm_cli:main",
                             "reV-plexos=reVX.plexos.rev_reeds_plexos_cli:main",
                             "plexos-plants=reVX.plexos.plexos_plants_cli:main",
-                            "wind-dirs=reVX.wind_dirs.wind_dirs_cli:main"
+                            "wind-dirs=reVX.wind_dirs.wind_dirs_cli:main",
+                            ("wind-setbacks=reVX.wind_setbacks."
+                             "wind_setbacks_cli:main")
                             ],
     },
     include_package_data=True,

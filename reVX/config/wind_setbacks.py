@@ -10,8 +10,9 @@ class WindSetbacksConfig(AnalysisConfig):
     """Config framework for wind setbacks"""
 
     NAME = 'WindSetbacks'
-    REQUIREMENTS = ('excl_h5', 'hub_height', 'rotor_diameter', 'features_dir',
-                    'layer_name')
+    REQUIREMENTS = ('excl_h5', 'hub_height', 'rotor_diameter', 'features_path',
+                    'layer_name', 'feature_type')
+    FEATURE_TYPES = ['structure', 'road', 'rail', 'transmission']
 
     def __init__(self, config):
         """
@@ -22,6 +23,19 @@ class WindSetbacksConfig(AnalysisConfig):
         """
         super().__init__(config)
         self._replace_default = False
+
+    @property
+    def feature_type(self):
+        """
+        Get the setback feature type (required).
+        must be one of ['structure', 'road', 'rail', 'transmission']
+        """
+        feature_type = self['feature_type']
+        msg = ("feature_type must be one of: "
+               "['structure', 'road', 'rail', 'transmission']")
+        assert feature_type in self.FEATURE_TYPES, msg
+
+        return feature_type
 
     @property
     def excl_h5(self):
@@ -39,9 +53,9 @@ class WindSetbacksConfig(AnalysisConfig):
         return self['rotor_diameter']
 
     @property
-    def features_dir(self):
-        """Get features directory path (required)."""
-        return self['features_dir']
+    def features_path(self):
+        """Get path to features file or directory (required)."""
+        return self['features_path']
 
     @property
     def layer_name(self):
