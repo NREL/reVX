@@ -22,6 +22,7 @@ requirements:
     - pyproj
     - pywavelets
     - rasterio
+    - rtree
     - scikit-learn
     - shapely
     - toolz
@@ -36,6 +37,7 @@ requirements:
     - pyproj
     - pywavelets
     - rasterio
+    - rtree
     - scikit-learn
     - shapely
     - toolz
