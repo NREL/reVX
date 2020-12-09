@@ -28,7 +28,8 @@ def test_general_structures(max_workers):
     setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                      regs_fpath=None, multiplier=MULTIPLIER)
     structure_dir = os.path.join(TESTDATADIR, 'setbacks')
-    test = setbacks.compute_setbacks(structure_dir, max_workers=max_workers)
+    test = setbacks.compute_setbacks(structure_dir, 'State',
+                                     max_workers=max_workers)
 
     assert np.allclose(baseline, test[0])
 
@@ -44,7 +45,8 @@ def test_existing_structures(max_workers):
     setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                      regs_fpath=REG_FPATH, multiplier=None)
     structure_dir = os.path.join(TESTDATADIR, 'setbacks')
-    test = setbacks.compute_setbacks(structure_dir, max_workers=max_workers)
+    test = setbacks.compute_setbacks(structure_dir, 'State',
+                                     max_workers=max_workers)
 
     assert np.allclose(baseline, test[0])
 
