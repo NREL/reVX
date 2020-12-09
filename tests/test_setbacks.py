@@ -8,7 +8,7 @@ import pytest
 from reV.handlers import ExclusionLayers
 
 from reVX import TESTDATADIR
-from reVX.utilities.wind_set_backs import (StructureWindSetbacks)
+from reVX.wind_setbacks import (StructureWindSetbacks)
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
 HUB_HEIGHT = 135
