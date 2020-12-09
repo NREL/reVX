@@ -69,25 +69,6 @@ class BaseWindSetbacks(ABC):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_h5)
         return msg
 
-    def __setitem__(self, layer, arr):
-        """
-        Write layer to excl_h5 file
-
-        Parameters
-        ----------
-        layer : str
-            Layer to set
-        arr : ndarray
-            Path to GeoTiff to load data from
-        """
-
-        if layer in self.layers:
-            msg = "{} is already present in {}".format(layer, self._excl_h5)
-            logger.error(msg)
-            raise KeyError(msg)
-
-        self._write_layer(layer, arr, chunks=self._chunks)
-
     @property
     def hub_height(self):
         """
@@ -138,21 +119,6 @@ class BaseWindSetbacks(ABC):
 
         return setback
 
-    @property
-    def layers(self):
-        """
-        Available exclusion layers in .h5 file
-
-        Returns
-        -------
-        layers : list
-            Available layers in .h5 file
-        """
-        with ExclusionLayers(self._excl_h5, hsds=self._hsds) as exc:
-            layers = exc.layers
-
-        return layers
-
     @staticmethod
     def _parse_excl_properties(excl_h5, chunks, hsds=False):
         """
@@ -188,6 +154,12 @@ class BaseWindSetbacks(ABC):
 
         if len(shape) < 3:
             shape = (1, ) + shape
+
+        logger.debug('Exclusions properties:\n'
+                     'shape : {}\n'
+                     'chunks : {}\n'
+                     'profile : {}\n'
+                     .format(shape, chunks, profile))
 
         return shape, chunks, profile
 
@@ -258,6 +230,8 @@ class BaseWindSetbacks(ABC):
             raise RuntimeError(msg)
 
         regs = fips_df.merge(regs, on='FIPS', how='right')
+        logger.debug('Wind regulations were provided for {} counties'
+                     .format(len(regs)))
 
         return regs
 
@@ -287,13 +261,13 @@ class BaseWindSetbacks(ABC):
         """
         setback_type = cnty_regs['Value Type']
         setback = cnty_regs['Value']
-        if setback_type == ' Hub-height Multiplier':
+        if setback_type == 'Max-tip Height Multiplier':
             setback *= tip_height
         elif setback_type == 'Rotor-Diameter Multiplier':
-            setback_type *= rotor_diameter
+            setback *= rotor_diameter
         elif setback_type != 'Meters':
             msg = ('Cannot create setback for {}, expecting '
-                   '"Hub-height Multiplier", '
+                   '"Max-tip Height Multiplier", '
                    '"Rotor-Diameter Multiplier", or '
                    '"Meters", but got {}'
                    .format(cnty_regs['County'], setback_type))
@@ -341,9 +315,9 @@ class BaseWindSetbacks(ABC):
         """
 
     @classmethod
-    def _general_state_setbacks(cls, features_fpath, crs, setback):
+    def _compute_general_setbacks(cls, features_fpath, crs, setback):
         """
-        Abstract method to compute general state setbacks
+        Abstract method to compute general setbacks
 
         Parameters
         ----------
@@ -357,29 +331,29 @@ class BaseWindSetbacks(ABC):
         Returns
         -------
         setbacks : list
-            List of setback geometries for given state
+            List of setback geometries for given features
         """
-        state_features = cls._parse_features(features_fpath, crs)
+        features = cls._parse_features(features_fpath, crs)
 
-        state_features['geometry'] = state_features.buffer(setback)
-        setbacks = [(geom, 1) for geom in state_features['geometry']]
+        features['geometry'] = features.buffer(setback)
+        setbacks = [(geom, 1) for geom in features['geometry']]
 
         return setbacks
 
     @classmethod
-    def _existing_state_setbacks(cls, features_fpath, crs, state_regs,
-                                 tip_height, rotor_diameter):
+    def _compute_existing_setbacks(cls, features_fpath, crs, wind_regs,
+                                   tip_height, rotor_diameter):
         """
-        Compute existing state features setbacks
+        Compute existing features setbacks
 
         Parameters
         ----------
         features_fpath : str
-            Path to file containg feature to setback from for in a given state
+            Path to file containg feature to setback from
         crs : str
             Coordinate reference system to convert structures geometries into
-        state_regs : pandas.DataFrame
-            Wind regulations for same state as geojson
+        wind_regs : pandas.DataFrame
+            Wind regulations that define setbacks by county
         tip_height : float
             Turbine blade tip height in meters
         rotor_diameter : float
@@ -388,16 +362,20 @@ class BaseWindSetbacks(ABC):
         Returns
         -------
         setbacks : list
-            List of setback geometries for given state
+            List of setback geometries
         """
-        state_features = cls._parse_features(features_fpath, crs)
+        features = cls._parse_features(features_fpath, crs)
 
         setbacks = []
-        for _, cnty in state_regs.iterrows():
-            setback = cls._get_setback(cnty, tip_height, rotor_diameter)
+        for i in range(len(wind_regs)):
+            cnty = wind_regs.iloc[[i]]
+            setback = cls._get_setback(cnty.iloc[0], tip_height,
+                                       rotor_diameter)
             if setback is not None:
-                tmp = gpd.sjoin(state_features, cnty, how='inner',
-                                op='intersects')
+                logger.debug('- Computing setbacks for county FIPS {}'
+                             .format(cnty.iloc[0]['FIPS']))
+                tmp = gpd.sjoin(features, cnty,
+                                how='inner', op='intersects')
                 tmp['geometry'] = tmp.buffer(setback)
 
                 setbacks.extend((geom, 1) for geom in tmp['geometry'])
@@ -439,12 +417,16 @@ class BaseWindSetbacks(ABC):
 
             multiplier = None
             regs = self._parse_county_regs(regs_fpath, self._excl_h5)
-
+            logger.debug('Computing setbacks using regulations provided in: {}'
+                         .format(regs_fpath))
         elif multiplier:
+
             regs = None
             if isinstance(multiplier, str):
                 multiplier = self.MULTIPLIERS[multiplier]
 
+            logger.debug('Computing setbacks using generic Max-tip Height '
+                         'Multiplier of {}'.format(multiplier))
         else:
             msg = ('Computing setbacks requires either a wind regulations '
                    '.csv file or a generic multiplier!')
@@ -468,13 +450,17 @@ class BaseWindSetbacks(ABC):
         arr : ndarray
             Exclusions layer arr with proper shape to write to self._excl_h5
         """
-        arr = features.rasterize(shapes=shapes, out_shape=self._shape, fill=0,
+        logger.debug('Generating setbacks exclusion array of shape {}'
+                     .format(self._shape))
+        arr = features.rasterize(shapes=shapes,
+                                 out_shape=self._shape[1:],
+                                 fill=0,
                                  transform=self._profile['transform'],
                                  dtype='uint8')
 
         return np.expand_dims(arr, axis=0)
 
-    def _compute_general_setbacks(self, features, crs, max_workers=None):
+    def _general_setbacks(self, features, max_workers=None):
         """
         Compute general setbacks for all states either in serial or parallel
 
@@ -482,8 +468,6 @@ class BaseWindSetbacks(ABC):
         ----------
         features : list
             list of feature files to compute setbacks from
-        crs : str
-            Coordinate reference system to convert structures geometries into
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
@@ -498,6 +482,8 @@ class BaseWindSetbacks(ABC):
         if max_workers is None:
             max_workers = os.cpu_count()
 
+        crs = self._profile['crs']
+
         setbacks = []
         if max_workers > 1:
             logger.info('Computing general setbacks in parallel using {} '
@@ -507,8 +493,9 @@ class BaseWindSetbacks(ABC):
                                   loggers=loggers) as exe:
                 futures = []
                 for state_features in features:
-                    future = exe.submit(self._general_state_setbacks,
-                                        state_features, crs)
+                    future = exe.submit(self._compute_general_setbacks,
+                                        state_features, crs,
+                                        self.generic_setback)
                     futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
@@ -518,8 +505,8 @@ class BaseWindSetbacks(ABC):
         else:
             logger.info('Computing general setbacks in serial')
             for i, state_features in enumerate(features):
-                setbacks.extend(self._general_state_setbacks(
-                    state_features, crs))
+                setbacks.extend(self._compute_general_setbacks(
+                    state_features, crs, self.generic_setback))
                 logger.debug('Computed setbacks for {} of {} states'
                              .format((i + 1), len(features)))
 
@@ -527,8 +514,8 @@ class BaseWindSetbacks(ABC):
 
         return setbacks
 
-    def _compute_existing_setbacks(self, features_state_map, groupby='State',
-                                   max_workers=None):
+    def _existing_setbacks(self, features_state_map, groupby='State',
+                           max_workers=None):
         """
         Compute existing setbacks for all states either in serial or parallel
 
@@ -565,32 +552,85 @@ class BaseWindSetbacks(ABC):
                                   loggers=loggers) as exe:
                 futures = []
                 for state, state_regs in regs:
-                    features_fpath = features_state_map[state]
-                    future = exe.submit(self._existing_state_setbacks,
-                                        features_fpath, crs, state_regs,
-                                        self.tip_height, self.rotor_diameter)
-                    futures.append(future)
+                    if state in features_state_map:
+                        features_fpath = features_state_map[state]
+                        future = exe.submit(self._compute_existing_setbacks,
+                                            features_fpath, crs, state_regs,
+                                            self.tip_height,
+                                            self.rotor_diameter)
+                        futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
                     setbacks.extend(future.result())
                     logger.debug('Computed setbacks for {} of {} states'
-                                 .format((i + 1), len(regs)))
+                                 .format((i + 1), len(futures)))
         else:
             logger.info('Computing existing setbacks in serial')
             for i, (state, state_regs) in enumerate(regs):
-                features_fpath = features_state_map[state]
-                setbacks.extend(self._existing_state_setbacks(
-                    features_fpath, crs, state_regs,
-                    self.tip_height, self.rotor_diameter))
-                logger.debug('Computed setbacks for {} of {} states'
-                             .format((i + 1), len(regs)))
+                if state in features_state_map:
+                    features_fpath = features_state_map[state]
+                    setbacks.extend(self._compute_existing_setbacks(
+                        features_fpath, crs, state_regs,
+                        self.tip_height, self.rotor_diameter))
+                    logger.debug('Computed setbacks for {} of {} states'
+                                 .format((i + 1), len(regs)))
 
         setbacks = self._rasterize_setbacks(setbacks)
 
         return setbacks
 
+    def _write_layer(self, layer, arr, description=None, replace=False):
+        """
+        Write exclusion layer to disc
+
+        Parameters
+        ----------
+        layer : str
+            Exclusion layer name (dataset name)
+        arr : ndarray
+            Exclusion layers array
+        description : str, optional
+            Description of exclusion layer (set as an attribute),
+            by default None
+        replace : bool, optional
+            Flag to replace existing layer data with arr if layer already
+            exists in the exlcusion .h5 file, by default False
+        """
+        if self._hsds:
+            msg = ('Cannot write new layers to an exclusion file hosted in '
+                   'the cloud behind HSDS!')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        with h5py.File(self._excl_h5, mode='a') as f:
+            if layer in f:
+                msg = "{} is already present in {}".format(layer,
+                                                           self._excl_h5)
+                if replace:
+                    msg += ', layer data will be replaced with new setbacks'
+                    logger.warning(msg)
+                    warn(msg)
+
+                    f[layer][...] = arr
+                else:
+                    msg += ' to replace layer data, set replace=True'
+                    logger.error(msg)
+                    raise RuntimeError(msg)
+            else:
+                ds = f.create_dataset(layer,
+                                      shape=arr.shape,
+                                      dtype=arr.dtype,
+                                      chunks=self._chunks,
+                                      data=arr)
+                logger.debug('\t- {} created and loaded'.format(layer))
+                ds.attrs['profile'] = json.dumps(self._profile)
+                if description is not None:
+                    ds.attrs['description'] = description
+                    logger.debug('\t- Description for {} added:\n{}'
+                                 .format(layer, description))
+
     def compute_setbacks(self, features_dir, groupby='State', max_workers=None,
-                         layer=None, description=None):
+                         layer=None, description=None, replace=False):
         """
         Compute setbacks for all states either in serial or parallel.
         Existing setbacks are computed if a wind regulations file was supplied
@@ -615,6 +655,9 @@ class BaseWindSetbacks(ABC):
         description : str, optional
             Description of exclusion layer (set as an attribute),
             by default None
+        replace : bool, optional
+            Flag to replace existing layer data with arr if layer already
+            exists in the exlcusion .h5 file, by default False
 
         Returns
         -------
@@ -624,52 +667,20 @@ class BaseWindSetbacks(ABC):
         """
         features_state_map = self._map_features_dir(features_dir)
         if self._regs is not None:
-            setbacks = self._compute_existing_setbacks(features_state_map,
-                                                       groupby=groupby,
-                                                       max_workers=max_workers)
+            setbacks = self._existing_setbacks(features_state_map,
+                                               groupby=groupby,
+                                               max_workers=max_workers)
         else:
-            crs = self._profile['crs']
-            setbacks = self._compute_general_setbacks(
-                features_state_map.values(), crs, self.generic_setback,
-                max_workers=max_workers)
+            setbacks = self._general_setbacks(features_state_map.values(),
+                                              max_workers=max_workers)
 
         if layer is not None:
-            self._write_layer(layer, setbacks, description=description)
+            logger.debug('Writing setbacks to {} as layer {}'
+                         .format(self._excl_h5, layer))
+            self._write_layer(layer, setbacks, description=description,
+                              replace=replace)
 
         return setbacks
-
-    def _write_layer(self, layer, arr, description=None):
-        """
-        Write exclusion layer to disc
-
-        Parameters
-        ----------
-        layer : str
-            Exclusion layer name (dataset name)
-        arr : ndarray
-            Exclusion layers array
-        description : str, optional
-            Description of exclusion layer (set as an attribute),
-            by default None
-        """
-        if self._hsds:
-            msg = ('Cannot write new layers to an exclusion file hosted in '
-                   'the cloud behind HSDS!')
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        with h5py.File(self._excl_h5, mode='a') as f:
-            ds = f.create_dataset(layer,
-                                  shape=arr.shape,
-                                  dtype=arr.dtype,
-                                  chunks=(1, ) + self._chunks,
-                                  data=arr)
-            logger.debug('\t- {} created and loaded'.format(layer))
-            ds.attrs['profile'] = json.dumps(self._profile)
-            if description is not None:
-                ds.attrs['description'] = description
-                logger.debug('\t- Description for {} added:\n{}'
-                             .format(layer, description))
 
 
 class StructureWindSetbacks(BaseWindSetbacks):
@@ -691,7 +702,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         regs : pandas.DataFrame
             Wind regulations table
         """
-        regs = super()._parse_regs(regs_fpath)
+        regs = BaseWindSetbacks._parse_regs(regs_fpath)
 
         mask = ((regs['Feature Type'] == 'Structures')
                 & ~(regs['Comment'] == 'Occupied Community Buildings'))
@@ -771,7 +782,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         return structures.to_crs(crs)
 
     def compute_setbacks(self, structure_fpath, max_workers=None,
-                         layer=None, description=None):
+                         layer=None, description=None, replace=False):
         """
         Compute structure setbacks for all states either in serial or parallel.
         Existing setbacks are computed if a wind regulations file was supplied
@@ -793,6 +804,9 @@ class StructureWindSetbacks(BaseWindSetbacks):
         description : str, optional
             Description of exclusion layer (set as an attribute),
             by default None
+        replace : bool, optional
+            Flag to replace existing layer data with arr if layer already
+            exists in the exlcusion .h5 file, by default False
 
         Returns
         -------
@@ -803,14 +817,16 @@ class StructureWindSetbacks(BaseWindSetbacks):
         setbacks = super().compute_setbacks(structure_fpath, groupby='State',
                                             max_workers=max_workers,
                                             layer=layer,
-                                            description=description)
+                                            description=description,
+                                            replace=replace)
 
         return setbacks
 
     @classmethod
     def run(cls, excl_h5, structures_dir, layer_name, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
-            chunks=(128, 128), max_workers=None, description=None):
+            chunks=(128, 128), max_workers=None, description=None,
+            replace=False):
         """
         Compute structural setbacks and write them as a new layer to the
         exclusions .h5 file. If a wind regulations file is given compute
@@ -852,13 +868,17 @@ class StructureWindSetbacks(BaseWindSetbacks):
         description : str, optional
             Description of exclusion layer (set as an attribute),
             by default None
+        replace : bool, optional
+            Flag to replace existing layer data with arr if layer already
+            exists in the exlcusion .h5 file, by default False
         """
         setbacks = cls(excl_h5, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
-                       hsds=False, chunk=chunks)
+                       hsds=False, chunks=chunks)
         setbacks.compute_setbacks(structures_dir, layer=layer_name,
                                   max_workers=max_workers,
-                                  description=description)
+                                  description=description,
+                                  replace=replace)
 
 
 class RoadWindSetbacks(BaseWindSetbacks):
@@ -880,7 +900,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         regs : pandas.DataFrame
             Wind regulations table
         """
-        regs = super()._parse_regs(regs_fpath)
+        regs = BaseWindSetbacks._parse_regs(regs_fpath)
 
         mask = regs['Feature Type'].isin(['Roads', 'Highways', 'Highways 111'])
         regs = regs.loc[mask]
@@ -936,19 +956,19 @@ class RoadWindSetbacks(BaseWindSetbacks):
         return roads.to_crs(crs)
 
     @classmethod
-    def _existing_state_setbacks(cls, roads_fpath, crs, state_regs,
-                                 tip_height, rotor_diameter):
+    def _compute_existing_setbacks(cls, roads_fpath, crs, wind_regs,
+                                   tip_height, rotor_diameter):
         """
-        Compute existing state road setbacks
+        Compute existing road setbacks
 
         Parameters
         ----------
         roads_fpath : str
-            Path to here streets gdb file for given state
+            Path to here streets gdb file with roads to setback from
         crs : str
             Coordinate reference system to convert structures geometries into
-        state_regs : pandas.DataFrame
-            Wind regulations for same state as geojson
+        wind_regs : pandas.DataFrame
+            Wind regulations by county
         tip_height : float
             Turbine blade tip height in meters
         rotor_diameter : float
@@ -957,21 +977,25 @@ class RoadWindSetbacks(BaseWindSetbacks):
         Returns
         -------
         setbacks : list
-            List of setback geometries for given state
+            List of setback geometries for given eatures
         """
-        state_features = cls._parse_features(roads_fpath, crs)
-        state_features = state_features[['StreetName', 'geometry']]
-        si = state_features.sindex
+        features = cls._parse_features(roads_fpath, crs)
+        features = features[['StreetName', 'geometry']]
+        si = features.sindex
 
         setbacks = []
-        for _, cnty in state_regs.iterrows():
-            setback = cls._get_setback(cnty, tip_height, rotor_diameter)
+        for i in range(len(wind_regs)):
+            cnty = wind_regs.iloc[i]
+            setback = cls._get_setback(cnty, tip_height,
+                                       rotor_diameter)
             if setback is not None:
+                logger.debug('- Computing setbacks for county FIPS {}'
+                             .format(cnty['FIPS']))
                 # spatial index bounding box and intersection
                 bb_index = \
-                    list(si.intersection(cnty.geometry.bounds.values[0]))
-                bb_pos = state_features.iloc[bb_index]
-                tmp = bb_pos.intersection(cnty.geometry.values[0])
+                    list(si.intersection(cnty['geometry'].bounds))
+                bb_pos = features.iloc[bb_index]
+                tmp = bb_pos.intersection(cnty['geometry'])
                 tmp = gpd.GeoDataFrame(geometry=tmp)
                 tmp = tmp[~tmp.is_empty]
                 # Buffer setback
@@ -982,7 +1006,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         return setbacks
 
     def compute_setbacks(self, roads_dir, max_workers=None,
-                         layer=None, description=None):
+                         layer=None, description=None, replace=False):
         """
         Compute road setbacks for all states either in serial or parallel.
         Existing setbacks are computed if a wind regulations file was supplied
@@ -1004,6 +1028,9 @@ class RoadWindSetbacks(BaseWindSetbacks):
         description : str, optional
             Description of exclusion layer (set as an attribute),
             by default None
+        replace : bool, optional
+            Flag to replace existing layer data with arr if layer already
+            exists in the exlcusion .h5 file, by default False
 
         Returns
         -------
@@ -1014,14 +1041,16 @@ class RoadWindSetbacks(BaseWindSetbacks):
         setbacks = super().compute_setbacks(roads_dir, groupby='Abbr',
                                             max_workers=max_workers,
                                             layer=layer,
-                                            description=description)
+                                            description=description,
+                                            replace=replace)
 
         return setbacks
 
     @classmethod
     def run(cls, excl_h5, roads_dir, layer_name, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
-            chunks=(128, 128), max_workers=None, description=None):
+            chunks=(128, 128), max_workers=None, description=None,
+            replace=False):
         """
         Compute road setbacks and write them as a new layer to the
         exclusions .h5 file. If a wind regulations file is given compute
@@ -1063,13 +1092,17 @@ class RoadWindSetbacks(BaseWindSetbacks):
         description : str, optional
             Description of exclusion layer (set as an attribute),
             by default None
+        replace : bool, optional
+            Flag to replace existing layer data with arr if layer already
+            exists in the exlcusion .h5 file, by default False
         """
         setbacks = cls(excl_h5, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
-                       hsds=False, chunk=chunks)
+                       hsds=False, chunks=chunks)
         setbacks.compute_setbacks(roads_dir, layer=layer_name,
                                   max_workers=max_workers,
-                                  description=description)
+                                  description=description,
+                                  replace=replace)
 
 
 class TransmissionWindSetbacks(BaseWindSetbacks):
@@ -1091,7 +1124,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         regs : pandas.DataFrame
             Wind regulations table
         """
-        regs = super()._parse_regs(regs_fpath)
+        regs = BaseWindSetbacks._parse_regs(regs_fpath)
 
         mask = regs['Feature Type'] == 'Transmission'
         regs = regs.loc[mask]
@@ -1124,8 +1157,8 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         return trans.to_crs(crs)
 
     @classmethod
-    def _existing_cnty_setbacks(cls, features_fpath, crs, cnty,
-                                tip_height, rotor_diameter):
+    def _compute_existing_setbacks(cls, features_fpath, crs, cnty,
+                                   tip_height, rotor_diameter):
         """
         Compute existing county setbacks
 
@@ -1135,7 +1168,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             Path to shape file with features to compute setbacks from
         crs : str
             Coordinate reference system to convert structures geometries into
-        cnty : pandas.Series
+        cnty : geopandas.GeoDataFrame
             Wind regulations for a single county
         tip_height : float
             Turbine blade tip height in meters
@@ -1150,7 +1183,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         features = cls._parse_features(features_fpath, crs)
 
         setbacks = []
-        setback = cls._get_setback(cnty, tip_height, rotor_diameter)
+        setback = cls._get_setback(cnty.iloc[0], tip_height, rotor_diameter)
         if setback is not None:
             # clip the transmission lines to county geometry
             # pylint: disable=assignment-from-no-return
@@ -1165,7 +1198,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         return setbacks
 
     def compute_setbacks(self, features_fpath, max_workers=None,
-                         layer=None, description=None):
+                         layer=None, description=None, replace=False):
         """
         Compute setbacks for all states either in serial or parallel.
         Existing setbacks are computed if a wind regulations file was supplied
@@ -1185,6 +1218,9 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         description : str, optional
             Description of exclusion layer (set as an attribute),
             by default None
+        replace : bool, optional
+            Flag to replace existing layer data with arr if layer already
+            exists in the exlcusion .h5 file, by default False
 
         Returns
         -------
@@ -1205,9 +1241,10 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
                 with SpawnProcessPool(max_workers=max_workers,
                                       loggers=loggers) as exe:
                     futures = []
-                    for _, cnty_regs in self._regs.iterrows():
-                        future = exe.submit(self._existing_cnty_setbacks,
-                                            features_fpath, crs, cnty_regs,
+                    for i in range(len(self._regs)):
+                        cnty = self._regs.iloc[[i]]
+                        future = exe.submit(self._compute_existing_setbacks,
+                                            features_fpath, crs, cnty,
                                             self.tip_height,
                                             self.rotor_diameter)
                         futures.append(future)
@@ -1218,28 +1255,33 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
                                      .format((i + 1), len(self._regs)))
             else:
                 logger.info('Computing existing setbacks in serial')
-                for i, (_, cnty_regs) in enumerate(self._regs.iterrows()):
-                    setbacks.extend(self._existing_cnty_setbacks(
-                        features_fpath, crs, cnty_regs,
-                        self.tip_height, self.rotor_diameter))
+                for i in range(len(self._regs)):
+                    cnty = self._regs.iloc[[i]]
+                    setbacks.extend(self._compute_existing_setbacks(
+                        features_fpath, crs, cnty, self.tip_height,
+                        self.rotor_diameter))
                     logger.debug('Computed setbacks for {} of {} states'
                                  .format((i + 1), len(self._regs)))
         else:
             logger.info('Computing general setbacks')
-            setbacks.extend(self._general_state_setbacks(features_fpath, crs,
-                                                         self.generic_setback))
+            setbacks.extend(self._compute_general_setbacks(
+                features_fpath, crs, self.generic_setback))
 
         setbacks = self._rasterize_setbacks(setbacks)
 
         if layer is not None:
-            self._write_layer(layer, setbacks, description=description)
+            logger.debug('Writing setbacks to {} as layer {}'
+                         .format(self._excl_h5, layer))
+            self._write_layer(layer, setbacks, description=description,
+                              replace=replace)
 
         return setbacks
 
     @classmethod
     def run(cls, excl_h5, features_fpath, layer_name, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
-            chunks=(128, 128), max_workers=None, description=None):
+            chunks=(128, 128), max_workers=None, description=None,
+            replace=False):
         """
         Compute setbacks and write them as a new layer to the
         exclusions .h5 file. If a wind regulations file is given compute
@@ -1279,13 +1321,17 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         description : str, optional
             Description of exclusion layer (set as an attribute),
             by default None
+        replace : bool, optional
+            Flag to replace existing layer data with arr if layer already
+            exists in the exlcusion .h5 file, by default False
         """
         setbacks = cls(excl_h5, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
-                       hsds=False, chunk=chunks)
+                       hsds=False, chunks=chunks)
         setbacks.compute_setbacks(features_fpath, layer=layer_name,
                                   max_workers=max_workers,
-                                  description=description)
+                                  description=description,
+                                  replace=replace)
 
 
 class RailWindSetbacks(TransmissionWindSetbacks):
@@ -1307,7 +1353,7 @@ class RailWindSetbacks(TransmissionWindSetbacks):
         regs : pandas.DataFrame
             Wind regulations table
         """
-        regs = super()._parse_regs(regs_fpath)
+        regs = BaseWindSetbacks._parse_regs(regs_fpath)
 
         mask = regs['Feature Type'] == 'Railroads'
         regs = regs.loc[mask]
