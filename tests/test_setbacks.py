@@ -35,9 +35,9 @@ def test_general_structures(max_workers):
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
-def test_existing_structures(max_workers):
+def test_local_structures(max_workers):
     """
-    Test existing structures setbacks
+    Test local structures setbacks
     """
     with ExclusionLayers(EXCL_H5) as exc:
         baseline = exc['existing_structures']
