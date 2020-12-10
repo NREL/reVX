@@ -15,7 +15,7 @@ from rex.utilities.utilities import check_tz
 JOB_TAG = 'pytest'
 CF_FPATH = os.path.join(TESTDATADIR, 'reV_gen',
                         'gen_ri_pv_2012_x000.h5')
-EXCL_FPATH = os.path.join(TESTDATADIR, 'reV_excl',
+EXCL_FPATH = os.path.join(TESTDATADIR, 'ri_exclusions',
                           'ri_exclusions.h5')
 TECHMAP_DSET = 'techmap_nsrdb_ri_truth'
 EXCL_DICT = {'ri_srtm_slope': {'inclusion_range': (None, 5),
