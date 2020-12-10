@@ -19,6 +19,7 @@ Subpackages
    reVX.rpm
    reVX.utilities
    reVX.wind_dirs
+   reVX.wind_setbacks
 
 Submodules
 ----------
