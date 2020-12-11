@@ -43,7 +43,7 @@ requirements:
     - toolz
     - xarray
   run-constrained:
-    - earthpy
+    - h5pyd
 
 about:
   home: "https://github.com/NREL/reVX"

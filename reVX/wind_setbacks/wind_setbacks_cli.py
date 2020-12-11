@@ -18,6 +18,7 @@ from reVX.wind_setbacks.wind_setbacks import (StructureWindSetbacks,
                                               RoadWindSetbacks,
                                               RailWindSetbacks,
                                               TransmissionWindSetbacks)
+from reVX import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,14 @@ def main(ctx, name, log_dir, verbose):
 
     ctx.obj["LOGGER"] = init_logger('reVX', log_file=log_file,
                                     log_level=log_level)
+
+
+@main.command()
+def version():
+    """
+    print version
+    """
+    click.echo(__version__)
 
 
 @main.command()

@@ -15,6 +15,7 @@ from reVX.config.rpm import (RPMConfig, ClusterConfigGroup,
 from reVX.rpm.rpm_manager import RPMClusterManager as rpm_cm
 from reVX.rpm.rpm_output import RPMOutput as rpm_o
 from reVX.utilities.exceptions import RPMRuntimeError
+from reVX import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,14 @@ def main(ctx, name, verbose):
     ctx.ensure_object(dict)
     ctx.obj['VERBOSE'] = verbose
     ctx.obj['NAME'] = name
+
+
+@main.command()
+def version():
+    """
+    print version
+    """
+    click.echo(__version__)
 
 
 @main.command()
