@@ -8,7 +8,8 @@ import pytest
 from reV.handlers import ExclusionLayers
 
 from reVX import TESTDATADIR
-from reVX.wind_setbacks import (StructureWindSetbacks)
+from reVX.wind_setbacks import (StructureWindSetbacks,
+                                RailWindSetbacks)
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
 HUB_HEIGHT = 135
@@ -47,6 +48,40 @@ def test_local_structures(max_workers):
     structure_dir = os.path.join(TESTDATADIR, 'setbacks')
     test = setbacks.compute_setbacks(structure_dir, 'State',
                                      max_workers=max_workers)
+
+    assert np.allclose(baseline, test[0])
+
+
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_general_railroads(max_workers):
+    """
+    Test general rail setbacks
+    """
+    with ExclusionLayers(EXCL_H5) as exc:
+        baseline = exc['general_rail']
+
+    setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
+                                regs_fpath=None, multiplier=MULTIPLIER)
+    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                             'RI_Railroads.shp')
+    test = setbacks.compute_setbacks(rail_path, max_workers=max_workers)
+
+    assert np.allclose(baseline, test[0])
+
+
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_local_railroads(max_workers):
+    """
+    Test local rail setbacks
+    """
+    with ExclusionLayers(EXCL_H5) as exc:
+        baseline = exc['existing_rail']
+
+    setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
+                                regs_fpath=REG_FPATH, multiplier=None)
+    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                             'RI_Railroads.shp')
+    test = setbacks.compute_setbacks(rail_path, max_workers=max_workers)
 
     assert np.allclose(baseline, test[0])
 

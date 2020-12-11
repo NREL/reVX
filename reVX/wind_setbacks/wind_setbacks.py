@@ -2,9 +2,8 @@
 """
 Handler to convert exclusion to/from .h5 and .geotiff
 """
-from abc import ABC, abstractstaticmethod, abstractclassmethod
+from abc import ABC, abstractstaticmethod
 from concurrent.futures import as_completed
-from earthpy import clip as cl
 import fiona
 import geopandas as gpd
 import h5py
@@ -299,7 +298,7 @@ class BaseWindSetbacks(ABC):
             system
         """
 
-    @abstractclassmethod
+    @classmethod
     def _map_features_dir(cls, features_dir):
         """
         Map features files to state based on file name
@@ -1077,9 +1076,6 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             system
         """
         trans = gpd.read_file(transmission_fpath)
-        mask = ((trans['Proposed'] != 'Proposed')
-                & (trans['Undergroun'] != 'T'))
-        trans = trans.loc[mask]
 
         return trans.to_crs(crs)
 
@@ -1114,7 +1110,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         if setback is not None:
             # clip the transmission lines to county geometry
             # pylint: disable=assignment-from-no-return
-            tmp = cl.clip_shp(features, cnty)
+            tmp = gpd.clip(features, cnty)
             tmp = tmp[~tmp.is_empty]
 
             # Buffer setback
@@ -1299,8 +1295,8 @@ class RailWindSetbacks(TransmissionWindSetbacks):
 
         Parameters
         ----------
-        transmission_fpath : str
-            Path to transmission shape file
+        rail_fpath : str
+            Path to rail shape file
         crs : str
             Coordinate reference system to convert structures geometries into
 
@@ -1311,8 +1307,5 @@ class RailWindSetbacks(TransmissionWindSetbacks):
             system
         """
         rail = gpd.read_file(rail_fpath)
-        # remove out of service and abandoned
-        mask = ~rail['STATUS'].isin(['X', 'A', 'R'])
-        rail = rail.loc[mask]
 
         return rail.to_crs(crs)

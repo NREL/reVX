@@ -14,6 +14,7 @@ from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.forecasts import Forecasts
 from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region import RegionClassifier
+from reVX import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,14 @@ def main(ctx, verbose):
         log_level = 'INFO'
 
     init_logger('reVX', log_level=log_level)
+
+
+@main.command()
+def version():
+    """
+    print version
+    """
+    click.echo(__version__)
 
 
 @main.command()

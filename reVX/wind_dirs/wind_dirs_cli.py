@@ -13,6 +13,7 @@ from rex.utilities.utilities import get_class_properties
 
 from reVX.config.wind_dirs import WindDirsConfig
 from reVX.wind_dirs.wind_dirs import WindDirections
+from reVX import __version__
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,14 @@ def main(ctx, name, verbose):
     ctx.ensure_object(dict)
     ctx.obj['NAME'] = name
     ctx.obj['VERBOSE'] = verbose
+
+
+@main.command()
+def version():
+    """
+    print version
+    """
+    click.echo(__version__)
 
 
 @main.command()
