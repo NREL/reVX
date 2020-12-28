@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.option('--name', '-n', default='WindDirs', type=STR,
+              show_default=True,
               help='Job name. Default is "WindDirs".')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
@@ -34,19 +35,19 @@ def main(ctx, name, verbose):
 
 
 @main.command()
-def version():
-    """
-    print version
-    """
-    click.echo(__version__)
-
-
-@main.command()
 def valid_config_keys():
     """
     Echo the valid Wind Dirs config keys
     """
     click.echo(', '.join(get_class_properties(WindDirsConfig)))
+
+
+@main.command()
+def version():
+    """
+    print version
+    """
+    click.echo(__version__)
 
 
 def run_local(ctx, config):
@@ -64,15 +65,15 @@ def run_local(ctx, config):
     ctx.invoke(local,
                powerrose_h5_fpath=config.powerrose_h5_fpath,
                excl_fpath=config.excl_fpath,
-               out_dir=config.out_dir,
+               out_dir=config.dirout,
                agg_dset=config.agg_dset,
                tm_dset=config.tm_dset,
                resolution=config.resolution,
                excl_area=config.excl_area,
                max_workers=config.max_workers,
                chunk_point_len=config.chunk_point_len,
-               log_dir=config.log_dir,
-               verbose=config.verbose)
+               log_dir=config.logdir,
+               verbose=config.log_level)
 
 
 @main.command()
@@ -112,22 +113,29 @@ def from_config(ctx, config, verbose):
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
 @click.option('--agg_dset', '-ad', default='powerrose_100m', type=STR,
+              show_default=True,
               help="Powerrose dataset to aggreate")
 @click.option('--tm_dset', '-td', default='techmap_wtk', type=STR,
+              show_default=True,
               help=("Dataset name in the techmap file containing the "
                     "exclusions-to-resource mapping data,"))
 @click.option('--resolution', '-res', default=128, type=INT,
+              show_default=True,
               help=("SC resolution, must be input in combination with gid. "
                     "Prefered option is to use the row / col slices to define "
                     "the SC point instead"))
 @click.option('--excl_area', '-ea', default=0.0081, type=float,
+              show_default=True,
               help="Area of an exclusion cell (square km)")
 @click.option('--max_workers', '-mw', default=None, type=INT,
+              show_default=True,
               help=("Number of cores to run summary on. None is all "
                     "available cpus"))
 @click.option('--chunk_point_len', '-cpl', default=1000, type=INT,
+              show_default=True,
               help="Number of SC points to process on each parallel worker")
 @click.option('--log_dir', '-log', default=None, type=STR,
+              show_default=True,
               help='Directory to dump log files. Default is out_dir.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')

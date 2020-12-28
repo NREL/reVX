@@ -2,20 +2,33 @@
 """
 pytests for exclusions converter
 """
+from click.testing import CliRunner
+import json
 import os
 import numpy as np
 import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal
+import tempfile
+import traceback
+
 from reV.handlers.exclusions import ExclusionLayers
 
+from reVX.cli import main
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX import TESTDATADIR
 
 DIR = os.path.join(TESTDATADIR, 'ri_exclusions')
 EXCL_H5 = os.path.join(DIR, 'ri_exclusions.h5')
-PURGE_OUT = True
+
+
+@pytest.fixture(scope="module")
+def runner():
+    """
+    cli runner
+    """
+    return CliRunner()
 
 
 def extract_geotiff(geotiff):
@@ -77,19 +90,17 @@ def test_layer_to_geotiff(layer):
     layer : str
         Layer to extract
     """
-    geotiff = os.path.join(DIR, 'test_{}.tif'.format(layer))
-    converter = ExclusionsConverter(EXCL_H5)
-    converter.layer_to_geotiff(layer, geotiff)
+    with tempfile.TemporaryDirectory() as td:
+        geotiff = os.path.join(td, 'test_{}.tif'.format(layer))
+        converter = ExclusionsConverter(EXCL_H5)
+        converter.layer_to_geotiff(layer, geotiff)
 
-    truth = os.path.join(DIR, '{}.tif'.format(layer))
-    true_values, true_profile = extract_geotiff(truth)
-    test_values, test_profile = extract_geotiff(geotiff)
+        truth = os.path.join(DIR, '{}.tif'.format(layer))
+        true_values, true_profile = extract_geotiff(truth)
+        test_values, test_profile = extract_geotiff(geotiff)
 
-    assert np.allclose(true_values, test_values)
-    assert true_profile == test_profile
-
-    if PURGE_OUT:
-        os.remove(geotiff)
+        assert np.allclose(true_values, test_values)
+        assert true_profile == test_profile
 
 
 @pytest.mark.parametrize('tif',
@@ -104,42 +115,101 @@ def test_geotiff_to_h5(tif):
     tif : str
         Tif to load into .h5
     """
-    excl_h5 = os.path.join(DIR, tif.replace('.tif', '.h5'))
-    if os.path.isfile(excl_h5):
-        os.remove(excl_h5)
+    with tempfile.TemporaryDirectory() as td:
+        excl_h5 = os.path.join(td, tif.replace('.tif', '.h5'))
 
-    converter = ExclusionsConverter(excl_h5)
-    layer = tif.split('.')[0]
-    converter.geotiff_to_layer(layer, os.path.join(DIR, tif))
+        converter = ExclusionsConverter(excl_h5)
+        layer = tif.split('.')[0]
+        converter.geotiff_to_layer(layer, os.path.join(DIR, tif))
 
-    true_values, true_profile = extract_layer(EXCL_H5, layer)
-    test_values, test_profile = extract_layer(excl_h5, layer)
+        true_values, true_profile = extract_layer(EXCL_H5, layer)
+        test_values, test_profile = extract_layer(excl_h5, layer)
 
-    assert np.allclose(true_values, test_values)
+        assert np.allclose(true_values, test_values)
 
-    for profile_k, true_v in true_profile.items():
-        test_v = test_profile[profile_k]
-        if profile_k == 'crs':
-            true_crs = {k: v for k, v in
-                        [i.split("=") for i in true_v.split(' ')]}
-            true_crs = pd.DataFrame(true_crs, index=[0, ])
-            true_crs = true_crs.apply(pd.to_numeric, errors='ignore')
+        for profile_k, true_v in true_profile.items():
+            test_v = test_profile[profile_k]
+            if profile_k == 'crs':
+                true_crs = dict([i.split("=") for i in true_v.split(' ')])
+                true_crs = pd.DataFrame(true_crs, index=[0, ])
+                true_crs = true_crs.apply(pd.to_numeric, errors='ignore')
 
-            test_crs = {k: v for k, v in
-                        [i.split("=") for i in test_v.split(' ')]}
-            test_crs = pd.DataFrame(test_crs, index=[0, ])
-            test_crs = test_crs.apply(pd.to_numeric, errors='ignore')
+                test_crs = dict([i.split("=") for i in test_v.split(' ')])
+                test_crs = pd.DataFrame(test_crs, index=[0, ])
+                test_crs = test_crs.apply(pd.to_numeric, errors='ignore')
 
-            cols = list(set(true_crs.columns) & set(test_crs.columns))
-            assert_frame_equal(true_crs[cols], test_crs[cols],
-                               check_dtype=False, check_exact=False)
-        else:
-            msg = ("Profile {} does not match: {} != {}"
-                   .format(profile_k, true_v, test_v))
-            assert true_v == test_v, msg
+                cols = list(set(true_crs.columns) & set(test_crs.columns))
+                assert_frame_equal(true_crs[cols], test_crs[cols],
+                                   check_dtype=False, check_exact=False)
+            else:
+                msg = ("Profile {} does not match: {} != {}"
+                       .format(profile_k, true_v, test_v))
+                assert true_v == test_v, msg
 
-    if PURGE_OUT:
-        os.remove(excl_h5)
+
+def test_cli(runner):
+    """
+    Test CLI
+    """
+    layer = 'ri_padus'
+    with tempfile.TemporaryDirectory() as td:
+        # Geotiff from H5
+        result = runner.invoke(main, ['exclusions',
+                                      '-h5', EXCL_H5,
+                                      'layers-from-h5',
+                                      '-o', td,
+                                      '-l', layer])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        geotiff = os.path.join(td, '{}.tif'.format(layer))
+        test_values, test_profile = extract_geotiff(geotiff)
+
+        truth = os.path.join(DIR, '{}.tif'.format(layer))
+        true_values, true_profile = extract_geotiff(truth)
+
+        assert np.allclose(true_values, test_values)
+        assert true_profile == test_profile
+
+        # Geotiff to H5
+        layers = {layer: truth}
+        layers_path = os.path.join(td, 'layers.json')
+        with open(layers_path, 'w') as f:
+            json.dump(layers, f)
+
+        excl_h5 = os.path.join(td, "{}.h5".format(layer))
+        result = runner.invoke(main, ['exclusions',
+                                      '-h5', excl_h5,
+                                      'layers-to-h5',
+                                      '-l', layers_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        true_values, true_profile = extract_layer(EXCL_H5, layer)
+        test_values, test_profile = extract_layer(excl_h5, layer)
+
+        assert np.allclose(true_values, test_values)
+
+        for profile_k, true_v in true_profile.items():
+            test_v = test_profile[profile_k]
+            if profile_k == 'crs':
+                true_crs = dict([i.split("=") for i in true_v.split(' ')])
+                true_crs = pd.DataFrame(true_crs, index=[0, ])
+                true_crs = true_crs.apply(pd.to_numeric, errors='ignore')
+
+                test_crs = dict([i.split("=") for i in test_v.split(' ')])
+                test_crs = pd.DataFrame(test_crs, index=[0, ])
+                test_crs = test_crs.apply(pd.to_numeric, errors='ignore')
+
+                cols = list(set(true_crs.columns) & set(test_crs.columns))
+                assert_frame_equal(true_crs[cols], test_crs[cols],
+                                   check_dtype=False, check_exact=False)
+            else:
+                msg = ("Profile {} does not match: {} != {}"
+                       .format(profile_k, true_v, test_v))
+                assert true_v == test_v, msg
 
 
 def execute_pytest(capture='all', flags='-rapP'):

@@ -2,20 +2,33 @@
 """
 Prominent wind directions tests
 """
+from click.testing import CliRunner
+import json
 import numpy as np
 import os
 import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal
+import tempfile
+import traceback
+
 from reV.supply_curve.points import SupplyCurveExtent
 
 from reVX import TESTDATADIR
 from reVX.wind_dirs.wind_dirs import WindDirections
-
+from reVX.wind_dirs.wind_dirs_cli import main
 
 PR_H5 = os.path.join(TESTDATADIR, 'wind_dirs', 'ri_100_wtk_powerrose.h5')
 EXCL_H5 = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_exclusions.h5')
 BASELINE = os.path.join(TESTDATADIR, 'wind_dirs', 'baseline_wind_dirs.csv')
+
+
+@pytest.fixture(scope="module")
+def runner():
+    """
+    cli runner
+    """
+    return CliRunner()
 
 
 def test_gid_row_col_mapping():
@@ -52,6 +65,47 @@ def test_prominent_wind_directions():
     for c in test:
         for c in ['source_gids', 'gid_counts']:
             test[c] = test[c].astype(str)
+
+    assert_frame_equal(baseline, test, check_dtype=False)
+
+
+def test_cli(runner):
+    """
+    Test CLI
+    """
+
+    with tempfile.TemporaryDirectory() as td:
+        config = {
+            "directories": {
+                "log_directory": os.path.join(td, 'logs'),
+                "output_directory": td
+            },
+            "excl_fpath": EXCL_H5,
+            "execution_control": {
+                "option": "local"
+            },
+            "log_level": "INFO",
+            "powerrose_h5_fpath": PR_H5,
+            "resolution": 64
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        baseline = pd.read_csv(BASELINE)
+        test = os.path.basename(PR_H5).replace('.h5', '_prominent_dir_64.csv')
+        test = os.path.join(td, test)
+        test = pd.read_csv(os.path.join(td, test))
+
+        for c in test:
+            for c in ['source_gids', 'gid_counts']:
+                test[c] = test[c].astype(str)
 
     assert_frame_equal(baseline, test, check_dtype=False)
 

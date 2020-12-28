@@ -24,7 +24,7 @@ class RPMConfig(AnalysisConfig):
     @property
     def rep_profiles(self):
         """Get the profiles input group in the config dict."""
-        profiles = self.get('profiles', None)
+        profiles = self.get('rep_profiles', None)
         if profiles is not None:
             profiles = RepProfilesConfigGroup(profiles)
 
@@ -64,7 +64,6 @@ class ClusterConfigGroup(BaseConfig):
 class RepProfilesConfigGroup(BaseConfig):
     """Subclass for handling the RPM config input group for the reVX-RPM
     representative profiles framework."""
-    REQUIREMENTS = ('rpm_clusters', )
 
     def __init__(self, config):
         """

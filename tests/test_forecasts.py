@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
-"""reVX PLEXOS unit test module
+"""reVX Forecast correction tests
 """
+from click.testing import CliRunner
 import os
 import pytest
 import numpy as np
+import tempfile
+import traceback
 
+from reVX.cli import main
 from reVX import TESTDATADIR
 from reVX.utilities.forecasts import Forecasts
 
@@ -12,11 +16,17 @@ from rex import Resource
 
 DIR = os.path.join(TESTDATADIR, 'fcst')
 FCST_H5 = os.path.join(DIR, 'fcst.h5')
-OUT_H5 = os.path.join(DIR, 'corrected.h5')
 FCST_DSET = 'fcst'
 ACT_DSET = 'actuals'
-PURGE_OUT = True
 RTOL = 1e4
+
+
+@pytest.fixture(scope="module")
+def runner():
+    """
+    cli runner
+    """
+    return CliRunner()
 
 
 def read_data(path, actuals=False):
@@ -36,40 +46,69 @@ def read_data(path, actuals=False):
 
 def test_bias_correction():
     """Test Forecast bias correction"""
-    Forecasts.bias_correct(FCST_H5, FCST_DSET, OUT_H5, actuals_dset=ACT_DSET)
+    with tempfile.TemporaryDirectory() as td:
+        OUT_H5 = os.path.join(td, 'corrected.h5')
+        Forecasts.bias_correct(FCST_H5, FCST_DSET, OUT_H5,
+                               actuals_dset=ACT_DSET)
 
-    fcst, actuals = read_data(FCST_H5, actuals=True)
-    bc_factors = actuals.sum(axis=0) / fcst.sum(axis=0)
-    actuals_max = actuals.max(axis=0)
-    truth = fcst * bc_factors
-    truth = np.where(fcst >= actuals_max, actuals_max, fcst)
+        fcst, actuals = read_data(FCST_H5, actuals=True)
+        bc_factors = actuals.sum(axis=0) / fcst.sum(axis=0)
+        actuals_max = actuals.max(axis=0)
+        truth = fcst * bc_factors
+        truth = np.where(fcst >= actuals_max, actuals_max, fcst)
 
-    bc = read_data(OUT_H5)
-    assert np.all(bc <= actuals_max)
-    assert np.allclose(bc, truth, rtol=RTOL)
-
-    if PURGE_OUT:
-        os.remove(OUT_H5)
+        bc = read_data(OUT_H5)
+        assert np.all(bc <= actuals_max)
+        assert np.allclose(bc, truth, rtol=RTOL)
 
 
 @pytest.mark.parametrize('perc', [0.25, 0.5])
 def test_blend(perc):
     """Test Forecast blending"""
-    Forecasts.blend(FCST_H5, FCST_DSET, OUT_H5, perc, actuals_dset=ACT_DSET)
+    with tempfile.TemporaryDirectory() as td:
+        OUT_H5 = os.path.join(td, 'corrected.h5')
+        Forecasts.blend(FCST_H5, FCST_DSET, OUT_H5, perc,
+                        actuals_dset=ACT_DSET)
 
-    fcst, actuals = read_data(FCST_H5, actuals=True)
-    bc_factors = actuals.sum(axis=0) / fcst.sum(axis=0)
-    actuals_max = actuals.max(axis=0)
-    truth = fcst * bc_factors
-    truth = np.where(fcst >= actuals_max, actuals_max, fcst)
-    truth = (perc * truth) + ((1 - perc) * actuals)
+        fcst, actuals = read_data(FCST_H5, actuals=True)
+        bc_factors = actuals.sum(axis=0) / fcst.sum(axis=0)
+        actuals_max = actuals.max(axis=0)
+        truth = fcst * bc_factors
+        truth = np.where(fcst >= actuals_max, actuals_max, fcst)
+        truth = (perc * truth) + ((1 - perc) * actuals)
 
-    blend = read_data(OUT_H5)
-    assert np.all(blend <= actuals_max)
-    assert np.allclose(blend, truth, rtol=RTOL)
+        blend = read_data(OUT_H5)
+        assert np.all(blend <= actuals_max)
+        assert np.allclose(blend, truth, rtol=RTOL)
 
-    if PURGE_OUT:
-        os.remove(OUT_H5)
+
+def test_cli(runner):
+    """
+    Test CLI
+    """
+    perc = 0.5
+    with tempfile.TemporaryDirectory() as td:
+        OUT_H5 = os.path.join(td, 'corrected.h5')
+        result = runner.invoke(main, ['correct-forecast',
+                                      '-fcst', FCST_H5,
+                                      '-fdset', FCST_DSET,
+                                      '-out', OUT_H5,
+                                      '-adset', ACT_DSET,
+                                      '-perc', perc])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        fcst, actuals = read_data(FCST_H5, actuals=True)
+        bc_factors = actuals.sum(axis=0) / fcst.sum(axis=0)
+        actuals_max = actuals.max(axis=0)
+        truth = fcst * bc_factors
+        truth = np.where(fcst >= actuals_max, actuals_max, fcst)
+        truth = (perc * truth) + ((1 - perc) * actuals)
+
+        blend = read_data(OUT_H5)
+        assert np.all(blend <= actuals_max)
+        assert np.allclose(blend, truth, rtol=RTOL)
 
 
 def execute_pytest(capture='all', flags='-rapP'):

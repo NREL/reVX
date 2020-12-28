@@ -53,6 +53,7 @@ def version():
               type=click.Path(exists=True),
               help=('Path to regions shapefile containing labeled geometries'))
 @click.option('--regions_label', '-rl', default=None, type=STR,
+              show_default=True,
               help=('Attribute to use as label in the regions shapefile'))
 @click.option('--fout', '-o', required=True,
               prompt='Output CSV file path',
@@ -80,6 +81,7 @@ def region_classifier(meta_path, regions_path, regions_label, fout,
               type=click.Path(),
               help='Path to output .h5 file')
 @click.option('--year', '-yr', default=None, type=STR,
+              show_default=True,
               help='Year to extract, if None parse from out_fpath')
 def extract_output_year(my_fpath, out_fpath, year):
     """
@@ -88,20 +90,22 @@ def extract_output_year(my_fpath, out_fpath, year):
     output_extractor(my_fpath, out_fpath, year=year)
 
 
-@main.group()
+@main.command()
 @click.option('--fcst_h5', '-fcst', required=True,
               type=click.Path(exists=True),
               help="Path to forecast .h5 file")
 @click.option('--fcst_dset', '-fdset', required=True, type=str,
               help="Dataset to correct")
-@click.option('--out_h5', '-out', required=True, type=click.Path(exists=True),
+@click.option('--out_h5', '-out', required=True, type=click.Path(),
               help="Output path for corrected .h5 file")
 @click.option('--actuals_h5', '-actuals', type=click.Path(exists=False),
-              default=None,
+              default=None, show_default=True,
               help="Path to forecast to .h5 file, by default None")
 @click.option('--actuals_dset', '-adset', default=None, type=STR,
+              show_default=True,
               help="Actuals dataset, by default None")
 @click.option('--fcst_perc', '-perc', default=None, type=FLOAT,
+              show_default=True,
               help=("Percentage of forecast to use for blending, by default "
                     "None"))
 def correct_forecast(fcst_h5, fcst_dset, out_h5, actuals_h5, actuals_dset,
@@ -134,13 +138,15 @@ def exclusions(ctx, excl_h5):
               help=(".json file containing list of geotiffs to load or "
                     "mapping of layer names to geotiffs"))
 @click.option('--descriptions', '-d', default=None,
-              type=click.Path(exists=True),
+              type=click.Path(exists=True), show_default=True,
               help=(".json file containing layer descriptions as a list or "
                     "mapping to layers"))
 @click.option('--transform_atol', '-tatol', default=0.01, type=float,
+              show_default=True,
               help=("Absolute tolerance parameter when comparing geotiff "
                     "transform data."))
 @click.option('--coord_atol', '-catol', default=0.00001, type=float,
+              show_default=True,
               help=("Absolute tolerance parameter when comparing new "
                     "un-projected geotiff coordinates against previous "
                     "coordinates."))
@@ -162,8 +168,8 @@ def layers_to_h5(ctx, layers, descriptions, transform_atol, coord_atol, purge):
     if descriptions is not None:
         descriptions = safe_json_load(descriptions)
         if 'descriptions' in descriptions:
-            descriptions = {os.path.basename(l).split('.')[0]: d
-                            for l, d in zip(layers, descriptions)}
+            descriptions = {os.path.basename(layer).split('.')[0]: d
+                            for layer, d in zip(layers, descriptions)}
 
     ExclusionsConverter.layers_to_h5(excl_h5, layers,
                                      transform_atol=transform_atol,
@@ -175,6 +181,7 @@ def layers_to_h5(ctx, layers, descriptions, transform_atol, coord_atol, purge):
 @click.option('--out_dir', '-o', required=True, type=click.Path(exists=True),
               help=("Output directory to save layers into"))
 @click.option('--layers', '-l', default=None, type=STRLIST,
+              show_default=True,
               help=("List of layers to extract, if None extract all"))
 @click.option('--hsds', '-hsds', is_flag=True,
               help="Extract layers from HSDS")
@@ -185,7 +192,8 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
     """
     excl_h5 = ctx.obj['EXCL_H5']
     if layers is not None:
-        layers = {l: os.path.join(out_dir, "{}.tif".format(l)) for l in layers}
+        layers = {layer: os.path.join(out_dir, "{}.tif".format(layer))
+                  for layer in layers}
         ExclusionsConverter.extract_layers(excl_h5, layers, hsds=hsds)
     else:
         ExclusionsConverter.extract_all_layers(excl_h5, out_dir, hsds=hsds)

@@ -30,20 +30,26 @@ logger = logging.getLogger(__name__)
 @click.option('--out_dir', '-out', required=True, type=click.Path(),
               help='Directory to dump output files')
 @click.option('--dist_percentile', '-dp', type=int, default=90,
+              show_default=True,
               help=('Percentile to use to compute distance threshold using '
                     'sc_gid to SubStation distance, by default 90'))
 @click.option('--lcoe_col', '-lc', type=str, default='total_lcoe',
+              show_default=True,
               help="LCOE column to sort by, by default 'total_lcoe'")
 @click.option('--lcoe_thresh', '-lt', type=float, default=1.3,
+              show_default=True,
               help=('LCOE threshold multiplier, exclude sc_gids above '
                     'threshold, by default 1.3'))
 @click.option('--max_workers', '-mw', type=INT, default=None,
+              show_default=True,
               help=('Number of workers to use for point and plant creation, '
                     '1 == serial, > 1 == parallel, None == parallel using all '
                     'available cpus, by default None'))
 @click.option('--points_per_worker', type=int, default=400,
+              show_default=True,
               help='Number of points to create on each worker, by default 400')
 @click.option('--plants_per_worker', type=int, default=40,
+              show_default=True,
               help=('Number of plants to identify on each worker, by default '
                     '40'))
 @click.option('-o', '--offshore', is_flag=True,
@@ -126,11 +132,14 @@ def get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,
 @click.option('--alloc', '-a', required=True, type=STR,
               help='Eagle allocation account name.')
 @click.option('--walltime', '-wt', default=1.0, type=float,
+              show_default=True,
               help='Eagle walltime request in hours. Default is 1.0')
 @click.option('--feature', '-l', default=None, type=STR,
+              show_default=True,
               help=('Additional flags for SLURM job. Format is "--qos=high" '
                     'or "--depend=[state:job_id]". Default is None.'))
 @click.option('--stdout_path', '-sout', default=None, type=STR,
+              show_default=True,
               help='Subprocess standard output path. Default is in out_dir.')
 @click.pass_context
 def eagle(ctx, alloc, walltime, feature, stdout_path):

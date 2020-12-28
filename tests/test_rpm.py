@@ -1,16 +1,21 @@
 # -*- coding: utf-8 -*-
 """reVX RPM unit test module
 """
+from click.testing import CliRunner
+import json
 import numpy as np
 import os
 import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal
+import tempfile
+import traceback
+
+from rex.utilities.utilities import check_tz
 
 from reVX import TESTDATADIR
 from reVX.rpm.rpm_manager import RPMClusterManager
-from rex.utilities.utilities import check_tz
-
+from reVX.rpm.rpm_cli import main
 
 JOB_TAG = 'pytest'
 CF_FPATH = os.path.join(TESTDATADIR, 'reV_gen',
@@ -29,13 +34,13 @@ BASELINE_CLUSTERS = os.path.join(TESTDATADIR,
 BASELINE_PROFILES = os.path.join(TESTDATADIR,
                                  'rpm/rpm_rep_profiles_baseline.csv')
 
-OUT_DIR = os.path.join(TESTDATADIR, 'rpm/test_outputs')
-TEST_CLUSTERS = os.path.join(OUT_DIR,
-                             'rpm_cluster_outputs_{}.csv'.format(JOB_TAG))
-TEST_PROFILES = os.path.join(OUT_DIR,
-                             'rpm_rep_profiles_{}_rank0.csv'.format(JOB_TAG))
 
-PURGE_OUT = True
+@pytest.fixture(scope="module")
+def runner():
+    """
+    cli runner
+    """
+    return CliRunner()
 
 
 def compute_centers(clusters):
@@ -115,64 +120,112 @@ def check_profiles(baseline, test):
 
 def test_rpm():
     """Test the rpm clustering pipeline and run a baseline validation."""
-    RPMClusterManager.run_clusters_and_profiles(CF_FPATH, RPM_META, EXCL_FPATH,
-                                                EXCL_DICT, TECHMAP_DSET,
-                                                OUT_DIR, job_tag=JOB_TAG,
-                                                rpm_region_col=None,
-                                                max_workers=None,
-                                                output_kwargs=None,
-                                                dist_rank_filter=True,
-                                                contiguous_filter=False)
+    with tempfile.TemporaryDirectory() as td:
+        RPMClusterManager.run_clusters_and_profiles(
+            CF_FPATH, RPM_META, EXCL_FPATH, EXCL_DICT, TECHMAP_DSET, td,
+            job_tag=JOB_TAG,
+            rpm_region_col=None,
+            max_workers=None,
+            output_kwargs=None,
+            dist_rank_filter=True,
+            contiguous_filter=False)
 
-    check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
-    check_profiles(BASELINE_PROFILES, TEST_PROFILES)
+        TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
+                                         .format(JOB_TAG))
+        TEST_PROFILES = os.path.join(td, 'rpm_rep_profiles_{}_rank0.csv'
+                                         .format(JOB_TAG))
 
-    if PURGE_OUT:
-        for fn in os.listdir(OUT_DIR):
-            os.remove(os.path.join(OUT_DIR, fn))
+        check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
+        check_profiles(BASELINE_PROFILES, TEST_PROFILES)
 
 
 def test_rpm_serial():
     """Test the rpm clustering pipeline in SERIAL and run a baseline
     validation."""
+    with tempfile.TemporaryDirectory() as td:
+        RPMClusterManager.run_clusters_and_profiles(
+            CF_FPATH, RPM_META, EXCL_FPATH, EXCL_DICT, TECHMAP_DSET, td,
+            job_tag=JOB_TAG,
+            rpm_region_col=None,
+            max_workers=1,
+            output_kwargs=None,
+            dist_rank_filter=True,
+            contiguous_filter=False)
 
-    RPMClusterManager.run_clusters_and_profiles(CF_FPATH, RPM_META, EXCL_FPATH,
-                                                EXCL_DICT, TECHMAP_DSET,
-                                                OUT_DIR, job_tag=JOB_TAG,
-                                                rpm_region_col=None,
-                                                max_workers=1,
-                                                output_kwargs=None,
-                                                dist_rank_filter=True,
-                                                contiguous_filter=False)
+        TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
+                                         .format(JOB_TAG))
+        TEST_PROFILES = os.path.join(td, 'rpm_rep_profiles_{}_rank0.csv'
+                                         .format(JOB_TAG))
 
-    check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
-    check_profiles(BASELINE_PROFILES, TEST_PROFILES)
-
-    if PURGE_OUT:
-        for fn in os.listdir(OUT_DIR):
-            os.remove(os.path.join(OUT_DIR, fn))
+        check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
+        check_profiles(BASELINE_PROFILES, TEST_PROFILES)
 
 
 def test_rpm_no_exclusions():
     """Test that the clustering works without exclusions."""
+    with tempfile.TemporaryDirectory() as td:
+        RPMClusterManager.run_clusters_and_profiles(
+            CF_FPATH, RPM_META, None, None, TECHMAP_DSET, td,
+            job_tag=JOB_TAG,
+            rpm_region_col=None,
+            max_workers=1,
+            output_kwargs=None,
+            dist_rank_filter=True,
+            contiguous_filter=False)
 
-    RPMClusterManager.run_clusters_and_profiles(CF_FPATH, RPM_META, None,
-                                                None, TECHMAP_DSET,
-                                                OUT_DIR, job_tag=JOB_TAG,
-                                                rpm_region_col=None,
-                                                max_workers=None,
-                                                output_kwargs=None,
-                                                dist_rank_filter=True,
-                                                contiguous_filter=False)
+        TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
+                                         .format(JOB_TAG))
+        TEST_PROFILES = os.path.join(td, 'rpm_rep_profiles_{}_rank0.csv'
+                                         .format(JOB_TAG))
 
-    check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
-    baseline_profiles = os.path.join(TESTDATADIR, 'rpm',
-                                     'rpm_rep_profiles_baseline_noexcl.csv')
-    check_profiles(baseline_profiles, TEST_PROFILES)
+        check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
+        baseline_profiles = os.path.join(
+            TESTDATADIR, 'rpm', 'rpm_rep_profiles_baseline_noexcl.csv')
+        check_profiles(baseline_profiles, TEST_PROFILES)
 
-    if PURGE_OUT:
-        for fn in os.listdir(OUT_DIR):
-            os.remove(os.path.join(OUT_DIR, fn))
+
+def test_cli(runner):
+    """
+    Test CLI
+    """
+    with tempfile.TemporaryDirectory() as td:
+        config = {
+            "name": JOB_TAG,
+            "directories": {
+                "log_directory": os.path.join(td, 'logs'),
+                "output_directory": td
+            },
+            "execution_control": {
+                "option": "local"
+            },
+            "cf_profiles": CF_FPATH,
+            "cluster": {
+                "rpm_meta": RPM_META
+            },
+            "rep_profiles": {
+                "exclusions": EXCL_FPATH,
+                "excl_dict": EXCL_DICT,
+                "techmap_dset": TECHMAP_DSET
+            }
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        print(os.listdir(td))
+        TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
+                                         .format(JOB_TAG))
+        TEST_PROFILES = os.path.join(td, 'rpm_rep_profiles_{}_rank0.csv'
+                                         .format(JOB_TAG))
+
+        check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
+        check_profiles(BASELINE_PROFILES, TEST_PROFILES)
 
 
 def execute_pytest(capture='all', flags='-rapP'):

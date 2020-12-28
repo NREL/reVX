@@ -322,7 +322,7 @@ class RPMClusters:
         """
         geometry = [Point(xy) for xy in zip(meta.longitude, meta.latitude)]
         gdf_points = gpd.GeoDataFrame(meta, geometry=geometry,
-                                      crs={'init': 'epsg:4326'})
+                                      crs="EPSG:4326")
 
         clusters, mean_dist = cls._get_cluster_geom(gdf_points)
 
@@ -345,7 +345,8 @@ class RPMClusters:
         meta = self._meta
 
         geometry = [Point(xy) for xy in zip(meta.longitude, meta.latitude)]
-        gdf_points = gpd.GeoDataFrame(meta, geometry=geometry)
+        gdf_points = gpd.GeoDataFrame(meta, geometry=geometry,
+                                      crs="EPSG:4326")
 
         clusters, mean_dist = self._get_cluster_geom(gdf_points)
 
