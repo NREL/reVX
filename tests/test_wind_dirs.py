@@ -61,6 +61,7 @@ def test_prominent_wind_directions():
     """
     Test prominent wind direction computation
     """
+    print(LOGGERS._loggers)
     baseline = pd.read_csv(BASELINE)
 
     test = WindDirections.run(PR_H5, EXCL_H5, resolution=64,
@@ -79,6 +80,8 @@ def test_cli(runner):
     """
 
     with tempfile.TemporaryDirectory() as td:
+        print(LOGGERS._loggers)
+        print(td)
         config = {
             "directories": {
                 "log_directory": td,
