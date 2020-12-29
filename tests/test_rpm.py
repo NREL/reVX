@@ -114,7 +114,7 @@ def check_profiles(baseline, test):
     baseline = load_profiles(baseline)
     test = load_profiles(test)
 
-    assert_frame_equal(baseline, test, check_dtype=False, rtol=0.005)
+    assert_frame_equal(baseline, test, check_dtype=False)
 
 
 def test_rpm():
