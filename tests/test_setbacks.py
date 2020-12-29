@@ -122,7 +122,7 @@ def test_cli(runner):
 
         config = {
             "directories": {
-                "log_directory": os.path.join(td, 'logs'),
+                "log_directory": td,
                 "output_directory": td
             },
             "excl_h5": out_h5,

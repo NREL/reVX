@@ -170,7 +170,7 @@ def test_cli(runner):
         config = {
             "name": JOB_TAG,
             "directories": {
-                "log_directory": os.path.join(td, 'logs'),
+                "log_directory": td,
                 "output_directory": td
             },
             "execution_control": {

@@ -77,7 +77,7 @@ def test_cli(runner):
     with tempfile.TemporaryDirectory() as td:
         config = {
             "directories": {
-                "log_directory": os.path.join(td, 'logs'),
+                "log_directory": td,
                 "output_directory": td
             },
             "excl_fpath": EXCL_H5,

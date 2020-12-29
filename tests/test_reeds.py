@@ -422,7 +422,7 @@ def test_cli(runner, trg_classes):
 
         config = {
             "directories": {
-                "log_directory": os.path.join(td, 'logs'),
+                "log_directory": td,
                 "output_directory": td
             },
             "execution_control": {
