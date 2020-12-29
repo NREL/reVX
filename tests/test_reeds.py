@@ -140,7 +140,7 @@ def test_classifier(trg_classes):
     path = os.path.join(ROOT_DIR, 'ReEDS_Classifications_Slim.csv')
     truth_table = pd.read_csv(path)
     path = os.path.join(ROOT_DIR, 'ReEDS_Aggregation.csv')
-    truth_agg = pd.read_csv(path)
+    truth_agg = pd.read_csv(path).fillna(0)
 
     rev_table = os.path.join(TESTDATADIR, 'reV_sc', 'sc_table.csv')
     out = ReedsClassifier.create(rev_table, trg_classes,
@@ -149,6 +149,9 @@ def test_classifier(trg_classes):
                                  trg_by_region=False)
 
     test_table_full, test_table, _, test_agg = out
+
+    cols =['capacity', 'trans_cap_cost', 'dist_mi']
+    test_agg[cols] = test_agg[cols].fillna(0)
 
     assert_frame_equal(truth_table_full, test_table_full, check_dtype=False,
                        check_categorical=False)

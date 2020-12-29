@@ -12,6 +12,8 @@ from pandas.testing import assert_frame_equal
 import tempfile
 import traceback
 
+from rex.utilities.loggers import LOGGERS
+
 from reV.supply_curve.points import SupplyCurveExtent
 
 from reVX import TESTDATADIR
@@ -21,6 +23,8 @@ from reVX.wind_dirs.wind_dirs_cli import main
 PR_H5 = os.path.join(TESTDATADIR, 'wind_dirs', 'ri_100_wtk_powerrose.h5')
 EXCL_H5 = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_exclusions.h5')
 BASELINE = os.path.join(TESTDATADIR, 'wind_dirs', 'baseline_wind_dirs.csv')
+# Reset loggers
+LOGGERS._loggers = {}
 
 
 @pytest.fixture(scope="module")
