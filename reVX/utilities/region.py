@@ -35,7 +35,7 @@ class RegionClassifier():
     >>> classifier.output_to_csv(classification, fout)
     """
 
-    CRS = "EPSG:5070"
+    CRS = "EPSG:4326"
     DEFAULT_REGIONS_LABEL = 'regions_index'
 
     def __init__(self, meta_path, regions_path, regions_label=None):

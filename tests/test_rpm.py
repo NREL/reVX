@@ -7,7 +7,6 @@ import numpy as np
 import os
 import pytest
 import pandas as pd
-from pandas.testing import assert_frame_equal
 import tempfile
 import traceback
 
@@ -114,39 +113,19 @@ def check_profiles(baseline, test):
     baseline = load_profiles(baseline)
     test = load_profiles(test)
 
-    assert_frame_equal(baseline, test, check_dtype=False, rtol=0.01)
+    assert baseline.index.equals(test.index)
+    np.allclose(baseline.values, test.values, rtol=0.001)
 
 
-def test_rpm():
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_rpm(max_workers):
     """Test the rpm clustering pipeline and run a baseline validation."""
     with tempfile.TemporaryDirectory() as td:
         RPMClusterManager.run_clusters_and_profiles(
             CF_FPATH, RPM_META, EXCL_FPATH, EXCL_DICT, TECHMAP_DSET, td,
             job_tag=JOB_TAG,
             rpm_region_col=None,
-            max_workers=None,
-            output_kwargs=None,
-            dist_rank_filter=True,
-            contiguous_filter=False)
-
-        TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
-                                         .format(JOB_TAG))
-        TEST_PROFILES = os.path.join(td, 'rpm_rep_profiles_{}_rank0.csv'
-                                         .format(JOB_TAG))
-
-        check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
-        check_profiles(BASELINE_PROFILES, TEST_PROFILES)
-
-
-def test_rpm_serial():
-    """Test the rpm clustering pipeline in SERIAL and run a baseline
-    validation."""
-    with tempfile.TemporaryDirectory() as td:
-        RPMClusterManager.run_clusters_and_profiles(
-            CF_FPATH, RPM_META, EXCL_FPATH, EXCL_DICT, TECHMAP_DSET, td,
-            job_tag=JOB_TAG,
-            rpm_region_col=None,
-            max_workers=1,
+            max_workers=max_workers,
             output_kwargs=None,
             dist_rank_filter=True,
             contiguous_filter=False)
