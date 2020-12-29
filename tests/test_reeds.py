@@ -154,6 +154,7 @@ def test_classifier(trg_classes):
                        check_categorical=False)
     assert_frame_equal(truth_table, test_table, check_dtype=False,
                        check_categorical=False)
+    test_agg = test_agg.fillna(0)
     assert_frame_equal(truth_agg, test_agg, check_dtype=False,
                        check_categorical=False)
 

@@ -20,8 +20,6 @@ from reVX.wind_setbacks.wind_setbacks import (StructureWindSetbacks,
                                               TransmissionWindSetbacks)
 from reVX import __version__
 
-logger = logging.getLogger(__name__)
-
 
 @click.group()
 @click.option('--name', '-n', default='WindSetbacks', type=STR,
