@@ -140,7 +140,7 @@ def test_classifier(trg_classes):
     path = os.path.join(ROOT_DIR, 'ReEDS_Classifications_Slim.csv')
     truth_table = pd.read_csv(path)
     path = os.path.join(ROOT_DIR, 'ReEDS_Aggregation.csv')
-    truth_agg = pd.read_csv(path)
+    truth_agg = pd.read_csv(path).fillna(0)
 
     rev_table = os.path.join(TESTDATADIR, 'reV_sc', 'sc_table.csv')
     out = ReedsClassifier.create(rev_table, trg_classes,
@@ -405,7 +405,7 @@ def test_cli(runner, trg_classes):
     path = os.path.join(ROOT_DIR, 'ReEDS_Classifications_Slim.csv')
     truth_table = pd.read_csv(path)
     path = os.path.join(ROOT_DIR, 'ReEDS_Aggregation.csv')
-    truth_agg = pd.read_csv(path)
+    truth_agg = pd.read_csv(path).fillna(0)
 
     truth_profiles = \
         extract_profiles(os.path.join(ROOT_DIR, 'ReEDS_Profiles.h5'))
@@ -466,7 +466,7 @@ def test_cli(runner, trg_classes):
         assert_frame_equal(truth_table, test_table, check_dtype=False,
                            check_categorical=False)
         path = os.path.join(td, '{}_ReEDS_supply_curve.csv'.format(name))
-        test_agg = pd.read_csv(path)
+        test_agg = pd.read_csv(path).fillna(0)
         assert_frame_equal(truth_agg, test_agg, check_dtype=False,
                            check_categorical=False)
 
