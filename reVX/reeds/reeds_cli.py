@@ -82,7 +82,8 @@ def run_local(ctx, config):
                    regions=config.classify.regions,
                    cap_bins=config.classify.cap_bins,
                    sort_bins_by=config.classify.sort_bins_by,
-                   pre_filter=config.classify.pre_filter)
+                   pre_filter=config.classify.pre_filter,
+                   trg_by_region=config.classify.trg_by_region)
 
     if config.profiles is not None:
         ctx.invoke(profiles,
@@ -193,9 +194,11 @@ def local(ctx, out_dir, log_dir, verbose):
               help='Column(s) in rev_table to sort before binning')
 @click.option('--pre_filter', '-f', type=STR, default=None, show_default=True,
               help='Column value pair(s) to filter on. If None do not filter')
+@click.option('--trg_by_region', '-tbr', is_flag=True,
+              help='Groupby on region when computing TRGs')
 @click.pass_context
 def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
-             pre_filter):
+             pre_filter, trg_by_region):
     """
     Extract ReEDS (region, bin, class) groups
     """
@@ -210,20 +213,21 @@ def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
     out = ReedsClassifier.create(rev_table, resource_classes,
                                  region_map=regions, cap_bins=cap_bins,
                                  sort_bins_by=sort_bins_by,
-                                 pre_filter=pre_filter)
+                                 pre_filter=pre_filter,
+                                 trg_by_region=trg_by_region)
     table_full, table, agg_table_full, agg_table = out
 
     out_path = os.path.join(out_dir,
                             '{}_supply_curve_raw_full.csv'.format(name))
     table_full.to_csv(out_path, index=False)
+    ctx.obj['TABLE'] = out_path
+
     out_path = os.path.join(out_dir, '{}_supply_curve_raw.csv'.format(name))
     table.to_csv(out_path, index=False)
     out_path = os.path.join(out_dir, '{}_supply_curve_full.csv'.format(name))
     agg_table_full.to_csv(out_path, index=False)
     out_path = os.path.join(out_dir, '{}_supply_curve.csv'.format(name))
     agg_table.to_csv(out_path, index=False)
-
-    ctx.obj['TABLE'] = table_full
 
     logger.info('reVX - ReEDS classification methods complete.')
 
@@ -244,6 +248,7 @@ def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
 @click.option('--n_profiles', '-np', type=int, default=1, show_default=True,
               help='Number of profiles to extract per "group".')
 @click.option('--profiles_dset', '-pd', type=str, default="cf_profile",
+              show_default=True,
               help='Profiles dataset name in cf_profiles file.')
 @click.option('--rep_method', '-rm', type=STR, default='meanoid',
               show_default=True,
@@ -396,6 +401,9 @@ def get_node_cmd(config):
                     '-sb {}'.format(SLURM.s(config.classify.sort_bins_by)),
                     '-f {}'.format(SLURM.s(config.classify.pre_filter)),
                     ]
+
+        if config.classify.trg_by_region:
+            classify.append('-tbr')
 
         args.extend(classify)
 

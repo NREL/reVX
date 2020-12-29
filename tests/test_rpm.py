@@ -200,9 +200,11 @@ def test_cli(runner):
             },
             "cf_profiles": CF_FPATH,
             "cluster": {
-                "rpm_meta": RPM_META
+                "rpm_meta": RPM_META,
+                "contiguous_filter": False,
             },
             "rep_profiles": {
+                "rpm_clusters": None,
                 "exclusions": EXCL_FPATH,
                 "excl_dict": EXCL_DICT,
                 "techmap_dset": TECHMAP_DSET
@@ -218,7 +220,6 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        print(os.listdir(td))
         TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
                                          .format(JOB_TAG))
         TEST_PROFILES = os.path.join(td, 'rpm_rep_profiles_{}_rank0.csv'

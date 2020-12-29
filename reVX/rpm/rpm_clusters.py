@@ -261,7 +261,6 @@ class RPMClusters:
         """
         Re-cluster data by minimizing the sum of the:
         - distance between each point and each cluster centroid
-        - distance between each point and each
 
         Parameters
         ----------
@@ -475,11 +474,12 @@ class RPMClusters:
         method_kwargs : dict
             Kwargs for running _cluster_coefficients
         dist_rank_filter : bool
-            Run _optimize_dist_rank
+            Re-cluster data by minimizing the sum of the:
+            - distance between each point and each cluster centroid
         dist_rmse_kwargs : dict
             Kwargs for running _dist_rank_optimization
         contiguous_filter : bool
-            Run _contiguous_filter
+            Re-classify clusters by making contigous cluster polygons
         contiguous_kwargs : dict
             Kwargs for _contiguous_filter
 

@@ -77,7 +77,9 @@ def run_local(ctx, config):
     if config.cluster is not None:
         ctx.invoke(cluster,
                    rpm_meta=config.cluster.rpm_meta,
-                   region_col=config.cluster.region_col)
+                   region_col=config.cluster.region_col,
+                   dist_rank_filter=config.cluster.dist_rank_filter,
+                   contiguous_filter=config.cluster.contiguous_filter)
 
     if config.rep_profiles is not None:
         ctx.invoke(rep_profiles,
@@ -163,8 +165,14 @@ def local(ctx, out_dir, cf_profiles, log_dir, max_workers, verbose):
 @click.option('--region_col', '-reg', type=str, default=None,
               show_default=True,
               help='The meta-data field to map RPM regions to')
+@click.option('--dist_rank_filter', '-drf', is_flag=True,
+              help=('Re-cluster data by minimizing the sum of the: '
+                    'distance between each point and each cluster centroid'))
+@click.option('--contiguous_filter', '-cf', is_flag=True,
+              help=('Flag to re-classify clusters by making contigous cluster '
+                    'polygons'))
 @click.pass_context
-def cluster(ctx, rpm_meta, region_col):
+def cluster(ctx, rpm_meta, region_col, dist_rank_filter, contiguous_filter):
     """
     Cluster RPM Regions
     """
@@ -176,7 +184,9 @@ def cluster(ctx, rpm_meta, region_col):
     logger.info('Clustering regions based on:\n{}'.format(rpm_meta))
     rpm_clusters = rpm_cm.run_clusters(cf_profiles, rpm_meta, out_dir,
                                        job_tag=name, rpm_region_col=region_col,
-                                       max_workers=max_workers)
+                                       max_workers=max_workers,
+                                       dist_rank_filter=dist_rank_filter,
+                                       contiguous_filter=contiguous_filter)
 
     logger.info('reVX - RPM clustering methods complete.')
     ctx.obj['RPM_CLUSTERS'] = rpm_clusters
@@ -286,6 +296,12 @@ def get_node_cmd(config):
                    '-m {}'.format(SLURM.s(config.cluster.rpm_meta)),
                    '-reg {}'.format(SLURM.s(config.cluster.region_col)),
                    ]
+
+        if config.cluster.dist_rank_filter:
+            cluster.append('-drf')
+
+        if config.cluster.contiguous_filter:
+            cluster.append('-cf')
 
         args.extend(cluster)
 

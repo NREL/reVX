@@ -60,10 +60,25 @@ class ClusterConfigGroup(BaseConfig):
         """The meta-data field to map RPM regions to."""
         return self.get('region_col', None)
 
+    @property
+    def dist_rank_filter(self):
+        """
+        Dist rank filter flag, default True
+        """
+        return bool(self.get('dist_rank_filter', True))
+
+    @property
+    def contiguous_filter(self):
+        """
+        Contiguous filter flag, default True
+        """
+        return bool(self.get('contiguous_filter', True))
+
 
 class RepProfilesConfigGroup(BaseConfig):
     """Subclass for handling the RPM config input group for the reVX-RPM
     representative profiles framework."""
+    REQUIREMENTS = ('rpm_clusters', )
 
     def __init__(self, config):
         """

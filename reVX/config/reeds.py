@@ -90,6 +90,13 @@ class ClassifyConfigGroup(BaseConfig):
         """
         return self.get('pre_filter', None)
 
+    @property
+    def trg_by_region(self):
+        """
+        Groupby on region when computing TRGs
+        """
+        return bool(self.get('trg_by_region', False))
+
 
 class ProfilesConfigGroup(BaseConfig):
     """Subclass for handling the Reeds config input group for the reVX-REEDS
@@ -168,7 +175,7 @@ class ProfilesConfigGroup(BaseConfig):
 class TimeslicesConfigGroup(BaseConfig):
     """Subclass for handling the Reeds config input group for the reVX-REEDS
     timeslices framework."""
-    REQUIREMENTS = ('timeslices', )
+    REQUIREMENTS = ('profiles', 'timeslices', )
 
     def __init__(self, config):
         """
