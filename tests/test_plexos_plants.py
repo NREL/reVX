@@ -10,19 +10,19 @@ from reVX.plexos.plexos_plants import Plants, PlexosPlants
 from reVX import TESTDATADIR
 
 ROOT_DIR = os.path.join(TESTDATADIR, 'plexos')
+BASELINE = os.path.join(ROOT_DIR, 'WECC_plants.csv')
+PLEXOS_TABLE = os.path.join(ROOT_DIR, 'WECC_ADS_2028_Solar.csv')
+SC_TABLE = os.path.join(ROOT_DIR, 'WECC_sc_table.csv')
+RES_META = os.path.join(ROOT_DIR, 'WECC_res_meta.csv')
 
 
 def test_plant_builds():
     """
     Test to ensure plant buildouts align with baseline
     """
-    baseline = os.path.join(ROOT_DIR, 'WECC_plants.csv')
-    baseline = Plants.load(baseline)
+    baseline = Plants.load(BASELINE)
 
-    plexos_table = os.path.join(ROOT_DIR, 'WECC_ADS_2028_Solar.csv')
-    sc_table = os.path.join(ROOT_DIR, 'WECC_sc_table.csv')
-    res_meta = os.path.join(ROOT_DIR, 'WECC_res_meta.csv')
-    test = PlexosPlants(plexos_table, sc_table, res_meta)
+    test = PlexosPlants(PLEXOS_TABLE, SC_TABLE, RES_META)
 
     msg = 'A different number of plants were built!'
     assert len(baseline) == len(test), msg
