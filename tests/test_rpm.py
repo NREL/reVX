@@ -76,7 +76,7 @@ def check_clusters(baseline, test):
     baseline = compute_centers(pd.read_csv(baseline))
     test = compute_centers(pd.read_csv(test))
 
-    assert np.allclose(baseline, test, rtol=0.0001)
+    assert np.allclose(baseline, test, rtol=0.001)
 
 
 def load_profiles(profiles):
