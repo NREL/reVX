@@ -200,4 +200,8 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
 
 
 if __name__ == '__main__':
-    main(obj={})
+    try:
+        main(obj={})
+    except Exception:
+        logger.exception('Error running reVX CLI')
+        raise

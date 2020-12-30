@@ -149,7 +149,7 @@ def local(ctx, out_dir, cf_profiles, log_dir, max_workers, verbose):
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
 
-    log_modules = [__name__, 'reVX', 'reVX.rpm', 'reV', 'reV.rep_profiles']
+    log_modules = ['reVX', 'reV']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
     logger.info('Running reV to RPM pipeline\n'

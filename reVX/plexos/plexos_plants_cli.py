@@ -78,9 +78,7 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir, dist_percentile,
     ctx.obj['VERBOSE'] = verbose
 
     if ctx.invoked_subcommand is None:
-        init_mult(name, out_dir, modules=[__name__,
-                                          'reVX.plexos.plexos_plants',
-                                          'reVX.handlers.sc_points'],
+        init_mult(name, out_dir, modules=['reVX'],
                   verbose=verbose)
         logger.info('Aggregating Plant for buses in PLEXOS table: {}'
                     .format(plexos_table))

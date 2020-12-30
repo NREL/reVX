@@ -20,6 +20,8 @@ from reVX.wind_setbacks.wind_setbacks import (StructureWindSetbacks,
                                               TransmissionWindSetbacks)
 from reVX import __version__
 
+logger = logging.getLogger(__name__)
+
 
 @click.group()
 @click.option('--name', '-n', default='WindSetbacks', type=STR,
@@ -47,8 +49,7 @@ def main(ctx, name, log_dir, verbose):
     else:
         log_level = 'INFO'
 
-    ctx.obj["LOGGER"] = init_logger('reVX', log_file=log_file,
-                                    log_level=log_level)
+    init_logger('reVX', log_file=log_file, log_level=log_level)
 
 
 @main.command()
@@ -190,7 +191,6 @@ def structure_setbacks(ctx):
     max_workers = ctx.obj['MAX_WORKERS']
     description = ctx.obj['DESCRIPTION']
     replace = ctx.obj['REPLACE']
-    logger = ctx.obj['LOGGER']
 
     logger.info('Computing setbacks from structures in {}'
                 .format(features_path))
@@ -228,7 +228,6 @@ def road_setbacks(ctx):
     max_workers = ctx.obj['MAX_WORKERS']
     description = ctx.obj['DESCRIPTION']
     replace = ctx.obj['REPLACE']
-    logger = ctx.obj['LOGGER']
 
     logger.info('Computing setbacks from roads in {}'
                 .format(features_path))
@@ -266,7 +265,6 @@ def transmission_setbacks(ctx):
     max_workers = ctx.obj['MAX_WORKERS']
     description = ctx.obj['DESCRIPTION']
     replace = ctx.obj['REPLACE']
-    logger = ctx.obj['LOGGER']
 
     logger.info('Computing setbacks from transmission in {}'
                 .format(features_path))
@@ -305,7 +303,6 @@ def rail_setbacks(ctx):
     max_workers = ctx.obj['MAX_WORKERS']
     description = ctx.obj['DESCRIPTION']
     replace = ctx.obj['REPLACE']
-    logger = ctx.obj['LOGGER']
 
     logger.info('Computing setbacks from structures in {}'
                 .format(features_path))

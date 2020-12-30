@@ -157,7 +157,7 @@ def local(ctx, out_dir, log_dir, verbose):
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
 
-    log_modules = [__name__, 'reVX.reeds', 'reV.rep_profiles']
+    log_modules = ['reVX', 'reV']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
     logger.info('Running reV to ReEDS pipeline\n'
