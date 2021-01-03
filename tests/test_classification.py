@@ -9,6 +9,8 @@ from pandas.testing import assert_series_equal
 import tempfile
 import traceback
 
+from rex.utilities.loggers import LOGGERS
+
 from reVX import TESTDATADIR
 from reVX.utilities.region import RegionClassifier
 from reVX.cli import main
@@ -62,6 +64,8 @@ def test_cli(runner):
         test_labels = pd.read_csv(out_path)[REGIONS_LABEL]
 
     assert_series_equal(test_labels, valid_labels)
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

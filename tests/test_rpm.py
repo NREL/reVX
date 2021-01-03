@@ -10,6 +10,7 @@ import pandas as pd
 import tempfile
 import traceback
 
+from rex.utilities.loggers import LOGGERS
 from rex.utilities.utilities import check_tz
 
 from reVX import TESTDATADIR
@@ -205,6 +206,8 @@ def test_cli(runner):
 
         check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
         check_profiles(BASELINE_PROFILES, TEST_PROFILES)
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

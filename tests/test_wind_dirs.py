@@ -12,6 +12,7 @@ from pandas.testing import assert_frame_equal
 import tempfile
 import traceback
 
+from rex.utilities.loggers import LOGGERS
 from reV.supply_curve.points import SupplyCurveExtent
 
 from reVX import TESTDATADIR
@@ -108,6 +109,8 @@ def test_cli(runner):
                 test[c] = test[c].astype(str)
 
     assert_frame_equal(baseline, test, check_dtype=False)
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

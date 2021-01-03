@@ -11,6 +11,7 @@ import shutil
 import tempfile
 import traceback
 
+from rex.utilities.loggers import LOGGERS
 from reV.handlers import ExclusionLayers
 
 from reVX import TESTDATADIR
@@ -155,6 +156,8 @@ def test_cli(runner):
             test = exc['general_structures']
 
         np.allclose(baseline, test)
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

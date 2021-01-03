@@ -12,6 +12,7 @@ from pandas.testing import assert_frame_equal
 import tempfile
 import traceback
 
+from rex.utilities.loggers import LOGGERS
 from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.cli import main
@@ -210,6 +211,8 @@ def test_cli(runner):
                 msg = ("Profile {} does not match: {} != {}"
                        .format(profile_k, true_v, test_v))
                 assert true_v == test_v, msg
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

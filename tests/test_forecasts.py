@@ -13,6 +13,7 @@ from reVX import TESTDATADIR
 from reVX.utilities.forecasts import Forecasts
 
 from rex import Resource
+from rex.utilities.loggers import LOGGERS
 
 DIR = os.path.join(TESTDATADIR, 'fcst')
 FCST_H5 = os.path.join(DIR, 'fcst.h5')
@@ -109,6 +110,8 @@ def test_cli(runner):
         blend = read_data(OUT_H5)
         assert np.all(blend <= actuals_max)
         assert np.allclose(blend, truth, rtol=RTOL)
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

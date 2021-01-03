@@ -13,6 +13,7 @@ import tempfile
 import traceback
 
 from rex.resource import Resource
+from rex.utilities.loggers import LOGGERS
 
 from reVX.reeds.reeds_cli import main
 from reVX.reeds.reeds_classification import ReedsClassifier
@@ -150,7 +151,7 @@ def test_classifier(trg_classes):
 
     test_table_full, test_table, _, test_agg = out
 
-    cols =['capacity', 'trans_cap_cost', 'dist_mi']
+    cols = ['capacity', 'trans_cap_cost', 'dist_mi']
     test_agg[cols] = test_agg[cols].fillna(0)
 
     assert_frame_equal(truth_table_full, test_table_full, check_dtype=False,
@@ -507,6 +508,8 @@ def test_cli(runner, trg_classes):
                 data = out[dset]
                 assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
                 assert len(meta) == len(data)
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):
