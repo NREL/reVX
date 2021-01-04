@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.option('--name', '-n', default='ReEDS', type=STR,
+              show_default=True,
               help='Job name. Default is "ReEDS".')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
@@ -81,7 +82,8 @@ def run_local(ctx, config):
                    regions=config.classify.regions,
                    cap_bins=config.classify.cap_bins,
                    sort_bins_by=config.classify.sort_bins_by,
-                   pre_filter=config.classify.pre_filter)
+                   pre_filter=config.classify.pre_filter,
+                   trg_by_region=config.classify.trg_by_region)
 
     if config.profiles is not None:
         ctx.invoke(profiles,
@@ -135,6 +137,7 @@ def from_config(ctx, config, verbose):
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
 @click.option('--log_dir', '-log', default=None, type=STR,
+              show_default=True,
               help='Directory to dump log files. Default is out_dir.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
@@ -154,7 +157,7 @@ def local(ctx, out_dir, log_dir, verbose):
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
 
-    log_modules = [__name__, 'reVX.reeds', 'reV.rep_profiles']
+    log_modules = ['reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
     logger.info('Running reV to ReEDS pipeline\n'
@@ -181,17 +184,21 @@ def local(ctx, out_dir, log_dir, verbose):
                     "NOTE: 'TRG_cap' can only be combined with categorical "
                     "bins"))
 @click.option('--regions', '-r', type=str, default='reeds_region',
+              show_default=True,
               help='Mapping of supply curve points to geographic region')
-@click.option('--cap_bins', '-cb', type=int, default=5,
+@click.option('--cap_bins', '-cb', type=int, default=5, show_default=True,
               help=('Number of capacity bins to create for each '
                     'region/resource bin combination'))
 @click.option('--sort_bins_by', '-sb', type=str, default='trans_cap_cost',
+              show_default=True,
               help='Column(s) in rev_table to sort before binning')
-@click.option('--pre_filter', '-f', type=STR, default=None,
+@click.option('--pre_filter', '-f', type=STR, default=None, show_default=True,
               help='Column value pair(s) to filter on. If None do not filter')
+@click.option('--trg_by_region', '-tbr', is_flag=True,
+              help='Groupby on region when computing TRGs')
 @click.pass_context
 def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
-             pre_filter):
+             pre_filter, trg_by_region):
     """
     Extract ReEDS (region, bin, class) groups
     """
@@ -206,12 +213,15 @@ def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
     out = ReedsClassifier.create(rev_table, resource_classes,
                                  region_map=regions, cap_bins=cap_bins,
                                  sort_bins_by=sort_bins_by,
-                                 pre_filter=pre_filter)
+                                 pre_filter=pre_filter,
+                                 trg_by_region=trg_by_region)
     table_full, table, agg_table_full, agg_table = out
 
     out_path = os.path.join(out_dir,
                             '{}_supply_curve_raw_full.csv'.format(name))
     table_full.to_csv(out_path, index=False)
+    ctx.obj['TABLE'] = out_path
+
     out_path = os.path.join(out_dir, '{}_supply_curve_raw.csv'.format(name))
     table.to_csv(out_path, index=False)
     out_path = os.path.join(out_dir, '{}_supply_curve_full.csv'.format(name))
@@ -219,13 +229,12 @@ def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
     out_path = os.path.join(out_dir, '{}_supply_curve.csv'.format(name))
     agg_table.to_csv(out_path, index=False)
 
-    ctx.obj['TABLE'] = table_full
-
     logger.info('reVX - ReEDS classification methods complete.')
 
 
 @local.command()
 @click.option('--reeds_table', '-rt', type=STR, default=None,
+              show_default=True,
               help=('Path to .csv containing reeds classification table '
                     'not needed if chained with classify command'))
 @click.option('--cf_profiles', '-cf', required=True,
@@ -233,28 +242,34 @@ def classify(ctx, rev_table, resource_classes, regions, cap_bins, sort_bins_by,
               help=('Path to reV .h5 file containing desired capacity factor '
                     'profiles'))
 @click.option('--gid_col', '-gc', type=str, default='gen_gids',
+              show_default=True,
               help='Column label in rev_summary that contains the generation '
               'gids (data index in cf_profiles file path).')
-@click.option('--n_profiles', '-np', type=int, default=1,
+@click.option('--n_profiles', '-np', type=int, default=1, show_default=True,
               help='Number of profiles to extract per "group".')
 @click.option('--profiles_dset', '-pd', type=str, default="cf_profile",
+              show_default=True,
               help='Profiles dataset name in cf_profiles file.')
 @click.option('--rep_method', '-rm', type=STR, default='meanoid',
+              show_default=True,
               help=('Method identifier for calculation of the representative '
                     'profile.'))
 @click.option('--err_method', '-em', type=STR, default='rmse',
+              show_default=True,
               help=('Method identifier for calculation of error from the '
                     'representative profile.'))
 @click.option('--weight', '-w', type=str, default='gid_counts',
+              show_default=True,
               help='Column in rev_summary used to apply weighted mean to '
               'profiles. The supply curve table data in the weight column '
               'should have weight values corresponding to the gid_col in '
               'the same row.')
 @click.option('--reg_cols', '-rcp', type=STRLIST,
-              default=('region', 'bin', 'class'),
+              default=('region', 'bin', 'class'), show_default=True,
               help=('Label(s) for a categorical region column(s) to extract '
                     'profiles for (default is region, bin, class)'))
 @click.option('--max_workers', '-mw', type=INT, default=None,
+              show_default=True,
               help=('Number of parallel workers. 1 will run serial, '
                     'None will use all available.'))
 @click.pass_context
@@ -295,14 +310,14 @@ def profiles(ctx, reeds_table, cf_profiles, gid_col, n_profiles, profiles_dset,
 
 
 @local.command()
-@click.option('--profiles', '-pr', type=STR, default=None,
+@click.option('--profiles', '-pr', type=STR, default=None, show_default=True,
               help=('Path to .h5 file containing (representative) profiles, '
                     'not needed if chained with profiles command'))
 @click.option('--timeslices', '-ts', required=True,
               type=click.Path(exists=True),
               help='.csv containing timeslice mapping')
 @click.option('--reg_cols', '-rct', type=STRLIST,
-              default=('region', 'class'),
+              default=('region', 'class'), show_default=True,
               help=('Label(s) for a categorical region column(s) to create '
                     'timeslice stats for (default is region and class)'))
 @click.option('--all_profiles', '-ap', is_flag=True,
@@ -386,6 +401,9 @@ def get_node_cmd(config):
                     '-sb {}'.format(SLURM.s(config.classify.sort_bins_by)),
                     '-f {}'.format(SLURM.s(config.classify.pre_filter)),
                     ]
+
+        if config.classify.trg_by_region:
+            classify.append('-tbr')
 
         args.extend(classify)
 

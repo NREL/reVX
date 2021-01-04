@@ -2,20 +2,34 @@
 """
 reVX ReEDs unit test module
 """
+from click.testing import CliRunner
+import json
 import numpy as np
 import os
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import pytest
-from rex.resource import Resource
+import tempfile
+import traceback
 
-from reVX.handlers.outputs import Outputs
+from rex.resource import Resource
+from rex.utilities.loggers import LOGGERS
+
+from reVX.reeds.reeds_cli import main
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.reeds.reeds_profiles import ReedsProfiles
 from reVX.reeds.reeds_timeslices import ReedsTimeslices
 from reVX import TESTDATADIR
 
 ROOT_DIR = os.path.join(TESTDATADIR, 'reeds')
+
+
+@pytest.fixture(scope="module")
+def runner():
+    """
+    cli runner
+    """
+    return CliRunner()
 
 
 def extract_profiles(profiles_h5):
@@ -127,7 +141,7 @@ def test_classifier(trg_classes):
     path = os.path.join(ROOT_DIR, 'ReEDS_Classifications_Slim.csv')
     truth_table = pd.read_csv(path)
     path = os.path.join(ROOT_DIR, 'ReEDS_Aggregation.csv')
-    truth_agg = pd.read_csv(path)
+    truth_agg = pd.read_csv(path).fillna(0)
 
     rev_table = os.path.join(TESTDATADIR, 'reV_sc', 'sc_table.csv')
     out = ReedsClassifier.create(rev_table, trg_classes,
@@ -136,6 +150,9 @@ def test_classifier(trg_classes):
                                  trg_by_region=False)
 
     test_table_full, test_table, _, test_agg = out
+
+    cols = ['capacity', 'trans_cap_cost', 'dist_mi']
+    test_agg[cols] = test_agg[cols].fillna(0)
 
     assert_frame_equal(truth_table_full, test_table_full, check_dtype=False,
                        check_categorical=False)
@@ -186,12 +203,12 @@ def test_rep_timeslices():
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_stats.csv')
     truth = pd.read_csv(path)
     assert_frame_equal(truth, test_stats, check_dtype=False,
-                       check_categorical=False, check_less_precise=True)
+                       check_categorical=False)
 
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_coeffs.csv')
     truth = pd.read_csv(path)
     assert_frame_equal(truth, test_coeffs, check_dtype=False,
-                       check_categorical=False, check_less_precise=True)
+                       check_categorical=False)
 
 
 def test_cf_timeslices():
@@ -209,7 +226,7 @@ def test_cf_timeslices():
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_cf_stats.csv')
     truth = pd.read_csv(path)
     assert_frame_equal(truth, test, check_dtype=False,
-                       check_categorical=False, check_less_precise=True)
+                       check_categorical=False)
 
 
 def test_timeslice_h5_output():
@@ -221,24 +238,25 @@ def test_timeslice_h5_output():
     timeslice_map = os.path.join(ROOT_DIR, 'inputs',
                                  'timeslices.csv')
     reg_cols = ('region', 'class')
-    fpath = os.path.join(ROOT_DIR, 'ReEDS_Corr_Coeffs.h5')
     _, test_coeffs = ReedsTimeslices.run(rep_profiles, timeslice_map,
                                          max_workers=1,
                                          legacy_format=False,
                                          reg_cols=reg_cols)
 
-    ReedsTimeslices.save_correlation_dict(test_coeffs, reg_cols, fpath,
-                                          sparsify=True)
+    with tempfile.TemporaryDirectory() as td:
+        fpath = os.path.join(td, 'ReEDS_Corr_Coeffs.h5')
+        ReedsTimeslices.save_correlation_dict(test_coeffs, reg_cols, fpath,
+                                              sparsify=True)
 
-    with Outputs(fpath) as out:
-        meta = out.meta
-        indices = out['indices']
-        for k, v in test_coeffs.items():
-            dset = 'timeslice_{}'.format(k)
-            data = ReedsTimeslices.unsparsify_corr_matrix(out[dset], indices)
-            assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
-            assert len(meta) == len(data)
-    os.remove(fpath)
+        with Resource(fpath) as out:
+            meta = out.meta
+            indices = out['indices']
+            for k, v in test_coeffs.items():
+                dset = 'timeslice_{}'.format(k)
+                data = \
+                    ReedsTimeslices.unsparsify_corr_matrix(out[dset], indices)
+                assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
+                assert len(meta) == len(data)
 
 
 @pytest.fixture
@@ -380,6 +398,118 @@ def test_sparse_matrix():
         assert out[-3] == x[-2, -2]
         sym = ReedsTimeslices.unsparsify_corr_matrix(out, indices)
         assert np.array_equal(x, sym)
+
+
+def test_cli(runner, trg_classes):
+    """
+    Test CLI
+    """
+    path = os.path.join(ROOT_DIR, 'ReEDS_Classifications.csv')
+    truth_table_full = pd.read_csv(path)
+    path = os.path.join(ROOT_DIR, 'ReEDS_Classifications_Slim.csv')
+    truth_table = pd.read_csv(path)
+    path = os.path.join(ROOT_DIR, 'ReEDS_Aggregation.csv')
+    truth_agg = pd.read_csv(path).fillna(0)
+
+    truth_profiles = \
+        extract_profiles(os.path.join(ROOT_DIR, 'ReEDS_Profiles.h5'))
+
+    path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_stats.csv')
+    truth_stats = pd.read_csv(path)
+
+    rev_table = os.path.join(TESTDATADIR, 'reV_sc', 'sc_table.csv')
+    cf_profiles = os.path.join(TESTDATADIR, 'reV_gen', 'gen_pv_2012.h5')
+    timeslice_map = os.path.join(ROOT_DIR, 'inputs', 'timeslices.csv')
+    with tempfile.TemporaryDirectory() as td:
+        res_classes = os.path.join(td, 'res_classes.csv')
+        trg_classes.to_csv(res_classes, index=False)
+
+        config = {
+            "directories": {
+                "log_directory": td,
+                "output_directory": td
+            },
+            "execution_control": {
+                "option": "local"
+            },
+            "classify": {
+                "rev_table": rev_table,
+                "resource_classes": res_classes,
+                "cap_bins": 5
+            },
+            "profiles": {
+                "reeds_table": None,
+                "cf_profiles": cf_profiles,
+                "n_profiles": 3,
+                "reg_cols": ['region', 'class']
+            },
+            "timeslices": {
+                "profiles": None,
+                "timeslices": timeslice_map
+            }
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        # Check Classificication Tables
+        name = os.path.basename(td)
+        path = os.path.join(td,
+                            '{}_ReEDS_supply_curve_raw_full.csv'.format(name))
+        test_table_full = pd.read_csv(path)
+        assert_frame_equal(truth_table_full, test_table_full,
+                           check_dtype=False, check_categorical=False)
+        path = os.path.join(td, '{}_ReEDS_supply_curve_raw.csv'.format(name))
+        test_table = pd.read_csv(path)
+        assert_frame_equal(truth_table, test_table, check_dtype=False,
+                           check_categorical=False)
+        path = os.path.join(td, '{}_ReEDS_supply_curve.csv'.format(name))
+        test_agg = pd.read_csv(path).fillna(0)
+        assert_frame_equal(truth_agg, test_agg, check_dtype=False,
+                           check_categorical=False)
+
+        # Check Profiles
+        path = os.path.join(td, '{}_ReEDS_hourly_cf.h5'.format(name))
+        test_profiles = extract_profiles(path)
+        for k, v in truth_profiles[0].items():
+            msg = 'Representative profiles {} do not match!'.format(k)
+            assert np.allclose(v, test_profiles[0][k]), msg
+
+        assert_frame_equal(truth_profiles[1], test_profiles[1],
+                           check_dtype=False,
+                           check_categorical=False)
+
+        msg = 'time_index does not match!'
+        assert truth_profiles[2].equals(test_profiles[2]), msg
+
+        # Check timeslices
+        path = os.path.join(td, '{}_ReEDS_performance.csv'.format(name))
+        test_stats = pd.read_csv(path)
+        assert_frame_equal(truth_stats, test_stats, check_dtype=False,
+                           check_categorical=False)
+
+        path = os.path.join(td, '{}_ReEDS_hourly_cf.h5'.format(name))
+        _, truth_coeffs = ReedsTimeslices.run(path, timeslice_map,
+                                              max_workers=1,
+                                              legacy_format=False,)
+        path = os.path.join(td, '{}_ReEDS_correlations.h5'.format(name))
+        with Resource(path) as out:
+            print(out.datasets)
+            print(truth_coeffs.keys())
+            meta = out.meta
+            for k, v in truth_coeffs.items():
+                dset = 'timeslice_{}'.format(k)
+                data = out[dset]
+                assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
+                assert len(meta) == len(data)
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

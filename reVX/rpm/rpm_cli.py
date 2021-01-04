@@ -21,8 +21,9 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option('--name', '-n', default='ReEDS', type=STR,
-              help='Job name. Default is "ReEDS".')
+@click.option('--name', '-n', default='RPM', type=STR,
+              show_default=True,
+              help='Job name. Default is "RPM".')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
@@ -76,7 +77,9 @@ def run_local(ctx, config):
     if config.cluster is not None:
         ctx.invoke(cluster,
                    rpm_meta=config.cluster.rpm_meta,
-                   region_col=config.classify.region_col)
+                   region_col=config.cluster.region_col,
+                   dist_rank_filter=config.cluster.dist_rank_filter,
+                   contiguous_filter=config.cluster.contiguous_filter)
 
     if config.rep_profiles is not None:
         ctx.invoke(rep_profiles,
@@ -122,9 +125,10 @@ def from_config(ctx, config, verbose):
               type=click.Path(exists=True),
               help=('Path to reV .h5 file containing desired capacity factor '
                     'profiles'))
-@click.option('--log_dir', '-log', default=None, type=STR,
+@click.option('--log_dir', '-log', default=None, type=STR, show_default=True,
               help='Directory to dump log files. Default is out_dir.')
 @click.option('--max_workers', '-mw', type=INT, default=None,
+              show_default=True,
               help=('Number of parallel workers. 1 will run serial, '
                     'None will use all available.'))
 @click.option('--verbose', '-v', is_flag=True,
@@ -145,7 +149,7 @@ def local(ctx, out_dir, cf_profiles, log_dir, max_workers, verbose):
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
 
-    log_modules = [__name__, 'reVX', 'reVX.rpm', 'reV', 'reV.rep_profiles']
+    log_modules = ['reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
     logger.info('Running reV to RPM pipeline\n'
@@ -159,9 +163,16 @@ def local(ctx, out_dir, cf_profiles, log_dir, max_workers, verbose):
 @click.option('--rpm_meta', '-m', required=True, type=click.Path(exists=True),
               help='.csv or .json containing the RPM meta data')
 @click.option('--region_col', '-reg', type=str, default=None,
+              show_default=True,
               help='The meta-data field to map RPM regions to')
+@click.option('--dist_rank_filter', '-drf', is_flag=True,
+              help=('Re-cluster data by minimizing the sum of the: '
+                    'distance between each point and each cluster centroid'))
+@click.option('--contiguous_filter', '-cf', is_flag=True,
+              help=('Flag to re-classify clusters by making contigous cluster '
+                    'polygons'))
 @click.pass_context
-def cluster(ctx, rpm_meta, region_col):
+def cluster(ctx, rpm_meta, region_col, dist_rank_filter, contiguous_filter):
     """
     Cluster RPM Regions
     """
@@ -173,7 +184,9 @@ def cluster(ctx, rpm_meta, region_col):
     logger.info('Clustering regions based on:\n{}'.format(rpm_meta))
     rpm_clusters = rpm_cm.run_clusters(cf_profiles, rpm_meta, out_dir,
                                        job_tag=name, rpm_region_col=region_col,
-                                       max_workers=max_workers)
+                                       max_workers=max_workers,
+                                       dist_rank_filter=dist_rank_filter,
+                                       contiguous_filter=contiguous_filter)
 
     logger.info('reVX - RPM clustering methods complete.')
     ctx.obj['RPM_CLUSTERS'] = rpm_clusters
@@ -184,23 +197,25 @@ def cluster(ctx, rpm_meta, region_col):
               help=('Path to pre-existing RPM cluster results .csv with '
                     '(gid, gen_gid, cluster_id, rank)'))
 @click.option('--exclusions', '-excl', default=None,
-              type=click.Path(exists=True),
+              type=click.Path(exists=True), show_default=True,
               help=('Filepath to exclusions data (must match the techmap grid)'
                     ' None will not apply exclusions.'))
-@click.option('--excl_dict', '-exd', default=None, type=STR,
+@click.option('--excl_dict', '-exd', default=None, type=STR, show_default=True,
               help='String representation of a dictionary of exclusion '
               'LayerMask arguments {layer: {kwarg: value}} where layer is a '
               'dataset in excl_fpath and kwarg can be "inclusion_range", '
               '"exclude_values", "include_values", "use_as_weights", '
               'or "weight".')
 @click.option('--techmap_dset', '-tmd', default=None, type=STR,
+              show_default=True,
               help=('Dataset name in the techmap file containing the '
                     'exclusions-to-resource mapping data.'))
-@click.option('--trg', '-trg', default=None, type=STR,
+@click.option('--trg', '-trg', default=None, type=STR, show_default=True,
               help=('Filepath to TRG LCOE bins.'))
-@click.option('--n_profiles', '-np', type=INT, default=1,
+@click.option('--n_profiles', '-np', type=INT, default=1, show_default=True,
               help=('Number of profiles per cluster to export.'))
 @click.option('--forecast_fpath', '-fcst', type=STR, default=None,
+              show_default=True,
               help=('reV generation output file for forecast data. If this is '
                     'input, profiles will be taken from forecast file instead '
                     'of the cf file, based on a NN mapping.'))
@@ -281,6 +296,12 @@ def get_node_cmd(config):
                    '-m {}'.format(SLURM.s(config.cluster.rpm_meta)),
                    '-reg {}'.format(SLURM.s(config.cluster.region_col)),
                    ]
+
+        if config.cluster.dist_rank_filter:
+            cluster.append('-drf')
+
+        if config.cluster.contiguous_filter:
+            cluster.append('-cf')
 
         args.extend(cluster)
 

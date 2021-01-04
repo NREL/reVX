@@ -24,7 +24,7 @@ class RPMConfig(AnalysisConfig):
     @property
     def rep_profiles(self):
         """Get the profiles input group in the config dict."""
-        profiles = self.get('profiles', None)
+        profiles = self.get('rep_profiles', None)
         if profiles is not None:
             profiles = RepProfilesConfigGroup(profiles)
 
@@ -59,6 +59,20 @@ class ClusterConfigGroup(BaseConfig):
     def region_col(self):
         """The meta-data field to map RPM regions to."""
         return self.get('region_col', None)
+
+    @property
+    def dist_rank_filter(self):
+        """
+        Dist rank filter flag, default True
+        """
+        return bool(self.get('dist_rank_filter', True))
+
+    @property
+    def contiguous_filter(self):
+        """
+        Contiguous filter flag, default True
+        """
+        return bool(self.get('contiguous_filter', True))
 
 
 class RepProfilesConfigGroup(BaseConfig):

@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
               help='Capacity factor resource year.')
 @click.option('--build_years', '-by', required=True, type=INTLIST,
               help='REEDS build years to aggregate profiles for.')
-@click.option('--scenario', '-s', required=False, default=None, type=STR,
+@click.option('--scenario', '-s', default=None, type=STR, show_default=True,
               help='Optional filter to run just one scenario from job input.')
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
@@ -50,7 +50,7 @@ def main(ctx, name, job_input, out_dir, reeds_dir, cf_years, build_years,
     ctx.obj['VERBOSE'] = verbose
 
     if ctx.invoked_subcommand is None:
-        init_mult(name, out_dir, modules=[__name__, 'reVX.plexos'],
+        init_mult(name, out_dir, modules=['reVX', 'reV', 'rex'],
                   verbose=verbose)
         logger.info('Running reV to PLEXOS pipeline using job input: {}'
                     .format(job_input))
@@ -86,14 +86,15 @@ def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_year,
 @main.command()
 @click.option('--alloc', '-a', required=True, type=STR,
               help='Eagle allocation account name.')
-@click.option('--memory', '-mem', default=90, type=INT,
+@click.option('--memory', '-mem', default=90, type=INT, show_default=True,
               help='Eagle node memory request in GB. Default is 90')
-@click.option('--walltime', '-wt', default=1.0, type=float,
+@click.option('--walltime', '-wt', default=1.0, type=float, show_default=True,
               help='Eagle walltime request in hours. Default is 1.0')
-@click.option('--feature', '-l', default=None, type=STR,
+@click.option('--feature', '-l', default=None, type=STR, show_default=True,
               help=('Additional flags for SLURM job. Format is "--qos=high" '
                     'or "--depend=[state:job_id]". Default is None.'))
 @click.option('--stdout_path', '-sout', default=None, type=STR,
+              show_default=True,
               help='Subprocess standard output path. Default is in out_dir.')
 @click.pass_context
 def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
