@@ -8,7 +8,7 @@ import click
 import logging
 import os
 
-from rex.utilities.loggers import init_logger
+from rex.utilities.loggers import init_mult
 from rex.utilities.cli_dtypes import STR, FLOAT, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
@@ -39,17 +39,8 @@ def main(ctx, name, log_dir, verbose):
     ctx.ensure_object(dict)
     ctx.obj['NAME'] = name
 
-    if log_dir is not None:
-        log_file = os.path.join(log_dir, '{}.log'.format(name))
-    else:
-        log_file = None
-
-    if verbose:
-        log_level = 'DEBUG'
-    else:
-        log_level = 'INFO'
-
-    init_logger('reVX', log_file=log_file, log_level=log_level)
+    log_modules = ['reVX', 'reV', 'rex']
+    init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
 
 @main.command()
