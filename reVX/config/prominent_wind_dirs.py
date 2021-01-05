@@ -6,10 +6,10 @@ reVX ProminentWindDirections Configuration
 from reV.config.base_analysis_config import AnalysisConfig
 
 
-class WindDirsConfig(AnalysisConfig):
+class ProminentWindDirsConfig(AnalysisConfig):
     """Config framework for prominent wind direction calculation"""
 
-    NAME = 'WindDirs'
+    NAME = 'ProminentWindDirs'
     REQUIREMENTS = ('powerrose_h5_fpath', 'excl_fpath')
 
     def __init__(self, config):

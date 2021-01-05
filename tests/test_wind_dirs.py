@@ -16,8 +16,8 @@ from rex.utilities.loggers import LOGGERS
 from reV.supply_curve.points import SupplyCurveExtent
 
 from reVX import TESTDATADIR
-from reVX.wind_dirs.wind_dirs import WindDirections
-from reVX.wind_dirs.wind_dirs_cli import main
+from reVX.wind_dirs.prominent_wind_dirs import ProminentWindDirections
+from reVX.wind_dirs.prominent_wind_dirs_cli import pwd_main
 
 PR_H5 = os.path.join(TESTDATADIR, 'wind_dirs', 'ri_100_wtk_powerrose.h5')
 EXCL_H5 = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_exclusions.h5')
@@ -48,7 +48,8 @@ def test_gid_row_col_mapping():
 
     assert np.allclose(test_gids, gids), 'gids do not match'
 
-    test_rows, test_cols = WindDirections._get_row_col_inds(gids, shape[1])
+    test_rows, test_cols = \
+        ProminentWindDirections._get_row_col_inds(gids, shape[1])
 
     assert np.allclose(test_rows, rows), 'rows do not match'
     assert np.allclose(test_cols, cols), 'rows do not match'
@@ -60,8 +61,8 @@ def test_prominent_wind_directions():
     """
     baseline = pd.read_csv(BASELINE)
 
-    test = WindDirections.run(PR_H5, EXCL_H5, resolution=64,
-                              chunk_point_len=10)
+    test = ProminentWindDirections.run(PR_H5, EXCL_H5, resolution=64,
+                                       chunk_point_len=10)
 
     for c in test:
         for c in ['source_gids', 'gid_counts']:
@@ -70,9 +71,9 @@ def test_prominent_wind_directions():
     assert_frame_equal(baseline, test, check_dtype=False)
 
 
-def test_cli(runner):
+def test_prominent_wind_dirs_cli(runner):
     """
-    Test CLI
+    Test ProminentWindDirections CLI
     """
 
     with tempfile.TemporaryDirectory() as td:
@@ -93,8 +94,8 @@ def test_cli(runner):
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(pwd_main, ['from-config',
+                                          '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg

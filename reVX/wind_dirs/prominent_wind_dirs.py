@@ -13,7 +13,7 @@ from reV.supply_curve.points import SupplyCurveExtent
 logger = logging.getLogger(__name__)
 
 
-class WindDirections(Aggregation):
+class ProminentWindDirections(Aggregation):
     """
     Aggregate PowerRose to Supply Curve points and sort directions in order
     of prominence. Then convert to equivalent sc_point_gid
