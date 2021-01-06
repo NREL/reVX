@@ -15,7 +15,7 @@ class MeanWindDirections(Aggregation):
     Then convert to equivalent sc_point_gid
     """
 
-    def __init__(self, res_h5_fpath, excl_fpath, res_dsets,
+    def __init__(self, res_h5_fpath, excl_fpath, wdir_dsets,
                  tm_dset='techmap_wtk', excl_dict=None,
                  area_filter_kernel='queen', min_area=None,
                  check_excl_layers=False, resolution=128, excl_area=None):
@@ -26,7 +26,7 @@ class MeanWindDirections(Aggregation):
             Filepath to .h5 file containing wind direction data
         excl_fpath : str
             Filepath to exclusions h5 with techmap dataset.
-        res_dset : str | list
+        wdir_dsets : str | list
             Wind direction dataset to average
         tm_dset : str, optional
             Dataset name in the techmap file containing the
@@ -51,17 +51,17 @@ class MeanWindDirections(Aggregation):
             from the profile transform attribute in excl_fpath,
             by default None
         """
-        if isinstance(res_dsets, str):
-            res_dsets = [res_dsets]
+        if isinstance(wdir_dsets, str):
+            wdir_dsets = [wdir_dsets]
 
-        for dset in res_dsets:
+        for dset in wdir_dsets:
             if not dset.startswith('winddirection'):
                 msg = ('{} is not a valid wind direction dataset!'
                        .format(dset))
                 logger.error(msg)
                 raise ValueError(msg)
 
-        super().__init__(excl_fpath, res_h5_fpath, tm_dset, *res_dsets,
+        super().__init__(excl_fpath, res_h5_fpath, tm_dset, *wdir_dsets,
                          excl_dict=excl_dict,
                          area_filter_kernel=area_filter_kernel,
                          min_area=min_area,
@@ -92,7 +92,7 @@ class MeanWindDirections(Aggregation):
         return agg
 
     @classmethod
-    def run(cls, res_h5_fpath, excl_fpath, res_dsets,
+    def run(cls, res_h5_fpath, excl_fpath, wdir_dsets,
             tm_dset='techmap_wtk', excl_dict=None,
             area_filter_kernel='queen', min_area=None,
             check_excl_layers=False, resolution=128, excl_area=None,
@@ -107,7 +107,7 @@ class MeanWindDirections(Aggregation):
             Filepath to .h5 file containing wind direction data
         excl_fpath : str
             Filepath to exclusions h5 with techmap dataset.
-        res_dset : str | list
+        wdir_dsets : str | list
             Wind direction dataset to average
         tm_dset : str, optional
             Dataset name in the techmap file containing the
@@ -145,7 +145,7 @@ class MeanWindDirections(Aggregation):
         agg : dict
             Aggregated values for each aggregation dataset
         """
-        wdir = cls(res_h5_fpath, excl_fpath, res_dsets, tm_dset=tm_dset,
+        wdir = cls(res_h5_fpath, excl_fpath, wdir_dsets, tm_dset=tm_dset,
                    excl_dict=excl_dict,
                    area_filter_kernel=area_filter_kernel,
                    min_area=min_area,

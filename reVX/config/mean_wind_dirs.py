@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-reVX ProminentWindDirections Configuration
+reVX MeanWindDirections Configuration
 """
 
 from reV.config.base_analysis_config import AnalysisConfig
 
 
-class ProminentWindDirsConfig(AnalysisConfig):
-    """Config framework for prominent wind direction calculation"""
+class MeanWindDirsConfig(AnalysisConfig):
+    """Config framework for mean wind direction calculation"""
 
-    NAME = 'ProminentWindDirs'
-    REQUIREMENTS = ('powerrose_h5_fpath', 'excl_fpath')
+    NAME = 'meanWindDirs'
+    REQUIREMENTS = ('res_h5_fpath', 'excl_fpath', 'wdir_dsets')
 
     def __init__(self, config):
         """
@@ -20,15 +20,15 @@ class ProminentWindDirsConfig(AnalysisConfig):
             Dictionary with pre-extracted config input group.
         """
         super().__init__(config)
-        self._default_agg_dset = 'powerrose_100m'
         self._default_tm_dset = 'techmap_wtk'
         self._default_resolution = 128
         self._default_chunk_point_len = 1000
+        self._default_area_filter_kernel = 'queen'
 
     @property
-    def powerrose_h5_fpath(self):
-        """Get the powerrose .h5 file path (required)."""
-        return self['powerrose_h5_fpath']
+    def res_h5_fpath(self):
+        """Get the resource .h5 file path (required)."""
+        return self['res_h5_fpath']
 
     @property
     def excl_fpath(self):
@@ -36,14 +36,19 @@ class ProminentWindDirsConfig(AnalysisConfig):
         return self['excl_fpath']
 
     @property
-    def agg_dset(self):
-        """Get the aggregation dataset name."""
-        return self.get('agg_dset', self._default_agg_dset)
+    def wdir_dsets(self):
+        """Get the  dataset name."""
+        return self['wdir_dsets']
 
     @property
     def tm_dset(self):
         """Get the techmap dataset name."""
         return self.get('tm_dset', self._default_tm_dset)
+
+    @property
+    def excl_dict(self):
+        """Get the exclusions dictionary"""
+        return self.get('excl_dict', None)
 
     @property
     def resolution(self):
@@ -54,6 +59,21 @@ class ProminentWindDirsConfig(AnalysisConfig):
     def excl_area(self):
         """Get the exclusion pixel area in km2"""
         return self.get('excl_area', None)
+
+    @property
+    def area_filter_kernel(self):
+        """Get the minimum area filter kernel name ('queen' or 'rook')."""
+        return self.get('area_filter_kernel', self._default_area_filter_kernel)
+
+    @property
+    def min_area(self):
+        """Get the minimum area filter minimum area in km2."""
+        return self.get('min_area', None)
+
+    @property
+    def check_excl_layers(self):
+        """Get the check_excl_layers flag."""
+        return self.get('check_excl_layers', False)
 
     @property
     def max_workers(self):
