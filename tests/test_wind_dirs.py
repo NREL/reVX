@@ -17,7 +17,7 @@ from reV.supply_curve.points import SupplyCurveExtent
 
 from reVX import TESTDATADIR
 from reVX.wind_dirs.prominent_wind_dirs import ProminentWindDirections
-from reVX.wind_dirs.prominent_wind_dirs_cli import pwd_main
+from reVX.wind_dirs.prominent_wind_dirs_cli import main
 
 PR_H5 = os.path.join(TESTDATADIR, 'wind_dirs', 'ri_100_wtk_powerrose.h5')
 EXCL_H5 = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_exclusions.h5')
@@ -71,7 +71,7 @@ def test_prominent_wind_directions():
     assert_frame_equal(baseline, test, check_dtype=False)
 
 
-def test_prominent_wind_dirs_cli(runner):
+def test_cli(runner):
     """
     Test ProminentWindDirections CLI
     """
@@ -94,8 +94,8 @@ def test_prominent_wind_dirs_cli(runner):
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(pwd_main, ['from-config',
-                                          '-c', config_path])
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg

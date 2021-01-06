@@ -16,7 +16,9 @@ class MeanWindDirections(Aggregation):
     """
 
     def __init__(self, res_h5_fpath, excl_fpath, res_dsets,
-                 tm_dset='techmap_wtk', resolution=128, excl_area=None):
+                 tm_dset='techmap_wtk', excl_dict=None,
+                 area_filter_kernel='queen', min_area=None,
+                 check_excl_layers=False, resolution=128, excl_area=None):
         """
         Parameters
         ----------
@@ -30,24 +32,40 @@ class MeanWindDirections(Aggregation):
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data,
             by default 'techmap_wtk'
-        resolution : int, optional
-            SC resolution, must be input in combination with gid. Prefered
-            option is to use the row/col slices to define the SC point instead,
+        excl_dict : dict | None, optional
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
+            by default None
+        area_filter_kernel : str, optional
+            Contiguous area filter method to use on final exclusions mask,
+            by default 'queen'
+        min_area : float | None, optional
+            Minimum required contiguous area filter in sq-km, by default None
+        check_excl_layers : bool, optional
+            Run a pre-flight check on each exclusion layer to ensure they
+            contain un-excluded values, by default False
+        resolution : int | None, optional
+            SC resolution, must be input in combination with gid,
             by default 128
-        excl_area : float | None
+        excl_area : float | None, optional
             Area of an exclusion pixel in km2. None will try to infer the area
-            from the profile transform attribute in excl_fpath.
+            from the profile transform attribute in excl_fpath,
+            by default None
         """
         if isinstance(res_dsets, str):
             res_dsets = [res_dsets]
 
         for dset in res_dsets:
-            if not dset.startswith('winddirectoin'):
-                msg = ('{} is not a valid wind direction dataset!')
+            if not dset.startswith('winddirection'):
+                msg = ('{} is not a valid wind direction dataset!'
+                       .format(dset))
                 logger.error(msg)
                 raise ValueError(msg)
 
         super().__init__(excl_fpath, res_h5_fpath, tm_dset, *res_dsets,
+                         excl_dict=excl_dict,
+                         area_filter_kernel=area_filter_kernel,
+                         min_area=min_area,
+                         check_excl_layers=check_excl_layers,
                          resolution=resolution, excl_area=excl_area)
 
     def aggregate(self, max_workers=None, chunk_point_len=1000):
@@ -75,7 +93,9 @@ class MeanWindDirections(Aggregation):
 
     @classmethod
     def run(cls, res_h5_fpath, excl_fpath, res_dsets,
-            tm_dset='techmap_wtk', resolution=128, excl_area=None,
+            tm_dset='techmap_wtk', excl_dict=None,
+            area_filter_kernel='queen', min_area=None,
+            check_excl_layers=False, resolution=128, excl_area=None,
             max_workers=None, chunk_point_len=1000, out_fpath=None):
         """
         Aggregate powerrose to supply curve points, find neighboring supply
@@ -93,13 +113,24 @@ class MeanWindDirections(Aggregation):
             Dataset name in the techmap file containing the
             exclusions-to-resource mapping data,
             by default 'techmap_wtk'
-        resolution : int, optional
-            SC resolution, must be input in combination with gid. Prefered
-            option is to use the row/col slices to define the SC point instead,
+        excl_dict : dict | None, optional
+            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}
+            by default None
+        area_filter_kernel : str, optional
+            Contiguous area filter method to use on final exclusions mask,
+            by default 'queen'
+        min_area : float | None, optional
+            Minimum required contiguous area filter in sq-km, by default None
+        check_excl_layers : bool, optional
+            Run a pre-flight check on each exclusion layer to ensure they
+            contain un-excluded values, by default False
+        resolution : int | None, optional
+            SC resolution, must be input in combination with gid,
             by default 128
-        excl_area : float | None
+        excl_area : float | None, optional
             Area of an exclusion pixel in km2. None will try to infer the area
-            from the profile transform attribute in excl_fpath.
+            from the profile transform attribute in excl_fpath,
+            by default None
         max_workers : int | None, optional
             Number of cores to run summary on. None is all
             available cpus, by default None
@@ -115,6 +146,10 @@ class MeanWindDirections(Aggregation):
             Aggregated values for each aggregation dataset
         """
         wdir = cls(res_h5_fpath, excl_fpath, res_dsets, tm_dset=tm_dset,
+                   excl_dict=excl_dict,
+                   area_filter_kernel=area_filter_kernel,
+                   min_area=min_area,
+                   check_excl_layers=check_excl_layers,
                    resolution=resolution, excl_area=excl_area)
 
         agg = wdir.aggregate(max_workers=max_workers,
