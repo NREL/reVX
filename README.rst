@@ -98,7 +98,6 @@ Option 2: Clone repo (recommended for developers)
     2) enter github password
 
 2. Create ``reVX`` environment and install package
-
     1) Create a conda env: ``conda create -n revx``
     2) Run the command: ``conda activate revx``
     3) cd into the repo cloned in 1.
