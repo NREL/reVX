@@ -11,17 +11,17 @@ from rex.utilities.cli_dtypes import STR, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reVX.config.wind_dirs import WindDirsConfig
-from reVX.wind_dirs.wind_dirs import WindDirections
+from reVX.config.prominent_wind_dirs import ProminentWindDirsConfig
+from reVX.wind_dirs.prominent_wind_dirs import ProminentWindDirections
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option('--name', '-n', default='WindDirs', type=STR,
+@click.option('--name', '-n', default='ProminentWindDirs', type=STR,
               show_default=True,
-              help='Job name. Default is "WindDirs".')
+              help='Job name. Default is "ProminentWindDirs".')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
@@ -37,9 +37,9 @@ def main(ctx, name, verbose):
 @main.command()
 def valid_config_keys():
     """
-    Echo the valid Wind Dirs config keys
+    Echo the valid Prominent Wind Dirs config keys
     """
-    click.echo(', '.join(get_class_properties(WindDirsConfig)))
+    click.echo(', '.join(get_class_properties(ProminentWindDirsConfig)))
 
 
 @main.command()
@@ -52,14 +52,14 @@ def version():
 
 def run_local(ctx, config):
     """
-    Run WindDirections locally using config
+    Run ProminentWindDirections locally using config
 
     Parameters
     ----------
     ctx : click.ctx
         click ctx object
-    config : reVX.config.wind_dirs.WindDirsConfig
-        Wind Directions config object.
+    config : reVX.config.prominent_wind_dirs.ProminentWindDirsConfig
+        Prominent Wind Directions config object.
     """
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
@@ -79,7 +79,7 @@ def run_local(ctx, config):
 @main.command()
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
-              help='Filepath to WindDirections config json file.')
+              help='Filepath to ProminentWindDirections config json file.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
@@ -88,7 +88,7 @@ def from_config(ctx, config, verbose):
     Run prominent wind directions from a config.
     """
 
-    config = WindDirsConfig(config)
+    config = ProminentWindDirsConfig(config)
 
     if 'VERBOSE' in ctx.obj:
         if any((ctx.obj['VERBOSE'], verbose)):
@@ -166,15 +166,15 @@ def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
     log_modules = ['reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
-    logger.info('Aggregating Wind Directions \n'
+    logger.info('Aggregating Prominent Wind Directions \n'
                 'Outputs to be stored in: {}'.format(out_dir))
 
-    WindDirections.run(powerrose_h5_fpath, excl_fpath,
-                       agg_dset=agg_dset, tm_dset=tm_dset,
-                       resolution=resolution, excl_area=excl_area,
-                       max_workers=max_workers,
-                       chunk_point_len=chunk_point_len,
-                       out_fpath=out_fpath)
+    ProminentWindDirections.run(powerrose_h5_fpath, excl_fpath,
+                                agg_dset=agg_dset, tm_dset=tm_dset,
+                                resolution=resolution, excl_area=excl_area,
+                                max_workers=max_workers,
+                                chunk_point_len=chunk_point_len,
+                                out_fpath=out_fpath)
 
 
 def get_node_cmd(config):
@@ -183,8 +183,8 @@ def get_node_cmd(config):
 
     Parameters
     ----------
-    config : reVX.config.wind_dirs.WindDirsConfig
-        Wind Directions config object.
+    config : reVX.config.prominent_wind_dirs.ProminentWindDirsConfig
+        Prominent Wind Directions config object.
 
     Returns
     -------
@@ -209,7 +209,8 @@ def get_node_cmd(config):
     if config.log_level == logging.DEBUG:
         args.append('-v')
 
-    cmd = 'python -m reVX.wind_dirs.wind_dirs_cli {}'.format(' '.join(args))
+    cmd = ('python -m reVX.wind_dirs.prominent_wind_dirs_cli {}'
+           .format(' '.join(args)))
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
 
     return cmd
@@ -221,8 +222,8 @@ def eagle(config):
 
     Parameters
     ----------
-    config : reVX.config.wind_dirs.WindDirsConfig
-        Wind Directions config object.
+    config : reVX.config.prominent_wind_dirs.ProminentWindDirsConfig
+        Prominent Wind Directions config object.
     """
 
     cmd = get_node_cmd(config)
@@ -232,7 +233,7 @@ def eagle(config):
 
     slurm_manager = SLURM()
 
-    logger.info('Running wind directions computation on Eagle with '
+    logger.info('Running prominent wind directions computation on Eagle with '
                 'node name "{}"'.format(name))
     out = slurm_manager.sbatch(cmd,
                                alloc=config.execution_control.alloc,
