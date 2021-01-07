@@ -42,8 +42,8 @@ reVX command line tools
 - `wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.wind_dirs_cli.html#wind-dirs>`_
 - `wind-setbacks <https://nrel.github.io/reVX/reVX/reVX.wind_setbacks.wind_setbacks_cli.html#wind-setbacks>`_
 
-Using Eagle Env / Module
-========================
+Using Eagle Env
+===============
 
 If you would like to run reVX on Eagle (NREL's HPC) you can use a pre-compiled
 conda env:
@@ -58,14 +58,14 @@ or
 
     source activate /shared-projects/rev/modulefiles/conda_env
 
-or module:
+.. or module:
 
-.. code-block:: bash
+.. .. code-block:: bash
 
-    module use /shared-projects/rev/modulefiles
-    module load reVX
+..     module use /shared-projects/rev/modulefiles
+..     module load reVX
 
-**NOTE: Loading the reVX module can take several minutes**
+.. **NOTE: Loading the reVX module can take several minutes**
 
 Installing reVX
 =================
@@ -97,38 +97,19 @@ Option 2: Clone repo (recommended for developers)
     1) enter github username
     2) enter github password
 
-2. Install reVX environment and modules (using conda)
-    1) cd into reVX repo cloned above
-    2) cd into ``bin/$OS/``
-    3) run the command: ``conda env create -f revx.yml``. If conda can't find
-       any packages, try removing them from the yml file.
+2. Create ``reVX`` environment and install package
 
-    4) run the command: ``conda activate revx``
-    5) prior to running ``pip`` below, make sure branch is correct (install
+    1) Create a conda env: ``conda create -n revx``
+    2) Run the command: ``conda activate revx``
+    3) cd into the repo cloned in 1.
+    5) prior to running ``pip`` below, make sure the branch is correct (install
        from master!)
-
-    6) cd back to the reVX repo (where setup.py is located)
-    7) install pre-commit: ``pre-commit install``
-    8) run ``pip install .`` (or ``pip install -e .`` if running a dev branch
+    6) Install ``reVX`` and its dependencies by running:
+       ``pip install .`` (or ``pip install -e .`` if running a dev branch
        or working on the source code)
 
-3. from home dir, ``git clone https://github.com/NREL/reV.git``
-    1) enter github username
-    2) enter github password
-
-4. Install reV environment and modules (using conda)
-    1) cd into reV repo cloned above
-    2) prior to running ``pip`` below, make sure branch is correct (install
-       from master!)
-
-    3) cd back to the reV repo (where setup.py is located)
-    4) install pre-commit: ``pre-commit install``
-    5) run ``pip install .`` (or ``pip install -e .`` if running a dev branch
-       or working on the source code)
-
-3. Check that reV and reVX were installed successfully
+3. Check that ``reVX`` was installed successfully
     1) From any directory, run the following commands. This should return the
        help pages for the CLI's.
 
         - ``reVX``
-        - ``reV``
