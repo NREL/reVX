@@ -20,7 +20,7 @@ between reV and other renewable energy focused models, for example,
    :start-after: inclusion-intro
 
 .. toctree::
-  :maxdepth: 4
+  :maxdepth: 2
   :caption: Contents:
 
   misc/misc
