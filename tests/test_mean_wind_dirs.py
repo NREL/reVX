@@ -52,7 +52,8 @@ def check_h5(test_h5, baseline_h5):
                     for c in ['source_gids', 'gid_counts']:
                         test[c] = test[c].astype(str)
 
-                    assert_frame_equal(truth, test, check_dtype=False)
+                    assert_frame_equal(truth, test, check_dtype=False,
+                                       rtol=0.0001)
                 elif dset == 'time_index':
                     truth.equals(test)
                 else:
