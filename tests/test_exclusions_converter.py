@@ -148,6 +148,25 @@ def test_geotiff_to_h5(tif):
                 assert true_v == test_v, msg
 
 
+def test_scale():
+    """
+    Test scale_factor
+    """
+    tif = 'ri_srtm_slope.tif'
+    with tempfile.TemporaryDirectory() as td:
+        excl_h5 = os.path.join(td, tif.replace('.tif', '.h5'))
+
+        converter = ExclusionsConverter(excl_h5)
+        layer = tif.split('.')[0]
+        converter.geotiff_to_layer(layer, os.path.join(DIR, tif),
+                                   scale_factor=100, dtype='int16')
+
+        true_values, _ = extract_layer(EXCL_H5, layer)
+        test_values, _ = extract_layer(excl_h5, layer)
+
+        assert np.allclose(true_values, test_values, rtol=0.01, atol=0.01)
+
+
 def test_cli(runner):
     """
     Test CLI

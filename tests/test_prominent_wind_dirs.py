@@ -68,7 +68,7 @@ def test_prominent_wind_directions():
         for c in ['source_gids', 'gid_counts']:
             test[c] = test[c].astype(str)
 
-    assert_frame_equal(baseline, test, check_dtype=False)
+    assert_frame_equal(baseline, test, check_dtype=False, rtol=0.0001)
 
 
 def test_cli(runner):
@@ -109,7 +109,7 @@ def test_cli(runner):
             for c in ['source_gids', 'gid_counts']:
                 test[c] = test[c].astype(str)
 
-    assert_frame_equal(baseline, test, check_dtype=False)
+    assert_frame_equal(baseline, test, check_dtype=False, rtol=0.0001)
 
     LOGGERS.clear()
 

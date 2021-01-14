@@ -12,6 +12,7 @@ from pandas.testing import assert_frame_equal
 import rasterio
 
 from reV.handlers.exclusions import ExclusionLayers
+from reV.handlers.outputs import Outputs
 
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.exceptions import ExclusionsCheckError
@@ -261,7 +262,7 @@ class ExclusionsConverter:
 
     @staticmethod
     def _write_layer(excl_h5, layer, profile, values, chunks=(128, 128),
-                     description=None):
+                     description=None, scale_factor=None):
         """
         Extract given layer from geotiff .tif and write to .h5 file
 
@@ -279,9 +280,12 @@ class ExclusionsConverter:
             Chunk size of dataset in .h5 file
         description : str
             Description of exclusion layer
+        scale_factor : int | float, optional
+            Scale factor to use to scale geotiff data when added to the .h5
+            file, by default None
         """
         if len(chunks) < 3:
-            chunks = (1,) + chunks
+            chunks = (1, ) + chunks
 
         with h5py.File(excl_h5, mode='a') as f:
             ds = f.create_dataset(layer, shape=values.shape,
@@ -296,10 +300,15 @@ class ExclusionsConverter:
                 logger.debug('\t- Description for {} added:\n{}'
                              .format(layer, description))
 
+            if scale_factor is not None:
+                ds.attrs['scale_factor'] = scale_factor
+                logger.debug('\t- scale_factor for {} added:\n{}'
+                             .format(layer, scale_factor))
+
     @classmethod
     def _geotiff_to_h5(cls, excl_h5, layer, geotiff, chunks=(128, 128),
                        transform_atol=0.01, coord_atol=0.00001,
-                       description=None):
+                       description=None, scale_factor=None, dtype='int16'):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
 
@@ -320,6 +329,12 @@ class ExclusionsConverter:
             geotiff coordinates against previous coordinates.
         description : str
             Description of exclusion layer
+        scale_factor : int | float, optional
+            Scale factor to use to scale geotiff data when added to the .h5
+            file, by default None
+        dtype : str, optional
+            Dtype to save geotiff data as in the .h5 file. Only used when
+            'scale_factor' is not None, by default 'int16'
         """
         logger.debug('\t- {} being extracted from {} and added to {}'
                      .format(layer, geotiff, os.path.basename(excl_h5)))
@@ -328,8 +343,13 @@ class ExclusionsConverter:
             geotiff, excl_h5=excl_h5, chunks=chunks,
             transform_atol=transform_atol, coord_atol=coord_atol)
 
+        if scale_factor is not None:
+            values = Outputs._check_data_dtype(values, dtype,
+                                               scale_factor=scale_factor)
+
         cls._write_layer(excl_h5, layer, profile, values,
-                         chunks=chunks, description=description)
+                         chunks=chunks, description=description,
+                         scale_factor=scale_factor)
 
     @staticmethod
     def _write_geotiff(geotiff, profile, values):
@@ -386,7 +406,8 @@ class ExclusionsConverter:
         return profile, values
 
     def geotiff_to_layer(self, layer, geotiff, transform_atol=0.01,
-                         coord_atol=0.00001, description=None):
+                         coord_atol=0.00001, description=None,
+                         scale_factor=None, dtype='int16'):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
 
@@ -403,6 +424,12 @@ class ExclusionsConverter:
             geotiff coordinates against previous coordinates.
         description : str
             Description of exclusion layer
+        scale_factor : int | float, optional
+            Scale factor to use to scale geotiff data when added to the .h5
+            file, by default None
+        dtype : str, optional
+            Dtype to save geotiff data as in the .h5 file. Only used when
+            'scale_factor' is not None, by default 'int16'
         """
         if not os.path.exists(self._excl_h5):
             self._init_h5(self._excl_h5, geotiff, chunks=self._chunks)
@@ -416,7 +443,9 @@ class ExclusionsConverter:
                             chunks=self._chunks,
                             transform_atol=transform_atol,
                             coord_atol=coord_atol,
-                            description=description)
+                            description=description,
+                            scale_factor=scale_factor,
+                            dtype=dtype)
 
     def layer_to_geotiff(self, layer, geotiff):
         """
@@ -435,7 +464,7 @@ class ExclusionsConverter:
     @classmethod
     def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128),
                      transform_atol=0.01, coord_atol=0.00001,
-                     descriptions=None):
+                     descriptions=None, scale_factors=None):
         """
         Create exclusions .h5 file from provided geotiffs
 
@@ -455,23 +484,39 @@ class ExclusionsConverter:
             geotiff coordinates against previous coordinates.
         descriptions : dict | NoneType
             Descriptions for layers to be writen to .h5
+        scale_factor : dict, optional
+            Scale factors and dtypes to use when scaling given layers,
+            by default None
         """
         if isinstance(layers, list):
-            layers = {os.path.basename(l).split('.')[0]: l
-                      for l in layers}
+            layers = {os.path.basename(lyr).split('.')[0]: lyr
+                      for lyr in layers}
 
         if descriptions is None:
             descriptions = {}
+
+        if scale_factors is None:
+            scale_factors = {}
 
         excls = cls(excl_h5, chunks=chunks)
         logger.info('Creating {}'.format(excl_h5))
         for layer, geotiff in layers.items():
             logger.info('- Transfering {}'.format(layer))
             description = descriptions.get(layer, None)
+            scale = scale_factors.get(layer, None)
+            if scale is not None:
+                scale_factor = scale['scale_factor']
+                dtype = scale['dtype']
+            else:
+                scale_factor = None
+                dtype = None
+
             excls.geotiff_to_layer(layer, geotiff,
                                    transform_atol=transform_atol,
                                    coord_atol=coord_atol,
-                                   description=description)
+                                   description=description,
+                                   scale_factor=scale_factor,
+                                   dtype=dtype)
 
     @classmethod
     def extract_layers(cls, excl_h5, layers, chunks=(128, 128),
