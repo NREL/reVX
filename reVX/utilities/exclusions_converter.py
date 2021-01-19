@@ -152,7 +152,7 @@ class ExclusionsConverter:
 
     @staticmethod
     def _check_geotiff(excl_h5, geotiff, chunks=(128, 128),
-                       transform_atol=0.01, coord_atol=0.00001):
+                       transform_atol=0.01, coord_atol=0.001):
         """
         Compare geotiff with exclusion layer, raise any errors
 
@@ -224,7 +224,7 @@ class ExclusionsConverter:
 
     @classmethod
     def _parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
-                    transform_atol=0.01, coord_atol=0.00001):
+                    transform_atol=0.01, coord_atol=0.001):
         """
         Extract exclusion layer from given geotiff, compare with excl_h5
         if provided
@@ -307,7 +307,7 @@ class ExclusionsConverter:
 
     @classmethod
     def _geotiff_to_h5(cls, excl_h5, layer, geotiff, chunks=(128, 128),
-                       transform_atol=0.01, coord_atol=0.00001,
+                       transform_atol=0.01, coord_atol=0.001,
                        description=None, scale_factor=None, dtype='int16'):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
@@ -406,7 +406,7 @@ class ExclusionsConverter:
         return profile, values
 
     def geotiff_to_layer(self, layer, geotiff, transform_atol=0.01,
-                         coord_atol=0.00001, description=None,
+                         coord_atol=0.001, description=None,
                          scale_factor=None, dtype='int16'):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
@@ -463,7 +463,7 @@ class ExclusionsConverter:
 
     @classmethod
     def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128),
-                     transform_atol=0.01, coord_atol=0.00001,
+                     transform_atol=0.01, coord_atol=0.001,
                      descriptions=None, scale_factors=None):
         """
         Create exclusions .h5 file from provided geotiffs
