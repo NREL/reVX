@@ -238,7 +238,7 @@ class BaseWindSetbacks(ABC):
         return regs
 
     @staticmethod
-    def _get_setback(cnty_regs, tip_height, rotor_diameter):
+    def _get_setback(cnty_regs, hub_height, rotor_diameter):
         """
         Compute the setback distance in meters from the county regulations,
         turbine tip height or rotor diameter
@@ -248,8 +248,9 @@ class BaseWindSetbacks(ABC):
         cnty_regs : pandas.Series
             Pandas Series with wind regulations for a single county / feature
             type
-        tip_height : int | float
-            Turbine tip height, used to compute setbacks from hub-height
+        hub_height : int | float
+            Turbine hub-height, used to compute setbacks from hub-height
+            multiplier regulations and to compute tip-height for tip-height
             multiplier regulations
         rotor_diameter : int | float
             Turbine rotor diameter, used to compute setbacks from
@@ -261,16 +262,21 @@ class BaseWindSetbacks(ABC):
             setback distance in meters, None if the setback "Value Type"
             was not recognized
         """
+        tip_height = hub_height + rotor_diameter / 2
+
         setback_type = cnty_regs['Value Type']
         setback = cnty_regs['Value']
         if setback_type == 'Max-tip Height Multiplier':
             setback *= tip_height
         elif setback_type == 'Rotor-Diameter Multiplier':
             setback *= rotor_diameter
+        elif setback_type == 'Hub-height Multiplier':
+            setback *= hub_height
         elif setback_type != 'Meters':
             msg = ('Cannot create setback for {}, expecting '
                    '"Max-tip Height Multiplier", '
-                   '"Rotor-Diameter Multiplier", or '
+                   '"Rotor-Diameter Multiplier", '
+                   '"Hub-height Multiplier", or '
                    '"Meters", but got {}'
                    .format(cnty_regs['County'], setback_type))
             logger.warning(msg)
@@ -344,7 +350,7 @@ class BaseWindSetbacks(ABC):
 
     @classmethod
     def _compute_local_setbacks(cls, features_fpath, crs, wind_regs,
-                                tip_height, rotor_diameter):
+                                hub_height, rotor_diameter):
         """
         Compute local features setbacks
 
@@ -356,8 +362,8 @@ class BaseWindSetbacks(ABC):
             Coordinate reference system to convert structures geometries into
         wind_regs : pandas.DataFrame
             Wind regulations that define setbacks by county
-        tip_height : float
-            Turbine blade tip height in meters
+        hub_height : float
+            Turbine hub height in meters
         rotor_diameter : float
             Turbine rotor diameter in meters
 
@@ -371,7 +377,7 @@ class BaseWindSetbacks(ABC):
         setbacks = []
         for i in range(len(wind_regs)):
             cnty = wind_regs.iloc[[i]]
-            setback = cls._get_setback(cnty.iloc[0], tip_height,
+            setback = cls._get_setback(cnty.iloc[0], hub_height,
                                        rotor_diameter)
             if setback is not None:
                 logger.debug('- Computing setbacks for county FIPS {}'
@@ -560,7 +566,7 @@ class BaseWindSetbacks(ABC):
                         features_fpath = features_state_map[state]
                         future = exe.submit(self._compute_local_setbacks,
                                             features_fpath, crs, state_regs,
-                                            self.tip_height,
+                                            self.hub_height,
                                             self.rotor_diameter)
                         futures.append(future)
 
@@ -575,7 +581,7 @@ class BaseWindSetbacks(ABC):
                     features_fpath = features_state_map[state]
                     setbacks.extend(self._compute_local_setbacks(
                         features_fpath, crs, state_regs,
-                        self.tip_height, self.rotor_diameter))
+                        self.hub_height, self.rotor_diameter))
                     logger.debug('Computed setbacks for {} of {} states'
                                  .format((i + 1), len(regs)))
 
@@ -780,9 +786,9 @@ class StructureWindSetbacks(BaseWindSetbacks):
             Geometries for structures in geojson, in exclusion coordinate
             system
         """
-        structures = gpd.read_file(structure_fpath)
+        structures = gpd.read_file(structure_fpath, crs=crs)
 
-        return structures.to_crs(crs)
+        return structures.to_crs(crs=crs)
 
     @classmethod
     def run(cls, excl_h5, structures_dir, layer_name, hub_height,
@@ -915,13 +921,14 @@ class RoadWindSetbacks(BaseWindSetbacks):
             system
         """
         lyr = fiona.listlayers(roads_fpath)[0]
-        roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr)
+        roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr,
+                              crs=crs)
 
-        return roads.to_crs(crs)
+        return roads.to_crs(crs=crs)
 
     @classmethod
     def _compute_local_setbacks(cls, roads_fpath, crs, wind_regs,
-                                tip_height, rotor_diameter):
+                                hub_height, rotor_diameter):
         """
         Compute local road setbacks
 
@@ -933,8 +940,8 @@ class RoadWindSetbacks(BaseWindSetbacks):
             Coordinate reference system to convert structures geometries into
         wind_regs : pandas.DataFrame
             Wind regulations by county
-        tip_height : float
-            Turbine blade tip height in meters
+        hub_height : float
+            Turbine hub height in meters
         rotor_diameter : float
             Turbine rotor diameter in meters
 
@@ -950,7 +957,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         setbacks = []
         for i in range(len(wind_regs)):
             cnty = wind_regs.iloc[i]
-            setback = cls._get_setback(cnty, tip_height,
+            setback = cls._get_setback(cnty, hub_height,
                                        rotor_diameter)
             if setback is not None:
                 logger.debug('- Computing setbacks for county FIPS {}'
@@ -1075,13 +1082,13 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             Geometries for transmission features, in exclusion coordinate
             system
         """
-        trans = gpd.read_file(transmission_fpath)
+        trans = gpd.read_file(transmission_fpath, crs=crs)
 
-        return trans.to_crs(crs)
+        return trans.to_crs(crs=crs)
 
     @classmethod
     def _compute_local_setbacks(cls, features_fpath, crs, cnty,
-                                tip_height, rotor_diameter):
+                                hub_height, rotor_diameter):
         """
         Compute local county setbacks
 
@@ -1093,8 +1100,8 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             Coordinate reference system to convert structures geometries into
         cnty : geopandas.GeoDataFrame
             Wind regulations for a single county
-        tip_height : float
-            Turbine blade tip height in meters
+        hub_height : float
+            Turbine hub height in meters
         rotor_diameter : float
             Turbine rotor diameter in meters
 
@@ -1106,7 +1113,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         features = cls._parse_features(features_fpath, crs)
 
         setbacks = []
-        setback = cls._get_setback(cnty.iloc[0], tip_height, rotor_diameter)
+        setback = cls._get_setback(cnty.iloc[0], hub_height, rotor_diameter)
         if setback is not None:
             # clip the transmission lines to county geometry
             # pylint: disable=assignment-from-no-return
@@ -1168,7 +1175,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
                         cnty = self._regs.iloc[[i]]
                         future = exe.submit(self._compute_local_setbacks,
                                             features_fpath, crs, cnty,
-                                            self.tip_height,
+                                            self.hub_height,
                                             self.rotor_diameter)
                         futures.append(future)
 
@@ -1181,7 +1188,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
                 for i in range(len(self._regs)):
                     cnty = self._regs.iloc[[i]]
                     setbacks.extend(self._compute_local_setbacks(
-                        features_fpath, crs, cnty, self.tip_height,
+                        features_fpath, crs, cnty, self.hub_height,
                         self.rotor_diameter))
                     logger.debug('Computed setbacks for {} of {} states'
                                  .format((i + 1), len(self._regs)))
@@ -1306,6 +1313,6 @@ class RailWindSetbacks(TransmissionWindSetbacks):
             Geometries for rail features, in exclusion coordinate
             system
         """
-        rail = gpd.read_file(rail_fpath)
+        rail = gpd.read_file(rail_fpath, crs=crs)
 
-        return rail.to_crs(crs)
+        return rail.to_crs(crs=crs)
