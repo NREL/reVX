@@ -37,9 +37,9 @@ class DistanceToPorts:
             'dist_to_shore' is a .h5 exclusions file path,
             by default 'dist_to_shore'
         """
-        self._arr, self._lat_lon, self._crs = \
+        self._arr, self._profile, lat_lon = \
             self._parse_arr(dist_to_shore, layer=layer)
-        self._ports = self._parse_ports(ports)
+        self._ports = self._parse_ports(ports, lat_lon)
 
     @property
     def ports(self):
@@ -63,41 +63,6 @@ class DistanceToPorts:
         ndarray
         """
         return self._arr
-
-    @property
-    def lat_lon(self):
-        """
-        Latitude, longitude DataFrame:
-        - latitude
-        - longitude
-        - row
-        - column
-        - offshore
-
-        Returns
-        -------
-        pandas.DataFrame
-        """
-        return self._lat_lon
-
-    @property
-    def offshore_lat_lon(self):
-        """
-        Offshore Latitude, longitude DataFrame:
-        - latitude
-        - longitude
-        - row
-        - column
-        - offshore
-
-        Returns
-        -------
-        pandas.DataFrame
-        """
-        lat_lon = self.lat_lon.copy()
-        lat_lon = lat_lon.loc[lat_lon['offshore']].reset_index(drop=True)
-
-        return lat_lon
 
     @staticmethod
     def _build_lat_lon(lat, lon):
@@ -147,22 +112,22 @@ class DistanceToPorts:
         arr : ndarray
             Cost array with offshore pixels set to 90 (pixel width) and on
             shore pixels set to 9999.
+        profile : dict
+            Offshore layer geotiff profile, contains transform, size, crs, etc.
         lat_lon : pandas.DataFrame
-            Mapping of (lat, lon) to array (row, col) and whether the exclusion
-            pixel is offshore or not
-        crs : str
-            Offshore layer coordinate system, needed to re-project the ports
+            Mapping of offshore pixel coordinates (lat, lon) to array indices
+            (row, col)
         """
         if distance_to_shore.endswith(('.tif', '.tiff')):
             with Geotiff(distance_to_shore) as tif:
-                crs = tif.profile['crs']
+                profile = tif.profile
                 lat, lon = tif.lat_lon
                 arr = tif.values[0]
         elif distance_to_shore.endswith('.h5'):
             hsds = check_res_file(distance_to_shore)[1]
             with ExclusionLayers(distance_to_shore, hsds=hsds) as tif:
                 arr = tif[layer]
-                crs = tif.get_layer_crs(layer)
+                profile = tif.get_layer_profile(layer)
                 lat = tif['latitude']
                 lon = tif['longitude']
 
@@ -171,9 +136,9 @@ class DistanceToPorts:
         arr[~mask] = 9999
 
         lat_lon = cls._build_lat_lon(lat, lon)
-        lat_lon['offshore'] = mask.flatten()
+        lat_lon = lat_lon.loc[mask.flatten()].reset_index(drop=True)
 
-        return arr, lat_lon, crs
+        return arr, profile, lat_lon
 
     @staticmethod
     def _haversine_distance(port_coords, pixel_coords):
@@ -241,7 +206,7 @@ class DistanceToPorts:
 
         return lc_dist.astype('float32')
 
-    def _parse_ports(self, ports):
+    def _parse_ports(self, ports, offshore_lat_lon):
         """
         Load ports and add mapping and distance to nearest offshore pixel
 
@@ -250,6 +215,9 @@ class DistanceToPorts:
         ports : str
             Path to shape file containing ports to compute least cost distance
             to
+        offshore_lat_lon : pandas.DataFrame
+            Mapping of offshore pixel coordinates (lat, lon) to array indices
+            (row, col)
 
         Returns
         -------
@@ -257,16 +225,15 @@ class DistanceToPorts:
             DataFrame of port locations and their mapping to the offshore
             pixels for least cost distance computation
         """
-        ports = gpd.read_file(ports, crs=self._crs)
+        ports = gpd.read_file(ports, crs=self._profile['crs'])
 
-        lat_lons = self.offshore_lat_lon
-        pixel_coords = lat_lons[['latitude', 'longitude']].values
+        pixel_coords = offshore_lat_lon[['latitude', 'longitude']].values
         tree = cKDTree(pixel_coords)  # pylint: disable=not-callable
 
         port_coords = ports[['LATITUDE', 'LONGITUDE']].values
         _, idx = tree.query(port_coords)
 
-        pixels = lat_lons.iloc[idx]
+        pixels = offshore_lat_lon.iloc[idx]
 
         ports['row'] = pixels['row'].values
         ports['col'] = pixels['col'].values
