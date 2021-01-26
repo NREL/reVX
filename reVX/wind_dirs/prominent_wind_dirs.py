@@ -13,6 +13,30 @@ from reV.supply_curve.points import SupplyCurveExtent
 logger = logging.getLogger(__name__)
 
 
+def row_col_indices(sc_point_gids, row_length):
+    """
+    Convert supply curve point gids to row and col indices given row length
+
+    Parameters
+    ----------
+    sc_point_gids : int | list | ndarray
+        Supply curve point gid or list/array of gids
+    row_length : int
+        row length (shape[1])
+
+    Returns
+    -------
+    row : int | list | ndarray
+        row indices
+    col : int | list | ndarray
+        row indices
+    """
+    rows = sc_point_gids // row_length
+    cols = sc_point_gids % row_length
+
+    return rows, cols
+
+
 class ProminentWindDirections(Aggregation):
     """
     Aggregate PowerRose to Supply Curve points and sort directions in order
@@ -72,31 +96,7 @@ class ProminentWindDirections(Aggregation):
         return dir_pos
 
     @staticmethod
-    def _get_row_col_inds(sc_point_gids, row_length):
-        """
-        Convert supply curve point gids to row and col indices given row length
-
-        Parameters
-        ----------
-        sc_point_gids : int | list | ndarray
-            Supply curve point gid or list/array of gids
-        row_length : int
-            row length (shape[1])
-
-        Returns
-        -------
-        row : int | list | ndarray
-            row indices
-        col : int | list | ndarray
-            row indices
-        """
-        rows = sc_point_gids // row_length
-        cols = sc_point_gids % row_length
-
-        return rows, cols
-
-    @classmethod
-    def _compute_neighbors(cls, sc_point_gids, shape):
+    def _compute_neighbors(sc_point_gids, shape):
         """
         Compute neighboring supply curve point gids in following order:
         ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
@@ -113,7 +113,7 @@ class ProminentWindDirections(Aggregation):
         neighbor_gids : ndarray
             Neighboring supply curve point gids
         """
-        rows, cols = cls._get_row_col_inds(sc_point_gids, shape[1])
+        rows, cols = row_col_indices(sc_point_gids, shape[1])
 
         row_shifts = [-1, -1, 0, 1, 1, 1, 0, -1]
         rows = np.expand_dims(rows, axis=1) + row_shifts
