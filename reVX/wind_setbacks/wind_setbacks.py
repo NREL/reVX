@@ -786,9 +786,9 @@ class StructureWindSetbacks(BaseWindSetbacks):
             Geometries for structures in geojson, in exclusion coordinate
             system
         """
-        structures = gpd.read_file(structure_fpath)
+        structures = gpd.read_file(structure_fpath, crs=crs)
 
-        return structures.to_crs(crs)
+        return structures.to_crs(crs=crs)
 
     @classmethod
     def run(cls, excl_h5, structures_dir, layer_name, hub_height,
@@ -921,9 +921,10 @@ class RoadWindSetbacks(BaseWindSetbacks):
             system
         """
         lyr = fiona.listlayers(roads_fpath)[0]
-        roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr)
+        roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr,
+                              crs=crs)
 
-        return roads.to_crs(crs)
+        return roads.to_crs(crs=crs)
 
     @classmethod
     def _compute_local_setbacks(cls, roads_fpath, crs, wind_regs,
@@ -1081,9 +1082,9 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             Geometries for transmission features, in exclusion coordinate
             system
         """
-        trans = gpd.read_file(transmission_fpath)
+        trans = gpd.read_file(transmission_fpath, crs=crs)
 
-        return trans.to_crs(crs)
+        return trans.to_crs(crs=crs)
 
     @classmethod
     def _compute_local_setbacks(cls, features_fpath, crs, cnty,
@@ -1312,6 +1313,6 @@ class RailWindSetbacks(TransmissionWindSetbacks):
             Geometries for rail features, in exclusion coordinate
             system
         """
-        rail = gpd.read_file(rail_fpath)
+        rail = gpd.read_file(rail_fpath, crs=crs)
 
-        return rail.to_crs(crs)
+        return rail.to_crs(crs=crs)
