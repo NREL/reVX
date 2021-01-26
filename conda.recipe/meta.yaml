@@ -23,6 +23,7 @@ requirements:
     - pywavelets
     - rasterio
     - rtree
+    - scikit-image
     - scikit-learn
     - shapely
     - toolz
@@ -38,6 +39,7 @@ requirements:
     - pywavelets
     - rasterio
     - rtree
+    - scikit-image
     - scikit-learn
     - shapely
     - toolz
