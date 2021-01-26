@@ -224,7 +224,7 @@ class ExclusionsConverter:
 
     @classmethod
     def _parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
-                    transform_atol=0.01, coord_atol=0.001):
+                    check_tiff=True, transform_atol=0.01, coord_atol=0.001):
         """
         Extract exclusion layer from given geotiff, compare with excl_h5
         if provided
@@ -233,15 +233,19 @@ class ExclusionsConverter:
         ----------
         geotiff : str
             Path to geotiff file
-        excl_h5 : str
-            Path to .h5 file containing exclusion layers
-        chunks : tuple
-            Chunk size of exclusions in Geotiff
-        transform_atol : float
-            Absolute tolerance parameter when comparing geotiff transform data.
-        coord_atol : float
+        excl_h5 : str, optional
+            Path to .h5 file containing exclusion layers, by default None
+        chunks : tuple, optional
+            Chunk size of exclusions in Geotiff, by default (128, 128)
+        check_tiff : bool, optional
+            Flag to check tiff profile and coordinates against exclusion .h5
+            profile and coordinates, by default True
+        transform_atol : float, optional
+            Absolute tolerance parameter when comparing geotiff transform data,
+            by default 0.01
+        coord_atol : float, optional
             Absolute tolerance parameter when comparing new un-projected
-            geotiff coordinates against previous coordinates.
+            geotiff coordinates against previous coordinates, by default 0.001
 
         Returns
         -------
@@ -250,7 +254,7 @@ class ExclusionsConverter:
         values : ndarray
             Geotiff data
         """
-        if excl_h5 is not None:
+        if excl_h5 is not None and check_tiff:
             cls._check_geotiff(excl_h5, geotiff, chunks=chunks,
                                transform_atol=transform_atol,
                                coord_atol=coord_atol)
@@ -307,7 +311,7 @@ class ExclusionsConverter:
 
     @classmethod
     def _geotiff_to_h5(cls, excl_h5, layer, geotiff, chunks=(128, 128),
-                       transform_atol=0.01, coord_atol=0.001,
+                       check_tiff=True, transform_atol=0.01, coord_atol=0.001,
                        description=None, scale_factor=None, dtype='int16'):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
@@ -320,15 +324,19 @@ class ExclusionsConverter:
             Layer to extract
         geotiff : str
             Path to geotiff file
-        chunks : tuple
-            Chunk size of exclusions in .h5 and Geotiffs
-        transform_atol : float
-            Absolute tolerance parameter when comparing geotiff transform data.
-        coord_atol : float
+        chunks : tuple, optional
+            Chunk size of exclusions in Geotiff, by default (128, 128)
+        check_tiff : bool, optional
+            Flag to check tiff profile and coordinates against exclusion .h5
+            profile and coordinates, by default True
+        transform_atol : float, optional
+            Absolute tolerance parameter when comparing geotiff transform data,
+            by default 0.01
+        coord_atol : float, optional
             Absolute tolerance parameter when comparing new un-projected
-            geotiff coordinates against previous coordinates.
-        description : str
-            Description of exclusion layer
+            geotiff coordinates against previous coordinates, by default 0.001
+        description : str, optional
+            Description of exclusion layer, by default None
         scale_factor : int | float, optional
             Scale factor to use to scale geotiff data when added to the .h5
             file, by default None
@@ -340,7 +348,7 @@ class ExclusionsConverter:
                      .format(layer, geotiff, os.path.basename(excl_h5)))
 
         profile, values = cls._parse_tiff(
-            geotiff, excl_h5=excl_h5, chunks=chunks,
+            geotiff, excl_h5=excl_h5, chunks=chunks, check_tiff=check_tiff,
             transform_atol=transform_atol, coord_atol=coord_atol)
 
         if scale_factor is not None:
@@ -405,9 +413,9 @@ class ExclusionsConverter:
 
         return profile, values
 
-    def geotiff_to_layer(self, layer, geotiff, transform_atol=0.01,
-                         coord_atol=0.001, description=None,
-                         scale_factor=None, dtype='int16'):
+    def geotiff_to_layer(self, layer, geotiff, check_tiff=True,
+                         transform_atol=0.01, coord_atol=0.001,
+                         description=None, scale_factor=None, dtype='int16'):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
 
@@ -417,13 +425,17 @@ class ExclusionsConverter:
             Layer to extract
         geotiff : str
             Path to geotiff file
-        transform_atol : float
-            Absolute tolerance parameter when comparing geotiff transform data.
-        coord_atol : float
+        check_tiff : bool, optional
+            Flag to check tiff profile and coordinates against exclusion .h5
+            profile and coordinates, by default True
+        transform_atol : float, optional
+            Absolute tolerance parameter when comparing geotiff transform data,
+            by default 0.01
+        coord_atol : float, optional
             Absolute tolerance parameter when comparing new un-projected
-            geotiff coordinates against previous coordinates.
-        description : str
-            Description of exclusion layer
+            geotiff coordinates against previous coordinates, by default 0.001
+        description : str, optional
+            Description of exclusion layer, by default None
         scale_factor : int | float, optional
             Scale factor to use to scale geotiff data when added to the .h5
             file, by default None
@@ -441,6 +453,7 @@ class ExclusionsConverter:
 
         self._geotiff_to_h5(self._excl_h5, layer, geotiff,
                             chunks=self._chunks,
+                            check_tiff=check_tiff,
                             transform_atol=transform_atol,
                             coord_atol=coord_atol,
                             description=description,
@@ -462,7 +475,7 @@ class ExclusionsConverter:
                             hsds=self._hsds)
 
     @classmethod
-    def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128),
+    def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128), check_tiff=True,
                      transform_atol=0.01, coord_atol=0.001,
                      descriptions=None, scale_factors=None):
         """
@@ -475,15 +488,19 @@ class ExclusionsConverter:
         layers : list | dict
             List of geotiffs to load
             or dictionary mapping goetiffs to the layers to load
-        chunks : tuple
-            Chunk size of exclusions in .h5 and Geotiffs
-        transform_atol : float
-            Absolute tolerance parameter when comparing geotiff transform data.
-        coord_atol : float
+        chunks : tuple, optional
+            Chunk size of exclusions in Geotiff, by default (128, 128)
+        check_tiff : bool, optional
+            Flag to check tiff profile and coordinates against exclusion .h5
+            profile and coordinates, by default True
+        transform_atol : float, optional
+            Absolute tolerance parameter when comparing geotiff transform data,
+            by default 0.01
+        coord_atol : float, optional
             Absolute tolerance parameter when comparing new un-projected
-            geotiff coordinates against previous coordinates.
-        descriptions : dict | NoneType
-            Descriptions for layers to be writen to .h5
+            geotiff coordinates against previous coordinates, by default 0.001
+        description : str, optional
+            Description of exclusion layer, by default None
         scale_factor : dict, optional
             Scale factors and dtypes to use when scaling given layers,
             by default None
@@ -511,7 +528,7 @@ class ExclusionsConverter:
                 scale_factor = None
                 dtype = None
 
-            excls.geotiff_to_layer(layer, geotiff,
+            excls.geotiff_to_layer(layer, geotiff, check_tiff=check_tiff,
                                    transform_atol=transform_atol,
                                    coord_atol=coord_atol,
                                    description=description,
