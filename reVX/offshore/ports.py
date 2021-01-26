@@ -2,9 +2,11 @@
 """
 Compute least-cost distance to port
 """
+from concurrent.futures import as_completed
 import geopandas as gpd
 import logging
 import numpy as np
+import os
 import pandas as pd
 from scipy.spatial import cKDTree
 from skimage.graph import MCP_Geometric
@@ -13,6 +15,7 @@ from sklearn.metrics.pairwise import haversine_distances
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.handlers.geotiff import Geotiff
 from reVX.wind_dirs import row_col_indices
+from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.utilities import check_res_file
 
 logger = logging.getLogger(__name__)
@@ -200,13 +203,13 @@ class DistanceToPorts:
 
         mcp = MCP_Geometric(cost_arr)
         lc_dist, _ = mcp.find_costs(starts=port_idx)
-
+        lc_dist = lc_dist.astype('float32')
         lc_dist += port_dist
-        lc_dist[cost_arr > 90] = -1
 
-        return lc_dist.astype('float32')
+        return lc_dist
 
-    def _parse_ports(self, ports, offshore_lat_lon):
+    @classmethod
+    def _parse_ports(cls, ports, offshore_lat_lon):
         """
         Load ports and add mapping and distance to nearest offshore pixel
 
@@ -225,7 +228,7 @@ class DistanceToPorts:
             DataFrame of port locations and their mapping to the offshore
             pixels for least cost distance computation
         """
-        ports = gpd.read_file(ports, crs=self._profile['crs'])
+        ports = gpd.read_file(ports, ignore_geometry=True)
 
         pixel_coords = offshore_lat_lon[['latitude', 'longitude']].values
         tree = cKDTree(pixel_coords)  # pylint: disable=not-callable
@@ -237,7 +240,63 @@ class DistanceToPorts:
 
         ports['row'] = pixels['row'].values
         ports['col'] = pixels['col'].values
-        ports['dist_to_pixel'] = self._haversine_distance(port_coords,
-                                                          pixel_coords[idx])
+        ports['dist_to_pixel'] = cls._haversine_distance(port_coords,
+                                                         pixel_coords[idx])
 
         return ports
+
+    def least_cost_distance(self, max_workers=None):
+        """
+        Compute the least cost distance from each offshore pixel to the nearest
+        port
+
+        Parameters
+        ----------
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+
+        Returns
+        -------
+        dist_to_ports : ndarray
+            Least cost distance to nearest port for all offshore pixels
+        """
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        dist_to_ports = np.full(self.arr.shape, np.finfo('float32').max,
+                                dtype='float32')
+        n_ports = len(self.ports)
+        if max_workers > 1:
+            logger.info('Computing least cost distance to ports in parallel '
+                        'using {} workers'.format(max_workers))
+            loggers = [__name__, 'reVX']
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
+                futures = []
+                for _, port in self.ports.iterrows():
+                    port_idx = port[['row', 'col']].values
+                    port_dist = port['dist_to_pixel']
+                    future = exe.submit(self._lc_dist_to_port,
+                                        self.arr, port_idx, port_dist)
+                    futures.append(future)
+
+                for i, future in enumerate(as_completed(futures)):
+                    dist_to_ports = np.minimum(dist_to_ports, future.result())
+                    logger.debug('Computed least cost distance for {} of {} '
+                                 'ports'.format((i + 1), n_ports))
+        else:
+            logger.info('Computing least cost distance to ports in serial')
+            for i, port in self.ports.iterrows():
+                port_idx = port[['row', 'col']].values
+                port_dist = port['dist_to_pixel']
+                dist = self._lc_dist_to_port(self.arr, port_idx, port_dist)
+                dist_to_ports = np.minimum(dist_to_ports, dist)
+                logger.debug('Computed least cost distance for {} of {} '
+                             'ports'.format((i + 1), n_ports))
+
+        # Set onshore pixels least cost distance to -1
+        dist_to_ports[self.arr > 90] = -1
+
+        return dist_to_ports

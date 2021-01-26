@@ -484,7 +484,8 @@ class ExclusionsConverter:
                             hsds=self._hsds)
 
     @classmethod
-    def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128), check_tiff=True,
+    def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128),
+                     replace=True, check_tiff=True,
                      transform_atol=0.01, coord_atol=0.001,
                      descriptions=None, scale_factors=None):
         """
@@ -499,6 +500,8 @@ class ExclusionsConverter:
             or dictionary mapping goetiffs to the layers to load
         chunks : tuple, optional
             Chunk size of exclusions in Geotiff, by default (128, 128)
+        replace : bool, optional
+            Flag to replace existing layers if needed, by default True
         check_tiff : bool, optional
             Flag to check tiff profile and coordinates against exclusion .h5
             profile and coordinates, by default True
@@ -508,8 +511,8 @@ class ExclusionsConverter:
         coord_atol : float, optional
             Absolute tolerance parameter when comparing new un-projected
             geotiff coordinates against previous coordinates, by default 0.001
-        description : str, optional
-            Description of exclusion layer, by default None
+        description : dict, optional
+            Description of exclusion layers, by default None
         scale_factor : dict, optional
             Scale factors and dtypes to use when scaling given layers,
             by default None
