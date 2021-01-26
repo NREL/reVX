@@ -171,7 +171,7 @@ class DistanceToPorts:
         return dist * R
 
     @staticmethod
-    def _least_cost_dist(cost_arr, port_idx, port_dist):
+    def _lc_dist_to_port(cost_arr, port_idx, port_dist):
         """
         Compute the least cost dist from the port coordinates to all
         offshore coordinates
