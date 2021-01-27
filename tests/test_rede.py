@@ -42,11 +42,38 @@ def test_tech_pot(base, power_density):
                         '{}-{}.npy'.format(base, power_density))
     truth = np.load(path)
 
-    if 'cf' in base:
-        test = TechPotential.run_generation(EXCL, base, EXCL_DICT,
-                                            power_density=power_density)
-    else:
-        test = TechPotential.run(EXCL, base, EXCL_DICT,
-                                 power_density=power_density)
+    generation = 'cf' in base
+    test = TechPotential.run(EXCL, base, EXCL_DICT,
+                             power_density=power_density,
+                             generation=generation)
+
+    assert np.allclose(test, truth, rtol=RTOL)
+
+
+@pytest.mark.parametrize(('base', 'sub_slice'),
+                         (('solar_fixlat_cf', None),
+                          ('solar_fixlat_cf', (10, 20)),
+                          ('solar_fixlat_cf', (10, 20, 2)),
+                          ('solar_fixlat_cf', ((10, 20), (10, 20))),
+                          ('solar_fixlat_cf', ((None, ), (10, 20, 2))),
+                          ('dni', None),
+                          ('dni', (10, 20)),
+                          ('dni', (10, 20, 2)),
+                          ('dni', ((10, 20), (10, 20))),
+                          ('dni', ((None, ), (10, 20, 2)))))
+def test_sub_slice(base, sub_slice):
+    """
+    Test Tech potential sub_slice
+    """
+    path = os.path.join(TESTDATADIR, 'red_e',
+                        '{}-{}.npy'.format(base, 1))
+    truth = np.load(path)
+
+    truth = truth[TechPotential._parse_sub_slice(sub_slice)]
+
+    generation = 'cf' in base
+    test = TechPotential.run(EXCL, base, EXCL_DICT,
+                             sub_slice=sub_slice,
+                             generation=generation)
 
     assert np.allclose(test, truth, rtol=RTOL)
