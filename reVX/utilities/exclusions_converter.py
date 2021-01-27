@@ -263,7 +263,7 @@ class ExclusionsConverter:
     def _write_layer(excl_h5, layer, profile, values, chunks=(128, 128),
                      description=None, scale_factor=None):
         """
-        Extract given layer from geotiff .tif and write to .h5 file
+        Write exclusion layer to .h5 file
 
         Parameters
         ----------
@@ -291,7 +291,6 @@ class ExclusionsConverter:
                 ds = f[layer]
                 ds[...] = values
                 logger.debug('\t- {} values replaced'.format(layer))
-
             else:
                 ds = f.create_dataset(layer, shape=values.shape,
                                       dtype=values.dtype, chunks=chunks,
