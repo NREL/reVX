@@ -13,7 +13,7 @@ from skimage.graph import MCP_Geometric
 from sklearn.metrics.pairwise import haversine_distances
 
 from reV.handlers.exclusions import ExclusionLayers
-from reVX.handlers.geotiff import Geotiff
+from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.wind_dirs import row_col_indices
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.utilities import check_res_file
@@ -25,23 +25,22 @@ class DistanceToPorts:
     """
     Compute the distance to port
     """
-    def __init__(self, ports, dist_to_shore, layer='dist_to_shore'):
+    def __init__(self, ports, excl_h5, layer='dist_to_shore'):
         """
         Parameters
         ----------
         ports : str
             Path to shape file containing ports to compute least cost distance
             to
-        dist_to_shore : str
-            Path to distance to shore geotiff, or exclusions .h5 file with
-            distance to shore layer
+        excl_h5: str
+            Path to exclusions .h5 file with distance to shore layer
         layer : str, optional
-            Exclusions layer with distance to shore. Only used if
-            'dist_to_shore' is a .h5 exclusions file path,
+            Exclusions layer name with distance to shore,
             by default 'dist_to_shore'
         """
-        self._arr, self._profile, lat_lon = \
-            self._parse_arr(dist_to_shore, layer=layer)
+        self._excl_h5 = excl_h5
+        self._arr, self._profile, lat_lon = self._parse_arr(excl_h5,
+                                                            layer=layer)
         self._ports = self._parse_ports(ports, lat_lon)
 
     @property
@@ -56,10 +55,10 @@ class DistanceToPorts:
         return self._ports
 
     @property
-    def arr(self):
+    def cost_arr(self):
         """
-        Numpy array (raster) of onshore distance to coast in m. Water pixels
-        will have values of 0 to allow for least-cost path analysis.
+        Cost array (raster). Water pixels have a value of 90, the pixel width,
+        while onshore pixels have a value of 9999.
 
         Returns
         -------
@@ -96,18 +95,16 @@ class DistanceToPorts:
         return lat_lon
 
     @classmethod
-    def _parse_arr(cls, distance_to_shore, layer='dist_to_shore'):
+    def _parse_arr(cls, excl_h5, layer='dist_to_shore'):
         """
         Parse offshore array from distance to shore layer
 
         Parameters
         ----------
-        dist_to_shore : str
-            Path to distance to shore geotiff, or exclusions .h5 file with
-            distance to shore layer
+        excl_h5: str
+            Path to exclusions .h5 file with distance to shore layer
         layer : str, optional
-            Exclusions layer with distance to shore. Only used if
-            'dist_to_shore' is a .h5 exclusions file path,
+            Exclusions layer name with distance to shore,
             by default 'dist_to_shore'
 
         Returns
@@ -116,23 +113,17 @@ class DistanceToPorts:
             Cost array with offshore pixels set to 90 (pixel width) and on
             shore pixels set to 9999.
         profile : dict
-            Offshore layer geotiff profile, contains transform, size, crs, etc.
+            Profile (transform, crs, etc.) of arr raster
         lat_lon : pandas.DataFrame
             Mapping of offshore pixel coordinates (lat, lon) to array indices
             (row, col)
         """
-        if distance_to_shore.endswith(('.tif', '.tiff')):
-            with Geotiff(distance_to_shore) as tif:
-                profile = tif.profile
-                lat, lon = tif.lat_lon
-                arr = tif.values[0]
-        elif distance_to_shore.endswith('.h5'):
-            hsds = check_res_file(distance_to_shore)[1]
-            with ExclusionLayers(distance_to_shore, hsds=hsds) as tif:
-                arr = tif[layer]
-                profile = tif.get_layer_profile(layer)
-                lat = tif['latitude']
-                lon = tif['longitude']
+        hsds = check_res_file(excl_h5)[1]
+        with ExclusionLayers(excl_h5, hsds=hsds) as tif:
+            arr = tif[layer]
+            profile = tif.get_layer_profile(layer)
+            lat = tif['latitude']
+            lon = tif['longitude']
 
         mask = arr > 0
         arr[mask] = 90
@@ -245,13 +236,16 @@ class DistanceToPorts:
 
         return ports
 
-    def least_cost_distance(self, max_workers=None):
+    def least_cost_distance(self, dist_to_ports=None, max_workers=None):
         """
         Compute the least cost distance from each offshore pixel to the nearest
         port
 
         Parameters
         ----------
+        dist_to_ports : ndarray, optional
+            Existing minimum distance to port layer, can be used if new ports
+            are being added, by default None
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
@@ -265,8 +259,17 @@ class DistanceToPorts:
         if max_workers is None:
             max_workers = os.cpu_count()
 
-        dist_to_ports = np.full(self.arr.shape, np.finfo('float32').max,
-                                dtype='float32')
+        if dist_to_ports is None:
+            dist_to_ports = np.full(self.cost_arr.shape,
+                                    np.finfo('float32').max,
+                                    dtype='float32')
+        elif dist_to_ports.shape != self.cost_arr.shape:
+            msg = ("Starting 'dist_to_ports' shape {} does not match the "
+                   "the 'cost_arr' shape {}"
+                   .format(dist_to_ports.shape, self.cost_arr.shape))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
         n_ports = len(self.ports)
         if max_workers > 1:
             logger.info('Computing least cost distance to ports in parallel '
@@ -279,7 +282,7 @@ class DistanceToPorts:
                     port_idx = port[['row', 'col']].values
                     port_dist = port['dist_to_pixel']
                     future = exe.submit(self._lc_dist_to_port,
-                                        self.arr, port_idx, port_dist)
+                                        self.cost_arr, port_idx, port_dist)
                     futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
@@ -291,12 +294,91 @@ class DistanceToPorts:
             for i, port in self.ports.iterrows():
                 port_idx = port[['row', 'col']].values
                 port_dist = port['dist_to_pixel']
-                dist = self._lc_dist_to_port(self.arr, port_idx, port_dist)
+                dist = self._lc_dist_to_port(self.cost_arr, port_idx,
+                                             port_dist)
                 dist_to_ports = np.minimum(dist_to_ports, dist)
                 logger.debug('Computed least cost distance for {} of {} '
                              'ports'.format((i + 1), n_ports))
 
         # Set onshore pixels least cost distance to -1
-        dist_to_ports[self.arr > 90] = -1
+        dist_to_ports[self.cost_arr > 90] = -1
+
+        return dist_to_ports
+
+    def save_as_layer(self, layer_name, dist_to_ports, chunks=(128, 128)):
+        """
+        Save distance to ports as an exclusion layer within excl_h5
+
+        Parameters
+        ----------
+        layer_name : str
+            Name of layer under which distance to ports is to be saved
+        dist_to_ports : ndarray
+            Distance to ports data
+        chunks : tuple
+            Chunk size of dataset in .h5 file
+        """
+        if len(dist_to_ports.shape) < 3:
+            dist_to_ports = np.expand_dims(dist_to_ports, 0)
+
+        logger.info('Saving {} to {}'.format(layer_name, self._excl_h5))
+        description = ("Minimum distance to the nearest {}"
+                       .format(layer_name))
+        ExclusionsConverter._write_layer(self._excl_h5, layer_name,
+                                         self._profile, dist_to_ports,
+                                         chunks=chunks,
+                                         description=description)
+
+    @classmethod
+    def run(cls, ports, excl_h5, cost_layer='dist_to_shore', dist_layer=None,
+            chunks=(128, 128), max_workers=None, update=True):
+        """
+        Compute the least cost distance to the nearest ports
+
+        Parameters
+        ----------
+        ports : str
+            Path to shape file containing ports to compute least cost distance
+            to
+        excl_h5: str
+            Path to exclusions .h5 file with distance to shore layer. Will also
+            be the file into which the least cost distance to port is saved.
+        cost_layer : str, optional
+            Exclusions layer with distance to shore. Only used if
+            'dist_to_shore' is a .h5 exclusions file path,
+            by default 'dist_to_shore'
+        dist_layer : str, optional
+            Exclusion layer under which the distance to ports layer should be
+            saved, if None use the ports file-name, by default None
+        chunks : tuple
+            Chunk size of dataset in .h5 file
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+        update : bool, optional
+            Flag to check for an existing distance to port layer and update it
+            with new least cost distances to new ports, if None compute the
+            least cost distance from scratch, by default True
+
+        Returns
+        -------
+        dist_to_ports : ndarray
+            Least cost distance to nearest port for all offshore pixels
+        """
+        dtp = cls(ports, excl_h5, layer=cost_layer)
+        if dist_layer is None:
+            dist_layer = os.path.basename(ports).split('.')[0]
+
+        dist_to_ports = None
+        if update:
+            hsds = check_res_file(excl_h5)[1]
+            with ExclusionLayers(excl_h5, hsds=hsds) as tif:
+                if dist_layer in tif:
+                    dist_to_ports = tif[dist_layer]
+
+        dist_to_ports = dtp.least_cost_distance(dist_to_ports=dist_to_ports,
+                                                max_workers=max_workers)
+        dtp.save_as_layer(dist_to_ports, chunks=chunks)
 
         return dist_to_ports
