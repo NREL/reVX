@@ -77,7 +77,8 @@ def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_year,
     if verbose:
         args.append('-v')
 
-    cmd = 'python -m reVX.plexos.plexos_cli {}'.format(' '.join(args))
+    cmd = ('python -m reVX.plexos.rev_reeds_plexos_cli {}'
+           .format(' '.join(args)))
     logger.debug('Creating the following command line call:\n\t{}'.format(cmd))
 
     return cmd
