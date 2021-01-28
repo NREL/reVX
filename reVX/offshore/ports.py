@@ -186,6 +186,9 @@ class DistanceToPorts:
         lc_dist : ndarray
             Least cost distance from port to all offshore pixels.
         """
+        logger.debug('Computing least cost distance from port that is {}m '
+                     'from pixel {} to all offshore pixels.'
+                     .format(port_dist, port_idx))
         if not isinstance(port_idx, np.ndarray):
             port_idx = np.array(port_idx)
 
@@ -322,8 +325,8 @@ class DistanceToPorts:
             dist_to_ports = np.expand_dims(dist_to_ports, 0)
 
         logger.info('Saving {} to {}'.format(layer_name, self._excl_h5))
-        description = ("Minimum distance to the nearest {}"
-                       .format(layer_name))
+        description = ("Minimum distance to the nearest {} in meters, onshore "
+                       "pixels have a value of -1".format(layer_name))
         ExclusionsConverter._write_layer(self._excl_h5, layer_name,
                                          self._profile, dist_to_ports,
                                          chunks=chunks,
@@ -366,6 +369,8 @@ class DistanceToPorts:
         dist_to_ports : ndarray
             Least cost distance to nearest port for all offshore pixels
         """
+        logger.info('Computing least cost distance to ports in {}'
+                    .format(ports))
         dtp = cls(ports, excl_h5, layer=cost_layer)
         if dist_layer is None:
             dist_layer = os.path.basename(ports).split('.')[0]
@@ -377,8 +382,11 @@ class DistanceToPorts:
                 if dist_layer in tif:
                     dist_to_ports = tif[dist_layer]
 
+        if dist_to_ports is not None:
+            logger.info('Updating exising layer {}'.format(dist_layer))
+
         dist_to_ports = dtp.least_cost_distance(dist_to_ports=dist_to_ports,
                                                 max_workers=max_workers)
-        dtp.save_as_layer(dist_to_ports, chunks=chunks)
+        dtp.save_as_layer(dist_layer, dist_to_ports, chunks=chunks)
 
         return dist_to_ports
