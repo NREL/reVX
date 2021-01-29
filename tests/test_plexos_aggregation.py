@@ -5,73 +5,28 @@ import os
 import pytest
 import pandas as pd
 import numpy as np
-from reVX.plexos.rev_reeds_plexos import PlexosAggregation, DataCleaner
+
+from reVX.plexos.rev_reeds_plexos import PlexosAggregation
+from reVX import TESTDATADIR
+
+REV_SC = os.path.join(
+    TESTDATADIR,
+    'reV_sc/wtk_coe_2017_cem_v3_wind_conus_multiyear_colorado.csv')
+REEDS = os.path.join(TESTDATADIR, 'plexos/reeds_build.csv')
+CF_FPATH = os.path.join(TESTDATADIR,
+                        'reV_gen/naris_rev_wtk_gen_colorado_2007.h5')
+PLEXOS_NODES = os.path.join(TESTDATADIR, 'plexos/plexos_nodes.csv')
 
 
-@pytest.fixture
-def rev_sc():
-    """Initialize a sc_build dataframe."""
-    datadir = os.path.join(os.path.dirname(__file__), 'data/')
-
-    fn = os.path.join(
-        datadir,
-        'reV_sc/wtk_coe_2017_cem_v3_wind_conus_multiyear_colorado.csv')
-    rev_sc = pd.read_csv(fn)
-
-    rev_sc = DataCleaner.rename_cols(rev_sc, DataCleaner.REV_NAME_MAP)
-
-    return rev_sc
-
-
-@pytest.fixture
-def reeds():
-    """Initialize a sc_build dataframe."""
-    datadir = os.path.join(os.path.dirname(__file__), 'data/')
-
-    fn = os.path.join(
-        datadir,
-        'reeds/BAU_wtk_coe_2017_cem_v3_wind_conus_'
-        'multiyear_US_wind_reeds_to_rev.csv')
-    reeds = pd.read_csv(fn)
-
-    reeds = DataCleaner.rename_cols(reeds, DataCleaner.REEDS_NAME_MAP)
-
-    return reeds
-
-
-@pytest.fixture
-def cf_fpath():
-    """Get a reV gen cf test filepath."""
-    datadir = os.path.join(os.path.dirname(__file__), 'data/')
-
-    cf_fpath = os.path.join(
-        datadir, 'reV_gen/naris_rev_wtk_gen_colorado_2007.h5')
-
-    return cf_fpath
-
-
-@pytest.fixture
-def plexos_nodes():
-    """Initialize a PLEXOS nodes meta dataframe."""
-    datadir = os.path.join(os.path.dirname(__file__), 'data/')
-
-    plx_node_fpath = os.path.join(
-        datadir, 'plexos/plexos_nodes.csv')
-    plexos_nodes = pd.read_csv(plx_node_fpath)
-
-    return plexos_nodes
-
-
-def test_plexos_agg(plexos_nodes, rev_sc, reeds, cf_fpath):
+def test_plexos_agg():
     """Test that a plexos node aggregation matches baseline results."""
 
     outdir = os.path.join(os.path.dirname(__file__),
                           'data/aggregated_plexos_profiles/')
 
     build_year = 2050
-    reeds = reeds[reeds.reeds_year == build_year].iloc[500:510]
-    plexos_meta, time_index, profiles = PlexosAggregation.run(
-        plexos_nodes, rev_sc, reeds, cf_fpath, build_year=build_year)
+    plexos_meta, _, profiles = PlexosAggregation.run(
+        PLEXOS_NODES, REV_SC, REEDS, CF_FPATH, build_year=build_year)
 
     fpath_meta = os.path.join(outdir, 'plexos_meta.csv')
     fpath_profiles = os.path.join(outdir, 'profiles.csv')
@@ -90,26 +45,24 @@ def test_plexos_agg(plexos_nodes, rev_sc, reeds, cf_fpath):
                        plexos_meta['built_capacity'])
     assert np.allclose(baseline_profiles.values, profiles)
 
-    return plexos_meta, time_index, profiles
 
-
-def test_missing_gids(plexos_nodes, rev_sc, reeds, cf_fpath):
+def test_missing_gids():
     """Test that buildouts with missing resource gids are allocated correctly.
     """
 
     build_year = 2050
-    reeds = reeds[reeds.reeds_year == build_year].iloc[500:510]
-
+    rev_sc = pd.read_csv(REV_SC)
     # add missing SC points to requested buildout for test
     n = 10
-    missing_test = pd.DataFrame({'sc_gid': rev_sc.iloc[0:n]['sc_gid'],
-                                 'reeds_year': [build_year] * n,
-                                 'built_capacity': [10] * n})
+    missing_test = pd.DataFrame({'gid': rev_sc.iloc[0:n]['gid'],
+                                 'year': [build_year] * n,
+                                 'capacity_reV': [10] * n})
 
+    reeds = pd.read_csv(REEDS)
     reeds = reeds.append(missing_test, ignore_index=False)
-    icap = reeds['built_capacity'].sum()
+    icap = reeds['capacity_reV'].sum()
 
-    pa = PlexosAggregation(plexos_nodes, rev_sc, reeds, cf_fpath)
+    pa = PlexosAggregation(PLEXOS_NODES, rev_sc, reeds, CF_FPATH)
     new_cap = pa._sc_build['built_capacity'].sum()
 
     assert icap == new_cap

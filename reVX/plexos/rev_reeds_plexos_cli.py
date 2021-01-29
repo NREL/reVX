@@ -24,8 +24,6 @@ logger = logging.getLogger(__name__)
               help=('Path to plexos job input csv.'))
 @click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to dump output files')
-@click.option('--reeds_dir', '-rd', required=True, type=click.Path(),
-              help='Directory containing REEDS buildout files.')
 @click.option('--cf_years', '-y', required=True, type=INTLIST,
               help='Capacity factor resource year.')
 @click.option('--build_years', '-by', required=True, type=INTLIST,
@@ -35,7 +33,7 @@ logger = logging.getLogger(__name__)
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def main(ctx, name, job_input, out_dir, reeds_dir, cf_years, build_years,
+def main(ctx, name, job_input, out_dir, cf_years, build_years,
          scenario, verbose):
     """reV-ReEDS-PLEXOS Command Line Interface"""
 
@@ -43,7 +41,6 @@ def main(ctx, name, job_input, out_dir, reeds_dir, cf_years, build_years,
     ctx.obj['NAME'] = name
     ctx.obj['JOB_INPUT'] = job_input
     ctx.obj['OUT_DIR'] = out_dir
-    ctx.obj['REEDS_DIR'] = reeds_dir
     ctx.obj['CF_YEARS'] = cf_years
     ctx.obj['BUILD_YEARS'] = build_years
     ctx.obj['SCENARIO'] = scenario
@@ -57,18 +54,17 @@ def main(ctx, name, job_input, out_dir, reeds_dir, cf_years, build_years,
         logger.info('Outputs to be stored in: {}'.format(out_dir))
         logger.info('Aggregating plexos scenario "{}".'.format(scenario))
         for cf_year in cf_years:
-            Manager.run(job_input, out_dir, reeds_dir, scenario=scenario,
+            Manager.run(job_input, out_dir, scenario=scenario,
                         cf_year=cf_year, build_years=build_years)
 
 
-def get_node_cmd(name, job_input, out_dir, reeds_dir, cf_year, build_year,
+def get_node_cmd(name, job_input, out_dir, cf_year, build_year,
                  scenario, verbose):
     """Get a CLI call command for the plexos CLI."""
 
     args = ['-n {}'.format(SLURM.s(name)),
             '-j {}'.format(SLURM.s(job_input)),
             '-o {}'.format(SLURM.s(out_dir)),
-            '-rd {}'.format(SLURM.s(reeds_dir)),
             '-y [{}]'.format(SLURM.s(cf_year)),
             '-by [{}]'.format(SLURM.s(build_year)),
             '-s {}'.format(SLURM.s(scenario)),
@@ -104,7 +100,6 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
     name = ctx.obj['NAME']
     job_input = ctx.obj['JOB_INPUT']
     out_dir = ctx.obj['OUT_DIR']
-    reeds_dir = ctx.obj['REEDS_DIR']
     cf_years = ctx.obj['CF_YEARS']
     build_years = ctx.obj['BUILD_YEARS']
     scenario = ctx.obj['SCENARIO']
@@ -130,8 +125,8 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
                 node_name = ('{}_{}_{}_{}'
                              .format(name, scenario.replace(' ', '_'),
                                      build_year, cf_year))
-                cmd = get_node_cmd(node_name, job_input, out_dir, reeds_dir,
-                                   cf_year, build_year, scenario, verbose)
+                cmd = get_node_cmd(node_name, job_input, out_dir, cf_year,
+                                   build_year, scenario, verbose)
 
                 logger.info('Running reVX plexos aggregation on Eagle with '
                             'node name "{}"'.format(node_name))

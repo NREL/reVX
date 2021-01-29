@@ -15,6 +15,7 @@ from warnings import warn
 
 from rex.rechunk_h5 import to_records_array
 from rex.utilities.execution import SpawnProcessPool
+from rex.utilities.utilities import parse_table
 
 from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import (DataCleaner, get_coord_labels,
@@ -107,14 +108,14 @@ class PlexosNode:
         gid_capacity = gid_counts / np.sum(gid_counts) * capacity
         gen_gids = [np.where(self._cf_res_gids == g)[0][0]
                     for g in res_gids]
-        sc_meta = pd.DataFrame({'gen_gids': gen_gids,
-                                'res_gids': res_gids,
-                                'gid_counts': gid_counts,
+        sc_meta = pd.DataFrame({'gen_gid': gen_gids,
+                                'res_gid': res_gids,
+                                'gid_count': gid_counts,
                                 'gid_capacity': gid_capacity})
-        sc_meta = sc_meta.sort_values(by='gen_gids')
+        sc_meta = sc_meta.sort_values(by='gen_gid')
 
         with Outputs(self._cf_fpath, mode='r') as cf_outs:
-            cf_mean = cf_outs['cf_mean', list(sc_meta['gen_gids'].values)]
+            cf_mean = cf_outs['cf_mean', list(sc_meta['gen_gid'].values)]
 
         sc_meta['cf_mean'] = cf_mean
         sc_meta = sc_meta.sort_values(by='cf_mean', ascending=False)
@@ -198,16 +199,16 @@ class PlexosNode:
 
             res_built.append(np.round(to_build, decimals=5))
 
+            gen_gid = int(row['gen_gid'])
             if self._forecast_map is None:
-                gen_gid = int(row['gen_gids'])
                 with Outputs(self._cf_fpath, mode='r') as cf_outs:
                     cf_profile = cf_outs['cf_profile', :, gen_gid]
             else:
-                gen_gid = self._forecast_map[row['gen_gids']]
+                gen_gid = self._forecast_map[gen_gid]
                 with Outputs(self._forecast_fpath, mode='r') as cf_outs:
                     cf_profile = cf_outs['cf_profile', :, gen_gid]
 
-            res_gids.append(row['res_gids'])
+            res_gids.append(row['res_gid'])
             gen_gids.append(gen_gid)
 
             if profile is None:
@@ -309,24 +310,26 @@ class PlexosAggregation:
         """
         Parameters
         ----------
-        plexos_nodes : pd.DataFrame
-            Plexos node meta data including gid, lat/lon, voltage.
-        rev_sc : pd.DataFrame
+        plexos_nodes : str | pd.DataFrame
+            Plexos node meta data including gid, lat/lon, voltage. Or path
+            to .csv containing plexos node meta data
+        rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts.
-        reeds_build : pd.DataFrame
-            REEDS buildout with rows for built capacity at each reV SC point.
+            res_gids, res_id_counts. Or  path to reV supply curve table.
+        reeds_build : str | pd.DataFrame
+            RdEDS buildout with rows for built capacity at each reV SC point.
+            Or ReEDS buildout table
         cf_fpath : str
             File path to capacity factor file to get profiles from.
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
-        build_year : int
-            REEDS year of interest.
+        build_year : int, optional
+            REEDS year of interest, by default 2050
         max_workers : int | None
             Do node aggregation on max_workers.
         """
-        self._plexos_nodes = DataCleaner.rename_cols(plexos_nodes)
+        self._plexos_nodes = self._parse_plexos_nodes(plexos_nodes)
         self._cf_fpath = cf_fpath
         self._forecast_fpath = forecast_fpath
         self.build_year = build_year
@@ -335,16 +338,11 @@ class PlexosAggregation:
         self._time_index = None
         self.max_workers = max_workers
 
-        year_mask = (reeds_build['reeds_year'] == build_year)
-        reeds_build = reeds_build[year_mask]
-
         logger.info('Running PLEXOS aggregation for build year: {}'
                     .format(build_year))
-        if not any(year_mask):
-            raise ValueError('Build year {} not found in reeds data!'
-                             .format(build_year))
 
-        self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build)
+        self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build,
+                                               build_year=build_year)
         missing = self._check_gids()
         self._handle_missing_resource_gids(missing)
 
@@ -449,6 +447,135 @@ class PlexosAggregation:
                 self._cf_res_gids = np.array(list(self._cf_res_gids))
 
         return self._cf_res_gids
+
+    @staticmethod
+    def _parse_plexos_nodes(plexos_nodes):
+        """
+        Load Plexos node meta data from disc if needed, pre-filter and rename
+        columns
+
+        Parameters
+        ----------
+        plexos_nodes : str | pd.DataFrame
+            Plexos node meta data including gid, lat/lon, voltage. Or path
+            to .csv containing plexos node meta data
+
+        Returns
+        -------
+        plexos_nodes : pd.DataFrame
+            Plexos node meta data including gid, lat/lon, voltage
+        """
+        plexos_nodes = parse_table(plexos_nodes)
+        plexos_nodes = DataCleaner.pre_filter_plexos_meta(plexos_nodes)
+        plexos_nodes = DataCleaner.rename_cols(plexos_nodes)
+
+        return plexos_nodes
+
+    @staticmethod
+    def _check_rev_reeds_coordinates(rev_sc, reeds_build, atol=0.5):
+        """Check that the coordinates are the same in rev and reeds buildouts.
+
+        Parameters
+        ----------
+        rev_sc : pd.DataFrame
+            reV supply curve results table including SC gid, lat/lon,
+            res_gids, res_id_counts.
+        reeds_build : pd.DataFrame
+            REEDS buildout with rows for built capacity at each reV SC point.
+        atol : float
+            Maximum difference in coord matching.
+
+        Returns
+        -------
+        rev_sc : pd.DataFrame
+            Same as input.
+        reeds_build : pd.DataFrame
+            Same as input but without lat/lon columns if matched.
+        """
+        join_on = 'sc_gid'
+        reeds_build = reeds_build.sort_values(join_on)
+        reeds_sc_gids = reeds_build[join_on].values
+        rev_mask = rev_sc[join_on].isin(reeds_sc_gids)
+        if not rev_mask.any():
+            msg = ("There are no overlapping sc_gids between the provided reV "
+                   "supply curve table the ReEDS buildout!")
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        rev_sc = rev_sc.sort_values(join_on)
+
+        rev_coord_labels = get_coord_labels(rev_sc)
+        reeds_coord_labels = get_coord_labels(reeds_build)
+
+        if rev_coord_labels is not None and reeds_coord_labels is not None:
+            reeds_coords = reeds_build[reeds_coord_labels].values
+            rev_coords = rev_sc.loc[rev_mask, rev_coord_labels].values
+
+            check = np.allclose(reeds_coords, rev_coords, atol=atol, rtol=0.0)
+            if not check:
+                emsg = ('reV SC and REEDS Buildout coordinates do not match.')
+                logger.exception(emsg)
+                raise ValueError(emsg)
+
+            reeds_build = reeds_build.drop(labels=reeds_coord_labels, axis=1)
+
+        return rev_sc, reeds_build
+
+    @classmethod
+    def _parse_rev_reeds(cls, rev_sc, reeds_build, build_year=2050):
+        """Parse and combine reV SC and REEDS buildout tables into single table
+
+        Parameters
+        ----------
+        rev_sc : str | pd.DataFrame
+            reV supply curve results table including SC gid, lat/lon,
+            res_gids, res_id_counts. Or  path to reV supply curve table.
+        reeds_build : str | pd.DataFrame
+            RdEDS buildout with rows for built capacity at each reV SC point.
+            Or ReEDS buildout table
+        build_year : int, optional
+            REEDS year of interest, by default 2050
+
+        Returns
+        -------
+        table : pd.DataFrame
+            rev_sc and reeds_build inner joined on supply curve gid.
+        """
+        rev_sc = DataCleaner.rename_cols(
+            parse_table(rev_sc),
+            name_map=DataCleaner.REV_NAME_MAP)
+        reeds_build = DataCleaner.rename_cols(
+            parse_table(reeds_build),
+            name_map=DataCleaner.REEDS_NAME_MAP)
+
+        year_mask = (reeds_build['reeds_year'] == build_year)
+        if not any(year_mask):
+            msg = 'Build year {} not found in reeds data!'.format(build_year)
+            logger.error(msg)
+            raise ValueError(msg)
+
+        reeds_build = reeds_build[year_mask]
+
+        join_on = 'sc_gid'
+        if 'sc_gid' not in rev_sc or 'sc_gid' not in reeds_build:
+            raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
+
+        rev_sc, reeds_build = cls._check_rev_reeds_coordinates(rev_sc,
+                                                               reeds_build)
+
+        check_isin = np.isin(reeds_build[join_on].values,
+                             rev_sc[join_on].values)
+        if not all(check_isin):
+            wmsg = ('There are REEDS buildout GIDs that are not in the reV '
+                    'supply curve table: {} out of {} total REEDS buildout '
+                    'sites.'.format(np.sum(~check_isin), len(reeds_build)))
+            warn(wmsg)
+            logger.warning(wmsg)
+
+        table = pd.merge(rev_sc, reeds_build, how='inner', left_on=join_on,
+                         right_on=join_on)
+
+        return table
 
     def _check_gids(self):
         """Ensure that the SC buildout GIDs are available in the cf file.
@@ -557,96 +684,6 @@ class PlexosAggregation:
         shape = (t, self.n_plexos_nodes)
         output = np.zeros(shape, dtype=np.float32)
         return output
-
-    def _parse_rev_reeds(self, rev_sc, reeds_build):
-        """Parse and combine reV SC and REEDS buildout tables into single table
-
-        Parameters
-        ----------
-        rev_sc : pd.DataFrame
-            reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts.
-        reeds_build : pd.DataFrame
-            REEDS buildout with rows for built capacity at each reV SC point.
-
-        Returns
-        -------
-        table : pd.DataFrame
-            rev_sc and reeds_build inner joined on supply curve gid.
-        """
-
-        if 'sc_gid' in rev_sc and 'sc_gid' in reeds_build:
-            rev_join_on = 'sc_gid'
-            reeds_join_on = 'sc_gid'
-        else:
-            raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
-
-        rev_sc, reeds_build = self._check_rev_reeds_coordinates(
-            rev_sc, reeds_build, rev_join_on, reeds_join_on)
-
-        check_isin = np.isin(reeds_build[reeds_join_on].values,
-                             rev_sc[rev_join_on].values)
-        if not all(check_isin):
-            wmsg = ('There are REEDS buildout GIDs that are not in the reV '
-                    'supply curve table: {} out of {} total REEDS buildout '
-                    'sites.'.format(np.sum(~check_isin), len(reeds_build)))
-            warn(wmsg)
-            logger.warning(wmsg)
-
-        table = pd.merge(rev_sc, reeds_build, how='inner', left_on=rev_join_on,
-                         right_on=reeds_join_on)
-
-        return table
-
-    @staticmethod
-    def _check_rev_reeds_coordinates(rev_sc, reeds_build, rev_join_on,
-                                     reeds_join_on, atol=0.5):
-        """Check that the coordinates are the same in rev and reeds buildouts.
-
-        Parameters
-        ----------
-        rev_sc : pd.DataFrame
-            reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts.
-        reeds_build : pd.DataFrame
-            REEDS buildout with rows for built capacity at each reV SC point.
-        rev_join_on : str
-            Column name to join rev table.
-        reeds_join_on : str
-            Column name to join reeds table.
-        atol : float
-            Maximum difference in coord matching.
-
-        Returns
-        -------
-        rev_sc : pd.DataFrame
-            Same as input.
-        reeds_build : pd.DataFrame
-            Same as input but without lat/lon columns if matched.
-        """
-
-        rev_coord_labels = get_coord_labels(rev_sc)
-        reeds_coord_labels = get_coord_labels(reeds_build)
-
-        if rev_coord_labels is not None and reeds_coord_labels is not None:
-            reeds_build = reeds_build.sort_values(reeds_join_on)
-            reeds_sc_gids = reeds_build[reeds_join_on].values
-            reeds_coords = reeds_build[reeds_coord_labels]
-
-            rev_mask = (rev_sc[rev_join_on].isin(reeds_sc_gids))
-            rev_sc = rev_sc.sort_values(rev_join_on)
-            rev_coords = rev_sc.loc[rev_mask, rev_coord_labels]
-
-            check = np.allclose(reeds_coords.values, rev_coords.values,
-                                atol=atol, rtol=0.0)
-            if not check:
-                emsg = ('reV SC and REEDS Buildout coordinates do not match.')
-                logger.exception(emsg)
-                raise ValueError(emsg)
-
-            reeds_build = reeds_build.drop(labels=reeds_coord_labels, axis=1)
-
-        return rev_sc, reeds_build
 
     def _make_forecast_map(self):
         """Run ckdtree to map forecast pixels to generation pixels.
@@ -1017,7 +1054,7 @@ class Manager:
         return meta, time_index, profiles
 
     @classmethod
-    def _run_group(cls, df_group, reeds_dir, cf_year, build_year):
+    def _run_group(cls, df_group, cf_year, build_year):
         """Run a group of plexos node aggregations all belonging to the same
         final extent.
 
@@ -1025,9 +1062,6 @@ class Manager:
         ----------
         df_group : str
             DataFrame from the job_file with a common group.
-        reeds_dir : str
-            Directory containing the REEDS buildout files in the reeds_build
-            column in the df_group.
         cf_year : str
             Year of the cf_fpath resource year (will be inserted if {} is in
             cf_fpath).
@@ -1048,8 +1082,7 @@ class Manager:
 
         for i in df_group.index.values:
             plexos_nodes = df_group.loc[i, 'plexos_nodes']
-            reeds_build = os.path.join(reeds_dir,
-                                       df_group.loc[i, 'reeds_build'])
+            reeds_build = df_group.loc[i, 'reeds_build']
             cf_fpath = df_group.loc[i, 'cf_fpath']
             if '{}' in cf_fpath:
                 cf_fpath = cf_fpath.format(cf_year)
@@ -1090,7 +1123,7 @@ class Manager:
         return meta, ti, profiles
 
     @classmethod
-    def run(cls, job, out_dir, reeds_dir, scenario=None, cf_year=2012,
+    def run(cls, job, out_dir, scenario=None, cf_year=2012,
             build_years=(2024, 2050)):
         """Run plexos node aggregation for a job file input.
 
@@ -1102,9 +1135,6 @@ class Manager:
             plexos_nodes)
         out_dir : str
             Path to an output directory.
-        reeds_dir : str
-            Directory containing the REEDS buildout files in the reeds_build
-            column in the job.
         scenario : str | None
             Optional filter to run plexos aggregation for just one scenario in
             the job.
@@ -1140,7 +1170,6 @@ class Manager:
                         logger.info('Running group "{}"'.format(group))
 
                         meta, time_index, profiles = cls._run_group(df_group,
-                                                                    reeds_dir,
                                                                     cf_year,
                                                                     build_year)
 
@@ -1149,8 +1178,9 @@ class Manager:
 
                         with Outputs(out_fpath, mode='a') as out:
                             meta = to_records_array(meta)
-                            time_index = np.array(time_index.astype(str),
-                                                  dtype='S20')
+                            time_index = time_index.astype(str)
+                            dtype = "S{}".format(len(time_index[0]))
+                            time_index = np.array(time_index, dtype=dtype)
                             out._create_dset('{}/meta'.format(group),
                                              meta.shape,
                                              meta.dtype,
