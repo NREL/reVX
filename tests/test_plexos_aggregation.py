@@ -15,7 +15,7 @@ REV_SC = os.path.join(
 REEDS = os.path.join(TESTDATADIR, 'plexos/reeds_build.csv')
 CF_FPATH = os.path.join(TESTDATADIR,
                         'reV_gen/naris_rev_wtk_gen_colorado_2007.h5')
-PLEXOS_NODES = os.path.join(TESTDATADIR, 'plexos/PLEXOS_NODES.csv')
+PLEXOS_NODES = os.path.join(TESTDATADIR, 'plexos/plexos_nodes.csv')
 
 
 def test_plexos_agg():
@@ -25,7 +25,7 @@ def test_plexos_agg():
                           'data/aggregated_plexos_profiles/')
 
     build_year = 2050
-    plexos_meta, time_index, profiles = PlexosAggregation.run(
+    plexos_meta, _, profiles = PlexosAggregation.run(
         PLEXOS_NODES, REV_SC, REEDS, CF_FPATH, build_year=build_year)
 
     fpath_meta = os.path.join(outdir, 'plexos_meta.csv')
@@ -44,8 +44,6 @@ def test_plexos_agg():
     assert np.allclose(baseline_meta['built_capacity'],
                        plexos_meta['built_capacity'])
     assert np.allclose(baseline_profiles.values, profiles)
-
-    return plexos_meta, time_index, profiles
 
 
 def test_missing_gids():

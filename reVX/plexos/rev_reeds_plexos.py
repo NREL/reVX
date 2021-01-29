@@ -1178,8 +1178,9 @@ class Manager:
 
                         with Outputs(out_fpath, mode='a') as out:
                             meta = to_records_array(meta)
-                            time_index = np.array(time_index.astype(str),
-                                                  dtype='S20')
+                            time_index = time_index.astype(str)
+                            dtype = "S{}".format(len(time_index[0]))
+                            time_index = np.array(time_index, dtype=dtype)
                             out._create_dset('{}/meta'.format(group),
                                              meta.shape,
                                              meta.dtype,
