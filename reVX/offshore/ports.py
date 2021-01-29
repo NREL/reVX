@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class DistanceToPorts:
     """
-    Compute the distance to port
+    Compute the distance to port in km
     """
     def __init__(self, ports, excl_h5, layer='dist_to_shore'):
         """
@@ -138,7 +138,7 @@ class DistanceToPorts:
     def _haversine_distance(port_coords, pixel_coords):
         """
         Compute the haversine distance between the ports and the nearest
-        offshore pixel. Results are in meters
+        offshore pixel. Results are in km
 
         Parameters
         ----------
@@ -151,7 +151,7 @@ class DistanceToPorts:
         -------
         dist : ndarray
             Vector of haversine distances between each port and its nearest
-            offshore pixel in meters
+            offshore pixel in km
         """
         dist = haversine_distances(np.radians(port_coords),
                                    np.radians(pixel_coords))
@@ -160,7 +160,8 @@ class DistanceToPorts:
         else:
             dist = np.diag(dist)
 
-        R = 6371000  # radius of the earth in meters
+        # radius of the earth in kilometers # radius of the earth in km
+        R = 6371.0
 
         return dist * R
 
@@ -168,7 +169,7 @@ class DistanceToPorts:
     def _lc_dist_to_port(cost_arr, port_idx, port_dist):
         """
         Compute the least cost dist from the port coordinates to all
-        offshore coordinates
+        offshore coordinates in km
 
         Parameters
         ----------
@@ -184,9 +185,9 @@ class DistanceToPorts:
         Returns
         -------
         lc_dist : ndarray
-            Least cost distance from port to all offshore pixels.
+            Least cost distance from port to all offshore pixels in km
         """
-        logger.debug('Computing least cost distance from port that is {}m '
+        logger.debug('Computing least cost distance from port that is {}km '
                      'from pixel {} to all offshore pixels.'
                      .format(port_dist, port_idx))
         if not isinstance(port_idx, np.ndarray):
@@ -197,7 +198,7 @@ class DistanceToPorts:
 
         mcp = MCP_Geometric(cost_arr)
         lc_dist, _ = mcp.find_costs(starts=port_idx)
-        lc_dist = lc_dist.astype('float32')
+        lc_dist = lc_dist.astype('float32') / 1000
         lc_dist += port_dist
 
         return lc_dist
@@ -242,7 +243,7 @@ class DistanceToPorts:
     def least_cost_distance(self, dist_to_ports=None, max_workers=None):
         """
         Compute the least cost distance from each offshore pixel to the nearest
-        port
+        port in km
 
         Parameters
         ----------
@@ -257,7 +258,7 @@ class DistanceToPorts:
         Returns
         -------
         dist_to_ports : ndarray
-            Least cost distance to nearest port for all offshore pixels
+            Least cost distance to nearest port for all offshore pixels in km
         """
         if max_workers is None:
             max_workers = os.cpu_count()
@@ -336,7 +337,7 @@ class DistanceToPorts:
     def run(cls, ports, excl_h5, cost_layer='dist_to_shore', dist_layer=None,
             chunks=(128, 128), max_workers=None, update=True):
         """
-        Compute the least cost distance to the nearest ports
+        Compute the least cost distance to the nearest ports in km
 
         Parameters
         ----------
@@ -367,7 +368,7 @@ class DistanceToPorts:
         Returns
         -------
         dist_to_ports : ndarray
-            Least cost distance to nearest port for all offshore pixels
+            Least cost distance to nearest port for all offshore pixels in km
         """
         logger.info('Computing least cost distance to ports in {}'
                     .format(ports))
