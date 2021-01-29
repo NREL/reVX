@@ -204,7 +204,7 @@ class PlexosNode:
                 with Outputs(self._cf_fpath, mode='r') as cf_outs:
                     cf_profile = cf_outs['cf_profile', :, gen_gid]
             else:
-                gen_gid = self._forecast_map[gen_gid]
+                gen_gid = int(self._forecast_map[gen_gid])
                 with Outputs(self._forecast_fpath, mode='r') as cf_outs:
                     cf_profile = cf_outs['cf_profile', :, gen_gid]
 
@@ -1147,6 +1147,8 @@ class Manager:
 
         if isinstance(job, str):
             job = pd.read_csv(job)
+
+        job = job.where(pd.notnull(job), None)
 
         if isinstance(build_years, int):
             build_years = [build_years]
