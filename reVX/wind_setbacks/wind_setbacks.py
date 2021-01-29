@@ -382,8 +382,10 @@ class BaseWindSetbacks(ABC):
             if setback is not None:
                 logger.debug('- Computing setbacks for county FIPS {}'
                              .format(cnty.iloc[0]['FIPS']))
-                tmp = gpd.sjoin(features, cnty,
-                                how='inner', op='intersects')
+                idx = features.sindex.intersection(cnty.total_bounds)
+                tmp = features.iloc[list(idx)]
+                mask = tmp.centroid.within(cnty['geometry'].values[0])
+                tmp = tmp.loc[mask]
                 tmp['geometry'] = tmp.buffer(setback)
 
                 setbacks.extend((geom, 1) for geom in tmp['geometry'])
@@ -786,7 +788,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
             Geometries for structures in geojson, in exclusion coordinate
             system
         """
-        structures = gpd.read_file(structure_fpath, crs=crs)
+        structures = gpd.read_file(structure_fpath)
 
         return structures.to_crs(crs=crs)
 
@@ -921,8 +923,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
             system
         """
         lyr = fiona.listlayers(roads_fpath)[0]
-        roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr,
-                              crs=crs)
+        roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr)
 
         return roads.to_crs(crs=crs)
 
@@ -1082,7 +1083,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             Geometries for transmission features, in exclusion coordinate
             system
         """
-        trans = gpd.read_file(transmission_fpath, crs=crs)
+        trans = gpd.read_file(transmission_fpath)
 
         return trans.to_crs(crs=crs)
 
@@ -1313,6 +1314,6 @@ class RailWindSetbacks(TransmissionWindSetbacks):
             Geometries for rail features, in exclusion coordinate
             system
         """
-        rail = gpd.read_file(rail_fpath, crs=crs)
+        rail = gpd.read_file(rail_fpath)
 
         return rail.to_crs(crs=crs)
