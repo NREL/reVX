@@ -107,14 +107,14 @@ class PlexosNode:
         gid_capacity = gid_counts / np.sum(gid_counts) * capacity
         gen_gids = [np.where(self._cf_res_gids == g)[0][0]
                     for g in res_gids]
-        sc_meta = pd.DataFrame({'gen_gids': gen_gids,
-                                'res_gids': res_gids,
-                                'gid_counts': gid_counts,
+        sc_meta = pd.DataFrame({'gen_gid': gen_gids,
+                                'res_gid': res_gids,
+                                'gid_count': gid_counts,
                                 'gid_capacity': gid_capacity})
-        sc_meta = sc_meta.sort_values(by='gen_gids')
+        sc_meta = sc_meta.sort_values(by='gen_gid')
 
         with Outputs(self._cf_fpath, mode='r') as cf_outs:
-            cf_mean = cf_outs['cf_mean', list(sc_meta['gen_gids'].values)]
+            cf_mean = cf_outs['cf_mean', list(sc_meta['gen_gid'].values)]
 
         sc_meta['cf_mean'] = cf_mean
         sc_meta = sc_meta.sort_values(by='cf_mean', ascending=False)
@@ -198,16 +198,16 @@ class PlexosNode:
 
             res_built.append(np.round(to_build, decimals=5))
 
+            gen_gid = int(row['gen_gid'])
             if self._forecast_map is None:
-                gen_gid = row['gen_gids']
                 with Outputs(self._cf_fpath, mode='r') as cf_outs:
                     cf_profile = cf_outs['cf_profile', :, gen_gid]
             else:
-                gen_gid = self._forecast_map[row['gen_gids']]
+                gen_gid = self._forecast_map[gen_gid]
                 with Outputs(self._forecast_fpath, mode='r') as cf_outs:
                     cf_profile = cf_outs['cf_profile', :, gen_gid]
 
-            res_gids.append(row['res_gids'])
+            res_gids.append(row['res_gid'])
             gen_gids.append(gen_gid)
 
             if profile is None:
@@ -471,25 +471,9 @@ class PlexosAggregation:
         reeds_build : pd.DataFrame
             Same as input but without lat/lon columns if matched.
         """
-
-        rev_coord_labels = get_coord_labels(rev_sc)
-        reeds_coord_labels = get_coord_labels(reeds_build)
-
-        msg = 'Cannot compare reV supply curve and ReEDS buildout coordinates '
-        if rev_coord_labels is None:
-            msg += ', could not find reV supply curve coordinate labels!'
-            logger.error(msg)
-            raise RuntimeError(msg)
-        elif reeds_coord_labels is None:
-            msg = ', could not find ReEDS coordinate labels!'
-            logger.error(msg)
-            raise RuntimeError(msg)
-
         join_on = 'sc_gid'
         reeds_build = reeds_build.sort_values(join_on)
         reeds_sc_gids = reeds_build[join_on].values
-        reeds_coords = reeds_build[reeds_coord_labels].values
-
         rev_mask = rev_sc[join_on].isin(reeds_sc_gids)
         if not rev_mask.any():
             msg = ("There are no overlapping sc_gids between the provided reV "
@@ -498,15 +482,21 @@ class PlexosAggregation:
             raise RuntimeError(msg)
 
         rev_sc = rev_sc.sort_values(join_on)
-        rev_coords = rev_sc.loc[rev_mask, rev_coord_labels].values
 
-        check = np.allclose(reeds_coords, rev_coords, atol=atol, rtol=0.0)
-        if not check:
-            emsg = ('reV SC and REEDS Buildout coordinates do not match.')
-            logger.exception(emsg)
-            raise ValueError(emsg)
+        rev_coord_labels = get_coord_labels(rev_sc)
+        reeds_coord_labels = get_coord_labels(reeds_build)
 
-        reeds_build = reeds_build.drop(labels=reeds_coord_labels, axis=1)
+        if rev_coord_labels is not None and reeds_coord_labels is not None:
+            reeds_coords = reeds_build[reeds_coord_labels].values
+            rev_coords = rev_sc.loc[rev_mask, rev_coord_labels].values
+
+            check = np.allclose(reeds_coords, rev_coords, atol=atol, rtol=0.0)
+            if not check:
+                emsg = ('reV SC and REEDS Buildout coordinates do not match.')
+                logger.exception(emsg)
+                raise ValueError(emsg)
+
+            reeds_build = reeds_build.drop(labels=reeds_coord_labels, axis=1)
 
         return rev_sc, reeds_build
 
