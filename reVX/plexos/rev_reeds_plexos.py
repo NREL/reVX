@@ -15,6 +15,7 @@ from warnings import warn
 
 from rex.rechunk_h5 import to_records_array
 from rex.utilities.execution import SpawnProcessPool
+from rex.utilities.utilities import parse_table
 
 from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import (DataCleaner, get_coord_labels,
@@ -309,24 +310,26 @@ class PlexosAggregation:
         """
         Parameters
         ----------
-        plexos_nodes : pd.DataFrame
-            Plexos node meta data including gid, lat/lon, voltage.
-        rev_sc : pd.DataFrame
+        plexos_nodes : str | pd.DataFrame
+            Plexos node meta data including gid, lat/lon, voltage. Or path
+            to .csv containing plexos node meta data
+        rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts.
-        reeds_build : pd.DataFrame
-            REEDS buildout with rows for built capacity at each reV SC point.
+            res_gids, res_id_counts. Or  path to reV supply curve table.
+        reeds_build : str | pd.DataFrame
+            RdEDS buildout with rows for built capacity at each reV SC point.
+            Or ReEDS buildout table
         cf_fpath : str
             File path to capacity factor file to get profiles from.
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
-        build_year : int
-            REEDS year of interest.
+        build_year : int, optional
+            REEDS year of interest, by default 2050
         max_workers : int | None
             Do node aggregation on max_workers.
         """
-        self._plexos_nodes = DataCleaner.rename_cols(plexos_nodes)
+        self._plexos_nodes = self._parse_plexos_nodes(plexos_nodes)
         self._cf_fpath = cf_fpath
         self._forecast_fpath = forecast_fpath
         self.build_year = build_year
@@ -335,16 +338,11 @@ class PlexosAggregation:
         self._time_index = None
         self.max_workers = max_workers
 
-        year_mask = (reeds_build['reeds_year'] == build_year)
-        reeds_build = reeds_build[year_mask]
-
         logger.info('Running PLEXOS aggregation for build year: {}'
                     .format(build_year))
-        if not any(year_mask):
-            raise ValueError('Build year {} not found in reeds data!'
-                             .format(build_year))
 
-        self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build)
+        self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build,
+                                               build_year=build_year)
         missing = self._check_gids()
         self._handle_missing_resource_gids(missing)
 
@@ -451,6 +449,29 @@ class PlexosAggregation:
         return self._cf_res_gids
 
     @staticmethod
+    def _parse_plexos_nodes(plexos_nodes):
+        """
+        Load Plexos node meta data from disc if needed, pre-filter and rename
+        columns
+
+        Parameters
+        ----------
+        plexos_nodes : str | pd.DataFrame
+            Plexos node meta data including gid, lat/lon, voltage. Or path
+            to .csv containing plexos node meta data
+
+        Returns
+        -------
+        plexos_nodes : pd.DataFrame
+            Plexos node meta data including gid, lat/lon, voltage
+        """
+        plexos_nodes = parse_table(plexos_nodes)
+        plexos_nodes = DataCleaner.pre_filter_plexos_meta(plexos_nodes)
+        plexos_nodes = DataCleaner.rename_cols(plexos_nodes)
+
+        return plexos_nodes
+
+    @staticmethod
     def _check_rev_reeds_coordinates(rev_sc, reeds_build, atol=0.5):
         """Check that the coordinates are the same in rev and reeds buildouts.
 
@@ -499,6 +520,62 @@ class PlexosAggregation:
             reeds_build = reeds_build.drop(labels=reeds_coord_labels, axis=1)
 
         return rev_sc, reeds_build
+
+    @classmethod
+    def _parse_rev_reeds(cls, rev_sc, reeds_build, build_year=2050):
+        """Parse and combine reV SC and REEDS buildout tables into single table
+
+        Parameters
+        ----------
+        rev_sc : str | pd.DataFrame
+            reV supply curve results table including SC gid, lat/lon,
+            res_gids, res_id_counts. Or  path to reV supply curve table.
+        reeds_build : str | pd.DataFrame
+            RdEDS buildout with rows for built capacity at each reV SC point.
+            Or ReEDS buildout table
+        build_year : int, optional
+            REEDS year of interest, by default 2050
+
+        Returns
+        -------
+        table : pd.DataFrame
+            rev_sc and reeds_build inner joined on supply curve gid.
+        """
+        rev_sc = DataCleaner.rename_cols(
+            parse_table(rev_sc),
+            name_map=DataCleaner.REV_NAME_MAP)
+        reeds_build = DataCleaner.rename_cols(
+            parse_table(reeds_build),
+            name_map=DataCleaner.REEDS_NAME_MAP)
+
+        year_mask = (reeds_build['reeds_year'] == build_year)
+        if not any(year_mask):
+            msg = 'Build year {} not found in reeds data!'.format(build_year)
+            logger.error(msg)
+            raise ValueError(msg)
+
+        reeds_build = reeds_build[year_mask]
+
+        join_on = 'sc_gid'
+        if 'sc_gid' not in rev_sc or 'sc_gid' not in reeds_build:
+            raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
+
+        rev_sc, reeds_build = cls._check_rev_reeds_coordinates(rev_sc,
+                                                               reeds_build)
+
+        check_isin = np.isin(reeds_build[join_on].values,
+                             rev_sc[join_on].values)
+        if not all(check_isin):
+            wmsg = ('There are REEDS buildout GIDs that are not in the reV '
+                    'supply curve table: {} out of {} total REEDS buildout '
+                    'sites.'.format(np.sum(~check_isin), len(reeds_build)))
+            warn(wmsg)
+            logger.warning(wmsg)
+
+        table = pd.merge(rev_sc, reeds_build, how='inner', left_on=join_on,
+                         right_on=join_on)
+
+        return table
 
     def _check_gids(self):
         """Ensure that the SC buildout GIDs are available in the cf file.
@@ -607,43 +684,6 @@ class PlexosAggregation:
         shape = (t, self.n_plexos_nodes)
         output = np.zeros(shape, dtype=np.float32)
         return output
-
-    def _parse_rev_reeds(self, rev_sc, reeds_build):
-        """Parse and combine reV SC and REEDS buildout tables into single table
-
-        Parameters
-        ----------
-        rev_sc : pd.DataFrame
-            reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts.
-        reeds_build : pd.DataFrame
-            REEDS buildout with rows for built capacity at each reV SC point.
-
-        Returns
-        -------
-        table : pd.DataFrame
-            rev_sc and reeds_build inner joined on supply curve gid.
-        """
-        join_on = 'sc_gid'
-        if 'sc_gid' not in rev_sc or 'sc_gid' not in reeds_build:
-            raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
-
-        rev_sc, reeds_build = self._check_rev_reeds_coordinates(rev_sc,
-                                                                reeds_build)
-
-        check_isin = np.isin(reeds_build[join_on].values,
-                             rev_sc[join_on].values)
-        if not all(check_isin):
-            wmsg = ('There are REEDS buildout GIDs that are not in the reV '
-                    'supply curve table: {} out of {} total REEDS buildout '
-                    'sites.'.format(np.sum(~check_isin), len(reeds_build)))
-            warn(wmsg)
-            logger.warning(wmsg)
-
-        table = pd.merge(rev_sc, reeds_build, how='inner', left_on=join_on,
-                         right_on=join_on)
-
-        return table
 
     def _make_forecast_map(self):
         """Run ckdtree to map forecast pixels to generation pixels.
