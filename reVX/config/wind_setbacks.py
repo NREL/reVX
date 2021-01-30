@@ -11,18 +11,8 @@ class WindSetbacksConfig(AnalysisConfig):
 
     NAME = 'WindSetbacks'
     REQUIREMENTS = ('excl_h5', 'hub_height', 'rotor_diameter', 'features_path',
-                    'layer_name', 'feature_type')
+                    'feature_type')
     FEATURE_TYPES = ['structure', 'road', 'rail', 'transmission']
-
-    def __init__(self, config):
-        """
-        Parameters
-        ----------
-        config : dict
-            Dictionary with pre-extracted config input group.
-        """
-        super().__init__(config)
-        self._replace_default = False
 
     @property
     def feature_type(self):
@@ -31,8 +21,7 @@ class WindSetbacksConfig(AnalysisConfig):
         must be one of ['structure', 'road', 'rail', 'transmission']
         """
         feature_type = self['feature_type']
-        msg = ("feature_type must be one of: "
-               "['structure', 'road', 'rail', 'transmission']")
+        msg = ("feature_type must be one of: {}".format(self.FEATURE_TYPES))
         assert feature_type in self.FEATURE_TYPES, msg
 
         return feature_type
@@ -58,11 +47,6 @@ class WindSetbacksConfig(AnalysisConfig):
         return self['features_path']
 
     @property
-    def layer_name(self):
-        """Get setbacks layer name (required)."""
-        return self['layer_name']
-
-    @property
     def regs_fpath(self):
         """Get wind regulations .csv path"""
         return self.get('regs_fpath', None)
@@ -80,9 +64,9 @@ class WindSetbacksConfig(AnalysisConfig):
     @property
     def replace(self):
         """Get replace flag"""
-        return self.get('replace', self._replace_default)
+        return self.get('replace', False)
 
     @property
-    def description(self):
-        """Get layer description"""
-        return self.get('description', None)
+    def hsds(self):
+        """Get hsds flag"""
+        return self.get('hsds', False)

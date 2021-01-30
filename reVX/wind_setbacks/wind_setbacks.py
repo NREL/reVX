@@ -699,7 +699,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         return structures.to_crs(crs=crs)
 
     @staticmethod
-    def _get_structure_paths(structures_dir):
+    def _get_feature_paths(structures_dir):
         """
         Find all structures .geojson files in structures dir
 
@@ -798,7 +798,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         if structures_path.endswith('.geojson'):
             structures_path = [structures_path]
         else:
-            structures_path = setbacks._get_structure_paths(structures_path)
+            structures_path = setbacks._get_feature_paths(structures_path)
 
         for fpath in structures_path:
             geotiff = os.path.basename(fpath).replace('.geojson', '.geotiff')
@@ -860,7 +860,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         return roads.to_crs(crs=crs)
 
     @staticmethod
-    def _get_roads_paths(roads_dir):
+    def _get_feature_paths(roads_dir):
         """
         Find all roads gdb files in roads_dir
 
@@ -1006,7 +1006,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         if roads_path.endswith('.gdb'):
             roads_path = [roads_path]
         else:
-            roads_path = setbacks._get_roads_paths(roads_path)
+            roads_path = setbacks._get_feature_paths(roads_path)
 
         for fpath in roads_path:
             geotiff = os.path.basename(fpath).replace('.gdb', '.geotiff')

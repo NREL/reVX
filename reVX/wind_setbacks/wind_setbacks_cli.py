@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=all
 """
-ReEDS Command Line Interface
+Wind Setbacks CLI
 """
-
 import click
+from copy import deepcopy
 import logging
 import os
 
@@ -21,6 +21,9 @@ from reVX.wind_setbacks.wind_setbacks import (StructureWindSetbacks,
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
+
+
+STATE_SETBACKS = {'structure': StructureWindSetbacks, 'road': RoadWindSetbacks}
 
 
 @click.group()
@@ -109,12 +112,14 @@ def from_config(ctx, config):
                     'be the location of any new setback layers'))
 @click.option('--features_path', '-feats', required=True,
               type=click.Path(exists=True),
-              help=('Path to directory containing state level structure or '
-                    'road features files, or path to transmission or railroad '
-                    'CONUS wide features'))
-@click.option('--layer_name', '-layer', required=True, type=str,
-              help=('Name of new layer to write to exclusions .h5 file '
-                    'containing computed setbacks'))
+              help=('Path to:/n'
+                    '- State level structure .geotiff or directory containing '
+                    'geotiff files./n'
+                    '- State level roads .gdb or directory containing .gdb '
+                    'files./n'
+                    '-transmission or railroad CONUS wide .shp file.'))
+@click.option('--out_dir', '-o', required=True, type=str,
+              help=('Directory to save setbacks geotiff(s) into'))
 @click.option('--hub_height', '-height', required=True, type=float,
               help=('Turbine hub height(m), used along with rotor diameter to '
                     'compute blade tip height which is used to determine '
@@ -141,29 +146,28 @@ def from_config(ctx, config):
                     'run in serial, if > 1 run in parallel with that many '
                     'workers, if None run in parallel on all available cores, '
                     'by default None'))
-@click.option('--description', '-desc', default=None, type=STR,
-              show_default=True,
-              help=('Description of exclusion layer(set as an attribute), '
-                    'by default None'))
 @click.option('--replace', '-r', is_flag=True,
               help=('Flag to replace local layer data with arr if layer '
                     'already exists in the exlcusion .h5 file'))
+@click.option('--hsds', '-hsds', is_flag=True,
+              help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
+                    'behind HSDS'))
 @click.pass_context
-def local(ctx, excl_h5, features_path, layer_name, hub_height, rotor_diameter,
-          regs_fpath, multiplier, max_workers, description, replace):
+def local(ctx, excl_h5, features_path, out_dir, hub_height, rotor_diameter,
+          regs_fpath, multiplier, max_workers, replace, hsds):
     """
     Compute Wind Setbacks locally
     """
     ctx.obj['EXCL_H5'] = excl_h5
     ctx.obj['FEATURES_PATH'] = features_path
-    ctx.obj['LAYER_NAME'] = layer_name
+    ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['HUB_HEIGHT'] = hub_height
     ctx.obj['ROTOR_DIAMETER'] = rotor_diameter
     ctx.obj['REGS_FPATH'] = regs_fpath
     ctx.obj['MULTIPLIER'] = multiplier
     ctx.obj['MAX_WORKERS'] = max_workers
-    ctx.obj['DESCRIPTION'] = description
     ctx.obj['REPLACE'] = replace
+    ctx.obj['HSDS'] = hsds
 
 
 @local.command()
@@ -174,14 +178,14 @@ def structure_setbacks(ctx):
     """
     excl_h5 = ctx.obj['EXCL_H5']
     features_path = ctx.obj['FEATURES_PATH']
-    layer_name = ctx.obj['LAYER_NAME']
+    out_dir = ctx.obj['OUT_DIR']
     hub_height = ctx.obj['HUB_HEIGHT']
     rotor_diameter = ctx.obj['ROTOR_DIAMETER']
     regs_fpath = ctx.obj['REGS_FPATH']
     multiplier = ctx.obj['MULTIPLIER']
     max_workers = ctx.obj['MAX_WORKERS']
-    description = ctx.obj['DESCRIPTION']
     replace = ctx.obj['REPLACE']
+    hsds = ctx.obj['HSDS']
 
     logger.info('Computing setbacks from structures in {}'
                 .format(features_path))
@@ -195,12 +199,12 @@ def structure_setbacks(ctx):
                  .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                          max_workers, replace))
 
-    StructureWindSetbacks.run(excl_h5, features_path, layer_name, hub_height,
+    StructureWindSetbacks.run(excl_h5, features_path, out_dir, hub_height,
                               rotor_diameter, regs_fpath=regs_fpath,
                               multiplier=multiplier, max_workers=max_workers,
-                              description=description, replace=replace)
+                              replace=replace, hsds=hsds)
     logger.info('Setbacks computed and writen to {} as {}'
-                .format(excl_h5, layer_name))
+                .format(excl_h5, out_dir))
 
 
 @local.command()
@@ -211,14 +215,14 @@ def road_setbacks(ctx):
     """
     excl_h5 = ctx.obj['EXCL_H5']
     features_path = ctx.obj['FEATURES_PATH']
-    layer_name = ctx.obj['LAYER_NAME']
+    out_dir = ctx.obj['OUT_DIR']
     hub_height = ctx.obj['HUB_HEIGHT']
     rotor_diameter = ctx.obj['ROTOR_DIAMETER']
     regs_fpath = ctx.obj['REGS_FPATH']
     multiplier = ctx.obj['MULTIPLIER']
     max_workers = ctx.obj['MAX_WORKERS']
-    description = ctx.obj['DESCRIPTION']
     replace = ctx.obj['REPLACE']
+    hsds = ctx.obj['HSDS']
 
     logger.info('Computing setbacks from roads in {}'
                 .format(features_path))
@@ -232,12 +236,12 @@ def road_setbacks(ctx):
                  .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                          max_workers, replace))
 
-    RoadWindSetbacks.run(excl_h5, features_path, layer_name, hub_height,
+    RoadWindSetbacks.run(excl_h5, features_path, out_dir, hub_height,
                          rotor_diameter, regs_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
-                         description=description, replace=replace)
+                         replace=replace, hsds=hsds)
     logger.info('Setbacks computed and writen to {} as {}'
-                .format(excl_h5, layer_name))
+                .format(excl_h5, out_dir))
 
 
 @local.command()
@@ -248,14 +252,14 @@ def transmission_setbacks(ctx):
     """
     excl_h5 = ctx.obj['EXCL_H5']
     features_path = ctx.obj['FEATURES_PATH']
-    layer_name = ctx.obj['LAYER_NAME']
+    out_dir = ctx.obj['OUT_DIR']
     hub_height = ctx.obj['HUB_HEIGHT']
     rotor_diameter = ctx.obj['ROTOR_DIAMETER']
     regs_fpath = ctx.obj['REGS_FPATH']
     multiplier = ctx.obj['MULTIPLIER']
     max_workers = ctx.obj['MAX_WORKERS']
-    description = ctx.obj['DESCRIPTION']
     replace = ctx.obj['REPLACE']
+    hsds = ctx.obj['HSDS']
 
     logger.info('Computing setbacks from transmission in {}'
                 .format(features_path))
@@ -269,13 +273,13 @@ def transmission_setbacks(ctx):
                  .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                          max_workers, replace))
 
-    TransmissionWindSetbacks.run(excl_h5, features_path, layer_name,
-                                 hub_height, rotor_diameter,
-                                 regs_fpath=regs_fpath, multiplier=multiplier,
-                                 max_workers=max_workers,
-                                 description=description, replace=replace)
+    TransmissionWindSetbacks.run(excl_h5, features_path, out_dir, hub_height,
+                                 rotor_diameter, regs_fpath=regs_fpath,
+                                 multiplier=multiplier,
+                                 max_workers=max_workers, replace=replace,
+                                 hsds=hsds)
     logger.info('Setbacks computed and writen to {} as {}'
-                .format(excl_h5, layer_name))
+                .format(excl_h5, out_dir))
 
 
 @local.command()
@@ -286,14 +290,14 @@ def rail_setbacks(ctx):
     """
     excl_h5 = ctx.obj['EXCL_H5']
     features_path = ctx.obj['FEATURES_PATH']
-    layer_name = ctx.obj['LAYER_NAME']
+    out_dir = ctx.obj['OUT_DIR']
     hub_height = ctx.obj['HUB_HEIGHT']
     rotor_diameter = ctx.obj['ROTOR_DIAMETER']
     regs_fpath = ctx.obj['REGS_FPATH']
     multiplier = ctx.obj['MULTIPLIER']
     max_workers = ctx.obj['MAX_WORKERS']
-    description = ctx.obj['DESCRIPTION']
     replace = ctx.obj['REPLACE']
+    hsds = ctx.obj['HSDS']
 
     logger.info('Computing setbacks from structures in {}'
                 .format(features_path))
@@ -307,15 +311,15 @@ def rail_setbacks(ctx):
                  .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                          max_workers, replace))
 
-    RailWindSetbacks.run(excl_h5, features_path, layer_name, hub_height,
+    RailWindSetbacks.run(excl_h5, features_path, out_dir, hub_height,
                          rotor_diameter, regs_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
-                         description=description, replace=replace)
+                         replace=replace, hsds=hsds)
     logger.info('Setbacks computed and writen to {} as {}'
-                .format(excl_h5, layer_name))
+                .format(excl_h5, out_dir))
 
 
-def get_node_cmd(config):
+def get_node_cmd(name, config):
     """
     Get the node CLI call for the Wind Setbacks computation
 
@@ -329,22 +333,24 @@ def get_node_cmd(config):
     cmd : str
         CLI call to submit to SLURM execution.
     """
-    args = ['-n {}'.format(SLURM.s(config.name)),
+    args = ['-n {}'.format(SLURM.s(name)),
             '-log {}'.format(SLURM.s(config.logdir)),
             'local',
             '-excl {}'.format(SLURM.s(config.excl_h5)),
             '-feats {}'.format(SLURM.s(config.features_path)),
-            '-layer {}'.format(SLURM.s(config.layer_name)),
+            '-o {}'.format(SLURM.s(config.out_dir)),
             '-height {}'.format(SLURM.s(config.hub_height)),
             '-diameter {}'.format(SLURM.s(config.rotor_diameter)),
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
             '-mult {}'.format(SLURM.s(config.multiplier)),
             '-mw {}'.format(SLURM.s(config.max_workers)),
-            '-desc {}'.format(SLURM.s(config.description)),
             ]
 
     if config.replace:
         args.append('-r')
+
+    if config.hsds:
+        args.append('-hsds')
 
     if config.log_level == logging.DEBUG:
         args.append('-v')
@@ -369,19 +375,20 @@ def get_node_cmd(config):
     return cmd
 
 
-def eagle(config):
+def launch_job(config):
     """
-    Run Wind Setbacks on Eagle HPC.
+    Launch job from config on SLURM
 
     Parameters
     ----------
     config : reVX.config.wind_setbacks.WindSetbacks
         Wind Setbacks config object.
     """
-    cmd = get_node_cmd(config)
-    name = config.name
     log_dir = config.logdir
     stdout_path = os.path.join(log_dir, 'stdout/')
+    name = os.path.basename(config.features_path).split('.')[0]
+    name = "{}-{}".format(config.name, name)
+    cmd = get_node_cmd(name, config)
 
     logger.info('Computing Wind Setbacks on Eagle with '
                 'node name "{}"'.format(name))
@@ -391,7 +398,8 @@ def eagle(config):
                                memory=config.execution_control.node_mem,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,
-                               name=name, stdout_path=stdout_path,
+                               name=name,
+                               stdout_path=stdout_path,
                                conda_env=config.execution_control.conda_env,
                                module=config.execution_control.module)[0]
     if out:
@@ -405,6 +413,34 @@ def eagle(config):
 
     click.echo(msg)
     logger.info(msg)
+
+
+def eagle(config):
+    """
+    Run Wind Setbacks on Eagle HPC.
+
+    Parameters
+    ----------
+    config : reVX.config.wind_setbacks.WindSetbacks
+        Wind Setbacks config object.
+    """
+    features_path = config.features_path
+    if os.path.isdir(features_path):
+        if config.feature_type not in STATE_SETBACKS:
+            msg = ("'features_path' must be a .shp file to run rail or "
+                   "transmission setbacks, was given: {}"
+                   .format(features_path))
+            logger.error(msg)
+            raise ValueError(msg)
+
+        cls = STATE_SETBACKS[config.feature_type]
+        features_path = cls.get_feature_paths(features_path)
+        for fpath in features_path:
+            fpath_config = deepcopy(config)
+            fpath_config['features_path'] = fpath
+            launch_job(fpath_config)
+    else:
+        launch_job(config)
 
 
 if __name__ == '__main__':
