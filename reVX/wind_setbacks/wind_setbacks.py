@@ -698,6 +698,31 @@ class StructureWindSetbacks(BaseWindSetbacks):
 
         return structures.to_crs(crs=crs)
 
+    @staticmethod
+    def _get_structure_paths(structures_dir):
+        """
+        Find all structures .geojson files in structures dir
+
+        Parameters
+        ----------
+        structure_dir : str
+            Path to directory containing microsoft strucutes *.geojsons. Used
+            to identify structures to build setbacks from. Files should be
+            by state
+
+        Returns
+        -------
+        structure_paths : list
+            List of file paths to all structures .geojson files in
+            structures_dir
+        """
+        structure_paths = []
+        for file in os.listdir(structures_dir):
+            if file.endswith('.geojson'):
+                structure_paths.append(os.path.join(structures_dir, file))
+
+        return structure_paths
+
     def _check_regs(self, features_fpath):
         """
         Reduce regs to state corresponding to features_fpath if needed
@@ -720,7 +745,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         return wind_regs.loc[mask].reset_index(drop=True)
 
     @classmethod
-    def run(cls, excl_h5, structures_fpath, geotiff, hub_height,
+    def run(cls, excl_h5, structures_path, out_dir, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
@@ -734,10 +759,11 @@ class StructureWindSetbacks(BaseWindSetbacks):
         excl_h5 : str
             Path to .h5 file containing exclusion layers, will also be the
             location of any new setback layers
-        structure_fpath : str
-            Path to state geojson of structures to setback from
-        geotiff : str
-            Path to save geotiff containing rasterized setbacks
+        structure_path : str
+            Path to structures geojson for a single state, or directory
+            containing geojsons for all states.
+        out_dir : str
+            Directory to save setbacks geotiff(s) into
         hub_height : float | int
             Turbine hub height (m), used along with rotor diameter to compute
             blade tip height which is used to determine setback distance
@@ -768,9 +794,20 @@ class StructureWindSetbacks(BaseWindSetbacks):
         setbacks = cls(excl_h5, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
-        setbacks.compute_setbacks(structures_fpath, geotiff=geotiff,
-                                  max_workers=max_workers,
-                                  replace=replace)
+
+        if structures_path.endswith('.geojson'):
+            structures_path = [structures_path]
+        else:
+            structures_path = setbacks._get_structure_paths(structures_path)
+
+        for fpath in structures_path:
+            geotiff = os.path.basename(fpath).replace('.geojson', '.geotiff')
+            geotiff = os.path.join(out_dir, geotiff)
+            logger.info("Computing setbacks from structures in {} and saving "
+                        "to {}".format(fpath, geotiff))
+            setbacks.compute_setbacks(fpath, geotiff=geotiff,
+                                      max_workers=max_workers,
+                                      replace=replace)
 
 
 class RoadWindSetbacks(BaseWindSetbacks):
@@ -821,6 +858,30 @@ class RoadWindSetbacks(BaseWindSetbacks):
         roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr)
 
         return roads.to_crs(crs=crs)
+
+    @staticmethod
+    def _get_roads_paths(roads_dir):
+        """
+        Find all roads gdb files in roads_dir
+
+        Parameters
+        ----------
+        roads_dir : str
+            Path to directory containing here streets *.gdb files. Used
+            to identify roads to build setbacks from. Files should be
+            by state
+
+        Returns
+        -------
+        roads_paths : list
+            List of file paths to all roads .gdp files in roads_dir
+        """
+        roads_paths = []
+        for file in os.listdir(roads_dir):
+            if file.endswith('.gdb') and file.startswith('Streets_USA'):
+                roads_paths.append(os.path.join(roads_dir, file))
+
+        return roads_paths
 
     @classmethod
     def _compute_local_setbacks(cls, roads_fpath, crs, wind_regs,
@@ -893,10 +954,9 @@ class RoadWindSetbacks(BaseWindSetbacks):
         return wind_regs.loc[mask].reset_index(drop=True)
 
     @classmethod
-    def run(cls, excl_h5, roads_fpath, layer_name, hub_height,
+    def run(cls, excl_h5, roads_path, out_dir, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
-            chunks=(128, 128), max_workers=None, description=None,
-            replace=False, hsds=False):
+            chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
         Compute state's road setbacks and write them to a geotiff.
         If a wind regulations file is given compute local setbacks, otherwise
@@ -908,10 +968,11 @@ class RoadWindSetbacks(BaseWindSetbacks):
         excl_h5 : str
             Path to .h5 file containing exclusion layers, will also be the
             location of any new setback layers
-        road_fpath : str
-            Path to state here streets gdb file
-        geotiff : str
-            Path to save geotiff containing rasterized setbacks
+        road_path : str
+            Path to state here streets gdb file or directory containing
+            states gdb files.
+        out_dir : str
+            Directory to save setbacks geotiff(s) into
         hub_height : float | int
             Turbine hub height (m), used along with rotor diameter to compute
             blade tip height which is used to determine setback distance
@@ -942,10 +1003,19 @@ class RoadWindSetbacks(BaseWindSetbacks):
         setbacks = cls(excl_h5, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
-        setbacks.compute_setbacks(roads_fpath, layer=layer_name,
-                                  max_workers=max_workers,
-                                  description=description,
-                                  replace=replace)
+        if roads_path.endswith('.gdb'):
+            roads_path = [roads_path]
+        else:
+            roads_path = setbacks._get_roads_paths(roads_path)
+
+        for fpath in roads_path:
+            geotiff = os.path.basename(fpath).replace('.gdb', '.geotiff')
+            geotiff = os.path.join(out_dir, geotiff)
+            logger.info("Computing setbacks from roads in {} and saving "
+                        "to {}".format(fpath, geotiff))
+            setbacks.compute_setbacks(fpath, geotiff=geotiff,
+                                      max_workers=max_workers,
+                                      replace=replace)
 
 
 class TransmissionWindSetbacks(BaseWindSetbacks):
@@ -1039,7 +1109,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         return setbacks
 
     @classmethod
-    def run(cls, excl_h5, features_fpath, geotiff, hub_height,
+    def run(cls, excl_h5, features_fpath, out_dir, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
@@ -1055,8 +1125,8 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         features_fpath : str
             Path to shape file with transmission or rail features to compute
             setbacks from
-        geotiff : str
-            Path to save geotiff containing rasterized setbacks
+        out_dir : str
+            Directory to save geotiff containing rasterized setbacks into
         hub_height : float | int
             Turbine hub height (m), used along with rotor diameter to compute
             blade tip height which is used to determine setback distance
@@ -1087,6 +1157,8 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         setbacks = cls(excl_h5, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
+        geotiff = os.path.basename(features_fpath).replace('.shp', '.geotiff')
+        geotiff = os.path.join(out_dir, geotiff)
         setbacks.compute_setbacks(features_fpath, geotiff=geotiff,
                                   max_workers=max_workers,
                                   replace=replace)
