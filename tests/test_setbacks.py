@@ -7,14 +7,13 @@ import json
 import numpy as np
 import os
 import pytest
-import shutil
 import tempfile
 import traceback
 
 from rex.utilities.loggers import LOGGERS
-from reV.handlers import ExclusionLayers
 
 from reVX import TESTDATADIR
+from reVX.handlers.geotiff import Geotiff
 from reVX.wind_setbacks import (StructureWindSetbacks,
                                 RailWindSetbacks)
 from reVX.wind_setbacks.wind_setbacks_cli import main
@@ -35,21 +34,22 @@ def runner():
     return CliRunner()
 
 
-@pytest.mark.parametrize('max_workers', [None, 1])
-def test_general_structures(max_workers):
+def test_generic_structure():
     """
-    Test general structures setbacks
+    Test generic structures setbacks
     """
-    with ExclusionLayers(EXCL_H5) as exc:
-        baseline = exc['general_structures']
+    baseline = os.path.join(TESTDATADIR, 'setbacks',
+                            'generic_structures.geotiff')
+    with Geotiff(baseline) as tif:
+        baseline = tif.values
 
     setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                      regs_fpath=None, multiplier=MULTIPLIER)
-    structure_dir = os.path.join(TESTDATADIR, 'setbacks')
-    test = setbacks.compute_setbacks(structure_dir, 'State',
-                                     max_workers=max_workers)
+    structure_path = os.path.join(TESTDATADIR, 'setbacks',
+                                  'RhodeIsland.geojson')
+    test = setbacks.compute_setbacks(structure_path)
 
-    assert np.allclose(baseline, test[0])
+    assert np.allclose(baseline, test)
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
@@ -57,31 +57,33 @@ def test_local_structures(max_workers):
     """
     Test local structures setbacks
     """
-    with ExclusionLayers(EXCL_H5) as exc:
-        baseline = exc['existing_structures']
+    baseline = os.path.join(TESTDATADIR, 'setbacks',
+                            'existing_structures.geotiff')
+    with Geotiff(baseline) as tif:
+        baseline = tif.values
 
     setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                      regs_fpath=REG_FPATH, multiplier=None)
-    structure_dir = os.path.join(TESTDATADIR, 'setbacks')
-    test = setbacks.compute_setbacks(structure_dir, 'State',
-                                     max_workers=max_workers)
+    structure_path = os.path.join(TESTDATADIR, 'setbacks',
+                                  'RhodeIsland.geojson')
+    test = setbacks.compute_setbacks(structure_path, max_workers=max_workers)
 
-    assert np.allclose(baseline, test[0])
+    assert np.allclose(baseline, test)
 
 
-@pytest.mark.parametrize('max_workers', [None, 1])
-def test_general_railroads(max_workers):
+def test_generic_railroads():
     """
-    Test general rail setbacks
+    Test generic rail setbacks
     """
-    with ExclusionLayers(EXCL_H5) as exc:
-        baseline = exc['general_rail']
+    baseline = os.path.join(TESTDATADIR, 'setbacks', 'generic_rails.geotiff')
+    with Geotiff(baseline) as tif:
+        baseline = tif.values
 
     setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                 regs_fpath=None, multiplier=MULTIPLIER)
     rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
                              'RI_Railroads.shp')
-    test = setbacks.compute_setbacks(rail_path, max_workers=max_workers)
+    test = setbacks.compute_setbacks(rail_path)
 
     assert np.allclose(baseline, test[0])
 
@@ -91,8 +93,9 @@ def test_local_railroads(max_workers):
     """
     Test local rail setbacks
     """
-    with ExclusionLayers(EXCL_H5) as exc:
-        baseline = exc['existing_rail']
+    baseline = os.path.join(TESTDATADIR, 'setbacks', 'existing_rails.geotiff')
+    with Geotiff(baseline) as tif:
+        baseline = tif.values
 
     setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                 regs_fpath=REG_FPATH, multiplier=None)
@@ -118,22 +121,17 @@ def test_cli(runner):
     """
     structure_dir = os.path.join(TESTDATADIR, 'setbacks')
     with tempfile.TemporaryDirectory() as td:
-        out_h5 = os.path.join(td, os.path.basename(EXCL_H5))
-        shutil.copy(EXCL_H5, out_h5)
-
         config = {
             "directories": {
                 "log_directory": td,
                 "output_directory": td
             },
-            "excl_h5": out_h5,
             "execution_control": {
                 "option": "local"
             },
             "feature_type": "structure",
             "features_path": structure_dir,
             "hub_height": 135,
-            "layer_name": 'general_structures',
             "log_level": "INFO",
             "regs_fpath": REG_FPATH,
             "replace": True,
@@ -149,11 +147,14 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        with ExclusionLayers(EXCL_H5) as exc:
-            baseline = exc['general_structures']
+        baseline = os.path.join(TESTDATADIR, 'setbacks',
+                                'generic_structures.geotiff')
+        with Geotiff(baseline) as tif:
+            baseline = tif.values
 
-        with ExclusionLayers(out_h5) as exc:
-            test = exc['general_structures']
+        test = os.path.join(td, 'RhodeIsland.geotiff')
+        with Geotiff(test) as tif:
+            test = tif.values
 
         np.allclose(baseline, test)
 

@@ -357,73 +357,32 @@ class BaseWindSetbacks(ABC):
             system
         """
 
-    @classmethod
-    def _compute_generic_setbacks(cls, features_fpath, crs, setback):
-        """
-        Abstract method to compute generic setbacks
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to file containing features to setback from
-        crs : str
-            Coordinate reference system to convert structures geometries into
-        setback : float
-            Generic set back distance in meters
-
-        Returns
-        -------
-        setbacks : list
-            List of setback geometries for given features
-        """
-        features = cls._parse_features(features_fpath, crs)
-
-        features['geometry'] = features.buffer(setback)
-        setbacks = [(geom, 1) for geom in features['geometry']]
-
-        return setbacks
-
-    @classmethod
-    def _compute_local_setbacks(cls, features_fpath, crs, wind_regs,
-                                hub_height, rotor_diameter):
+    @staticmethod
+    def _compute_local_setbacks(features, cnty, setback):
         """
         Compute local features setbacks
 
         Parameters
         ----------
-        features_fpath : str
-            Path to file containg feature to setback from
-        crs : str
-            Coordinate reference system to convert structures geometries into
-        wind_regs : pandas.DataFrame
-            Wind regulations that define setbacks by county
-        hub_height : float
-            Turbine hub height in meters
-        rotor_diameter : float
-            Turbine rotor diameter in meters
+        features : geopandas.GeoDataFrame
+            Features to setback from
+        cnty : geopandas.GeoDataFrame
+            Wind regulations for a single county
+        setback : int
+            Setback distance in meters
 
         Returns
         -------
         setbacks : list
             List of setback geometries
         """
-        features = cls._parse_features(features_fpath, crs)
+        logger.debug('- Computing setbacks for county FIPS {}'
+                     .format(cnty.iloc[0]['FIPS']))
+        mask = features.centroid.within(cnty['geometry'].values[0])
+        tmp = features.loc[mask]
+        tmp.loc[:, 'geometry'] = tmp.buffer(setback)
 
-        setbacks = []
-        for i in range(len(wind_regs)):
-            cnty = wind_regs.iloc[[i]]
-            setback = cls._get_setback(cnty.iloc[0], hub_height,
-                                       rotor_diameter)
-            if setback is not None:
-                logger.debug('- Computing setbacks for county FIPS {}'
-                             .format(cnty.iloc[0]['FIPS']))
-                idx = features.sindex.intersection(cnty.total_bounds)
-                tmp = features.iloc[list(idx)]
-                mask = tmp.centroid.within(cnty['geometry'].values[0])
-                tmp = tmp.loc[mask]
-                tmp['geometry'] = tmp.buffer(setback)
-
-                setbacks.extend((geom, 1) for geom in tmp['geometry'])
+        setbacks = [(geom, 1) for geom in tmp['geometry']]
 
         return setbacks
 
@@ -465,7 +424,6 @@ class BaseWindSetbacks(ABC):
             logger.debug('Computing setbacks using regulations provided in: {}'
                          .format(regs_fpath))
         elif multiplier:
-
             regs = None
             if isinstance(multiplier, str):
                 multiplier = self.MULTIPLIERS[multiplier]
@@ -549,6 +507,90 @@ class BaseWindSetbacks(ABC):
 
         ExclusionsConverter._write_geotiff(geotiff, self.profile, setbacks)
 
+    def compute_local_setbacks(self, features_fpath, max_workers=None):
+        """
+        Compute local setbacks for all counties either in serial or parallel.
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to shape file with features to compute setbacks from
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+
+        Returns
+        -------
+        setbacks : ndarray
+            Raster array of setbacks
+        """
+        setbacks = []
+        features = self._parse_features(features_fpath, self.crs)
+        wind_regs = self._check_regs(features_fpath)
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        if max_workers > 1:
+            logger.info('Computing local setbacks in parallel using {} '
+                        'workers'.format(max_workers))
+            loggers = [__name__, 'reVX']
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
+                futures = []
+                for i in range(len(wind_regs)):
+                    cnty = wind_regs.iloc[[i]]
+                    setback = self._get_setback(cnty.iloc[0], self.hub_height,
+                                                self.rotor_diameter)
+                    if setback is not None:
+                        idx = features.sindex.intersection(cnty.total_bounds)
+                        cnty_feats = features.iloc[list(idx)]
+                        future = exe.submit(self._compute_local_setbacks,
+                                            cnty_feats, cnty, setback)
+                        futures.append(future)
+
+                for i, future in enumerate(as_completed(futures)):
+                    setbacks.extend(future.result())
+                    logger.debug('Computed setbacks for {} of {} states'
+                                 .format((i + 1), len(wind_regs)))
+        else:
+            logger.info('Computing local setbacks in serial')
+            for i in range(len(wind_regs)):
+                cnty = wind_regs.iloc[[i]]
+                setback = self._get_setback(cnty.iloc[0], self.hub_height,
+                                            self.rotor_diameter)
+                if setback is not None:
+                    idx = features.sindex.intersection(cnty.total_bounds)
+                    cnty_feats = features.iloc[list(idx)]
+                    setbacks.extend(self._compute_local_setbacks(cnty_feats,
+                                                                 cnty,
+                                                                 setback))
+                    logger.debug('Computed setbacks for {} of {} states'
+                                 .format((i + 1), len(wind_regs)))
+
+        return self._rasterize_setbacks(setbacks)
+
+    def compute_generic_setbacks(self, features_fpath):
+        """
+        Compute generic setbacks.
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to shape file with features to compute setbacks from
+
+        Returns
+        -------
+        setbacks : ndarray
+            Raster array of setbacks
+        """
+        logger.info('Computing generic setbacks')
+        features = self._parse_features(features_fpath, self.crs)
+        features.loc[:, 'geometry'] = features.buffer(self.generic_setback)
+        setbacks = [(geom, 1) for geom in features['geometry']]
+
+        return self._rasterize_setbacks(setbacks)
+
     def compute_setbacks(self, features_fpath, max_workers=None,
                          geotiff=None, replace=False):
         """
@@ -573,51 +615,13 @@ class BaseWindSetbacks(ABC):
         Returns
         -------
         setbacks : ndarray
-            Raster array of setbacks, ready to be written to the exclusions
-            .h5 file as a new exclusion layer
+            Raster array of setbacks
         """
-        crs = self.crs
-        setbacks = []
-
         if self._regs is not None:
-            wind_regs = self._check_regs(features_fpath)
-            if max_workers is None:
-                max_workers = os.cpu_count()
-
-            if max_workers > 1:
-                logger.info('Computing local setbacks in parallel using {} '
-                            'workers'.format(max_workers))
-                loggers = [__name__, 'reVX']
-                with SpawnProcessPool(max_workers=max_workers,
-                                      loggers=loggers) as exe:
-                    futures = []
-                    for i in range(len(wind_regs)):
-                        cnty = wind_regs.iloc[[i]]
-                        future = exe.submit(self._compute_local_setbacks,
-                                            features_fpath, crs, cnty,
-                                            self.hub_height,
-                                            self.rotor_diameter)
-                        futures.append(future)
-
-                    for i, future in enumerate(as_completed(futures)):
-                        setbacks.extend(future.result())
-                        logger.debug('Computed setbacks for {} of {} states'
-                                     .format((i + 1), len(wind_regs)))
-            else:
-                logger.info('Computing local setbacks in serial')
-                for i in range(len(wind_regs)):
-                    cnty = wind_regs.iloc[[i]]
-                    setbacks.extend(self._compute_local_setbacks(
-                        features_fpath, crs, cnty, self.hub_height,
-                        self.rotor_diameter))
-                    logger.debug('Computed setbacks for {} of {} states'
-                                 .format((i + 1), len(wind_regs)))
+            setbacks = self.compute_local_setbacks(features_fpath,
+                                                   max_workers=max_workers)
         else:
-            logger.info('Computing generic setbacks')
-            setbacks.extend(self._compute_generic_setbacks(
-                features_fpath, crs, self.generic_setback))
-
-        setbacks = self._rasterize_setbacks(setbacks)
+            setbacks = self.compute_generic_setbacks(features_fpath)
 
         if geotiff is not None:
             logger.debug('Writing setbacks to {}'.format(geotiff))
@@ -737,7 +741,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         wind_regs : geopands.GeoDataFrame | None
             Wind Regulations
         """
-        state_name = features_fpath.split('.')[0]
+        state_name = os.path.basename(features_fpath).split('.')[0]
         state = self._split_state_name(state_name)
         wind_regs = self.wind_regs
         mask = wind_regs["State"] == state
@@ -883,53 +887,34 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
         return roads_paths
 
-    @classmethod
-    def _compute_local_setbacks(cls, roads_fpath, crs, wind_regs,
-                                hub_height, rotor_diameter):
+    @staticmethod
+    def _compute_local_setbacks(features, cnty, setback):
         """
         Compute local road setbacks
 
         Parameters
         ----------
-        roads_fpath : str
-            Path to here streets gdb file with roads to setback from
-        crs : str
-            Coordinate reference system to convert structures geometries into
-        wind_regs : pandas.DataFrame
-            Wind regulations by county
-        hub_height : float
-            Turbine hub height in meters
-        rotor_diameter : float
-            Turbine rotor diameter in meters
+        features : geopandas.GeoDataFrame
+            Features to setback from
+        cnty : geopandas.GeoDataFrame
+            Wind regulations for a single county
+        setback : int
+            Setback distance in meters
 
         Returns
         -------
         setbacks : list
-            List of setback geometries for given eatures
+            List of setback geometries
         """
-        features = cls._parse_features(roads_fpath, crs)
-        features = features[['StreetName', 'geometry']]
-        si = features.sindex
+        logger.debug('- Computing setbacks for county FIPS {}'
+                     .format(cnty['FIPS']))
+        tmp = features.intersection(cnty['geometry'])
+        tmp = gpd.GeoDataFrame(geometry=tmp)
+        tmp = tmp[~tmp.is_empty]
+        # Buffer setback
+        tmp.loc[:, 'geometry'] = tmp.buffer(setback)
 
-        setbacks = []
-        for i in range(len(wind_regs)):
-            cnty = wind_regs.iloc[i]
-            setback = cls._get_setback(cnty, hub_height,
-                                       rotor_diameter)
-            if setback is not None:
-                logger.debug('- Computing setbacks for county FIPS {}'
-                             .format(cnty['FIPS']))
-                # spatial index bounding box and intersection
-                bb_index = \
-                    list(si.intersection(cnty['geometry'].bounds))
-                bb_pos = features.iloc[bb_index]
-                tmp = bb_pos.intersection(cnty['geometry'])
-                tmp = gpd.GeoDataFrame(geometry=tmp)
-                tmp = tmp[~tmp.is_empty]
-                # Buffer setback
-                tmp['geometry'] = tmp.buffer(setback)
-
-                setbacks.extend((geom, 1) for geom in tmp['geometry'])
+        setbacks = [(geom, 1) for geom in tmp['geometry']]
 
         return setbacks
 
@@ -1067,44 +1052,32 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
 
         return trans.to_crs(crs=crs)
 
-    @classmethod
-    def _compute_local_setbacks(cls, features_fpath, crs, cnty,
-                                hub_height, rotor_diameter):
+    @staticmethod
+    def _compute_local_setbacks(features, cnty, setback):
         """
         Compute local county setbacks
 
         Parameters
         ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from
-        crs : str
-            Coordinate reference system to convert structures geometries into
+        features : geopandas.GeoDataFrame
+            Features to setback from
         cnty : geopandas.GeoDataFrame
             Wind regulations for a single county
-        hub_height : float
-            Turbine hub height in meters
-        rotor_diameter : float
-            Turbine rotor diameter in meters
+        setback : int
+            Setback distance in meters
 
         Returns
         -------
         setbacks : list
-            List of setback geometries for given state
+            List of setback geometries
         """
-        features = cls._parse_features(features_fpath, crs)
+        tmp = gpd.clip(features, cnty)
+        tmp = tmp[~tmp.is_empty]
 
-        setbacks = []
-        setback = cls._get_setback(cnty.iloc[0], hub_height, rotor_diameter)
-        if setback is not None:
-            # clip the transmission lines to county geometry
-            # pylint: disable=assignment-from-no-return
-            tmp = gpd.clip(features, cnty)
-            tmp = tmp[~tmp.is_empty]
+        # Buffer setback
+        tmp.loc[:, 'geometry'] = tmp.buffer(setback)
 
-            # Buffer setback
-            tmp['geometry'] = tmp.buffer(setback)
-
-            setbacks.extend((geom, 1) for geom in tmp['geometry'])
+        setbacks = [(geom, 1) for geom in tmp['geometry']]
 
         return setbacks
 

@@ -373,6 +373,11 @@ class ExclusionsConverter:
         values : ndarray
             Geotiff data
         """
+        if values.shape[0] != 1:
+            values = np.expand_dims(values, 0)
+
+        profile['dtype'] = values.dtype.name
+
         with rasterio.open(geotiff, 'w', **profile) as f:
             f.write(values)
             logger.debug('\t- {} created'.format(geotiff))
