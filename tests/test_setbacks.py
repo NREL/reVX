@@ -85,7 +85,7 @@ def test_generic_railroads():
                              'RI_Railroads.shp')
     test = setbacks.compute_setbacks(rail_path)
 
-    assert np.allclose(baseline, test[0])
+    assert np.allclose(baseline, test)
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
@@ -103,7 +103,7 @@ def test_local_railroads(max_workers):
                              'RI_Railroads.shp')
     test = setbacks.compute_setbacks(rail_path, max_workers=max_workers)
 
-    assert np.allclose(baseline, test[0])
+    assert np.allclose(baseline, test)
 
 
 def test_setback_preflight_check():

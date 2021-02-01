@@ -77,14 +77,26 @@ def run_local(ctx, config):
     ctx.invoke(local,
                excl_h5=config.excl_h5,
                features_path=config.features_path,
-               layer_name=config.layer_name,
+               out_dir=config.dirout,
                hub_height=config.hub_height,
                rotor_diameter=config.rotor_diameter,
                regs_fpath=config.regs_fpath,
                multiplier=config.multiplier,
                max_workers=config.max_workers,
-               description=config.description,
                replace=config.replace)
+
+    feature_type = config.feature_type
+    if feature_type == 'structure':
+        ctx.invoke(structure_setbacks)
+    elif feature_type == 'road':
+        ctx.invoke(road_setbacks)
+    elif feature_type == 'transmission':
+        ctx.invoke(transmission_setbacks)
+    elif feature_type == 'rail':
+        ctx.invoke(rail_setbacks)
+    else:
+        msg = 'Feature type must be one of {}'.format(config.FEATURE_TYPES)
+        raise RuntimeError(msg)
 
 
 @main.command()
@@ -338,7 +350,7 @@ def get_node_cmd(name, config):
             'local',
             '-excl {}'.format(SLURM.s(config.excl_h5)),
             '-feats {}'.format(SLURM.s(config.features_path)),
-            '-o {}'.format(SLURM.s(config.out_dir)),
+            '-o {}'.format(SLURM.s(config.dirout)),
             '-height {}'.format(SLURM.s(config.hub_height)),
             '-diameter {}'.format(SLURM.s(config.rotor_diameter)),
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
