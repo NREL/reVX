@@ -1,0 +1,561 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.rpm.rpm_output module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.utilities package" href="reVX.utilities.html" />
+    <link rel="prev" title="reVX.rpm.rpm_manager module" href="reVX.rpm.rpm_manager.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.rpm.html">reVX.rpm package</a> &raquo;</li>
+        
+      <li>reVX.rpm.rpm_output module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.rpm.rpm_output.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-reVX.rpm.rpm_output">
+<span id="revx-rpm-rpm-output-module"></span><h1>reVX.rpm.rpm_output module<a class="headerlink" href="#module-reVX.rpm.rpm_output" title="Permalink to this headline">¶</a></h1>
+<p>RPM output handler.</p>
+<dl class="py class">
+<dt id="reVX.rpm.rpm_output.RepresentativeProfiles">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.rpm.rpm_output.</code><code class="sig-name descname">RepresentativeProfiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">clusters</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RepresentativeProfiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RepresentativeProfiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Methods to export representative generation profiles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>clusters</strong> (<em>pd.DataFrame</em>) – Single DataFrame with (gid, gen_gid, cluster_id, rank).</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – reV generation output file.</p></li>
+<li><p><strong>key</strong> (<em>str | None</em>) – Rank column to sort by to get the best ranked profile.
+None will use implicit logic to select the rank key.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str</em>) – reV generation output file for forecast data. If this is input,
+profiles will be taken from forecast fpath instead of fpath gen
+based on a NN mapping.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RepresentativeProfiles.process_forecast_clusters">
+<em class="property">classmethod </em><code class="sig-name descname">process_forecast_clusters</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">clusters</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RepresentativeProfiles.process_forecast_clusters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RepresentativeProfiles.process_forecast_clusters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Process the clusters dataframe with NN to forecast data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>clusters</strong> (<em>pd.DataFrame</em>) – Single DataFrame with (gid, gen_gid, cluster_id, rank).</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – reV generation output file.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str</em>) – reV generation output file for forecast data. If this is input,
+profiles will be taken from forecast fpath instead of fpath gen
+based on a NN mapping.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>clusters</strong> (<em>pd.DataFrame</em>) – Single DataFrame with additional forecast columns.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RepresentativeProfiles.export_profiles">
+<em class="property">classmethod </em><code class="sig-name descname">export_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_profiles</span></em>, <em class="sig-param"><span class="n">clusters</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">fn_pro</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RepresentativeProfiles.export_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RepresentativeProfiles.export_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export representative profile files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_profiles</strong> (<em>int</em>) – Number of profiles to export.</p></li>
+<li><p><strong>clusters</strong> (<em>pd.DataFrame</em>) – RPM output clusters attribute.</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Filepath to reV generation results to get profiles from.</p></li>
+<li><p><strong>fn_pro</strong> (<em>str</em>) – Filename for representative profile output.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to dump output files.</p></li>
+<li><p><strong>key</strong> (<em>str | None</em>) – Column in clusters to sort ranks by. None will allow for
+default logic.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str</em>) – reV generation output file for forecast data. If this is input,
+profiles will be taken from forecast fpath instead of fpath gen
+based on a NN mapping.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RepresentativeProfiles.export_single_profile">
+<em class="property">classmethod </em><code class="sig-name descname">export_single_profile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">clusters</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">irp</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">fpath_out</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RepresentativeProfiles.export_single_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RepresentativeProfiles.export_single_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a single representative profile timeseries dataframe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>clusters</strong> (<em>pd.DataFrame</em>) – Single DataFrame with (gid, gen_gid, cluster_id, rank).</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – reV generation output file.</p></li>
+<li><p><strong>irp</strong> (<em>int</em>) – Rank of profile to get. Zero is the most representative profile.</p></li>
+<li><p><strong>fpath_out</strong> (<em>str</em>) – Optional filepath to export files to.</p></li>
+<li><p><strong>key</strong> (<em>str | None</em>) – Rank column to sort by to get the best ranked profile.
+None will use implicit logic to select the rank key.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str</em>) – reV generation output file for forecast data. If this is input,
+profiles will be taken from forecast fpath instead of fpath gen
+based on a NN mapping.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.rpm.rpm_output.RPMOutput">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.rpm.rpm_output.</code><code class="sig-name descname">RPMOutput</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rpm_clusters</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">excl_fpath</span></em>, <em class="sig-param"><span class="n">excl_dict</span></em>, <em class="sig-param"><span class="n">techmap_dset</span></em>, <em class="sig-param"><span class="n">excl_area</span><span class="o">=</span><span class="default_value">0.0081</span></em>, <em class="sig-param"><span class="n">include_threshold</span><span class="o">=</span><span class="default_value">0.001</span></em>, <em class="sig-param"><span class="n">n_profiles</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">rerank</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">cluster_kwargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">trg</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RPMOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Framework to format and process RPM clustering results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rpm_clusters</strong> (<em>pd.DataFrame | str</em>) – Single DataFrame with (gid, gen_gid, cluster_id, rank),
+or str to file.</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Path to reV .h5 file containing desired capacity factor profiles</p></li>
+<li><p><strong>excl_fpath</strong> (<em>str | None</em>) – Filepath to exclusions data (must match the techmap grid).
+None will not apply exclusions.</p></li>
+<li><p><strong>excl_dict</strong> (<em>dict | None</em>) – Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}</p></li>
+<li><p><strong>techmap_dset</strong> (<em>str</em>) – Dataset name in the exclusions file containing the
+exclusions-to-resource mapping data.</p></li>
+<li><p><strong>excl_area</strong> (<em>float</em>) – Area in km2 of one exclusion pixel.</p></li>
+<li><p><strong>include_threshold</strong> (<em>float</em>) – Inclusion threshold. Resource pixels included more than this
+threshold will be considered in the representative profiles.
+Set to zero to find representative profile on all resource, not
+just included.</p></li>
+<li><p><strong>n_profiles</strong> (<em>int</em>) – Number of representative profiles to output.</p></li>
+<li><p><strong>rerank</strong> (<em>bool</em>) – Flag to rerank representative generation profiles after removing
+excluded generation pixels.</p></li>
+<li><p><strong>cluster_kwargs</strong> (<em>dict</em>) – RPMClusters kwargs</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of parallel workers. 1 will run serial, None will use all
+available., by default None</p></li>
+<li><p><strong>trg</strong> (<em>pd.DataFrame | str | None</em>) – TRG bins or string to filepath containing TRG bins.
+None will not analyze TRG bins.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.excl_lat">
+<em class="property">property </em><code class="sig-name descname">excl_lat</code><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.excl_lat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the full 2D array of latitudes of the exclusion grid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>_excl_lat</strong> (<em>np.ndarray</em>) – 2D array representing the latitudes at each exclusion grid cell</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.excl_lon">
+<em class="property">property </em><code class="sig-name descname">excl_lon</code><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.excl_lon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the full 2D array of longitudes of the exclusion grid.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>_excl_lon</strong> (<em>np.ndarray</em>) – 2D array representing the latitudes at each exclusion grid cell</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.apply_exclusions">
+<code class="sig-name descname">apply_exclusions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RPMOutput.apply_exclusions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.apply_exclusions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate exclusions for clusters, adding data to self._clusters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>self._clusters</strong> (<em>pd.DataFrame</em>) – self._clusters with new columns for exclusions data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.apply_trgs">
+<code class="sig-name descname">apply_trgs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RPMOutput.apply_trgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.apply_trgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply TRG’s if requested.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.run_rerank">
+<code class="sig-name descname">run_rerank</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">groupby</span><span class="o">=</span><span class="default_value">'cluster_id'</span></em>, <em class="sig-param"><span class="n">rank_col</span><span class="o">=</span><span class="default_value">'rank_included'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RPMOutput.run_rerank"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.run_rerank" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-rank rep profiles for included resource in generic groups.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>groupby</strong> (<em>str | list</em>) – One or more columns in self._clusters to groupby and rank profiles
+within each group.</p></li>
+<li><p><strong>rank_col</strong> (<em>str</em>) – Column to add to self._clusters with new rankings.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.cluster_summary">
+<em class="property">property </em><code class="sig-name descname">cluster_summary</code><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.cluster_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Summary dataframe with cluster_id primary key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>s</strong> (<em>pd.DataFrame</em>) – Summary dataframe with a row for each cluster id.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.make_shape_file">
+<code class="sig-name descname">make_shape_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fpath_shp</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RPMOutput.make_shape_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.make_shape_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make shape file containing all clusters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>fpath_shp</strong> (<em>str</em>) – Filepath to write shape_file to.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.export_all">
+<code class="sig-name descname">export_all</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">job_tag</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RPMOutput.export_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.export_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run RPM output algorithms and write to CSV’s.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to dump output files.</p></li>
+<li><p><strong>job_tag</strong> (<em>str | None</em>) – Optional name tag to add to the csvs being saved.
+Format is “rpm_cluster_output_{tag}.csv”.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.extract_profiles">
+<em class="property">classmethod </em><code class="sig-name descname">extract_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rpm_clusters</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">n_profiles</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">job_tag</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RPMOutput.extract_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.extract_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use pre-formatted RPM cluster outputs to generate profile outputs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rpm_clusters</strong> (<em>pd.DataFrame | str</em>) – Single DataFrame with (gid, gen_gid, cluster_id, rank),
+or str to file.</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – reV generation output file.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to dump output files.</p></li>
+<li><p><strong>n_profiles</strong> (<em>int</em>) – Number of representative profiles to output.</p></li>
+<li><p><strong>job_tag</strong> (<em>str | None</em>) – Optional name tag to add to the output files.
+Format is “rpm_cluster_output_{tag}.csv”.</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of parallel workers. 1 will run serial, None will use all
+available., by default None</p></li>
+<li><p><strong>key</strong> (<em>str | None</em>) – Column in clusters to sort ranks by. None will allow for
+default logic.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str</em>) – reV generation output file for forecast data. If this is input,
+profiles will be taken from forecast fpath instead of fpath gen
+based on a NN mapping.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_output.RPMOutput.process_outputs">
+<em class="property">classmethod </em><code class="sig-name descname">process_outputs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rpm_clusters</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">excl_fpath</span></em>, <em class="sig-param"><span class="n">excl_dict</span></em>, <em class="sig-param"><span class="n">techmap_dset</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">job_tag</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cluster_kwargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">excl_area</span><span class="o">=</span><span class="default_value">0.0081</span></em>, <em class="sig-param"><span class="n">include_threshold</span><span class="o">=</span><span class="default_value">0.001</span></em>, <em class="sig-param"><span class="n">n_profiles</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">rerank</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">trg</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_output.html#RPMOutput.process_outputs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_output.RPMOutput.process_outputs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform output processing on clusters and write results to disk.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rpm_clusters</strong> (<em>pd.DataFrame | str</em>) – Single DataFrame with (gid, gen_gid, cluster_id, rank),
+or str to file.</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Path to reV .h5 file containing desired capacity factor profiles</p></li>
+<li><p><strong>excl_fpath</strong> (<em>str | None</em>) – Filepath to exclusions data (must match the techmap grid).
+None will not apply exclusions.</p></li>
+<li><p><strong>excl_dict</strong> (<em>dict | None</em>) – Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}</p></li>
+<li><p><strong>techmap_dset</strong> (<em>str</em>) – Dataset name in the techmap file containing the
+exclusions-to-resource mapping data.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to dump output files.</p></li>
+<li><p><strong>job_tag</strong> (<em>str | None</em>) – Optional name tag to add to the output files.
+Format is “rpm_cluster_output_{tag}.csv”.</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of parallel workers. 1 will run serial, None will use all
+available., by default None</p></li>
+<li><p><strong>excl_area</strong> (<em>float</em>) – Area in km2 of one exclusion pixel.</p></li>
+<li><p><strong>include_threshold</strong> (<em>float</em>) – Inclusion threshold. Resource pixels included more than this
+threshold will be considered in the representative profiles.
+Set to zero to find representative profile on all resource, not
+just included.</p></li>
+<li><p><strong>n_profiles</strong> (<em>int</em>) – Number of representative profiles to output.</p></li>
+<li><p><strong>rerank</strong> (<em>bool</em>) – Flag to rerank representative generation profiles after removing
+excluded generation pixels.</p></li>
+<li><p><strong>trg</strong> (<em>pd.DataFrame | str | None</em>) – TRG bins or string to filepath containing TRG bins.
+None will not analyze TRG bins.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.utilities.html" class="btn btn-neutral float-right" title="reVX.utilities package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.rpm.rpm_manager.html" class="btn btn-neutral float-left" title="reVX.rpm.rpm_manager module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

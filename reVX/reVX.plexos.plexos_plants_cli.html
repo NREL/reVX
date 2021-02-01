@@ -1,0 +1,446 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.plexos.plexos_plants_cli module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.plexos.rev_reeds_plexos module" href="reVX.plexos.rev_reeds_plexos.html" />
+    <link rel="prev" title="reVX.plexos.plexos_plants module" href="reVX.plexos.plexos_plants.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.plexos.html">reVX.plexos package</a> &raquo;</li>
+        
+      <li>reVX.plexos.plexos_plants_cli module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.plexos.plexos_plants_cli.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="revx-plexos-plexos-plants-cli-module">
+<h1>reVX.plexos.plexos_plants_cli module<a class="headerlink" href="#revx-plexos-plexos-plants-cli-module" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="plexos-plants">
+<h2>plexos-plants<a class="headerlink" href="#plexos-plants" title="Permalink to this headline">¶</a></h2>
+<p>PLEXOS plant Command Line Interface</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>plexos-plants <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-n">
+<span id="cmdoption-plexos-plants-name"></span><code class="sig-name descname">-n</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--name</code><code class="sig-prename descclassname"> &lt;name&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Job name. Default is “plexos-plants”.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-pt">
+<span id="cmdoption-plexos-plants-plexos_table"></span><span id="cmdoption-plexos-plants-plexos-table"></span><code class="sig-name descname">-pt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--plexos_table</code><code class="sig-prename descclassname"> &lt;plexos_table&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-pt" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> Path to PLEXOS table of bus locations and capacity .csv</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-st">
+<span id="cmdoption-plexos-plants-sc_table"></span><span id="cmdoption-plexos-plants-sc-table"></span><code class="sig-name descname">-st</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--sc_table</code><code class="sig-prename descclassname"> &lt;sc_table&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-st" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> Path to Supply Curve table .csv</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-cf">
+<span id="cmdoption-plexos-plants-cf_fpath"></span><span id="cmdoption-plexos-plants-cf-fpath"></span><code class="sig-name descname">-cf</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--cf_fpath</code><code class="sig-prename descclassname"> &lt;cf_fpath&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-cf" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> Path to reV Generation output .h5 file</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-out">
+<span id="cmdoption-plexos-plants-out_dir"></span><span id="cmdoption-plexos-plants-out-dir"></span><code class="sig-name descname">-out</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--out_dir</code><code class="sig-prename descclassname"> &lt;out_dir&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-out" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> Directory to dump output files</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-dp">
+<span id="cmdoption-plexos-plants-dist_percentile"></span><span id="cmdoption-plexos-plants-dist-percentile"></span><code class="sig-name descname">-dp</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--dist_percentile</code><code class="sig-prename descclassname"> &lt;dist_percentile&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-dp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Percentile to use to compute distance threshold using sc_gid to SubStation distance, by default 90</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>90</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-lc">
+<span id="cmdoption-plexos-plants-lcoe_col"></span><span id="cmdoption-plexos-plants-lcoe-col"></span><code class="sig-name descname">-lc</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--lcoe_col</code><code class="sig-prename descclassname"> &lt;lcoe_col&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-lc" title="Permalink to this definition">¶</a></dt>
+<dd><p>LCOE column to sort by, by default ‘total_lcoe’</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>total_lcoe</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-lt">
+<span id="cmdoption-plexos-plants-lcoe_thresh"></span><span id="cmdoption-plexos-plants-lcoe-thresh"></span><code class="sig-name descname">-lt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--lcoe_thresh</code><code class="sig-prename descclassname"> &lt;lcoe_thresh&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-lt" title="Permalink to this definition">¶</a></dt>
+<dd><p>LCOE threshold multiplier, exclude sc_gids above threshold, by default 1.3</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>1.3</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-mw">
+<span id="cmdoption-plexos-plants-max_workers"></span><span id="cmdoption-plexos-plants-max-workers"></span><code class="sig-name descname">-mw</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--max_workers</code><code class="sig-prename descclassname"> &lt;max_workers&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-mw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of workers to use for point and plant creation, 1 == serial, &gt; 1 == parallel, None == parallel using all available cpus, by default None</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-points_per_worker">
+<span id="cmdoption-plexos-plants-points-per-worker"></span><code class="sig-name descname">--points_per_worker</code><code class="sig-prename descclassname"> &lt;points_per_worker&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-points_per_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of points to create on each worker, by default 400</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>400</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-plants_per_worker">
+<span id="cmdoption-plexos-plants-plants-per-worker"></span><code class="sig-name descname">--plants_per_worker</code><code class="sig-prename descclassname"> &lt;plants_per_worker&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-plants_per_worker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of plants to identify on each worker, by default 40</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>40</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-o">
+<span id="cmdoption-plexos-plants-offshore"></span><code class="sig-name descname">-o</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--offshore</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-plexos-plants-o" title="Permalink to this definition">¶</a></dt>
+<dd><p>Include offshore points, by default False</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-v">
+<span id="cmdoption-plexos-plants-verbose"></span><code class="sig-name descname">-v</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-plexos-plants-v" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag to turn on debug logging. Default is not verbose.</p>
+</dd></dl>
+
+<div class="section" id="plexos-plants-eagle">
+<h3>eagle<a class="headerlink" href="#plexos-plants-eagle" title="Permalink to this headline">¶</a></h3>
+<p>Eagle submission tool for PLEXOS aggregation.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>plexos-plants eagle <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-eagle-a">
+<span id="cmdoption-plexos-plants-eagle-alloc"></span><code class="sig-name descname">-a</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--alloc</code><code class="sig-prename descclassname"> &lt;alloc&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-eagle-a" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> Eagle allocation account name.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-eagle-wt">
+<span id="cmdoption-plexos-plants-eagle-walltime"></span><code class="sig-name descname">-wt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--walltime</code><code class="sig-prename descclassname"> &lt;walltime&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-eagle-wt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eagle walltime request in hours. Default is 1.0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>1.0</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-eagle-l">
+<span id="cmdoption-plexos-plants-eagle-feature"></span><code class="sig-name descname">-l</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--feature</code><code class="sig-prename descclassname"> &lt;feature&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-eagle-l" title="Permalink to this definition">¶</a></dt>
+<dd><p>Additional flags for SLURM job. Format is “–qos=high” or “–depend=[state:job_id]”. Default is None.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-plexos-plants-eagle-sout">
+<span id="cmdoption-plexos-plants-eagle-stdout_path"></span><span id="cmdoption-plexos-plants-eagle-stdout-path"></span><code class="sig-name descname">-sout</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--stdout_path</code><code class="sig-prename descclassname"> &lt;stdout_path&gt;</code><a class="headerlink" href="#cmdoption-plexos-plants-eagle-sout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subprocess standard output path. Default is in out_dir.</p>
+</dd></dl>
+
+</div>
+</div>
+<span class="target" id="module-reVX.plexos.plexos_plants_cli"></span><p>PLEXOS Plants command line interface (cli).</p>
+<dl class="py function">
+<dt id="reVX.plexos.plexos_plants_cli.get_node_cmd">
+<code class="sig-prename descclassname">reVX.plexos.plexos_plants_cli.</code><code class="sig-name descname">get_node_cmd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">plexos_table</span></em>, <em class="sig-param"><span class="n">sc_table</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">dist_percentile</span></em>, <em class="sig-param"><span class="n">lcoe_col</span></em>, <em class="sig-param"><span class="n">lcoe_thresh</span></em>, <em class="sig-param"><span class="n">max_workers</span></em>, <em class="sig-param"><span class="n">points_per_worker</span></em>, <em class="sig-param"><span class="n">plants_per_worker</span></em>, <em class="sig-param"><span class="n">offshore</span></em>, <em class="sig-param"><span class="n">verbose</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/plexos_plants_cli.html#get_node_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.plexos_plants_cli.get_node_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build PLEXOS Plant CLI command.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.plexos.rev_reeds_plexos.html" class="btn btn-neutral float-right" title="reVX.plexos.rev_reeds_plexos module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.plexos.plexos_plants.html" class="btn btn-neutral float-left" title="reVX.plexos.plexos_plants module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

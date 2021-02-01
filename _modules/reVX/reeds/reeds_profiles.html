@@ -1,0 +1,641 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.reeds.reeds_profiles &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.reeds.reeds_profiles</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.reeds.reeds_profiles</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Extract representative profiles for ReEDS</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">reV.rep_profiles.rep_profiles</span> <span class="kn">import</span> <span class="n">RepProfiles</span>
+
+<span class="kn">from</span> <span class="nn">reVX.reeds.reeds_classification</span> <span class="kn">import</span> <span class="n">ReedsClassifier</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.exceptions</span> <span class="kn">import</span> <span class="n">ReedsRuntimeError</span><span class="p">,</span> <span class="n">ReedsValueError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ReedsProfiles"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_profiles.html#reVX.reeds.reeds_profiles.ReedsProfiles">[docs]</a><span class="k">class</span> <span class="nc">ReedsProfiles</span><span class="p">(</span><span class="n">RepProfiles</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract representative profile for ReEDS</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cf_profiles</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">gid_col</span><span class="o">=</span><span class="s1">&#39;gen_gids&#39;</span><span class="p">,</span>
+                 <span class="n">profiles_dset</span><span class="o">=</span><span class="s1">&#39;cf_profile&#39;</span><span class="p">,</span> <span class="n">rep_method</span><span class="o">=</span><span class="s1">&#39;meanoid&#39;</span><span class="p">,</span>
+                 <span class="n">err_method</span><span class="o">=</span><span class="s1">&#39;rmse&#39;</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">,</span>
+                 <span class="n">n_profiles</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">resource_classes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">region_map</span><span class="o">=</span><span class="s1">&#39;reeds_region&#39;</span><span class="p">,</span> <span class="n">cap_bins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                 <span class="n">sort_bins_by</span><span class="o">=</span><span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">,</span>
+                 <span class="n">pre_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">trg_by_region</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">reg_cols</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cf_profiles : str</span>
+<span class="sd">            Filepath to reV gen output file to extract &quot;cf_profile&quot; from.</span>
+<span class="sd">        rev_table : str | pd.DataFrame</span>
+<span class="sd">            Aggregated supply curve summary table or file containing table</span>
+<span class="sd">        gid_col : str</span>
+<span class="sd">            Column label in rev_summary that contains the generation gids</span>
+<span class="sd">            (data index in gen_fpath).</span>
+<span class="sd">        profiles_dset : str</span>
+<span class="sd">            Dataset name to pull generation profiles from.</span>
+<span class="sd">        rep_method : str</span>
+<span class="sd">            Method identifier for calculation of the representative profile.</span>
+<span class="sd">        err_method : str</span>
+<span class="sd">            Method identifier for calculation of error from the representative</span>
+<span class="sd">            profile.</span>
+<span class="sd">        weight : str | None</span>
+<span class="sd">            Column in rev_summary used to apply weighted mean to profiles.</span>
+<span class="sd">            The supply curve table data in the weight column should have</span>
+<span class="sd">            weight values corresponding to the gid_col in the same row.</span>
+<span class="sd">        n_profiles : int</span>
+<span class="sd">            Number of representative profiles to save to fout.</span>
+<span class="sd">        resource_classes : str | pandas.DataFrame | pandas.Series | dict</span>
+<span class="sd">            Resource classes, either provided in a .csv, .json</span>
+<span class="sd">            as a DataFrame or Series, or in a dictionary.</span>
+<span class="sd">            If None, assumes rev_table has come from ReedsClassifier</span>
+<span class="sd">        region_map : str | pandas.DataFrame</span>
+<span class="sd">            Mapping of supply curve points to region to create classes for</span>
+<span class="sd">        cap_bins : int</span>
+<span class="sd">            Number of equal capacity bins to create for each</span>
+<span class="sd">            region-class</span>
+<span class="sd">        sort_bins_by : str | list, optional</span>
+<span class="sd">            Column(s) to sort by before capacity binning,</span>
+<span class="sd">            by default &#39;trans_cap_cost&#39;</span>
+<span class="sd">        pre_filter : dict | NoneType</span>
+<span class="sd">            Column value pair(s) to filter on. If None don&#39;t filter</span>
+<span class="sd">        trg_by_region : bool</span>
+<span class="sd">            Groupby on region when computing TRGs</span>
+<span class="sd">        reg_cols : tuple</span>
+<span class="sd">            Label(s) for a categorical region column(s) to extract profiles</span>
+<span class="sd">            for.</span>
+<span class="sd">            Defaulted to ReedsClassifier region and class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">resource_classes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rev_table</span> <span class="o">=</span> <span class="n">ReedsClassifier</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span>
+                                               <span class="n">region_map</span><span class="o">=</span><span class="n">region_map</span><span class="p">,</span>
+                                               <span class="n">cap_bins</span><span class="o">=</span><span class="n">cap_bins</span><span class="p">,</span>
+                                               <span class="n">sort_bins_by</span><span class="o">=</span><span class="n">sort_bins_by</span><span class="p">,</span>
+                                               <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+                                               <span class="n">trg_by_region</span><span class="o">=</span><span class="n">trg_by_region</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">cf_profiles</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">,</span> <span class="n">gid_col</span><span class="o">=</span><span class="n">gid_col</span><span class="p">,</span>
+                         <span class="n">cf_dset</span><span class="o">=</span><span class="n">profiles_dset</span><span class="p">,</span> <span class="n">rep_method</span><span class="o">=</span><span class="n">rep_method</span><span class="p">,</span>
+                         <span class="n">err_method</span><span class="o">=</span><span class="n">err_method</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">weight</span><span class="p">,</span>
+                         <span class="n">n_profiles</span><span class="o">=</span><span class="n">n_profiles</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;timezone&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Meta data must contain timezone to enable &#39;</span>
+                   <span class="s1">&#39;conversion to local time!&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsRuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_to_hourly</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">time_index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduce profiles to hourly resolution</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles : dict</span>
+<span class="sd">            dict of n_profile-keyed arrays with shape (time, n) for the</span>
+<span class="sd">            representative profiles for each region.</span>
+<span class="sd">        time_index : pd.DatatimeIndex</span>
+<span class="sd">            Datetime Index for represntative profiles</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles : dict</span>
+<span class="sd">            dict of n_profile-keyed arrays with shape (time, n) for the</span>
+<span class="sd">            representative profiles for each region at hourly resolutions</span>
+<span class="sd">        time_index : pd.DatatimeIndex</span>
+<span class="sd">            Datetime Index for represntative profiles reduced to hourly</span>
+<span class="sd">            resolution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">time_index</span><span class="o">.</span><span class="n">minute</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="n">time_index</span> <span class="o">=</span> <span class="n">time_index</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">profiles</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="k">return</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">time_index</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_to_hour_ending</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">time_index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shift profiles and time index to hour ending from instantaneous at</span>
+<span class="sd">        top of hour. First timestep will be at 01:00 in current year, last</span>
+<span class="sd">        timestep will be 00:00 in next year.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles : dict</span>
+<span class="sd">            dict of n_profile-keyed arrays with shape (8760, n) for the</span>
+<span class="sd">            representative profiles for each region.</span>
+<span class="sd">        time_index : pd.DatatimeIndex</span>
+<span class="sd">            Datetime Index for represntative profiles</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles : dict</span>
+<span class="sd">            dict of n_profile-keyed arrays with shape (8760, n) for the</span>
+<span class="sd">            representative profiles for each region, rolled to hour ending</span>
+<span class="sd">        time_index : pd.DatatimeIndex</span>
+<span class="sd">            Datetime Index for represntative profiles shifted to hour ending</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_index</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">8760</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;ReedsProfiles cannot be shifted to hour ending unless they &#39;</span>
+                 <span class="s1">&#39;are hourly! Got time index with length </span><span class="si">{}</span><span class="s1">&#39;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_index</span><span class="p">)))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="n">year</span> <span class="o">=</span> <span class="n">time_index</span><span class="o">.</span><span class="n">year</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">time_index</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">date_range</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">0101&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">year</span><span class="p">),</span>
+                                   <span class="n">end</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">0101&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">year</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span>
+                                   <span class="n">freq</span><span class="o">=</span><span class="s1">&#39;1h&#39;</span><span class="p">,</span> <span class="n">closed</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+        <span class="c1"># pylint: disable=no-member</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">time_index</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">time_index</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="mi">29</span><span class="p">)</span>
+        <span class="c1"># drop 12/31 on leap years</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">time_index</span><span class="o">.</span><span class="n">month</span> <span class="o">==</span> <span class="mi">12</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">time_index</span><span class="o">.</span><span class="n">day</span> <span class="o">==</span> <span class="mi">31</span><span class="p">)</span>
+            <span class="n">time_index</span> <span class="o">=</span> <span class="n">time_index</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="n">profiles</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">profiles</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="k">return</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">time_index</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_hour_of_year</span><span class="p">(</span><span class="n">time_index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the hour of the year from time_index</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        time_index : pandas.DatatimeIndex</span>
+<span class="sd">            Datetime index to extract hours of the year from</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        hour_of_year : ndarray</span>
+<span class="sd">            Vector of the hour of the year for each timestep</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hour_of_year</span> <span class="o">=</span> <span class="p">(</span><span class="n">time_index</span><span class="o">.</span><span class="n">hour</span> <span class="o">+</span> <span class="p">(</span><span class="n">time_index</span><span class="o">.</span><span class="n">minute</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span>
+                        <span class="o">+</span> <span class="p">(</span><span class="n">time_index</span><span class="o">.</span><span class="n">dayofyear</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">24</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hour_of_year</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">time_index</span><span class="p">):</span>
+            <span class="n">hour_of_year</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">time_index</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">hour_of_year</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_roll_array</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">shifts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Roll array with unique shifts for each column</span>
+<span class="sd">        This converts timeseries to local time</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        arr : ndarray</span>
+<span class="sd">            Input timeseries array of form (time, sites)</span>
+<span class="sd">        shifts : ndarray | list</span>
+<span class="sd">            Vector of shifts from UTC to local time</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        local_arr : ndarray</span>
+<span class="sd">            Array shifted to local time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">shifts</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Number of timezone shifts (</span><span class="si">{}</span><span class="s1">) does not match number of &#39;</span>
+                   <span class="s1">&#39;sites (</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">shifts</span><span class="p">),</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">local_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shifts</span><span class="p">):</span>
+            <span class="n">local_arr</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">local_arr</span>
+
+    <span class="k">def</span> <span class="nf">_to_local_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shift profiles to local time from UTC</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;timezone&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">tz</span> <span class="o">*=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time_index</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8760</span>
+        <span class="c1"># pylint: disable=W0201</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_roll_array</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">tz</span><span class="p">)</span>
+                          <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+    <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hourly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">hour_ending</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract ReEDS representative profiles in serial or parallel</span>
+<span class="sd">        and save to disc if requested. Convert to hourly and hour_ending if</span>
+<span class="sd">        requested.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fout : str, optional</span>
+<span class="sd">            filepath to output h5 file, by default None</span>
+<span class="sd">        hourly : bool, optional</span>
+<span class="sd">            Flag to get hourly data (top of hour) instead of native resolution,</span>
+<span class="sd">            by default True</span>
+<span class="sd">        hour_ending : bool, optional</span>
+<span class="sd">            Flag to shift instantaneous profiles and time index to hour ending,</span>
+<span class="sd">            by default True</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of parallel workers. 1 will run serial, None will use all</span>
+<span class="sd">            available., by default None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profiles : dict</span>
+<span class="sd">            dict of n_profile-keyed arrays with shape (time, n) for the</span>
+<span class="sd">            representative profiles for each region.</span>
+<span class="sd">        meta : pd.DataFrame</span>
+<span class="sd">            Meta dataframes recording the regions and the selected rep profile</span>
+<span class="sd">            gid.</span>
+<span class="sd">        time_index : pd.DatatimeIndex</span>
+<span class="sd">            Datetime Index for represntative profiles</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_serial</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_parallel</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_to_local_time</span><span class="p">()</span>
+
+        <span class="c1"># pylint: disable=attribute-defined-outside-init</span>
+        <span class="c1"># pylint: disable=access-member-before-definition</span>
+        <span class="k">if</span> <span class="n">hourly</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">8760</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_hourly</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">,</span>
+                                                               <span class="bp">self</span><span class="o">.</span><span class="n">time_index</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">hourly</span> <span class="ow">and</span> <span class="n">hour_ending</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_to_hour_ending</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_index</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">fout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_profiles</span><span class="p">(</span><span class="n">fout</span><span class="p">,</span> <span class="n">save_rev_summary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                               <span class="n">scaled_precision</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Representative profiles complete!&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_index</span>
+
+<div class="viewcode-block" id="ReedsProfiles.run"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_profiles.html#reVX.reeds.reeds_profiles.ReedsProfiles.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cf_profiles</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">gid_col</span><span class="o">=</span><span class="s1">&#39;gen_gids&#39;</span><span class="p">,</span>
+            <span class="n">profiles_dset</span><span class="o">=</span><span class="s1">&#39;cf_profile&#39;</span><span class="p">,</span> <span class="n">rep_method</span><span class="o">=</span><span class="s1">&#39;meanoid&#39;</span><span class="p">,</span>
+            <span class="n">err_method</span><span class="o">=</span><span class="s1">&#39;rmse&#39;</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">,</span>
+            <span class="n">n_profiles</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">resource_classes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">region_map</span><span class="o">=</span><span class="s1">&#39;reeds_region&#39;</span><span class="p">,</span>
+            <span class="n">cap_bins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sort_bins_by</span><span class="o">=</span><span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">,</span>
+            <span class="n">pre_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">trg_by_region</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">reg_cols</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">),</span> <span class="n">fout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hourly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">hour_ending</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run representative profiles.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cf_profiles : str</span>
+<span class="sd">            Filepath to reV gen output file to extract &quot;cf_profile&quot; from.</span>
+<span class="sd">        rev_table : str | pd.DataFrame</span>
+<span class="sd">            Aggregated supply curve summary table or file containing table</span>
+<span class="sd">        gid_col : str</span>
+<span class="sd">            Column label in rev_summary that contains the generation gids</span>
+<span class="sd">            (data index in gen_fpath).</span>
+<span class="sd">        profiles_dset : str</span>
+<span class="sd">            Dataset name to pull generation profiles from.</span>
+<span class="sd">        rep_method : str</span>
+<span class="sd">            Method identifier for calculation of the representative profile.</span>
+<span class="sd">        err_method : str</span>
+<span class="sd">            Method identifier for calculation of error from the representative</span>
+<span class="sd">            profile.</span>
+<span class="sd">        weight : str | None</span>
+<span class="sd">            Column in rev_summary used to apply weighted mean to profiles.</span>
+<span class="sd">            The supply curve table data in the weight column should have</span>
+<span class="sd">            weight values corresponding to the gid_col in the same row.</span>
+<span class="sd">        n_profiles : int</span>
+<span class="sd">            Number of representative profiles to save to fout.</span>
+<span class="sd">        resource_classes : str | pandas.DataFrame | pandas.Series | dict</span>
+<span class="sd">            Resource classes, either provided in a .csv, .json</span>
+<span class="sd">            as a DataFrame or Series, or in a dictionary.</span>
+<span class="sd">            If None, assumes rev_table has come from ReedsClassifier</span>
+<span class="sd">        region_map : str | pandas.DataFrame</span>
+<span class="sd">            Mapping of supply curve points to region to create classes for</span>
+<span class="sd">         cap_bins : int</span>
+<span class="sd">            Number of equal capacity bins to create for each</span>
+<span class="sd">            region-class</span>
+<span class="sd">        sort_bins_by : str | list, optional</span>
+<span class="sd">            Column(s) to sort by before capacity binning,</span>
+<span class="sd">            by default &#39;trans_cap_cost&#39;</span>
+<span class="sd">        pre_filter : dict | NoneType</span>
+<span class="sd">            Column value pair(s) to filter on. If None don&#39;t filter</span>
+<span class="sd">        trg_by_region : bool</span>
+<span class="sd">            Groupby on region when computing TRGs</span>
+<span class="sd">        reg_cols : tuple</span>
+<span class="sd">            Label(s) for a categorical region column(s) to extract profiles</span>
+<span class="sd">            for.</span>
+<span class="sd">        fout : str, optional</span>
+<span class="sd">            filepath to output h5 file, by default None</span>
+<span class="sd">        hourly : bool, optional</span>
+<span class="sd">            Flag to get hourly data (top of hour) instead of native resolution,</span>
+<span class="sd">            by default True</span>
+<span class="sd">        hour_ending : bool, optional</span>
+<span class="sd">            Flag to shift instantaneous profiles and time index to hour ending,</span>
+<span class="sd">            by default True</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of parallel workers. 1 will run serial, None will use all</span>
+<span class="sd">            available., by default None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profiles : dict</span>
+<span class="sd">            dict of n_profile-keyed arrays with shape (time, n) for the</span>
+<span class="sd">            representative profiles for each region.</span>
+<span class="sd">        meta : pd.DataFrame</span>
+<span class="sd">            Meta dataframes recording the regions and the selected rep profile</span>
+<span class="sd">            gid.</span>
+<span class="sd">        time_index : pd.DatatimeIndex</span>
+<span class="sd">            Datetime Index for represntative profiles</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rp</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">cf_profiles</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">gid_col</span><span class="o">=</span><span class="n">gid_col</span><span class="p">,</span>
+                 <span class="n">profiles_dset</span><span class="o">=</span><span class="n">profiles_dset</span><span class="p">,</span> <span class="n">rep_method</span><span class="o">=</span><span class="n">rep_method</span><span class="p">,</span>
+                 <span class="n">err_method</span><span class="o">=</span><span class="n">err_method</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="n">weight</span><span class="p">,</span>
+                 <span class="n">n_profiles</span><span class="o">=</span><span class="n">n_profiles</span><span class="p">,</span> <span class="n">resource_classes</span><span class="o">=</span><span class="n">resource_classes</span><span class="p">,</span>
+                 <span class="n">region_map</span><span class="o">=</span><span class="n">region_map</span><span class="p">,</span> <span class="n">cap_bins</span><span class="o">=</span><span class="n">cap_bins</span><span class="p">,</span>
+                 <span class="n">sort_bins_by</span><span class="o">=</span><span class="n">sort_bins_by</span><span class="p">,</span> <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+                 <span class="n">trg_by_region</span><span class="o">=</span><span class="n">trg_by_region</span><span class="p">,</span> <span class="n">reg_cols</span><span class="o">=</span><span class="n">reg_cols</span><span class="p">)</span>
+
+        <span class="n">rp</span><span class="o">.</span><span class="n">_run</span><span class="p">(</span><span class="n">fout</span><span class="o">=</span><span class="n">fout</span><span class="p">,</span> <span class="n">hourly</span><span class="o">=</span><span class="n">hourly</span><span class="p">,</span> <span class="n">hour_ending</span><span class="o">=</span><span class="n">hour_ending</span><span class="p">,</span>
+                <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rp</span><span class="o">.</span><span class="n">profiles</span><span class="p">,</span> <span class="n">rp</span><span class="o">.</span><span class="n">meta</span><span class="p">,</span> <span class="n">rp</span><span class="o">.</span><span class="n">time_index</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

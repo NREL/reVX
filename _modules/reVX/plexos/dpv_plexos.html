@@ -1,0 +1,671 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.plexos.dpv_plexos &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.plexos.dpv_plexos</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.plexos.dpv_plexos</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Distribute PV to PLEXOS methods.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">cKDTree</span>
+
+<span class="kn">from</span> <span class="nn">reVX.handlers.outputs</span> <span class="kn">import</span> <span class="n">Outputs</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DpvResource"><a class="viewcode-back" href="../../../reVX/reVX.plexos.dpv_plexos.html#reVX.plexos.dpv_plexos.DpvResource">[docs]</a><span class="k">class</span> <span class="nc">DpvResource</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Framework to handle and merge multiple reV distributed PV runs.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_dir</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">sub_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        root_dir : str</span>
+<span class="sd">            Root directory containing sub directories containing reV dpv job</span>
+<span class="sd">            files.</span>
+<span class="sd">        year : int | str</span>
+<span class="sd">            Year of interest.</span>
+<span class="sd">        sub_dirs : list</span>
+<span class="sd">            List of strings of directory names in root_dir. Each sub_dir is a</span>
+<span class="sd">            job directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root_dir</span> <span class="o">=</span> <span class="n">root_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_year</span> <span class="o">=</span> <span class="n">year</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sub_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_sub_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root_dir</span><span class="p">,</span>
+                                              <span class="n">sub_dirs</span><span class="o">=</span><span class="n">sub_dirs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fpaths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_all_fpaths</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_sub_dirs</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">sub_dirs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a list of strings of directory names in root_dir.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        root_dir : str</span>
+<span class="sd">            Root directory containing sub directories containing reV dpv job</span>
+<span class="sd">            files.</span>
+<span class="sd">        sub_dirs : list | None</span>
+<span class="sd">            List of strings of directory names in root_dir. Each sub_dir is a</span>
+<span class="sd">            job directory. None to parse dirs.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sub_dirs : list</span>
+<span class="sd">            List of strings of directory names in root_dir. Each sub_dir is a</span>
+<span class="sd">            job directory.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">sub_dirs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sub_dirs</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">root_dir</span><span class="p">)</span>
+            <span class="n">sub_dirs</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sub_dirs</span> <span class="k">if</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">s</span><span class="p">))]</span>
+        <span class="k">return</span> <span class="n">sub_dirs</span>
+
+    <span class="k">def</span> <span class="nf">_get_sub_dir_fpath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sub_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the full h5 filepath of the job in the target sub dir.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sub_dir : str</span>
+<span class="sd">            Directory name in root_dir.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fpath : str</span>
+<span class="sd">            Full filepath to the h5 job file in root_dir/sub_dir/</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">fpaths</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root_dir</span><span class="p">,</span> <span class="n">sub_dir</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">fn</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.h5&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_year</span><span class="p">)</span> <span class="ow">in</span> <span class="n">fn</span>
+                    <span class="ow">and</span> <span class="s1">&#39;node&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fn</span><span class="p">):</span>
+                <span class="n">fpaths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">fn</span><span class="p">))</span>
+
+        <span class="n">fpath</span> <span class="o">=</span> <span class="n">fpaths</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">fpaths</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">wmsg</span> <span class="o">=</span> <span class="s1">&#39;More than one h5 filepath found. Using: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">wmsg</span><span class="p">)</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">wmsg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fpath</span>
+
+    <span class="k">def</span> <span class="nf">_get_all_fpaths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a list of all job filepaths in all sub directories.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fpaths : list</span>
+<span class="sd">            List of full filepaths to h5 job files in root_dir/sub_dir/</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">fpaths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sub_dir</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sub_dirs</span><span class="p">:</span>
+            <span class="n">fpaths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_sub_dir_fpath</span><span class="p">(</span><span class="n">sub_dir</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">fpaths</span>
+
+    <span class="k">def</span> <span class="nf">_merge_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dset</span><span class="p">,</span> <span class="n">job_frac_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Merge reV data from multiple dpv jobs based on relative fractions.</span>
+
+<span class="sd">        Example: batch job to run multiple DPV jobs at different tilt/azimuths,</span>
+<span class="sd">        this method will combine all of the different jobs based on respective</span>
+<span class="sd">        fractions in the job_frac_map into a single composite DPV result.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dset : str</span>
+<span class="sd">            Dataset name to merge (i.e. cf_mean, cf_profile, etc...)</span>
+<span class="sd">        job_frac_map : dict</span>
+<span class="sd">            Lookup of the fractional contribution for each job.</span>
+<span class="sd">            The keys are job names (string tags found in the sub_dirs and</span>
+<span class="sd">            job h5 files), and the values are fractions for the</span>
+<span class="sd">            respective jobs.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        arr : np.ndarray</span>
+<span class="sd">            Unscaled numpy array of dset data merged from all fpaths based</span>
+<span class="sd">            on the job fractions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">total_frac</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">fpath</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fpaths</span><span class="p">:</span>
+            <span class="n">apply_frac</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">job_tag</span><span class="p">,</span> <span class="n">frac</span> <span class="ow">in</span> <span class="n">job_frac_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">job_tag</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
+                    <span class="n">apply_frac</span> <span class="o">=</span> <span class="n">frac</span>
+                    <span class="n">total_frac</span> <span class="o">+=</span> <span class="n">frac</span>
+                    <span class="k">break</span>
+
+            <span class="k">if</span> <span class="n">apply_frac</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Merging &quot;</span><span class="si">{}</span><span class="s1">&quot; with frac </span><span class="si">{}</span><span class="s1"> from: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dset</span><span class="p">,</span> <span class="n">apply_frac</span><span class="p">,</span>
+                                     <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fpath</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">arr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+                        <span class="n">arr</span> <span class="o">=</span> <span class="p">(</span><span class="n">apply_frac</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="n">dset</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+                        <span class="n">arr</span> <span class="o">+=</span> <span class="p">(</span><span class="n">apply_frac</span> <span class="o">*</span> <span class="n">out</span><span class="p">[</span><span class="n">dset</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">total_frac</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.01</span><span class="p">:</span>
+            <span class="n">wmsg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Fractions sum to </span><span class="si">{}</span><span class="s1"> (should be 1.00) when merging &#39;</span>
+                    <span class="s1">&#39;DPV jobs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">total_frac</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fpaths</span><span class="p">))</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">wmsg</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">wmsg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">arr</span>
+
+    <span class="k">def</span> <span class="nf">_merge_dpv_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">,</span> <span class="n">job_frac_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Merge multiple DPV reV runs into a single result based on fractional</span>
+<span class="sd">        contributions.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fn_out : str</span>
+<span class="sd">            Filename for merged results, to be saved in root_dir.</span>
+<span class="sd">        job_frac_map : dict</span>
+<span class="sd">            Lookup of the fractional contribution for each job.</span>
+<span class="sd">            The keys are job names (string tags found in the sub_dirs and</span>
+<span class="sd">            job h5 files), and the values are fractions for the</span>
+<span class="sd">            respective jobs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">fpath_out</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root_dir</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fpaths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">fpath_out</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">fpath_out</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">dsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">datasets</span>
+                     <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;time_index&#39;</span><span class="p">,</span> <span class="s1">&#39;meta&#39;</span><span class="p">]]</span>
+
+        <span class="k">for</span> <span class="n">dset</span> <span class="ow">in</span> <span class="n">dsets</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_merge_data</span><span class="p">(</span><span class="n">dset</span><span class="p">,</span> <span class="n">job_frac_map</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Writing &quot;</span><span class="si">{}</span><span class="s1">&quot; to merged DPV output file.&#39;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">dset</span><span class="p">))</span>
+            <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">fpath_out</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">dset</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span>
+
+<div class="viewcode-block" id="DpvResource.merge"><a class="viewcode-back" href="../../../reVX/reVX.plexos.dpv_plexos.html#reVX.plexos.dpv_plexos.DpvResource.merge">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">root_dir</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">,</span> <span class="n">job_frac_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Merge multiple DPV reV runs into a single result based on fractional</span>
+<span class="sd">        contributions.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        root_dir : str</span>
+<span class="sd">            Root directory containing sub directories containing reV dpv job</span>
+<span class="sd">            files.</span>
+<span class="sd">        year : int | str</span>
+<span class="sd">            Year of interest.</span>
+<span class="sd">        fn_out : str</span>
+<span class="sd">            Filename for merged results, to be saved in root_dir.</span>
+<span class="sd">        job_frac_map : dict</span>
+<span class="sd">            Lookup of the fractional contribution for each job.</span>
+<span class="sd">            The keys are job names (string tags found in the sub_dirs and</span>
+<span class="sd">            job h5 files), and the values are fractions for the</span>
+<span class="sd">            respective jobs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">dpv</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">root_dir</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">sub_dirs</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">job_frac_map</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="n">dpv</span><span class="o">.</span><span class="n">_merge_dpv_files</span><span class="p">(</span><span class="n">fn_out</span><span class="p">,</span> <span class="n">job_frac_map</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="DpvPlexosAggregation"><a class="viewcode-back" href="../../../reVX/reVX.plexos.dpv_plexos.html#reVX.plexos.dpv_plexos.DpvPlexosAggregation">[docs]</a><span class="k">class</span> <span class="nc">DpvPlexosAggregation</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Methods to aggregate DPV profiles to plexos nodes.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_buildout</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        node_buildout : str | pd.DataFrame</span>
+<span class="sd">            Plexos node buildout meta data. Must have the following columns:</span>
+<span class="sd">            [plexos_id, latitude, longitude, built_capacity]</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            Filepath to a reV capacity factor file.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Starting DPV to PLEXOS aggregation.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_node_buildout</span><span class="p">(</span><span class="n">node_buildout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span> <span class="o">=</span> <span class="n">cf_fpath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cf_meta</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Using CF file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_parse_node_buildout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_buildout</span><span class="p">,</span>
+                             <span class="n">req</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;plexos_id&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;built_capacity&#39;</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;Parse the node buildout table.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        node_buildout : str | pd.DataFrame</span>
+<span class="sd">            Plexos node buildout meta data.</span>
+<span class="sd">        req : list</span>
+<span class="sd">            List of required column names in node_buildout</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node_buildout</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Using PLEXOS node file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_buildout</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">node_buildout</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node_buildout</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span> <span class="o">=</span> <span class="n">node_buildout</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Did not recognize the type of the node buildout &#39;</span>
+                            <span class="s1">&#39;table input: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">node_buildout</span><span class="p">)))</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">req</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span><span class="p">:</span>
+                <span class="n">missing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">missing</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Node buildout table is missing the following &#39;</span>
+                           <span class="s1">&#39;columns: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">missing</span><span class="p">))</span>
+
+        <span class="c1"># drop node buildouts without capacity</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span><span class="p">[</span><span class="s1">&#39;built_capacity&#39;</span><span class="p">])</span>
+               <span class="o">|</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span><span class="p">[</span><span class="s1">&#39;built_capacity&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">))</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">bad</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">bad</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cf_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the cf meta data.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _cf_meta : pd.DataFrame</span>
+<span class="sd">            reV CF Meta data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_meta</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_cf_meta</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">meta</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_meta</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">time_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the cf time index.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _time_index : pd.DateTimeindex</span>
+<span class="sd">            reV timeindex data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">time_index</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">kdtree</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the KDtree of the reV CF meta data coordinates.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _kdtree : scipy.spatial.ckdtree</span>
+<span class="sd">            KDtree build from the reV CF meta data coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># pylint: disable=not-callable</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cf_meta</span><span class="p">[[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kdtree</span>
+
+    <span class="k">def</span> <span class="nf">_run_nn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">query</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run KDTree query, getting CF index values matching the node buildout</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        query : np.ndarray</span>
+<span class="sd">            Query the kdtree attribute with this argument.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        i : np.ndarray</span>
+<span class="sd">            1D array of CF index values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">d</span><span class="p">,</span> <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kdtree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;KDTree distance min / mean / max: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1">&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+                            <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">3</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">i</span>
+
+<div class="viewcode-block" id="DpvPlexosAggregation.get_mapped_node_data"><a class="viewcode-back" href="../../../reVX/reVX.plexos.dpv_plexos.html#reVX.plexos.dpv_plexos.DpvPlexosAggregation.get_mapped_node_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_mapped_node_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dset</span><span class="o">=</span><span class="s1">&#39;cf_profile&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the CF dataset mapped to plexos nodes via NN results.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        node_arr : np.ndarray</span>
+<span class="sd">            Get a 2D dataset from the reV cf file mapped to the node_buildout</span>
+<span class="sd">            table via NN.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">dset</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_nn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span><span class="p">[[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]])</span>
+        <span class="n">node_arr</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">node_arr</span></div>
+
+<div class="viewcode-block" id="DpvPlexosAggregation.get_node_gen_profiles"><a class="viewcode-back" href="../../../reVX/reVX.plexos.dpv_plexos.html#reVX.plexos.dpv_plexos.DpvPlexosAggregation.get_node_gen_profiles">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_gen_profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the generation profiles (cf * capacity) mapped to the node meta.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gen_profiles : np.ndarray</span>
+<span class="sd">            Timeseries profiles of (t, n) where t is the time index and n is</span>
+<span class="sd">            the node buildout. Units are the built_capacity units from the</span>
+<span class="sd">            node_buildout table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node_arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mapped_node_data</span><span class="p">(</span><span class="n">dset</span><span class="o">=</span><span class="s1">&#39;cf_profile&#39;</span><span class="p">)</span>
+        <span class="n">built_capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_buildout</span><span class="p">[</span><span class="s1">&#39;built_capacity&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">gen_profiles</span> <span class="o">=</span> <span class="n">node_arr</span> <span class="o">*</span> <span class="n">built_capacity</span>
+        <span class="k">return</span> <span class="n">gen_profiles</span></div>
+
+<div class="viewcode-block" id="DpvPlexosAggregation.run"><a class="viewcode-back" href="../../../reVX/reVX.plexos.dpv_plexos.html#reVX.plexos.dpv_plexos.DpvPlexosAggregation.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node_buildout</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">out_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Aggregate dpv reV gen data to a buildout nodes and save to h5.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        node_buildout : str | pd.DataFrame</span>
+<span class="sd">            Plexos node buildout meta data. Must have the following columns:</span>
+<span class="sd">            [plexos_id, latitude, longitude, built_capacity]</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            Filepath to a reV capacity factor file.</span>
+<span class="sd">        out_fpath : str</span>
+<span class="sd">            Output filepath.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">pa</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">node_buildout</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">)</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">get_node_gen_profiles</span><span class="p">()</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Writing results to file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out_fpath</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">out_fpath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;dpv/meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">_node_buildout</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;dpv/time_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pa</span><span class="o">.</span><span class="n">time_index</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">_create_dset</span><span class="p">(</span><span class="s1">&#39;dpv/gen_profiles&#39;</span><span class="p">,</span> <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                             <span class="n">profiles</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+                             <span class="n">data</span><span class="o">=</span><span class="n">profiles</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished DPV to PLEXOS aggregation.&#39;</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,918 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.reeds.reeds_classification &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.reeds.reeds_classification</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.reeds.reeds_classification</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Map ReEDS geographic regions and classes to Supply Curve points</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">from</span> <span class="nn">rex.utilities.utilities</span> <span class="kn">import</span> <span class="n">parse_table</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.exceptions</span> <span class="kn">import</span> <span class="n">ReedsValueError</span><span class="p">,</span> <span class="n">ReedsKeyError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ReedsClassifier"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_classification.html#reVX.reeds.reeds_classification.ReedsClassifier">[docs]</a><span class="k">class</span> <span class="nc">ReedsClassifier</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create ReEDS resource classes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">TABLE_OUT_COLS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">,</span> <span class="s1">&#39;capacity&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;mean_lcoe&#39;</span><span class="p">,</span> <span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">,</span> <span class="s1">&#39;total_lcoe&#39;</span><span class="p">)</span>
+
+    <span class="n">AGG_TABLE_OUT_COLS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">,</span> <span class="s1">&#39;capacity&#39;</span><span class="p">,</span>
+                          <span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">,</span> <span class="s1">&#39;dist_mi&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span> <span class="n">region_map</span><span class="o">=</span><span class="s1">&#39;reeds_region&#39;</span><span class="p">,</span>
+                 <span class="n">cap_bins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sort_bins_by</span><span class="o">=</span><span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">,</span> <span class="n">pre_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">trg_by_region</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rev_table : str | pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table,</span>
+<span class="sd">            or path to file containing table</span>
+<span class="sd">        resource_classes : str | pandas.DataFrame</span>
+<span class="sd">            Resource classes, either provided in a .csv, .json or a DataFrame</span>
+<span class="sd">            Allowable columns:</span>
+<span class="sd">            - &#39;class&#39; -&gt; class labels to use</span>
+<span class="sd">            - &#39;TRG_cap&#39; -&gt; TRG capacity bins to use to create TRG classes</span>
+<span class="sd">            - any column in &#39;rev_table&#39; -&gt; Used for categorical bins</span>
+<span class="sd">            - &#39;*_min&#39; and &#39;*_max&#39; where * is a numberical column in &#39;rev_table&#39;</span>
+<span class="sd">              -&gt; used for range binning</span>
+<span class="sd">            NOTE: &#39;TRG_cap&#39; can only be combined with categorical bins</span>
+<span class="sd">        region_map : str | pandas.DataFrame</span>
+<span class="sd">            Mapping of supply curve points to region to create classes for</span>
+<span class="sd">        cap_bins : int</span>
+<span class="sd">            Number of equal capacity bins to create for each</span>
+<span class="sd">            region-class</span>
+<span class="sd">        sort_bins_by : str | list</span>
+<span class="sd">            Column(s) to sort by before capacity binning</span>
+<span class="sd">        pre_filter : dict | NoneType</span>
+<span class="sd">            Column value pair(s) to filter on. If None don&#39;t filter</span>
+<span class="sd">        trg_by_region : bool</span>
+<span class="sd">            Groupby on region when computing TRGs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_table</span><span class="p">(</span><span class="n">rev_table</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pre_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">pre_filter</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Subsetting reV table to </span><span class="si">{}</span><span class="s1"> in </span><span class="si">{}</span><span class="s1">&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">col</span><span class="p">))</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">rev_table</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">==</span> <span class="n">v</span>
+                <span class="n">rev_table</span> <span class="o">=</span> <span class="n">rev_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_region</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">region_map</span><span class="p">)</span>
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resource_classes</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span>
+                                           <span class="n">trg_by_region</span><span class="o">=</span><span class="n">trg_by_region</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rev_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_capacity_bins</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">cap_bins</span><span class="p">,</span>
+                                              <span class="n">sort_bins_by</span><span class="o">=</span><span class="n">sort_bins_by</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rev_table</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> contains </span><span class="si">{}</span><span class="s2"> region-class-class groups&quot;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_groups</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_groups</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is an invalid group:</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsKeyError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">group</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span>
+
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_i</span><span class="p">]</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">group</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">test</span> <span class="o">=</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_groups</span><span class="o">.</span><span class="n">groups</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">test</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> does not exist in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsKeyError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">test</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">regions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unique ReEDS geographic regions</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rev_table</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resource_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unique ReEDS resource classes</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rev_table</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sc_bins</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unique ReEDS supply curve bins (clusters)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rev_table</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supply curve or aggregation table</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rev_table</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">table_slim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supply curve or aggregation table with only columns in TABLE_OUT_COLS</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">TABLE_OUT_COLS</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        All unique group keys</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_groups</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">region_class_bin_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        All unique (region, class, bin) groups</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">groups</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        All unique group keys</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aggregate_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Region, class, bin aggregate table</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        agg_table : pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;area_sq_km&#39;</span><span class="p">,</span> <span class="s1">&#39;capacity&#39;</span><span class="p">,</span> <span class="s1">&#39;trans_capacity&#39;</span><span class="p">]</span>
+        <span class="n">sum_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_groups</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;mean_cf&#39;</span><span class="p">,</span> <span class="s1">&#39;mean_lcoe&#39;</span><span class="p">,</span> <span class="s1">&#39;mean_res&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">,</span> <span class="s1">&#39;dist_mi&#39;</span><span class="p">,</span> <span class="s1">&#39;lcot&#39;</span><span class="p">,</span> <span class="s1">&#39;total_lcoe&#39;</span><span class="p">]</span>
+        <span class="n">mean_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_groups</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">agg_table</span> <span class="o">=</span> <span class="n">sum_table</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mean_table</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">agg_table</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aggregate_table_slim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Aggregate table with only columns in AGG_TABLE_OUT_COLS</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        agg_table : pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">agg_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_table</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">agg_table</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">AGG_TABLE_OUT_COLS</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">agg_table</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_table</span><span class="p">(</span><span class="n">input_table</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse table from input argument</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_table : str | pandas.DataFrame</span>
+<span class="sd">            Input table to parse</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        table : pandas.DataFrame</span>
+<span class="sd">            Parsed table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">table</span> <span class="o">=</span> <span class="n">parse_table</span><span class="p">(</span><span class="n">input_table</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+            <span class="k">raise</span>
+
+        <span class="k">return</span> <span class="n">table</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_region_map</span><span class="p">(</span><span class="n">region_map</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse region map from input arg</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        region_map : str | pandas.DataFrame | None</span>
+<span class="sd">            Mapping of supply curve points to region to create classes for</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        region_map : pandas.DataFrame</span>
+<span class="sd">            Mapping of region to sc_gid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">region_map</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">region_map</span><span class="p">):</span>
+                <span class="n">region_map</span> <span class="o">=</span> <span class="n">ReedsClassifier</span><span class="o">.</span><span class="n">_parse_table</span><span class="p">(</span><span class="n">region_map</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">region_map</span> <span class="ow">in</span> <span class="n">rev_table</span><span class="p">:</span>
+                <span class="n">region_map</span> <span class="o">=</span> <span class="n">rev_table</span><span class="p">[[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="n">region_map</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> is not a valid file path or reV table &#39;</span>
+                       <span class="s1">&#39;column label&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">region_map</span><span class="p">)))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ReedsValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">region_map</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Cannot parse region map from type </span><span class="si">{}</span><span class="s1">&#39;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">region_map</span><span class="p">)))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">region_map</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_map_region</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">region_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Map regions to sc points and append to rev_table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table</span>
+<span class="sd">        region_map : str | pandas.DataFrame | None</span>
+<span class="sd">            Mapping of supply curve points to region to create classes for</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            Updated table with region_id added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">region_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">rev_table</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">region_map</span> <span class="o">=</span> <span class="n">ReedsClassifier</span><span class="o">.</span><span class="n">_parse_region_map</span><span class="p">(</span><span class="n">region_map</span><span class="p">,</span>
+                                                           <span class="n">rev_table</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="s1">&#39;sc_gid&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">region_map</span><span class="p">:</span>
+                <span class="n">merge_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">region_map</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">rev_table</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">merge_cols</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;region map must contain a &quot;sc_gid&quot; column or a &#39;</span>
+                           <span class="s1">&#39;column in common with the Supply Curve table.&#39;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">ReedsValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+                <span class="n">region_map</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">rev_table</span><span class="p">[[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="p">]</span> <span class="o">+</span> <span class="n">merge_cols</span><span class="p">],</span>
+                                      <span class="n">region_map</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">merge_cols</span><span class="p">)</span>
+
+            <span class="n">region_col</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">region_map</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="s1">&#39;sc_gid&#39;</span><span class="p">]</span>
+            <span class="n">rev_table</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">rev_table</span> <span class="o">=</span> <span class="n">rev_table</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">region_map</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">region_col</span><span class="p">):</span>
+                <span class="n">rev_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">],</span> <span class="s1">&#39;region&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">r</span>
+
+            <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">rev_table</span><span class="p">[</span><span class="s1">&#39;region&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span>
+            <span class="n">rev_table</span> <span class="o">=</span> <span class="n">rev_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">rev_table</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_TRG_bins</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">trg_bins</span><span class="p">,</span> <span class="n">by_region</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create TRG (technical resource groups) using given cummulative</span>
+<span class="sd">        capacity bin widths</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table</span>
+<span class="sd">        trg_bins : pandas.Series</span>
+<span class="sd">            Cummulative capacity bin widths to create TRGs from</span>
+<span class="sd">            (in GW)</span>
+<span class="sd">        by_region : bool</span>
+<span class="sd">            Groupby on region</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            Updated table with TRG classes added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cap_breaks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">trg_bins</span><span class="p">[</span><span class="s1">&#39;TRG_cap&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># GW to MW</span>
+        <span class="n">cap_breaks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(([</span><span class="mf">0.</span><span class="p">,</span> <span class="p">],</span> <span class="n">cap_breaks</span><span class="p">),</span>
+                                    <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">trg_bins</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;capacity&#39;</span><span class="p">,</span> <span class="s1">&#39;mean_lcoe&#39;</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">]</span>
+        <span class="n">trg_classes</span> <span class="o">=</span> <span class="n">rev_table</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">by_region</span><span class="p">:</span>
+            <span class="n">classes</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">trg_classes</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">trg_classes</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">):</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;mean_lcoe&#39;</span><span class="p">)</span>
+                <span class="n">cum_cap</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;capacity&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+                <span class="n">df</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">cum_cap</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">cap_breaks</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+                <span class="n">classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+            <span class="n">trg_classes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">classes</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">trg_classes</span> <span class="o">=</span> <span class="n">trg_classes</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">&#39;mean_lcoe&#39;</span><span class="p">)</span>
+            <span class="n">cum_cap</span> <span class="o">=</span> <span class="n">trg_classes</span><span class="p">[</span><span class="s1">&#39;capacity&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+            <span class="n">trg_classes</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">cum_cap</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">cap_breaks</span><span class="p">,</span>
+                                                 <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="n">rev_table</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">trg_classes</span><span class="p">[[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">]],</span>
+                                    <span class="n">on</span><span class="o">=</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rev_table</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_TRG_classes</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">trg_bins</span><span class="p">,</span> <span class="n">by_region</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create TRG (technical resource groups) using given cummulative</span>
+<span class="sd">        capacity bin widths</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table</span>
+<span class="sd">        trg_bins : pandas.Series</span>
+<span class="sd">            Cummulative capacity bin widths to create TRGs from</span>
+<span class="sd">            (in GW)</span>
+<span class="sd">        by_region : bool</span>
+<span class="sd">            Groupby on region</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            Updated table with TRG classes added</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If categorical columns do not exist in rev_table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">trg_bins</span> <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="s1">&#39;TRG_cap&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">cat_cols</span><span class="p">:</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rev_table</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;categorical column(s) supplied with &#39;TRG_cap&#39; &quot;</span>
+                       <span class="s2">&quot;are not valid columns of &#39;rev_table&#39;: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">missing</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Additional columns were supplied with &quot;</span>
+                       <span class="s2">&quot;&#39;TRG_cap&#39;! </span><span class="se">\n</span><span class="s2"> TRG bins will be computed for all &quot;</span>
+                       <span class="s2">&quot;unique combinations of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cat_cols</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="n">tables</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">rev_groups</span> <span class="o">=</span> <span class="n">rev_table</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">cat_cols</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">grp</span><span class="p">,</span> <span class="n">bins</span> <span class="ow">in</span> <span class="n">trg_bins</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">cat_cols</span><span class="p">):</span>
+                <span class="n">group_table</span> <span class="o">=</span> <span class="n">rev_groups</span><span class="o">.</span><span class="n">get_group</span><span class="p">(</span><span class="n">grp</span><span class="p">)</span>
+                <span class="n">tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ReedsClassifier</span><span class="o">.</span><span class="n">_TRG_bins</span><span class="p">(</span><span class="n">group_table</span><span class="p">,</span> <span class="n">bins</span><span class="p">,</span>
+                                                        <span class="n">by_region</span><span class="o">=</span><span class="n">by_region</span><span class="p">))</span>
+
+            <span class="n">rev_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">tables</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rev_table</span> <span class="o">=</span> <span class="n">ReedsClassifier</span><span class="o">.</span><span class="n">_TRG_bins</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">trg_bins</span><span class="p">,</span>
+                                                  <span class="n">by_region</span><span class="o">=</span><span class="n">by_region</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rev_table</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_bin_classes</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">class_bins</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bin classes based on categorical or range bins</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table</span>
+<span class="sd">        class_bins : pandas.DataFrame</span>
+<span class="sd">            Class bins to use:</span>
+<span class="sd">            - categorical: single value</span>
+<span class="sd">            - range: *_min and *_max pair of values -&gt; (min, max]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            Updated table with TRG classes added</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If range min and max are not supplied for range bins</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">range_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">class_bins</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;min&#39;</span><span class="p">,</span> <span class="s1">&#39;max&#39;</span><span class="p">))]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">range_cols</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;A &#39;*_min&#39; and a &#39;*_max&#39; value are neede for range bins! &quot;</span>
+                   <span class="s2">&quot;Values provided: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">range_cols</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">rev_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;_min&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;_max&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">range_cols</span><span class="p">]</span>
+        <span class="n">rev_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">rev_cols</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">rev_cols</span><span class="p">:</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_min&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="p">),</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_max&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">col</span><span class="p">)]</span>
+            <span class="n">class_bins</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">class_bins</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="n">class_bins</span> <span class="o">=</span> <span class="n">class_bins</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">range_cols</span><span class="p">)</span>
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">class_bins</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rev_table</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Bin columns </span><span class="si">{}</span><span class="s2"> are not in &#39;rev_table&#39;!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">rev_table</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">bins</span> <span class="ow">in</span> <span class="n">class_bins</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">for</span> <span class="n">col</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">bins</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+                    <span class="n">bin_mask</span> <span class="o">=</span> <span class="p">((</span><span class="n">rev_table</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                                <span class="o">&amp;</span> <span class="p">(</span><span class="n">rev_table</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">value</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">bin_mask</span> <span class="o">=</span> <span class="n">rev_table</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">==</span> <span class="n">value</span>
+
+                <span class="n">mask</span> <span class="o">*=</span> <span class="n">bin_mask</span>
+
+            <span class="n">rev_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
+
+        <span class="k">return</span> <span class="n">rev_table</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_resource_classes</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span>
+                          <span class="n">trg_by_region</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create resource classes</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table</span>
+<span class="sd">        resource_classes : str | pandas.DataFrame</span>
+<span class="sd">            Resource classes, either provided in a .csv, .json</span>
+<span class="sd">            as a DataFrame or Series, or in a dictionary</span>
+<span class="sd">        trg_by_region : bool</span>
+<span class="sd">            Groupby on region for TRGs</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            Updated table with resource classes added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">resource_classes</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_table</span><span class="p">(</span><span class="n">resource_classes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;class&#39;</span> <span class="ow">in</span> <span class="n">resource_classes</span><span class="p">:</span>
+            <span class="n">resource_classes</span> <span class="o">=</span> <span class="n">resource_classes</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;TRG_cap&#39;</span> <span class="ow">in</span> <span class="n">resource_classes</span><span class="p">:</span>
+            <span class="n">rev_table</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_TRG_classes</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span>
+                                         <span class="n">by_region</span><span class="o">=</span><span class="n">trg_by_region</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rev_table</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_bin_classes</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rev_table</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_capacity_bins</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">cap_bins</span><span class="p">,</span> <span class="n">sort_bins_by</span><span class="o">=</span><span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create equal capacity bins in each region-class sorted by given</span>
+<span class="sd">        column(s)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table</span>
+<span class="sd">        cap_bins : int</span>
+<span class="sd">            Number of equal capacity bins to create for each</span>
+<span class="sd">            region-class</span>
+<span class="sd">        sort_bins_by : str | list, optional</span>
+<span class="sd">            Column(s) to sort by before capacity binning,</span>
+<span class="sd">            by default &#39;trans_cap_cost&#39;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        rev_table : pandas.DataFrame</span>
+<span class="sd">            Updated table with classes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sort_bins_by</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">sort_bins_by</span> <span class="o">=</span> <span class="p">[</span><span class="n">sort_bins_by</span><span class="p">]</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;capacity&#39;</span><span class="p">,</span> <span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">sort_bins_by</span>
+        <span class="n">capacity_bins</span> <span class="o">=</span> <span class="n">rev_table</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">bins</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">capacity_bins</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">cap_bins</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">capacity_bins</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">]):</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">sort_bins_by</span><span class="p">)</span>
+            <span class="n">cum_cap</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;capacity&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+            <span class="n">bin_labels</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">cum_cap</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">cap_bins</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">)</span>
+            <span class="n">unique_l</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">bin_labels</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_l</span><span class="p">)</span> <span class="o">&lt;</span> <span class="p">(</span><span class="n">cap_bins</span> <span class="o">/</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;In </span><span class="si">{}</span><span class="s2">: only </span><span class="si">{}</span><span class="s2"> bins where filled: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_l</span><span class="p">),</span> <span class="n">unique_l</span><span class="p">))</span>
+                <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="n">df</span><span class="p">[</span><span class="s1">&#39;bin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bin_labels</span>
+            <span class="n">bins</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="n">capacity_bins</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">bins</span><span class="p">)</span>
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="n">rev_table</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">capacity_bins</span><span class="p">[[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">]],</span>
+                                    <span class="n">on</span><span class="o">=</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rev_table</span>
+
+<div class="viewcode-block" id="ReedsClassifier.create"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_classification.html#reVX.reeds.reeds_classification.ReedsClassifier.create">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span> <span class="n">region_map</span><span class="o">=</span><span class="s1">&#39;reeds_region&#39;</span><span class="p">,</span>
+               <span class="n">cap_bins</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">sort_bins_by</span><span class="o">=</span><span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">,</span>
+               <span class="n">pre_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">trg_by_region</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Identify ReEDS regions and classes and dump and updated table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rev_table : str | pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table,</span>
+<span class="sd">            or path to file containing table</span>
+<span class="sd">        resource_classes : str | pandas.DataFrame</span>
+<span class="sd">            Resource classes, either provided in a .csv, .json or a DataFrame</span>
+<span class="sd">            Allowable columns:</span>
+<span class="sd">            - &#39;class&#39; -&gt; class labels to use</span>
+<span class="sd">            - &#39;TRG_cap&#39; -&gt; TRG capacity bins to use to create TRG classes</span>
+<span class="sd">            - any column in &#39;rev_table&#39; -&gt; Used for categorical bins</span>
+<span class="sd">            - &#39;*_min&#39; and &#39;*_max&#39; where * is a numberical column in &#39;rev_table&#39;</span>
+<span class="sd">              -&gt; used for range binning</span>
+<span class="sd">            NOTE: &#39;TRG_cap&#39; can only be combined with categorical bins</span>
+<span class="sd">        region_map : str | pandas.DataFrame</span>
+<span class="sd">            Mapping of supply curve points to region to create classes for</span>
+<span class="sd">        cap_bins : int</span>
+<span class="sd">            Number of equal capacity bins to create for each</span>
+<span class="sd">            region-class</span>
+<span class="sd">        sort_bins_by : str | list, optional</span>
+<span class="sd">            Column(s) to sort by before capacity binning,</span>
+<span class="sd">            by default &#39;trans_cap_cost&#39;</span>
+<span class="sd">        pre_filter : dict | NoneType</span>
+<span class="sd">            Column value pair(s) to filter on. If None don&#39;t filter</span>
+<span class="sd">        trg_by_region : bool</span>
+<span class="sd">            Groupby on region when computing TRGs</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        .table : pandas.DataFrame</span>
+<span class="sd">            Updated table with region_id and class_bin columns</span>
+<span class="sd">            added. Includes all columns.</span>
+<span class="sd">        .table_slim : pandas.DataFrame</span>
+<span class="sd">            Updated table with region_id and class_bin columns</span>
+<span class="sd">            added. Only includes columns in TABLE_OUT_COLS.</span>
+<span class="sd">        .aggregate_table : pandas.DataFrame</span>
+<span class="sd">            Region, class, bin aggregate table. Includes all columns.</span>
+<span class="sd">        .aggregate_table_slim : pandas.DataFrame</span>
+<span class="sd">            Region, class, bin aggregate table. Only inlcudes columns in</span>
+<span class="sd">            AGG_TABLE_OUT_COLS.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">classes</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span> <span class="n">region_map</span><span class="o">=</span><span class="n">region_map</span><span class="p">,</span>
+                      <span class="n">cap_bins</span><span class="o">=</span><span class="n">cap_bins</span><span class="p">,</span> <span class="n">sort_bins_by</span><span class="o">=</span><span class="n">sort_bins_by</span><span class="p">,</span>
+                      <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span> <span class="n">trg_by_region</span><span class="o">=</span><span class="n">trg_by_region</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">(</span><span class="n">classes</span><span class="o">.</span><span class="n">table</span><span class="p">,</span> <span class="n">classes</span><span class="o">.</span><span class="n">table_slim</span><span class="p">,</span> <span class="n">classes</span><span class="o">.</span><span class="n">aggregate_table</span><span class="p">,</span>
+               <span class="n">classes</span><span class="o">.</span><span class="n">aggregate_table_slim</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

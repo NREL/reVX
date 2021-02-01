@@ -1,0 +1,649 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.rpm.rpm_cli &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.rpm.rpm_cli</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.rpm.rpm_cli</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">RPM Command Line Interface</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">click</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.loggers</span> <span class="kn">import</span> <span class="n">init_mult</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.cli_dtypes</span> <span class="kn">import</span> <span class="n">STR</span><span class="p">,</span> <span class="n">INT</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.hpc</span> <span class="kn">import</span> <span class="n">SLURM</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.utilities</span> <span class="kn">import</span> <span class="n">dict_str_load</span><span class="p">,</span> <span class="n">get_class_properties</span>
+
+<span class="kn">from</span> <span class="nn">reVX.config.rpm</span> <span class="kn">import</span> <span class="p">(</span><span class="n">RPMConfig</span><span class="p">,</span> <span class="n">ClusterConfigGroup</span><span class="p">,</span>
+                             <span class="n">RepProfilesConfigGroup</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">reVX.rpm.rpm_manager</span> <span class="kn">import</span> <span class="n">RPMClusterManager</span> <span class="k">as</span> <span class="n">rpm_cm</span>
+<span class="kn">from</span> <span class="nn">reVX.rpm.rpm_output</span> <span class="kn">import</span> <span class="n">RPMOutput</span> <span class="k">as</span> <span class="n">rpm_o</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.exceptions</span> <span class="kn">import</span> <span class="n">RPMRuntimeError</span>
+<span class="kn">from</span> <span class="nn">reVX</span> <span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="nd">@click</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;RPM&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Job name. Default is &quot;RPM&quot;.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    RPM Command Line Interface</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">ensure_object</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">verbose</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">version</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    print version</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">__version__</span><span class="p">)</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">valid_config_keys</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Echo the valid RPM config keys</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">config_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">RPMConfig</span><span class="p">,</span> <span class="n">ClusterConfigGroup</span><span class="p">,</span> <span class="n">RepProfilesConfigGroup</span><span class="p">]</span>
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">config_classes</span><span class="p">:</span>
+        <span class="n">cls_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&gt;&quot;</span><span class="p">)</span>
+        <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s2">&quot;Valid keys for </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cls_name</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_class_properties</span><span class="p">(</span><span class="bp">cls</span><span class="p">))))</span>
+
+
+<div class="viewcode-block" id="run_local"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_cli.html#reVX.rpm.rpm_cli.run_local">[docs]</a><span class="k">def</span> <span class="nf">run_local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run reV to ReEDs locally from config</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ctx : click.ctx</span>
+<span class="sd">        click ctx object</span>
+<span class="sd">    config : RPMConfig</span>
+<span class="sd">        RPM Config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">local</span><span class="p">,</span>
+               <span class="n">out_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dirout</span><span class="p">,</span>
+               <span class="n">cf_profiles</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">cf_profiles</span><span class="p">,</span>
+               <span class="n">log_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">logdir</span><span class="p">,</span>
+               <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">cluster</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">cluster</span><span class="p">,</span>
+                   <span class="n">rpm_meta</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">rpm_meta</span><span class="p">,</span>
+                   <span class="n">region_col</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">region_col</span><span class="p">,</span>
+                   <span class="n">dist_rank_filter</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">dist_rank_filter</span><span class="p">,</span>
+                   <span class="n">contiguous_filter</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">contiguous_filter</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">rep_profiles</span><span class="p">,</span>
+                   <span class="n">rpm_clusters</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">rpm_clusters</span><span class="p">,</span>
+                   <span class="n">exclusions</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">exclusions</span><span class="p">,</span>
+                   <span class="n">excl_dict</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">excl_dict</span><span class="p">,</span>
+                   <span class="n">techmap_dset</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">techmap_dset</span><span class="p">,</span>
+                   <span class="n">trg</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">trg</span><span class="p">,</span>
+                   <span class="n">n_profiles</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">n_profiles</span><span class="p">,</span>
+                   <span class="n">forecast_fpath</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">forecast_fpath</span><span class="p">)</span></div>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--config&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Filepath to reVX-rpm config json file.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run reVX-rpm from a config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">RPMConfig</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;VERBOSE&#39;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="p">)):</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">_log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+    <span class="k">elif</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">_log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;local&#39;</span><span class="p">:</span>
+        <span class="n">run_local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;eagle&#39;</span><span class="p">:</span>
+        <span class="n">eagle</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--out_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Directory to dump output files&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--cf_profiles&#39;</span><span class="p">,</span> <span class="s1">&#39;-cf&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to reV .h5 file containing desired capacity factor &#39;</span>
+                    <span class="s1">&#39;profiles&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--log_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-log&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Directory to dump log files. Default is out_dir.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--max_workers&#39;</span><span class="p">,</span> <span class="s1">&#39;-mw&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INT</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Number of parallel workers. 1 will run serial, &#39;</span>
+                    <span class="s1">&#39;None will use all available.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">cf_profiles</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run reVX-REEDS on local hardware.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">out_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">log_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">log_dir</span> <span class="o">=</span> <span class="n">out_dir</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s1">&#39;VERBOSE&#39;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">:</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="p">))</span>
+
+    <span class="n">log_modules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;reVX&#39;</span><span class="p">,</span> <span class="s1">&#39;reV&#39;</span><span class="p">,</span> <span class="s1">&#39;rex&#39;</span><span class="p">]</span>
+    <span class="n">init_mult</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="n">log_modules</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Running reV to RPM pipeline</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="s1">&#39;Outputs to be stored in: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out_dir</span><span class="p">))</span>
+
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;CF_PROFILES&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cf_profiles</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_workers</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--rpm_meta&#39;</span><span class="p">,</span> <span class="s1">&#39;-m&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;.csv or .json containing the RPM meta data&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--region_col&#39;</span><span class="p">,</span> <span class="s1">&#39;-reg&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The meta-data field to map RPM regions to&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--dist_rank_filter&#39;</span><span class="p">,</span> <span class="s1">&#39;-drf&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Re-cluster data by minimizing the sum of the: &#39;</span>
+                    <span class="s1">&#39;distance between each point and each cluster centroid&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--contiguous_filter&#39;</span><span class="p">,</span> <span class="s1">&#39;-cf&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Flag to re-classify clusters by making contigous cluster &#39;</span>
+                    <span class="s1">&#39;polygons&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">rpm_meta</span><span class="p">,</span> <span class="n">region_col</span><span class="p">,</span> <span class="n">dist_rank_filter</span><span class="p">,</span> <span class="n">contiguous_filter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Cluster RPM Regions</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="n">cf_profiles</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;CF_PROFILES&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+    <span class="n">max_workers</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Clustering regions based on:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rpm_meta</span><span class="p">))</span>
+    <span class="n">rpm_clusters</span> <span class="o">=</span> <span class="n">rpm_cm</span><span class="o">.</span><span class="n">run_clusters</span><span class="p">(</span><span class="n">cf_profiles</span><span class="p">,</span> <span class="n">rpm_meta</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+                                       <span class="n">job_tag</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">rpm_region_col</span><span class="o">=</span><span class="n">region_col</span><span class="p">,</span>
+                                       <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                       <span class="n">dist_rank_filter</span><span class="o">=</span><span class="n">dist_rank_filter</span><span class="p">,</span>
+                                       <span class="n">contiguous_filter</span><span class="o">=</span><span class="n">contiguous_filter</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;reVX - RPM clustering methods complete.&#39;</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;RPM_CLUSTERS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rpm_clusters</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--rpm_clusters&#39;</span><span class="p">,</span> <span class="s1">&#39;-rc&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to pre-existing RPM cluster results .csv with &#39;</span>
+                    <span class="s1">&#39;(gid, gen_gid, cluster_id, rank)&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--exclusions&#39;</span><span class="p">,</span> <span class="s1">&#39;-excl&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Filepath to exclusions data (must match the techmap grid)&#39;</span>
+                    <span class="s1">&#39; None will not apply exclusions.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--excl_dict&#39;</span><span class="p">,</span> <span class="s1">&#39;-exd&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;String representation of a dictionary of exclusion &#39;</span>
+              <span class="s1">&#39;LayerMask arguments {layer: {kwarg: value}} where layer is a &#39;</span>
+              <span class="s1">&#39;dataset in excl_fpath and kwarg can be &quot;inclusion_range&quot;, &#39;</span>
+              <span class="s1">&#39;&quot;exclude_values&quot;, &quot;include_values&quot;, &quot;use_as_weights&quot;, &#39;</span>
+              <span class="s1">&#39;or &quot;weight&quot;.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--techmap_dset&#39;</span><span class="p">,</span> <span class="s1">&#39;-tmd&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Dataset name in the techmap file containing the &#39;</span>
+                    <span class="s1">&#39;exclusions-to-resource mapping data.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--trg&#39;</span><span class="p">,</span> <span class="s1">&#39;-trg&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Filepath to TRG LCOE bins.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--n_profiles&#39;</span><span class="p">,</span> <span class="s1">&#39;-np&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INT</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Number of profiles per cluster to export.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--forecast_fpath&#39;</span><span class="p">,</span> <span class="s1">&#39;-fcst&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;reV generation output file for forecast data. If this is &#39;</span>
+                    <span class="s1">&#39;input, profiles will be taken from forecast file instead &#39;</span>
+                    <span class="s1">&#39;of the cf file, based on a NN mapping.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">rep_profiles</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">exclusions</span><span class="p">,</span> <span class="n">excl_dict</span><span class="p">,</span> <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">trg</span><span class="p">,</span>
+                 <span class="n">n_profiles</span><span class="p">,</span> <span class="n">forecast_fpath</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract representative profiles from RPM clusters</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="n">cf_profiles</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;CF_PROFILES&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+    <span class="n">max_workers</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">rpm_clusters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;RPM_CLUSTERS&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;You must run &quot;cluster&quot; or provide path to existing &#39;</span>
+                   <span class="s1">&#39;RPM clusters to extract representative profiles!&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">RPMRuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">rpm_clusters</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;RPM_CLUSTERS&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting representative profiles from RPM clusters: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting representative profiles using exclusions: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">exclusions</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">trg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Applying TRGs: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">trg</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">excl_dict</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">excl_dict</span> <span class="o">=</span> <span class="n">dict_str_load</span><span class="p">(</span><span class="n">excl_dict</span><span class="p">)</span>
+
+    <span class="n">rpm_o</span><span class="o">.</span><span class="n">process_outputs</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_profiles</span><span class="p">,</span> <span class="n">exclusions</span><span class="p">,</span> <span class="n">excl_dict</span><span class="p">,</span>
+                          <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">job_tag</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                          <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span> <span class="n">trg</span><span class="o">=</span><span class="n">trg</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">forecast_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">n_profiles</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting extra representative profiles from: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">forecast_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using forecast file: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">forecast_fpath</span><span class="p">))</span>
+
+        <span class="n">rpm_o</span><span class="o">.</span><span class="n">extract_profiles</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_profiles</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+                               <span class="n">n_profiles</span><span class="o">=</span><span class="n">n_profiles</span><span class="p">,</span> <span class="n">job_tag</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                               <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                               <span class="n">forecast_fpath</span><span class="o">=</span><span class="n">forecast_fpath</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_node_cmd"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_cli.html#reVX.rpm.rpm_cli.get_node_cmd">[docs]</a><span class="k">def</span> <span class="nf">get_node_cmd</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the node CLI call for the reVX-REEDS pipeline.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.reeds.ReedsConfig</span>
+<span class="sd">        reVX-REEDS config object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cmd : str</span>
+<span class="sd">        CLI call to submit to SLURM execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-n </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="p">)),</span>
+            <span class="s1">&#39;local&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;-o </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">dirout</span><span class="p">)),</span>
+            <span class="s1">&#39;-cf </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">cf_profiles</span><span class="p">)),</span>
+            <span class="s1">&#39;-mw </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)),</span>
+            <span class="s1">&#39;-log </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">logdir</span><span class="p">)),</span>
+            <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">log_level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">cluster</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">cluster</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cluster&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;-m </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">rpm_meta</span><span class="p">)),</span>
+                   <span class="s1">&#39;-reg </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">region_col</span><span class="p">)),</span>
+                   <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">dist_rank_filter</span><span class="p">:</span>
+            <span class="n">cluster</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-drf&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">cluster</span><span class="o">.</span><span class="n">contiguous_filter</span><span class="p">:</span>
+            <span class="n">cluster</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-cf&#39;</span><span class="p">)</span>
+
+        <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">cluster</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">rep_profiles</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rep_profiles&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;-rc </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">rpm_clusters</span><span class="p">)),</span>
+                    <span class="s1">&#39;-excl </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">exclusions</span><span class="p">)),</span>
+                    <span class="s1">&#39;-exd </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">excl_dict</span><span class="p">)),</span>
+                    <span class="s1">&#39;-tmp </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">techmap_dset</span><span class="p">)),</span>
+                    <span class="s1">&#39;-trg </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">trg</span><span class="p">)),</span>
+                    <span class="s1">&#39;-np </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">n_profiles</span><span class="p">)),</span>
+                    <span class="s1">&#39;-fcst </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">rep_profiles</span><span class="o">.</span><span class="n">forecast_fpath</span><span class="p">)),</span>
+                    <span class="p">]</span>
+
+        <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;python -m reVX.rpm.rpm_cli </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Submitting the following cli call:</span><span class="se">\n\t</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">cmd</span></div>
+
+
+<div class="viewcode-block" id="eagle"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_cli.html#reVX.rpm.rpm_cli.eagle">[docs]</a><span class="k">def</span> <span class="nf">eagle</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run reVX-RPM on Eagle HPC.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.rpm.RPMConfig</span>
+<span class="sd">        reVX-RPM config object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">get_node_cmd</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">log_dir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">logdir</span>
+    <span class="n">stdout_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log_dir</span><span class="p">,</span> <span class="s1">&#39;stdout/&#39;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Running reVX-RPM pipeline on Eagle with &#39;</span>
+                <span class="s1">&#39;node name &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">slurm_manager</span> <span class="o">=</span> <span class="n">SLURM</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">slurm_manager</span><span class="o">.</span><span class="n">sbatch</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span>
+                               <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                               <span class="n">stdout_path</span><span class="o">=</span><span class="n">stdout_path</span><span class="p">,</span>
+                               <span class="n">alloc</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">alloc</span><span class="p">,</span>
+                               <span class="n">memory</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">node_mem</span><span class="p">,</span>
+                               <span class="n">walltime</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">walltime</span><span class="p">,</span>
+                               <span class="n">feature</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">feature</span><span class="p">,</span>
+                               <span class="n">module</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">module</span><span class="p">,</span>
+                               <span class="n">conda_env</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">conda_env</span><span class="p">,</span>
+                               <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Kicked off reVX-RPM pipeline job &quot;</span><span class="si">{}</span><span class="s1">&quot; &#39;</span>
+               <span class="s1">&#39;(SLURM jobid #</span><span class="si">{}</span><span class="s1">) on Eagle.&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">out</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Was unable to kick off reVX-RPM pipeline job &quot;</span><span class="si">{}</span><span class="s1">&quot;. &#39;</span>
+               <span class="s1">&#39;Please see the stdout error messages&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">main</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="p">{})</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Error running RPM CLI&#39;</span><span class="p">)</span>
+        <span class="k">raise</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

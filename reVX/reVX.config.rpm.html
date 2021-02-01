@@ -1,0 +1,458 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.config.rpm module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.config.wind_setbacks module" href="reVX.config.wind_setbacks.html" />
+    <link rel="prev" title="reVX.config.reeds module" href="reVX.config.reeds.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.config.html">reVX.config package</a> &raquo;</li>
+        
+      <li>reVX.config.rpm module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.config.rpm.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-reVX.config.rpm">
+<span id="revx-config-rpm-module"></span><h1>reVX.config.rpm module<a class="headerlink" href="#module-reVX.config.rpm" title="Permalink to this headline">¶</a></h1>
+<p>reVX ReEDS Configuration</p>
+<dl class="py class">
+<dt id="reVX.config.rpm.RPMConfig">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.config.rpm.</code><code class="sig-name descname">RPMConfig</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em>, <em class="sig-param"><span class="n">run_preflight</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">check_keys</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/config/rpm.html#RPMConfig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.config.rpm.RPMConfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">reV.config.base_analysis_config.AnalysisConfig</span></code></p>
+<p>Config framework for RPM jobs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<em>str | dict</em>) – File path to config json (str), serialized json object (str),
+or dictionary with pre-extracted config.</p></li>
+<li><p><strong>run_preflight</strong> (<em>bool, optional</em>) – Flag to run or disable preflight checks, by default True</p></li>
+<li><p><strong>check_keys</strong> (<em>bool, optional</em>) – Flag to check config keys against Class properties, by default True</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="reVX.config.rpm.RPMConfig.NAME">
+<code class="sig-name descname">NAME</code><em class="property"> = 'RPM'</em><a class="headerlink" href="#reVX.config.rpm.RPMConfig.NAME" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="reVX.config.rpm.RPMConfig.REQUIREMENTS">
+<code class="sig-name descname">REQUIREMENTS</code><em class="property"> = ('cf_profiles',)</em><a class="headerlink" href="#reVX.config.rpm.RPMConfig.REQUIREMENTS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RPMConfig.cluster">
+<em class="property">property </em><code class="sig-name descname">cluster</code><a class="headerlink" href="#reVX.config.rpm.RPMConfig.cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the clustering input group in the config dict.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RPMConfig.rep_profiles">
+<em class="property">property </em><code class="sig-name descname">rep_profiles</code><a class="headerlink" href="#reVX.config.rpm.RPMConfig.rep_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the profiles input group in the config dict.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RPMConfig.cf_profiles">
+<em class="property">property </em><code class="sig-name descname">cf_profiles</code><a class="headerlink" href="#reVX.config.rpm.RPMConfig.cf_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to reV .h5 file containing desired capacity factor profiles</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RPMConfig.max_workers">
+<em class="property">property </em><code class="sig-name descname">max_workers</code><a class="headerlink" href="#reVX.config.rpm.RPMConfig.max_workers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the max_workers input (None is parallel).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.config.rpm.ClusterConfigGroup">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.config.rpm.</code><code class="sig-name descname">ClusterConfigGroup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em>, <em class="sig-param"><span class="n">check_keys</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">perform_str_rep</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/config/rpm.html#ClusterConfigGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.config.rpm.ClusterConfigGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">reV.config.base_config.BaseConfig</span></code></p>
+<p>Subclass for handling the RPM config input group for the reVX-RPM
+cluster framework.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config</strong> (<em>str | dict</em>) – File path to config json (str), serialized json object (str),
+or dictionary with pre-extracted config.</p></li>
+<li><p><strong>check_keys</strong> (<em>bool, optional</em>) – Flag to check config keys against Class properties, by default True</p></li>
+<li><p><strong>perform_str_rep</strong> (<em>bool</em>) – Flag to perform string replacement for REVDIR, TESTDATADIR, and ./</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="reVX.config.rpm.ClusterConfigGroup.REQUIREMENTS">
+<code class="sig-name descname">REQUIREMENTS</code><em class="property"> = ('rpm_meta',)</em><a class="headerlink" href="#reVX.config.rpm.ClusterConfigGroup.REQUIREMENTS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.ClusterConfigGroup.rpm_meta">
+<em class="property">property </em><code class="sig-name descname">rpm_meta</code><a class="headerlink" href="#reVX.config.rpm.ClusterConfigGroup.rpm_meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>.csv or .json containing the RPM meta data (required).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.ClusterConfigGroup.region_col">
+<em class="property">property </em><code class="sig-name descname">region_col</code><a class="headerlink" href="#reVX.config.rpm.ClusterConfigGroup.region_col" title="Permalink to this definition">¶</a></dt>
+<dd><p>The meta-data field to map RPM regions to.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.ClusterConfigGroup.dist_rank_filter">
+<em class="property">property </em><code class="sig-name descname">dist_rank_filter</code><a class="headerlink" href="#reVX.config.rpm.ClusterConfigGroup.dist_rank_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dist rank filter flag, default True</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.ClusterConfigGroup.contiguous_filter">
+<em class="property">property </em><code class="sig-name descname">contiguous_filter</code><a class="headerlink" href="#reVX.config.rpm.ClusterConfigGroup.contiguous_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contiguous filter flag, default True</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.config.rpm.</code><code class="sig-name descname">RepProfilesConfigGroup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/config/rpm.html#RepProfilesConfigGroup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">reV.config.base_config.BaseConfig</span></code></p>
+<p>Subclass for handling the RPM config input group for the reVX-RPM
+representative profiles framework.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>dict</em>) – Dictionary with pre-extracted config input group.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup.REQUIREMENTS">
+<code class="sig-name descname">REQUIREMENTS</code><em class="property"> = ('rpm_clusters',)</em><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup.REQUIREMENTS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup.rpm_clusters">
+<em class="property">property </em><code class="sig-name descname">rpm_clusters</code><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup.rpm_clusters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pre-existing RPM cluster results .csv with
+(gid, gen_gid, cluster_id, rank) (required).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup.n_profiles">
+<em class="property">property </em><code class="sig-name descname">n_profiles</code><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup.n_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of profiles to get.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup.exclusions">
+<em class="property">property </em><code class="sig-name descname">exclusions</code><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup.exclusions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filepath to exclusions data (must match the techmap grid),
+None will not apply exclusions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup.excl_dict">
+<em class="property">property </em><code class="sig-name descname">excl_dict</code><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup.excl_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>String representation of a dictionary of exclusion LayerMask arguments
+{layer: {kwarg: value}} where layer is a dataset in excl_fpath and
+kwarg can be “inclusion_range”, “exclude_values”, “include_values”,
+“use_as_weights”, or “weight”.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup.techmap_dset">
+<em class="property">property </em><code class="sig-name descname">techmap_dset</code><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup.techmap_dset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dataset name in the techmap file containing the exclusions-to-resource
+mapping data.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup.trg">
+<em class="property">property </em><code class="sig-name descname">trg</code><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup.trg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filepath to TRG LCOE bins.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.config.rpm.RepProfilesConfigGroup.forecast_fpath">
+<em class="property">property </em><code class="sig-name descname">forecast_fpath</code><a class="headerlink" href="#reVX.config.rpm.RepProfilesConfigGroup.forecast_fpath" title="Permalink to this definition">¶</a></dt>
+<dd><p>reV generation output file for forecast data. If this is input,
+profiles will be taken from forecast file instead of the cf file,
+based on a NN mapping.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.config.wind_setbacks.html" class="btn btn-neutral float-right" title="reVX.config.wind_setbacks module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.config.reeds.html" class="btn btn-neutral float-left" title="reVX.config.reeds module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

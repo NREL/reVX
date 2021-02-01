@@ -1,0 +1,1498 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.rpm.rpm_output &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.rpm.rpm_output</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.rpm.rpm_output</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">RPM output handler.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">as_completed</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">psutil</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">cKDTree</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">from</span> <span class="nn">rex.utilities.execution</span> <span class="kn">import</span> <span class="n">SpawnProcessPool</span>
+
+<span class="kn">from</span> <span class="nn">reV.supply_curve.exclusions</span> <span class="kn">import</span> <span class="n">ExclusionMask</span><span class="p">,</span> <span class="n">ExclusionMaskFromDict</span>
+
+<span class="kn">from</span> <span class="nn">reVX.handlers.outputs</span> <span class="kn">import</span> <span class="n">Outputs</span>
+<span class="kn">from</span> <span class="nn">reVX.rpm.rpm_clusters</span> <span class="kn">import</span> <span class="n">RPMClusters</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.exceptions</span> <span class="kn">import</span> <span class="n">RPMRuntimeError</span><span class="p">,</span> <span class="n">RPMTypeError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RepresentativeProfiles"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RepresentativeProfiles">[docs]</a><span class="k">class</span> <span class="nc">RepresentativeProfiles</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Methods to export representative generation profiles.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">forecast_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank).</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            reV generation output file.</span>
+<span class="sd">        key : str | None</span>
+<span class="sd">            Rank column to sort by to get the best ranked profile.</span>
+<span class="sd">            None will use implicit logic to select the rank key.</span>
+<span class="sd">        forecast_fpath : str</span>
+<span class="sd">            reV generation output file for forecast data. If this is input,</span>
+<span class="sd">            profiles will be taken from forecast fpath instead of fpath gen</span>
+<span class="sd">            based on a NN mapping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="k">elif</span> <span class="s1">&#39;rank_included_trg&#39;</span> <span class="ow">in</span> <span class="n">clusters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;rank_included_trg&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;rank_included&#39;</span> <span class="ow">in</span> <span class="n">clusters</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;rank_included&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;rank&#39;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">clusters</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Could not find rank column &quot;</span><span class="si">{}</span><span class="s1">&quot; in &#39;</span>
+                           <span class="s1">&#39;cluster table. Cannot extract &#39;</span>
+                           <span class="s1">&#39;representative profiles.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Getting rep profiles based on column &quot;</span><span class="si">{}</span><span class="s1">&quot;.&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clusters</span> <span class="o">=</span> <span class="n">clusters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span> <span class="o">=</span> <span class="n">cf_fpath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forecast_fpath</span> <span class="o">=</span> <span class="n">forecast_fpath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forecast_map</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_forecast_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="s1">&#39;forecast_gid&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">clusters</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clusters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_forecast_clusters</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">clusters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forecast_fpath</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_make_forecast_nn_map</span><span class="p">(</span><span class="n">meta_cf</span><span class="p">,</span> <span class="n">meta_forecast</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make a mapping between the cf meta and the forecast meta.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        meta_cf : pd.DataFrame</span>
+<span class="sd">            Meta data for reV gen CF file (actuals).</span>
+<span class="sd">        meta_forecast : pd.DataFrame</span>
+<span class="sd">            Meta data for reV gen CF file (forecast).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        i : np.ndarray</span>
+<span class="sd">            1D array of forecast gid&#39;s with length equal to meta_cf.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">meta_forecast</span><span class="p">[</span><span class="n">labels</span><span class="p">])</span>  <span class="c1"># pylint: disable=not-callable</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">meta_cf</span><span class="p">[</span><span class="n">labels</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Mapping reV gen file to forecast gen file, &#39;</span>
+                    <span class="s1">&#39;nearest neighbor min / mean / max: </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1"> / </span><span class="si">{}</span><span class="s1">&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">d</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="n">d</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">i</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_add_forecast_gids</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">forecast_map</span><span class="p">,</span> <span class="n">meta_forecast</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add forecast_gid column in cluster table with forecast data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank).</span>
+<span class="sd">        forecast_map : np.ndarray</span>
+<span class="sd">            1D array of forecast gid&#39;s with length equal to meta_cf.</span>
+<span class="sd">        meta_forecast : pd.DataFrame</span>
+<span class="sd">            Meta data for reV gen CF file (forecast).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with additional forecast columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">clusters</span><span class="p">[</span><span class="s1">&#39;forecast_gid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">clusters</span><span class="p">[</span><span class="s1">&#39;forecast_latitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">clusters</span><span class="p">[</span><span class="s1">&#39;forecast_longitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">lats</span> <span class="o">=</span> <span class="n">meta_forecast</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">]</span>
+        <span class="n">lons</span> <span class="o">=</span> <span class="n">meta_forecast</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">clusters</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="n">gen_gid</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;gen_gid&#39;</span><span class="p">]</span>
+            <span class="n">forecast_gid</span> <span class="o">=</span> <span class="n">forecast_map</span><span class="p">[</span><span class="n">gen_gid</span><span class="p">]</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;forecast_gid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">forecast_gid</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;forecast_latitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lats</span><span class="p">[</span><span class="n">forecast_gid</span><span class="p">]</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;forecast_longitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lons</span><span class="p">[</span><span class="n">forecast_gid</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">clusters</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_rep_profile</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">irp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fpath_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">key</span><span class="o">=</span><span class="s1">&#39;rank&#39;</span><span class="p">,</span> <span class="n">forecast_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a single representative profile timeseries dataframe.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank).</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            reV generation output file.</span>
+<span class="sd">        irp : int</span>
+<span class="sd">            Rank of profile to get. Zero is the most representative profile.</span>
+<span class="sd">        fpath_out : str</span>
+<span class="sd">            Optional filepath to export files to.</span>
+<span class="sd">        key : str</span>
+<span class="sd">            Rank column to sort by to get the best ranked profile.</span>
+<span class="sd">        forecast_fpath : str</span>
+<span class="sd">            reV generation output file for forecast data. If this is input,</span>
+<span class="sd">            profiles will be taken from forecast fpath instead of fpath gen</span>
+<span class="sd">            based on a NN mapping.</span>
+<span class="sd">        cols : list | None</span>
+<span class="sd">            Columns headers for the rep profiles. None will use whatever</span>
+<span class="sd">            cluster_ids are in clusters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">forecast_fpath</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">ti</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">time_index</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">forecast_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">ti</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">time_index</span>
+
+        <span class="k">if</span> <span class="n">cols</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">cluster_id</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+        <span class="n">profile_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">ti</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+        <span class="n">profile_df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;time_index&#39;</span>
+
+        <span class="k">for</span> <span class="n">cid</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">clusters</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+                <span class="n">df_ranked</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">irp</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">df_ranked</span><span class="p">):</span>
+                    <span class="n">rep</span> <span class="o">=</span> <span class="n">df_ranked</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">irp</span><span class="p">,</span> <span class="p">:]</span>
+                    <span class="n">res_gid</span> <span class="o">=</span> <span class="n">rep</span><span class="p">[</span><span class="s1">&#39;gid&#39;</span><span class="p">]</span>
+                    <span class="n">gen_gid</span> <span class="o">=</span> <span class="n">rep</span><span class="p">[</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">]</span>
+
+                    <span class="k">if</span> <span class="n">forecast_fpath</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Representative profile i #</span><span class="si">{}</span><span class="s1"> from &#39;</span>
+                                    <span class="s1">&#39;cluster id </span><span class="si">{}</span><span class="s1"> is from gen_gid </span><span class="si">{}</span><span class="s1">, &#39;</span>
+                                    <span class="s1">&#39;res_gid </span><span class="si">{}</span><span class="s1">&#39;</span>
+                                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">irp</span><span class="p">,</span> <span class="n">cid</span><span class="p">,</span> <span class="n">gen_gid</span><span class="p">,</span> <span class="n">res_gid</span><span class="p">))</span>
+
+                        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                            <span class="n">meta_gid</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_meta_arr</span><span class="p">(</span><span class="s1">&#39;gid&#39;</span><span class="p">)</span>
+                            <span class="n">gen_gid_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">meta_gid</span> <span class="o">==</span> <span class="n">res_gid</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="k">if</span> <span class="n">gen_gid_arr</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="n">gen_gid</span> <span class="o">=</span> <span class="n">gen_gid_arr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                                <span class="n">profile_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;cf_profile&#39;</span><span class="p">,</span> <span class="p">:,</span>
+                                                           <span class="n">gen_gid</span><span class="p">]</span>
+
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">for_gid</span> <span class="o">=</span> <span class="n">rep</span><span class="p">[</span><span class="s1">&#39;forecast_gid&#39;</span><span class="p">]</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Representative profile i #</span><span class="si">{}</span><span class="s1"> from &#39;</span>
+                                    <span class="s1">&#39;cluster id </span><span class="si">{}</span><span class="s1"> is from gen_gid </span><span class="si">{}</span><span class="s1">, &#39;</span>
+                                    <span class="s1">&#39;forecast_gid </span><span class="si">{}</span><span class="s1">.&#39;</span>
+                                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">irp</span><span class="p">,</span> <span class="n">cid</span><span class="p">,</span> <span class="n">for_gid</span><span class="p">,</span> <span class="n">gen_gid</span><span class="p">))</span>
+
+                        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">forecast_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                            <span class="n">profile_df</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;cf_profile&#39;</span><span class="p">,</span> <span class="p">:,</span>
+                                                       <span class="n">for_gid</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">fpath_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">profile_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fpath_out</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath_out</span><span class="p">))</span>
+
+<div class="viewcode-block" id="RepresentativeProfiles.process_forecast_clusters"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RepresentativeProfiles.process_forecast_clusters">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">process_forecast_clusters</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">forecast_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process the clusters dataframe with NN to forecast data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank).</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            reV generation output file.</span>
+<span class="sd">        forecast_fpath : str</span>
+<span class="sd">            reV generation output file for forecast data. If this is input,</span>
+<span class="sd">            profiles will be taken from forecast fpath instead of fpath gen</span>
+<span class="sd">            based on a NN mapping.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with additional forecast columns.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">cf</span><span class="p">:</span>
+            <span class="n">meta_cf</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">meta</span>
+
+        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">forecast_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">forecast</span><span class="p">:</span>
+            <span class="n">meta_forecast</span> <span class="o">=</span> <span class="n">forecast</span><span class="o">.</span><span class="n">meta</span>
+
+        <span class="n">forecast_map</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_make_forecast_nn_map</span><span class="p">(</span><span class="n">meta_cf</span><span class="p">,</span> <span class="n">meta_forecast</span><span class="p">)</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_add_forecast_gids</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">forecast_map</span><span class="p">,</span>
+                                          <span class="n">meta_forecast</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">clusters</span></div>
+
+<div class="viewcode-block" id="RepresentativeProfiles.export_profiles"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RepresentativeProfiles.export_profiles">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">export_profiles</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">n_profiles</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">fn_pro</span><span class="p">,</span>
+                        <span class="n">out_dir</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">forecast_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Export representative profile files.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_profiles : int</span>
+<span class="sd">            Number of profiles to export.</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            RPM output clusters attribute.</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            Filepath to reV generation results to get profiles from.</span>
+<span class="sd">        fn_pro : str</span>
+<span class="sd">            Filename for representative profile output.</span>
+<span class="sd">        out_dir : str</span>
+<span class="sd">            Directory to dump output files.</span>
+<span class="sd">        key : str | None</span>
+<span class="sd">            Column in clusters to sort ranks by. None will allow for</span>
+<span class="sd">            default logic.</span>
+<span class="sd">        forecast_fpath : str</span>
+<span class="sd">            reV generation output file for forecast data. If this is input,</span>
+<span class="sd">            profiles will be taken from forecast fpath instead of fpath gen</span>
+<span class="sd">            based on a NN mapping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">forecast_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">clusters</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">process_forecast_clusters</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span>
+                                                     <span class="n">forecast_fpath</span><span class="p">)</span>
+            <span class="n">fn_fore</span> <span class="o">=</span> <span class="n">fn_pro</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;_meta.csv&#39;</span><span class="p">)</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">fn_fore</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">irp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_profiles</span><span class="p">):</span>
+                <span class="n">fni</span> <span class="o">=</span> <span class="n">fn_pro</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;_rank</span><span class="si">{}</span><span class="s1">.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">irp</span><span class="p">))</span>
+                <span class="n">fpath_out_i</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">fni</span><span class="p">)</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">export_single_profile</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">irp</span><span class="o">=</span><span class="n">irp</span><span class="p">,</span>
+                                          <span class="n">fpath_out</span><span class="o">=</span><span class="n">fpath_out_i</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+                                          <span class="n">forecast_fpath</span><span class="o">=</span><span class="n">forecast_fpath</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">loggers</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">]</span>
+            <span class="k">with</span> <span class="n">SpawnProcessPool</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                  <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">)</span> <span class="k">as</span> <span class="n">exe</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">irp</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_profiles</span><span class="p">):</span>
+                    <span class="n">fni</span> <span class="o">=</span> <span class="n">fn_pro</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;_rank</span><span class="si">{}</span><span class="s1">.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">irp</span><span class="p">))</span>
+                    <span class="n">fpath_out_i</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">fni</span><span class="p">)</span>
+                    <span class="n">exe</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">export_single_profile</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span>
+                               <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">irp</span><span class="o">=</span><span class="n">irp</span><span class="p">,</span> <span class="n">fpath_out</span><span class="o">=</span><span class="n">fpath_out_i</span><span class="p">,</span>
+                               <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">forecast_fpath</span><span class="o">=</span><span class="n">forecast_fpath</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RepresentativeProfiles.export_single_profile"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RepresentativeProfiles.export_single_profile">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">export_single_profile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">irp</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">fpath_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                              <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">forecast_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a single representative profile timeseries dataframe.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank).</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            reV generation output file.</span>
+<span class="sd">        irp : int</span>
+<span class="sd">            Rank of profile to get. Zero is the most representative profile.</span>
+<span class="sd">        fpath_out : str</span>
+<span class="sd">            Optional filepath to export files to.</span>
+<span class="sd">        key : str | None</span>
+<span class="sd">            Rank column to sort by to get the best ranked profile.</span>
+<span class="sd">            None will use implicit logic to select the rank key.</span>
+<span class="sd">        forecast_fpath : str</span>
+<span class="sd">            reV generation output file for forecast data. If this is input,</span>
+<span class="sd">            profiles will be taken from forecast fpath instead of fpath gen</span>
+<span class="sd">            based on a NN mapping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rp</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span> <span class="n">forecast_fpath</span><span class="o">=</span><span class="n">forecast_fpath</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">cluster_id</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">rp</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;rank_included_trg&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">itrg</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">rp</span><span class="o">.</span><span class="n">clusters</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;trg&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">fpath_out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">fpath_out_trg</span> <span class="o">=</span> <span class="n">fpath_out</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;_trg</span><span class="si">{}</span><span class="s1">.csv&#39;</span>
+                                                      <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">itrg</span><span class="p">))</span>
+
+                <span class="n">rp</span><span class="o">.</span><span class="n">_get_rep_profile</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">irp</span><span class="o">=</span><span class="n">irp</span><span class="p">,</span>
+                                    <span class="n">fpath_out</span><span class="o">=</span><span class="n">fpath_out_trg</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">rp</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                                    <span class="n">forecast_fpath</span><span class="o">=</span><span class="n">rp</span><span class="o">.</span><span class="n">_forecast_fpath</span><span class="p">,</span>
+                                    <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rp</span><span class="o">.</span><span class="n">_get_rep_profile</span><span class="p">(</span><span class="n">rp</span><span class="o">.</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">irp</span><span class="o">=</span><span class="n">irp</span><span class="p">,</span>
+                                <span class="n">fpath_out</span><span class="o">=</span><span class="n">fpath_out</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">rp</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                                <span class="n">forecast_fpath</span><span class="o">=</span><span class="n">rp</span><span class="o">.</span><span class="n">_forecast_fpath</span><span class="p">,</span>
+                                <span class="n">cols</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="RPMOutput"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RPMOutput">[docs]</a><span class="k">class</span> <span class="nc">RPMOutput</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Framework to format and process RPM clustering results.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span> <span class="n">excl_dict</span><span class="p">,</span>
+                 <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">excl_area</span><span class="o">=</span><span class="mf">0.0081</span><span class="p">,</span> <span class="n">include_threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                 <span class="n">n_profiles</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rerank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cluster_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">trg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rpm_clusters : pd.DataFrame | str</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank),</span>
+<span class="sd">            or str to file.</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            Path to reV .h5 file containing desired capacity factor profiles</span>
+<span class="sd">        excl_fpath : str | None</span>
+<span class="sd">            Filepath to exclusions data (must match the techmap grid).</span>
+<span class="sd">            None will not apply exclusions.</span>
+<span class="sd">        excl_dict : dict | None</span>
+<span class="sd">            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}</span>
+<span class="sd">        techmap_dset : str</span>
+<span class="sd">            Dataset name in the exclusions file containing the</span>
+<span class="sd">            exclusions-to-resource mapping data.</span>
+<span class="sd">        excl_area : float</span>
+<span class="sd">            Area in km2 of one exclusion pixel.</span>
+<span class="sd">        include_threshold : float</span>
+<span class="sd">            Inclusion threshold. Resource pixels included more than this</span>
+<span class="sd">            threshold will be considered in the representative profiles.</span>
+<span class="sd">            Set to zero to find representative profile on all resource, not</span>
+<span class="sd">            just included.</span>
+<span class="sd">        n_profiles : int</span>
+<span class="sd">            Number of representative profiles to output.</span>
+<span class="sd">        rerank : bool</span>
+<span class="sd">            Flag to rerank representative generation profiles after removing</span>
+<span class="sd">            excluded generation pixels.</span>
+<span class="sd">        cluster_kwargs : dict</span>
+<span class="sd">            RPMClusters kwargs</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of parallel workers. 1 will run serial, None will use all</span>
+<span class="sd">            available., by default None</span>
+<span class="sd">        trg : pd.DataFrame | str | None</span>
+<span class="sd">            TRG bins or string to filepath containing TRG bins.</span>
+<span class="sd">            None will not analyze TRG bins.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Initializing RPM output processing...&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_cluster_arg</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span> <span class="o">=</span> <span class="n">excl_fpath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_excl_dict</span> <span class="o">=</span> <span class="n">excl_dict</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_techmap_dset</span> <span class="o">=</span> <span class="n">techmap_dset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span> <span class="o">=</span> <span class="n">cf_fpath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">excl_area</span> <span class="o">=</span> <span class="n">excl_area</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">include_threshold</span> <span class="o">=</span> <span class="n">include_threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_profiles</span> <span class="o">=</span> <span class="n">n_profiles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rerank</span> <span class="o">=</span> <span class="n">rerank</span>
+
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_workers</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span> <span class="o">=</span> <span class="n">max_workers</span>
+
+        <span class="k">if</span> <span class="n">cluster_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cluster_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cluster_kwargs</span> <span class="o">=</span> <span class="n">cluster_kwargs</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">trg</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trg</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">trg</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">trg</span> <span class="o">=</span> <span class="n">trg</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_full_lat_slice</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_full_lon_slice</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_lat_lon</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_cluster_arg</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rpm_clusters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse dataframe from cluster input arg.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rpm_clusters : pd.DataFrame | str</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank),</span>
+<span class="sd">            or str to file.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        clusters : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank,</span>
+<span class="sd">            latitude, longitude)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">clusters</span> <span class="o">=</span> <span class="n">rpm_clusters</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">rpm_clusters</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">):</span>
+                <span class="n">clusters</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">rpm_clusters</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.json&#39;</span><span class="p">):</span>
+                <span class="n">clusters</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">RPMTypeError</span><span class="p">(</span><span class="s1">&#39;Expected a DataFrame or str but received </span><span class="si">{}</span><span class="s1">&#39;</span>
+                               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">)))</span>
+
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_check_cluster_cols</span><span class="p">(</span><span class="n">clusters</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">clusters</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_check_cluster_cols</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;gid&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">,</span>
+                                          <span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;cluster_id&#39;</span><span class="p">,</span> <span class="s1">&#39;rank&#39;</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;Check for required columns in the rpm cluster dataframe.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Single DataFrame with columns to check</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">required</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+                <span class="n">missing</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">missing</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">RPMRuntimeError</span><span class="p">(</span><span class="s1">&#39;Missing the following columns in RPM &#39;</span>
+                                  <span class="s1">&#39;clusters input df: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">missing</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_init_lat_lon</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize the lat/lon arrays and reduce their size.&quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_full_lat_slice</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_lon_slice</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_lat_lon_slices</span><span class="p">(</span><span class="n">cluster_id</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Initial lat/lon shape is </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> and &#39;</span>
+                         <span class="s1">&#39;range is </span><span class="si">{}</span><span class="s1"> - </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> - </span><span class="si">{}</span><span class="s1">&#39;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">excl_lat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">excl_lon</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">excl_lat</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">excl_lon</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_lat_slice</span><span class="p">,</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">_full_lon_slice</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_full_lat_slice</span><span class="p">,</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">_full_lon_slice</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Reduced lat/lon shape is </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> and &#39;</span>
+                         <span class="s1">&#39;range is </span><span class="si">{}</span><span class="s1"> - </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> - </span><span class="si">{}</span><span class="s1">&#39;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">excl_lat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">excl_lon</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">excl_lat</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">excl_lon</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span><span class="o">.</span><span class="n">max</span><span class="p">()))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_tm_data</span><span class="p">(</span><span class="n">excl</span><span class="p">,</span> <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">lat_slice</span><span class="p">,</span> <span class="n">lon_slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the techmap data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl : ExclusionMask | ExclusionMaskFromDict</span>
+<span class="sd">            Pre-initialized exclusions mask object.</span>
+<span class="sd">        techmap_dset : str</span>
+<span class="sd">            Dataset name in the exclusions file containing the</span>
+<span class="sd">            exclusions-to-resource mapping data.</span>
+<span class="sd">        lat_slice : slice</span>
+<span class="sd">            The latitude (row) slice to extract from the exclusions or</span>
+<span class="sd">            techmap 2D datasets.</span>
+<span class="sd">        lon_slice : slice</span>
+<span class="sd">            The longitude (col) slice to extract from the exclusions or</span>
+<span class="sd">            techmap 2D datasets.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        techmap : np.ndarray</span>
+<span class="sd">            Techmap data mapping exclusions grid to resource gid (flattened).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">excl</span><span class="p">,</span> <span class="p">(</span><span class="n">ExclusionMask</span><span class="p">,</span> <span class="n">ExclusionMaskFromDict</span><span class="p">)):</span>
+            <span class="n">techmap</span> <span class="o">=</span> <span class="n">excl</span><span class="o">.</span><span class="n">excl_h5</span><span class="p">[</span><span class="n">techmap_dset</span><span class="p">,</span> <span class="n">lat_slice</span><span class="p">,</span> <span class="n">lon_slice</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="s1">&#39;Cannot recognize exclusion type: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">excl</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="n">techmap</span> <span class="o">=</span> <span class="n">techmap</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">techmap</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_excl_data</span><span class="p">(</span><span class="n">excl</span><span class="p">,</span> <span class="n">lat_slice</span><span class="p">,</span> <span class="n">lon_slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the exclusions data from a geotiff file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl : ExclusionMask | ExclusionMaskFromDict</span>
+<span class="sd">            Pre-initialized exclusions mask object.</span>
+<span class="sd">        lat_slice : slice</span>
+<span class="sd">            The latitude (row) slice to extract from the exclusions or</span>
+<span class="sd">            techmap 2D datasets.</span>
+<span class="sd">        lon_slice : slice</span>
+<span class="sd">            The longitude (col) slice to extract from the exclusions or</span>
+<span class="sd">            techmap 2D datasets.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        excl_data : np.ndarray</span>
+<span class="sd">            Exclusions data flattened and normalized from 0 to 1 (1 is incld).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">excl</span><span class="p">,</span> <span class="p">(</span><span class="n">ExclusionMask</span><span class="p">,</span> <span class="n">ExclusionMaskFromDict</span><span class="p">)):</span>
+            <span class="n">excl_data</span> <span class="o">=</span> <span class="n">excl</span><span class="p">[</span><span class="n">lat_slice</span><span class="p">,</span> <span class="n">lon_slice</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="s1">&#39;Cannot recognize exclusion type: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">excl</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="c1"># infer exclusions that are scaled percentages from 0 to 100</span>
+        <span class="k">if</span> <span class="n">excl_data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">excl_data</span> <span class="o">=</span> <span class="n">excl_data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">excl_data</span> <span class="o">/=</span> <span class="mi">100</span>
+
+        <span class="k">return</span> <span class="n">excl_data</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_lat_lon_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster_id</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">margin</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the slice args to locate exclusion/techmap data of interest.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cluster_id : str | None</span>
+<span class="sd">            Single cluster ID of interest or None for full region.</span>
+<span class="sd">        margin : float</span>
+<span class="sd">            Extra margin around the cluster lat/lon box.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        lat_slice : slice</span>
+<span class="sd">            The latitude (row) slice to extract from the exclusions or</span>
+<span class="sd">            techmap 2D datasets.</span>
+<span class="sd">        lon_slice : slice</span>
+<span class="sd">            The longitude (col) slice to extract from the exclusions or</span>
+<span class="sd">            techmap 2D datasets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">box</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_coord_box</span><span class="p">(</span><span class="n">cluster_id</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">excl_lat</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="n">margin</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">excl_lat</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="n">margin</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">excl_lon</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">])</span> <span class="o">-</span> <span class="n">margin</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">excl_lon</span> <span class="o">&lt;</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="n">margin</span><span class="p">))</span>
+
+        <span class="n">lat_locs</span><span class="p">,</span> <span class="n">lon_locs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_lat_slice</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_lon_slice</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">lat_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lat_locs</span><span class="p">),</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lat_locs</span><span class="p">))</span>
+            <span class="n">lon_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lon_locs</span><span class="p">),</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lon_locs</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lat_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_full_lat_slice</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lat_locs</span><span class="p">),</span>
+                <span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_lat_slice</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lat_locs</span><span class="p">))</span>
+            <span class="n">lon_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_full_lon_slice</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lon_locs</span><span class="p">),</span>
+                <span class="mi">1</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_lon_slice</span><span class="o">.</span><span class="n">start</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lon_locs</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">lat_slice</span><span class="p">,</span> <span class="n">lon_slice</span>
+
+    <span class="k">def</span> <span class="nf">_get_all_lat_lon_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">margin</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">free_mem</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the slice args for all clusters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        margin : float</span>
+<span class="sd">            Extra margin around the cluster lat/lon box.</span>
+<span class="sd">        free_mem : bool</span>
+<span class="sd">            Flag to free lat/lon arrays from memory to clear space for later</span>
+<span class="sd">            exclusion processing.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        slices : dict</span>
+<span class="sd">            Dictionary of tuples - (lat, lon) slices keyed by cluster id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">():</span>
+            <span class="n">slices</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_lat_lon_slices</span><span class="p">(</span><span class="n">cluster_id</span><span class="o">=</span><span class="n">cid</span><span class="p">,</span>
+                                                   <span class="n">margin</span><span class="o">=</span><span class="n">margin</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">free_mem</span><span class="p">:</span>
+            <span class="c1"># free up memory</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_full_lat_slice</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_full_lon_slice</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">slices</span>
+
+    <span class="k">def</span> <span class="nf">_get_coord_box</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cluster_id</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the RPM cluster latitude/longitude range.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cluster_id : str | None</span>
+<span class="sd">            Single cluster ID of interest or None for all clusters in</span>
+<span class="sd">            self._clusters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        coord_box : dict</span>
+<span class="sd">            Bounding box of the cluster or region:</span>
+<span class="sd">                {&#39;latitude&#39;: (lat_min, lat_max),</span>
+<span class="sd">                 &#39;longitude&#39;: (lon_min, lon_max)}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">cluster_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">cluster_id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">)</span> <span class="o">*</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span>
+
+        <span class="n">lat_range</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">lon_range</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="n">box</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;latitude&#39;</span><span class="p">:</span> <span class="n">lat_range</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">:</span> <span class="n">lon_range</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">box</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">excl_lat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the full 2D array of latitudes of the exclusion grid.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _excl_lat : np.ndarray</span>
+<span class="sd">            2D array representing the latitudes at each exclusion grid cell</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Importing Latitude data from techmap...&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lat</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">excl_lon</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the full 2D array of longitudes of the exclusion grid.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _excl_lon : np.ndarray</span>
+<span class="sd">            2D array representing the latitudes at each exclusion grid cell</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Importing Longitude data from techmap...&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_lon</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_single_excl</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cluster_id</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span> <span class="n">excl_dict</span><span class="p">,</span>
+                     <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">lat_slice</span><span class="p">,</span> <span class="n">lon_slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the exclusions for each resource GID in a cluster.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cluster_id : str</span>
+<span class="sd">            Single cluster ID of interest.</span>
+<span class="sd">        clusters : pandas.DataFrame</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank)</span>
+<span class="sd">        excl_fpath : str | None</span>
+<span class="sd">            Filepath to exclusions data (must match the techmap grid).</span>
+<span class="sd">            None will not apply exclusions.</span>
+<span class="sd">        excl_dict : dict | None</span>
+<span class="sd">            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}</span>
+<span class="sd">        techmap_dset : str</span>
+<span class="sd">            Dataset name in the techmap file containing the</span>
+<span class="sd">            exclusions-to-resource mapping data.</span>
+<span class="sd">        lat_slice : slice</span>
+<span class="sd">            The latitude (row) slice to extract from the exclusions or</span>
+<span class="sd">            techmap 2D datasets.</span>
+<span class="sd">        lon_slice : slice</span>
+<span class="sd">            The longitude (col) slice to extract from the exclusions or</span>
+<span class="sd">            techmap 2D datasets.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        inclusions : np.ndarray</span>
+<span class="sd">            1D array of inclusions fraction corresponding to the indexed</span>
+<span class="sd">            cluster provided by cluster_id.</span>
+<span class="sd">        n_inclusions : np.ndarray</span>
+<span class="sd">            1D array of number of included pixels corresponding to each</span>
+<span class="sd">            gid in cluster_id.</span>
+<span class="sd">        n_points : np.ndarray</span>
+<span class="sd">            1D array of the total number of techmap pixels corresponding to</span>
+<span class="sd">            each gid in cluster_id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">clusters</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">cluster_id</span><span class="p">)</span>
+        <span class="n">locs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">inclusions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">locs</span><span class="p">),</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">n_inclusions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">locs</span><span class="p">),</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">n_points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">locs</span><span class="p">),</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">ExclusionMaskFromDict</span><span class="p">(</span><span class="n">excl_fpath</span><span class="p">,</span> <span class="n">layers_dict</span><span class="o">=</span><span class="n">excl_dict</span><span class="p">)</span> <span class="k">as</span> <span class="n">excl</span><span class="p">:</span>
+            <span class="n">techmap</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_tm_data</span><span class="p">(</span><span class="n">excl</span><span class="p">,</span> <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">lat_slice</span><span class="p">,</span>
+                                       <span class="n">lon_slice</span><span class="p">)</span>
+            <span class="n">exclusions</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_excl_data</span><span class="p">(</span><span class="n">excl</span><span class="p">,</span> <span class="n">lat_slice</span><span class="p">,</span> <span class="n">lon_slice</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="p">:]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+            <span class="n">techmap_locs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">techmap</span> <span class="o">==</span> <span class="nb">int</span><span class="p">(</span><span class="n">clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="s1">&#39;gid&#39;</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">gid_excl_data</span> <span class="o">=</span> <span class="n">exclusions</span><span class="p">[</span><span class="n">techmap_locs</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">gid_excl_data</span><span class="o">.</span><span class="n">size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">inclusions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gid_excl_data</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">gid_excl_data</span><span class="p">)</span>
+                <span class="n">n_inclusions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gid_excl_data</span><span class="p">)</span>
+                <span class="n">n_points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gid_excl_data</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inclusions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="n">n_inclusions</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                <span class="n">n_points</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">inclusions</span><span class="p">,</span> <span class="n">n_inclusions</span><span class="p">,</span> <span class="n">n_points</span>
+
+    <span class="k">def</span> <span class="nf">_apply_exclusions_parallel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique_clusters</span><span class="p">,</span> <span class="n">static_clusters</span><span class="p">,</span>
+                                   <span class="n">slices</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate exclusions for clusters in parallel</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        unique_clusters : np.ndarray</span>
+<span class="sd">            1D array of unique cluster id&#39;s.</span>
+<span class="sd">        static_clusters : pd.DataFrame</span>
+<span class="sd">            Static (non-changing deepcopy) version of self._clusters.</span>
+<span class="sd">        slices : dict</span>
+<span class="sd">            Dictionary of tuples - (lat, lon) slices keyed by cluster id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">loggers</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">]</span>
+        <span class="k">with</span> <span class="n">SpawnProcessPool</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">,</span>
+                              <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">)</span> <span class="k">as</span> <span class="n">exe</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">):</span>
+
+                <span class="n">lat_s</span><span class="p">,</span> <span class="n">lon_s</span> <span class="o">=</span> <span class="n">slices</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="n">exe</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_single_excl</span><span class="p">,</span> <span class="n">cid</span><span class="p">,</span> <span class="n">static_clusters</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_dict</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_techmap_dset</span><span class="p">,</span>
+                                    <span class="n">lat_s</span><span class="p">,</span> <span class="n">lon_s</span><span class="p">)</span>
+                <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span> <span class="o">=</span> <span class="n">cid</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Kicked off exclusions for cluster &quot;</span><span class="si">{}</span><span class="s1">&quot;, </span><span class="si">{}</span><span class="s1"> out &#39;</span>
+                             <span class="s1">&#39;of </span><span class="si">{}</span><span class="s1">.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cid</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">)))</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">future</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">)):</span>
+                <span class="n">cid</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                <span class="n">mem</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished exclusions for cluster &quot;</span><span class="si">{}</span><span class="s1">&quot;, </span><span class="si">{}</span><span class="s1"> out &#39;</span>
+                            <span class="s1">&#39;of </span><span class="si">{}</span><span class="s1"> futures. &#39;</span>
+                            <span class="s1">&#39;Memory usage is </span><span class="si">{:.2f}</span><span class="s1"> out of </span><span class="si">{:.2f}</span><span class="s1"> GB.&#39;</span>
+                            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cid</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">),</span>
+                                    <span class="n">mem</span><span class="o">.</span><span class="n">used</span> <span class="o">/</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">mem</span><span class="o">.</span><span class="n">total</span> <span class="o">/</span> <span class="mf">1e9</span><span class="p">))</span>
+                <span class="n">incl</span><span class="p">,</span> <span class="n">n_incl</span><span class="p">,</span> <span class="n">n_pix</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">cid</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;included_frac&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">incl</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;included_area_km2&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                    <span class="n">n_incl</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">excl_area</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;n_excl_pixels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_pix</span>
+
+    <span class="k">def</span> <span class="nf">_apply_exclusions_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unique_clusters</span><span class="p">,</span> <span class="n">static_clusters</span><span class="p">,</span>
+                                 <span class="n">slices</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate exclusions for clusters in serial</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        unique_clusters : np.ndarray</span>
+<span class="sd">            1D array of unique cluster id&#39;s.</span>
+<span class="sd">        static_clusters : pd.DataFrame</span>
+<span class="sd">            Static (non-changing deepcopy) version of self._clusters.</span>
+<span class="sd">        slices : dict</span>
+<span class="sd">            Dictionary of tuples - (lat, lon) slices keyed by cluster id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cid</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">):</span>
+
+            <span class="n">lat_s</span><span class="p">,</span> <span class="n">lon_s</span> <span class="o">=</span> <span class="n">slices</span><span class="p">[</span><span class="n">cid</span><span class="p">]</span>
+            <span class="n">incl</span><span class="p">,</span> <span class="n">n_incl</span><span class="p">,</span> <span class="n">n_pix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_single_excl</span><span class="p">(</span><span class="n">cid</span><span class="p">,</span> <span class="n">static_clusters</span><span class="p">,</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span><span class="p">,</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">_excl_dict</span><span class="p">,</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">_techmap_dset</span><span class="p">,</span>
+                                                    <span class="n">lat_s</span><span class="p">,</span> <span class="n">lon_s</span><span class="p">)</span>
+
+            <span class="n">mem</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished exclusions for cluster &quot;</span><span class="si">{}</span><span class="s1">&quot;, </span><span class="si">{}</span><span class="s1"> out &#39;</span>
+                        <span class="s1">&#39;of </span><span class="si">{}</span><span class="s1"> futures. &#39;</span>
+                        <span class="s1">&#39;Memory usage is </span><span class="si">{:.2f}</span><span class="s1"> out of </span><span class="si">{:.2f}</span><span class="s1"> GB.&#39;</span>
+                        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cid</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">),</span>
+                                <span class="n">mem</span><span class="o">.</span><span class="n">used</span> <span class="o">/</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">mem</span><span class="o">.</span><span class="n">total</span> <span class="o">/</span> <span class="mf">1e9</span><span class="p">))</span>
+
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">cid</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;included_frac&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">incl</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;included_area_km2&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">n_incl</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">excl_area</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;n_excl_pixels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">n_pix</span>
+
+<div class="viewcode-block" id="RPMOutput.apply_exclusions"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RPMOutput.apply_exclusions">[docs]</a>    <span class="k">def</span> <span class="nf">apply_exclusions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate exclusions for clusters, adding data to self._clusters.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self._clusters : pd.DataFrame</span>
+<span class="sd">            self._clusters with new columns for exclusions data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Working on applying exclusions with </span><span class="si">{}</span><span class="s1"> workers...&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">))</span>
+
+        <span class="n">unique_clusters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+        <span class="n">static_clusters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;included_frac&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;included_area_km2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;n_excl_pixels&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_all_lat_lon_slices</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_exclusions_parallel</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">,</span> <span class="n">static_clusters</span><span class="p">,</span>
+                                            <span class="n">slices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_apply_exclusions_serial</span><span class="p">(</span><span class="n">unique_clusters</span><span class="p">,</span> <span class="n">static_clusters</span><span class="p">,</span>
+                                          <span class="n">slices</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished applying exclusions.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rerank</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_rerank</span><span class="p">(</span><span class="n">groupby</span><span class="o">=</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">,</span> <span class="n">rank_col</span><span class="o">=</span><span class="s1">&#39;rank_included&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span></div>
+
+<div class="viewcode-block" id="RPMOutput.apply_trgs"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RPMOutput.apply_trgs">[docs]</a>    <span class="k">def</span> <span class="nf">apply_trgs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply TRG&#39;s if requested.&quot;&quot;&quot;</span>
+
+        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">dsets</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">datasets</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">trg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;lcoe_fcr&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dsets</span><span class="p">:</span>
+            <span class="n">wmsg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;TRGs requested but &quot;lcoe_fcr&quot; not in cf file: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">))</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">wmsg</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">wmsg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">trg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;lcoe_fcr&#39;</span> <span class="ow">in</span> <span class="n">dsets</span><span class="p">:</span>
+            <span class="n">gen_gid</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+            <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">lcoe_fcr</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;lcoe_fcr&#39;</span><span class="p">,</span> <span class="n">gen_gid</span><span class="p">]</span>
+
+            <span class="n">lcoe_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">:</span> <span class="n">gen_gid</span><span class="p">,</span>
+                                    <span class="s1">&#39;lcoe_fcr&#39;</span><span class="p">:</span> <span class="n">lcoe_fcr</span><span class="p">})</span>
+            <span class="n">bcol</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">trg</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="s1">&#39;bin&#39;</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">bins</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trg</span><span class="p">[</span><span class="n">bcol</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+            <span class="n">trg_labels</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trg</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+            <span class="n">lcoe_df</span><span class="p">[</span><span class="s1">&#39;trg_lcoe_bin&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">lcoe_df</span><span class="p">[</span><span class="s1">&#39;lcoe_fcr&#39;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">)</span>
+            <span class="n">lcoe_df</span><span class="p">[</span><span class="s1">&#39;trg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">cut</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">lcoe_df</span><span class="p">[</span><span class="s1">&#39;lcoe_fcr&#39;</span><span class="p">],</span> <span class="n">bins</span><span class="o">=</span><span class="n">bins</span><span class="p">,</span>
+                                    <span class="n">labels</span><span class="o">=</span><span class="n">trg_labels</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">,</span> <span class="n">lcoe_df</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">,</span>
+                                      <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">validate</span><span class="o">=</span><span class="s1">&#39;1:1&#39;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_rerank</span><span class="p">(</span><span class="n">groupby</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">,</span> <span class="s1">&#39;trg&#39;</span><span class="p">],</span>
+                            <span class="n">rank_col</span><span class="o">=</span><span class="s1">&#39;rank_included_trg&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_run_rerank_parallel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">,</span>
+                             <span class="n">rank_col</span><span class="o">=</span><span class="s1">&#39;rank_included&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Re-rank rep profiles for included resource in generic groups.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        groupby : str | list</span>
+<span class="sd">            One or more columns in self._clusters to groupby and rank profiles</span>
+<span class="sd">            within each group.</span>
+<span class="sd">        rank_col : str</span>
+<span class="sd">            Column to add to self._clusters with new rankings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">futures</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">loggers</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX.rpm.rpm_clusters&#39;</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">]</span>
+        <span class="k">with</span> <span class="n">SpawnProcessPool</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">,</span>
+                              <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">)</span> <span class="k">as</span> <span class="n">exe</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">groupby</span><span class="p">):</span>
+                <span class="k">if</span> <span class="s1">&#39;included_frac&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;included_frac&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_threshold</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+                    <span class="n">gen_gid</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;gen_gid&#39;</span><span class="p">]</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cluster_kwargs</span><span class="p">[</span><span class="s1">&#39;dist_rank_filter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">cluster_kwargs</span><span class="p">[</span><span class="s1">&#39;contiguous_filter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="n">future</span> <span class="o">=</span> <span class="n">exe</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">RPMClusters</span><span class="o">.</span><span class="n">cluster</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">,</span>
+                                        <span class="n">gen_gid</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">cluster_kwargs</span><span class="p">)</span>
+                    <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_gid</span>
+
+            <span class="k">if</span> <span class="n">futures</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Re-ranking representative profiles &quot;</span><span class="si">{}</span><span class="s1">&quot; using &#39;</span>
+                            <span class="s1">&#39;groupby: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rank_col</span><span class="p">,</span> <span class="n">groupby</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="n">rank_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">future</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">)):</span>
+                <span class="n">gen_gid</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                <span class="n">mem</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">virtual_memory</span><span class="p">()</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished re-ranking </span><span class="si">{}</span><span class="s1"> out of </span><span class="si">{}</span><span class="s1">. &#39;</span>
+                            <span class="s1">&#39;Memory usage is </span><span class="si">{:.2f}</span><span class="s1"> out of </span><span class="si">{:.2f}</span><span class="s1"> GB.&#39;</span>
+                            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">),</span>
+                                    <span class="n">mem</span><span class="o">.</span><span class="n">used</span> <span class="o">/</span> <span class="mf">1e9</span><span class="p">,</span> <span class="n">mem</span><span class="o">.</span><span class="n">total</span> <span class="o">/</span> <span class="mf">1e9</span><span class="p">))</span>
+                <span class="n">new</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">gen_gid</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">rank_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">new</span><span class="p">[</span><span class="s1">&#39;rank&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+    <span class="k">def</span> <span class="nf">_run_rerank_serial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">,</span>
+                           <span class="n">rank_col</span><span class="o">=</span><span class="s1">&#39;rank_included&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Re-rank rep profiles for included resource in generic groups.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        groupby : str | list</span>
+<span class="sd">            One or more columns in self._clusters to groupby and rank profiles</span>
+<span class="sd">            within each group.</span>
+<span class="sd">        rank_col : str</span>
+<span class="sd">            Column to add to self._clusters with new rankings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">init</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">groupby</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="s1">&#39;included_frac&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;included_frac&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">include_threshold</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">mask</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">init</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="n">rank_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Re-ranking representative profiles &quot;</span><span class="si">{}</span><span class="s1">&quot; &#39;</span>
+                                <span class="s1">&#39;using groupby: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rank_col</span><span class="p">,</span> <span class="n">groupby</span><span class="p">))</span>
+                    <span class="n">init</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="n">gen_gid</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;gen_gid&#39;</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cluster_kwargs</span><span class="p">[</span><span class="s1">&#39;dist_rank_filter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cluster_kwargs</span><span class="p">[</span><span class="s1">&#39;contiguous_filter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">new</span> <span class="o">=</span> <span class="n">RPMClusters</span><span class="o">.</span><span class="n">cluster</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">,</span> <span class="n">gen_gid</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span>
+                                          <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">cluster_kwargs</span><span class="p">)</span>
+
+                <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">gen_gid</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="n">rank_col</span><span class="p">]</span> <span class="o">=</span> <span class="n">new</span><span class="p">[</span><span class="s1">&#39;rank&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+<div class="viewcode-block" id="RPMOutput.run_rerank"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RPMOutput.run_rerank">[docs]</a>    <span class="k">def</span> <span class="nf">run_rerank</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">groupby</span><span class="o">=</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">,</span> <span class="n">rank_col</span><span class="o">=</span><span class="s1">&#39;rank_included&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Re-rank rep profiles for included resource in generic groups.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        groupby : str | list</span>
+<span class="sd">            One or more columns in self._clusters to groupby and rank profiles</span>
+<span class="sd">            within each group.</span>
+<span class="sd">        rank_col : str</span>
+<span class="sd">            Column to add to self._clusters with new rankings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_rerank_parallel</span><span class="p">(</span><span class="n">groupby</span><span class="o">=</span><span class="n">groupby</span><span class="p">,</span> <span class="n">rank_col</span><span class="o">=</span><span class="n">rank_col</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_rerank_serial</span><span class="p">(</span><span class="n">groupby</span><span class="o">=</span><span class="n">groupby</span><span class="p">,</span> <span class="n">rank_col</span><span class="o">=</span><span class="n">rank_col</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cluster_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Summary dataframe with cluster_id primary key.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        s : pd.DataFrame</span>
+<span class="sd">            Summary dataframe with a row for each cluster id.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;included_frac&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">RPMRuntimeError</span><span class="p">(</span><span class="s1">&#39;Exclusions must be applied before &#39;</span>
+                                  <span class="s1">&#39;representative profiles can be determined.&#39;</span><span class="p">)</span>
+
+        <span class="n">ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">cluster_id</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;longitude&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;n_gen_gids&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;included_frac&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;included_area_km2&#39;</span><span class="p">]</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">ind</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;cluster_id&#39;</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">):</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;longitude&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;n_gen_gids&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="s1">&#39;included_frac&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;included_frac&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;included_frac&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;included_area_km2&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">&#39;included_area_km2&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">s</span>
+
+<div class="viewcode-block" id="RPMOutput.make_shape_file"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RPMOutput.make_shape_file">[docs]</a>    <span class="k">def</span> <span class="nf">make_shape_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fpath_shp</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make shape file containing all clusters.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fpath_shp : str</span>
+<span class="sd">            Filepath to write shape_file to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]</span>
+        <span class="n">RPMClusters</span><span class="o">.</span><span class="n">_generate_shapefile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">[</span><span class="n">labels</span><span class="p">],</span> <span class="n">fpath_shp</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_fout_names</span><span class="p">(</span><span class="n">job_tag</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a set of output filenames.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        job_tag : str | None</span>
+<span class="sd">            Optional name tag to add to the csvs being saved.</span>
+<span class="sd">            Format is &quot;rpm_cluster_output_{tag}.csv&quot;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fn_out : str</span>
+<span class="sd">            Filename for full cluster output.</span>
+<span class="sd">        fn_pro : str</span>
+<span class="sd">            Filename for representative profile output.</span>
+<span class="sd">        fn_sum : str</span>
+<span class="sd">            Filename for summary output.</span>
+<span class="sd">        fn_shp : str</span>
+<span class="sd">            Filename for shapefile output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">fn_out</span> <span class="o">=</span> <span class="s1">&#39;rpm_cluster_outputs.csv&#39;</span>
+        <span class="n">fn_pro</span> <span class="o">=</span> <span class="s1">&#39;rpm_rep_profiles.csv&#39;</span>
+        <span class="n">fn_sum</span> <span class="o">=</span> <span class="s1">&#39;rpm_cluster_summary.csv&#39;</span>
+        <span class="n">fn_shp</span> <span class="o">=</span> <span class="s1">&#39;rpm_cluster_shapes.shp&#39;</span>
+
+        <span class="k">if</span> <span class="n">job_tag</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fn_out</span> <span class="o">=</span> <span class="n">fn_out</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;_</span><span class="si">{}</span><span class="s1">.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_tag</span><span class="p">))</span>
+            <span class="n">fn_pro</span> <span class="o">=</span> <span class="n">fn_pro</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;_</span><span class="si">{}</span><span class="s1">.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_tag</span><span class="p">))</span>
+            <span class="n">fn_sum</span> <span class="o">=</span> <span class="n">fn_sum</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;_</span><span class="si">{}</span><span class="s1">.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_tag</span><span class="p">))</span>
+            <span class="n">fn_shp</span> <span class="o">=</span> <span class="n">fn_shp</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.shp&#39;</span><span class="p">,</span> <span class="s1">&#39;_</span><span class="si">{}</span><span class="s1">.shp&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_tag</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">fn_out</span><span class="p">,</span> <span class="n">fn_pro</span><span class="p">,</span> <span class="n">fn_sum</span><span class="p">,</span> <span class="n">fn_shp</span>
+
+<div class="viewcode-block" id="RPMOutput.export_all"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RPMOutput.export_all">[docs]</a>    <span class="k">def</span> <span class="nf">export_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">job_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run RPM output algorithms and write to CSV&#39;s.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        out_dir : str</span>
+<span class="sd">            Directory to dump output files.</span>
+<span class="sd">        job_tag : str | None</span>
+<span class="sd">            Optional name tag to add to the csvs being saved.</span>
+<span class="sd">            Format is &quot;rpm_cluster_output_{tag}.csv&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">fn_out</span><span class="p">,</span> <span class="n">fn_pro</span><span class="p">,</span> <span class="n">fn_sum</span><span class="p">,</span> <span class="n">fn_shp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_fout_names</span><span class="p">(</span><span class="n">job_tag</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">out_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;included_frac&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apply_exclusions</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">apply_trgs</span><span class="p">()</span>
+
+        <span class="n">RepresentativeProfiles</span><span class="o">.</span><span class="n">export_profiles</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">,</span> <span class="n">fn_pro</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+            <span class="n">max_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_workers</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">cluster_summary</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">fn_sum</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fn_sum</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_clusters</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">fn_out</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fn_out</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_shape_file</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">fn_shp</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saved </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fn_shp</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="RPMOutput.extract_profiles"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RPMOutput.extract_profiles">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">extract_profiles</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">n_profiles</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                         <span class="n">job_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">forecast_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use pre-formatted RPM cluster outputs to generate profile outputs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rpm_clusters : pd.DataFrame | str</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank),</span>
+<span class="sd">            or str to file.</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            reV generation output file.</span>
+<span class="sd">        out_dir : str</span>
+<span class="sd">            Directory to dump output files.</span>
+<span class="sd">        n_profiles : int</span>
+<span class="sd">            Number of representative profiles to output.</span>
+<span class="sd">        job_tag : str | None</span>
+<span class="sd">            Optional name tag to add to the output files.</span>
+<span class="sd">            Format is &quot;rpm_cluster_output_{tag}.csv&quot;.</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of parallel workers. 1 will run serial, None will use all</span>
+<span class="sd">            available., by default None</span>
+<span class="sd">        key : str | None</span>
+<span class="sd">            Column in clusters to sort ranks by. None will allow for</span>
+<span class="sd">            default logic.</span>
+<span class="sd">        forecast_fpath : str</span>
+<span class="sd">            reV generation output file for forecast data. If this is input,</span>
+<span class="sd">            profiles will be taken from forecast fpath instead of fpath gen</span>
+<span class="sd">            based on a NN mapping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">rpmo</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>
+                   <span class="n">n_profiles</span><span class="o">=</span><span class="n">n_profiles</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">fn_pro</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">rpmo</span><span class="o">.</span><span class="n">_get_fout_names</span><span class="p">(</span><span class="n">job_tag</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">out_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+
+        <span class="n">RepresentativeProfiles</span><span class="o">.</span><span class="n">export_profiles</span><span class="p">(</span>
+            <span class="n">rpmo</span><span class="o">.</span><span class="n">n_profiles</span><span class="p">,</span> <span class="n">rpmo</span><span class="o">.</span><span class="n">_clusters</span><span class="p">,</span> <span class="n">rpmo</span><span class="o">.</span><span class="n">_cf_fpath</span><span class="p">,</span> <span class="n">fn_pro</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+            <span class="n">max_workers</span><span class="o">=</span><span class="n">rpmo</span><span class="o">.</span><span class="n">max_workers</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+            <span class="n">forecast_fpath</span><span class="o">=</span><span class="n">forecast_fpath</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished extracting extra representative profiles!&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RPMOutput.process_outputs"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_output.html#reVX.rpm.rpm_output.RPMOutput.process_outputs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">process_outputs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span>
+                        <span class="n">excl_dict</span><span class="p">,</span> <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">job_tag</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cluster_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">excl_area</span><span class="o">=</span><span class="mf">0.0081</span><span class="p">,</span> <span class="n">include_threshold</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                        <span class="n">n_profiles</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rerank</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">trg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform output processing on clusters and write results to disk.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rpm_clusters : pd.DataFrame | str</span>
+<span class="sd">            Single DataFrame with (gid, gen_gid, cluster_id, rank),</span>
+<span class="sd">            or str to file.</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            Path to reV .h5 file containing desired capacity factor profiles</span>
+<span class="sd">        excl_fpath : str | None</span>
+<span class="sd">            Filepath to exclusions data (must match the techmap grid).</span>
+<span class="sd">            None will not apply exclusions.</span>
+<span class="sd">        excl_dict : dict | None</span>
+<span class="sd">            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}</span>
+<span class="sd">        techmap_dset : str</span>
+<span class="sd">            Dataset name in the techmap file containing the</span>
+<span class="sd">            exclusions-to-resource mapping data.</span>
+<span class="sd">        out_dir : str</span>
+<span class="sd">            Directory to dump output files.</span>
+<span class="sd">        job_tag : str | None</span>
+<span class="sd">            Optional name tag to add to the output files.</span>
+<span class="sd">            Format is &quot;rpm_cluster_output_{tag}.csv&quot;.</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of parallel workers. 1 will run serial, None will use all</span>
+<span class="sd">            available., by default None</span>
+<span class="sd">        excl_area : float</span>
+<span class="sd">            Area in km2 of one exclusion pixel.</span>
+<span class="sd">        include_threshold : float</span>
+<span class="sd">            Inclusion threshold. Resource pixels included more than this</span>
+<span class="sd">            threshold will be considered in the representative profiles.</span>
+<span class="sd">            Set to zero to find representative profile on all resource, not</span>
+<span class="sd">            just included.</span>
+<span class="sd">        n_profiles : int</span>
+<span class="sd">            Number of representative profiles to output.</span>
+<span class="sd">        rerank : bool</span>
+<span class="sd">            Flag to rerank representative generation profiles after removing</span>
+<span class="sd">            excluded generation pixels.</span>
+<span class="sd">        trg : pd.DataFrame | str | None</span>
+<span class="sd">            TRG bins or string to filepath containing TRG bins.</span>
+<span class="sd">            None will not analyze TRG bins.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">rpmo</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span> <span class="n">excl_dict</span><span class="p">,</span>
+                   <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">cluster_kwargs</span><span class="o">=</span><span class="n">cluster_kwargs</span><span class="p">,</span>
+                   <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span> <span class="n">excl_area</span><span class="o">=</span><span class="n">excl_area</span><span class="p">,</span>
+                   <span class="n">include_threshold</span><span class="o">=</span><span class="n">include_threshold</span><span class="p">,</span> <span class="n">n_profiles</span><span class="o">=</span><span class="n">n_profiles</span><span class="p">,</span>
+                   <span class="n">rerank</span><span class="o">=</span><span class="n">rerank</span><span class="p">,</span> <span class="n">trg</span><span class="o">=</span><span class="n">trg</span><span class="p">)</span>
+        <span class="n">rpmo</span><span class="o">.</span><span class="n">export_all</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">job_tag</span><span class="o">=</span><span class="n">job_tag</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

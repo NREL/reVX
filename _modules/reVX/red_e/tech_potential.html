@@ -1,0 +1,426 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.red_e.tech_potential &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.red_e.tech_potential</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.red_e.tech_potential</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">RED-E reV based tech potential tool</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">reV.supply_curve.exclusions</span> <span class="kn">import</span> <span class="n">ExclusionMaskFromDict</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TechPotential"><a class="viewcode-back" href="../../../reVX/reVX.red_e.tech_potential.html#reVX.red_e.tech_potential.TechPotential">[docs]</a><span class="k">class</span> <span class="nc">TechPotential</span><span class="p">(</span><span class="n">ExclusionMaskFromDict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    RED-E Tech Potential tool</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h5_path</span><span class="p">,</span> <span class="n">base_layer</span><span class="p">,</span> <span class="n">excl_dict</span><span class="p">,</span> <span class="n">power_density</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                 <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">min_area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;queen&#39;</span><span class="p">,</span>
+                 <span class="n">check_layers</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        h5_path : str</span>
+<span class="sd">            Path to .h5 file containing CF means and exclusion layers</span>
+<span class="sd">        base_layer : str</span>
+<span class="sd">            Name of dataset in .h5 file containing base layer</span>
+<span class="sd">        excl_dict : dcit</span>
+<span class="sd">            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}</span>
+<span class="sd">        power_density : float</span>
+<span class="sd">            Multiplier to convert CF means to generation means</span>
+<span class="sd">        hsds : bool</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS</span>
+<span class="sd">        min_area : float | NoneType</span>
+<span class="sd">            Minimum required contiguous area in sq-km</span>
+<span class="sd">        kernel : str</span>
+<span class="sd">            Contiguous filter method to use on final exclusion</span>
+<span class="sd">        check_layers : bool</span>
+<span class="sd">            Run a pre-flight check on each layer to ensure they contain</span>
+<span class="sd">            un-excluded values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">layers_dict</span> <span class="o">=</span> <span class="n">excl_dict</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">layers_dict</span><span class="p">[</span><span class="n">base_layer</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;use_as_weights&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="n">layers_dict</span><span class="o">=</span><span class="n">layers_dict</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">,</span>
+                         <span class="n">min_area</span><span class="o">=</span><span class="n">min_area</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span>
+                         <span class="n">check_layers</span><span class="o">=</span><span class="n">check_layers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span> <span class="o">=</span> <span class="n">power_density</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        GeoTiff profile for exclusions</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Generic GeoTiff profile for exclusions in .h5 file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">excl_h5</span><span class="o">.</span><span class="n">profile</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">generation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Tech-potential as generation</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gen : ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">gen</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="o">...</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">gen</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pd</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_sub_slice</span><span class="p">(</span><span class="n">sub_slice</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert sub_slice tuples into a tuple of slice objects</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sub_slice : tuple | None</span>
+<span class="sd">            Tuple of sub-window coordinates in the format (start, end, step),</span>
+<span class="sd">            if None return (slice(None), )</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out_slice : tuple</span>
+<span class="sd">            Tuple of equivalent slice objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">sub_slice</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sub_slice</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">sub_slice</span> <span class="o">=</span> <span class="p">(</span><span class="n">sub_slice</span><span class="p">,</span> <span class="p">)</span>
+
+            <span class="n">out_slice</span> <span class="o">=</span> <span class="p">()</span>
+            <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">sub_slice</span><span class="p">:</span>
+                <span class="n">out_slice</span> <span class="o">+=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="o">*</span><span class="n">s</span><span class="p">),</span> <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out_slice</span> <span class="o">=</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out_slice</span>
+
+<div class="viewcode-block" id="TechPotential.run"><a class="viewcode-back" href="../../../reVX/reVX.red_e.tech_potential.html#reVX.red_e.tech_potential.TechPotential.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">h5_path</span><span class="p">,</span> <span class="n">base_layer</span><span class="p">,</span> <span class="n">excl_dict</span><span class="p">,</span> <span class="n">sub_slice</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">power_density</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">min_area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="s1">&#39;queen&#39;</span><span class="p">,</span>
+            <span class="n">check_layers</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">generation</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        compute tech-potential</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        h5_path : str</span>
+<span class="sd">            Path to .h5 file containing CF means and exclusion layers</span>
+<span class="sd">        base_layer : str</span>
+<span class="sd">            Name of dataset in .h5 file containing base layer</span>
+<span class="sd">        excl_dict : dcit</span>
+<span class="sd">            Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}</span>
+<span class="sd">        sub_slice : tuple, optional</span>
+<span class="sd">            Coordinates of sub-slice to extract, if None extract entire mask,</span>
+<span class="sd">            by default None</span>
+<span class="sd">        power_density : float, optional</span>
+<span class="sd">            Multiplier to convert CF means to generation means, by default 1</span>
+<span class="sd">        hsds : bool, optional</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS, by default False</span>
+<span class="sd">        min_area : float | NoneType, optional</span>
+<span class="sd">            Minimum required contiguous area in sq-km, by default None</span>
+<span class="sd">        kernel : str, optional</span>
+<span class="sd">            Contiguous filter method to use on final exclusion,</span>
+<span class="sd">            by default &#39;queen&#39;</span>
+<span class="sd">        check_layers : bool, optional</span>
+<span class="sd">            Run a pre-flight check on each layer to ensure they contain</span>
+<span class="sd">            un-excluded values, by default False</span>
+<span class="sd">        generation : bool, optional</span>
+<span class="sd">            Flag to return generation instead of base layer:</span>
+<span class="sd">            gen = base layer * power density</span>
+<span class="sd">            by default False</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : ndarray</span>
+<span class="sd">            Base layer with exclusions masked out, if generation is true</span>
+<span class="sd">            multiply base layer mask by power density</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">cls</span><span class="p">(</span><span class="n">h5_path</span><span class="p">,</span> <span class="n">base_layer</span><span class="p">,</span> <span class="n">excl_dict</span><span class="p">,</span> <span class="n">power_density</span><span class="o">=</span><span class="n">power_density</span><span class="p">,</span>
+                 <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">,</span> <span class="n">min_area</span><span class="o">=</span><span class="n">min_area</span><span class="p">,</span> <span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span>
+                 <span class="n">check_layers</span><span class="o">=</span><span class="n">check_layers</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">sub_slice</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_sub_slice</span><span class="p">(</span><span class="n">sub_slice</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">sub_slice</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">generation</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">*=</span> <span class="n">f</span><span class="o">.</span><span class="n">_pd</span>
+
+        <span class="k">return</span> <span class="n">out</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

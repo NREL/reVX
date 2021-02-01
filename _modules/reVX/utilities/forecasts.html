@@ -1,0 +1,680 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.utilities.forecasts &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.utilities.forecasts</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.utilities.forecasts</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Forecast Utilities</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">from</span> <span class="nn">rex</span> <span class="kn">import</span> <span class="n">Resource</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Forecasts"><a class="viewcode-back" href="../../../reVX/reVX.utilities.forecasts.html#reVX.utilities.forecasts.Forecasts">[docs]</a><span class="k">class</span> <span class="nc">Forecasts</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Forecast Utility</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fcst_h5</span><span class="p">,</span> <span class="n">fcst_dset</span><span class="p">,</span> <span class="n">actuals_h5</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">actuals_dset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fcst_h5 : str</span>
+<span class="sd">            Path to forecast .h5 file</span>
+<span class="sd">        fcst_dset : str</span>
+<span class="sd">            Dataset to correct</span>
+<span class="sd">        actuals_h5 : str, optional</span>
+<span class="sd">            Path to forecast to .h5 file, by default None</span>
+<span class="sd">        actuals_dset : str, optional</span>
+<span class="sd">            Actuals dataset, by default None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fcst_h5</span> <span class="o">=</span> <span class="n">fcst_h5</span>
+        <span class="k">if</span> <span class="n">actuals_h5</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">actuals_h5</span> <span class="o">=</span> <span class="n">fcst_h5</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_actuals_h5</span> <span class="o">=</span> <span class="n">actuals_h5</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fcst_dset</span> <span class="o">=</span> <span class="n">fcst_dset</span>
+
+        <span class="k">if</span> <span class="n">actuals_dset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">actuals_dset</span> <span class="o">=</span> <span class="n">fcst_dset</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_actuals_dset</span> <span class="o">=</span> <span class="n">actuals_dset</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_a_slice</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_check</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fcst_h5</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Path to forecast .h5 file</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fcst_h5</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">actuals_h5</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Path to actuals .h5 file</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_actuals_h5</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">fcst_dset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forecast dset to correct</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fcst_dset</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">actuals_dset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Actuals dset to use to correct forecasts</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_actuals_dset</span>
+
+<div class="viewcode-block" id="Forecasts.bias_correct_fcst"><a class="viewcode-back" href="../../../reVX/reVX.utilities.forecasts.html#reVX.utilities.forecasts.Forecasts.bias_correct_fcst">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">bias_correct_fcst</span><span class="p">(</span><span class="n">actuals</span><span class="p">,</span> <span class="n">fcsts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bias correct forecast data using bias correction factor:</span>
+<span class="sd">        total actual generation / total forecasted generation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        actuals : ndarray</span>
+<span class="sd">            Timeseries actuals (time x sites)</span>
+<span class="sd">        fcsts : ndarray</span>
+<span class="sd">            Timeseries forecats (time x sites)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fcsts : ndarray</span>
+<span class="sd">            Bias corrected forecasts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bc_factors</span> <span class="o">=</span> <span class="n">actuals</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">fcsts</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">fcsts</span> <span class="o">=</span> <span class="n">fcsts</span> <span class="o">*</span> <span class="n">bc_factors</span>
+        <span class="n">actuals_max</span> <span class="o">=</span> <span class="n">actuals</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">fcsts</span> <span class="o">&gt;=</span> <span class="n">actuals_max</span>
+        <span class="n">fcsts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">actuals_max</span><span class="p">,</span> <span class="n">fcsts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">fcsts</span></div>
+
+<div class="viewcode-block" id="Forecasts.blend_fcsts"><a class="viewcode-back" href="../../../reVX/reVX.utilities.forecasts.html#reVX.utilities.forecasts.Forecasts.blend_fcsts">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">blend_fcsts</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">actuals</span><span class="p">,</span> <span class="n">fcsts</span><span class="p">,</span> <span class="n">fcst_perc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bias correct and blend forecasts with actuals</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        actuals : ndarray</span>
+<span class="sd">            Timeseries actuals (time x sites)</span>
+<span class="sd">        fcsts : ndarray</span>
+<span class="sd">            Timeseries forecats (time x sites)</span>
+<span class="sd">        fcst_perc : float</span>
+<span class="sd">            Percentage of forecast to use for blending</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fcsts : ndarray</span>
+<span class="sd">            Bias corrected and blended forecasts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fcsts</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">bias_correct_fcst</span><span class="p">(</span><span class="n">actuals</span><span class="p">,</span> <span class="n">fcsts</span><span class="p">)</span>
+        <span class="n">fcsts</span> <span class="o">=</span> <span class="p">((</span><span class="n">actuals</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">fcst_perc</span><span class="p">))</span> <span class="o">+</span> <span class="p">(</span><span class="n">fcsts</span> <span class="o">*</span> <span class="n">fcst_perc</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">fcsts</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_correct</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fcst</span><span class="p">,</span> <span class="n">actuals</span><span class="p">,</span> <span class="n">fcst_perc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Correct given data using following steps:</span>
+<span class="sd">        - Bias correct forecast data using bias correction factor:</span>
+<span class="sd">        total actual generation / total forecasted generation</span>
+<span class="sd">        - Blend fcst_perc of forecast generation with (1 - fcst_perc) of</span>
+<span class="sd">        actuals generation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        actuals : ndarray</span>
+<span class="sd">            Timeseries actuals (time x sites)</span>
+<span class="sd">        fcsts : ndarray</span>
+<span class="sd">            Timeseries forecats (time x sites)</span>
+<span class="sd">        fcst_perc : float, optional</span>
+<span class="sd">            Percentage of forecast to use for blending, by default None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        fcsts : ndarray</span>
+<span class="sd">            Corrected forecasts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mae</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">compute_mae</span><span class="p">(</span><span class="n">actuals</span><span class="p">,</span> <span class="n">fcst</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Forecast agg MAE: </span><span class="si">{:.4f}</span><span class="s1">, ave MAE </span><span class="si">{:.4f}</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">mae</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">fcst_perc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Bias correcting and blending forecasts with &#39;</span>
+                        <span class="s1">&#39;</span><span class="si">{:}% a</span><span class="s1">ctuals&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">fcst_perc</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">))</span>
+            <span class="n">fcst</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">blend_fcsts</span><span class="p">(</span><span class="n">actuals</span><span class="p">,</span> <span class="n">fcst</span><span class="p">,</span> <span class="n">fcst_perc</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Bias correcting forecasts&#39;</span><span class="p">)</span>
+            <span class="n">fcst</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">bias_correct_fcst</span><span class="p">(</span><span class="n">actuals</span><span class="p">,</span> <span class="n">fcst</span><span class="p">)</span>
+
+        <span class="n">mae</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">compute_mae</span><span class="p">(</span><span class="n">actuals</span><span class="p">,</span> <span class="n">fcst</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Corrected forecast agg MAE: </span><span class="si">{:.4f}</span><span class="s1">, &#39;</span>
+                     <span class="s1">&#39;ave MAE </span><span class="si">{:.4f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">mae</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">fcst</span>
+
+<div class="viewcode-block" id="Forecasts.compute_mae"><a class="viewcode-back" href="../../../reVX/reVX.utilities.forecasts.html#reVX.utilities.forecasts.Forecasts.compute_mae">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">compute_mae</span><span class="p">(</span><span class="n">actuals</span><span class="p">,</span> <span class="n">fcsts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute aggregate and normalized average MAE between actuals and</span>
+<span class="sd">        forecasts. The MAE is normalized by the total actuals generation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        actuals : ndarray</span>
+<span class="sd">            Timeseries actuals (time x sites)</span>
+<span class="sd">        fcsts : ndarray</span>
+<span class="sd">            Timeseries forecats (time x sites)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        agg_mae : float</span>
+<span class="sd">            Aggregate MAE for all sites</span>
+<span class="sd">        ave_mae : float</span>
+<span class="sd">            Average MEA for all sites</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">site_mae</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">fcsts</span> <span class="o">-</span> <span class="n">actuals</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">site_rel_mae</span> <span class="o">=</span> <span class="n">site_mae</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">actuals</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">ave_mae</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">site_rel_mae</span><span class="p">)</span>
+        <span class="n">agg_mae</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">site_rel_mae</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">agg_mae</span><span class="p">,</span> <span class="n">ave_mae</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_make_time_index_name</span><span class="p">(</span><span class="n">dset_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Make time_index name from dataset name</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dset_name : str</span>
+<span class="sd">            profiles dataset</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            time_index name associated with profiles dataset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">time_index_name</span> <span class="o">=</span> <span class="s1">&#39;time_index&#39;</span>
+        <span class="k">if</span> <span class="s1">&#39;/&#39;</span> <span class="ow">in</span> <span class="n">dset_name</span><span class="p">:</span>
+            <span class="n">group</span> <span class="o">=</span> <span class="n">dset_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">time_index_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">time_index_name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">time_index_name</span>
+
+    <span class="k">def</span> <span class="nf">_get_actuals_slice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create actuals slice needed to match fcst time-steps</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        a_slice : slice</span>
+<span class="sd">            Slice of actuals timeseries needed to match forecast timeseries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f_shape</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_dset_properties</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">f_time_index</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_make_time_index_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span><span class="p">)]</span>
+
+        <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actuals_h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">a_shape</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_dset_properties</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actuals_dset</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">a_time_index</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_make_time_index_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actuals_dset</span><span class="p">)]</span>
+
+        <span class="n">a_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">a_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="n">f_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">f_time_index</span><span class="p">)</span> <span class="o">!=</span> <span class="n">f_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Forecast time_index does not match forecast shape, &#39;</span>
+                   <span class="s1">&#39;actuals slice will be estimated!&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">f_time_index</span><span class="o">.</span><span class="n">equals</span><span class="p">(</span><span class="n">a_time_index</span><span class="p">[</span><span class="n">a_slice</span><span class="p">]):</span>
+            <span class="n">a_slice</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">a_time_index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">f_time_index</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">a_slice</span>
+
+    <span class="k">def</span> <span class="nf">_preflight_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check to ensure dset is available in forecast and actuals .h5 files</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        a_slice : slice</span>
+<span class="sd">            Slice of actuals timeseries needed to match forecast timeseries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> is not a valid dataset in forecast file: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fcst_h5</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">f_shape</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_dset_properties</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actuals_h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">actuals_dset</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> is not a valid dataset in actuals file: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actuals_dset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">actuals_h5</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">a_shape</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_dset_properties</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actuals_dset</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">a_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">a_shape</span> <span class="o">!=</span> <span class="n">f_shape</span><span class="p">:</span>
+                    <span class="n">a_slice</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_actuals_slice</span><span class="p">()</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Extracting </span><span class="si">{}</span><span class="s1"> sub-slice of </span><span class="si">{}</span><span class="s1"> to match </span><span class="si">{}</span><span class="s1"> &#39;</span>
+                                 <span class="s1">&#39;shape: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a_slice</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">actuals_dset</span><span class="p">,</span>
+                                                    <span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span><span class="p">,</span> <span class="n">f_shape</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">a_slice</span>
+
+<div class="viewcode-block" id="Forecasts.correct_dset"><a class="viewcode-back" href="../../../reVX/reVX.utilities.forecasts.html#reVX.utilities.forecasts.Forecasts.correct_dset">[docs]</a>    <span class="k">def</span> <span class="nf">correct_dset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out_h5</span><span class="p">,</span> <span class="n">fcst_perc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bias correct and blend (if requested) forecasts:</span>
+<span class="sd">        - Bias correct forecast data using bias correction factor:</span>
+<span class="sd">        total actual generation / total forecasted generation</span>
+<span class="sd">        - Blend fcst_perc of forecast generation with (1 - fcst_perc) of</span>
+<span class="sd">        actuals generation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        out_h5 : str</span>
+<span class="sd">            Output path for corrected .h5 file</span>
+<span class="sd">        fcst_perc : float, optional</span>
+<span class="sd">            Percentage of forecast to use for blending, by default None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">out_h5</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Copying forecasts (</span><span class="si">{}</span><span class="s1">) to output path (</span><span class="si">{}</span><span class="s1">)&#39;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_h5</span><span class="p">,</span> <span class="n">out_h5</span><span class="p">))</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_h5</span><span class="p">,</span> <span class="n">out_h5</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">out_h5</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_out</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_h5</span><span class="p">,</span> <span class="n">unscale</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_fcst</span><span class="p">:</span>
+                <span class="n">fcst</span> <span class="o">=</span> <span class="n">f_fcst</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span><span class="p">]</span>
+
+            <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">actuals_h5</span><span class="p">,</span> <span class="n">unscale</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">f_act</span><span class="p">:</span>
+                <span class="n">actuals</span> <span class="o">=</span> <span class="n">f_act</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">actuals_dset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_a_slice</span><span class="p">]</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Correcting </span><span class="si">{}</span><span class="s1"> forecasts&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span><span class="p">))</span>
+            <span class="n">f_out</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">fcst_dset</span><span class="p">][</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_correct</span><span class="p">(</span><span class="n">fcst</span><span class="p">,</span> <span class="n">actuals</span><span class="p">,</span>
+                                                       <span class="n">fcst_perc</span><span class="o">=</span><span class="n">fcst_perc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Forecasts.correct"><a class="viewcode-back" href="../../../reVX/reVX.utilities.forecasts.html#reVX.utilities.forecasts.Forecasts.correct">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">correct</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fcst_h5</span><span class="p">,</span> <span class="n">fcst_dset</span><span class="p">,</span> <span class="n">out_h5</span><span class="p">,</span>
+                <span class="n">actuals_h5</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">actuals_dset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fcst_perc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bias correct and blend (if requested) forecasts using actuals:</span>
+<span class="sd">        - Bias correct forecast data using bias correction factor:</span>
+<span class="sd">        total actual generation / total forecasted generation</span>
+<span class="sd">        - Blend fcst_perc of forecast generation with (1 - fcst_perc) of</span>
+<span class="sd">        actuals generation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fcst_h5 : str</span>
+<span class="sd">            Path to forecast .h5 file</span>
+<span class="sd">        fcst_dset : str</span>
+<span class="sd">            Dataset to correct</span>
+<span class="sd">        out_h5 : str</span>
+<span class="sd">            Output path for corrected .h5 file</span>
+<span class="sd">        actuals_h5 : str, optional</span>
+<span class="sd">            Path to forecast to .h5 file, by default None</span>
+<span class="sd">        actuals_dset : str, optional</span>
+<span class="sd">            Actuals dataset, by default None</span>
+<span class="sd">        fcst_perc : float, None</span>
+<span class="sd">            Percentage of forecast to use for blending, by default None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fcst</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">fcst_h5</span><span class="p">,</span> <span class="n">fcst_dset</span><span class="p">,</span> <span class="n">actuals_h5</span><span class="o">=</span><span class="n">actuals_h5</span><span class="p">,</span>
+                   <span class="n">actuals_dset</span><span class="o">=</span><span class="n">actuals_dset</span><span class="p">)</span>
+        <span class="n">fcst</span><span class="o">.</span><span class="n">correct_dset</span><span class="p">(</span><span class="n">out_h5</span><span class="p">,</span> <span class="n">fcst_perc</span><span class="o">=</span><span class="n">fcst_perc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Forecasts.bias_correct"><a class="viewcode-back" href="../../../reVX/reVX.utilities.forecasts.html#reVX.utilities.forecasts.Forecasts.bias_correct">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">bias_correct</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fcst_h5</span><span class="p">,</span> <span class="n">fcst_dset</span><span class="p">,</span> <span class="n">out_h5</span><span class="p">,</span>
+                     <span class="n">actuals_h5</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">actuals_dset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bias correct forecast using actuals using bias correction factor:</span>
+<span class="sd">        total actual generation / total forecasted generation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fcst_h5 : str</span>
+<span class="sd">            Path to forecast .h5 file</span>
+<span class="sd">        fcst_dset : str</span>
+<span class="sd">            Dataset to correct</span>
+<span class="sd">        out_h5 : str</span>
+<span class="sd">            Output path for corrected .h5 file</span>
+<span class="sd">        actuals_h5 : str, optional</span>
+<span class="sd">            Path to forecast to .h5 file, by default None</span>
+<span class="sd">        actuals_dset : str, optional</span>
+<span class="sd">            Actuals dataset, by default None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">fcst_h5</span><span class="p">,</span> <span class="n">fcst_dset</span><span class="p">,</span> <span class="n">out_h5</span><span class="p">,</span>
+                    <span class="n">actuals_h5</span><span class="o">=</span><span class="n">actuals_h5</span><span class="p">,</span> <span class="n">actuals_dset</span><span class="o">=</span><span class="n">actuals_dset</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Forecasts.blend"><a class="viewcode-back" href="../../../reVX/reVX.utilities.forecasts.html#reVX.utilities.forecasts.Forecasts.blend">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">blend</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">fcst_h5</span><span class="p">,</span> <span class="n">fcst_dset</span><span class="p">,</span> <span class="n">out_h5</span><span class="p">,</span> <span class="n">fcst_perc</span><span class="p">,</span>
+              <span class="n">actuals_h5</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">actuals_dset</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bias correct and blend forecast using actuals:</span>
+<span class="sd">        - Bias correct forecast data using bias correction factor:</span>
+<span class="sd">        total actual generation / total forecasted generation</span>
+<span class="sd">        - Blend fcst_perc of forecast generation with (1 - fcst_perc) of</span>
+<span class="sd">        actuals generation</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        fcst_h5 : str</span>
+<span class="sd">            Path to forecast .h5 file</span>
+<span class="sd">        fcst_dset : str</span>
+<span class="sd">            Dataset to correct</span>
+<span class="sd">        out_h5 : str</span>
+<span class="sd">            Output path for corrected .h5 file</span>
+<span class="sd">        fcst_perc : float</span>
+<span class="sd">            Percentage of forecast to use for blending</span>
+<span class="sd">        actuals_h5 : str, optional</span>
+<span class="sd">            Path to forecast to .h5 file, by default None</span>
+<span class="sd">        actuals_dset : str, optional</span>
+<span class="sd">            Actuals dataset, by default None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">correct</span><span class="p">(</span><span class="n">fcst_h5</span><span class="p">,</span> <span class="n">fcst_dset</span><span class="p">,</span> <span class="n">out_h5</span><span class="p">,</span>
+                    <span class="n">actuals_h5</span><span class="o">=</span><span class="n">actuals_h5</span><span class="p">,</span> <span class="n">actuals_dset</span><span class="o">=</span><span class="n">actuals_dset</span><span class="p">,</span>
+                    <span class="n">fcst_perc</span><span class="o">=</span><span class="n">fcst_perc</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

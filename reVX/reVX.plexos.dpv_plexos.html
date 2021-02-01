@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.plexos.dpv_plexos module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.plexos.plexos_cli module" href="reVX.plexos.rev_reeds_plexos_cli.html" />
+    <link rel="prev" title="reVX.plexos package" href="reVX.plexos.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.plexos.html">reVX.plexos package</a> &raquo;</li>
+        
+      <li>reVX.plexos.dpv_plexos module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.plexos.dpv_plexos.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-reVX.plexos.dpv_plexos">
+<span id="revx-plexos-dpv-plexos-module"></span><h1>reVX.plexos.dpv_plexos module<a class="headerlink" href="#module-reVX.plexos.dpv_plexos" title="Permalink to this headline">¶</a></h1>
+<p>Distribute PV to PLEXOS methods.</p>
+<dl class="py class">
+<dt id="reVX.plexos.dpv_plexos.DpvResource">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.plexos.dpv_plexos.</code><code class="sig-name descname">DpvResource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root_dir</span></em>, <em class="sig-param"><span class="n">year</span></em>, <em class="sig-param"><span class="n">sub_dirs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/dpv_plexos.html#DpvResource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvResource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Framework to handle and merge multiple reV distributed PV runs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root_dir</strong> (<em>str</em>) – Root directory containing sub directories containing reV dpv job
+files.</p></li>
+<li><p><strong>year</strong> (<em>int | str</em>) – Year of interest.</p></li>
+<li><p><strong>sub_dirs</strong> (<em>list</em>) – List of strings of directory names in root_dir. Each sub_dir is a
+job directory.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.plexos.dpv_plexos.DpvResource.merge">
+<em class="property">classmethod </em><code class="sig-name descname">merge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root_dir</span></em>, <em class="sig-param"><span class="n">year</span></em>, <em class="sig-param"><span class="n">fn_out</span></em>, <em class="sig-param"><span class="n">job_frac_map</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/dpv_plexos.html#DpvResource.merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvResource.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge multiple DPV reV runs into a single result based on fractional
+contributions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root_dir</strong> (<em>str</em>) – Root directory containing sub directories containing reV dpv job
+files.</p></li>
+<li><p><strong>year</strong> (<em>int | str</em>) – Year of interest.</p></li>
+<li><p><strong>fn_out</strong> (<em>str</em>) – Filename for merged results, to be saved in root_dir.</p></li>
+<li><p><strong>job_frac_map</strong> (<em>dict</em>) – Lookup of the fractional contribution for each job.
+The keys are job names (string tags found in the sub_dirs and
+job h5 files), and the values are fractions for the
+respective jobs.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.plexos.dpv_plexos.DpvPlexosAggregation">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.plexos.dpv_plexos.</code><code class="sig-name descname">DpvPlexosAggregation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_buildout</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/dpv_plexos.html#DpvPlexosAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvPlexosAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Methods to aggregate DPV profiles to plexos nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_buildout</strong> (<em>str | pd.DataFrame</em>) – Plexos node buildout meta data. Must have the following columns:
+[plexos_id, latitude, longitude, built_capacity]</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Filepath to a reV capacity factor file.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.plexos.dpv_plexos.DpvPlexosAggregation.cf_meta">
+<em class="property">property </em><code class="sig-name descname">cf_meta</code><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvPlexosAggregation.cf_meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the cf meta data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>_cf_meta</strong> (<em>pd.DataFrame</em>) – reV CF Meta data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.dpv_plexos.DpvPlexosAggregation.time_index">
+<em class="property">property </em><code class="sig-name descname">time_index</code><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvPlexosAggregation.time_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the cf time index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>_time_index</strong> (<em>pd.DateTimeindex</em>) – reV timeindex data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.dpv_plexos.DpvPlexosAggregation.kdtree">
+<em class="property">property </em><code class="sig-name descname">kdtree</code><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvPlexosAggregation.kdtree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the KDtree of the reV CF meta data coordinates.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>_kdtree</strong> (<em>scipy.spatial.ckdtree</em>) – KDtree build from the reV CF meta data coordinates.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.dpv_plexos.DpvPlexosAggregation.get_mapped_node_data">
+<code class="sig-name descname">get_mapped_node_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dset</span><span class="o">=</span><span class="default_value">'cf_profile'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/dpv_plexos.html#DpvPlexosAggregation.get_mapped_node_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvPlexosAggregation.get_mapped_node_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the CF dataset mapped to plexos nodes via NN results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>node_arr</strong> (<em>np.ndarray</em>) – Get a 2D dataset from the reV cf file mapped to the node_buildout
+table via NN.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.dpv_plexos.DpvPlexosAggregation.get_node_gen_profiles">
+<code class="sig-name descname">get_node_gen_profiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/dpv_plexos.html#DpvPlexosAggregation.get_node_gen_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvPlexosAggregation.get_node_gen_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the generation profiles (cf * capacity) mapped to the node meta.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>gen_profiles</strong> (<em>np.ndarray</em>) – Timeseries profiles of (t, n) where t is the time index and n is
+the node buildout. Units are the built_capacity units from the
+node_buildout table.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.dpv_plexos.DpvPlexosAggregation.run">
+<em class="property">classmethod </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node_buildout</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">out_fpath</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/dpv_plexos.html#DpvPlexosAggregation.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.dpv_plexos.DpvPlexosAggregation.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Aggregate dpv reV gen data to a buildout nodes and save to h5.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>node_buildout</strong> (<em>str | pd.DataFrame</em>) – Plexos node buildout meta data. Must have the following columns:
+[plexos_id, latitude, longitude, built_capacity]</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Filepath to a reV capacity factor file.</p></li>
+<li><p><strong>out_fpath</strong> (<em>str</em>) – Output filepath.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.plexos.rev_reeds_plexos_cli.html" class="btn btn-neutral float-right" title="reVX.plexos.plexos_cli module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.plexos.html" class="btn btn-neutral float-left" title="reVX.plexos package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

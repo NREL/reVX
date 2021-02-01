@@ -1,0 +1,713 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.wind_setbacks.wind_setbacks module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.wind_setbacks.wind_setbacks_cli module" href="reVX.wind_setbacks.wind_setbacks_cli.html" />
+    <link rel="prev" title="reVX.wind_setbacks.setbacks_converter module" href="reVX.wind_setbacks.setbacks_converter.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a> &raquo;</li>
+        
+      <li>reVX.wind_setbacks.wind_setbacks module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.wind_setbacks.wind_setbacks.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-reVX.wind_setbacks.wind_setbacks">
+<span id="revx-wind-setbacks-wind-setbacks-module"></span><h1>reVX.wind_setbacks.wind_setbacks module<a class="headerlink" href="#module-reVX.wind_setbacks.wind_setbacks" title="Permalink to this headline">¶</a></h1>
+<p>Compute wind setbacks exclusions</p>
+<dl class="py class">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.wind_setbacks.wind_setbacks.</code><code class="sig-name descname">BaseWindSetbacks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">excl_h5</span></em>, <em class="sig-param"><span class="n">hub_height</span></em>, <em class="sig-param"><span class="n">rotor_diameter</span></em>, <em class="sig-param"><span class="n">regs_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">multiplier</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hsds</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#BaseWindSetbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/abc.html#abc.ABC" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></a></p>
+<p>Create exclusions layers for wind setbacks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excl_h5</strong> (<em>str</em>) – Path to .h5 file containing exclusion layers, will also be the
+location of any new setback layers</p></li>
+<li><p><strong>hub_height</strong> (<em>float | int</em>) – Turbine hub height (m), used along with rotor diameter to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>rotor_diameter</strong> (<em>float | int</em>) – Turbine rotor diameter (m), used along with hub height to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>regs_fpath</strong> (<em>str | None, optional</em>) – Path to wind regulations .csv file, if None create generic
+setbacks using max-tip height * “multiplier”, by default None</p></li>
+<li><p><strong>multiplier</strong> (<em>int | float | str | None, optional</em>) – setback multiplier to use if wind regulations are not supplied,
+if str, must a key in {‘high’: 3, ‘moderate’: 1.1}, if supplied
+along with regs_fpath, will be ignored, multiplied with
+max-tip height, by default None</p></li>
+<li><p><strong>hsds</strong> (<em>bool, optional</em>) – Boolean flag to use h5pyd to handle .h5 ‘files’ hosted on AWS
+behind HSDS, by default False</p></li>
+<li><p><strong>chunks</strong> (<em>tuple, optional</em>) – Chunk size to use for setback layers, if None use default chunk
+size in excl_h5, by default (128, 128)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.MULTIPLIERS">
+<code class="sig-name descname">MULTIPLIERS</code><em class="property"> = {'high': 3, 'moderate': 1.1}</em><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.MULTIPLIERS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.hub_height">
+<em class="property">property </em><code class="sig-name descname">hub_height</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.hub_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turbine hub-height in meters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>float</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.rotor_diameter">
+<em class="property">property </em><code class="sig-name descname">rotor_diameter</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.rotor_diameter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turbine rotor diameter in meters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>float</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.tip_height">
+<em class="property">property </em><code class="sig-name descname">tip_height</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.tip_height" title="Permalink to this definition">¶</a></dt>
+<dd><p>Turbine blade tip height in meters</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>float</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.generic_setback">
+<em class="property">property </em><code class="sig-name descname">generic_setback</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.generic_setback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default setback of turbine tip height * multiplier, used for global
+setbacks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>float</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.wind_regs">
+<em class="property">property </em><code class="sig-name descname">wind_regs</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.wind_regs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wind Regulations table</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>geopands.GeoDataFrame | None</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.multiplier">
+<em class="property">property </em><code class="sig-name descname">multiplier</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.multiplier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic setback multiplier</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>int | float</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.arr_shape">
+<em class="property">property </em><code class="sig-name descname">arr_shape</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.arr_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rasterize array shape</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>tuple</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.profile">
+<em class="property">property </em><code class="sig-name descname">profile</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Geotiff profile</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>dict</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.crs">
+<em class="property">property </em><code class="sig-name descname">crs</code><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Coordinate reference system</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>str</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_local_setbacks">
+<code class="sig-name descname">compute_local_setbacks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">features_fpath</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#BaseWindSetbacks.compute_local_setbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_local_setbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute local setbacks for all counties either in serial or parallel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features_fpath</strong> (<em>str</em>) – Path to shape file with features to compute setbacks from</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of workers to use for setback computation, if 1 run in
+serial, if &gt; 1 run in parallel with that many workers, if None
+run in parallel on all available cores, by default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>setbacks</strong> (<em>ndarray</em>) – Raster array of setbacks</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_generic_setbacks">
+<code class="sig-name descname">compute_generic_setbacks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">features_fpath</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#BaseWindSetbacks.compute_generic_setbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_generic_setbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute generic setbacks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>features_fpath</strong> (<em>str</em>) – Path to shape file with features to compute setbacks from</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>setbacks</strong> (<em>ndarray</em>) – Raster array of setbacks</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_setbacks">
+<code class="sig-name descname">compute_setbacks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">features_fpath</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">geotiff</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">replace</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#BaseWindSetbacks.compute_setbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_setbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute setbacks for all states either in serial or parallel.
+Existing setbacks are computed if a wind regulations file was supplied
+during class initialization, otherwise generic setbacks are computed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features_fpath</strong> (<em>str</em>) – Path to shape file with features to compute setbacks from</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of workers to use for setback computation, if 1 run in
+serial, if &gt; 1 run in parallel with that many workers, if None
+run in parallel on all available cores, by default None</p></li>
+<li><p><strong>geotiff</strong> (<em>str, optional</em>) – Path to save geotiff containing rasterized setbacks,
+by default None</p></li>
+<li><p><strong>replace</strong> (<em>bool, optional</em>) – Flag to replace geotiff if it already exists, by default False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>setbacks</strong> (<em>ndarray</em>) – Raster array of setbacks</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.wind_setbacks.wind_setbacks.StructureWindSetbacks">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.wind_setbacks.wind_setbacks.</code><code class="sig-name descname">StructureWindSetbacks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">excl_h5</span></em>, <em class="sig-param"><span class="n">hub_height</span></em>, <em class="sig-param"><span class="n">rotor_diameter</span></em>, <em class="sig-param"><span class="n">regs_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">multiplier</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hsds</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#StructureWindSetbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.StructureWindSetbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks" title="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks"><code class="xref py py-class docutils literal notranslate"><span class="pre">reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks</span></code></a></p>
+<p>Structure Wind setbacks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excl_h5</strong> (<em>str</em>) – Path to .h5 file containing exclusion layers, will also be the
+location of any new setback layers</p></li>
+<li><p><strong>hub_height</strong> (<em>float | int</em>) – Turbine hub height (m), used along with rotor diameter to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>rotor_diameter</strong> (<em>float | int</em>) – Turbine rotor diameter (m), used along with hub height to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>regs_fpath</strong> (<em>str | None, optional</em>) – Path to wind regulations .csv file, if None create generic
+setbacks using max-tip height * “multiplier”, by default None</p></li>
+<li><p><strong>multiplier</strong> (<em>int | float | str | None, optional</em>) – setback multiplier to use if wind regulations are not supplied,
+if str, must a key in {‘high’: 3, ‘moderate’: 1.1}, if supplied
+along with regs_fpath, will be ignored, multiplied with
+max-tip height, by default None</p></li>
+<li><p><strong>hsds</strong> (<em>bool, optional</em>) – Boolean flag to use h5pyd to handle .h5 ‘files’ hosted on AWS
+behind HSDS, by default False</p></li>
+<li><p><strong>chunks</strong> (<em>tuple, optional</em>) – Chunk size to use for setback layers, if None use default chunk
+size in excl_h5, by default (128, 128)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.StructureWindSetbacks.run">
+<em class="property">classmethod </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">excl_h5</span></em>, <em class="sig-param"><span class="n">structures_path</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">hub_height</span></em>, <em class="sig-param"><span class="n">rotor_diameter</span></em>, <em class="sig-param"><span class="n">regs_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">multiplier</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">replace</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">hsds</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#StructureWindSetbacks.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.StructureWindSetbacks.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute state’s structural setbacks and write them to a geotiff.
+If a wind regulations file is given compute local setbacks, otherwise
+compute generic setbacks using the given multiplier and the turbine
+tip-height.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excl_h5</strong> (<em>str</em>) – Path to .h5 file containing exclusion layers, will also be the
+location of any new setback layers</p></li>
+<li><p><strong>structure_path</strong> (<em>str</em>) – Path to structures geojson for a single state, or directory
+containing geojsons for all states.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to save setbacks geotiff(s) into</p></li>
+<li><p><strong>hub_height</strong> (<em>float | int</em>) – Turbine hub height (m), used along with rotor diameter to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>rotor_diameter</strong> (<em>float | int</em>) – Turbine rotor diameter (m), used along with hub height to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>regs_fpath</strong> (<em>str | None, optional</em>) – Path to wind regulations .csv file, if None create generic
+setbacks using max-tip height * “multiplier”, by default None</p></li>
+<li><p><strong>multiplier</strong> (<em>int | float | str | None, optional</em>) – setback multiplier to use if wind regulations are not supplied,
+if str, must a key in {‘high’: 3, ‘moderate’: 1.1}, if supplied
+along with regs_fpath, will be ignored, multiplied with
+max-tip height, by default None</p></li>
+<li><p><strong>chunks</strong> (<em>tuple, optional</em>) – Chunk size to use for setback layers, if None use default chunk
+size in excl_h5, by default (128, 128)</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of workers to use for setback computation, if 1 run in
+serial, if &gt; 1 run in parallel with that many workers, if None
+run in parallel on all available cores, by default None</p></li>
+<li><p><strong>replace</strong> (<em>bool, optional</em>) – Flag to replace geotiff if it already exists, by default False</p></li>
+<li><p><strong>hsds</strong> (<em>bool, optional</em>) – Boolean flag to use h5pyd to handle .h5 ‘files’ hosted on AWS
+behind HSDS, by default False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.wind_setbacks.wind_setbacks.RoadWindSetbacks">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.wind_setbacks.wind_setbacks.</code><code class="sig-name descname">RoadWindSetbacks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">excl_h5</span></em>, <em class="sig-param"><span class="n">hub_height</span></em>, <em class="sig-param"><span class="n">rotor_diameter</span></em>, <em class="sig-param"><span class="n">regs_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">multiplier</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hsds</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#RoadWindSetbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.RoadWindSetbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks" title="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks"><code class="xref py py-class docutils literal notranslate"><span class="pre">reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks</span></code></a></p>
+<p>Road Wind setbacks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excl_h5</strong> (<em>str</em>) – Path to .h5 file containing exclusion layers, will also be the
+location of any new setback layers</p></li>
+<li><p><strong>hub_height</strong> (<em>float | int</em>) – Turbine hub height (m), used along with rotor diameter to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>rotor_diameter</strong> (<em>float | int</em>) – Turbine rotor diameter (m), used along with hub height to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>regs_fpath</strong> (<em>str | None, optional</em>) – Path to wind regulations .csv file, if None create generic
+setbacks using max-tip height * “multiplier”, by default None</p></li>
+<li><p><strong>multiplier</strong> (<em>int | float | str | None, optional</em>) – setback multiplier to use if wind regulations are not supplied,
+if str, must a key in {‘high’: 3, ‘moderate’: 1.1}, if supplied
+along with regs_fpath, will be ignored, multiplied with
+max-tip height, by default None</p></li>
+<li><p><strong>hsds</strong> (<em>bool, optional</em>) – Boolean flag to use h5pyd to handle .h5 ‘files’ hosted on AWS
+behind HSDS, by default False</p></li>
+<li><p><strong>chunks</strong> (<em>tuple, optional</em>) – Chunk size to use for setback layers, if None use default chunk
+size in excl_h5, by default (128, 128)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.RoadWindSetbacks.run">
+<em class="property">classmethod </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">excl_h5</span></em>, <em class="sig-param"><span class="n">roads_path</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">hub_height</span></em>, <em class="sig-param"><span class="n">rotor_diameter</span></em>, <em class="sig-param"><span class="n">regs_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">multiplier</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">replace</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">hsds</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#RoadWindSetbacks.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.RoadWindSetbacks.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute state’s road setbacks and write them to a geotiff.
+If a wind regulations file is given compute local setbacks, otherwise
+compute generic setbacks using the given multiplier and the turbine
+tip-height.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excl_h5</strong> (<em>str</em>) – Path to .h5 file containing exclusion layers, will also be the
+location of any new setback layers</p></li>
+<li><p><strong>road_path</strong> (<em>str</em>) – Path to state here streets gdb file or directory containing
+states gdb files.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to save setbacks geotiff(s) into</p></li>
+<li><p><strong>hub_height</strong> (<em>float | int</em>) – Turbine hub height (m), used along with rotor diameter to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>rotor_diameter</strong> (<em>float | int</em>) – Turbine rotor diameter (m), used along with hub height to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>regs_fpath</strong> (<em>str | None, optional</em>) – Path to wind regulations .csv file, if None create generic
+setbacks using max-tip height * “multiplier”, by default None</p></li>
+<li><p><strong>multiplier</strong> (<em>int | float | str | None, optional</em>) – setback multiplier to use if wind regulations are not supplied,
+if str, must a key in {‘high’: 3, ‘moderate’: 1.1}, if supplied
+along with regs_fpath, will be ignored, multiplied with
+max-tip height, by default None</p></li>
+<li><p><strong>chunks</strong> (<em>tuple, optional</em>) – Chunk size to use for setback layers, if None use default chunk
+size in excl_h5, by default (128, 128)</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of workers to use for setback computation, if 1 run in
+serial, if &gt; 1 run in parallel with that many workers, if None
+run in parallel on all available cores, by default None</p></li>
+<li><p><strong>replace</strong> (<em>bool, optional</em>) – Flag to replace geotiff if it already exists, by default False</p></li>
+<li><p><strong>hsds</strong> (<em>bool, optional</em>) – Boolean flag to use h5pyd to handle .h5 ‘files’ hosted on AWS
+behind HSDS, by default False</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.wind_setbacks.wind_setbacks.</code><code class="sig-name descname">TransmissionWindSetbacks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">excl_h5</span></em>, <em class="sig-param"><span class="n">hub_height</span></em>, <em class="sig-param"><span class="n">rotor_diameter</span></em>, <em class="sig-param"><span class="n">regs_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">multiplier</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hsds</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#TransmissionWindSetbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks" title="reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks"><code class="xref py py-class docutils literal notranslate"><span class="pre">reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks</span></code></a></p>
+<p>Transmission Wind setbacks, computed against a single set of transmission
+features instead of against state level features</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excl_h5</strong> (<em>str</em>) – Path to .h5 file containing exclusion layers, will also be the
+location of any new setback layers</p></li>
+<li><p><strong>hub_height</strong> (<em>float | int</em>) – Turbine hub height (m), used along with rotor diameter to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>rotor_diameter</strong> (<em>float | int</em>) – Turbine rotor diameter (m), used along with hub height to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>regs_fpath</strong> (<em>str | None, optional</em>) – Path to wind regulations .csv file, if None create generic
+setbacks using max-tip height * “multiplier”, by default None</p></li>
+<li><p><strong>multiplier</strong> (<em>int | float | str | None, optional</em>) – setback multiplier to use if wind regulations are not supplied,
+if str, must a key in {‘high’: 3, ‘moderate’: 1.1}, if supplied
+along with regs_fpath, will be ignored, multiplied with
+max-tip height, by default None</p></li>
+<li><p><strong>hsds</strong> (<em>bool, optional</em>) – Boolean flag to use h5pyd to handle .h5 ‘files’ hosted on AWS
+behind HSDS, by default False</p></li>
+<li><p><strong>chunks</strong> (<em>tuple, optional</em>) – Chunk size to use for setback layers, if None use default chunk
+size in excl_h5, by default (128, 128)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks.run">
+<em class="property">classmethod </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">excl_h5</span></em>, <em class="sig-param"><span class="n">features_fpath</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">hub_height</span></em>, <em class="sig-param"><span class="n">rotor_diameter</span></em>, <em class="sig-param"><span class="n">regs_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">multiplier</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">replace</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">hsds</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#TransmissionWindSetbacks.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute setbacks from given features and write them to a geotiff.
+If a wind regulations file is given compute local setbacks, otherwise
+compute generic setbacks using the given multiplier and the turbine
+tip-height.
+:Parameters: * <strong>excl_h5</strong> (<em>str</em>) – Path to .h5 file containing exclusion layers, will also be the</p>
+<blockquote>
+<div><blockquote>
+<div><p>location of any new setback layers</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><strong>features_fpath</strong> (<em>str</em>) – Path to shape file with transmission or rail features to compute
+setbacks from</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to save geotiff containing rasterized setbacks into</p></li>
+<li><p><strong>hub_height</strong> (<em>float | int</em>) – Turbine hub height (m), used along with rotor diameter to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>rotor_diameter</strong> (<em>float | int</em>) – Turbine rotor diameter (m), used along with hub height to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>regs_fpath</strong> (<em>str | None, optional</em>) – Path to wind regulations .csv file, if None create generic
+setbacks using max-tip height * “multiplier”, by default None</p></li>
+<li><p><strong>multiplier</strong> (<em>int | float | str | None, optional</em>) – setback multiplier to use if wind regulations are not supplied,
+if str, must a key in {‘high’: 3, ‘moderate’: 1.1}, if supplied
+along with regs_fpath, will be ignored, multiplied with
+max-tip height, by default None</p></li>
+<li><p><strong>chunks</strong> (<em>tuple, optional</em>) – Chunk size to use for setback layers, if None use default chunk
+size in excl_h5, by default (128, 128)</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of workers to use for setback computation, if 1 run in
+serial, if &gt; 1 run in parallel with that many workers, if None
+run in parallel on all available cores, by default None</p></li>
+<li><p><strong>replace</strong> (<em>bool, optional</em>) – Flag to replace geotiff if it already exists, by default False</p></li>
+<li><p><strong>hsds</strong> (<em>bool, optional</em>) – Boolean flag to use h5pyd to handle .h5 ‘files’ hosted on AWS
+behind HSDS, by default False</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.wind_setbacks.wind_setbacks.RailWindSetbacks">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.wind_setbacks.wind_setbacks.</code><code class="sig-name descname">RailWindSetbacks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">excl_h5</span></em>, <em class="sig-param"><span class="n">hub_height</span></em>, <em class="sig-param"><span class="n">rotor_diameter</span></em>, <em class="sig-param"><span class="n">regs_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">multiplier</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hsds</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/wind_setbacks/wind_setbacks.html#RailWindSetbacks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.wind_setbacks.wind_setbacks.RailWindSetbacks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks" title="reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks"><code class="xref py py-class docutils literal notranslate"><span class="pre">reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks</span></code></a></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>excl_h5</strong> (<em>str</em>) – Path to .h5 file containing exclusion layers, will also be the
+location of any new setback layers</p></li>
+<li><p><strong>hub_height</strong> (<em>float | int</em>) – Turbine hub height (m), used along with rotor diameter to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>rotor_diameter</strong> (<em>float | int</em>) – Turbine rotor diameter (m), used along with hub height to compute
+blade tip height which is used to determine setback distance</p></li>
+<li><p><strong>regs_fpath</strong> (<em>str | None, optional</em>) – Path to wind regulations .csv file, if None create generic
+setbacks using max-tip height * “multiplier”, by default None</p></li>
+<li><p><strong>multiplier</strong> (<em>int | float | str | None, optional</em>) – setback multiplier to use if wind regulations are not supplied,
+if str, must a key in {‘high’: 3, ‘moderate’: 1.1}, if supplied
+along with regs_fpath, will be ignored, multiplied with
+max-tip height, by default None</p></li>
+<li><p><strong>hsds</strong> (<em>bool, optional</em>) – Boolean flag to use h5pyd to handle .h5 ‘files’ hosted on AWS
+behind HSDS, by default False</p></li>
+<li><p><strong>chunks</strong> (<em>tuple, optional</em>) – Chunk size to use for setback layers, if None use default chunk
+size in excl_h5, by default (128, 128)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.wind_setbacks.wind_setbacks_cli.html" class="btn btn-neutral float-right" title="reVX.wind_setbacks.wind_setbacks_cli module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.wind_setbacks.setbacks_converter.html" class="btn btn-neutral float-left" title="reVX.wind_setbacks.setbacks_converter module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

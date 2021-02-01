@@ -1,0 +1,1337 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.reeds.reeds_timeslices &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.reeds.reeds_timeslices</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.reeds.reeds_timeslices</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Extract ReEDS timeslices from rep-profiles</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">as_completed</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">rex.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.execution</span> <span class="kn">import</span> <span class="n">SpawnProcessPool</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.utilities</span> <span class="kn">import</span> <span class="n">check_tz</span>
+
+<span class="kn">from</span> <span class="nn">reVX.handlers.outputs</span> <span class="kn">import</span> <span class="n">Outputs</span>
+<span class="kn">from</span> <span class="nn">reVX.reeds.reeds_classification</span> <span class="kn">import</span> <span class="n">ReedsClassifier</span>
+<span class="kn">from</span> <span class="nn">reVX.reeds.reeds_profiles</span> <span class="kn">import</span> <span class="n">ReedsProfiles</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.exceptions</span> <span class="kn">import</span> <span class="n">ReedsValueError</span><span class="p">,</span> <span class="n">ReedsRuntimeError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ReedsTimeslices"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_timeslices.html#reVX.reeds.reeds_timeslices.ReedsTimeslices">[docs]</a><span class="k">class</span> <span class="nc">ReedsTimeslices</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create ReEDS timeslices from region-bin-class groups and representative</span>
+<span class="sd">    profiles</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">timeslice_map</span><span class="p">,</span> <span class="n">rev_table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">reg_cols</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles : str</span>
+<span class="sd">            Path to .h5 file containing profiles (representative or cf)</span>
+<span class="sd">        timeslice_map : str | pandas.DataFrame</span>
+<span class="sd">            Path to timeslice mapping file or DataFrame with mapping</span>
+<span class="sd">        rev_table : str | pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table, or path to file containing</span>
+<span class="sd">            table. Only required if timeslice calc is based on all cf_profiles</span>
+<span class="sd">            instead of representative profiles.</span>
+<span class="sd">        reg_cols : tuple</span>
+<span class="sd">            Label(s) for a categorical region column(s) to create timeslices</span>
+<span class="sd">            for</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_profiles</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">rev_table</span><span class="o">=</span><span class="n">rev_table</span><span class="p">,</span>
+                                 <span class="n">reg_cols</span><span class="o">=</span><span class="n">reg_cols</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_timeslice_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_timeslices</span><span class="p">(</span><span class="n">timeslice_map</span><span class="p">,</span>
+                                                      <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rev_table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cf_profiles</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cf_profiles</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_profiles</span><span class="p">:</span>
+            <span class="n">profiles</span> <span class="o">=</span> <span class="s1">&#39;cf profiles&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">profiles</span> <span class="o">=</span> <span class="s1">&#39;representative profiles&#39;</span>
+
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> with </span><span class="si">{}</span><span class="s2"> timeslices and </span><span class="si">{}</span><span class="s2"> region-class groups computed &quot;</span>
+               <span class="s2">&quot;from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timeslices</span><span class="p">),</span>
+                                <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">regions</span><span class="p">),</span> <span class="n">profiles</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">profiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        .h5 file containing representative profiles</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Meta data for &quot;region&quot; groups</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">regions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unique &quot;regions&quot; defaulted to region-class pairs</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">index</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">timeslices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Timeslice keys</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeslice_groups</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">profile_datetimes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Datetime index for representative profiles</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DatetimeIndex</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_index</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extract_meta_and_timeindex</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract meta data, and time index from the profiles .h5 file</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles : str</span>
+<span class="sd">            Path to .h5 file containing profiles (representative or cf)</span>
+<span class="sd">        reg_cols : tuple</span>
+<span class="sd">            Label(s) for a categorical region column(s) to create timeslices</span>
+<span class="sd">            for</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        meta : pandas.DataFrame</span>
+<span class="sd">            Meta data table corresponding to profiles</span>
+<span class="sd">        time_index : pandas.DatetimeIndex</span>
+<span class="sd">            Datetime Index for profiles</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span>
+            <span class="n">ignore</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;rep_gen_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;rep_res_gid&#39;</span><span class="p">]</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">columns</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ignore</span><span class="p">]</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+            <span class="n">isin</span> <span class="o">=</span> <span class="p">[(</span><span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">reg_cols</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">isin</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Found region column labels in profile meta for &#39;</span>
+                            <span class="s1">&#39;timeslice regions: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">))</span>
+                <span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">))</span>
+
+            <span class="n">time_index</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">time_index</span>
+
+        <span class="k">return</span> <span class="n">meta</span><span class="p">,</span> <span class="n">time_index</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_unpack_list</span><span class="p">(</span><span class="n">col</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unpack lists stored in given column</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        col : pandas.DataFrame | pandas.Series</span>
+<span class="sd">            Column containing lists to unpack</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            Vector of values contained in lists</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">col</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_unpack_gen_gids</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">group_df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Unpack gen gids and counts lists</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        -----------</span>
+<span class="sd">        group_df : pandas.DataFrame</span>
+<span class="sd">            Group DataFrame to unpack gen gids and counts for</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pandas.DataFrame</span>
+<span class="sd">            DataFrame of unique gen gids and their associated counts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">gen_df</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gid&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_unpack_list</span><span class="p">(</span><span class="n">group_df</span><span class="p">[</span><span class="s1">&#39;gen_gids&#39;</span><span class="p">]),</span>
+                  <span class="s1">&#39;gid_count&#39;</span><span class="p">:</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_unpack_list</span><span class="p">(</span><span class="n">group_df</span><span class="p">[</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">])}</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">gen_df</span><span class="p">)</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;gid&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_add_reg_cols</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">reg_cols</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add reg_cols to meta from rev_table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        meta : pandas.DataFrame</span>
+<span class="sd">            Meta data table corresponding to profiles</span>
+<span class="sd">        rev_table : None | str | pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table,</span>
+<span class="sd">            or path to file containing table</span>
+<span class="sd">        reg_cols : tuple</span>
+<span class="sd">            Label(s) for a categorical region column(s) to create timeslices</span>
+<span class="sd">            for</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        meta : pandas.DataFrame</span>
+<span class="sd">            Updated meta with reg_cols added to sites to be extract</span>
+<span class="sd">            timeslices from</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="n">ReedsClassifier</span><span class="o">.</span><span class="n">_parse_table</span><span class="p">(</span><span class="n">rev_table</span><span class="p">)</span>
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="n">rev_table</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">))</span>
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="n">rev_table</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_unpack_gen_gids</span><span class="p">)</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">rev_table</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(),</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;gid&#39;</span><span class="p">)</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">meta</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_check_profiles</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">rev_table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                        <span class="n">reg_cols</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check profiles to ensure all needed data is available.</span>
+<span class="sd">        Extract meta and time_index</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles : str</span>
+<span class="sd">            Path to .h5 file containing profiles (representative or cf)</span>
+<span class="sd">        rev_table : None | str | pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table,</span>
+<span class="sd">            or path to file containing table</span>
+<span class="sd">        reg_cols : tuple</span>
+<span class="sd">            Label(s) for a categorical region column(s) to create timeslices</span>
+<span class="sd">            for</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profiles : str</span>
+<span class="sd">            Path to .h5 file containing profiles (representative or cf)</span>
+<span class="sd">        meta : pandas.DataFrame</span>
+<span class="sd">            Meta data table corresponding to profiles</span>
+<span class="sd">        time_index : pandas.DatetimeIndex</span>
+<span class="sd">            Datetime Index for rep profiles</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">profiles</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.h5&#39;</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Cannot parse </span><span class="si">{}</span><span class="s2"> must be a .h5 file!&quot;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">profiles</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">profiles</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not a valid file path!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">meta</span><span class="p">,</span> <span class="n">time_index</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_extract_meta_and_timeindex</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span>
+                                                           <span class="n">reg_cols</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">rev_table</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_add_reg_cols</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span>
+                                     <span class="n">reg_cols</span><span class="o">=</span><span class="n">reg_cols</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Using input region column labels for timeslice &#39;</span>
+                        <span class="s1">&#39;regions: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Profile data check complete.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">time_index</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_timeslice_map</span><span class="p">(</span><span class="n">timeslice_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract timeslice mapping</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeslice_map : str | pandas.DataFrame</span>
+<span class="sd">            Path to timeslice mapping file or DataFrame with mapping</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeslice_map : pandas.GroupBy</span>
+<span class="sd">            Mapping of each timeslice to a datetime stamp or hour</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">timeslice_map</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">timeslice_map</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">timeslice_map</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">timeslice_map</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Cannot parse timeslice mapping from : </span><span class="si">{}</span><span class="s1">&#39;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">timeslice_map</span><span class="p">)))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">index_col</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">timeslice_map</span><span class="o">.</span><span class="n">columns</span>
+                     <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;datetime&#39;</span><span class="p">,</span> <span class="s1">&#39;hour&#39;</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">index_col</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Timeslice mapping must contain a &quot;datetime&quot; or &quot;hour&quot; &#39;</span>
+                   <span class="s1">&#39;column to enable mapping to profiles datetime index!&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsRuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">index_col</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Timeslice mapping can only be mapped to &quot;datetime&quot; OR &#39;</span>
+                   <span class="s1">&#39;&quot;hour&quot;&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsRuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">index</span> <span class="o">=</span> <span class="n">index_col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">timeslice_map</span> <span class="o">=</span> <span class="n">timeslice_map</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="n">index</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span>
+            <span class="n">timeslice_map</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">check_tz</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_datetime</span><span class="p">(</span><span class="n">timeslice_map</span><span class="o">.</span><span class="n">index</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">timeslice_map</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_map_timeslices</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">timeslice_map</span><span class="p">,</span> <span class="n">time_index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Map timeslices to profiles datetime index</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeslice_map : str | pandas.DataFrame</span>
+<span class="sd">            Path to timeslice mapping file or DataFrame with mapping</span>
+<span class="sd">        time_index : pandas.DatetimeIndex</span>
+<span class="sd">            Datetime Index for profiles, must be supplied with rep_profiles</span>
+<span class="sd">            dictionary</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        ----------</span>
+<span class="sd">        timeslice_map : pandas.GroupBy</span>
+<span class="sd">            Mapping of each timeslice to profiles time_index</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">timeslice_map</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_timeslice_map</span><span class="p">(</span><span class="n">timeslice_map</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">timeslice_map</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;datetime&#39;</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">timeslice_map</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">time_index</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">mask</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> timesteps in the timeslice mapping do not exist &quot;</span>
+                       <span class="s2">&quot;in the representative profiles datetime index:&quot;</span>
+                       <span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="o">~</span><span class="n">mask</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
+                                     <span class="n">timeslice_map</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ReedsRuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hour_of_year</span> <span class="o">=</span> <span class="n">ReedsProfiles</span><span class="o">.</span><span class="n">_get_hour_of_year</span><span class="p">(</span><span class="n">time_index</span><span class="p">)</span>
+            <span class="n">hour_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">hour_of_year</span><span class="p">)</span>
+            <span class="n">timeslice_hours</span> <span class="o">=</span> <span class="n">timeslice_map</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">timeslice_hours</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">hour_max</span><span class="p">:</span>
+                <span class="n">mask</span> <span class="o">=</span> <span class="n">timeslice_hours</span> <span class="o">&gt;</span> <span class="n">hour_max</span>
+                <span class="n">timeslice_hours</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">hour_max</span>
+                                               <span class="o">-</span> <span class="n">timeslice_hours</span><span class="p">[</span><span class="n">mask</span><span class="p">])</span>
+
+            <span class="n">hour_of_year</span> <span class="o">=</span> <span class="n">hour_of_year</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">hour_of_year</span><span class="p">)]</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">searchsorted</span><span class="p">(</span><span class="n">hour_of_year</span><span class="p">,</span> <span class="n">timeslice_hours</span><span class="p">)</span>
+            <span class="n">timeslice_map</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">time_index</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">timeslice_map</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracted timeslice map.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">timeslice_map</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extract_rep_profiles</span><span class="p">(</span><span class="n">profiles_h5</span><span class="p">,</span> <span class="n">meta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract representative profiles and combine them with meta data</span>
+<span class="sd">        and time_index to create a single dataframe to extract stats from</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles_h5 : str</span>
+<span class="sd">            Path to .h5 file containing representative profiles</span>
+<span class="sd">        meta : pandas.DataFrame</span>
+<span class="sd">            Meta data table for representative profiles</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profiles_df : pandas.DataFrame</span>
+<span class="sd">            Multi-index DataFrame of profiles for each &#39;region&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="n">profiles_h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">time_index</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">time_index</span>
+            <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s1">&#39;rep_profiles&#39;</span> <span class="ow">in</span> <span class="n">ds</span><span class="p">:</span>
+                    <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                    <span class="n">profiles</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">ds</span><span class="p">]</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">([</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">c</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+        <span class="n">profiles_df</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">profiles</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">cols</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">time_index</span><span class="p">)</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">MultiIndex</span><span class="o">.</span><span class="n">from_product</span><span class="p">([[</span><span class="n">k</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
+            <span class="n">profiles_df</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">swaplevel</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">profiles_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">profiles_df</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                                                <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">profiles_df</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_rep_tslice_stats</span><span class="p">(</span><span class="n">ts_profiles</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute means and standard deviations and correlation coefficients</span>
+<span class="sd">        for each timeslice from representative profiles</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ts_profiles : pandas.DataFrame</span>
+<span class="sd">            Timeseries profiles to compute stats for</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        means : pandas.Series</span>
+<span class="sd">            CF means for each &quot;region&quot;</span>
+<span class="sd">        stdevs : pandas.Series</span>
+<span class="sd">            Standard deviations of CF for each &quot;region&quot;</span>
+<span class="sd">        coeffs : pandas.DataFrame</span>
+<span class="sd">            Pearson&#39;s correlation coefficients between all combinations</span>
+<span class="sd">            of regions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">ts_profiles</span><span class="o">.</span><span class="n">columns</span><span class="p">)))</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">ts_profiles</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="mi">0</span><span class="p">)][</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="n">coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">rowvar</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">coeffs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">coeffs</span><span class="p">[:</span><span class="n">n</span><span class="p">,</span> <span class="p">:</span><span class="n">n</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="n">cols</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">cols</span><span class="p">)</span>
+        <span class="n">coeffs</span> <span class="o">=</span> <span class="n">coeffs</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">means</span> <span class="o">=</span> <span class="n">ts_profiles</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">stdevs</span> <span class="o">=</span> <span class="n">ts_profiles</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">means</span><span class="p">,</span> <span class="n">stdevs</span><span class="p">,</span> <span class="n">coeffs</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_rep_profile_stats</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">profiles_h5</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">timeslice_groups</span><span class="p">,</span>
+                           <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute means and standard divations for each timeslice from</span>
+<span class="sd">        representative profiles</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles_h5 : str</span>
+<span class="sd">            Path to .h5 file containing representative profiles</span>
+<span class="sd">        meta : pandas.DataFrame</span>
+<span class="sd">            Meta data table for representative profiles</span>
+<span class="sd">        timeslice_groups : pandas.GroupBy</span>
+<span class="sd">            Mapping of each timeslice to profiles time_index</span>
+<span class="sd">        max_workers : int</span>
+<span class="sd">            Number of workers to use for parallel computation of means</span>
+<span class="sd">            and stdevs when using cf profiles.</span>
+<span class="sd">            1 means run in serial</span>
+<span class="sd">            None means use all available CPUs</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        means : pandas.DataFrame</span>
+<span class="sd">            Mean CF for each region and timeslice</span>
+<span class="sd">        stdevs : pandas.DataFrame</span>
+<span class="sd">            Standard deviation in CF for each region and timeslice</span>
+<span class="sd">        corr_coeffs : dict</span>
+<span class="sd">            Correlation matrices for each timeslice</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_workers</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+
+        <span class="n">profiles</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_extract_rep_profiles</span><span class="p">(</span><span class="n">profiles_h5</span><span class="p">,</span> <span class="n">meta</span><span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">stdevs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">corr_coeffs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing representative profile timeslice stats for &#39;</span>
+                    <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> timeslice groups.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">timeslice_groups</span><span class="p">)))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing timeslice stats with max_workers: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">max_workers</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">loggers</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">]</span>
+            <span class="k">with</span> <span class="n">SpawnProcessPool</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                  <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">)</span> <span class="k">as</span> <span class="n">exe</span><span class="p">:</span>
+                <span class="n">futures</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">slice_map</span> <span class="ow">in</span> <span class="n">timeslice_groups</span><span class="p">:</span>
+                    <span class="n">tslice</span> <span class="o">=</span> <span class="n">profiles</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">slice_map</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+                    <span class="n">future</span> <span class="o">=</span> <span class="n">exe</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_rep_tslice_stats</span><span class="p">,</span> <span class="n">tslice</span><span class="p">)</span>
+                    <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span>
+
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">future</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">)):</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                    <span class="n">mean</span><span class="p">,</span> <span class="n">stdev</span><span class="p">,</span> <span class="n">coeffs</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+
+                    <span class="n">corr_coeffs</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">coeffs</span>
+                    <span class="n">mean</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">s</span>
+                    <span class="n">means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
+
+                    <span class="n">stdev</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">s</span>
+                    <span class="n">stdevs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stdev</span><span class="p">)</span>
+
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Completed </span><span class="si">{}</span><span class="s1"> out of </span><span class="si">{}</span><span class="s1"> representative &#39;</span>
+                                <span class="s1">&#39;profile timeslice stats futures.&#39;</span>
+                                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">)))</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">slice_map</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">timeslice_groups</span><span class="p">):</span>
+                <span class="n">tslice</span> <span class="o">=</span> <span class="n">profiles</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">slice_map</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+                <span class="n">mean</span><span class="p">,</span> <span class="n">stdev</span><span class="p">,</span> <span class="n">coeffs</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_rep_tslice_stats</span><span class="p">(</span><span class="n">tslice</span><span class="p">)</span>
+
+                <span class="n">corr_coeffs</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">coeffs</span>
+                <span class="n">mean</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">s</span>
+                <span class="n">means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span>
+
+                <span class="n">stdev</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">s</span>
+                <span class="n">stdevs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stdev</span><span class="p">)</span>
+
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Completed </span><span class="si">{}</span><span class="s1"> out of </span><span class="si">{}</span><span class="s1"> representative &#39;</span>
+                            <span class="s1">&#39;profile timeslice stats.&#39;</span>
+                            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">timeslice_groups</span><span class="p">)))</span>
+
+        <span class="n">means</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">means</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;timeslice&#39;</span>
+        <span class="n">stdevs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stdevs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">stdevs</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;timeslice&#39;</span>
+
+        <span class="k">return</span> <span class="n">means</span><span class="p">,</span> <span class="n">stdevs</span><span class="p">,</span> <span class="n">corr_coeffs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_cf_group_stats</span><span class="p">(</span><span class="n">profiles_h5</span><span class="p">,</span> <span class="n">region_meta</span><span class="p">,</span> <span class="n">timeslice_groups</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute means and standard deviations for each region</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles_h5 : str</span>
+<span class="sd">            Path to .h5 file containing profiles (representative or cf)</span>
+<span class="sd">        region_meta : pandas.DataFrame</span>
+<span class="sd">            Meta data table for subset of cf profiles in specific region</span>
+<span class="sd">        timeslice_groups : pandas.GroupBy</span>
+<span class="sd">            Mapping of each timeslice to profiles time_index</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        means : pandas.Series</span>
+<span class="sd">            Mean CF for timeslices in specific region</span>
+<span class="sd">        stdevs : pandas.Series</span>
+<span class="sd">            Standard deviation in CF for timeslices in specific region</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">gids</span> <span class="o">=</span> <span class="n">region_meta</span><span class="p">[</span><span class="s1">&#39;gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">region_meta</span><span class="p">[</span><span class="s1">&#39;gid_count&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="n">profiles_h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">time_index</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">time_index</span>
+            <span class="n">profiles</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;cf_profile&#39;</span><span class="p">,</span> <span class="p">:,</span> <span class="n">gids</span><span class="p">]</span> <span class="o">*</span> <span class="n">counts</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span>
+                                <span class="n">index</span><span class="o">=</span><span class="n">time_index</span><span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">stdevs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">slice_map</span> <span class="ow">in</span> <span class="n">timeslice_groups</span><span class="p">:</span>
+            <span class="n">tslice</span> <span class="o">=</span> <span class="n">profiles</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">slice_map</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+            <span class="n">means</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">tslice</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">stdevs</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">tslice</span><span class="o">.</span><span class="n">stack</span><span class="p">()</span><span class="o">.</span><span class="n">std</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">means</span><span class="p">),</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">stdevs</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_cf_profile_stats</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">profiles_h5</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">timeslices</span><span class="p">,</span>
+                          <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute timeslice mean and standard deviation from cf profiles</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles_h5 : str</span>
+<span class="sd">            Path to .h5 file containing profiles (representative or cf)</span>
+<span class="sd">        meta : pandas.DataFrame</span>
+<span class="sd">            Meta data table for cf profiles</span>
+<span class="sd">        timeslices : pandas.DataFrame</span>
+<span class="sd">            Mapping between timeslices of interest and profile timesteps</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        means : pandas.DataFrame</span>
+<span class="sd">            Mean CF for each region and timeslice</span>
+<span class="sd">        stdevs : pandas.DataFrame</span>
+<span class="sd">            Standard deviation in CF for each region and timeslice</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">reg_cols</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_workers</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing timeslice stats with max_workers: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">max_workers</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">loggers</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">]</span>
+            <span class="k">with</span> <span class="n">SpawnProcessPool</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                  <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">)</span> <span class="k">as</span> <span class="n">exe</span><span class="p">:</span>
+                <span class="n">futures</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">):</span>
+                    <span class="n">future</span> <span class="o">=</span> <span class="n">exe</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_cf_group_stats</span><span class="p">,</span> <span class="n">profiles_h5</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span>
+                                        <span class="n">timeslices</span><span class="p">)</span>
+                    <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>
+
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Submitted </span><span class="si">{}</span><span class="s1"> futures.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">)))</span>
+
+                <span class="n">means</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">stdevs</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">future</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">)):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Timeslice future </span><span class="si">{}</span><span class="s1"> out of </span><span class="si">{}</span><span class="s1"> completed.&#39;</span>
+                                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">futures</span><span class="p">)))</span>
+                    <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                    <span class="n">group</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">future</span><span class="p">]</span>
+                    <span class="n">m</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+                    <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+                    <span class="n">means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+                    <span class="n">stdevs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">means</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">stdevs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">):</span>
+                <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_cf_group_stats</span><span class="p">(</span><span class="n">profiles_h5</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">timeslices</span><span class="p">)</span>
+                <span class="n">m</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">group</span><span class="p">))</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">group</span><span class="p">))</span>
+                <span class="n">means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+                <span class="n">stdevs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+        <span class="n">means</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">means</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;timeslice&#39;</span>
+        <span class="n">stdevs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">stdevs</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">stdevs</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;timeslice&#39;</span>
+
+        <span class="k">return</span> <span class="n">means</span><span class="p">,</span> <span class="n">stdevs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_flatten_timeslices</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">value_name</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Flatten timeslice table into legacy ReEDS Format</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table : pandas.DataFrame</span>
+<span class="sd">            Input means or stdev table to flatten</span>
+<span class="sd">        value_name : str</span>
+<span class="sd">            Name of values in table</span>
+<span class="sd">        reg_cols : list</span>
+<span class="sd">            List of names for &quot;region&quot; classifiers, default is region, class</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : pandas.DataFrame</span>
+<span class="sd">            Flattened table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">region</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+            <span class="n">region</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">value_name</span>
+            <span class="n">region</span> <span class="o">=</span> <span class="n">region</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+
+            <span class="k">for</span> <span class="n">n</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span>
+                <span class="n">region</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">region</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_correlation_table</span><span class="p">(</span><span class="n">corr_coeffs</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Flatten and combine correlation matrixes for all timeslices</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coeffs : dict</span>
+<span class="sd">            Correlation matrices for each timeslice</span>
+<span class="sd">        reg_cols : list</span>
+<span class="sd">            List of names for &quot;region&quot; classifiers, default is region, class</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : pandas.DataFrame</span>
+<span class="sd">            Flattened table of correlation coefficients for all timeslices</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Creating legacy timeslice correlation table.&#39;</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">corr_coeffs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+            <span class="n">ctable</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;coefficient&#39;</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">flatten</span><span class="p">()})</span>
+
+            <span class="n">second_cols</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">):</span>
+                <span class="n">r_label_0</span> <span class="o">=</span> <span class="n">rc</span>
+                <span class="n">r_label_1</span> <span class="o">=</span> <span class="n">rc</span> <span class="o">+</span> <span class="s1">&#39;2&#39;</span>
+                <span class="n">second_cols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r_label_1</span><span class="p">)</span>
+
+                <span class="n">r0</span> <span class="o">=</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">c</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                      <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">index</span><span class="p">]</span>
+                <span class="n">r1</span> <span class="o">=</span> <span class="p">[</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">c</span><span class="p">)[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                      <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+
+                <span class="n">r0</span> <span class="o">=</span> <span class="p">[[</span><span class="n">r0</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">r1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r1</span><span class="p">))]</span>
+                <span class="n">r0</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">r0</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span><span class="p">]</span>
+                <span class="n">r1</span> <span class="o">*=</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+                <span class="n">ctable</span><span class="p">[</span><span class="n">r_label_0</span><span class="p">]</span> <span class="o">=</span> <span class="n">r0</span>
+                <span class="n">ctable</span><span class="p">[</span><span class="n">r_label_1</span><span class="p">]</span> <span class="o">=</span> <span class="n">r1</span>
+
+            <span class="n">ctable</span><span class="p">[</span><span class="s1">&#39;timeslice&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+            <span class="n">corder</span> <span class="o">=</span> <span class="n">reg_cols</span> <span class="o">+</span> <span class="n">second_cols</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;timeslice&#39;</span><span class="p">,</span> <span class="s1">&#39;coefficient&#39;</span><span class="p">]</span>
+            <span class="n">ctable</span> <span class="o">=</span> <span class="n">ctable</span><span class="p">[</span><span class="n">corder</span><span class="p">]</span>
+
+            <span class="n">out</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ctable</span><span class="p">)</span>
+
+        <span class="n">sort_cols</span> <span class="o">=</span> <span class="p">(</span><span class="n">reg_cols</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">2&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">reg_cols</span><span class="p">]</span>
+                     <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;timeslice&#39;</span><span class="p">,</span> <span class="p">])</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">out</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">sort_cols</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Legacy timeslice correlation table complete.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">_stats_to_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">means</span><span class="p">,</span> <span class="n">stdevs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert means and stdevs to single dataframe</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        means : pandas.DataFrame</span>
+<span class="sd">            Mean CF for each region and timeslice</span>
+<span class="sd">        stdevs : pandas.DataFrame</span>
+<span class="sd">            Standard deviation in CF for each region and timeslice</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        stats : pandas.DataFrame</span>
+<span class="sd">            Flattened timeslice table with means and sigma</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">reg_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">means</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten_timeslices</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="s1">&#39;cfmean&#39;</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">)</span>
+        <span class="n">stdevs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten_timeslices</span><span class="p">(</span><span class="n">stdevs</span><span class="p">,</span> <span class="s1">&#39;cfsigma&#39;</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">)</span>
+        <span class="n">merge_cols</span> <span class="o">=</span> <span class="n">reg_cols</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;timeslice&#39;</span><span class="p">,</span> <span class="p">]</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">means</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">stdevs</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="n">merge_cols</span><span class="p">)</span>
+        <span class="n">sort_cols</span> <span class="o">=</span> <span class="n">reg_cols</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;timeslice&#39;</span><span class="p">,</span> <span class="p">]</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">sort_cols</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">stats</span>
+
+    <span class="k">def</span> <span class="nf">_coeffs_to_legacy_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert outputs to legacy format</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coeffs : dict</span>
+<span class="sd">            Correlation matrices for each timeslice, optional</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        coeffs : pandas.DataFrame</span>
+<span class="sd">            Flattened correlation table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Performing legacy formatting operation.&#39;</span><span class="p">)</span>
+        <span class="n">reg_cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">coeffs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">coeffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_correlation_table</span><span class="p">(</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Legacy formatting complete.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">coeffs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_correlation_meta</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the correlation meta data, which is a dataframe of labels for</span>
+<span class="sd">        the square correlation matrices.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        corr : dict</span>
+<span class="sd">            A dictionary of correlation matrices for each timeslice.</span>
+<span class="sd">            Each value is a square dataframe with index labels == column labels</span>
+<span class="sd">        reg_cols : list | tuple</span>
+<span class="sd">            Labels for the column/index values in the corr dataframe values.</span>
+<span class="sd">            The order must match the order of the correlation dataframe labels.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        meta : pd.DataFrame</span>
+<span class="sd">            Meta dataframe with a column for each reg col and a row entry for</span>
+<span class="sd">            each column/index in the corr dataframe values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">meta_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">reg_cols</span><span class="p">}</span>
+        <span class="n">corr_labels</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">corr_labels</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">):</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Cannot save correlation dataframes. reg_cols was input &#39;</span>
+                     <span class="s1">&#39;as &quot;</span><span class="si">{}</span><span class="s1">&quot; but the correlation table has column/index &#39;</span>
+                     <span class="s1">&#39;values with different label length: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">,</span> <span class="n">corr_labels</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ReedsRuntimeError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">label</span><span class="p">):</span>
+                <span class="n">meta_dict</span><span class="p">[</span><span class="n">reg_cols</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">meta_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">meta</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_check_correlation_dfs</span><span class="p">(</span><span class="n">corr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check that all correlation tables have the same index and</span>
+<span class="sd">        column values.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        corr : dict</span>
+<span class="sd">            A dictionary of correlation matrices for each timeslice.</span>
+<span class="sd">            Each value is a square dataframe with index labels == column labels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">corr_labels</span> <span class="o">=</span> <span class="n">corr</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">corr</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">for</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">corr</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">values</span> <span class="o">==</span> <span class="n">corr_labels</span><span class="p">)</span>
+                    <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span> <span class="o">==</span> <span class="n">corr_labels</span><span class="p">)):</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="s1">&#39;Correlation matrix labels did not match!&#39;</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ReedsRuntimeError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Correlation matrix of shape </span><span class="si">{}</span><span class="s1"> is not square!&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">ReedsRuntimeError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ReedsTimeslices.sparsify_corr_matrix"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_timeslices.html#reVX.reeds.reeds_timeslices.ReedsTimeslices.sparsify_corr_matrix">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">sparsify_corr_matrix</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sparsify a symmetric correlation matrix.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        arr : np.ndarray</span>
+<span class="sd">            A 2D symmetric matrix.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : np.ndarray</span>
+<span class="sd">            A 1D matrix representing values from one half of the input arr</span>
+<span class="sd">            (with the diagnol).</span>
+<span class="sd">        indices : np.ndarray</span>
+<span class="sd">            A 1D matrix representing the flat index locations in arr that</span>
+<span class="sd">            the values in the out array are from.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="s1">&#39;Cannot sparsify a non-square matrix!&#39;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">arr</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">arr</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">]:</span>
+                <span class="n">e</span> <span class="o">=</span> <span class="s1">&#39;Matrix does not appear to be symmetric!&#39;</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="c1"># pylint: disable=no-member</span>
+        <span class="n">i_arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">triu</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">i_arr</span><span class="p">[(</span><span class="n">i_arr</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)]</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(([</span><span class="mi">0</span><span class="p">],</span> <span class="n">indices</span><span class="p">))</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">flatten</span><span class="p">()[</span><span class="n">indices</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">out</span><span class="p">,</span> <span class="n">indices</span></div>
+
+<div class="viewcode-block" id="ReedsTimeslices.unsparsify_corr_matrix"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_timeslices.html#reVX.reeds.reeds_timeslices.ReedsTimeslices.unsparsify_corr_matrix">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">unsparsify_corr_matrix</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">indices</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;UnSparsify a symmetric correlation matrix from a flat matrix</span>
+<span class="sd">        generated by .sparsify_corr_matrix().</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        arr : np.ndarray</span>
+<span class="sd">            A 1D matrix representing values from one half of the input arr</span>
+<span class="sd">            (with the diagnol).</span>
+<span class="sd">        indices : np.ndarray</span>
+<span class="sd">            A 1D matrix representing the flat index locations in arr that</span>
+<span class="sd">            the values in the out array are from.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : np.ndarray</span>
+<span class="sd">            A 2D symmetric matrix generated from arr.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Cannot make a symmetric matrix from a matrix that is &#39;</span>
+                 <span class="s1">&#39;already 2D!&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">out</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                <span class="n">out</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="ReedsTimeslices.save_correlation_dict"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_timeslices.html#reVX.reeds.reeds_timeslices.ReedsTimeslices.save_correlation_dict">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">save_correlation_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">corr</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">,</span> <span class="n">fpath</span><span class="p">,</span> <span class="n">compression</span><span class="o">=</span><span class="s1">&#39;gzip&#39;</span><span class="p">,</span>
+                              <span class="n">sparsify</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save a dictionary of correlation coefficient matrices to an h5 file.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        corr : dict</span>
+<span class="sd">            A dictionary of correlation matrices for each timeslice.</span>
+<span class="sd">            Each value is a square dataframe with index labels == column labels</span>
+<span class="sd">        reg_cols : list | tuple</span>
+<span class="sd">            Labels for the column/index values in the corr dataframe values.</span>
+<span class="sd">            The order must match the order of the correlation dataframe labels.</span>
+<span class="sd">        fpath : str</span>
+<span class="sd">            h5 destination filepath (will overwrite).</span>
+<span class="sd">        compression : str</span>
+<span class="sd">            H5py dataset compression argument. gzip or None.</span>
+<span class="sd">        sparsify : bool</span>
+<span class="sd">            Flag to sparsify symmetric matrices.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Tried to save non-dict correlation coefficient data. &#39;</span>
+                 <span class="s1">&#39;Maybe legacy formatting was still active.&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_correlation_meta</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_check_correlation_dfs</span><span class="p">(</span><span class="n">corr</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">out</span><span class="p">[</span><span class="s1">&#39;meta&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">meta</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">corr</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">ds_name</span> <span class="o">=</span> <span class="s1">&#39;timeslice_</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">compression</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+                    <span class="n">data</span> <span class="o">*=</span> <span class="mi">1000</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int16</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">sparsify</span><span class="p">:</span>
+                        <span class="n">data</span><span class="p">,</span> <span class="n">ind</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">sparsify_corr_matrix</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span>
+                                          <span class="n">shape</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                          <span class="n">compression</span><span class="o">=</span><span class="n">compression</span><span class="p">,</span>
+                                          <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">h5</span><span class="p">[</span><span class="n">ds_name</span><span class="p">]</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;scale_factor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1000</span>
+
+                    <span class="k">if</span> <span class="s1">&#39;indices&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">datasets</span> <span class="ow">and</span> <span class="n">sparsify</span><span class="p">:</span>
+                        <span class="n">out</span><span class="o">.</span><span class="n">h5</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;indices&#39;</span><span class="p">,</span>
+                                              <span class="n">shape</span><span class="o">=</span><span class="n">ind</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                              <span class="n">compression</span><span class="o">=</span><span class="n">compression</span><span class="p">,</span>
+                                              <span class="n">data</span><span class="o">=</span><span class="n">ind</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">_create_dset</span><span class="p">(</span><span class="n">ds_name</span><span class="p">,</span>
+                                     <span class="n">shape</span><span class="o">=</span><span class="n">v</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                     <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int16&#39;</span><span class="p">,</span>
+                                     <span class="n">attrs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;scale_factor&#39;</span><span class="p">:</span> <span class="mi">1000</span><span class="p">})</span>
+                    <span class="n">out</span><span class="p">[</span><span class="n">ds_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">values</span></div>
+
+<div class="viewcode-block" id="ReedsTimeslices.compute_stats"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_timeslices.html#reVX.reeds.reeds_timeslices.ReedsTimeslices.compute_stats">[docs]</a>    <span class="k">def</span> <span class="nf">compute_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">legacy_format</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the mean and stdev CF for each timeslice for each &quot;region&quot;</span>
+<span class="sd">        Compute the correlation coefficients between &quot;regions&quot; from</span>
+<span class="sd">        timeslice means</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        max_workers : int</span>
+<span class="sd">            Number of workers to use for parallel computation of means</span>
+<span class="sd">            and stdevs when using cf profiles.</span>
+<span class="sd">            1 means run in serial</span>
+<span class="sd">            None means use all available CPUs</span>
+<span class="sd">        legacy_format : bool</span>
+<span class="sd">            Format outputs into ReEDS legacy format</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        stats : pandas.DataFrame</span>
+<span class="sd">            A single DataFrame containing means and stdevs (sigma)</span>
+<span class="sd">        corr_coeffs : pandas.DataFrame | dict | NoneType</span>
+<span class="sd">            In legacy format: a DataFrame of correlation coefficients for</span>
+<span class="sd">            all pairs of &quot;regions&quot; for each timeslice, else:</span>
+<span class="sd">            a dictionary of correlation matrices for each timeslice.</span>
+<span class="sd">            None for CF profiles due to memory constraints</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_profiles</span><span class="p">:</span>
+            <span class="n">means</span><span class="p">,</span> <span class="n">stdevs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_profile_stats</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span>
+                                                   <span class="bp">self</span><span class="o">.</span><span class="n">_timeslice_groups</span><span class="p">,</span>
+                                                   <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span>
+            <span class="n">coeffs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">means</span><span class="p">,</span> <span class="n">stdevs</span><span class="p">,</span> <span class="n">coeffs</span> <span class="o">=</span> \
+                <span class="bp">self</span><span class="o">.</span><span class="n">_rep_profile_stats</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span>
+                                        <span class="bp">self</span><span class="o">.</span><span class="n">_timeslice_groups</span><span class="p">,</span>
+                                        <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span>
+        <span class="n">stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stats_to_df</span><span class="p">(</span><span class="n">means</span><span class="p">,</span> <span class="n">stdevs</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Finished timeslice stats computation.&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">legacy_format</span><span class="p">:</span>
+            <span class="n">coeffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coeffs_to_legacy_format</span><span class="p">(</span><span class="n">coeffs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stats</span><span class="p">,</span> <span class="n">coeffs</span></div>
+
+<div class="viewcode-block" id="ReedsTimeslices.run"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_timeslices.html#reVX.reeds.reeds_timeslices.ReedsTimeslices.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">timeslice_map</span><span class="p">,</span> <span class="n">rev_table</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">reg_cols</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">),</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">legacy_format</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute means and standar deviations for each region and timeslice</span>
+<span class="sd">        from given representative profiles</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        profiles : str</span>
+<span class="sd">            Path to .h5 file containing profiles (representative or cf)</span>
+<span class="sd">        timeslice_map : str | pandas.DataFrame</span>
+<span class="sd">            Path to timeslice mapping file or DataFrame with mapping</span>
+<span class="sd">        rev_table : str | pandas.DataFrame</span>
+<span class="sd">            reV supply curve or aggregation table, or path to file containing</span>
+<span class="sd">            table. Only required if timeslice calc is based on all cf_profiles</span>
+<span class="sd">            instead of representative profiles.</span>
+<span class="sd">        reg_cols : tuple</span>
+<span class="sd">            Label(s) for a categorical region column(s) to create timeslices</span>
+<span class="sd">            for</span>
+<span class="sd">        max_workers : int</span>
+<span class="sd">            Number of workers to use for parallel computation of means</span>
+<span class="sd">            and stdevs when using cf profiles.</span>
+<span class="sd">            1 means run in serial</span>
+<span class="sd">            None means use all available CPUs</span>
+<span class="sd">        legacy_format : bool</span>
+<span class="sd">            Format outputs into ReEDS legacy format</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        stats : pandas.DataFrame</span>
+<span class="sd">            A single DataFrame containing means and stdevs (sigma)</span>
+<span class="sd">        corr_coeffs : pandas.DataFrame | dict | NoneType</span>
+<span class="sd">            In legacy format: a DataFrame of correlation coefficients for</span>
+<span class="sd">            all pairs of &quot;regions&quot; for each timeslice, else:</span>
+<span class="sd">            a dictionary of correlation matrices for each timeslice.</span>
+<span class="sd">            None for CF profiles due to memory constraints</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">timeslice_map</span><span class="p">,</span> <span class="n">rev_table</span><span class="o">=</span><span class="n">rev_table</span><span class="p">,</span>
+                 <span class="n">reg_cols</span><span class="o">=</span><span class="n">reg_cols</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">,</span> <span class="n">coeffs</span> <span class="o">=</span> <span class="n">ts</span><span class="o">.</span><span class="n">compute_stats</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                         <span class="n">legacy_format</span><span class="o">=</span><span class="n">legacy_format</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stats</span><span class="p">,</span> <span class="n">coeffs</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,1463 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.wind_setbacks.wind_setbacks &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.wind_setbacks.wind_setbacks</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.wind_setbacks.wind_setbacks</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Compute wind setbacks exclusions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractstaticmethod</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">as_completed</span>
+<span class="kn">import</span> <span class="nn">fiona</span>
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">rasterio</span> <span class="kn">import</span> <span class="n">features</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">shape</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">from</span> <span class="nn">rex.utilities</span> <span class="kn">import</span> <span class="n">parse_table</span><span class="p">,</span> <span class="n">SpawnProcessPool</span>
+<span class="kn">from</span> <span class="nn">reV.handlers.exclusions</span> <span class="kn">import</span> <span class="n">ExclusionLayers</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.exclusions_converter</span> <span class="kn">import</span> <span class="n">ExclusionsConverter</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BaseWindSetbacks"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks">[docs]</a><span class="k">class</span> <span class="nc">BaseWindSetbacks</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create exclusions layers for wind setbacks</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">MULTIPLIERS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;high&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;moderate&#39;</span><span class="p">:</span> <span class="mf">1.1</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">multiplier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers, will also be the</span>
+<span class="sd">            location of any new setback layers</span>
+<span class="sd">        hub_height : float | int</span>
+<span class="sd">            Turbine hub height (m), used along with rotor diameter to compute</span>
+<span class="sd">            blade tip height which is used to determine setback distance</span>
+<span class="sd">        rotor_diameter : float | int</span>
+<span class="sd">            Turbine rotor diameter (m), used along with hub height to compute</span>
+<span class="sd">            blade tip height which is used to determine setback distance</span>
+<span class="sd">        regs_fpath : str | None, optional</span>
+<span class="sd">            Path to wind regulations .csv file, if None create generic</span>
+<span class="sd">            setbacks using max-tip height * &quot;multiplier&quot;, by default None</span>
+<span class="sd">        multiplier : int | float | str | None, optional</span>
+<span class="sd">            setback multiplier to use if wind regulations are not supplied,</span>
+<span class="sd">            if str, must a key in {&#39;high&#39;: 3, &#39;moderate&#39;: 1.1}, if supplied</span>
+<span class="sd">            along with regs_fpath, will be ignored, multiplied with</span>
+<span class="sd">            max-tip height, by default None</span>
+<span class="sd">        hsds : bool, optional</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS, by default False</span>
+<span class="sd">        chunks : tuple, optional</span>
+<span class="sd">            Chunk size to use for setback layers, if None use default chunk</span>
+<span class="sd">            size in excl_h5, by default (128, 128)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span> <span class="o">=</span> <span class="n">excl_h5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hub_height</span> <span class="o">=</span> <span class="n">hub_height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rotor_diameter</span> <span class="o">=</span> <span class="n">rotor_diameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hsds</span> <span class="o">=</span> <span class="n">hsds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profile</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_excl_properties</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">chunks</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_regs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preflight_check</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">hub_height</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turbine hub-height in meters</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hub_height</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rotor_diameter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turbine rotor diameter in meters</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rotor_diameter</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tip_height</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turbine blade tip height in meters</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hub_height</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rotor_diameter</span> <span class="o">/</span> <span class="mi">2</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">generic_setback</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Default setback of turbine tip height * multiplier, used for global</span>
+<span class="sd">        setbacks</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">setback</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">setback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tip_height</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multi</span>
+
+        <span class="k">return</span> <span class="n">setback</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">wind_regs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Wind Regulations table</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        geopands.GeoDataFrame | None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">multiplier</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generic setback multiplier</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int | float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_multi</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arr_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Rasterize array shape</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">profile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Geotiff profile</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profile</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">crs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Coordinate reference system</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_excl_properties</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">chunks</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse exclusions shape, chunk size, and profile from excl_h5 file</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers, will also be the</span>
+<span class="sd">            location of any new setback layers</span>
+<span class="sd">        chunks : tuple | None</span>
+<span class="sd">            Chunk size of exclusions datasets</span>
+<span class="sd">        hsds : bool, optional</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS, by default False</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        shape : tuple</span>
+<span class="sd">            Shape of exclusions datasets</span>
+<span class="sd">        chunks : tuple | None</span>
+<span class="sd">            Chunk size of exclusions datasets</span>
+<span class="sd">        profile : str</span>
+<span class="sd">            GeoTiff profile for exclusions datasets</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ExclusionLayers</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">profile</span>
+            <span class="k">if</span> <span class="n">chunks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">chunks</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">chunks</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">)</span> <span class="o">+</span> <span class="n">chunks</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">)</span> <span class="o">+</span> <span class="n">shape</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Exclusions properties:</span><span class="se">\n</span><span class="s1">&#39;</span>
+                     <span class="s1">&#39;shape : </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                     <span class="s1">&#39;chunks : </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                     <span class="s1">&#39;profile : </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">chunks</span><span class="p">,</span> <span class="n">profile</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">shape</span><span class="p">,</span> <span class="n">chunks</span><span class="p">,</span> <span class="n">profile</span>
+
+    <span class="nd">@abstractstaticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse wind regulations</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regs_fpath : str</span>
+<span class="sd">            Path to wind regulations .csv file</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        regs : pandas.DataFrame</span>
+<span class="sd">            Wind regulations table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">parse_table</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;FIPS&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">regs</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Wind regulations does not have county FIPS! Please add a &#39;</span>
+                   <span class="s1">&#39;&quot;FIPS&quot; columns with the unique county FIPS values.&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">regs</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_county_regs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse wind regulations, combine with county geometries from</span>
+<span class="sd">        exclusions .h5 file. The county geometries are intersected with</span>
+<span class="sd">        features to compute county specific setbacks.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regs_fpath : str</span>
+<span class="sd">            Path to wind regulations .csv file, must have a county FIPS column</span>
+<span class="sd">            to match with &quot;cnty_fips&quot; exclusion layer.</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers, will also be the</span>
+<span class="sd">            location of any new setback layers, one layer must be &#39;cnty_fips&#39;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        regs: geopandas.GeoDataFrame</span>
+<span class="sd">            GeoDataFrame with county level wind setback regulations merged</span>
+<span class="sd">            with county geometries, use for intersecting with setback features</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">ExclusionLayers</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">fips</span> <span class="o">=</span> <span class="n">exc</span><span class="p">[</span><span class="s1">&#39;cnty_fips&#39;</span><span class="p">]</span>
+            <span class="n">transform</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">]</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">crs</span>
+
+        <span class="n">fips_df</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">,</span> <span class="s1">&#39;FIPS&#39;</span><span class="p">],</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">shapes</span><span class="p">(</span><span class="n">fips</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">)):</span>
+            <span class="n">fips_df</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">shape</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">v</span>
+
+        <span class="n">fips_check</span> <span class="o">=</span> <span class="n">regs</span><span class="p">[</span><span class="s1">&#39;FIPS&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">fips_df</span><span class="p">[</span><span class="s1">&#39;FIPS&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fips_check</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;The following county FIPS were requested in by the wind &#39;</span>
+                   <span class="s1">&#39;regulations but were not availble in the Exclusions &#39;</span>
+                   <span class="s1">&#39;&quot;cnty_fips&quot; layer:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">regs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="n">fips_check</span><span class="p">,</span> <span class="s1">&#39;FIPS&#39;</span><span class="p">]))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">fips_df</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">regs</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;FIPS&#39;</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Wind regulations were provided for </span><span class="si">{}</span><span class="s1"> counties&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">regs</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">regs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_setback</span><span class="p">(</span><span class="n">cnty_regs</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the setback distance in meters from the county regulations,</span>
+<span class="sd">        turbine tip height or rotor diameter</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cnty_regs : pandas.Series</span>
+<span class="sd">            Pandas Series with wind regulations for a single county / feature</span>
+<span class="sd">            type</span>
+<span class="sd">        hub_height : int | float</span>
+<span class="sd">            Turbine hub-height, used to compute setbacks from hub-height</span>
+<span class="sd">            multiplier regulations and to compute tip-height for tip-height</span>
+<span class="sd">            multiplier regulations</span>
+<span class="sd">        rotor_diameter : int | float</span>
+<span class="sd">            Turbine rotor diameter, used to compute setbacks from</span>
+<span class="sd">            rotor-diameter multiplier regulations</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setback : float | None</span>
+<span class="sd">            setback distance in meters, None if the setback &quot;Value Type&quot;</span>
+<span class="sd">            was not recognized</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tip_height</span> <span class="o">=</span> <span class="n">hub_height</span> <span class="o">+</span> <span class="n">rotor_diameter</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="n">setback_type</span> <span class="o">=</span> <span class="n">cnty_regs</span><span class="p">[</span><span class="s1">&#39;Value Type&#39;</span><span class="p">]</span>
+        <span class="n">setback</span> <span class="o">=</span> <span class="n">cnty_regs</span><span class="p">[</span><span class="s1">&#39;Value&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">setback_type</span> <span class="o">==</span> <span class="s1">&#39;Max-tip Height Multiplier&#39;</span><span class="p">:</span>
+            <span class="n">setback</span> <span class="o">*=</span> <span class="n">tip_height</span>
+        <span class="k">elif</span> <span class="n">setback_type</span> <span class="o">==</span> <span class="s1">&#39;Rotor-Diameter Multiplier&#39;</span><span class="p">:</span>
+            <span class="n">setback</span> <span class="o">*=</span> <span class="n">rotor_diameter</span>
+        <span class="k">elif</span> <span class="n">setback_type</span> <span class="o">==</span> <span class="s1">&#39;Hub-height Multiplier&#39;</span><span class="p">:</span>
+            <span class="n">setback</span> <span class="o">*=</span> <span class="n">hub_height</span>
+        <span class="k">elif</span> <span class="n">setback_type</span> <span class="o">!=</span> <span class="s1">&#39;Meters&#39;</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Cannot create setback for </span><span class="si">{}</span><span class="s1">, expecting &#39;</span>
+                   <span class="s1">&#39;&quot;Max-tip Height Multiplier&quot;, &#39;</span>
+                   <span class="s1">&#39;&quot;Rotor-Diameter Multiplier&quot;, &#39;</span>
+                   <span class="s1">&#39;&quot;Hub-height Multiplier&quot;, or &#39;</span>
+                   <span class="s1">&#39;&quot;Meters&quot;, but got </span><span class="si">{}</span><span class="s1">&#39;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cnty_regs</span><span class="p">[</span><span class="s1">&#39;County&#39;</span><span class="p">],</span> <span class="n">setback_type</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="n">setback</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">setback</span>
+
+    <span class="nd">@abstractstaticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_features</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">,</span> <span class="n">crs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method to parse features</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features_fpath : str</span>
+<span class="sd">            Path to file containing features to setback from</span>
+<span class="sd">        crs : str</span>
+<span class="sd">            Coordinate reference system to convert structures geometries into</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        features : geopandas.GeoDataFrame</span>
+<span class="sd">            Geometries of features to setback from in exclusion coordinate</span>
+<span class="sd">            system</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_compute_local_setbacks</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">cnty</span><span class="p">,</span> <span class="n">setback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute local features setbacks</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features : geopandas.GeoDataFrame</span>
+<span class="sd">            Features to setback from</span>
+<span class="sd">        cnty : geopandas.GeoDataFrame</span>
+<span class="sd">            Wind regulations for a single county</span>
+<span class="sd">        setback : int</span>
+<span class="sd">            Setback distance in meters</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setbacks : list</span>
+<span class="sd">            List of setback geometries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;- Computing setbacks for county FIPS </span><span class="si">{}</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cnty</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;FIPS&#39;</span><span class="p">]))</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">centroid</span><span class="o">.</span><span class="n">within</span><span class="p">(</span><span class="n">cnty</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+        <span class="n">tmp</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">setback</span><span class="p">)</span>
+
+        <span class="n">setbacks</span> <span class="o">=</span> <span class="p">[(</span><span class="n">geom</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="n">setbacks</span>
+
+    <span class="k">def</span> <span class="nf">_preflight_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run preflight checks on WindSetBack inputs:</span>
+<span class="sd">        1) Ensure either a wind regulations .csv is provided, or</span>
+<span class="sd">           a setback multiplier</span>
+<span class="sd">        2) Ensure wind regulations has county FIPS, map regulations to county</span>
+<span class="sd">           geometries from exclusions .h5 file</span>
+<span class="sd">        3) Ensure multiplier is a valid entry, either a float or one of</span>
+<span class="sd">           {&#39;high&#39;: 3, &#39;moderate&#39;: 1.1}</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regs_fpath : str | None</span>
+<span class="sd">            Path to wind regulations .csv file, if None create global</span>
+<span class="sd">            setbacks</span>
+<span class="sd">        multiplier : int | float | str | None</span>
+<span class="sd">            setback multiplier to use if wind regulations are not supplied,</span>
+<span class="sd">            if str, must one of {&#39;high&#39;: 3, &#39;moderate&#39;: 1.1}</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        regs : geopands.GeoDataFrame | None</span>
+<span class="sd">            Wind Regulations</span>
+<span class="sd">        Multiplier : float | None</span>
+<span class="sd">            Generic setbacks multiplier</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">regs_fpath</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">multiplier</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;A wind regulation .csv file was also provided and &#39;</span>
+                       <span class="s1">&#39;will be used to determine setback multipliers!&#39;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+            <span class="n">multiplier</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">regs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_county_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Computing setbacks using regulations provided in: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">multiplier</span><span class="p">:</span>
+            <span class="n">regs</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">multiplier</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">multiplier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">MULTIPLIERS</span><span class="p">[</span><span class="n">multiplier</span><span class="p">]</span>
+
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Computing setbacks using generic Max-tip Height &#39;</span>
+                         <span class="s1">&#39;Multiplier of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">multiplier</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Computing setbacks requires either a wind regulations &#39;</span>
+                   <span class="s1">&#39;.csv file or a generic multiplier!&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">regs</span><span class="p">,</span> <span class="n">multiplier</span>
+
+    <span class="k">def</span> <span class="nf">_check_regs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features_fpath</span><span class="p">):</span>  <span class="c1"># pylint: disable=unused-argument</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduce regs to state corresponding to features_fpath if needed</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features_fpath : str</span>
+<span class="sd">            Path to shape file with features to compute setbacks from</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        regs : geopands.GeoDataFrame | None</span>
+<span class="sd">            Wind Regulations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_regs</span>
+
+    <span class="k">def</span> <span class="nf">_rasterize_setbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert setbacks geometries into exclusions array</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        setbacks : list</span>
+<span class="sd">            List of (geometry, 1) pairs to rasterize. Each geometry is a</span>
+<span class="sd">            feature buffered by the desired setback distance in meters</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        arr : ndarray</span>
+<span class="sd">            Rasterized array of setbacks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Generating setbacks exclusion array of shape </span><span class="si">{}</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arr_shape</span><span class="p">))</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">rasterize</span><span class="p">(</span><span class="n">shapes</span><span class="o">=</span><span class="n">shapes</span><span class="p">,</span>
+                                 <span class="n">out_shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">arr_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+                                 <span class="n">fill</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                 <span class="n">transform</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span>
+                                 <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;uint8&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">arr</span>
+
+    <span class="k">def</span> <span class="nf">_write_setbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">setbacks</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write setbacks to geotiff, replace if requested</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file to save setbacks too</span>
+<span class="sd">        setbacks : ndarray</span>
+<span class="sd">            Rasterized array of setbacks</span>
+<span class="sd">        replace : bool, optional</span>
+<span class="sd">            Flag to replace local layer data with arr if layer already</span>
+<span class="sd">            exists in the exlcusion .h5 file, by default False</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">geotiff</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">replace</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> already exists. To replace it set &quot;replace=True&quot;&#39;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> already exists and will be replaced!&#39;</span>
+                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">ExclusionsConverter</span><span class="o">.</span><span class="n">_write_geotiff</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="n">setbacks</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BaseWindSetbacks.compute_local_setbacks"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_local_setbacks">[docs]</a>    <span class="k">def</span> <span class="nf">compute_local_setbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features_fpath</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute local setbacks for all counties either in serial or parallel.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features_fpath : str</span>
+<span class="sd">            Path to shape file with features to compute setbacks from</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for setback computation, if 1 run in</span>
+<span class="sd">            serial, if &gt; 1 run in parallel with that many workers, if None</span>
+<span class="sd">            run in parallel on all available cores, by default None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setbacks : ndarray</span>
+<span class="sd">            Raster array of setbacks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">setbacks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_features</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="n">wind_regs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_regs</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_workers</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing local setbacks in parallel using </span><span class="si">{}</span><span class="s1"> &#39;</span>
+                        <span class="s1">&#39;workers&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">max_workers</span><span class="p">))</span>
+            <span class="n">loggers</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">]</span>
+            <span class="k">with</span> <span class="n">SpawnProcessPool</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                  <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">)</span> <span class="k">as</span> <span class="n">exe</span><span class="p">:</span>
+                <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">wind_regs</span><span class="p">)):</span>
+                    <span class="n">cnty</span> <span class="o">=</span> <span class="n">wind_regs</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="n">i</span><span class="p">]]</span>
+                    <span class="n">setback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_setback</span><span class="p">(</span><span class="n">cnty</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">hub_height</span><span class="p">,</span>
+                                                <span class="bp">self</span><span class="o">.</span><span class="n">rotor_diameter</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">setback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">idx</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">sindex</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">cnty</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">)</span>
+                        <span class="n">cnty_feats</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">idx</span><span class="p">)]</span>
+                        <span class="n">future</span> <span class="o">=</span> <span class="n">exe</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_local_setbacks</span><span class="p">,</span>
+                                            <span class="n">cnty_feats</span><span class="p">,</span> <span class="n">cnty</span><span class="p">,</span> <span class="n">setback</span><span class="p">)</span>
+                        <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">future</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">)):</span>
+                    <span class="n">setbacks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">())</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Computed setbacks for </span><span class="si">{}</span><span class="s1"> of </span><span class="si">{}</span><span class="s1"> states&#39;</span>
+                                 <span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wind_regs</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing local setbacks in serial&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">wind_regs</span><span class="p">)):</span>
+                <span class="n">cnty</span> <span class="o">=</span> <span class="n">wind_regs</span><span class="o">.</span><span class="n">iloc</span><span class="p">[[</span><span class="n">i</span><span class="p">]]</span>
+                <span class="n">setback</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_setback</span><span class="p">(</span><span class="n">cnty</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">hub_height</span><span class="p">,</span>
+                                            <span class="bp">self</span><span class="o">.</span><span class="n">rotor_diameter</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">setback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">sindex</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">cnty</span><span class="o">.</span><span class="n">total_bounds</span><span class="p">)</span>
+                    <span class="n">cnty_feats</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">idx</span><span class="p">)]</span>
+                    <span class="n">setbacks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_compute_local_setbacks</span><span class="p">(</span><span class="n">cnty_feats</span><span class="p">,</span>
+                                                                 <span class="n">cnty</span><span class="p">,</span>
+                                                                 <span class="n">setback</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Computed setbacks for </span><span class="si">{}</span><span class="s1"> of </span><span class="si">{}</span><span class="s1"> states&#39;</span>
+                                 <span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">wind_regs</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rasterize_setbacks</span><span class="p">(</span><span class="n">setbacks</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseWindSetbacks.compute_generic_setbacks"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_generic_setbacks">[docs]</a>    <span class="k">def</span> <span class="nf">compute_generic_setbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute generic setbacks.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features_fpath : str</span>
+<span class="sd">            Path to shape file with features to compute setbacks from</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setbacks : ndarray</span>
+<span class="sd">            Raster array of setbacks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing generic setbacks&#39;</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_features</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+        <span class="n">features</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">generic_setback</span><span class="p">)</span>
+        <span class="n">setbacks</span> <span class="o">=</span> <span class="p">[(</span><span class="n">geom</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">features</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rasterize_setbacks</span><span class="p">(</span><span class="n">setbacks</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseWindSetbacks.compute_setbacks"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.BaseWindSetbacks.compute_setbacks">[docs]</a>    <span class="k">def</span> <span class="nf">compute_setbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features_fpath</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">geotiff</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute setbacks for all states either in serial or parallel.</span>
+<span class="sd">        Existing setbacks are computed if a wind regulations file was supplied</span>
+<span class="sd">        during class initialization, otherwise generic setbacks are computed</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features_fpath : str</span>
+<span class="sd">            Path to shape file with features to compute setbacks from</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for setback computation, if 1 run in</span>
+<span class="sd">            serial, if &gt; 1 run in parallel with that many workers, if None</span>
+<span class="sd">            run in parallel on all available cores, by default None</span>
+<span class="sd">        geotiff : str, optional</span>
+<span class="sd">            Path to save geotiff containing rasterized setbacks,</span>
+<span class="sd">            by default None</span>
+<span class="sd">        replace : bool, optional</span>
+<span class="sd">            Flag to replace geotiff if it already exists, by default False</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setbacks : ndarray</span>
+<span class="sd">            Raster array of setbacks</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">setbacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_local_setbacks</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">,</span>
+                                                   <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">setbacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_generic_setbacks</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">geotiff</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Writing setbacks to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_setbacks</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">setbacks</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">setbacks</span></div></div>
+
+
+<div class="viewcode-block" id="StructureWindSetbacks"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.StructureWindSetbacks">[docs]</a><span class="k">class</span> <span class="nc">StructureWindSetbacks</span><span class="p">(</span><span class="n">BaseWindSetbacks</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Structure Wind setbacks</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse wind regulations, reduce table to just structures</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regs_fpath : str</span>
+<span class="sd">            Path to wind regulations .csv file</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        regs : pandas.DataFrame</span>
+<span class="sd">            Wind regulations table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">BaseWindSetbacks</span><span class="o">.</span><span class="n">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">((</span><span class="n">regs</span><span class="p">[</span><span class="s1">&#39;Feature Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Structures&#39;</span><span class="p">)</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">regs</span><span class="p">[</span><span class="s1">&#39;Comment&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;Occupied Community Buildings&#39;</span><span class="p">))</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">regs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">regs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_split_state_name</span><span class="p">(</span><span class="n">state_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Split state name at capitals to map .geojson files to regulations</span>
+<span class="sd">        state names</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        state_name : str</span>
+<span class="sd">            State name from geojson files paths with out spaces</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            State names with spaces added between Capitals (names) to match</span>
+<span class="sd">            wind regulations state names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state_name</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">a</span> <span class="k">for</span> <span class="n">a</span>
+                              <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;([A-Z][a-z]*)&#39;</span><span class="p">,</span> <span class="n">state_name</span><span class="p">)</span>
+                              <span class="k">if</span> <span class="n">a</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">state_name</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_features</span><span class="p">(</span><span class="n">structure_fpath</span><span class="p">,</span> <span class="n">crs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load structures from geojson, convert to exclusions coordinate system</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        structure_fpath : str</span>
+<span class="sd">            Path to Microsoft .geojson of structures in a given state</span>
+<span class="sd">        crs : str</span>
+<span class="sd">            Coordinate reference system to convert structures geometries into</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        structures : geopandas.GeoDataFrame</span>
+<span class="sd">            Geometries for structures in geojson, in exclusion coordinate</span>
+<span class="sd">            system</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">structures</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">structure_fpath</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">structures</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_feature_paths</span><span class="p">(</span><span class="n">structures_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find all structures .geojson files in structures dir</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        structure_dir : str</span>
+<span class="sd">            Path to directory containing microsoft strucutes *.geojsons. Used</span>
+<span class="sd">            to identify structures to build setbacks from. Files should be</span>
+<span class="sd">            by state</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        structure_paths : list</span>
+<span class="sd">            List of file paths to all structures .geojson files in</span>
+<span class="sd">            structures_dir</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">structure_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">structures_dir</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.geojson&#39;</span><span class="p">):</span>
+                <span class="n">structure_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">structures_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">structure_paths</span>
+
+    <span class="k">def</span> <span class="nf">_check_regs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduce regs to state corresponding to features_fpath if needed</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features_fpath : str</span>
+<span class="sd">            Path to shape file with features to compute setbacks from</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        wind_regs : geopands.GeoDataFrame | None</span>
+<span class="sd">            Wind Regulations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_state_name</span><span class="p">(</span><span class="n">state_name</span><span class="p">)</span>
+        <span class="n">wind_regs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_regs</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">wind_regs</span><span class="p">[</span><span class="s2">&quot;State&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">state</span>
+
+        <span class="k">return</span> <span class="n">wind_regs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StructureWindSetbacks.run"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.StructureWindSetbacks.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">structures_path</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span>
+            <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute state&#39;s structural setbacks and write them to a geotiff.</span>
+<span class="sd">        If a wind regulations file is given compute local setbacks, otherwise</span>
+<span class="sd">        compute generic setbacks using the given multiplier and the turbine</span>
+<span class="sd">        tip-height.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers, will also be the</span>
+<span class="sd">            location of any new setback layers</span>
+<span class="sd">        structure_path : str</span>
+<span class="sd">            Path to structures geojson for a single state, or directory</span>
+<span class="sd">            containing geojsons for all states.</span>
+<span class="sd">        out_dir : str</span>
+<span class="sd">            Directory to save setbacks geotiff(s) into</span>
+<span class="sd">        hub_height : float | int</span>
+<span class="sd">            Turbine hub height (m), used along with rotor diameter to compute</span>
+<span class="sd">            blade tip height which is used to determine setback distance</span>
+<span class="sd">        rotor_diameter : float | int</span>
+<span class="sd">            Turbine rotor diameter (m), used along with hub height to compute</span>
+<span class="sd">            blade tip height which is used to determine setback distance</span>
+<span class="sd">        regs_fpath : str | None, optional</span>
+<span class="sd">            Path to wind regulations .csv file, if None create generic</span>
+<span class="sd">            setbacks using max-tip height * &quot;multiplier&quot;, by default None</span>
+<span class="sd">        multiplier : int | float | str | None, optional</span>
+<span class="sd">            setback multiplier to use if wind regulations are not supplied,</span>
+<span class="sd">            if str, must a key in {&#39;high&#39;: 3, &#39;moderate&#39;: 1.1}, if supplied</span>
+<span class="sd">            along with regs_fpath, will be ignored, multiplied with</span>
+<span class="sd">            max-tip height, by default None</span>
+<span class="sd">        chunks : tuple, optional</span>
+<span class="sd">            Chunk size to use for setback layers, if None use default chunk</span>
+<span class="sd">            size in excl_h5, by default (128, 128)</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for setback computation, if 1 run in</span>
+<span class="sd">            serial, if &gt; 1 run in parallel with that many workers, if None</span>
+<span class="sd">            run in parallel on all available cores, by default None</span>
+<span class="sd">        replace : bool, optional</span>
+<span class="sd">            Flag to replace geotiff if it already exists, by default False</span>
+<span class="sd">        hsds : bool, optional</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS, by default False</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">setbacks</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span>
+                       <span class="n">regs_fpath</span><span class="o">=</span><span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span>
+                       <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">structures_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.geojson&#39;</span><span class="p">):</span>
+            <span class="n">structures_path</span> <span class="o">=</span> <span class="p">[</span><span class="n">structures_path</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">structures_path</span> <span class="o">=</span> <span class="n">setbacks</span><span class="o">.</span><span class="n">_get_feature_paths</span><span class="p">(</span><span class="n">structures_path</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">fpath</span> <span class="ow">in</span> <span class="n">structures_path</span><span class="p">:</span>
+            <span class="n">geotiff</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.geojson&#39;</span><span class="p">,</span> <span class="s1">&#39;.geotiff&#39;</span><span class="p">)</span>
+            <span class="n">geotiff</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing setbacks from structures in </span><span class="si">{}</span><span class="s2"> and saving &quot;</span>
+                        <span class="s2">&quot;to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">))</span>
+            <span class="n">setbacks</span><span class="o">.</span><span class="n">compute_setbacks</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="n">geotiff</span><span class="o">=</span><span class="n">geotiff</span><span class="p">,</span>
+                                      <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                      <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="RoadWindSetbacks"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.RoadWindSetbacks">[docs]</a><span class="k">class</span> <span class="nc">RoadWindSetbacks</span><span class="p">(</span><span class="n">BaseWindSetbacks</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Road Wind setbacks</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse wind regulations, reduce table to just roads</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regs_fpath : str</span>
+<span class="sd">            Path to wind regulations .csv file</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        regs : pandas.DataFrame</span>
+<span class="sd">            Wind regulations table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">BaseWindSetbacks</span><span class="o">.</span><span class="n">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">regs</span><span class="p">[</span><span class="s1">&#39;Feature Type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">([</span><span class="s1">&#39;Roads&#39;</span><span class="p">,</span> <span class="s1">&#39;Highways&#39;</span><span class="p">,</span> <span class="s1">&#39;Highways 111&#39;</span><span class="p">])</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">regs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">regs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_features</span><span class="p">(</span><span class="n">roads_fpath</span><span class="p">,</span> <span class="n">crs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load roads from gdb file, convert to exclusions coordinate system</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        roads_fpath : str</span>
+<span class="sd">            Path to here streets gdb file for given state</span>
+<span class="sd">        crs : str</span>
+<span class="sd">            Coordinate reference system to convert structures geometries into</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        roads : geopandas.GeoDataFrame.sindex</span>
+<span class="sd">            Geometries for roads in gdb file, in exclusion coordinate</span>
+<span class="sd">            system</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lyr</span> <span class="o">=</span> <span class="n">fiona</span><span class="o">.</span><span class="n">listlayers</span><span class="p">(</span><span class="n">roads_fpath</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">roads</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">roads_fpath</span><span class="p">,</span> <span class="n">driver</span><span class="o">=</span><span class="s1">&#39;FileGDB&#39;</span><span class="p">,</span> <span class="n">layer</span><span class="o">=</span><span class="n">lyr</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">roads</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_feature_paths</span><span class="p">(</span><span class="n">roads_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find all roads gdb files in roads_dir</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        roads_dir : str</span>
+<span class="sd">            Path to directory containing here streets *.gdb files. Used</span>
+<span class="sd">            to identify roads to build setbacks from. Files should be</span>
+<span class="sd">            by state</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        roads_paths : list</span>
+<span class="sd">            List of file paths to all roads .gdp files in roads_dir</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">roads_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">roads_dir</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.gdb&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;Streets_USA&#39;</span><span class="p">):</span>
+                <span class="n">roads_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">roads_dir</span><span class="p">,</span> <span class="n">file</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">roads_paths</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_compute_local_setbacks</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">cnty</span><span class="p">,</span> <span class="n">setback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute local road setbacks</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features : geopandas.GeoDataFrame</span>
+<span class="sd">            Features to setback from</span>
+<span class="sd">        cnty : geopandas.GeoDataFrame</span>
+<span class="sd">            Wind regulations for a single county</span>
+<span class="sd">        setback : int</span>
+<span class="sd">            Setback distance in meters</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setbacks : list</span>
+<span class="sd">            List of setback geometries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;- Computing setbacks for county FIPS </span><span class="si">{}</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cnty</span><span class="p">[</span><span class="s1">&#39;FIPS&#39;</span><span class="p">]))</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">features</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">cnty</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">])</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">geometry</span><span class="o">=</span><span class="n">tmp</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="o">~</span><span class="n">tmp</span><span class="o">.</span><span class="n">is_empty</span><span class="p">]</span>
+        <span class="c1"># Buffer setback</span>
+        <span class="n">tmp</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">setback</span><span class="p">)</span>
+
+        <span class="n">setbacks</span> <span class="o">=</span> <span class="p">[(</span><span class="n">geom</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="n">setbacks</span>
+
+    <span class="k">def</span> <span class="nf">_check_regs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">features_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduce regs to state corresponding to features_fpath if needed</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features_fpath : str</span>
+<span class="sd">            Path to shape file with features to compute setbacks from</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        wind_regs : geopands.GeoDataFrame | None</span>
+<span class="sd">            Wind Regulations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">features_fpath</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">wind_regs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wind_regs</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">wind_regs</span><span class="p">[</span><span class="s1">&#39;Abbr&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">state</span>
+
+        <span class="k">return</span> <span class="n">wind_regs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RoadWindSetbacks.run"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.RoadWindSetbacks.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">roads_path</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span>
+            <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute state&#39;s road setbacks and write them to a geotiff.</span>
+<span class="sd">        If a wind regulations file is given compute local setbacks, otherwise</span>
+<span class="sd">        compute generic setbacks using the given multiplier and the turbine</span>
+<span class="sd">        tip-height.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers, will also be the</span>
+<span class="sd">            location of any new setback layers</span>
+<span class="sd">        road_path : str</span>
+<span class="sd">            Path to state here streets gdb file or directory containing</span>
+<span class="sd">            states gdb files.</span>
+<span class="sd">        out_dir : str</span>
+<span class="sd">            Directory to save setbacks geotiff(s) into</span>
+<span class="sd">        hub_height : float | int</span>
+<span class="sd">            Turbine hub height (m), used along with rotor diameter to compute</span>
+<span class="sd">            blade tip height which is used to determine setback distance</span>
+<span class="sd">        rotor_diameter : float | int</span>
+<span class="sd">            Turbine rotor diameter (m), used along with hub height to compute</span>
+<span class="sd">            blade tip height which is used to determine setback distance</span>
+<span class="sd">        regs_fpath : str | None, optional</span>
+<span class="sd">            Path to wind regulations .csv file, if None create generic</span>
+<span class="sd">            setbacks using max-tip height * &quot;multiplier&quot;, by default None</span>
+<span class="sd">        multiplier : int | float | str | None, optional</span>
+<span class="sd">            setback multiplier to use if wind regulations are not supplied,</span>
+<span class="sd">            if str, must a key in {&#39;high&#39;: 3, &#39;moderate&#39;: 1.1}, if supplied</span>
+<span class="sd">            along with regs_fpath, will be ignored, multiplied with</span>
+<span class="sd">            max-tip height, by default None</span>
+<span class="sd">        chunks : tuple, optional</span>
+<span class="sd">            Chunk size to use for setback layers, if None use default chunk</span>
+<span class="sd">            size in excl_h5, by default (128, 128)</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for setback computation, if 1 run in</span>
+<span class="sd">            serial, if &gt; 1 run in parallel with that many workers, if None</span>
+<span class="sd">            run in parallel on all available cores, by default None</span>
+<span class="sd">        replace : bool, optional</span>
+<span class="sd">            Flag to replace geotiff if it already exists, by default False</span>
+<span class="sd">        hsds : bool, optional</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS, by default False</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">setbacks</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span>
+                       <span class="n">regs_fpath</span><span class="o">=</span><span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span>
+                       <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">roads_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.gdb&#39;</span><span class="p">):</span>
+            <span class="n">roads_path</span> <span class="o">=</span> <span class="p">[</span><span class="n">roads_path</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">roads_path</span> <span class="o">=</span> <span class="n">setbacks</span><span class="o">.</span><span class="n">_get_feature_paths</span><span class="p">(</span><span class="n">roads_path</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">fpath</span> <span class="ow">in</span> <span class="n">roads_path</span><span class="p">:</span>
+            <span class="n">geotiff</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.gdb&#39;</span><span class="p">,</span> <span class="s1">&#39;.geotiff&#39;</span><span class="p">)</span>
+            <span class="n">geotiff</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Computing setbacks from roads in </span><span class="si">{}</span><span class="s2"> and saving &quot;</span>
+                        <span class="s2">&quot;to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">))</span>
+            <span class="n">setbacks</span><span class="o">.</span><span class="n">compute_setbacks</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="n">geotiff</span><span class="o">=</span><span class="n">geotiff</span><span class="p">,</span>
+                                      <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                      <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="TransmissionWindSetbacks"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks">[docs]</a><span class="k">class</span> <span class="nc">TransmissionWindSetbacks</span><span class="p">(</span><span class="n">BaseWindSetbacks</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transmission Wind setbacks, computed against a single set of transmission</span>
+<span class="sd">    features instead of against state level features</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse wind regulations, reduce table to just transmission</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regs_fpath : str</span>
+<span class="sd">            Path to wind regulations .csv file</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        regs : pandas.DataFrame</span>
+<span class="sd">            Wind regulations table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">BaseWindSetbacks</span><span class="o">.</span><span class="n">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">regs</span><span class="p">[</span><span class="s1">&#39;Feature Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Transmission&#39;</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">regs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">regs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_features</span><span class="p">(</span><span class="n">transmission_fpath</span><span class="p">,</span> <span class="n">crs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load transmission shape file, convert to exclusions coordinate system</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        transmission_fpath : str</span>
+<span class="sd">            Path to transmission shape file</span>
+<span class="sd">        crs : str</span>
+<span class="sd">            Coordinate reference system to convert structures geometries into</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        trans : geopandas.GeoDataFrame.sindex</span>
+<span class="sd">            Geometries for transmission features, in exclusion coordinate</span>
+<span class="sd">            system</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">trans</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">transmission_fpath</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">trans</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_compute_local_setbacks</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">cnty</span><span class="p">,</span> <span class="n">setback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute local county setbacks</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        features : geopandas.GeoDataFrame</span>
+<span class="sd">            Features to setback from</span>
+<span class="sd">        cnty : geopandas.GeoDataFrame</span>
+<span class="sd">            Wind regulations for a single county</span>
+<span class="sd">        setback : int</span>
+<span class="sd">            Setback distance in meters</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setbacks : list</span>
+<span class="sd">            List of setback geometries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">cnty</span><span class="p">)</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="n">tmp</span><span class="p">[</span><span class="o">~</span><span class="n">tmp</span><span class="o">.</span><span class="n">is_empty</span><span class="p">]</span>
+
+        <span class="c1"># Buffer setback</span>
+        <span class="n">tmp</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tmp</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">setback</span><span class="p">)</span>
+
+        <span class="n">setbacks</span> <span class="o">=</span> <span class="p">[(</span><span class="n">geom</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">tmp</span><span class="p">[</span><span class="s1">&#39;geometry&#39;</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="n">setbacks</span>
+
+<div class="viewcode-block" id="TransmissionWindSetbacks.run"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.TransmissionWindSetbacks.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">features_fpath</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span>
+            <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute setbacks from given features and write them to a geotiff.</span>
+<span class="sd">        If a wind regulations file is given compute local setbacks, otherwise</span>
+<span class="sd">        compute generic setbacks using the given multiplier and the turbine</span>
+<span class="sd">        tip-height.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers, will also be the</span>
+<span class="sd">            location of any new setback layers</span>
+<span class="sd">        features_fpath : str</span>
+<span class="sd">            Path to shape file with transmission or rail features to compute</span>
+<span class="sd">            setbacks from</span>
+<span class="sd">        out_dir : str</span>
+<span class="sd">            Directory to save geotiff containing rasterized setbacks into</span>
+<span class="sd">        hub_height : float | int</span>
+<span class="sd">            Turbine hub height (m), used along with rotor diameter to compute</span>
+<span class="sd">            blade tip height which is used to determine setback distance</span>
+<span class="sd">        rotor_diameter : float | int</span>
+<span class="sd">            Turbine rotor diameter (m), used along with hub height to compute</span>
+<span class="sd">            blade tip height which is used to determine setback distance</span>
+<span class="sd">        regs_fpath : str | None, optional</span>
+<span class="sd">            Path to wind regulations .csv file, if None create generic</span>
+<span class="sd">            setbacks using max-tip height * &quot;multiplier&quot;, by default None</span>
+<span class="sd">        multiplier : int | float | str | None, optional</span>
+<span class="sd">            setback multiplier to use if wind regulations are not supplied,</span>
+<span class="sd">            if str, must a key in {&#39;high&#39;: 3, &#39;moderate&#39;: 1.1}, if supplied</span>
+<span class="sd">            along with regs_fpath, will be ignored, multiplied with</span>
+<span class="sd">            max-tip height, by default None</span>
+<span class="sd">        chunks : tuple, optional</span>
+<span class="sd">            Chunk size to use for setback layers, if None use default chunk</span>
+<span class="sd">            size in excl_h5, by default (128, 128)</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for setback computation, if 1 run in</span>
+<span class="sd">            serial, if &gt; 1 run in parallel with that many workers, if None</span>
+<span class="sd">            run in parallel on all available cores, by default None</span>
+<span class="sd">        replace : bool, optional</span>
+<span class="sd">            Flag to replace geotiff if it already exists, by default False</span>
+<span class="sd">        hsds : bool, optional</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS, by default False</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">setbacks</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span>
+                       <span class="n">regs_fpath</span><span class="o">=</span><span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span>
+                       <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">)</span>
+        <span class="n">geotiff</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.shp&#39;</span><span class="p">,</span> <span class="s1">&#39;.geotiff&#39;</span><span class="p">)</span>
+        <span class="n">geotiff</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">)</span>
+        <span class="n">setbacks</span><span class="o">.</span><span class="n">compute_setbacks</span><span class="p">(</span><span class="n">features_fpath</span><span class="p">,</span> <span class="n">geotiff</span><span class="o">=</span><span class="n">geotiff</span><span class="p">,</span>
+                                  <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                  <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="RailWindSetbacks"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks.html#reVX.wind_setbacks.wind_setbacks.RailWindSetbacks">[docs]</a><span class="k">class</span> <span class="nc">RailWindSetbacks</span><span class="p">(</span><span class="n">TransmissionWindSetbacks</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rail Wind setbacks, computed against a single set of railroad features,</span>
+<span class="sd">    instead of state level features, uses the same approach as</span>
+<span class="sd">    TransmissionWindSetbacks</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse wind regulations, reduce table to just rail</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regs_fpath : str</span>
+<span class="sd">            Path to wind regulations .csv file</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        regs : pandas.DataFrame</span>
+<span class="sd">            Wind regulations table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">BaseWindSetbacks</span><span class="o">.</span><span class="n">_parse_regs</span><span class="p">(</span><span class="n">regs_fpath</span><span class="p">)</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">regs</span><span class="p">[</span><span class="s1">&#39;Feature Type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;Railroads&#39;</span>
+        <span class="n">regs</span> <span class="o">=</span> <span class="n">regs</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">regs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_features</span><span class="p">(</span><span class="n">rail_fpath</span><span class="p">,</span> <span class="n">crs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load rail shape file, convert to exclusions coordinate system</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rail_fpath : str</span>
+<span class="sd">            Path to rail shape file</span>
+<span class="sd">        crs : str</span>
+<span class="sd">            Coordinate reference system to convert structures geometries into</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        rail : geopandas.GeoDataFrame.sindex</span>
+<span class="sd">            Geometries for rail features, in exclusion coordinate</span>
+<span class="sd">            system</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rail</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">rail_fpath</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">rail</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

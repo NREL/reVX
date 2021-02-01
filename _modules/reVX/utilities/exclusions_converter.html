@@ -1,0 +1,884 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.utilities.exclusions_converter &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.utilities.exclusions_converter</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.utilities.exclusions_converter</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Handler to convert exclusion to/from .h5 and .geotiff</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">pandas.testing</span> <span class="kn">import</span> <span class="n">assert_frame_equal</span>
+<span class="kn">import</span> <span class="nn">rasterio</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">from</span> <span class="nn">reV.handlers.exclusions</span> <span class="kn">import</span> <span class="n">ExclusionLayers</span>
+<span class="kn">from</span> <span class="nn">reV.handlers.outputs</span> <span class="kn">import</span> <span class="n">Outputs</span>
+
+<span class="kn">from</span> <span class="nn">reVX.handlers.geotiff</span> <span class="kn">import</span> <span class="n">Geotiff</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.exceptions</span> <span class="kn">import</span> <span class="n">ExclusionsCheckError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ExclusionsConverter"><a class="viewcode-back" href="../../../reVX/reVX.utilities.exclusions_converter.html#reVX.utilities.exclusions_converter.ExclusionsConverter">[docs]</a><span class="k">class</span> <span class="nc">ExclusionsConverter</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert exclusion layers between .h5 and .tif (geotiff)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing or to contain exclusion layers</span>
+<span class="sd">        hsds : bool, optional</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS, by default False</span>
+<span class="sd">        chunks : tuple, optional</span>
+<span class="sd">            Chunk size of exclusions in .h5 and Geotiffs, by default (128, 128)</span>
+<span class="sd">        replace : bool, optional</span>
+<span class="sd">            Flag to replace existing layers if needed, by default True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span> <span class="o">=</span> <span class="n">excl_h5</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hsds</span> <span class="o">=</span> <span class="n">hsds</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span> <span class="o">=</span> <span class="n">chunks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_replace</span> <span class="o">=</span> <span class="n">replace</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        layer : str</span>
+<span class="sd">            Layer to extract data for</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Geotiff profile (attributes)</span>
+<span class="sd">        values : ndarray</span>
+<span class="sd">            Geotiff data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">layer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not present in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">profile</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_layer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span>
+                                              <span class="n">hsds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hsds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">values</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        layer : str</span>
+<span class="sd">            Layer to set</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to GeoTiff to load data from</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">geotiff_to_layer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">layers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Available exclusion layers in .h5 file</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        layers : list</span>
+<span class="sd">            Available layers in .h5 file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">ExclusionLayers</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hsds</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">layers</span> <span class="o">=</span> <span class="n">exc</span><span class="o">.</span><span class="n">layers</span>
+
+        <span class="k">return</span> <span class="n">layers</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_init_h5</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize exclusions .h5 file from geotiff:</span>
+<span class="sd">        - Transfer profile, shape, and meta</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file</span>
+<span class="sd">        chunks : tuple</span>
+<span class="sd">            Chunk size of exclusions in Geotiff</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- Initializing </span><span class="si">{}</span><span class="s1"> from </span><span class="si">{}</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">Geotiff</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">:</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">profile</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">lat_lon</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- &quot;profile&quot;, &quot;meta&quot;, and &quot;shape&quot; extracted from </span><span class="si">{}</span><span class="s1">&#39;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">dst</span><span class="p">:</span>
+                <span class="n">dst</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- Default profile:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">profile</span><span class="p">))</span>
+                <span class="n">dst</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;shape&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">shape</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- Default shape:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shape</span><span class="p">))</span>
+                <span class="n">dst</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;chunks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chunks</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- Default chunks:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chunks</span><span class="p">))</span>
+
+                <span class="n">dst</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">lat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                   <span class="n">dtype</span><span class="o">=</span><span class="n">lat</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lat</span><span class="p">,</span>
+                                   <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- latitude coordiantes created&#39;</span><span class="p">)</span>
+
+                <span class="n">dst</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">lon</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                   <span class="n">dtype</span><span class="o">=</span><span class="n">lon</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">lon</span><span class="p">,</span>
+                                   <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- longitude coordiantes created&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error initilizing </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_check_geotiff</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+                       <span class="n">transform_atol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">coord_atol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compare geotiff with exclusion layer, raise any errors</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file</span>
+<span class="sd">        chunks : tuple</span>
+<span class="sd">            Chunk size of exclusions in Geotiff</span>
+<span class="sd">        transform_atol : float</span>
+<span class="sd">            Absolute tolerance parameter when comparing geotiff transform data.</span>
+<span class="sd">        coord_atol : float</span>
+<span class="sd">            Absolute tolerance parameter when comparing new un-projected</span>
+<span class="sd">            geotiff coordinates against previous coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">Geotiff</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">)</span> <span class="k">as</span> <span class="n">tif</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">ExclusionLayers</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">)</span> <span class="k">as</span> <span class="n">h5</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">tif</span><span class="o">.</span><span class="n">bands</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> contains more than one band!&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">ExclusionsCheckError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">h5</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">tif</span><span class="o">.</span><span class="n">shape</span><span class="p">):</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Shape of exclusion data in </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> do not &#39;</span>
+                             <span class="s1">&#39;match!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">ExclusionsCheckError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+                <span class="n">profile</span> <span class="o">=</span> <span class="n">h5</span><span class="o">.</span><span class="n">profile</span>
+                <span class="n">h5_crs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                              <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">))</span>
+                <span class="n">h5_crs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">h5_crs</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">])</span>
+                <span class="n">h5_crs</span> <span class="o">=</span> <span class="n">h5_crs</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+                <span class="n">tif_crs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                               <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tif</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;crs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">))</span>
+                <span class="n">tif_crs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">tif_crs</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">])</span>
+                <span class="n">tif_crs</span> <span class="o">=</span> <span class="n">tif_crs</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">,</span> <span class="n">errors</span><span class="o">=</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+                <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">h5_crs</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">tif_crs</span><span class="o">.</span><span class="n">columns</span><span class="p">))</span>
+                <span class="n">assert_frame_equal</span><span class="p">(</span><span class="n">h5_crs</span><span class="p">[</span><span class="n">cols</span><span class="p">],</span> <span class="n">tif_crs</span><span class="p">[</span><span class="n">cols</span><span class="p">],</span>
+                                   <span class="n">check_dtype</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">check_exact</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span>
+                                   <span class="n">tif</span><span class="o">.</span><span class="n">profile</span><span class="p">[</span><span class="s1">&#39;transform&#39;</span><span class="p">],</span>
+                                   <span class="n">atol</span><span class="o">=</span><span class="n">transform_atol</span><span class="p">):</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Geospatial &quot;transform&quot; in </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> do not &#39;</span>
+                             <span class="s1">&#39;match!&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">ExclusionsCheckError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+                <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span> <span class="o">=</span> <span class="n">tif</span><span class="o">.</span><span class="n">lat_lon</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">h5</span><span class="o">.</span><span class="n">latitude</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">coord_atol</span><span class="p">):</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Latitude coordinates </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> do not match to &#39;</span>
+                             <span class="s1">&#39;within </span><span class="si">{}</span><span class="s1"> degrees!&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">coord_atol</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">ExclusionsCheckError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">h5</span><span class="o">.</span><span class="n">longitude</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">coord_atol</span><span class="p">):</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Longitude coordinates </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> do not match to &#39;</span>
+                             <span class="s1">&#39;within </span><span class="si">{}</span><span class="s1"> degrees!&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">coord_atol</span><span class="p">))</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">ExclusionsCheckError</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_tiff</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">excl_h5</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+                    <span class="n">check_tiff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform_atol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">coord_atol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract exclusion layer from given geotiff, compare with excl_h5</span>
+<span class="sd">        if provided</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file</span>
+<span class="sd">        excl_h5 : str, optional</span>
+<span class="sd">            Path to .h5 file containing exclusion layers, by default None</span>
+<span class="sd">        chunks : tuple, optional</span>
+<span class="sd">            Chunk size of exclusions in Geotiff, by default (128, 128)</span>
+<span class="sd">        check_tiff : bool, optional</span>
+<span class="sd">            Flag to check tiff profile and coordinates against exclusion .h5</span>
+<span class="sd">            profile and coordinates, by default True</span>
+<span class="sd">        transform_atol : float, optional</span>
+<span class="sd">            Absolute tolerance parameter when comparing geotiff transform data,</span>
+<span class="sd">            by default 0.01</span>
+<span class="sd">        coord_atol : float, optional</span>
+<span class="sd">            Absolute tolerance parameter when comparing new un-projected</span>
+<span class="sd">            geotiff coordinates against previous coordinates, by default 0.001</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Geotiff profile (attributes)</span>
+<span class="sd">        values : ndarray</span>
+<span class="sd">            Geotiff data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">excl_h5</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">check_tiff</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_check_geotiff</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span>
+                               <span class="n">transform_atol</span><span class="o">=</span><span class="n">transform_atol</span><span class="p">,</span>
+                               <span class="n">coord_atol</span><span class="o">=</span><span class="n">coord_atol</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">Geotiff</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">)</span> <span class="k">as</span> <span class="n">tif</span><span class="p">:</span>
+            <span class="n">profile</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="n">tif</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="n">tif</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">values</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_write_layer</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+                     <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write exclusion layer to .h5 file</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers</span>
+<span class="sd">        layer : str</span>
+<span class="sd">            Exclusion layer to extract</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Geotiff profile (attributes)</span>
+<span class="sd">        values : ndarray</span>
+<span class="sd">            Geotiff data</span>
+<span class="sd">        chunks : tuple</span>
+<span class="sd">            Chunk size of dataset in .h5 file</span>
+<span class="sd">        description : str</span>
+<span class="sd">            Description of exclusion layer</span>
+<span class="sd">        scale_factor : int | float, optional</span>
+<span class="sd">            Scale factor to use to scale geotiff data when added to the .h5</span>
+<span class="sd">            file, by default None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">chunks</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">)</span> <span class="o">+</span> <span class="n">chunks</span>
+
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span>
+                <span class="n">ds</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- </span><span class="si">{}</span><span class="s1"> values replaced&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                      <span class="n">dtype</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span>
+                                      <span class="n">data</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- </span><span class="si">{}</span><span class="s1"> created and loaded&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">))</span>
+
+            <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;profile&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- Unique profile for </span><span class="si">{}</span><span class="s1"> added:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">profile</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">description</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">description</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- Description for </span><span class="si">{}</span><span class="s1"> added:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">description</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">scale_factor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ds</span><span class="o">.</span><span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;scale_factor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scale_factor</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- scale_factor for </span><span class="si">{}</span><span class="s1"> added:</span><span class="se">\n</span><span class="si">{}</span><span class="s1">&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">scale_factor</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_geotiff_to_h5</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+                       <span class="n">check_tiff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform_atol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">coord_atol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                       <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int16&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Transfer geotiff exclusions to h5 confirming they match existing layers</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers</span>
+<span class="sd">        layer : str</span>
+<span class="sd">            Layer to extract</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file</span>
+<span class="sd">        chunks : tuple, optional</span>
+<span class="sd">            Chunk size of exclusions in Geotiff, by default (128, 128)</span>
+<span class="sd">        check_tiff : bool, optional</span>
+<span class="sd">            Flag to check tiff profile and coordinates against exclusion .h5</span>
+<span class="sd">            profile and coordinates, by default True</span>
+<span class="sd">        transform_atol : float, optional</span>
+<span class="sd">            Absolute tolerance parameter when comparing geotiff transform data,</span>
+<span class="sd">            by default 0.01</span>
+<span class="sd">        coord_atol : float, optional</span>
+<span class="sd">            Absolute tolerance parameter when comparing new un-projected</span>
+<span class="sd">            geotiff coordinates against previous coordinates, by default 0.001</span>
+<span class="sd">        description : str, optional</span>
+<span class="sd">            Description of exclusion layer, by default None</span>
+<span class="sd">        scale_factor : int | float, optional</span>
+<span class="sd">            Scale factor to use to scale geotiff data when added to the .h5</span>
+<span class="sd">            file, by default None</span>
+<span class="sd">        dtype : str, optional</span>
+<span class="sd">            Dtype to save geotiff data as in the .h5 file. Only used when</span>
+<span class="sd">            &#39;scale_factor&#39; is not None, by default &#39;int16&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- </span><span class="si">{}</span><span class="s1"> being extracted from </span><span class="si">{}</span><span class="s1"> and added to </span><span class="si">{}</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">)))</span>
+
+        <span class="n">profile</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_tiff</span><span class="p">(</span>
+            <span class="n">geotiff</span><span class="p">,</span> <span class="n">excl_h5</span><span class="o">=</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">check_tiff</span><span class="o">=</span><span class="n">check_tiff</span><span class="p">,</span>
+            <span class="n">transform_atol</span><span class="o">=</span><span class="n">transform_atol</span><span class="p">,</span> <span class="n">coord_atol</span><span class="o">=</span><span class="n">coord_atol</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">scale_factor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">Outputs</span><span class="o">.</span><span class="n">_check_data_dtype</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span>
+                                               <span class="n">scale_factor</span><span class="o">=</span><span class="n">scale_factor</span><span class="p">)</span>
+
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_write_layer</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span>
+                         <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                         <span class="n">scale_factor</span><span class="o">=</span><span class="n">scale_factor</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_write_geotiff</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Write values to geotiff with given profile</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file to save data to</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Geotiff profile (attributes)</span>
+<span class="sd">        values : ndarray</span>
+<span class="sd">            Geotiff data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">profile</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="k">with</span> <span class="n">rasterio</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">profile</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- </span><span class="si">{}</span><span class="s1"> created&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_extract_layer</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract given layer from exclusions .h5 file and write to geotiff .tif</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing exclusion layers</span>
+<span class="sd">        layer : str</span>
+<span class="sd">            Layer to extract</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file</span>
+<span class="sd">        hsds : bool</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        profile : dict</span>
+<span class="sd">            Geotiff profile (attributes)</span>
+<span class="sd">        values : ndarray</span>
+<span class="sd">            Geotiff data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> - Extracting </span><span class="si">{}</span><span class="s1"> from </span><span class="si">{}</span><span class="s1">&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">)))</span>
+        <span class="k">with</span> <span class="n">ExclusionLayers</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_layer_profile</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">get_layer_values</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">geotiff</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">- Writing </span><span class="si">{}</span><span class="s1"> to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">))</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_write_geotiff</span><span class="p">(</span><span class="n">geotiff</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">profile</span><span class="p">,</span> <span class="n">values</span>
+
+<div class="viewcode-block" id="ExclusionsConverter.geotiff_to_layer"><a class="viewcode-back" href="../../../reVX/reVX.utilities.exclusions_converter.html#reVX.utilities.exclusions_converter.ExclusionsConverter.geotiff_to_layer">[docs]</a>    <span class="k">def</span> <span class="nf">geotiff_to_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">check_tiff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                         <span class="n">transform_atol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">coord_atol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                         <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int16&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Transfer geotiff exclusions to h5 confirming they match existing layers</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        layer : str</span>
+<span class="sd">            Layer to extract</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file</span>
+<span class="sd">        check_tiff : bool, optional</span>
+<span class="sd">            Flag to check tiff profile and coordinates against exclusion .h5</span>
+<span class="sd">            profile and coordinates, by default True</span>
+<span class="sd">        transform_atol : float, optional</span>
+<span class="sd">            Absolute tolerance parameter when comparing geotiff transform data,</span>
+<span class="sd">            by default 0.01</span>
+<span class="sd">        coord_atol : float, optional</span>
+<span class="sd">            Absolute tolerance parameter when comparing new un-projected</span>
+<span class="sd">            geotiff coordinates against previous coordinates, by default 0.001</span>
+<span class="sd">        description : str, optional</span>
+<span class="sd">            Description of exclusion layer, by default None</span>
+<span class="sd">        scale_factor : int | float, optional</span>
+<span class="sd">            Scale factor to use to scale geotiff data when added to the .h5</span>
+<span class="sd">            file, by default None</span>
+<span class="sd">        dtype : str, optional</span>
+<span class="sd">            Dtype to save geotiff data as in the .h5 file. Only used when</span>
+<span class="sd">            &#39;scale_factor&#39; is not None, by default &#39;int16&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_h5</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">layer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is already present in </span><span class="si">{}</span><span class="s2">&quot;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replace</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot; and will be replaced&quot;</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="s2">&quot;, to &#39;replace&#39; set to True&quot;</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_geotiff_to_h5</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span>
+                            <span class="n">chunks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_chunks</span><span class="p">,</span>
+                            <span class="n">check_tiff</span><span class="o">=</span><span class="n">check_tiff</span><span class="p">,</span>
+                            <span class="n">transform_atol</span><span class="o">=</span><span class="n">transform_atol</span><span class="p">,</span>
+                            <span class="n">coord_atol</span><span class="o">=</span><span class="n">coord_atol</span><span class="p">,</span>
+                            <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                            <span class="n">scale_factor</span><span class="o">=</span><span class="n">scale_factor</span><span class="p">,</span>
+                            <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExclusionsConverter.layer_to_geotiff"><a class="viewcode-back" href="../../../reVX/reVX.utilities.exclusions_converter.html#reVX.utilities.exclusions_converter.ExclusionsConverter.layer_to_geotiff">[docs]</a>    <span class="k">def</span> <span class="nf">layer_to_geotiff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract desired layer from .h5 file and write to geotiff .tif</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        layer : str</span>
+<span class="sd">            Layer to extract</span>
+<span class="sd">        geotiff : str</span>
+<span class="sd">            Path to geotiff file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_layer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_h5</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="o">=</span><span class="n">geotiff</span><span class="p">,</span>
+                            <span class="n">hsds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_hsds</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExclusionsConverter.layers_to_h5"><a class="viewcode-back" href="../../../reVX/reVX.utilities.exclusions_converter.html#reVX.utilities.exclusions_converter.ExclusionsConverter.layers_to_h5">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">layers_to_h5</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">layers</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+                     <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">check_tiff</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                     <span class="n">transform_atol</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">coord_atol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                     <span class="n">descriptions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scale_factors</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create exclusions .h5 file, or load layers into existing exclusion .h5</span>
+<span class="sd">        file from provided geotiffs</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing or to contain exclusion layers</span>
+<span class="sd">        layers : list | dict</span>
+<span class="sd">            List of geotiffs to load</span>
+<span class="sd">            or dictionary mapping goetiffs to the layers to load</span>
+<span class="sd">        chunks : tuple, optional</span>
+<span class="sd">            Chunk size of exclusions in Geotiff, by default (128, 128)</span>
+<span class="sd">        replace : bool, optional</span>
+<span class="sd">            Flag to replace existing layers if needed, by default True</span>
+<span class="sd">        check_tiff : bool, optional</span>
+<span class="sd">            Flag to check tiff profile and coordinates against exclusion .h5</span>
+<span class="sd">            profile and coordinates, by default True</span>
+<span class="sd">        transform_atol : float, optional</span>
+<span class="sd">            Absolute tolerance parameter when comparing geotiff transform data,</span>
+<span class="sd">            by default 0.01</span>
+<span class="sd">        coord_atol : float, optional</span>
+<span class="sd">            Absolute tolerance parameter when comparing new un-projected</span>
+<span class="sd">            geotiff coordinates against previous coordinates, by default 0.001</span>
+<span class="sd">        description : dict, optional</span>
+<span class="sd">            Description of exclusion layers, by default None</span>
+<span class="sd">        scale_factor : dict, optional</span>
+<span class="sd">            Scale factors and dtypes to use when scaling given layers,</span>
+<span class="sd">            by default None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">layers</span> <span class="o">=</span> <span class="p">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">lyr</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">lyr</span>
+                      <span class="k">for</span> <span class="n">lyr</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">descriptions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">descriptions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">scale_factors</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">scale_factors</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">excls</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Creating </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span> <span class="ow">in</span> <span class="n">layers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;- Transfering </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">))</span>
+            <span class="n">description</span> <span class="o">=</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="n">scale_factors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">scale</span><span class="p">[</span><span class="s1">&#39;scale_factor&#39;</span><span class="p">]</span>
+                <span class="n">dtype</span> <span class="o">=</span> <span class="n">scale</span><span class="p">[</span><span class="s1">&#39;dtype&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">scale_factor</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">dtype</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="n">excls</span><span class="o">.</span><span class="n">geotiff_to_layer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">,</span> <span class="n">check_tiff</span><span class="o">=</span><span class="n">check_tiff</span><span class="p">,</span>
+                                   <span class="n">transform_atol</span><span class="o">=</span><span class="n">transform_atol</span><span class="p">,</span>
+                                   <span class="n">coord_atol</span><span class="o">=</span><span class="n">coord_atol</span><span class="p">,</span>
+                                   <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span>
+                                   <span class="n">scale_factor</span><span class="o">=</span><span class="n">scale_factor</span><span class="p">,</span>
+                                   <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExclusionsConverter.extract_layers"><a class="viewcode-back" href="../../../reVX/reVX.utilities.exclusions_converter.html#reVX.utilities.exclusions_converter.ExclusionsConverter.extract_layers">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">extract_layers</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">layers</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+                       <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract given layers from exclusions .h5 file and save to disk</span>
+<span class="sd">        as GeoTiffs</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing or to contain exclusion layers</span>
+<span class="sd">        layers : dict</span>
+<span class="sd">            Dictionary mapping layers to geotiffs to create</span>
+<span class="sd">        chunks : tuple</span>
+<span class="sd">            Chunk size of exclusions in .h5 and Geotiffs</span>
+<span class="sd">        hsds : bool</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">excls</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting layers from </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span> <span class="ow">in</span> <span class="n">layers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;- Extracting </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">))</span>
+            <span class="n">excls</span><span class="o">.</span><span class="n">layer_to_geotiff</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ExclusionsConverter.extract_all_layers"><a class="viewcode-back" href="../../../reVX/reVX.utilities.exclusions_converter.html#reVX.utilities.exclusions_converter.ExclusionsConverter.extract_all_layers">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">extract_all_layers</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+                           <span class="n">hsds</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract all layers from exclusions .h5 file and save to disk</span>
+<span class="sd">        as GeoTiffs</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_h5 : str</span>
+<span class="sd">            Path to .h5 file containing or to contain exclusion layers</span>
+<span class="sd">        out_dir : str</span>
+<span class="sd">            Path to output directory into which layers should be saved as</span>
+<span class="sd">            GeoTiffs</span>
+<span class="sd">        chunks : tuple</span>
+<span class="sd">            Chunk size of exclusions in .h5 and Geotiffs</span>
+<span class="sd">        hsds : bool</span>
+<span class="sd">            Boolean flag to use h5pyd to handle .h5 &#39;files&#39; hosted on AWS</span>
+<span class="sd">            behind HSDS</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">out_dir</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+
+        <span class="n">excls</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">chunks</span><span class="o">=</span><span class="n">chunks</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting layers from </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">excls</span><span class="o">.</span><span class="n">layers</span><span class="p">:</span>
+            <span class="n">geotiff</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.tif&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;- Extracting </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">geotiff</span><span class="p">))</span>
+            <span class="n">excls</span><span class="o">.</span><span class="n">layer_to_geotiff</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">geotiff</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

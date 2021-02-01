@@ -1,0 +1,774 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.plexos.utilities &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.plexos.utilities</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.plexos.utilities</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">reVX-plexos utilities</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">cKDTree</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_coord_labels"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.get_coord_labels">[docs]</a><span class="k">def</span> <span class="nf">get_coord_labels</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieve the coordinate labels from df.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        DataFrame with each row being a geo location and two columns</span>
+<span class="sd">        containing coordinate labels.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df_coord_labels : list | None</span>
+<span class="sd">        Two entry list if coordinate labels are found:</span>
+<span class="sd">        [&#39;lat&#39;, &#39;lon&#39;] or [&#39;latitude&#39;, &#39;longitude&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">df_coord_labels</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="s1">&#39;lat&#39;</span> <span class="ow">in</span> <span class="n">df</span> <span class="ow">and</span> <span class="s1">&#39;lon&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+        <span class="n">df_coord_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="s1">&#39;latitude&#39;</span> <span class="ow">in</span> <span class="n">df</span> <span class="ow">and</span> <span class="s1">&#39;longitude&#39;</span> <span class="ow">in</span> <span class="n">df</span><span class="p">:</span>
+        <span class="n">df_coord_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">df_coord_labels</span></div>
+
+
+<div class="viewcode-block" id="parse_table_name"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.parse_table_name">[docs]</a><span class="k">def</span> <span class="nf">parse_table_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">db_host</span><span class="o">=</span><span class="s1">&#39;gds_edit.nrel.gov&#39;</span><span class="p">,</span>
+                     <span class="n">db_user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">db_pass</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">db_port</span><span class="o">=</span><span class="mi">5432</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse a dataframe from an input name.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name : str | pd.DataFrame</span>
+<span class="sd">        CSV file path or database.schema.name or already extracted df.</span>
+<span class="sd">    wait : int</span>
+<span class="sd">        Integer seconds to wait for DB connection to become available</span>
+<span class="sd">        before raising exception.</span>
+<span class="sd">    db_host : str</span>
+<span class="sd">        Database host name.</span>
+<span class="sd">    db_user : str</span>
+<span class="sd">        Your database user name.</span>
+<span class="sd">    db_pass : str</span>
+<span class="sd">        Database password (None if your password is cached).</span>
+<span class="sd">    db_port : int</span>
+<span class="sd">        Database port.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    df : pd.DataFrame</span>
+<span class="sd">        Extracted table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">):</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">reVX.handlers.database</span> <span class="kn">import</span> <span class="n">Database</span>
+            <span class="n">db</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">table</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Retrieving &quot;</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">&quot; from database &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span>
+                         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">db</span><span class="p">))</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">Database</span><span class="o">.</span><span class="n">get_table</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="n">wait</span><span class="p">,</span>
+                                    <span class="n">db_host</span><span class="o">=</span><span class="n">db_host</span><span class="p">,</span> <span class="n">db_user</span><span class="o">=</span><span class="n">db_user</span><span class="p">,</span>
+                                    <span class="n">db_pass</span><span class="o">=</span><span class="n">db_pass</span><span class="p">,</span> <span class="n">db_port</span><span class="o">=</span><span class="n">db_port</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Could not recognize input table name: &#39;</span>
+                        <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> with type </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">name</span><span class="p">)))</span>
+
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="DataCleaner"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.DataCleaner">[docs]</a><span class="k">class</span> <span class="nc">DataCleaner</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class for custom Plexos data cleaning procedures.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Keys are bad values, values are corrected values</span>
+
+    <span class="n">REEDS_NAME_MAP</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gid&#39;</span><span class="p">:</span> <span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;capacity_reV&#39;</span><span class="p">:</span> <span class="s1">&#39;built_capacity&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;capacity_rev&#39;</span><span class="p">:</span> <span class="s1">&#39;built_capacity&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;year&#39;</span><span class="p">:</span> <span class="s1">&#39;reeds_year&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;Year&#39;</span><span class="p">:</span> <span class="s1">&#39;reeds_year&#39;</span><span class="p">}</span>
+
+    <span class="n">REV_NAME_MAP</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gid&#39;</span><span class="p">:</span> <span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;sq_km&#39;</span><span class="p">:</span> <span class="s1">&#39;area_sq_km&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;capacity&#39;</span><span class="p">:</span> <span class="s1">&#39;potential_capacity&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;resource_ids&#39;</span><span class="p">:</span> <span class="s1">&#39;res_gids&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;resource_ids_cnts&#39;</span><span class="p">:</span> <span class="s1">&#39;gid_counts&#39;</span><span class="p">}</span>
+
+    <span class="n">PLEXOS_META_COLS</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;plexos_id&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;voltage&#39;</span><span class="p">,</span> <span class="s1">&#39;interconnect&#39;</span><span class="p">,</span> <span class="s1">&#39;built_capacity&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plexos_meta</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        plexos_meta : pd.DataFrame</span>
+<span class="sd">            Plexos meta data including the built capacity at each plexos node.</span>
+<span class="sd">        profiles : np.ndarray</span>
+<span class="sd">            2D timeseries array of generation profiles. Number of columns must</span>
+<span class="sd">            match the length of the meta data.</span>
+<span class="sd">        name_map : dictionary, optional</span>
+<span class="sd">            Column rename mapping, by default None -&gt; {&#39;gid&#39;: &#39;sc_gid&#39;}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">profiles</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">plexos_meta</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Plexos profiles shape does not match meta.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rename_cols</span><span class="p">(</span><span class="n">plexos_meta</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="n">name_map</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span> <span class="o">=</span> <span class="n">profiles</span>
+
+<div class="viewcode-block" id="DataCleaner.rename_cols"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.DataCleaner.rename_cols">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">rename_cols</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Input df with bad or inconsistent column names.</span>
+<span class="sd">        name_map : dictionary, optional</span>
+<span class="sd">            Column rename mapping, by default None -&gt; {&#39;gid&#39;: &#39;sc_gid&#39;}</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Same as inputs but with better col names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gid&#39;</span><span class="p">:</span> <span class="s1">&#39;sc_gid&#39;</span><span class="p">}</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">name_map</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="DataCleaner.reduce_df"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.DataCleaner.reduce_df">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">reduce_df</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reduce a df to just certain columns.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Dataframe to reduce.</span>
+<span class="sd">        cols : list | tuple</span>
+<span class="sd">            List of column names to keep.</span>
+<span class="sd">        name_map : dictionary, optional</span>
+<span class="sd">            Column rename mapping, by default None -&gt; {&#39;gid&#39;: &#39;sc_gid&#39;}</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        df : pd.DataFrame</span>
+<span class="sd">            Dataframe with only cols if the input df had all cols.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">rename_cols</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="n">name_map</span><span class="p">)</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">df</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DataCleaner.pre_filter_plexos_meta"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.DataCleaner.pre_filter_plexos_meta">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">pre_filter_plexos_meta</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">plexos_meta</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Pre-filter the plexos meta data to drop bad node names and</span>
+<span class="sd">        duplicate lat/lons.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        plexos_meta : pd.DataFrame</span>
+<span class="sd">            Plexos meta data.</span>
+<span class="sd">        name_map : dictionary, optional</span>
+<span class="sd">            Column rename mapping, by default None -&gt; {&#39;gid&#39;: &#39;sc_gid&#39;}</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        plexos_meta : pd.DataFrame</span>
+<span class="sd">            Filtered plexos meta data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plexos_meta</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">rename_cols</span><span class="p">(</span><span class="n">plexos_meta</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="n">name_map</span><span class="p">)</span>
+        <span class="c1"># as of 8/2019 there were two erroneous plexos nodes with bad names</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">plexos_meta</span><span class="p">[</span><span class="s1">&#39;plexos_id&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;#NAME?&#39;</span><span class="p">)</span>
+        <span class="n">plexos_meta</span> <span class="o">=</span> <span class="n">plexos_meta</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="c1"># Several plexos nodes share the same location. As of 8/2019</span>
+        <span class="c1"># Josh Novacheck suggests that the duplicate locations can be dropped.</span>
+        <span class="n">plexos_meta</span> <span class="o">=</span> <span class="n">plexos_meta</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;voltage&#39;</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">plexos_meta</span> <span class="o">=</span> <span class="n">plexos_meta</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span>
+            <span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">],</span> <span class="n">keep</span><span class="o">=</span><span class="s1">&#39;first&#39;</span><span class="p">)</span>
+        <span class="n">plexos_meta</span> <span class="o">=</span> <span class="n">plexos_meta</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">plexos_meta</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_merge_plexos_meta</span><span class="p">(</span><span class="n">meta_final</span><span class="p">,</span> <span class="n">meta_orig</span><span class="p">,</span> <span class="n">i_final</span><span class="p">,</span> <span class="n">i_orig</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Ammend the plexos meta dataframe with data about resource buildouts.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        meta_final : pd.DataFrame</span>
+<span class="sd">            Plexos meta data for the final set of nodes.</span>
+<span class="sd">        meta_orig : pd.DataFrame</span>
+<span class="sd">            Plexos meta data for the original pre-merge set of nodes.</span>
+<span class="sd">        i_final : int</span>
+<span class="sd">            Index location (iloc) of the persistent meta data row in</span>
+<span class="sd">            meta_final.</span>
+<span class="sd">        i_orig : int</span>
+<span class="sd">            Index location (iloc) of the meta data row to be merged in</span>
+<span class="sd">            meta_orig.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        meta_final : pd.DataFrame</span>
+<span class="sd">            Plexos meta data for the final set of nodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">i_final</span> <span class="o">=</span> <span class="n">meta_final</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i_final</span><span class="p">]</span>
+        <span class="n">i_orig</span> <span class="o">=</span> <span class="n">meta_orig</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i_orig</span><span class="p">]</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;res_gids&#39;</span><span class="p">,</span> <span class="s1">&#39;gen_gids&#39;</span><span class="p">,</span> <span class="s1">&#39;res_built&#39;</span><span class="p">,</span> <span class="s1">&#39;built_capacity&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
+            <span class="n">val_final</span> <span class="o">=</span> <span class="n">meta_final</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i_final</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span>
+            <span class="n">val_orig</span> <span class="o">=</span> <span class="n">meta_orig</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i_orig</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val_final</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">val_orig</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Mismatch in column dtype for plexos meta!&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val_final</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">val_final</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">val_final</span><span class="p">)</span>
+                <span class="n">val_orig</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">val_orig</span><span class="p">)</span>
+                <span class="n">val_final</span> <span class="o">+=</span> <span class="n">val_orig</span>
+                <span class="n">val_final</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">val_final</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">val_final</span> <span class="o">+=</span> <span class="n">val_orig</span>
+
+            <span class="n">meta_final</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i_final</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">val_final</span>
+
+        <span class="k">return</span> <span class="n">meta_final</span>
+
+<div class="viewcode-block" id="DataCleaner.merge_small"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.DataCleaner.merge_small">[docs]</a>    <span class="k">def</span> <span class="nf">merge_small</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">capacity_threshold</span><span class="o">=</span><span class="mf">20.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Merge small plexos buildout nodes into closest bigger nodes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        capacity_threshold : float</span>
+<span class="sd">            Capacity threshold, nodes with built capacities less than this</span>
+<span class="sd">            will be merged into bigger nodes.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        meta : pd.DataFrame</span>
+<span class="sd">            New plexos node meta data with updated built capacities.</span>
+<span class="sd">        profiles : np.ndarray</span>
+<span class="sd">            New profiles with big nodes having absorbed additional generation</span>
+<span class="sd">            from bigger nodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">small</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">[</span><span class="s1">&#39;built_capacity&#39;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">capacity_threshold</span><span class="p">)</span>
+        <span class="n">big</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">[</span><span class="s1">&#39;built_capacity&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">capacity_threshold</span><span class="p">)</span>
+
+        <span class="n">n_nodes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">big</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">n_nodes</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">)</span> <span class="ow">or</span> <span class="n">n_nodes</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">profiles</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">[</span><span class="n">big</span><span class="p">]</span>
+            <span class="n">profiles</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[:,</span> <span class="n">big</span><span class="o">.</span><span class="n">values</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Merging plexos nodes from </span><span class="si">{}</span><span class="s1"> to </span><span class="si">{}</span><span class="s1"> due to small &#39;</span>
+                        <span class="s1">&#39;nodes.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">meta</span><span class="p">)))</span>
+
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">get_coord_labels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">)</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="n">labels</span><span class="p">])</span>  <span class="c1"># pylint: disable=not-callable</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">nn_ind</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">[</span><span class="n">labels</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">meta</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">small</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="k">for</span> <span class="n">nn</span> <span class="ow">in</span> <span class="n">nn_ind</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]:</span>
+                        <span class="k">if</span> <span class="n">big</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">nn</span><span class="p">]:</span>
+                            <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_merge_plexos_meta</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span>
+                                                           <span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">,</span>
+                                                           <span class="n">nn</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                            <span class="n">profiles</span><span class="p">[:,</span> <span class="n">nn</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+
+                            <span class="k">break</span>
+
+        <span class="k">return</span> <span class="n">meta</span><span class="p">,</span> <span class="n">profiles</span></div>
+
+<div class="viewcode-block" id="DataCleaner.merge_extent"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.DataCleaner.merge_extent">[docs]</a>    <span class="k">def</span> <span class="nf">merge_extent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_meta</span><span class="p">,</span> <span class="n">new_profiles</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Merge a new set of plexos node aggregation data into the self attr.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        new_meta : pd.DataFrame</span>
+<span class="sd">            A new set of Plexos node meta data to be merged into the meta in</span>
+<span class="sd">            self.</span>
+<span class="sd">        new_profiles : np.ndarray</span>
+<span class="sd">            A new set of plexos node profiles corresponding to new_meta to be</span>
+<span class="sd">            merged into the profiles in self where the meta data overlaps with</span>
+<span class="sd">            common nodes.</span>
+<span class="sd">        name_map : dictionary, optional</span>
+<span class="sd">            Column rename mapping, by default None -&gt; {&#39;gid&#39;: &#39;sc_gid&#39;}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rename_cols</span><span class="p">(</span><span class="n">new_meta</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="n">name_map</span><span class="p">)</span>
+
+        <span class="n">keep_index</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Merging extents with </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> nodes (</span><span class="si">{}</span><span class="s1"> total).&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_meta</span><span class="p">),</span>
+                            <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_meta</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">new_meta</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">):</span>
+            <span class="n">lookup</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                      <span class="o">==</span> <span class="n">new_meta</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="s1">&#39;sc_gid&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">lookup</span><span class="p">):</span>
+                <span class="n">i_self</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lookup</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">i_self</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Duplicate PLEXOS node GIDs in base plexos meta!&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">i_self</span> <span class="o">=</span> <span class="n">i_self</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Merging plexos node IDs </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1"> &#39;</span>
+                             <span class="s1">&#39;(gids </span><span class="si">{}</span><span class="s1"> and </span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i_self</span><span class="p">][</span><span class="s1">&#39;plexos_id&#39;</span><span class="p">],</span>
+                                 <span class="n">new_meta</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;plexos_id&#39;</span><span class="p">],</span>
+                                 <span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i_self</span><span class="p">][</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">],</span>
+                                 <span class="n">new_meta</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">]))</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_merge_plexos_meta</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">,</span> <span class="n">new_meta</span><span class="p">,</span> <span class="n">i_self</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">[:,</span> <span class="n">i_self</span><span class="p">]</span> <span class="o">+=</span> <span class="n">new_profiles</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">keep_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="n">new_meta</span> <span class="o">=</span> <span class="n">new_meta</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">new_meta</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">keep_index</span><span class="p">]]</span>
+        <span class="n">new_profiles</span> <span class="o">=</span> <span class="n">new_profiles</span><span class="p">[:,</span> <span class="n">keep_index</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">,</span> <span class="n">new_meta</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                      <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span><span class="p">,</span> <span class="n">new_profiles</span><span class="p">))</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Merged extents. Output has </span><span class="si">{}</span><span class="s1"> nodes.&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="DataCleaner.merge_multiple_extents"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.DataCleaner.merge_multiple_extents">[docs]</a>    <span class="k">def</span> <span class="nf">merge_multiple_extents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meta_list</span><span class="p">,</span> <span class="n">profile_list</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Merge multiple plexos extents into the self attrs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        meta_list : list</span>
+<span class="sd">            List of new meta data extents to merge into self.</span>
+<span class="sd">        profile_list : list</span>
+<span class="sd">            List of new gen profile to merge into self.</span>
+<span class="sd">        name_map : dictionary, optional</span>
+<span class="sd">            Column rename mapping, by default None -&gt; {&#39;gid&#39;: &#39;sc_gid&#39;}</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        meta : pd.DataFrame</span>
+<span class="sd">            Merged plexos node meta data.</span>
+<span class="sd">        profiles : np.ndarray</span>
+<span class="sd">            New profiles with merged profiles for matching nodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">meta_list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">merge_extent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rename_cols</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="n">name_map</span><span class="p">),</span>
+                              <span class="n">profile_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plexos_meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_profiles</span></div></div>
+
+
+<div class="viewcode-block" id="ProjectGidHandler"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.ProjectGidHandler">[docs]</a><span class="k">class</span> <span class="nc">ProjectGidHandler</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Class to handle project GIDs for a plexos project.</span>
+<span class="sd">    Can be used to make gid superset project points for 5min data.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ProjectGidHandler.get_resource_gids"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.ProjectGidHandler.get_resource_gids">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_resource_gids</span><span class="p">(</span><span class="n">sc_table</span><span class="p">,</span> <span class="n">reeds_build</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+                          <span class="n">db_host</span><span class="o">=</span><span class="s1">&#39;gds_edit.nrel.gov&#39;</span><span class="p">,</span>
+                          <span class="n">db_user</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">db_pass</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">db_port</span><span class="o">=</span><span class="mi">5432</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get resource gids from a  single reeds supply curve build</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_table : str | pd.DataFrame</span>
+<span class="sd">            reV supply curve results (CSV file path or database.schema.name)</span>
+<span class="sd">        reeds_build : str | pd.DataFrame</span>
+<span class="sd">            REEDS buildout file with</span>
+<span class="sd">        wait : int</span>
+<span class="sd">            Integer seconds to wait for DB connection to become available</span>
+<span class="sd">            before raising exception.</span>
+<span class="sd">        db_host : str</span>
+<span class="sd">            Database host name.</span>
+<span class="sd">        db_user : str</span>
+<span class="sd">            Your database user name.</span>
+<span class="sd">        db_pass : str</span>
+<span class="sd">            Database password (None if your password is cached).</span>
+<span class="sd">        db_port : int</span>
+<span class="sd">            Database port.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gids : list</span>
+<span class="sd">            Sorted list of unique integer resource gids build out.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sc_table</span> <span class="o">=</span> <span class="n">parse_table_name</span><span class="p">(</span><span class="n">sc_table</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="n">wait</span><span class="p">,</span>
+                                    <span class="n">db_host</span><span class="o">=</span><span class="n">db_host</span><span class="p">,</span>
+                                    <span class="n">db_user</span><span class="o">=</span><span class="n">db_user</span><span class="p">,</span>
+                                    <span class="n">db_pass</span><span class="o">=</span><span class="n">db_pass</span><span class="p">,</span>
+                                    <span class="n">db_port</span><span class="o">=</span><span class="n">db_port</span><span class="p">)</span>
+        <span class="n">reeds_build</span> <span class="o">=</span> <span class="n">parse_table_name</span><span class="p">(</span><span class="n">reeds_build</span><span class="p">,</span> <span class="n">wait</span><span class="o">=</span><span class="n">wait</span><span class="p">,</span>
+                                       <span class="n">db_host</span><span class="o">=</span><span class="n">db_host</span><span class="p">,</span>
+                                       <span class="n">db_user</span><span class="o">=</span><span class="n">db_user</span><span class="p">,</span>
+                                       <span class="n">db_pass</span><span class="o">=</span><span class="n">db_pass</span><span class="p">,</span>
+                                       <span class="n">db_port</span><span class="o">=</span><span class="n">db_port</span><span class="p">)</span>
+
+        <span class="n">sc_table</span> <span class="o">=</span> <span class="n">DataCleaner</span><span class="o">.</span><span class="n">rename_cols</span><span class="p">(</span>
+            <span class="n">sc_table</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="n">DataCleaner</span><span class="o">.</span><span class="n">REV_NAME_MAP</span><span class="p">)</span>
+        <span class="n">reeds_build</span> <span class="o">=</span> <span class="n">DataCleaner</span><span class="o">.</span><span class="n">rename_cols</span><span class="p">(</span>
+            <span class="n">reeds_build</span><span class="p">,</span> <span class="n">name_map</span><span class="o">=</span><span class="n">DataCleaner</span><span class="o">.</span><span class="n">REEDS_NAME_MAP</span><span class="p">)</span>
+
+        <span class="n">reeds_gids</span> <span class="o">=</span> <span class="n">reeds_build</span><span class="p">[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">rev_gids</span> <span class="o">=</span> <span class="n">sc_table</span><span class="p">[</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">gid</span> <span class="k">for</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">reeds_gids</span> <span class="k">if</span> <span class="n">gid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rev_gids</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">missing</span><span class="p">):</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;The following gids were built in reeds but not found in &#39;</span>
+                 <span class="s1">&#39;the reV sc table: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">missing</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="n">gid_table</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">reeds_build</span><span class="p">,</span> <span class="n">sc_table</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">)</span>
+
+        <span class="n">gids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">res_gid_list</span> <span class="ow">in</span> <span class="n">gid_table</span><span class="p">[</span><span class="s1">&#39;res_gids&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res_gid_list</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">res_gid_list</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">res_gid_list</span><span class="p">)</span>
+            <span class="n">gids</span> <span class="o">+=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">gid</span><span class="p">)</span> <span class="k">for</span> <span class="n">gid</span> <span class="ow">in</span> <span class="n">res_gid_list</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">gids</span><span class="p">):</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="s1">&#39;No resource gids found!&#39;</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="n">gids</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">gids</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">gids</span></div>
+
+<div class="viewcode-block" id="ProjectGidHandler.build_project_points"><a class="viewcode-back" href="../../../reVX/reVX.plexos.utilities.html#reVX.plexos.utilities.ProjectGidHandler.build_project_points">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">build_project_points</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">build_map</span><span class="p">,</span> <span class="n">fpath_out</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">config_tag</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">db_kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build a project points CSV from a set of rev/reeds build files.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        build_map : dict</span>
+<span class="sd">            Mapping of buildout files/tables. Keys are filepaths to reeds</span>
+<span class="sd">            buildout files, values are reV SC tables (can be db names).</span>
+<span class="sd">        fpath_out : str | None</span>
+<span class="sd">            Output filepath to save project points file.</span>
+<span class="sd">        config_tag : str</span>
+<span class="sd">            Config tab/label to write to the project points config column.</span>
+<span class="sd">        db_kwargs : dict</span>
+<span class="sd">            Optional database kwargs.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pp : pd.DataFrame</span>
+<span class="sd">            Project points dataframe with gid and config columns..</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tables</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">gids</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">reeds_table</span><span class="p">,</span> <span class="n">rev_table</span> <span class="ow">in</span> <span class="n">build_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">reeds_table</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+                <span class="n">tables</span><span class="p">[</span><span class="n">reeds_table</span><span class="p">]</span> <span class="o">=</span> <span class="n">parse_table_name</span><span class="p">(</span><span class="n">reeds_table</span><span class="p">,</span>
+                                                       <span class="o">**</span><span class="n">db_kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">rev_table</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+                <span class="n">tables</span><span class="p">[</span><span class="n">rev_table</span><span class="p">]</span> <span class="o">=</span> <span class="n">parse_table_name</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="o">**</span><span class="n">db_kwargs</span><span class="p">)</span>
+
+            <span class="n">gids</span> <span class="o">+=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_resource_gids</span><span class="p">(</span><span class="n">tables</span><span class="p">[</span><span class="n">rev_table</span><span class="p">],</span>
+                                          <span class="n">tables</span><span class="p">[</span><span class="n">reeds_table</span><span class="p">])</span>
+
+        <span class="n">gids</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">gids</span><span class="p">)),</span> <span class="n">key</span><span class="o">=</span><span class="nb">float</span><span class="p">)</span>
+        <span class="n">pp</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span><span class="s1">&#39;config&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">config_tag</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">gids</span><span class="p">)},</span> <span class="n">index</span><span class="o">=</span><span class="n">gids</span><span class="p">)</span>
+        <span class="n">pp</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;sc_gid&#39;</span>
+
+        <span class="k">if</span> <span class="n">fpath_out</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Writing project points: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath_out</span><span class="p">))</span>
+            <span class="n">pp</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">fpath_out</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pp</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

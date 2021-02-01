@@ -1,0 +1,539 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.wind_dirs.prominent_wind_dirs_cli &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.wind_dirs.prominent_wind_dirs_cli</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.wind_dirs.prominent_wind_dirs_cli</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Wind Directions Command Line Interface</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">click</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">rex.utilities.loggers</span> <span class="kn">import</span> <span class="n">init_mult</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.cli_dtypes</span> <span class="kn">import</span> <span class="n">STR</span><span class="p">,</span> <span class="n">INT</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.hpc</span> <span class="kn">import</span> <span class="n">SLURM</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.utilities</span> <span class="kn">import</span> <span class="n">get_class_properties</span>
+
+<span class="kn">from</span> <span class="nn">reVX.config.prominent_wind_dirs</span> <span class="kn">import</span> <span class="n">ProminentWindDirsConfig</span>
+<span class="kn">from</span> <span class="nn">reVX.wind_dirs.prominent_wind_dirs</span> <span class="kn">import</span> <span class="n">ProminentWindDirections</span>
+<span class="kn">from</span> <span class="nn">reVX</span> <span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="nd">@click</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;ProminentWindDirs&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Job name. Default is &quot;ProminentWindDirs&quot;.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prominent Wind Directions Command Line Interface</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">ensure_object</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">verbose</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">valid_config_keys</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Echo the valid Prominent Wind Dirs config keys</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_class_properties</span><span class="p">(</span><span class="n">ProminentWindDirsConfig</span><span class="p">)))</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">version</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    print version</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">__version__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="run_local"><a class="viewcode-back" href="../../../reVX/reVX.wind_dirs.prominent_wind_dirs_cli.html#reVX.wind_dirs.prominent_wind_dirs_cli.run_local">[docs]</a><span class="k">def</span> <span class="nf">run_local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run ProminentWindDirections locally using config</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ctx : click.ctx</span>
+<span class="sd">        click ctx object</span>
+<span class="sd">    config : reVX.config.prominent_wind_dirs.ProminentWindDirsConfig</span>
+<span class="sd">        Prominent Wind Directions config object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">local</span><span class="p">,</span>
+               <span class="n">powerrose_h5_fpath</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">powerrose_h5_fpath</span><span class="p">,</span>
+               <span class="n">excl_fpath</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">excl_fpath</span><span class="p">,</span>
+               <span class="n">out_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dirout</span><span class="p">,</span>
+               <span class="n">agg_dset</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">agg_dset</span><span class="p">,</span>
+               <span class="n">tm_dset</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">tm_dset</span><span class="p">,</span>
+               <span class="n">resolution</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">resolution</span><span class="p">,</span>
+               <span class="n">excl_area</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">excl_area</span><span class="p">,</span>
+               <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">,</span>
+               <span class="n">chunk_point_len</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">chunk_point_len</span><span class="p">,</span>
+               <span class="n">log_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">logdir</span><span class="p">,</span>
+               <span class="n">verbose</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">log_level</span><span class="p">)</span></div>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--config&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Filepath to ProminentWindDirections config json file.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run prominent wind directions from a config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">ProminentWindDirsConfig</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;VERBOSE&#39;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="p">)):</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">_log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+    <span class="k">elif</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">_log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;local&#39;</span><span class="p">:</span>
+        <span class="n">run_local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;eagle&#39;</span><span class="p">:</span>
+        <span class="n">eagle</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--powerrose_h5_fpath&#39;</span><span class="p">,</span> <span class="s1">&#39;-prh5&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Filepath to .h5 file containing powerrose data&quot;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--excl_fpath&#39;</span><span class="p">,</span> <span class="s1">&#39;-excl&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Filepath to exclusions h5 with techmap dataset.&quot;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--out_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Directory to dump output files&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--agg_dset&#39;</span><span class="p">,</span> <span class="s1">&#39;-ad&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;powerrose_100m&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Powerrose dataset to aggreate&quot;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--tm_dset&#39;</span><span class="p">,</span> <span class="s1">&#39;-td&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;techmap_wtk&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Dataset name in the techmap file containing the &quot;</span>
+                    <span class="s2">&quot;exclusions-to-resource mapping data,&quot;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--resolution&#39;</span><span class="p">,</span> <span class="s1">&#39;-res&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INT</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;SC resolution, must be input in combination with gid. &quot;</span>
+                    <span class="s2">&quot;Prefered option is to use the row / col slices to define &quot;</span>
+                    <span class="s2">&quot;the SC point instead&quot;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--excl_area&#39;</span><span class="p">,</span> <span class="s1">&#39;-ea&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">0.0081</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Area of an exclusion cell (square km)&quot;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--max_workers&#39;</span><span class="p">,</span> <span class="s1">&#39;-mw&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INT</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;Number of cores to run summary on. None is all &quot;</span>
+                    <span class="s2">&quot;available cpus&quot;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--chunk_point_len&#39;</span><span class="p">,</span> <span class="s1">&#39;-cpl&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INT</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s2">&quot;Number of SC points to process on each parallel worker&quot;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--log_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-log&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Directory to dump log files. Default is out_dir.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">powerrose_h5_fpath</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">agg_dset</span><span class="p">,</span> <span class="n">tm_dset</span><span class="p">,</span>
+          <span class="n">resolution</span><span class="p">,</span> <span class="n">excl_area</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">,</span> <span class="n">chunk_point_len</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">,</span>
+          <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute prominent wind directions on local hardware</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">out_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+
+    <span class="n">out_fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">powerrose_h5_fpath</span><span class="p">)</span>
+    <span class="n">out_fpath</span> <span class="o">=</span> <span class="n">out_fpath</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.h5&#39;</span><span class="p">,</span>
+                                  <span class="s1">&#39;_prominent_dir_</span><span class="si">{}</span><span class="s1">.csv&#39;</span>
+                                  <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">resolution</span><span class="p">))</span>
+    <span class="n">out_fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">out_fpath</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">log_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">log_dir</span> <span class="o">=</span> <span class="n">out_dir</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s1">&#39;VERBOSE&#39;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">:</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="p">))</span>
+
+    <span class="n">log_modules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;reVX&#39;</span><span class="p">,</span> <span class="s1">&#39;reV&#39;</span><span class="p">,</span> <span class="s1">&#39;rex&#39;</span><span class="p">]</span>
+    <span class="n">init_mult</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="n">log_modules</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Aggregating Prominent Wind Directions </span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="s1">&#39;Outputs to be stored in: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out_dir</span><span class="p">))</span>
+
+    <span class="n">ProminentWindDirections</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">powerrose_h5_fpath</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span>
+                                <span class="n">agg_dset</span><span class="o">=</span><span class="n">agg_dset</span><span class="p">,</span> <span class="n">tm_dset</span><span class="o">=</span><span class="n">tm_dset</span><span class="p">,</span>
+                                <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span> <span class="n">excl_area</span><span class="o">=</span><span class="n">excl_area</span><span class="p">,</span>
+                                <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                <span class="n">chunk_point_len</span><span class="o">=</span><span class="n">chunk_point_len</span><span class="p">,</span>
+                                <span class="n">out_fpath</span><span class="o">=</span><span class="n">out_fpath</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_node_cmd"><a class="viewcode-back" href="../../../reVX/reVX.wind_dirs.prominent_wind_dirs_cli.html#reVX.wind_dirs.prominent_wind_dirs_cli.get_node_cmd">[docs]</a><span class="k">def</span> <span class="nf">get_node_cmd</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the node CLI call for prominent wind direction computation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.prominent_wind_dirs.ProminentWindDirsConfig</span>
+<span class="sd">        Prominent Wind Directions config object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cmd : str</span>
+<span class="sd">        CLI call to submit to SLURM execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-n </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="p">)),</span>
+            <span class="s1">&#39;local&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;-prh5 </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">powerrose_h5_fpath</span><span class="p">)),</span>
+            <span class="s1">&#39;-excl </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">excl_fpath</span><span class="p">)),</span>
+            <span class="s1">&#39;-o </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">dirout</span><span class="p">)),</span>
+            <span class="s1">&#39;-ad </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">agg_dset</span><span class="p">)),</span>
+            <span class="s1">&#39;-td </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">tm_dset</span><span class="p">)),</span>
+            <span class="s1">&#39;-res </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">resolution</span><span class="p">)),</span>
+            <span class="s1">&#39;-ea </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">excl_area</span><span class="p">)),</span>
+            <span class="s1">&#39;-mw </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)),</span>
+            <span class="s1">&#39;-cpl </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">chunk_point_len</span><span class="p">)),</span>
+            <span class="s1">&#39;-log </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">logdir</span><span class="p">)),</span>
+            <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">log_level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">)</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;python -m reVX.wind_dirs.prominent_wind_dirs_cli </span><span class="si">{}</span><span class="s1">&#39;</span>
+           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Submitting the following cli call:</span><span class="se">\n\t</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">cmd</span></div>
+
+
+<div class="viewcode-block" id="eagle"><a class="viewcode-back" href="../../../reVX/reVX.wind_dirs.prominent_wind_dirs_cli.html#reVX.wind_dirs.prominent_wind_dirs_cli.eagle">[docs]</a><span class="k">def</span> <span class="nf">eagle</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run prominent wind directions on Eagle HPC.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.prominent_wind_dirs.ProminentWindDirsConfig</span>
+<span class="sd">        Prominent Wind Directions config object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">get_node_cmd</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">log_dir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">logdir</span>
+    <span class="n">stdout_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log_dir</span><span class="p">,</span> <span class="s1">&#39;stdout/&#39;</span><span class="p">)</span>
+
+    <span class="n">slurm_manager</span> <span class="o">=</span> <span class="n">SLURM</span><span class="p">()</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Running prominent wind directions computation on Eagle with &#39;</span>
+                <span class="s1">&#39;node name &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">slurm_manager</span><span class="o">.</span><span class="n">sbatch</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span>
+                               <span class="n">alloc</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">alloc</span><span class="p">,</span>
+                               <span class="n">memory</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">node_mem</span><span class="p">,</span>
+                               <span class="n">walltime</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">walltime</span><span class="p">,</span>
+                               <span class="n">feature</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">feature</span><span class="p">,</span>
+                               <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">stdout_path</span><span class="o">=</span><span class="n">stdout_path</span><span class="p">,</span>
+                               <span class="n">conda_env</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">conda_env</span><span class="p">,</span>
+                               <span class="n">module</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">module</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Kicked off prominent wind direction calculation &quot;</span><span class="si">{}</span><span class="s1">&quot; &#39;</span>
+               <span class="s1">&#39;(SLURM jobid #</span><span class="si">{}</span><span class="s1">) on Eagle.&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">out</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Was unable to kick off prominent wind direction calculation &#39;</span>
+               <span class="s1">&#39;&quot;</span><span class="si">{}</span><span class="s1">&quot;. Please see the stdout error messages&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">main</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="p">{})</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Error running Prominent Wind Directions CLI&#39;</span><span class="p">)</span>
+        <span class="k">raise</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

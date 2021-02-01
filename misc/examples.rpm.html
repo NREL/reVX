@@ -1,0 +1,370 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Resource Planning Model (RPM) &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Regional Energy Deployment System (ReEDS)" href="examples.reeds.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="misc.html#examples">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="misc.html">Installation and Usage</a> &raquo;</li>
+        
+      <li>Resource Planning Model (RPM)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/misc/examples.rpm.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="resource-planning-model-rpm">
+<h1>Resource Planning Model (RPM)<a class="headerlink" href="#resource-planning-model-rpm" title="Permalink to this headline">¶</a></h1>
+<p>The reV to RPM pipeline can be run from the command line using the <code class="docutils literal notranslate"><span class="pre">reV-RPM</span></code>
+command line interface (CLI), or using the rpm sub-package.</p>
+<div class="section" id="rev-rpm-cli">
+<h2>reV-RPM CLI<a class="headerlink" href="#rev-rpm-cli" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">reV-RPM</span></code> command line tools can be used to run the reV to RPM pipeline
+using the default clustering and representative profile options.</p>
+<p>There are 3 steps to the reV to RPM pipeline:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Clustering of the capacity factor (CF) profiles within each RPM region</p></li>
+<li><p>Applying geo-spatial exclusions to the CF profiles (optional)</p></li>
+<li><p>Extracting representative profiles from each region</p></li>
+</ol>
+</div></blockquote>
+<p>The entire pipeline can be run using the following CLI call:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>reV-RPM --name<span class="o">=</span><span class="s2">&quot;Job_name&quot;</span> --cf-profile<span class="o">=</span><span class="s2">&quot;../cf_profiles.h5&quot;</span> --out-dir<span class="o">=</span><span class="s2">&quot;../output_directory&quot;</span> -p cluster --rpm_meta<span class="o">=</span><span class="s2">&quot;../rpm_meta.csv&quot;</span> and_profiles --exclusions<span class="o">=</span><span class="s2">&quot;../exclusions.tiff&quot;</span> --techmap<span class="o">=</span><span class="s2">&quot;../techmap.h5&quot;</span> --techmap_dset<span class="o">=</span><span class="s2">&quot;wtk_conus&quot;</span>
+</pre></div>
+</div>
+<p>This will cluster the RPM profiles using the regions and number of clusters
+given in <code class="docutils literal notranslate"><span class="pre">rpm_meta.csv</span></code> and then return a representative profile for each
+region. NOTE: that the and_profiles options are all optional. If they are not
+given than exclusions will not be applied.  Also NOTE that -p is an optional
+flag to run the clustering and profiles in parallel.</p>
+<p>If you only want to create the clusters you can drop the and_profiles part of
+the command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>reV-RPM --name<span class="o">=</span><span class="s2">&quot;Job_name&quot;</span> --cf-profile<span class="o">=</span><span class="s2">&quot;../cf_profiles.h5&quot;</span> --out-dir<span class="o">=</span><span class="s2">&quot;../output_directory&quot;</span> -p cluster --rpm_meta<span class="o">=</span><span class="s2">&quot;../rpm_meta.csv&quot;</span>
+</pre></div>
+</div>
+<p>This will write a .csv with the cluster results to <code class="docutils literal notranslate"><span class="pre">out_dir</span></code></p>
+<p>If representative profiles are desired for an existing set of clusters
+(<code class="docutils literal notranslate"><span class="pre">rpm_clusters.csv</span></code>) the <code class="docutils literal notranslate"><span class="pre">rep-profies</span></code> sub-command can be used:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>reV-RPM --name<span class="o">=</span><span class="s2">&quot;Job_name&quot;</span> --cf-profile<span class="o">=</span><span class="s2">&quot;../cf_profiles.h5&quot;</span> --out-dir<span class="o">=</span><span class="s2">&quot;../output_directory&quot;</span> -p and_profiles --rpm-clusters<span class="o">=</span><span class="s2">&quot;../rpm_clusters.csv&quot;</span> --exclusions<span class="o">=</span><span class="s2">&quot;../exclusions.tiff&quot;</span> --techmap<span class="o">=</span><span class="s2">&quot;../techmap.h5&quot;</span> --techmap_dset<span class="o">=</span><span class="s2">&quot;wtk_conus&quot;</span>
+</pre></div>
+</div>
+<p>Again –exclusions, –techmap, and –techmap-dset are optional if exclusions
+should be applied.</p>
+<p>If additional representative profiles are desired use the following call:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>reV-RPM --name<span class="o">=</span><span class="s2">&quot;Job_name&quot;</span> --cf-profile<span class="o">=</span><span class="s2">&quot;../cf_profiles.h5&quot;</span> --out-dir<span class="o">=</span><span class="s2">&quot;../output_directory&quot;</span> -p and_profiles --rpm-clusters<span class="o">=</span><span class="s2">&quot;../rpm_clusters.csv&quot;</span> extra_profiles --profiles<span class="o">=</span><span class="s2">&quot;5&quot;</span>
+</pre></div>
+</div>
+<p>This will extract 5 additional profiles.  NOTE: <code class="docutils literal notranslate"><span class="pre">extra-profiles</span></code> can only be
+run after <code class="docutils literal notranslate"><span class="pre">rep-profiles`</span></code>.</p>
+</div>
+<div class="section" id="rpm-sub-package">
+<h2>RPM sub-package<a class="headerlink" href="#rpm-sub-package" title="Permalink to this headline">¶</a></h2>
+<p>The reV-RPM pipeline can also be run using the rpm sub-package of reVX. The
+two main classes are
+<code class="docutils literal notranslate"><span class="pre">RPMClusterManager</span></code> and <code class="docutils literal notranslate"><span class="pre">RPMOutput</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">RPMClusterManager</span></code> manages the clustering of RPM regions and if desired can
+run <code class="docutils literal notranslate"><span class="pre">RPMOutput</span></code> to extract representative profiles.</p>
+<p>Extracting clusters:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">RPMClusterManager</span><span class="o">.</span><span class="n">run_clusters</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">,</span> <span class="n">rpm_meta</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">job_tag</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                               <span class="n">rpm_region_col</span><span class="o">=</span><span class="n">region_col</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="n">parallel</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Extracting clusters and profiles:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">RPMClusterManager</span><span class="o">.</span><span class="n">run_clusters_and_profiles</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">,</span> <span class="n">rpm_meta</span><span class="p">,</span> <span class="n">exclusions</span><span class="p">,</span>
+                                            <span class="n">techmap</span><span class="p">,</span> <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+                                            <span class="n">job_tag</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">rpm_region_col</span><span class="o">=</span><span class="n">region_col</span><span class="p">,</span>
+                                            <span class="n">parallel</span><span class="o">=</span><span class="n">parallel</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">RPMOutput</span></code> handles the application of exclusions and extraction of
+representative profiles from an existing set of clusters.</p>
+<p>Apply exclusions and extract profiles:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">RPMOutput</span><span class="o">.</span><span class="n">process_outputs</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">exclusions</span><span class="p">,</span>
+                          <span class="n">techmap</span><span class="p">,</span> <span class="n">techmap_dset</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+                          <span class="n">job_tag</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="n">parallel</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As above NOTE that <code class="docutils literal notranslate"><span class="pre">exclusions</span></code>, <code class="docutils literal notranslate"><span class="pre">techmap</span></code>, and <code class="docutils literal notranslate"><span class="pre">techmap_dset</span></code> can be
+set to <code class="docutils literal notranslate"><span class="pre">None</span></code> if representative profiles without exclusions are desired.</p>
+<p>Extra profiles can be extracted with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">RPMOutput</span><span class="o">.</span><span class="n">extract_profiles</span><span class="p">(</span><span class="n">rpm_clusters</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+                           <span class="n">n_profiles</span><span class="o">=</span><span class="n">profiles</span><span class="p">,</span> <span class="n">job_tag</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                           <span class="n">parallel</span><span class="o">=</span><span class="n">parallel</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Again <code class="docutils literal notranslate"><span class="pre">extra_profiles</span></code> can only be run after <code class="docutils literal notranslate"><span class="pre">process_outputs</span></code> has been
+run.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="examples.reeds.html" class="btn btn-neutral float-right" title="Regional Energy Deployment System (ReEDS)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

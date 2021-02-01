@@ -1,0 +1,879 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.rpm.rpm_clusters &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.rpm.rpm_clusters</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.rpm.rpm_clusters</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">RPM Clustering Module</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pywt</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">cKDTree</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">Point</span>
+
+<span class="kn">from</span> <span class="nn">reVX.handlers.outputs</span> <span class="kn">import</span> <span class="n">Outputs</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.cluster_methods</span> <span class="kn">import</span> <span class="n">ClusteringMethods</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RPMClusters"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_clusters.html#reVX.rpm.rpm_clusters.RPMClusters">[docs]</a><span class="k">class</span> <span class="nc">RPMClusters</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for RPM clusters</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from reV import Resource</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; fname = &#39;$TESTDATADIR/reV_gen/gen_pv_2012.h5&#39;</span>
+<span class="sd">    &gt;&gt;&gt; with Resource(fname) as res:</span>
+<span class="sd">    &gt;&gt;&gt;     gen_gids = f.meta.index.values</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; clusters = RPMClusters(fname, gen_gids, n_clusters=6)</span>
+<span class="sd">    &gt;&gt;&gt; clusters._cluster(**kwargs)</span>
+<span class="sd">    &gt;&gt;&gt; clusters.meta</span>
+<span class="sd">            gen_gid   latitude  longitude  cluster_id   geometry</span>
+<span class="sd">    0         0  41.290001 -71.860001           0  POINT (-71.86000 41.29000)</span>
+<span class="sd">    1         1  41.290001 -71.820000           0  POINT (-71.82000 41.29000)</span>
+<span class="sd">    2         2  41.250000 -71.820000           4  POINT (-71.82000 41.25000)</span>
+<span class="sd">    3         3  41.330002 -71.820000           0  POINT (-71.82000 41.33000)</span>
+<span class="sd">    4         4  41.369999 -71.820000           0  POINT (-71.82000 41.37000)</span>
+<span class="sd">    ..      ...        ...        ...         ...                         ...</span>
+<span class="sd">    95       95  41.250000 -71.660004           4  POINT (-71.66000 41.25000)</span>
+<span class="sd">    96       96  41.889999 -71.660004           5  POINT (-71.66000 41.89000)</span>
+<span class="sd">    97       97  41.450001 -71.660004           3  POINT (-71.66000 41.45000)</span>
+<span class="sd">    98       98  41.610001 -71.660004           1  POINT (-71.66000 41.61000)</span>
+<span class="sd">    99       99  41.410000 -71.660004           3  POINT (-71.66000 41.41000)</span>
+
+<span class="sd">    Generate Shape File of Cluster</span>
+
+<span class="sd">    &gt;&gt;&gt; RPMClusters._generate_shapefile(clusters.meta, fpath=&#39;./test.shp&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">gen_gids</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            Path to reV .h5 files containing desired capacity factor profiles</span>
+<span class="sd">        gen_gids : list | ndarray</span>
+<span class="sd">            List or vector of gen_gids to cluster on</span>
+<span class="sd">        n_clusters : int</span>
+<span class="sd">            Number of clusters to identify</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coefficients</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_data</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">,</span>
+                                                          <span class="n">gen_gids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_clusters</span> <span class="o">=</span> <span class="n">n_clusters</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _coefficients : ndarray</span>
+<span class="sd">            Array of wavelet coefficients for each gen_gid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coefficients</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _meta : pandas.DataFrame</span>
+<span class="sd">            DataFrame of meta data:</span>
+<span class="sd">            - gen_gid</span>
+<span class="sd">            - latitude</span>
+<span class="sd">            - longitude</span>
+<span class="sd">            - cluster_id</span>
+<span class="sd">            - rank</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">n_clusters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _n_clusters : int</span>
+<span class="sd">            Number of clusters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_clusters</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cluster_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cluster_coeffs : ndarray</span>
+<span class="sd">            Representative coefficients for each cluster</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cluster_coeffs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;cluster_id&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">:</span>
+            <span class="n">cluster_coeffs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">cdf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">):</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">cdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">values</span>
+                <span class="n">cluster_coeffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+            <span class="n">cluster_coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cluster_coeffs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cluster_coeffs</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cluster_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cluster_ids : ndarray</span>
+<span class="sd">            Cluster cluster_id for each gen_gid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cluster_ids</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;cluster_id&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">:</span>
+            <span class="n">cluster_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">return</span> <span class="n">cluster_ids</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cluster_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        cluster_coords : ndarray</span>
+<span class="sd">            lon, lat coordinates of the centroid of each cluster</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cluster_coords</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="s1">&#39;cluster_id&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">:</span>
+            <span class="n">cluster_coords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">)</span>
+            <span class="n">cluster_coords</span> <span class="o">=</span> <span class="n">cluster_coords</span><span class="p">[[</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+            <span class="n">cluster_coords</span> <span class="o">=</span> <span class="n">cluster_coords</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="k">return</span> <span class="n">cluster_coords</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        coords : ndarray</span>
+<span class="sd">            lon, lat coordinates for each gen_gid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">[[</span><span class="s1">&#39;longitude&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span>
+        <span class="k">return</span> <span class="n">coords</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_data</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">gen_gids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract lat, lon coordinates for given gen_gids</span>
+<span class="sd">        Extract and convert cf_profiles into wavelet coefficients</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cf_fpath : str</span>
+<span class="sd">            Path to reV .h5 files containing desired capacity factor profiles</span>
+<span class="sd">        gen_gids : list | ndarray</span>
+<span class="sd">            List or vector of gen_gids to cluster on</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">with</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">unscale</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">as</span> <span class="n">cfs</span><span class="p">:</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">cfs</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">gen_gids</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]]</span>
+            <span class="n">gid_slice</span><span class="p">,</span> <span class="n">gid_idx</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_gid_pos</span><span class="p">(</span><span class="n">gen_gids</span><span class="p">)</span>
+            <span class="n">coeff</span> <span class="o">=</span> <span class="n">cfs</span><span class="p">[</span><span class="s1">&#39;cf_profile&#39;</span><span class="p">,</span> <span class="p">:,</span> <span class="n">gid_slice</span><span class="p">][:,</span> <span class="n">gid_idx</span><span class="p">]</span>
+
+        <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gen_gids</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;gen_gid&#39;</span><span class="p">,</span> <span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">coeff</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_calculate_wavelets</span><span class="p">(</span><span class="n">coeff</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">meta</span><span class="p">,</span> <span class="n">coeff</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_gid_pos</span><span class="p">(</span><span class="n">gen_gids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gen_gids : list | ndarray</span>
+<span class="sd">            List or vector of gen_gids to cluster on</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        gid_slice : slice</span>
+<span class="sd">            Slice that encompasses the entire gen_gid range</span>
+<span class="sd">        gid_idx : ndarray</span>
+<span class="sd">            Adjusted list to extract gen_gids of interest from slice</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">gen_gids</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">gen_gids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">gen_gids</span><span class="p">)</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="n">gen_gids</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">e</span> <span class="o">=</span> <span class="n">gen_gids</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">gid_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">gid_idx</span> <span class="o">=</span> <span class="n">gen_gids</span> <span class="o">-</span> <span class="n">s</span>
+
+        <span class="k">return</span> <span class="n">gid_slice</span><span class="p">,</span> <span class="n">gid_idx</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_calculate_wavelets</span><span class="p">(</span><span class="n">ts_arrays</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Calculates the wavelet coefficients of each</span>
+<span class="sd">            timeseries within ndarray &quot;&quot;&quot;</span>
+        <span class="n">coefficients</span> <span class="o">=</span> <span class="n">RPMWavelets</span><span class="o">.</span><span class="n">get_dwt_coefficients</span><span class="p">(</span><span class="n">ts_arrays</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">coefficients</span>
+
+    <span class="k">def</span> <span class="nf">_cluster_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;kmeans&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply a clustering method to &lt;self.ts_arrays&gt; &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Applying </span><span class="si">{}</span><span class="s1"> clustering &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">method</span><span class="p">))</span>
+
+        <span class="n">c_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ClusteringMethods</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">c_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">,</span> <span class="n">n_clusters</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_clusters</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">labels</span>
+
+    <span class="k">def</span> <span class="nf">_dist_rank_optimization</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Re-cluster data by minimizing the sum of the:</span>
+<span class="sd">        - distance between each point and each cluster centroid</span>
+<span class="sd">        - distance between each point and each</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        norm : str</span>
+<span class="sd">            Normalization method to use (see sklearn.preprocessing.normalize)</span>
+<span class="sd">            if None range normalize</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        new_labels : ndarray</span>
+<span class="sd">            New cluster labels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cluster_coeffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_coefficients</span>
+        <span class="n">cluster_centroids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_coordinates</span>
+        <span class="n">rmse</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">rep_coeffs</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">cluster_centroids</span><span class="p">,</span> <span class="n">cluster_coeffs</span><span class="p">):</span>
+            <span class="n">c_rmse</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span> <span class="o">-</span> <span class="n">rep_coeffs</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                             <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">rmse</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c_rmse</span><span class="p">)</span>
+            <span class="n">c_dist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">coordinates</span> <span class="o">-</span> <span class="n">centroid</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">dist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c_dist</span><span class="p">)</span>
+
+        <span class="n">rmse</span> <span class="o">=</span> <span class="n">ClusteringMethods</span><span class="o">.</span><span class="n">_normalize_values</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">rmse</span><span class="p">),</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">ClusteringMethods</span><span class="o">.</span><span class="n">_normalize_values</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dist</span><span class="p">),</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="n">dist</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">rmse</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">new_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">err</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_labels</span>
+
+    <span class="k">def</span> <span class="nf">_dist_rank_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Re-cluster data by minimizing the sum of the:</span>
+<span class="sd">        - distance between each point and each cluster centroid</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        iterate : bool</span>
+<span class="sd">            Iterate on _dist_rank_optimization until cluster centroids and</span>
+<span class="sd">            profiles start to converge</span>
+<span class="sd">        norm : str</span>
+<span class="sd">            Normalization method to use (see sklearn.preprocessing.normalize)</span>
+<span class="sd">            if None range normalize</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        new_labels : ndarray</span>
+<span class="sd">            New cluster labels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">coeffs</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">cluster_coefficients</span>
+        <span class="n">centroids</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">cluster_coordinates</span>
+        <span class="n">dist</span><span class="p">,</span> <span class="n">rmse</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">new_labels</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">_dist_rank_optimization</span><span class="p">(</span><span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">_meta</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_labels</span>
+            <span class="k">if</span> <span class="n">iterate</span><span class="p">:</span>
+                <span class="n">c_coeffs</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">cluster_coefficients</span>
+                <span class="n">c_centroids</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">cluster_coordinates</span>
+                <span class="n">dist_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">c_centroids</span> <span class="o">-</span> <span class="n">centroids</span><span class="p">)</span>
+                <span class="n">rmse_i</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">c_coeffs</span> <span class="o">-</span> <span class="n">coeffs</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">dist_i</span> <span class="o">&lt;=</span> <span class="n">dist</span> <span class="ow">and</span> <span class="n">rmse_i</span> <span class="o">&lt;=</span> <span class="n">rmse</span><span class="p">):</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">dist</span><span class="p">,</span> <span class="n">rmse</span> <span class="o">=</span> <span class="n">dist_i</span><span class="p">,</span> <span class="n">rmse_i</span>
+                    <span class="n">coeffs</span><span class="p">,</span> <span class="n">centroids</span> <span class="o">=</span> <span class="n">c_coeffs</span><span class="p">,</span> <span class="n">c_centroids</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="k">return</span> <span class="n">new_labels</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_cluster_geom</span><span class="p">(</span><span class="n">gdf_points</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate cluster polygons as a geopandas dataframe</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lookup</span> <span class="o">=</span> <span class="n">gdf_points</span><span class="p">[[</span><span class="s1">&#39;latitude&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude&#39;</span><span class="p">]]</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">lookup</span><span class="p">)</span>  <span class="c1"># pylint: disable=not-callable</span>
+        <span class="n">dists</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">mean_dist</span> <span class="o">=</span> <span class="n">dists</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">gdf_poly</span> <span class="o">=</span> <span class="n">gdf_points</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">gdf_poly</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="n">gdf_poly</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">mean_dist</span><span class="p">)</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="n">gdf_poly</span><span class="o">.</span><span class="n">dissolve</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="o">-</span><span class="n">mean_dist</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">mean_dist</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_generate_shapefile</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">meta</span><span class="p">,</span> <span class="n">fpath</span><span class="p">,</span> <span class="n">beautify</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate cluster polygons and save to shapefile</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">geometry</span> <span class="o">=</span> <span class="p">[</span><span class="n">Point</span><span class="p">(</span><span class="n">xy</span><span class="p">)</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">longitude</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">latitude</span><span class="p">)]</span>
+        <span class="n">gdf_points</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">,</span>
+                                      <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;EPSG:5070&quot;</span><span class="p">)</span>
+
+        <span class="n">clusters</span><span class="p">,</span> <span class="n">mean_dist</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_cluster_geom</span><span class="p">(</span><span class="n">gdf_points</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">beautify</span><span class="p">:</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="o">-</span><span class="n">mean_dist</span><span class="p">)</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">mean_dist</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">clusters</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">geom</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">geom</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s1">&#39;MultiPolygon&#39;</span><span class="p">:</span>
+                    <span class="n">clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span>
+                                                          <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">area</span><span class="p">)</span>
+
+        <span class="n">clusters</span><span class="p">[[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">to_file</span><span class="p">(</span><span class="n">fpath</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fpath</span>
+
+    <span class="k">def</span> <span class="nf">_contiguous_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">drop_islands</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">buffer_weight</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Re-classify clusters by making contigous cluster polygons</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span>
+
+        <span class="n">geometry</span> <span class="o">=</span> <span class="p">[</span><span class="n">Point</span><span class="p">(</span><span class="n">xy</span><span class="p">)</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">longitude</span><span class="p">,</span> <span class="n">meta</span><span class="o">.</span><span class="n">latitude</span><span class="p">)]</span>
+        <span class="n">gdf_points</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">,</span>
+                                      <span class="n">crs</span><span class="o">=</span><span class="s2">&quot;EPSG:5070&quot;</span><span class="p">)</span>
+
+        <span class="n">clusters</span><span class="p">,</span> <span class="n">mean_dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cluster_geom</span><span class="p">(</span><span class="n">gdf_points</span><span class="p">)</span>
+
+        <span class="c1"># Drop Islands</span>
+        <span class="k">if</span> <span class="n">drop_islands</span><span class="p">:</span>
+            <span class="n">buffer</span> <span class="o">=</span> <span class="n">buffer_weight</span> <span class="o">*</span> <span class="n">mean_dist</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="o">-</span><span class="n">buffer</span><span class="p">)</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">buffer</span><span class="p">(</span><span class="n">buffer</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">clusters</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+                <span class="n">geom</span> <span class="o">=</span> <span class="n">clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">geom</span><span class="o">.</span><span class="n">geom_type</span> <span class="o">==</span> <span class="s1">&#39;MultiPolygon&#39;</span><span class="p">:</span>
+                    <span class="n">clusters</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span>
+                                                          <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="o">.</span><span class="n">area</span><span class="p">)</span>
+
+        <span class="n">intersected</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="n">gdf_points</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span>
+                                <span class="n">how</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="s1">&#39;intersects&#39;</span><span class="p">)</span>
+
+        <span class="c1"># drop duplicate rows</span>
+        <span class="n">gid_counts</span> <span class="o">=</span> <span class="n">intersected</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;gen_gid_left&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+        <span class="n">duplicate_gids</span> <span class="o">=</span> <span class="n">gid_counts</span><span class="p">[</span><span class="n">gid_counts</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">index</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">intersected</span><span class="p">[</span><span class="s1">&#39;gen_gid_left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">duplicate_gids</span><span class="p">)</span>
+        <span class="n">intersected</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">mask</span><span class="p">,</span> <span class="s1">&#39;cluster_id_right&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">intersected</span> <span class="o">=</span> <span class="n">intersected</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;gen_gid_left&#39;</span><span class="p">])</span>
+
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">intersected</span><span class="o">.</span><span class="n">cluster_id_right</span><span class="p">)</span>
+        <span class="n">assigned</span> <span class="o">=</span> <span class="n">intersected</span><span class="p">[</span><span class="o">~</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">unassigned</span> <span class="o">=</span> <span class="n">intersected</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+        <span class="n">lookup</span> <span class="o">=</span> <span class="n">assigned</span><span class="p">[[</span><span class="s1">&#39;latitude_left&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude_left&#39;</span><span class="p">]]</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">unassigned</span><span class="p">[[</span><span class="s1">&#39;latitude_left&#39;</span><span class="p">,</span> <span class="s1">&#39;longitude_left&#39;</span><span class="p">]]</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">lookup</span><span class="p">)</span>  <span class="c1"># pylint: disable=not-callable</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">inds</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ind</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">unassigned</span><span class="o">.</span><span class="n">index</span><span class="p">)):</span>
+            <span class="n">nearest_cluster_id</span> <span class="o">=</span> <span class="n">assigned</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">inds</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s1">&#39;cluster_id_left&#39;</span><span class="p">]</span>
+            <span class="n">intersected</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="s1">&#39;cluster_id_left&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">nearest_cluster_id</span>
+
+        <span class="n">new_labels</span> <span class="o">=</span> <span class="n">intersected</span><span class="p">[</span><span class="s1">&#39;cluster_id_left&#39;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">new_labels</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_ranks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Determine the rank of each location within all clusters</span>
+<span class="sd">        based on the mean square errors &quot;&quot;&quot;</span>
+        <span class="n">cluster_coeffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cluster_coefficients</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cdf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">):</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">cdf</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">rep_coeffs</span> <span class="o">=</span> <span class="n">cluster_coeffs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">coeffs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">coeffs</span> <span class="o">-</span> <span class="n">rep_coeffs</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">pos</span><span class="p">,</span> <span class="s1">&#39;rank&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rank</span>
+
+    <span class="k">def</span> <span class="nf">_cluster</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;kmeans&#39;</span><span class="p">,</span> <span class="n">method_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">dist_rank_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dist_rmse_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">contiguous_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">contiguous_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run three step RPM clustering procedure:</span>
+<span class="sd">        1) Cluster on wavelet coefficients</span>
+<span class="sd">        2) Clean up clusters by optimizing rmse and distance</span>
+<span class="sd">        3) Remove islands using polygon intersection</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        method : str</span>
+<span class="sd">            Method to use to cluster coefficients</span>
+<span class="sd">        method_kwargs : dict</span>
+<span class="sd">            Kwargs for running _cluster_coefficients</span>
+<span class="sd">        dist_rank_filter : bool</span>
+<span class="sd">            Run _optimize_dist_rank</span>
+<span class="sd">        dist_rmse_kwargs : dict</span>
+<span class="sd">            Kwargs for running _dist_rank_optimization</span>
+<span class="sd">        contiguous_filter : bool</span>
+<span class="sd">            Run _contiguous_filter</span>
+<span class="sd">        contiguous_kwargs : dict</span>
+<span class="sd">            Kwargs for _contiguous_filter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_clusters</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">dist_rank_filter</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">contiguous_filter</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">method_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">method_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cluster_coefficients</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="o">**</span><span class="n">method_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">labels</span>
+
+        <span class="c1"># Optimize Distance &amp; Rank</span>
+        <span class="k">if</span> <span class="n">dist_rank_filter</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">dist_rmse_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">dist_rmse_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="n">new_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dist_rank_filter</span><span class="p">(</span><span class="o">**</span><span class="n">dist_rmse_kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_labels</span>
+
+        <span class="c1"># Apply contiguous filter</span>
+        <span class="k">if</span> <span class="n">contiguous_filter</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">contiguous_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">contiguous_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="n">new_labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_contiguous_filter</span><span class="p">(</span><span class="o">**</span><span class="n">contiguous_kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">[</span><span class="s1">&#39;cluster_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_labels</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_ranks</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RPMClusters.cluster"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_clusters.html#reVX.rpm.rpm_clusters.RPMClusters.cluster">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">cluster</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cf_h5_path</span><span class="p">,</span> <span class="n">region_gen_gids</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;kmeans&#39;</span><span class="p">,</span>
+                <span class="n">method_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dist_rank_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">dist_rmse_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">contiguous_filter</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">contiguous_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Entry point for RPMCluster to get clusters for a given region</span>
+<span class="sd">        defined as a list | array of gen_gids</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        cf_h5_path : str</span>
+<span class="sd">            Path to reV .h5 files containing desired capacity factor profiles</span>
+<span class="sd">        region_gen_gids : list | ndarray</span>
+<span class="sd">            List or vector of gen_gids to cluster on</span>
+<span class="sd">        n_clusters : int</span>
+<span class="sd">            Number of clusters to identify</span>
+<span class="sd">        method : str</span>
+<span class="sd">            Method to use to cluster coefficients</span>
+<span class="sd">        method_kwargs : dict</span>
+<span class="sd">            Kwargs for running _cluster_coefficients</span>
+<span class="sd">        dist_rank_filter : bool</span>
+<span class="sd">            Re-cluster data by minimizing the sum of the:</span>
+<span class="sd">            - distance between each point and each cluster centroid</span>
+<span class="sd">        dist_rmse_kwargs : dict</span>
+<span class="sd">            Kwargs for running _dist_rank_optimization</span>
+<span class="sd">        contiguous_filter : bool</span>
+<span class="sd">            Re-classify clusters by making contigous cluster polygons</span>
+<span class="sd">        contiguous_kwargs : dict</span>
+<span class="sd">            Kwargs for _contiguous_filter</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : pandas.DataFrame</span>
+<span class="sd">            Cluster results: (gen_gid, lon, lat, cluster_id, rank)</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; from reV import Resource</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; fname = &#39;$TESTDATADIR/reV_ge/gen_pv_2012.h5&#39;</span>
+<span class="sd">        &gt;&gt;&gt; with Resource(fname) as res:</span>
+<span class="sd">        &gt;&gt;&gt;     gen_gids = f.meta.index.values</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; RPMClusters.cluster(fname, gen_gids, n_clusters=6)</span>
+<span class="sd">                gen_gid   latitude  longitude  cluster_id   geometry</span>
+<span class="sd">        0         0  41.290001 -71.860001       0  POINT (-71.86000 41.29000)</span>
+<span class="sd">        1         1  41.290001 -71.820000       0  POINT (-71.82000 41.29000)</span>
+<span class="sd">        2         2  41.250000 -71.820000       4  POINT (-71.82000 41.25000)</span>
+<span class="sd">        3         3  41.330002 -71.820000       0  POINT (-71.82000 41.33000)</span>
+<span class="sd">        4         4  41.369999 -71.820000       0  POINT (-71.82000 41.37000)</span>
+<span class="sd">        ..      ...        ...        ...     ...                         ...</span>
+<span class="sd">        95       95  41.250000 -71.660004       4  POINT (-71.66000 41.25000)</span>
+<span class="sd">        96       96  41.889999 -71.660004       5  POINT (-71.66000 41.89000)</span>
+<span class="sd">        97       97  41.450001 -71.660004       3  POINT (-71.66000 41.45000)</span>
+<span class="sd">        98       98  41.610001 -71.660004       1  POINT (-71.66000 41.61000)</span>
+<span class="sd">        99       99  41.410000 -71.660004       3  POINT (-71.66000 41.41000)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">clusters</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">cf_h5_path</span><span class="p">,</span> <span class="n">region_gen_gids</span><span class="p">,</span> <span class="n">n_clusters</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">clusters</span><span class="o">.</span><span class="n">_cluster</span><span class="p">(</span><span class="n">method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span> <span class="n">method_kwargs</span><span class="o">=</span><span class="n">method_kwargs</span><span class="p">,</span>
+                              <span class="n">dist_rank_filter</span><span class="o">=</span><span class="n">dist_rank_filter</span><span class="p">,</span>
+                              <span class="n">dist_rmse_kwargs</span><span class="o">=</span><span class="n">dist_rmse_kwargs</span><span class="p">,</span>
+                              <span class="n">contiguous_filter</span><span class="o">=</span><span class="n">contiguous_filter</span><span class="p">,</span>
+                              <span class="n">contiguous_kwargs</span><span class="o">=</span><span class="n">contiguous_kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Clustering failed on gen_gids </span><span class="si">{}</span><span class="s1"> through </span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">region_gen_gids</span><span class="p">),</span>
+                                     <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">region_gen_gids</span><span class="p">),</span> <span class="n">e</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">clusters</span><span class="o">.</span><span class="n">meta</span></div></div>
+
+
+<div class="viewcode-block" id="RPMWavelets"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_clusters.html#reVX.rpm.rpm_clusters.RPMWavelets">[docs]</a><span class="k">class</span> <span class="nc">RPMWavelets</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Base class for RPM wavelets&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RPMWavelets.get_dwt_coefficients"><a class="viewcode-back" href="../../../reVX/reVX.rpm.rpm_clusters.html#reVX.rpm.rpm_clusters.RPMWavelets.get_dwt_coefficients">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_dwt_coefficients</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">wavelet</span><span class="o">=</span><span class="s1">&#39;Haar&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Collect wavelet coefficients for time series &lt;x&gt; using</span>
+<span class="sd">        mother wavelet &lt;wavelet&gt; at levels &lt;level&gt;.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : ndarray</span>
+<span class="sd">            time series values</span>
+<span class="sd">        wavelet : string</span>
+<span class="sd">            mother wavelet type</span>
+<span class="sd">        level : int</span>
+<span class="sd">            optional wavelet computation level</span>
+<span class="sd">        indices : ndarray</span>
+<span class="sd">            coefficient array levels to keep</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            stacked coefficients at &lt;indices&gt;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># set mother</span>
+        <span class="n">_wavelet</span> <span class="o">=</span> <span class="n">pywt</span><span class="o">.</span><span class="n">Wavelet</span><span class="p">(</span><span class="n">wavelet</span><span class="p">)</span>
+
+        <span class="c1"># multi-level with default depth</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Calculating wavelet coefficients&#39;</span>
+                     <span class="s1">&#39; with </span><span class="si">{w}</span><span class="s1"> wavelet&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="n">_wavelet</span><span class="o">.</span><span class="n">family_name</span><span class="p">))</span>
+
+        <span class="n">_wavedec</span> <span class="o">=</span> <span class="n">pywt</span><span class="o">.</span><span class="n">wavedec</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">wavelet</span><span class="o">=</span><span class="n">_wavelet</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_subset_coefficients</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">_wavedec</span><span class="p">,</span>
+                                        <span class="n">gid_count</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                        <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_subset_coefficients</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">gid_count</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Subset and stack wavelet coefficients</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : ndarray</span>
+<span class="sd">            coefficients arrays</span>
+<span class="sd">        gid_count : int</span>
+<span class="sd">            number of area ID values</span>
+<span class="sd">        indices : ndarray</span>
+<span class="sd">            coefficient array levels to keep</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">            stacked coefficients: converted to integers</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span> <span class="ow">or</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+        <span class="n">_coefficient_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">_index</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="n">_shape</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">_index</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+            <span class="n">_coefficient_count</span> <span class="o">+=</span> <span class="n">_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">_combined_wc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">gid_count</span><span class="p">,</span> <span class="n">_coefficient_count</span><span class="p">),</span>
+                                <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">{c:d}</span><span class="s1"> coefficients&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">c</span><span class="o">=</span><span class="n">_coefficient_count</span><span class="p">))</span>
+
+        <span class="n">_i_start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">_index</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="n">_i_end</span> <span class="o">=</span> <span class="n">_i_start</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="n">_index</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">_combined_wc</span><span class="p">[:,</span> <span class="n">_i_start</span><span class="p">:</span><span class="n">_i_end</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="n">_index</span><span class="p">])</span>
+            <span class="n">_i_start</span> <span class="o">=</span> <span class="n">_i_end</span>
+
+        <span class="k">return</span> <span class="n">_combined_wc</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

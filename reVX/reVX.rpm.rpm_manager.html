@@ -1,0 +1,378 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.rpm.rpm_manager module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.rpm.rpm_output module" href="reVX.rpm.rpm_output.html" />
+    <link rel="prev" title="reVX.rpm.rpm_clusters module" href="reVX.rpm.rpm_clusters.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.rpm.html">reVX.rpm package</a> &raquo;</li>
+        
+      <li>reVX.rpm.rpm_manager module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.rpm.rpm_manager.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-reVX.rpm.rpm_manager">
+<span id="revx-rpm-rpm-manager-module"></span><h1>reVX.rpm.rpm_manager module<a class="headerlink" href="#module-reVX.rpm.rpm_manager" title="Permalink to this headline">¶</a></h1>
+<p>Pipeline between reV and RPM</p>
+<dl class="py class">
+<dt id="reVX.rpm.rpm_manager.RPMClusterManager">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.rpm.rpm_manager.</code><code class="sig-name descname">RPMClusterManager</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">rpm_meta</span></em>, <em class="sig-param"><span class="n">rpm_region_col</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_manager.html#RPMClusterManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_manager.RPMClusterManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>RPM Cluster Manager:
+- Extracts gids for all RPM regions
+- Runs RPMClusters in parallel for all regions
+- Save results to disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Path to reV .h5 file containing desired capacity factor profiles</p></li>
+<li><p><strong>rpm_meta</strong> (<em>pandas.DataFrame | str</em>) – DataFrame or path to .csv or .json containing the RPM meta data:
+(region, gid | gen_gid, clusters)
+- Regions of interest
+- # of clusters per region
+- cf or resource GIDs if region is not in default meta data</p></li>
+<li><p><strong>rpm_region_col</strong> (<em>str | Nonetype</em>) – If not None, the meta-data field to map RPM regions to</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of parallel workers. 1 will run serial, None will use all
+available., by default None</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.rpm.rpm_manager.RPMClusterManager.run_clusters">
+<em class="property">classmethod </em><code class="sig-name descname">run_clusters</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">rpm_meta</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">job_tag</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rpm_region_col</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">cluster_kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_manager.html#RPMClusterManager.run_clusters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_manager.RPMClusterManager.run_clusters" title="Permalink to this definition">¶</a></dt>
+<dd><p>RPM Cluster Manager:
+- Extracts gen_gids for all RPM regions
+- Runs RPMClusters in parallel for all regions
+- Save results to disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Path to reV .h5 file containing desired capacity factor profiles</p></li>
+<li><p><strong>rpm_meta</strong> (<em>pandas.DataFrame | str</em>) – DataFrame or path to .csv or .json containing the RPM meta data:
+- Regions of interest
+- # of clusters per region
+- cf or resource GIDs if region is not in default meta data</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to dump output files.</p></li>
+<li><p><strong>job_tag</strong> (<em>str | None</em>) – Optional name tag to add to the output files.
+Format is “rpm_cluster_output_{tag}.csv”.</p></li>
+<li><p><strong>rpm_region_col</strong> (<em>str | Nonetype</em>) – If not None, the meta-data field to map RPM regions to</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of parallel workers. 1 will run serial, None will use all
+available., by default None</p></li>
+<li><p><strong>output_kwargs</strong> (<em>dict | None</em>) – Kwargs for the RPM outputs manager.</p></li>
+<li><p><strong>**cluster_kwargs</strong> (<em>dict</em>) – RPMClusters kwargs</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.rpm.rpm_manager.RPMClusterManager.run_clusters_and_profiles">
+<em class="property">classmethod </em><code class="sig-name descname">run_clusters_and_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">rpm_meta</span></em>, <em class="sig-param"><span class="n">excl_fpath</span></em>, <em class="sig-param"><span class="n">excl_dict</span></em>, <em class="sig-param"><span class="n">techmap_dset</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">job_tag</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rpm_region_col</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">output_kwargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">cluster_kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_manager.html#RPMClusterManager.run_clusters_and_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_manager.RPMClusterManager.run_clusters_and_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>RPM Cluster Manager:
+- Extracts gen_gids for all RPM regions
+- Runs RPMClusters in parallel for all regions
+- Save results to disk</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Path to reV .h5 file containing desired capacity factor profiles</p></li>
+<li><p><strong>rpm_meta</strong> (<em>pandas.DataFrame | str</em>) – DataFrame or path to .csv or .json containing the RPM meta data:
+- Regions of interest
+- # of clusters per region
+- cf or resource GIDs if region is not in default meta data</p></li>
+<li><p><strong>excl_fpath</strong> (<em>str | None</em>) – Filepath to exclusions data (must match the techmap grid).
+None will not apply exclusions.</p></li>
+<li><p><strong>excl_dict</strong> (<em>dict | None</em>) – Dictionary of exclusion LayerMask arugments {layer: {kwarg: value}}</p></li>
+<li><p><strong>techmap_dset</strong> (<em>str</em>) – Dataset name in the exclusions file containing the
+exclusions-to-resource mapping data.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Directory to dump output files.</p></li>
+<li><p><strong>job_tag</strong> (<em>str | None</em>) – Optional name tag to add to the output files.
+Format is “rpm_cluster_output_{tag}.csv”.</p></li>
+<li><p><strong>rpm_region_col</strong> (<em>str | Nonetype</em>) – If not None, the meta-data field to map RPM regions to</p></li>
+<li><p><strong>max_workers</strong> (<em>int, optional</em>) – Number of parallel workers. 1 will run serial, None will use all
+available., by default None</p></li>
+<li><p><strong>output_kwargs</strong> (<em>dict | None</em>) – Kwargs for the RPM outputs manager.</p></li>
+<li><p><strong>**cluster_kwargs</strong> (<em>dict</em>) – RPMClusters kwargs</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.rpm.rpm_output.html" class="btn btn-neutral float-right" title="reVX.rpm.rpm_output module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.rpm.rpm_clusters.html" class="btn btn-neutral float-left" title="reVX.rpm.rpm_clusters module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,738 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.wind_setbacks.wind_setbacks_cli &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.wind_setbacks.wind_setbacks_cli</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.wind_setbacks.wind_setbacks_cli</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="c1"># pylint: disable=all</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Wind Setbacks CLI</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">click</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">rex.utilities.loggers</span> <span class="kn">import</span> <span class="n">init_mult</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.cli_dtypes</span> <span class="kn">import</span> <span class="n">STR</span><span class="p">,</span> <span class="n">FLOAT</span><span class="p">,</span> <span class="n">INT</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.hpc</span> <span class="kn">import</span> <span class="n">SLURM</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.utilities</span> <span class="kn">import</span> <span class="n">get_class_properties</span>
+
+<span class="kn">from</span> <span class="nn">reVX.config.wind_setbacks</span> <span class="kn">import</span> <span class="n">WindSetbacksConfig</span>
+<span class="kn">from</span> <span class="nn">reVX.wind_setbacks.wind_setbacks</span> <span class="kn">import</span> <span class="p">(</span><span class="n">StructureWindSetbacks</span><span class="p">,</span>
+                                              <span class="n">RoadWindSetbacks</span><span class="p">,</span>
+                                              <span class="n">RailWindSetbacks</span><span class="p">,</span>
+                                              <span class="n">TransmissionWindSetbacks</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">reVX</span> <span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">STATE_SETBACKS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;structure&#39;</span><span class="p">:</span> <span class="n">StructureWindSetbacks</span><span class="p">,</span> <span class="s1">&#39;road&#39;</span><span class="p">:</span> <span class="n">RoadWindSetbacks</span><span class="p">}</span>
+
+
+<span class="nd">@click</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;WindSetbacks&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Job name. Default is &quot;WindSetbaks&quot;.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--log_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-log&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Directory to dump log files. Default is out_dir.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wind Setbacks Command Line Interface</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">ensure_object</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+
+    <span class="n">log_modules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;reVX&#39;</span><span class="p">,</span> <span class="s1">&#39;reV&#39;</span><span class="p">,</span> <span class="s1">&#39;rex&#39;</span><span class="p">]</span>
+    <span class="n">init_mult</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="n">log_modules</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">version</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    print version</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">__version__</span><span class="p">)</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">valid_config_keys</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Echo the valid Wind Setbacks config keys</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_class_properties</span><span class="p">(</span><span class="n">WindSetbacksConfig</span><span class="p">)))</span>
+
+
+<div class="viewcode-block" id="run_local"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks_cli.html#reVX.wind_setbacks.wind_setbacks_cli.run_local">[docs]</a><span class="k">def</span> <span class="nf">run_local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run Wind Setbacks locally from config</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ctx : click.ctx</span>
+<span class="sd">        click ctx object</span>
+<span class="sd">    config : reVX.config.wind_setbacks.WindSetbacks</span>
+<span class="sd">        Wind Setbacks config object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">local</span><span class="p">,</span>
+               <span class="n">excl_h5</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">excl_h5</span><span class="p">,</span>
+               <span class="n">features_path</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">features_path</span><span class="p">,</span>
+               <span class="n">out_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dirout</span><span class="p">,</span>
+               <span class="n">hub_height</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">hub_height</span><span class="p">,</span>
+               <span class="n">rotor_diameter</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">rotor_diameter</span><span class="p">,</span>
+               <span class="n">regs_fpath</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">regs_fpath</span><span class="p">,</span>
+               <span class="n">multiplier</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">multiplier</span><span class="p">,</span>
+               <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">,</span>
+               <span class="n">replace</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">replace</span><span class="p">)</span>
+
+    <span class="n">feature_type</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">feature_type</span>
+    <span class="k">if</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s1">&#39;structure&#39;</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">structure_setbacks</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s1">&#39;road&#39;</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">road_setbacks</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s1">&#39;transmission&#39;</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">transmission_setbacks</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s1">&#39;rail&#39;</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">rail_setbacks</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Feature type must be one of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">FEATURE_TYPES</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--config&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Filepath to Wind Setbacks config json file.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run Wind Setbacks from a config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">WindSetbacksConfig</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;local&#39;</span><span class="p">:</span>
+        <span class="n">run_local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;eagle&#39;</span><span class="p">:</span>
+        <span class="n">eagle</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--excl_h5&#39;</span><span class="p">,</span> <span class="s1">&#39;-excl&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to .h5 file containing exclusion layers, will also &#39;</span>
+                    <span class="s1">&#39;be the location of any new setback layers&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--features_path&#39;</span><span class="p">,</span> <span class="s1">&#39;-feats&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to:/n&#39;</span>
+                    <span class="s1">&#39;- State level structure .geotiff or directory containing &#39;</span>
+                    <span class="s1">&#39;geotiff files./n&#39;</span>
+                    <span class="s1">&#39;- State level roads .gdb or directory containing .gdb &#39;</span>
+                    <span class="s1">&#39;files./n&#39;</span>
+                    <span class="s1">&#39;-transmission or railroad CONUS wide .shp file.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--out_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Directory to save setbacks geotiff(s) into&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--hub_height&#39;</span><span class="p">,</span> <span class="s1">&#39;-height&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Turbine hub height(m), used along with rotor diameter to &#39;</span>
+                    <span class="s1">&#39;compute blade tip height which is used to determine &#39;</span>
+                    <span class="s1">&#39;setback distance&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--rotor_diameter&#39;</span><span class="p">,</span> <span class="s1">&#39;-diameter&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Turbine rotor diameter(m), used along with hub height to &#39;</span>
+                    <span class="s1">&#39;compute blade tip height which is used to determine &#39;</span>
+                    <span class="s1">&#39;setback distance&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--regs_fpath&#39;</span><span class="p">,</span> <span class="s1">&#39;-regs&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to wind regulations .csv file, if None create &#39;</span>
+                    <span class="s1">&#39;generic setbacks using max - tip height * &quot;multiplier&quot;, &#39;</span>
+                    <span class="s1">&#39;by default None&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--multiplier&#39;</span><span class="p">,</span> <span class="s1">&#39;-mult&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">FLOAT</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;setback multiplier to use if wind regulations are not &#39;</span>
+                    <span class="s1">&#39;supplied, if str, must a key in &#39;</span>
+                    <span class="s1">&#39;{&quot;high&quot;: 3, &quot;moderate&quot;: 1.1}, if supplied along with &#39;</span>
+                    <span class="s1">&#39;regs_fpath, will be ignored, multiplied with max-tip &#39;</span>
+                    <span class="s1">&#39;height, by default None&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--max_workers&#39;</span><span class="p">,</span> <span class="s1">&#39;-mw&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INT</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Number of workers to use for setback computation, if 1 &#39;</span>
+                    <span class="s1">&#39;run in serial, if &gt; 1 run in parallel with that many &#39;</span>
+                    <span class="s1">&#39;workers, if None run in parallel on all available cores, &#39;</span>
+                    <span class="s1">&#39;by default None&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--replace&#39;</span><span class="p">,</span> <span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Flag to replace local layer data with arr if layer &#39;</span>
+                    <span class="s1">&#39;already exists in the exlcusion .h5 file&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--hsds&#39;</span><span class="p">,</span> <span class="s1">&#39;-hsds&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Flag to use h5pyd to handle .h5 domain hosted on AWS &#39;</span>
+                    <span class="s1">&#39;behind HSDS&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">excl_h5</span><span class="p">,</span> <span class="n">features_path</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span>
+          <span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">,</span> <span class="n">replace</span><span class="p">,</span> <span class="n">hsds</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute Wind Setbacks locally</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;EXCL_H5&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">excl_h5</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;FEATURES_PATH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">features_path</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HUB_HEIGHT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hub_height</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;ROTOR_DIAMETER&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rotor_diameter</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REGS_FPATH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">regs_fpath</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MULTIPLIER&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">multiplier</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_workers</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">replace</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HSDS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hsds</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">structure_setbacks</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute wind setbacks from structures</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">excl_h5</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;EXCL_H5&#39;</span><span class="p">]</span>
+    <span class="n">features_path</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;FEATURES_PATH&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+    <span class="n">hub_height</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HUB_HEIGHT&#39;</span><span class="p">]</span>
+    <span class="n">rotor_diameter</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;ROTOR_DIAMETER&#39;</span><span class="p">]</span>
+    <span class="n">regs_fpath</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REGS_FPATH&#39;</span><span class="p">]</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MULTIPLIER&#39;</span><span class="p">]</span>
+    <span class="n">max_workers</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span>
+    <span class="n">replace</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">]</span>
+    <span class="n">hsds</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HSDS&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing setbacks from structures in </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">features_path</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setbacks to be computed with:</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- hub_height = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- rotor_diameter = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- regs_fpath = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- multiplier = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- using max_workers = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- replace layer if needed = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">,</span>
+                         <span class="n">max_workers</span><span class="p">,</span> <span class="n">replace</span><span class="p">))</span>
+
+    <span class="n">StructureWindSetbacks</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">features_path</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span>
+                              <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="o">=</span><span class="n">regs_fpath</span><span class="p">,</span>
+                              <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                              <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Setbacks computed and writen to </span><span class="si">{}</span><span class="s1"> as </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">road_setbacks</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute wind setbacks from roads</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">excl_h5</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;EXCL_H5&#39;</span><span class="p">]</span>
+    <span class="n">features_path</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;FEATURES_PATH&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+    <span class="n">hub_height</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HUB_HEIGHT&#39;</span><span class="p">]</span>
+    <span class="n">rotor_diameter</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;ROTOR_DIAMETER&#39;</span><span class="p">]</span>
+    <span class="n">regs_fpath</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REGS_FPATH&#39;</span><span class="p">]</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MULTIPLIER&#39;</span><span class="p">]</span>
+    <span class="n">max_workers</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span>
+    <span class="n">replace</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">]</span>
+    <span class="n">hsds</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HSDS&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing setbacks from roads in </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">features_path</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setbacks to be computed with:</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- hub_height = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- rotor_diameter = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- regs_fpath = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- multiplier = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- using max_workers = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- replace layer if needed = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">,</span>
+                         <span class="n">max_workers</span><span class="p">,</span> <span class="n">replace</span><span class="p">))</span>
+
+    <span class="n">RoadWindSetbacks</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">features_path</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span>
+                         <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="o">=</span><span class="n">regs_fpath</span><span class="p">,</span>
+                         <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                         <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Setbacks computed and writen to </span><span class="si">{}</span><span class="s1"> as </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">transmission_setbacks</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute wind setbacks from transmission</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">excl_h5</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;EXCL_H5&#39;</span><span class="p">]</span>
+    <span class="n">features_path</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;FEATURES_PATH&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+    <span class="n">hub_height</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HUB_HEIGHT&#39;</span><span class="p">]</span>
+    <span class="n">rotor_diameter</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;ROTOR_DIAMETER&#39;</span><span class="p">]</span>
+    <span class="n">regs_fpath</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REGS_FPATH&#39;</span><span class="p">]</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MULTIPLIER&#39;</span><span class="p">]</span>
+    <span class="n">max_workers</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span>
+    <span class="n">replace</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">]</span>
+    <span class="n">hsds</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HSDS&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing setbacks from transmission in </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">features_path</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setbacks to be computed with:</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- hub_height = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- rotor_diameter = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- regs_fpath = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- multiplier = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- using max_workers = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- replace layer if needed = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">,</span>
+                         <span class="n">max_workers</span><span class="p">,</span> <span class="n">replace</span><span class="p">))</span>
+
+    <span class="n">TransmissionWindSetbacks</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">features_path</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span>
+                                 <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="o">=</span><span class="n">regs_fpath</span><span class="p">,</span>
+                                 <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span>
+                                 <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">,</span>
+                                 <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Setbacks computed and writen to </span><span class="si">{}</span><span class="s1"> as </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">rail_setbacks</span><span class="p">(</span><span class="n">ctx</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute wind setbacks from railroads</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">excl_h5</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;EXCL_H5&#39;</span><span class="p">]</span>
+    <span class="n">features_path</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;FEATURES_PATH&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+    <span class="n">hub_height</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HUB_HEIGHT&#39;</span><span class="p">]</span>
+    <span class="n">rotor_diameter</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;ROTOR_DIAMETER&#39;</span><span class="p">]</span>
+    <span class="n">regs_fpath</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REGS_FPATH&#39;</span><span class="p">]</span>
+    <span class="n">multiplier</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MULTIPLIER&#39;</span><span class="p">]</span>
+    <span class="n">max_workers</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span>
+    <span class="n">replace</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;REPLACE&#39;</span><span class="p">]</span>
+    <span class="n">hsds</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;HSDS&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing setbacks from structures in </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">features_path</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Setbacks to be computed with:</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- hub_height = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- rotor_diameter = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- regs_fpath = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- multiplier = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- using max_workers = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="s1">&#39;- replace layer if needed = </span><span class="si">{}</span><span class="se">\n</span><span class="s1">&#39;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hub_height</span><span class="p">,</span> <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="p">,</span> <span class="n">multiplier</span><span class="p">,</span>
+                         <span class="n">max_workers</span><span class="p">,</span> <span class="n">replace</span><span class="p">))</span>
+
+    <span class="n">RailWindSetbacks</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">features_path</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">hub_height</span><span class="p">,</span>
+                         <span class="n">rotor_diameter</span><span class="p">,</span> <span class="n">regs_fpath</span><span class="o">=</span><span class="n">regs_fpath</span><span class="p">,</span>
+                         <span class="n">multiplier</span><span class="o">=</span><span class="n">multiplier</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                         <span class="n">replace</span><span class="o">=</span><span class="n">replace</span><span class="p">,</span> <span class="n">hsds</span><span class="o">=</span><span class="n">hsds</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Setbacks computed and writen to </span><span class="si">{}</span><span class="s1"> as </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">excl_h5</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="get_node_cmd"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks_cli.html#reVX.wind_setbacks.wind_setbacks_cli.get_node_cmd">[docs]</a><span class="k">def</span> <span class="nf">get_node_cmd</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the node CLI call for the Wind Setbacks computation</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.wind_setbacks.WindSetbacks</span>
+<span class="sd">        Wind Setbacks config object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cmd : str</span>
+<span class="sd">        CLI call to submit to SLURM execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-n </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">name</span><span class="p">)),</span>
+            <span class="s1">&#39;-log </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">logdir</span><span class="p">)),</span>
+            <span class="s1">&#39;local&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;-excl </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">excl_h5</span><span class="p">)),</span>
+            <span class="s1">&#39;-feats </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">features_path</span><span class="p">)),</span>
+            <span class="s1">&#39;-o </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">dirout</span><span class="p">)),</span>
+            <span class="s1">&#39;-height </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">hub_height</span><span class="p">)),</span>
+            <span class="s1">&#39;-diameter </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">rotor_diameter</span><span class="p">)),</span>
+            <span class="s1">&#39;-regs </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">regs_fpath</span><span class="p">)),</span>
+            <span class="s1">&#39;-mult </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">multiplier</span><span class="p">)),</span>
+            <span class="s1">&#39;-mw </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)),</span>
+            <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">replace</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">hsds</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-hsds&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">log_level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">)</span>
+
+    <span class="n">feature_type</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">feature_type</span>
+    <span class="k">if</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s1">&#39;structure&#39;</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;structure-setbacks&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s1">&#39;road&#39;</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;road-setbacks&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s1">&#39;transmission&#39;</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;transmission-setbacks&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">feature_type</span> <span class="o">==</span> <span class="s1">&#39;rail&#39;</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;rail-setbacks&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;Feature type must be one of </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">FEATURE_TYPES</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;python -m reVX.wind_setbacks.wind_setbacks_cli </span><span class="si">{}</span><span class="s1">&#39;</span>
+           <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Submitting the following cli call:</span><span class="se">\n\t</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">cmd</span></div>
+
+
+<div class="viewcode-block" id="launch_job"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks_cli.html#reVX.wind_setbacks.wind_setbacks_cli.launch_job">[docs]</a><span class="k">def</span> <span class="nf">launch_job</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Launch job from config on SLURM</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.wind_setbacks.WindSetbacks</span>
+<span class="sd">        Wind Setbacks config object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">log_dir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">logdir</span>
+    <span class="n">stdout_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log_dir</span><span class="p">,</span> <span class="s1">&#39;stdout/&#39;</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">features_path</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">-</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">get_node_cmd</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Computing Wind Setbacks on Eagle with &#39;</span>
+                <span class="s1">&#39;node name &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">slurm_manager</span> <span class="o">=</span> <span class="n">SLURM</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">slurm_manager</span><span class="o">.</span><span class="n">sbatch</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span>
+                               <span class="n">alloc</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">alloc</span><span class="p">,</span>
+                               <span class="n">memory</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">node_mem</span><span class="p">,</span>
+                               <span class="n">walltime</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">walltime</span><span class="p">,</span>
+                               <span class="n">feature</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">feature</span><span class="p">,</span>
+                               <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                               <span class="n">stdout_path</span><span class="o">=</span><span class="n">stdout_path</span><span class="p">,</span>
+                               <span class="n">conda_env</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">conda_env</span><span class="p">,</span>
+                               <span class="n">module</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">module</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Kicked off Wind Setbacks job &quot;</span><span class="si">{}</span><span class="s1">&quot; &#39;</span>
+               <span class="s1">&#39;(SLURM jobid #</span><span class="si">{}</span><span class="s1">) on Eagle.&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">out</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Was unable to kick off Wind Setbacks job &quot;</span><span class="si">{}</span><span class="s1">&quot;. &#39;</span>
+               <span class="s1">&#39;Please see the stdout error messages&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="eagle"><a class="viewcode-back" href="../../../reVX/reVX.wind_setbacks.wind_setbacks_cli.html#reVX.wind_setbacks.wind_setbacks_cli.eagle">[docs]</a><span class="k">def</span> <span class="nf">eagle</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run Wind Setbacks on Eagle HPC.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.wind_setbacks.WindSetbacks</span>
+<span class="sd">        Wind Setbacks config object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">features_path</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">features_path</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">features_path</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">feature_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">STATE_SETBACKS</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;&#39;features_path&#39; must be a .shp file to run rail or &quot;</span>
+                   <span class="s2">&quot;transmission setbacks, was given: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">features_path</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">STATE_SETBACKS</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">feature_type</span><span class="p">]</span>
+        <span class="n">features_path</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">get_feature_paths</span><span class="p">(</span><span class="n">features_path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">fpath</span> <span class="ow">in</span> <span class="n">features_path</span><span class="p">:</span>
+            <span class="n">fpath_config</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+            <span class="n">fpath_config</span><span class="p">[</span><span class="s1">&#39;features_path&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fpath</span>
+            <span class="n">launch_job</span><span class="p">(</span><span class="n">fpath_config</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">launch_job</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">main</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="p">{})</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Error running Wind Setbacks CLI&#39;</span><span class="p">)</span>
+        <span class="k">raise</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,471 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.plexos.plexos_plants_cli &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.plexos.plexos_plants_cli</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.plexos.plexos_plants_cli</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">PLEXOS Plants command line interface (cli).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">click</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">rex.utilities.cli_dtypes</span> <span class="kn">import</span> <span class="n">STR</span><span class="p">,</span> <span class="n">INT</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.hpc</span> <span class="kn">import</span> <span class="n">SLURM</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.loggers</span> <span class="kn">import</span> <span class="n">init_mult</span>
+
+<span class="kn">from</span> <span class="nn">reVX.plexos.plexos_plants</span> <span class="kn">import</span> <span class="n">PlantProfileAggregation</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="nd">@click</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">invoke_without_command</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;plexos-plants&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Job name. Default is &quot;plexos-plants&quot;.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--plexos_table&#39;</span><span class="p">,</span> <span class="s1">&#39;-pt&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to PLEXOS table of bus locations and capacity .csv&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--sc_table&#39;</span><span class="p">,</span> <span class="s1">&#39;-st&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to Supply Curve table .csv&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--cf_fpath&#39;</span><span class="p">,</span> <span class="s1">&#39;-cf&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to reV Generation output .h5 file&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--out_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-out&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Directory to dump output files&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--dist_percentile&#39;</span><span class="p">,</span> <span class="s1">&#39;-dp&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Percentile to use to compute distance threshold using &#39;</span>
+                    <span class="s1">&#39;sc_gid to SubStation distance, by default 90&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--lcoe_col&#39;</span><span class="p">,</span> <span class="s1">&#39;-lc&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;total_lcoe&#39;</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s2">&quot;LCOE column to sort by, by default &#39;total_lcoe&#39;&quot;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--lcoe_thresh&#39;</span><span class="p">,</span> <span class="s1">&#39;-lt&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.3</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;LCOE threshold multiplier, exclude sc_gids above &#39;</span>
+                    <span class="s1">&#39;threshold, by default 1.3&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--max_workers&#39;</span><span class="p">,</span> <span class="s1">&#39;-mw&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INT</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Number of workers to use for point and plant creation, &#39;</span>
+                    <span class="s1">&#39;1 == serial, &gt; 1 == parallel, None == parallel using all &#39;</span>
+                    <span class="s1">&#39;available cpus, by default None&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--points_per_worker&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number of points to create on each worker, by default 400&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--plants_per_worker&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Number of plants to identify on each worker, by default &#39;</span>
+                    <span class="s1">&#39;40&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="s1">&#39;--offshore&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Include offshore points, by default False&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">plexos_table</span><span class="p">,</span> <span class="n">sc_table</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">dist_percentile</span><span class="p">,</span>
+         <span class="n">lcoe_col</span><span class="p">,</span> <span class="n">lcoe_thresh</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">,</span> <span class="n">points_per_worker</span><span class="p">,</span>
+         <span class="n">plants_per_worker</span><span class="p">,</span> <span class="n">offshore</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;PLEXOS plant Command Line Interface&quot;&quot;&quot;</span>
+
+    <span class="n">ctx</span><span class="o">.</span><span class="n">ensure_object</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;PLEXOS_TABLE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plexos_table</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;SC_TABLE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc_table</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;CF_FPATH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cf_fpath</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;DIST_PERCENTILE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist_percentile</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;LCOE_COL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lcoe_col</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;LCOE_THRESH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lcoe_thresh</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_workers</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;POINTS_PER_WORKER&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">points_per_worker</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;PLANTS_PER_WORKER&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plants_per_worker</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OFFSHORE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">offshore</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">verbose</span>
+
+    <span class="k">if</span> <span class="n">ctx</span><span class="o">.</span><span class="n">invoked_subcommand</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">init_mult</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;reVX&#39;</span><span class="p">,</span> <span class="s1">&#39;reV&#39;</span><span class="p">,</span> <span class="s1">&#39;rex&#39;</span><span class="p">],</span>
+                  <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Aggregating Plant for buses in PLEXOS table: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">plexos_table</span><span class="p">))</span>
+        <span class="n">out_fpath</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">out_fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">plexos_table</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="n">out_fpath</span><span class="p">)</span>
+        <span class="n">out_fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="n">out_fpath</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving Aggregated Plant Profiles to </span><span class="si">{}</span><span class="s1">&#39;</span>
+                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out_fpath</span><span class="p">))</span>
+        <span class="n">PlantProfileAggregation</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">plexos_table</span><span class="p">,</span> <span class="n">sc_table</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span>
+                                    <span class="n">out_fpath</span><span class="p">,</span> <span class="n">dist_percentile</span><span class="o">=</span><span class="n">dist_percentile</span><span class="p">,</span>
+                                    <span class="n">lcoe_col</span><span class="o">=</span><span class="n">lcoe_col</span><span class="p">,</span> <span class="n">lcoe_thresh</span><span class="o">=</span><span class="n">lcoe_thresh</span><span class="p">,</span>
+                                    <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                    <span class="n">points_per_worker</span><span class="o">=</span><span class="n">points_per_worker</span><span class="p">,</span>
+                                    <span class="n">plants_per_worker</span><span class="o">=</span><span class="n">plants_per_worker</span><span class="p">,</span>
+                                    <span class="n">offshore</span><span class="o">=</span><span class="n">offshore</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_node_cmd"><a class="viewcode-back" href="../../../reVX/reVX.plexos.plexos_plants_cli.html#reVX.plexos.plexos_plants_cli.get_node_cmd">[docs]</a><span class="k">def</span> <span class="nf">get_node_cmd</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">plexos_table</span><span class="p">,</span> <span class="n">sc_table</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+                 <span class="n">dist_percentile</span><span class="p">,</span> <span class="n">lcoe_col</span><span class="p">,</span> <span class="n">lcoe_thresh</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">,</span>
+                 <span class="n">points_per_worker</span><span class="p">,</span> <span class="n">plants_per_worker</span><span class="p">,</span> <span class="n">offshore</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Build PLEXOS Plant CLI command.&quot;&quot;&quot;</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-n </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">name</span><span class="p">)),</span>
+            <span class="s1">&#39;-pt </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">plexos_table</span><span class="p">)),</span>
+            <span class="s1">&#39;-sc </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">sc_table</span><span class="p">)),</span>
+            <span class="s1">&#39;-cf </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">cf_fpath</span><span class="p">)),</span>
+            <span class="s1">&#39;-out </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)),</span>
+            <span class="s1">&#39;-dp </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">dist_percentile</span><span class="p">)),</span>
+            <span class="s1">&#39;-lc </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">lcoe_col</span><span class="p">)),</span>
+            <span class="s1">&#39;-lt </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">lcoe_thresh</span><span class="p">)),</span>
+            <span class="s1">&#39;-mw </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">max_workers</span><span class="p">)),</span>
+            <span class="s1">&#39;--points_per_worker=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">points_per_worker</span><span class="p">)),</span>
+            <span class="s1">&#39;--plants_per_worker=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">plants_per_worker</span><span class="p">)),</span>
+            <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">offshore</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">)</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;python -m reVX.plexos.plexos_plants_cli </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Creating the following command line call:</span><span class="se">\n\t</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">cmd</span></div>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--alloc&#39;</span><span class="p">,</span> <span class="s1">&#39;-a&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Eagle allocation account name.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--walltime&#39;</span><span class="p">,</span> <span class="s1">&#39;-wt&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Eagle walltime request in hours. Default is 1.0&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--feature&#39;</span><span class="p">,</span> <span class="s1">&#39;-l&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Additional flags for SLURM job. Format is &quot;--qos=high&quot; &#39;</span>
+                    <span class="s1">&#39;or &quot;--depend=[state:job_id]&quot;. Default is None.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--stdout_path&#39;</span><span class="p">,</span> <span class="s1">&#39;-sout&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Subprocess standard output path. Default is in out_dir.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">eagle</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">alloc</span><span class="p">,</span> <span class="n">walltime</span><span class="p">,</span> <span class="n">feature</span><span class="p">,</span> <span class="n">stdout_path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Eagle submission tool for PLEXOS aggregation.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="n">plexos_table</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;PLEXOS_TABLE&#39;</span><span class="p">]</span>
+    <span class="n">sc_table</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;SC_TABLE&#39;</span><span class="p">]</span>
+    <span class="n">cf_fpath</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;CF_FPATH&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+    <span class="n">dist_percentile</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;DIST_PERCENTILE&#39;</span><span class="p">]</span>
+    <span class="n">lcoe_col</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;LCOE_COL&#39;</span><span class="p">]</span>
+    <span class="n">lcoe_thresh</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;LCOE_THRESH&#39;</span><span class="p">]</span>
+    <span class="n">max_workers</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;MAX_WORKERS&#39;</span><span class="p">]</span>
+    <span class="n">points_per_worker</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;POINTS_PER_WORKER&#39;</span><span class="p">]</span>
+    <span class="n">plants_per_worker</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;PLANTS_PER_WORKER&#39;</span><span class="p">]</span>
+    <span class="n">offshore</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OFFSHORE&#39;</span><span class="p">]</span>
+    <span class="n">verbose</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">stdout_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">stdout_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s1">&#39;stdout/&#39;</span><span class="p">)</span>
+
+    <span class="n">slurm_manager</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SLURM_MANAGER&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">slurm_manager</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">slurm_manager</span> <span class="o">=</span> <span class="n">SLURM</span><span class="p">()</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;SLURM_MANAGER&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slurm_manager</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">get_node_cmd</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">plexos_table</span><span class="p">,</span> <span class="n">sc_table</span><span class="p">,</span> <span class="n">cf_fpath</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span>
+                       <span class="n">dist_percentile</span><span class="p">,</span> <span class="n">lcoe_col</span><span class="p">,</span> <span class="n">lcoe_thresh</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">,</span>
+                       <span class="n">points_per_worker</span><span class="p">,</span> <span class="n">plants_per_worker</span><span class="p">,</span> <span class="n">offshore</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Running reVX plexos plant aggregation on Eagle with &#39;</span>
+                <span class="s1">&#39;node name &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">slurm_manager</span><span class="o">.</span><span class="n">sbatch</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">alloc</span><span class="o">=</span><span class="n">alloc</span><span class="p">,</span> <span class="n">walltime</span><span class="o">=</span><span class="n">walltime</span><span class="p">,</span>
+                               <span class="n">feature</span><span class="o">=</span><span class="n">feature</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                               <span class="n">stdout_path</span><span class="o">=</span><span class="n">stdout_path</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Kicked off reVX plexos aggregation job &quot;</span><span class="si">{}</span><span class="s1">&quot; &#39;</span>
+               <span class="s1">&#39;(SLURM jobid #</span><span class="si">{}</span><span class="s1">) on Eagle.&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">out</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Was unable to kick off reVX plexos aggregation job &quot;</span><span class="si">{}</span><span class="s1">&quot;. &#39;</span>
+               <span class="s1">&#39;Please see the stdout error messages&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">main</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="p">{})</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Error running PLEXOS-Plant CLI&#39;</span><span class="p">)</span>
+        <span class="k">raise</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

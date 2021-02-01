@@ -1,0 +1,540 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.plexos.rev_reeds_plexos module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.plexos.utilities module" href="reVX.plexos.utilities.html" />
+    <link rel="prev" title="reVX.plexos.plexos_plants_cli module" href="reVX.plexos.plexos_plants_cli.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.plexos.html">reVX.plexos package</a> &raquo;</li>
+        
+      <li>reVX.plexos.rev_reeds_plexos module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.plexos.rev_reeds_plexos.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-reVX.plexos.rev_reeds_plexos">
+<span id="revx-plexos-rev-reeds-plexos-module"></span><h1>reVX.plexos.rev_reeds_plexos module<a class="headerlink" href="#module-reVX.plexos.rev_reeds_plexos" title="Permalink to this headline">¶</a></h1>
+<p>Created on Wed Aug 21 13:47:43 2019</p>
+<p>&#64;author: gbuster</p>
+<dl class="py class">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosNode">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.plexos.rev_reeds_plexos.</code><code class="sig-name descname">PlexosNode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sc_build</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">cf_res_gids</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">forecast_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/rev_reeds_plexos.html#PlexosNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Framework to analyze the gen profile at a single plexos node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sc_build</strong> (<em>pd.DataFrame</em>) – Supply curve buildout table. Must only have rows that are built
+in this plexos node. Must have resource_gid lookup, counts per
+resource_gid, and capacity at each SC point.</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – File path to capacity factor file to get profiles from.</p></li>
+<li><p><strong>cf_res_gids</strong> (<em>list | np.ndarray, optional</em>) – Resource GID’s available in cf_fpath, if None pull from cf_fpath,
+by default None</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str | None, optional</em>) – Forecasted capacity factor .h5 file path (reV results).
+If not None, the generation profiles are sourced from this file,
+by default None</p></li>
+<li><p><strong>forecast_map</strong> (<em>np.ndarray | None, optional</em>) – (n, 1) array of forecast meta data indices mapped to the generation
+meta indices where n is the number of generation points. None if
+no forecast data being considered,
+by default None</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosNode.run">
+<em class="property">classmethod </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sc_build</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">cf_res_gids</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">forecast_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/rev_reeds_plexos.html#PlexosNode.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosNode.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make an aggregated generation profile for a single plexos node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sc_build</strong> (<em>pd.DataFrame</em>) – Supply curve buildout table. Must only have rows that are built
+in this plexos node. Must have resource_gid lookup, counts per
+resource_gid, and capacity at each SC point.</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – File path to capacity factor file to get profiles from.</p></li>
+<li><p><strong>cf_res_gids</strong> (<em>list | np.ndarray, optional</em>) – Resource GID’s available in cf_fpath, if None pull from cf_fpath,
+by default None</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str | None, optional</em>) – Forecasted capacity factor .h5 file path (reV results).
+If not None, the generation profiles are sourced from this file,
+by default None</p></li>
+<li><p><strong>forecast_map</strong> (<em>np.ndarray | None, optional</em>) – (n, 1) array of forecast meta data indices mapped to the generation
+meta indices where n is the number of generation points. None if
+no forecast data being considered,
+by default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>profile</strong> (<em>np.ndarray</em>) – (t, ) array of generation in MW.</p></li>
+<li><p><strong>res_gids</strong> (<em>list</em>) – List of resource GID’s that were built for this plexos node.</p></li>
+<li><p><strong>gen_gids</strong> (<em>list</em>) – List of generation GID’s that were built for this plexos node.</p></li>
+<li><p><strong>res_built</strong> (<em>list</em>) – List of built capacities at each resource GID for this plexos node.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosAggregation">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.plexos.rev_reeds_plexos.</code><code class="sig-name descname">PlexosAggregation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plexos_nodes</span></em>, <em class="sig-param"><span class="n">rev_sc</span></em>, <em class="sig-param"><span class="n">reeds_build</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">build_year</span><span class="o">=</span><span class="default_value">2050</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/rev_reeds_plexos.html#PlexosAggregation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosAggregation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Framework to aggregate reV gen profiles to PLEXOS node power profiles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plexos_nodes</strong> (<em>str | pd.DataFrame</em>) – Plexos node meta data including gid, lat/lon, voltage. Or path
+to .csv containing plexos node meta data</p></li>
+<li><p><strong>rev_sc</strong> (<em>str | pd.DataFrame</em>) – reV supply curve results table including SC gid, lat/lon,
+res_gids, res_id_counts. Or  path to reV supply curve table.</p></li>
+<li><p><strong>reeds_build</strong> (<em>str | pd.DataFrame</em>) – RdEDS buildout with rows for built capacity at each reV SC point.
+Or ReEDS buildout table</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – File path to capacity factor file to get profiles from.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str | None</em>) – Forecasted capacity factor .h5 file path (reV results).
+If not None, the generation profiles are sourced from this file.</p></li>
+<li><p><strong>build_year</strong> (<em>int, optional</em>) – REEDS year of interest, by default 2050</p></li>
+<li><p><strong>max_workers</strong> (<em>int | None</em>) – Do node aggregation on max_workers.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosAggregation.time_index">
+<em class="property">property </em><code class="sig-name descname">time_index</code><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosAggregation.time_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the generation profile time index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>time_index</strong> (<em>pd.Datetimeindex</em>) – Pandas datetime index sourced from the capacity factor data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosAggregation.plexos_meta">
+<em class="property">property </em><code class="sig-name descname">plexos_meta</code><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosAggregation.plexos_meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get plexos node meta data for the nodes included in this problem.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>plexos_meta</strong> (<em>pd.DataFrame</em>) – Plexos meta dataframe reduced to the nodes in this problem.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosAggregation.n_plexos_nodes">
+<em class="property">property </em><code class="sig-name descname">n_plexos_nodes</code><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosAggregation.n_plexos_nodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of unique plexos nodes in this buildout.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>n</strong> (<em>int</em>) – Number of unique plexos nodes in this buildout</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosAggregation.sc_res_gids">
+<em class="property">property </em><code class="sig-name descname">sc_res_gids</code><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosAggregation.sc_res_gids" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of unique resource GIDS in the REEDS build out.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>sc_res_gids</strong> (<em>np.ndarray</em>) – Array of resource GIDs associated with this REEDS buildout.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosAggregation.available_res_gids">
+<em class="property">property </em><code class="sig-name descname">available_res_gids</code><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosAggregation.available_res_gids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resource gids available in the cf file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>cf_res_gids</strong> (<em>np.ndarray</em>) – Array of resource GIDs available in the cf file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.PlexosAggregation.run">
+<em class="property">classmethod </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plexos_nodes</span></em>, <em class="sig-param"><span class="n">rev_sc</span></em>, <em class="sig-param"><span class="n">reeds_build</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">build_year</span><span class="o">=</span><span class="default_value">2050</span></em>, <em class="sig-param"><span class="n">max_workers</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/rev_reeds_plexos.html#PlexosAggregation.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.PlexosAggregation.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run plexos aggregation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plexos_nodes</strong> (<em>pd.DataFrame</em>) – Plexos node meta data including gid, lat/lon, voltage.</p></li>
+<li><p><strong>rev_sc</strong> (<em>pd.DataFrame</em>) – reV supply curve results table including SC gid, lat/lon,
+res_gids, res_id_counts.</p></li>
+<li><p><strong>reeds_build</strong> (<em>pd.DataFrame</em>) – REEDS buildout with rows for built capacity at each reV SC point.</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – File path to capacity factor file to get profiles from.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str | None</em>) – Forecasted capacity factor .h5 file path (reV results).
+If not None, the generation profiles are sourced from this file.</p></li>
+<li><p><strong>build_year</strong> (<em>int</em>) – REEDS year of interest.</p></li>
+<li><p><strong>max_workers</strong> (<em>int | None</em>) – Do node aggregation on max_workers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>plexos_meta</strong> (<em>pd.DataFrame</em>) – Plexos node meta data with built capacities.</p></li>
+<li><p><strong>time_index</strong> (<em>pd.datetimeindex</em>) – Time index for the profiles.</p></li>
+<li><p><strong>profiles</strong> (<em>np.ndarray</em>) – Generation profile timeseries at each plexos node.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.plexos.rev_reeds_plexos.Manager">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.plexos.rev_reeds_plexos.</code><code class="sig-name descname">Manager</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plexos_nodes</span></em>, <em class="sig-param"><span class="n">rev_sc</span></em>, <em class="sig-param"><span class="n">reeds_build</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">db_host</span><span class="o">=</span><span class="default_value">'gds_edit.nrel.gov'</span></em>, <em class="sig-param"><span class="n">db_user</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">db_pass</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">db_port</span><span class="o">=</span><span class="default_value">5432</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/rev_reeds_plexos.html#Manager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.Manager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Plexos job manager.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plexos_nodes</strong> (<em>str | pd.DataFrame</em>) – Plexos node meta data (CSV file path or database.schema.name)</p></li>
+<li><p><strong>rev_sc</strong> (<em>str | pd.DataFrame</em>) – reV supply curve results (CSV file path or database.schema.name)</p></li>
+<li><p><strong>reeds_build</strong> (<em>str | pd.DataFrame</em>) – REEDS buildout results (CSV file path or database.schema.name)</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str</em>) – Capacity factor .h5 file path.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str | None</em>) – Forecasted capacity factor .h5 file path (reV results).
+If not None, the generation profiles are sourced from this file.</p></li>
+<li><p><strong>wait</strong> (<em>int</em>) – Integer seconds to wait for DB connection to become available
+before raising exception.</p></li>
+<li><p><strong>db_host</strong> (<em>str</em>) – Database host name.</p></li>
+<li><p><strong>db_user</strong> (<em>str</em>) – Your database user name.</p></li>
+<li><p><strong>db_pass</strong> (<em>str</em>) – Database password (None if your password is cached).</p></li>
+<li><p><strong>db_port</strong> (<em>int</em>) – Database port.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.Manager.main">
+<em class="property">classmethod </em><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plexos_nodes</span></em>, <em class="sig-param"><span class="n">rev_sc</span></em>, <em class="sig-param"><span class="n">reeds_build</span></em>, <em class="sig-param"><span class="n">cf_fpath</span></em>, <em class="sig-param"><span class="n">forecast_fpath</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">agg_kwargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">db_host</span><span class="o">=</span><span class="default_value">'gds_edit.nrel.gov'</span></em>, <em class="sig-param"><span class="n">db_user</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">db_pass</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">db_port</span><span class="o">=</span><span class="default_value">5432</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/rev_reeds_plexos.html#Manager.main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.Manager.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the Plexos pipeline for a single extent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plexos_nodes</strong> (<em>str | pd.DataFrame</em>) – Plexos node meta data (CSV file path or database.schema.name)</p></li>
+<li><p><strong>rev_sc</strong> (<em>str | pd.DataFrame</em>) – reV supply curve results (CSV file path or database.schema.name)</p></li>
+<li><p><strong>reeds_build</strong> (<em>str | pd.DataFrame</em>) – REEDS buildout results (CSV file path or database.schema.name)</p></li>
+<li><p><strong>cf_fpath</strong> (<em>str | pd.DataFrame</em>) – Capacity factor .h5 file path.</p></li>
+<li><p><strong>forecast_fpath</strong> (<em>str | None</em>) – Forecasted capacity factor .h5 file path (reV results).
+If not None, the generation profiles are sourced from this file.</p></li>
+<li><p><strong>agg_kwargs</strong> (<em>dict</em>) – Optional additional kwargs for the aggregation run.</p></li>
+<li><p><strong>wait</strong> (<em>int</em>) – Integer seconds to wait for DB connection to become available
+before raising exception.</p></li>
+<li><p><strong>db_host</strong> (<em>str</em>) – Database host name.</p></li>
+<li><p><strong>db_user</strong> (<em>str</em>) – Your database user name.</p></li>
+<li><p><strong>db_pass</strong> (<em>str</em>) – Database password (None if your password is cached).</p></li>
+<li><p><strong>db_port</strong> (<em>int</em>) – Database port.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>meta</strong> (<em>pd.DataFrame</em>) – Plexos node meta data.</p></li>
+<li><p><strong>time_index</strong> (<em>pd.Datetimeindex</em>) – Time index.</p></li>
+<li><p><strong>profiles</strong> (<em>np.ndarray</em>) – Plexos node generation profiles.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.rev_reeds_plexos.Manager.run">
+<em class="property">classmethod </em><code class="sig-name descname">run</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">job</span></em>, <em class="sig-param"><span class="n">out_dir</span></em>, <em class="sig-param"><span class="n">scenario</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cf_year</span><span class="o">=</span><span class="default_value">2012</span></em>, <em class="sig-param"><span class="n">build_years</span><span class="o">=</span><span class="default_value">(2024, 2050)</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/rev_reeds_plexos.html#Manager.run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.rev_reeds_plexos.Manager.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run plexos node aggregation for a job file input.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>job</strong> (<em>str | pd.DataFrame</em>) – CSV file with plexos aggregation job config. Needs the following
+columns: (scenario, group, cf_fpath, reeds_build, rev_sc,
+plexos_nodes)</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Path to an output directory.</p></li>
+<li><p><strong>scenario</strong> (<em>str | None</em>) – Optional filter to run plexos aggregation for just one scenario in
+the job.</p></li>
+<li><p><strong>cf_year</strong> (<em>str</em>) – Year of the cf_fpath resource year (will be inserted if {} is in
+cf_fpath).</p></li>
+<li><p><strong>build_years</strong> (<em>list | tuple | int</em>) – REEDS years to run scenarios for.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.plexos.utilities.html" class="btn btn-neutral float-right" title="reVX.plexos.utilities module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.plexos.plexos_plants_cli.html" class="btn btn-neutral float-left" title="reVX.plexos.plexos_plants_cli module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

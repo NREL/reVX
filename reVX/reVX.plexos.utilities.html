@@ -1,0 +1,525 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.plexos.utilities module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.red_e package" href="reVX.red_e.html" />
+    <link rel="prev" title="reVX.plexos.rev_reeds_plexos module" href="reVX.plexos.rev_reeds_plexos.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.plexos.html">reVX.plexos package</a> &raquo;</li>
+        
+      <li>reVX.plexos.utilities module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.plexos.utilities.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-reVX.plexos.utilities">
+<span id="revx-plexos-utilities-module"></span><h1>reVX.plexos.utilities module<a class="headerlink" href="#module-reVX.plexos.utilities" title="Permalink to this headline">¶</a></h1>
+<p>reVX-plexos utilities</p>
+<dl class="py function">
+<dt id="reVX.plexos.utilities.get_coord_labels">
+<code class="sig-prename descclassname">reVX.plexos.utilities.</code><code class="sig-name descname">get_coord_labels</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#get_coord_labels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.get_coord_labels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve the coordinate labels from df.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>df</strong> (<em>pd.DataFrame</em>) – DataFrame with each row being a geo location and two columns
+containing coordinate labels.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>df_coord_labels</strong> (<em>list | None</em>) – Two entry list if coordinate labels are found:
+[‘lat’, ‘lon’] or [‘latitude’, ‘longitude’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="reVX.plexos.utilities.parse_table_name">
+<code class="sig-prename descclassname">reVX.plexos.utilities.</code><code class="sig-name descname">parse_table_name</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">db_host</span><span class="o">=</span><span class="default_value">'gds_edit.nrel.gov'</span></em>, <em class="sig-param"><span class="n">db_user</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">db_pass</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">db_port</span><span class="o">=</span><span class="default_value">5432</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#parse_table_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.parse_table_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a dataframe from an input name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str | pd.DataFrame</em>) – CSV file path or database.schema.name or already extracted df.</p></li>
+<li><p><strong>wait</strong> (<em>int</em>) – Integer seconds to wait for DB connection to become available
+before raising exception.</p></li>
+<li><p><strong>db_host</strong> (<em>str</em>) – Database host name.</p></li>
+<li><p><strong>db_user</strong> (<em>str</em>) – Your database user name.</p></li>
+<li><p><strong>db_pass</strong> (<em>str</em>) – Database password (None if your password is cached).</p></li>
+<li><p><strong>db_port</strong> (<em>int</em>) – Database port.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>df</strong> (<em>pd.DataFrame</em>) – Extracted table</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.plexos.utilities.DataCleaner">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.plexos.utilities.</code><code class="sig-name descname">DataCleaner</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plexos_meta</span></em>, <em class="sig-param"><span class="n">profiles</span></em>, <em class="sig-param"><span class="n">name_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#DataCleaner"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Class for custom Plexos data cleaning procedures.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plexos_meta</strong> (<em>pd.DataFrame</em>) – Plexos meta data including the built capacity at each plexos node.</p></li>
+<li><p><strong>profiles</strong> (<em>np.ndarray</em>) – 2D timeseries array of generation profiles. Number of columns must
+match the length of the meta data.</p></li>
+<li><p><strong>name_map</strong> (<em>dictionary, optional</em>) – Column rename mapping, by default None -&gt; {‘gid’: ‘sc_gid’}</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="reVX.plexos.utilities.DataCleaner.REEDS_NAME_MAP">
+<code class="sig-name descname">REEDS_NAME_MAP</code><em class="property"> = {'Year': 'reeds_year', 'capacity_reV': 'built_capacity', 'capacity_rev': 'built_capacity', 'gid': 'sc_gid', 'year': 'reeds_year'}</em><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.REEDS_NAME_MAP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="reVX.plexos.utilities.DataCleaner.REV_NAME_MAP">
+<code class="sig-name descname">REV_NAME_MAP</code><em class="property"> = {'capacity': 'potential_capacity', 'gid': 'sc_gid', 'resource_ids': 'res_gids', 'resource_ids_cnts': 'gid_counts', 'sq_km': 'area_sq_km'}</em><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.REV_NAME_MAP" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="reVX.plexos.utilities.DataCleaner.PLEXOS_META_COLS">
+<code class="sig-name descname">PLEXOS_META_COLS</code><em class="property"> = ('sc_gid', 'plexos_id', 'latitude', 'longitude', 'voltage', 'interconnect', 'built_capacity')</em><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.PLEXOS_META_COLS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.utilities.DataCleaner.rename_cols">
+<em class="property">static </em><code class="sig-name descname">rename_cols</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em>, <em class="sig-param"><span class="n">name_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#DataCleaner.rename_cols"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.rename_cols" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Input df with bad or inconsistent column names.</p></li>
+<li><p><strong>name_map</strong> (<em>dictionary, optional</em>) – Column rename mapping, by default None -&gt; {‘gid’: ‘sc_gid’}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters</dt>
+<dd class="field-even"><p><strong>df</strong> (<em>pd.DataFrame</em>) – Same as inputs but with better col names.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.utilities.DataCleaner.reduce_df">
+<em class="property">classmethod </em><code class="sig-name descname">reduce_df</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">df</span></em>, <em class="sig-param"><span class="n">cols</span></em>, <em class="sig-param"><span class="n">name_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#DataCleaner.reduce_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.reduce_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reduce a df to just certain columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>pd.DataFrame</em>) – Dataframe to reduce.</p></li>
+<li><p><strong>cols</strong> (<em>list | tuple</em>) – List of column names to keep.</p></li>
+<li><p><strong>name_map</strong> (<em>dictionary, optional</em>) – Column rename mapping, by default None -&gt; {‘gid’: ‘sc_gid’}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>df</strong> (<em>pd.DataFrame</em>) – Dataframe with only cols if the input df had all cols.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.utilities.DataCleaner.pre_filter_plexos_meta">
+<em class="property">classmethod </em><code class="sig-name descname">pre_filter_plexos_meta</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plexos_meta</span></em>, <em class="sig-param"><span class="n">name_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#DataCleaner.pre_filter_plexos_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.pre_filter_plexos_meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pre-filter the plexos meta data to drop bad node names and
+duplicate lat/lons.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>plexos_meta</strong> (<em>pd.DataFrame</em>) – Plexos meta data.</p></li>
+<li><p><strong>name_map</strong> (<em>dictionary, optional</em>) – Column rename mapping, by default None -&gt; {‘gid’: ‘sc_gid’}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>plexos_meta</strong> (<em>pd.DataFrame</em>) – Filtered plexos meta data.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.utilities.DataCleaner.merge_small">
+<code class="sig-name descname">merge_small</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">capacity_threshold</span><span class="o">=</span><span class="default_value">20.0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#DataCleaner.merge_small"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.merge_small" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge small plexos buildout nodes into closest bigger nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>capacity_threshold</strong> (<em>float</em>) – Capacity threshold, nodes with built capacities less than this
+will be merged into bigger nodes.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>meta</strong> (<em>pd.DataFrame</em>) – New plexos node meta data with updated built capacities.</p></li>
+<li><p><strong>profiles</strong> (<em>np.ndarray</em>) – New profiles with big nodes having absorbed additional generation
+from bigger nodes.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.utilities.DataCleaner.merge_extent">
+<code class="sig-name descname">merge_extent</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">new_meta</span></em>, <em class="sig-param"><span class="n">new_profiles</span></em>, <em class="sig-param"><span class="n">name_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#DataCleaner.merge_extent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.merge_extent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge a new set of plexos node aggregation data into the self attr.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>new_meta</strong> (<em>pd.DataFrame</em>) – A new set of Plexos node meta data to be merged into the meta in
+self.</p></li>
+<li><p><strong>new_profiles</strong> (<em>np.ndarray</em>) – A new set of plexos node profiles corresponding to new_meta to be
+merged into the profiles in self where the meta data overlaps with
+common nodes.</p></li>
+<li><p><strong>name_map</strong> (<em>dictionary, optional</em>) – Column rename mapping, by default None -&gt; {‘gid’: ‘sc_gid’}</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.utilities.DataCleaner.merge_multiple_extents">
+<code class="sig-name descname">merge_multiple_extents</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">meta_list</span></em>, <em class="sig-param"><span class="n">profile_list</span></em>, <em class="sig-param"><span class="n">name_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#DataCleaner.merge_multiple_extents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.DataCleaner.merge_multiple_extents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge multiple plexos extents into the self attrs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>meta_list</strong> (<em>list</em>) – List of new meta data extents to merge into self.</p></li>
+<li><p><strong>profile_list</strong> (<em>list</em>) – List of new gen profile to merge into self.</p></li>
+<li><p><strong>name_map</strong> (<em>dictionary, optional</em>) – Column rename mapping, by default None -&gt; {‘gid’: ‘sc_gid’}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>meta</strong> (<em>pd.DataFrame</em>) – Merged plexos node meta data.</p></li>
+<li><p><strong>profiles</strong> (<em>np.ndarray</em>) – New profiles with merged profiles for matching nodes.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="reVX.plexos.utilities.ProjectGidHandler">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.plexos.utilities.</code><code class="sig-name descname">ProjectGidHandler</code><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#ProjectGidHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.ProjectGidHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Class to handle project GIDs for a plexos project.
+Can be used to make gid superset project points for 5min data.</p>
+<dl class="py method">
+<dt id="reVX.plexos.utilities.ProjectGidHandler.get_resource_gids">
+<em class="property">static </em><code class="sig-name descname">get_resource_gids</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sc_table</span></em>, <em class="sig-param"><span class="n">reeds_build</span></em>, <em class="sig-param"><span class="n">wait</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">db_host</span><span class="o">=</span><span class="default_value">'gds_edit.nrel.gov'</span></em>, <em class="sig-param"><span class="n">db_user</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">db_pass</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">db_port</span><span class="o">=</span><span class="default_value">5432</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#ProjectGidHandler.get_resource_gids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.ProjectGidHandler.get_resource_gids" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get resource gids from a  single reeds supply curve build</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sc_table</strong> (<em>str | pd.DataFrame</em>) – reV supply curve results (CSV file path or database.schema.name)</p></li>
+<li><p><strong>reeds_build</strong> (<em>str | pd.DataFrame</em>) – REEDS buildout file with</p></li>
+<li><p><strong>wait</strong> (<em>int</em>) – Integer seconds to wait for DB connection to become available
+before raising exception.</p></li>
+<li><p><strong>db_host</strong> (<em>str</em>) – Database host name.</p></li>
+<li><p><strong>db_user</strong> (<em>str</em>) – Your database user name.</p></li>
+<li><p><strong>db_pass</strong> (<em>str</em>) – Database password (None if your password is cached).</p></li>
+<li><p><strong>db_port</strong> (<em>int</em>) – Database port.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>gids</strong> (<em>list</em>) – Sorted list of unique integer resource gids build out.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.plexos.utilities.ProjectGidHandler.build_project_points">
+<em class="property">classmethod </em><code class="sig-name descname">build_project_points</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">build_map</span></em>, <em class="sig-param"><span class="n">fpath_out</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">config_tag</span><span class="o">=</span><span class="default_value">'default'</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">db_kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/plexos/utilities.html#ProjectGidHandler.build_project_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.plexos.utilities.ProjectGidHandler.build_project_points" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a project points CSV from a set of rev/reeds build files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>build_map</strong> (<em>dict</em>) – Mapping of buildout files/tables. Keys are filepaths to reeds
+buildout files, values are reV SC tables (can be db names).</p></li>
+<li><p><strong>fpath_out</strong> (<em>str | None</em>) – Output filepath to save project points file.</p></li>
+<li><p><strong>config_tag</strong> (<em>str</em>) – Config tab/label to write to the project points config column.</p></li>
+<li><p><strong>db_kwargs</strong> (<em>dict</em>) – Optional database kwargs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>pp</strong> (<em>pd.DataFrame</em>) – Project points dataframe with gid and config columns..</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.red_e.html" class="btn btn-neutral float-right" title="reVX.red_e package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.plexos.rev_reeds_plexos.html" class="btn btn-neutral float-left" title="reVX.plexos.rev_reeds_plexos module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

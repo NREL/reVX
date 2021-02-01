@@ -1,0 +1,328 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Regional Energy Deployment System (ReEDS) &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX package" href="../reVX/reVX.html" />
+    <link rel="prev" title="Resource Planning Model (RPM)" href="examples.rpm.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="misc.html#examples">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="misc.html">Installation and Usage</a> &raquo;</li>
+        
+      <li>Regional Energy Deployment System (ReEDS)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/misc/examples.reeds.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="regional-energy-deployment-system-reeds">
+<h1>Regional Energy Deployment System (ReEDS)<a class="headerlink" href="#regional-energy-deployment-system-reeds" title="Permalink to this headline">¶</a></h1>
+<p>The reV to ReEDS pipeline can be run from the command line using the
+<cite>reV-ReEDS</cite> command line interface (CLI), or using the reeds sub-package.</p>
+<div class="section" id="rev-reeds-cli">
+<h2>reV-ReEDS CLI<a class="headerlink" href="#rev-reeds-cli" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">reV-ReEDS</span></code> command line tools can be used to run the reV to ReEDS
+pipeline using the default clustering and representative profile options.</p>
+<p>There are 3 steps to the reV to ReEDS pipeline:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Classifying the reV ‘resource’ into ‘regions’, ‘classes’, and ‘bins’</p></li>
+<li><p>Extracting representative profiles from the above regions</p></li>
+<li><p>Extract the ReEDS ‘timeslices’ from the repesentative profiles</p></li>
+</ol>
+</div></blockquote>
+<p>The entire pipeline can be run using the following CLI call:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>reV-ReEDS --name<span class="o">=</span><span class="s2">&quot;Job_name&quot;</span> <span class="nb">local</span> --out_dir<span class="o">=</span><span class="s2">&quot;./output_directory&quot;</span> classify --rev_table<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$TESTDATADIR</span><span class="s2">/reV_sc/sc_table.csv&quot;</span> --resource_classes<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$TESTDATADIR</span><span class="s2">/reeds/inputs/reeds_class_bins.csv&quot;</span> profiles --cf_profiles<span class="o">=</span><span class="s2">&quot;%TESTDATADIR/reV_gen/gen_pv_2012.h5&quot;</span> timeslices --timeslices<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$TESTDATADIR</span><span class="s2">/reeds/inputs/timeslices.csv&quot;</span>
+</pre></div>
+</div>
+<p>Results of each step of the process will be written to <code class="docutils literal notranslate"><span class="pre">out_dir</span></code>. Note that
+additional options are available for each step of the process: <code class="docutils literal notranslate"><span class="pre">classify</span></code>,
+<code class="docutils literal notranslate"><span class="pre">profiles</span></code>, and <code class="docutils literal notranslate"><span class="pre">timeslices</span></code>.</p>
+<p>Each step can be run individually:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>reV-ReEDS --name<span class="o">=</span><span class="s2">&quot;Job_name&quot;</span> <span class="nb">local</span> --out_dir<span class="o">=</span><span class="s2">&quot;./output_directory&quot;</span> classify --rev_table<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$TESTDATADIR</span><span class="s2">/reV_sc/sc_table.csv&quot;</span> --resource_classes<span class="o">=</span><span class="s2">&quot;</span><span class="nv">$TESTDATADIR</span><span class="s2">/reeds/inputs/reeds_class_bins.csv&quot;</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>reV-ReEDS --name<span class="o">=</span><span class="s2">&quot;Job_name&quot;</span> <span class="nb">local</span> --out_dir<span class="o">=</span><span class="s2">&quot;./output_directory&quot;</span> profiles --reeds_table<span class="o">=</span><span class="s2">&quot;./output_directory/Job_name_supply_curve_raw_full.csv --cf_profiles=&quot;</span>%TESTDATADIR/reV_gen/gen_pv_2012.h5<span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>NOTE: when running profiles without classify the ReEDS classification table
+must be supplied.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>reV-ReEDS --name<span class="o">=</span><span class="s2">&quot;Job_name&quot;</span> <span class="nb">local</span> --out_dir<span class="o">=</span><span class="s2">&quot;./output_directory&quot;</span> timeslices --profiles<span class="o">=</span><span class="s2">&quot;./output_directory/Job_name_hourly_cf.h5--timeslices=&quot;</span><span class="nv">$TESTDATADIR</span>/reeds/inputs/timeslices.csv<span class="s2">&quot;</span>
+</pre></div>
+</div>
+<p>NOTE: when running timeslices without profiles the ReEDS representative
+profiles must be supplied.</p>
+</div>
+<div class="section" id="reeds-sub-package">
+<h2>ReEDS sub-package<a class="headerlink" href="#reeds-sub-package" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../reVX/reVX.html" class="btn btn-neutral float-right" title="reVX package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="examples.rpm.html" class="btn btn-neutral float-left" title="Resource Planning Model (RPM)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

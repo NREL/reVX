@@ -1,0 +1,515 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.rpm.rpm_cli module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.rpm.rpm_clusters module" href="reVX.rpm.rpm_clusters.html" />
+    <link rel="prev" title="reVX.rpm package" href="reVX.rpm.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.rpm.html">reVX.rpm package</a> &raquo;</li>
+        
+      <li>reVX.rpm.rpm_cli module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.rpm.rpm_cli.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="revx-rpm-rpm-cli-module">
+<h1>reVX.rpm.rpm_cli module<a class="headerlink" href="#revx-rpm-rpm-cli-module" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="rev-rpm">
+<h2>reV-rpm<a class="headerlink" href="#rev-rpm" title="Permalink to this headline">¶</a></h2>
+<p>RPM Command Line Interface</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>reV-rpm <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-n">
+<span id="cmdoption-rev-rpm-n"></span><span id="cmdoption-reV-rpm-name"></span><span id="cmdoption-rev-rpm-name"></span><code class="sig-name descname">-n</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--name</code><code class="sig-prename descclassname"> &lt;name&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-n" title="Permalink to this definition">¶</a></dt>
+<dd><p>Job name. Default is “RPM”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>RPM</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-v">
+<span id="cmdoption-rev-rpm-v"></span><span id="cmdoption-reV-rpm-verbose"></span><span id="cmdoption-rev-rpm-verbose"></span><code class="sig-name descname">-v</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-reV-rpm-v" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag to turn on debug logging. Default is not verbose.</p>
+</dd></dl>
+
+<div class="section" id="rev-rpm-from-config">
+<h3>from-config<a class="headerlink" href="#rev-rpm-from-config" title="Permalink to this headline">¶</a></h3>
+<p>Run reVX-rpm from a config.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>reV-rpm from-config <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-from-config-c">
+<span id="cmdoption-rev-rpm-from-config-c"></span><span id="cmdoption-reV-rpm-from-config-config"></span><span id="cmdoption-rev-rpm-from-config-config"></span><code class="sig-name descname">-c</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--config</code><code class="sig-prename descclassname"> &lt;config&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-from-config-c" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> Filepath to reVX-rpm config json file.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-from-config-v">
+<span id="cmdoption-rev-rpm-from-config-v"></span><span id="cmdoption-reV-rpm-from-config-verbose"></span><span id="cmdoption-rev-rpm-from-config-verbose"></span><code class="sig-name descname">-v</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-reV-rpm-from-config-v" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag to turn on debug logging. Default is not verbose.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="rev-rpm-local">
+<h3>local<a class="headerlink" href="#rev-rpm-local" title="Permalink to this headline">¶</a></h3>
+<p>Run reVX-REEDS on local hardware.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>reV-rpm <span class="nb">local</span> <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND1 <span class="o">[</span>ARGS<span class="o">]</span>... <span class="o">[</span>COMMAND2 <span class="o">[</span>ARGS<span class="o">]</span>...<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-o">
+<span id="cmdoption-rev-rpm-local-o"></span><span id="cmdoption-reV-rpm-local-out_dir"></span><span id="cmdoption-rev-rpm-local-out-dir"></span><code class="sig-name descname">-o</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--out_dir</code><code class="sig-prename descclassname"> &lt;out_dir&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-o" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> Directory to dump output files</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-cf">
+<span id="cmdoption-rev-rpm-local-cf"></span><span id="cmdoption-reV-rpm-local-cf_profiles"></span><span id="cmdoption-rev-rpm-local-cf-profiles"></span><code class="sig-name descname">-cf</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--cf_profiles</code><code class="sig-prename descclassname"> &lt;cf_profiles&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-cf" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> Path to reV .h5 file containing desired capacity factor profiles</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-log">
+<span id="cmdoption-rev-rpm-local-log"></span><span id="cmdoption-reV-rpm-local-log_dir"></span><span id="cmdoption-rev-rpm-local-log-dir"></span><code class="sig-name descname">-log</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--log_dir</code><code class="sig-prename descclassname"> &lt;log_dir&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-log" title="Permalink to this definition">¶</a></dt>
+<dd><p>Directory to dump log files. Default is out_dir.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-mw">
+<span id="cmdoption-rev-rpm-local-mw"></span><span id="cmdoption-reV-rpm-local-max_workers"></span><span id="cmdoption-rev-rpm-local-max-workers"></span><code class="sig-name descname">-mw</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--max_workers</code><code class="sig-prename descclassname"> &lt;max_workers&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-mw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of parallel workers. 1 will run serial, None will use all available.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-v">
+<span id="cmdoption-rev-rpm-local-v"></span><span id="cmdoption-reV-rpm-local-verbose"></span><span id="cmdoption-rev-rpm-local-verbose"></span><code class="sig-name descname">-v</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--verbose</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-reV-rpm-local-v" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag to turn on debug logging. Default is not verbose.</p>
+</dd></dl>
+
+<div class="section" id="rev-rpm-local-cluster">
+<h4>cluster<a class="headerlink" href="#rev-rpm-local-cluster" title="Permalink to this headline">¶</a></h4>
+<p>Cluster RPM Regions</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>reV-rpm <span class="nb">local</span> cluster <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-cluster-m">
+<span id="cmdoption-rev-rpm-local-cluster-m"></span><span id="cmdoption-reV-rpm-local-cluster-rpm_meta"></span><span id="cmdoption-rev-rpm-local-cluster-rpm-meta"></span><code class="sig-name descname">-m</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--rpm_meta</code><code class="sig-prename descclassname"> &lt;rpm_meta&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-cluster-m" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Required</strong> .csv or .json containing the RPM meta data</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-cluster-reg">
+<span id="cmdoption-rev-rpm-local-cluster-reg"></span><span id="cmdoption-reV-rpm-local-cluster-region_col"></span><span id="cmdoption-rev-rpm-local-cluster-region-col"></span><code class="sig-name descname">-reg</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--region_col</code><code class="sig-prename descclassname"> &lt;region_col&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-cluster-reg" title="Permalink to this definition">¶</a></dt>
+<dd><p>The meta-data field to map RPM regions to</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-cluster-drf">
+<span id="cmdoption-rev-rpm-local-cluster-drf"></span><span id="cmdoption-reV-rpm-local-cluster-dist_rank_filter"></span><span id="cmdoption-rev-rpm-local-cluster-dist-rank-filter"></span><code class="sig-name descname">-drf</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--dist_rank_filter</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-reV-rpm-local-cluster-drf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Re-cluster data by minimizing the sum of the: distance between each point and each cluster centroid</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-cluster-cf">
+<span id="cmdoption-rev-rpm-local-cluster-cf"></span><span id="cmdoption-reV-rpm-local-cluster-contiguous_filter"></span><span id="cmdoption-rev-rpm-local-cluster-contiguous-filter"></span><code class="sig-name descname">-cf</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--contiguous_filter</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-reV-rpm-local-cluster-cf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flag to re-classify clusters by making contigous cluster polygons</p>
+</dd></dl>
+
+</div>
+<div class="section" id="rev-rpm-local-rep-profiles">
+<h4>rep-profiles<a class="headerlink" href="#rev-rpm-local-rep-profiles" title="Permalink to this headline">¶</a></h4>
+<p>Extract representative profiles from RPM clusters</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>reV-rpm <span class="nb">local</span> rep-profiles <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-rep-profiles-rc">
+<span id="cmdoption-rev-rpm-local-rep-profiles-rc"></span><span id="cmdoption-reV-rpm-local-rep-profiles-rpm_clusters"></span><span id="cmdoption-rev-rpm-local-rep-profiles-rpm-clusters"></span><code class="sig-name descname">-rc</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--rpm_clusters</code><code class="sig-prename descclassname"> &lt;rpm_clusters&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-rep-profiles-rc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to pre-existing RPM cluster results .csv with (gid, gen_gid, cluster_id, rank)</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-rep-profiles-excl">
+<span id="cmdoption-rev-rpm-local-rep-profiles-excl"></span><span id="cmdoption-reV-rpm-local-rep-profiles-exclusions"></span><span id="cmdoption-rev-rpm-local-rep-profiles-exclusions"></span><code class="sig-name descname">-excl</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--exclusions</code><code class="sig-prename descclassname"> &lt;exclusions&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-rep-profiles-excl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filepath to exclusions data (must match the techmap grid) None will not apply exclusions.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-rep-profiles-exd">
+<span id="cmdoption-rev-rpm-local-rep-profiles-exd"></span><span id="cmdoption-reV-rpm-local-rep-profiles-excl_dict"></span><span id="cmdoption-rev-rpm-local-rep-profiles-excl-dict"></span><code class="sig-name descname">-exd</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--excl_dict</code><code class="sig-prename descclassname"> &lt;excl_dict&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-rep-profiles-exd" title="Permalink to this definition">¶</a></dt>
+<dd><p>String representation of a dictionary of exclusion LayerMask arguments {layer: {kwarg: value}} where layer is a dataset in excl_fpath and kwarg can be “inclusion_range”, “exclude_values”, “include_values”, “use_as_weights”, or “weight”.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-rep-profiles-tmd">
+<span id="cmdoption-rev-rpm-local-rep-profiles-tmd"></span><span id="cmdoption-reV-rpm-local-rep-profiles-techmap_dset"></span><span id="cmdoption-rev-rpm-local-rep-profiles-techmap-dset"></span><code class="sig-name descname">-tmd</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--techmap_dset</code><code class="sig-prename descclassname"> &lt;techmap_dset&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-rep-profiles-tmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dataset name in the techmap file containing the exclusions-to-resource mapping data.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-rep-profiles-trg">
+<span id="cmdoption-rev-rpm-local-rep-profiles-trg"></span><span id="cmdoption-reV-rpm-local-rep-profiles-trg"></span><code class="sig-name descname">-trg</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--trg</code><code class="sig-prename descclassname"> &lt;trg&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-rep-profiles-trg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filepath to TRG LCOE bins.</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-rep-profiles-np">
+<span id="cmdoption-rev-rpm-local-rep-profiles-np"></span><span id="cmdoption-reV-rpm-local-rep-profiles-n_profiles"></span><span id="cmdoption-rev-rpm-local-rep-profiles-n-profiles"></span><code class="sig-name descname">-np</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--n_profiles</code><code class="sig-prename descclassname"> &lt;n_profiles&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-rep-profiles-np" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of profiles per cluster to export.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Default</dt>
+<dd class="field-odd"><p>1</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-reV-rpm-local-rep-profiles-fcst">
+<span id="cmdoption-rev-rpm-local-rep-profiles-fcst"></span><span id="cmdoption-reV-rpm-local-rep-profiles-forecast_fpath"></span><span id="cmdoption-rev-rpm-local-rep-profiles-forecast-fpath"></span><code class="sig-name descname">-fcst</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--forecast_fpath</code><code class="sig-prename descclassname"> &lt;forecast_fpath&gt;</code><a class="headerlink" href="#cmdoption-reV-rpm-local-rep-profiles-fcst" title="Permalink to this definition">¶</a></dt>
+<dd><p>reV generation output file for forecast data. If this is input, profiles will be taken from forecast file instead of the cf file, based on a NN mapping.</p>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="rev-rpm-valid-config-keys">
+<h3>valid-config-keys<a class="headerlink" href="#rev-rpm-valid-config-keys" title="Permalink to this headline">¶</a></h3>
+<p>Echo the valid RPM config keys</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>reV-rpm valid-config-keys <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="rev-rpm-version">
+<h3>version<a class="headerlink" href="#rev-rpm-version" title="Permalink to this headline">¶</a></h3>
+<p>print version</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>reV-rpm version <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+</div>
+</div>
+<span class="target" id="module-reVX.rpm.rpm_cli"></span><p>RPM Command Line Interface</p>
+<dl class="py function">
+<dt id="reVX.rpm.rpm_cli.run_local">
+<code class="sig-prename descclassname">reVX.rpm.rpm_cli.</code><code class="sig-name descname">run_local</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ctx</span></em>, <em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_cli.html#run_local"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_cli.run_local" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run reV to ReEDs locally from config</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ctx</strong> (<em>click.ctx</em>) – click ctx object</p></li>
+<li><p><strong>config</strong> (<em>RPMConfig</em>) – RPM Config object</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="reVX.rpm.rpm_cli.get_node_cmd">
+<code class="sig-prename descclassname">reVX.rpm.rpm_cli.</code><code class="sig-name descname">get_node_cmd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_cli.html#get_node_cmd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_cli.get_node_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the node CLI call for the reVX-REEDS pipeline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>reVX.config.reeds.ReedsConfig</em>) – reVX-REEDS config object.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>cmd</strong> (<em>str</em>) – CLI call to submit to SLURM execution.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="reVX.rpm.rpm_cli.eagle">
+<code class="sig-prename descclassname">reVX.rpm.rpm_cli.</code><code class="sig-name descname">eagle</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/rpm/rpm_cli.html#eagle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.rpm.rpm_cli.eagle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run reVX-RPM on Eagle HPC.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>config</strong> (<em>reVX.config.rpm.RPMConfig</em>) – reVX-RPM config object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.rpm.rpm_clusters.html" class="btn btn-neutral float-right" title="reVX.rpm.rpm_clusters module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.rpm.html" class="btn btn-neutral float-left" title="reVX.rpm package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

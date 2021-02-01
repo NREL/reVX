@@ -1,0 +1,546 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.wind_dirs.prominent_wind_dirs &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.wind_dirs.prominent_wind_dirs</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.wind_dirs.prominent_wind_dirs</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Aggregate powerrose and sort directions by dominance</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="kn">from</span> <span class="nn">reV.supply_curve.aggregation</span> <span class="kn">import</span> <span class="n">Aggregation</span>
+<span class="kn">from</span> <span class="nn">reV.supply_curve.points</span> <span class="kn">import</span> <span class="n">SupplyCurveExtent</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ProminentWindDirections"><a class="viewcode-back" href="../../../reVX/reVX.wind_dirs.prominent_wind_dirs.html#reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections">[docs]</a><span class="k">class</span> <span class="nc">ProminentWindDirections</span><span class="p">(</span><span class="n">Aggregation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Aggregate PowerRose to Supply Curve points and sort directions in order</span>
+<span class="sd">    of prominence. Then convert to equivalent sc_point_gid</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">DIR_ORDER</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="s1">&#39;NE&#39;</span><span class="p">,</span> <span class="s1">&#39;E&#39;</span><span class="p">,</span> <span class="s1">&#39;SE&#39;</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="s1">&#39;SW&#39;</span><span class="p">,</span> <span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="s1">&#39;NW&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">power_rose_h5_fpath</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span>
+                 <span class="n">agg_dset</span><span class="o">=</span><span class="s1">&#39;powerrose_100m&#39;</span><span class="p">,</span> <span class="n">tm_dset</span><span class="o">=</span><span class="s1">&#39;techmap_wtk&#39;</span><span class="p">,</span>
+                 <span class="n">resolution</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">excl_area</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        power_rose_h5_fpath : str</span>
+<span class="sd">            Filepath to .h5 file containing powerrose data</span>
+<span class="sd">        excl_fpath : str</span>
+<span class="sd">            Filepath to exclusions h5 with techmap dataset.</span>
+<span class="sd">        agg_dset : str, optional</span>
+<span class="sd">            Powerrose dataset to aggreate, by default &#39;powerrose_100m&#39;</span>
+<span class="sd">        tm_dset : str, optional</span>
+<span class="sd">            Dataset name in the techmap file containing the</span>
+<span class="sd">            exclusions-to-resource mapping data,</span>
+<span class="sd">            by default &#39;techmap_wtk&#39;</span>
+<span class="sd">        resolution : int, optional</span>
+<span class="sd">            SC resolution, must be input in combination with gid. Prefered</span>
+<span class="sd">            option is to use the row/col slices to define the SC point instead,</span>
+<span class="sd">            by default 128</span>
+<span class="sd">        excl_area : float | None</span>
+<span class="sd">            Area of an exclusion pixel in km2. None will try to infer the area</span>
+<span class="sd">            from the profile transform attribute in excl_fpath.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">excl_fpath</span><span class="p">,</span> <span class="n">power_rose_h5_fpath</span><span class="p">,</span> <span class="n">tm_dset</span><span class="p">,</span> <span class="n">agg_dset</span><span class="p">,</span>
+                         <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span> <span class="n">excl_area</span><span class="o">=</span><span class="n">excl_area</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_map_direction_pos</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">power_rose_h5_fpath</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Map powerrose directions to sc row and column shifts</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        power_rose_h5_fpath : str</span>
+<span class="sd">            Filepath to .h5 file containing powerrose</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">            Pos of major cardinal directions in power rose data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">directions</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DIR_ORDER</span>
+
+        <span class="k">with</span> <span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">power_rose_h5_fpath</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">cardinal_dirs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="s1">&#39;cardinal_directions&#39;</span><span class="p">][</span><span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">))</span>
+
+        <span class="n">dir_pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">cardinal_dirs</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">directions</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">dir_pos</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_row_col_inds</span><span class="p">(</span><span class="n">sc_point_gids</span><span class="p">,</span> <span class="n">row_length</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert supply curve point gids to row and col indices given row length</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_point_gids : int | list | ndarray</span>
+<span class="sd">            Supply curve point gid or list/array of gids</span>
+<span class="sd">        row_length : int</span>
+<span class="sd">            row length (shape[1])</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        row : int | list | ndarray</span>
+<span class="sd">            row indices</span>
+<span class="sd">        col : int | list | ndarray</span>
+<span class="sd">            row indices</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">sc_point_gids</span> <span class="o">//</span> <span class="n">row_length</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">sc_point_gids</span> <span class="o">%</span> <span class="n">row_length</span>
+
+        <span class="k">return</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_compute_neighbors</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sc_point_gids</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute neighboring supply curve point gids in following order:</span>
+<span class="sd">        [&#39;N&#39;, &#39;NE&#39;, &#39;E&#39;, &#39;SE&#39;, &#39;S&#39;, &#39;SW&#39;, &#39;W&#39;, &#39;NW&#39;]</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_point_gids : list | ndarray</span>
+<span class="sd">            Supply curve point gids to get neighbors for</span>
+<span class="sd">        shape : tuple</span>
+<span class="sd">            Exclusions gid shape</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        neighbor_gids : ndarray</span>
+<span class="sd">            Neighboring supply curve point gids</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_row_col_inds</span><span class="p">(</span><span class="n">sc_point_gids</span><span class="p">,</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">row_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">row_shifts</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">rows</span> <span class="o">&lt;</span> <span class="mi">0</span>
+        <span class="n">rows</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">rows</span> <span class="o">&gt;</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">rows</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">col_shifts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">col_shifts</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">cols</span> <span class="o">&lt;</span> <span class="mi">0</span>
+        <span class="n">cols</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">cols</span> <span class="o">&gt;</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">cols</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">neighbor_gids</span> <span class="o">=</span> <span class="n">rows</span> <span class="o">*</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">cols</span>
+
+        <span class="k">return</span> <span class="n">neighbor_gids</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_neighbors</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span> <span class="n">sc_point_gids</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="mi">128</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get neighboring sc_point_gids for all given supply curve points</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        excl_fpath : str</span>
+<span class="sd">            Filepath to exclusions h5 with techmap dataset.</span>
+<span class="sd">        sc_point_gids : list | ndarray</span>
+<span class="sd">            List of supply curve point gids of interest</span>
+<span class="sd">        resolution : int, optional</span>
+<span class="sd">            SC resolution, must be input in combination with gid. Prefered</span>
+<span class="sd">            option is to use the row/col slices to define the SC point instead,</span>
+<span class="sd">            by default 64</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        neighbor_gids : pandas.DataFrame</span>
+<span class="sd">            Neighboring sc_point_gids by cardinal direction</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">SupplyCurveExtent</span><span class="p">(</span><span class="n">excl_fpath</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">)</span> <span class="k">as</span> <span class="n">sc</span><span class="p">:</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">neighbor_gids</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_compute_neighbors</span><span class="p">(</span><span class="n">sc_point_gids</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">directions</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DIR_ORDER</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_gid&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">directions</span><span class="p">]</span>
+        <span class="n">neighbor_gids</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">neighbor_gids</span><span class="p">,</span>
+                                     <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span>
+                                     <span class="n">index</span><span class="o">=</span><span class="n">sc_point_gids</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">neighbor_gids</span>
+
+<div class="viewcode-block" id="ProminentWindDirections.prominent_directions"><a class="viewcode-back" href="../../../reVX/reVX.wind_dirs.prominent_wind_dirs.html#reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections.prominent_directions">[docs]</a>    <span class="k">def</span> <span class="nf">prominent_directions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                             <span class="n">chunk_point_len</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Aggregate power rose data to supply curve points, find all neighboring</span>
+<span class="sd">        supply curve points, sort neighbors in order of prominent powerrose</span>
+<span class="sd">        directions</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        max_workers : int | None, optional</span>
+<span class="sd">            Number of cores to run summary on. None is all</span>
+<span class="sd">            available cpus, by default None</span>
+<span class="sd">        chunk_point_len : int, optional</span>
+<span class="sd">            Number of SC points to process on a single parallel worker,</span>
+<span class="sd">            by default 100</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sc_pr : pandas.DataFrame</span>
+<span class="sd">            Update meta data table with neighboring supply curve point gids</span>
+<span class="sd">            and power-rose value at each cardinal direction</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">agg_out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                 <span class="n">chunk_point_len</span><span class="o">=</span><span class="n">chunk_point_len</span><span class="p">)</span>
+
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">agg_out</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;meta&#39;</span><span class="p">)</span>
+        <span class="n">neighbor_gids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_neighbors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_excl_fpath</span><span class="p">,</span>
+                                            <span class="n">meta</span><span class="p">[</span><span class="s1">&#39;sc_point_gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                                            <span class="n">resolution</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_resolution</span><span class="p">)</span>
+
+        <span class="n">dir_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_direction_pos</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_h5_fpath</span><span class="p">)</span>
+        <span class="n">sc_pr</span> <span class="o">=</span> <span class="n">agg_out</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;powerrose_100m&#39;</span><span class="p">)[</span><span class="n">dir_pos</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_pr&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                   <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">DIR_ORDER</span><span class="p">]</span>
+        <span class="n">sc_pr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">sc_pr</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">meta</span><span class="p">[</span><span class="s1">&#39;sc_point_gid&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                             <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">)</span>
+        <span class="n">sc_pr</span> <span class="o">=</span> <span class="n">neighbor_gids</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sc_pr</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">neighbor_gids</span>
+
+        <span class="n">sc_pr</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;sc_point_gid&#39;</span>
+        <span class="n">sc_pr</span> <span class="o">=</span> <span class="n">sc_pr</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+        <span class="n">sc_pr</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">sc_pr</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;sc_point_gid&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sc_pr</span></div>
+
+<div class="viewcode-block" id="ProminentWindDirections.run"><a class="viewcode-back" href="../../../reVX/reVX.wind_dirs.prominent_wind_dirs.html#reVX.wind_dirs.prominent_wind_dirs.ProminentWindDirections.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">power_rose_h5_fpath</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span>
+            <span class="n">agg_dset</span><span class="o">=</span><span class="s1">&#39;powerrose_100m&#39;</span><span class="p">,</span> <span class="n">tm_dset</span><span class="o">=</span><span class="s1">&#39;techmap_wtk&#39;</span><span class="p">,</span>
+            <span class="n">resolution</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">excl_area</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">chunk_point_len</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">out_fpath</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Aggregate powerrose to supply curve points, find neighboring supply</span>
+<span class="sd">        curve point gids and rank them based on prominent powerrose direction</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        power_rose_h5_fpath : str</span>
+<span class="sd">            Filepath to .h5 file containing power rose data, of same format as</span>
+<span class="sd">            WTK data with directions on axis 0 (rows) and sites on axis 1</span>
+<span class="sd">            (columns)</span>
+<span class="sd">        excl_fpath : str</span>
+<span class="sd">            Filepath to exclusions h5 with techmap dataset.</span>
+<span class="sd">        agg_dset : str, optional</span>
+<span class="sd">            Powerrose dataset to aggreate, by default &#39;powerrose_100m&#39;</span>
+<span class="sd">        tm_dset : str, optional</span>
+<span class="sd">            Dataset name in the techmap file containing the</span>
+<span class="sd">            exclusions-to-resource mapping data,</span>
+<span class="sd">            by default &#39;techmap_wtk&#39;</span>
+<span class="sd">        resolution : int, optional</span>
+<span class="sd">            SC resolution, must be input in combination with gid. Prefered</span>
+<span class="sd">            option is to use the row/col slices to define the SC point instead,</span>
+<span class="sd">            by default 128</span>
+<span class="sd">        excl_area : float | None</span>
+<span class="sd">            Area of an exclusion pixel in km2. None will try to infer the area</span>
+<span class="sd">            from the profile transform attribute in excl_fpath.</span>
+<span class="sd">        max_workers : int | None, optional</span>
+<span class="sd">            Number of cores to run summary on. None is all</span>
+<span class="sd">            available cpus, by default None</span>
+<span class="sd">        chunk_point_len : int, optional</span>
+<span class="sd">            Number of SC points to process on a single parallel worker,</span>
+<span class="sd">            by default 100</span>
+<span class="sd">        out_fpath : str</span>
+<span class="sd">            Path to .csv file to save output table to</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sc_pr : pandas.DataFrame</span>
+<span class="sd">            Update meta data table with neighboring supply curve point gids</span>
+<span class="sd">            and power-rose value at each cardinal direction</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pr</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">power_rose_h5_fpath</span><span class="p">,</span> <span class="n">excl_fpath</span><span class="p">,</span>
+                 <span class="n">agg_dset</span><span class="o">=</span><span class="n">agg_dset</span><span class="p">,</span> <span class="n">tm_dset</span><span class="o">=</span><span class="n">tm_dset</span><span class="p">,</span>
+                 <span class="n">resolution</span><span class="o">=</span><span class="n">resolution</span><span class="p">,</span> <span class="n">excl_area</span><span class="o">=</span><span class="n">excl_area</span><span class="p">)</span>
+
+        <span class="n">sc_pr</span> <span class="o">=</span> <span class="n">pr</span><span class="o">.</span><span class="n">prominent_directions</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                        <span class="n">chunk_point_len</span><span class="o">=</span><span class="n">chunk_point_len</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">out_fpath</span><span class="p">:</span>
+            <span class="n">sc_pr</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_fpath</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sc_pr</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

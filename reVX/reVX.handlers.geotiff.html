@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.handlers.geotiff module &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="reVX.handlers.outputs module" href="reVX.handlers.outputs.html" />
+    <link rel="prev" title="reVX.handlers.database module" href="reVX.handlers.database.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 current"><a class="reference internal" href="reVX.html">reVX package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="reVX.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3 current"><a class="reference internal" href="reVX.handlers.html">reVX.handlers package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="reVX.html">reVX package</a> &raquo;</li>
+        
+          <li><a href="reVX.handlers.html">reVX.handlers package</a> &raquo;</li>
+        
+      <li>reVX.handlers.geotiff module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            
+              <a href="https://github.com/nrel/reVX/blob/master/docs/source/reVX/reVX.handlers.geotiff.rst" class="fa fa-github"> Edit on GitHub</a>
+            
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="module-reVX.handlers.geotiff">
+<span id="revx-handlers-geotiff-module"></span><h1>reVX.handlers.geotiff module<a class="headerlink" href="#module-reVX.handlers.geotiff" title="Permalink to this headline">¶</a></h1>
+<p>Class to handle geotiff input files.</p>
+<p>Created on Thu Jun 20 09:43:34 2019</p>
+<p>&#64;author: gbuster</p>
+<dl class="py class">
+<dt id="reVX.handlers.geotiff.Geotiff">
+<em class="property">class </em><code class="sig-prename descclassname">reVX.handlers.geotiff.</code><code class="sig-name descname">Geotiff</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fpath</span></em>, <em class="sig-param"><span class="n">chunks</span><span class="o">=</span><span class="default_value">(128, 128)</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/handlers/geotiff.html#Geotiff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.5/library/functions.html#object" title="(in Python v3.5)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>GeoTIFF handler object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fpath</strong> (<em>str</em>) – Path to .tiff file.</p></li>
+<li><p><strong>chunks</strong> (<em>tuple</em>) – GeoTIFF chunk (tile) shape/size.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="reVX.handlers.geotiff.Geotiff.PROFILE">
+<code class="sig-name descname">PROFILE</code><em class="property"> = {'blockxsize': 128, 'blockysize': 128, 'compress': 'lzw', 'count': 1, 'crs': None, 'driver': 'GTiff', 'dtype': None, 'height': None, 'interleave': 'band', 'nodata': None, 'tiled': True, 'transform': None, 'width': None}</em><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.PROFILE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.attrs">
+<em class="property">property </em><code class="sig-name descname">attrs</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.attrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get geospatial attributes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>attrs</strong> (<em>OrderedDict</em>) – Geospatial/GeoTiff attributes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.dtype">
+<em class="property">property </em><code class="sig-name descname">dtype</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.dtype" title="Permalink to this definition">¶</a></dt>
+<dd><p>GeoTiff array dtype</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>dtype</strong> (<em>str</em>) – Dtype of data in GeoTiff</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.profile">
+<em class="property">property </em><code class="sig-name descname">profile</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>GeoTiff geospatial profile</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>_profile</strong> (<em>dict</em>) – Dictionary of geo-spatial attributes needed to create GeoTiff</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.iarr">
+<em class="property">property </em><code class="sig-name descname">iarr</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.iarr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get an array of 1D index values for the flattened geotiff extent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>iarr</strong> (<em>np.ndarray</em>) – Uint array with same shape as geotiff extent, representing the 1D
+index values if the geotiff extent was flattened
+(with default flatten order ‘C’)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.tiff_shape">
+<em class="property">property </em><code class="sig-name descname">tiff_shape</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.tiff_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tiff array shape (bands, y, x)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>shape</strong> (<em>tuple</em>) – (bands, y, x)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.shape">
+<em class="property">property </em><code class="sig-name descname">shape</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the Geotiff shape tuple (n_rows, n_cols).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>shape</strong> (<em>tuple</em>) – 2-entry tuple representing the full GeoTiff shape.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.n_rows">
+<em class="property">property </em><code class="sig-name descname">n_rows</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.n_rows" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of Geotiff rows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>n_rows</strong> (<em>int</em>) – Number of row entries in the full geotiff.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.n_cols">
+<em class="property">property </em><code class="sig-name descname">n_cols</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.n_cols" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of Geotiff columns.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>n_cols</strong> (<em>int</em>) – Number of column entries in the full geotiff.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.bands">
+<em class="property">property </em><code class="sig-name descname">bands</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.bands" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get number of GeoTiff bands</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><strong>bands</strong> (<em>int</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.lat_lon">
+<em class="property">property </em><code class="sig-name descname">lat_lon</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.lat_lon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get latitude and longitude coordinate arrays</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>tuple</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.latitude">
+<em class="property">property </em><code class="sig-name descname">latitude</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.latitude" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get latitude coordinates array</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.longitude">
+<em class="property">property </em><code class="sig-name descname">longitude</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.longitude" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get longitude coordinates array</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.meta">
+<em class="property">property </em><code class="sig-name descname">meta</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lat lon to y, x coordinate mapping</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>pd.DataFrame</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.values">
+<em class="property">property </em><code class="sig-name descname">values</code><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full DataArray in [bands, y, x] dimensions</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><em>ndarray</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="reVX.handlers.geotiff.Geotiff.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/reVX/handlers/geotiff.html#Geotiff.close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#reVX.handlers.geotiff.Geotiff.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the xarray-rasterio source object</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reVX.handlers.outputs.html" class="btn btn-neutral float-right" title="reVX.handlers.outputs module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="reVX.handlers.database.html" class="btn btn-neutral float-left" title="reVX.handlers.database module" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

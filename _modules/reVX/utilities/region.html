@@ -1,0 +1,576 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.utilities.region &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.utilities.region</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.utilities.region</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Region Classifier Module</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">geopandas</span> <span class="k">as</span> <span class="nn">gpd</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">Point</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">shape</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial</span> <span class="kn">import</span> <span class="n">cKDTree</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">rex</span> <span class="kn">import</span> <span class="n">Resource</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RegionClassifier"><a class="viewcode-back" href="../../../reVX/reVX.utilities.region.html#reVX.utilities.region.RegionClassifier">[docs]</a><span class="k">class</span> <span class="nc">RegionClassifier</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class of region classification</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; meta_path = &#39;meta.csv&#39;</span>
+<span class="sd">    &gt;&gt;&gt; regions_path = &#39;us_states.shp&#39;</span>
+<span class="sd">    &gt;&gt;&gt; regions_label = &#39;NAME&#39;</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; classifier = RegionClassifier(meta_path=meta_path,</span>
+<span class="sd">                                      regions_path=regions_path,</span>
+<span class="sd">                                      regions_label=regions_label)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; force = True</span>
+<span class="sd">    &gt;&gt;&gt; fout = &#39;new_meta.csv&#39;</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; classification = classifier.classify(force=force)</span>
+<span class="sd">    &gt;&gt;&gt; classifier.output_to_csv(classification, fout)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">CRS</span> <span class="o">=</span> <span class="s2">&quot;EPSG:4326&quot;</span>
+    <span class="n">DEFAULT_REGIONS_LABEL</span> <span class="o">=</span> <span class="s1">&#39;regions_index&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">meta_path</span><span class="p">,</span> <span class="n">regions_path</span><span class="p">,</span> <span class="n">regions_label</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        meta_path : str | pandas.DataFrame</span>
+<span class="sd">            Path to meta CSV file, resource .h5 file, or pre-loaded meta</span>
+<span class="sd">            DataFrame containing lat/lon points</span>
+<span class="sd">        regions_path : str</span>
+<span class="sd">            Path to regions shapefile containing labeled geometries</span>
+<span class="sd">        regions_label : str</span>
+<span class="sd">            Attribute to use as label in the regions shapefile</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_regions_label</span> <span class="o">=</span> <span class="n">regions_label</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_meta</span><span class="p">(</span><span class="n">meta_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_regions</span><span class="p">(</span><span class="n">regions_path</span><span class="p">,</span> <span class="n">regions_label</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RegionClassifier.output_to_csv"><a class="viewcode-back" href="../../../reVX/reVX.utilities.region.html#reVX.utilities.region.RegionClassifier.output_to_csv">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">output_to_csv</span><span class="p">(</span><span class="n">gdf</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Export a geopandas dataframe to csv</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        gdf : GeoPandas DataFrame</span>
+<span class="sd">            Meta data to export</span>
+<span class="sd">        path : str</span>
+<span class="sd">            Output CSV file path for labeled meta CSV file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">output_gdf</span> <span class="o">=</span> <span class="n">gdf</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;geometry&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">output_gdf</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;gid&#39;</span><span class="p">:</span>
+            <span class="n">output_gdf</span> <span class="o">=</span> <span class="n">output_gdf</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+
+        <span class="n">output_gdf</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_regions</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">regions_path</span><span class="p">,</span> <span class="n">regions_label</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Load the regions shapefile into geopandas dataframe</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        regions_path : str</span>
+<span class="sd">            Path to regions shapefile containing labeled geometries</span>
+<span class="sd">        regions_label : str</span>
+<span class="sd">            Attribute to use as label in the regions shapefile</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">regions</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">regions_path</span><span class="p">)</span><span class="o">.</span><span class="n">to_crs</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">CRS</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">regions_label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">regions</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">regions_label</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DEFAULT_REGIONS_LABEL</span>
+            <span class="n">regions</span><span class="p">[</span><span class="n">regions_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">regions</span><span class="o">.</span><span class="n">index</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Setting regions label: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">regions_label</span><span class="p">))</span>
+
+        <span class="n">centroids</span> <span class="o">=</span> <span class="n">regions</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">centroid</span>
+        <span class="n">regions</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">centroids</span><span class="o">.</span><span class="n">x</span>
+        <span class="n">regions</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">centroids</span><span class="o">.</span><span class="n">y</span>
+
+        <span class="k">return</span> <span class="n">regions</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_get_meta</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">meta_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Load the meta csv file into geopandas dataframe</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        meta_path : str | pandas.DataFrame</span>
+<span class="sd">            Path to meta CSV file, resource .h5 file, or pre-loaded meta</span>
+<span class="sd">            DataFrame containing lat/lon points</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meta_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">meta_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.csv&#39;</span><span class="p">):</span>
+                <span class="n">meta</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">meta_path</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">meta_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.h5&#39;</span><span class="p">):</span>
+                <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="n">meta_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">meta</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Cannot parse meta data from </span><span class="si">{}</span><span class="s2">, expecting a .csv or &quot;</span>
+                       <span class="s2">&quot;.h5 file!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta_path</span><span class="p">))</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">meta_path</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">meta</span> <span class="o">=</span> <span class="n">meta_path</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Cannot parse meta data from </span><span class="si">{}</span><span class="s2">, expecting a .csv or &quot;</span>
+                   <span class="s2">&quot;.h5 file path, or a pre-loaded pandas DataFrame&quot;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta_path</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">lat_label</span><span class="p">,</span> <span class="n">long_label</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_get_lat_lon_labels</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+        <span class="n">geometry</span> <span class="o">=</span> <span class="p">[</span><span class="n">Point</span><span class="p">(</span><span class="n">xy</span><span class="p">)</span> <span class="k">for</span> <span class="n">xy</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="n">long_label</span><span class="p">],</span>
+                                            <span class="n">meta</span><span class="p">[</span><span class="n">lat_label</span><span class="p">])]</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">GeoDataFrame</span><span class="p">(</span><span class="n">meta</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="n">CRS</span><span class="p">,</span>
+                                <span class="n">geometry</span><span class="o">=</span><span class="n">geometry</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">meta</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_lat_lon_labels</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Auto detect the latitude and longitude columns from DataFrame</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        df : Pandas DataFrame</span>
+<span class="sd">            Meta data with the latitude/longitude columns to detect</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Latitude</span>
+        <span class="n">lat_col</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lat_col</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Multiple latitude columns found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lat_col</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">lat_col</span> <span class="o">=</span> <span class="n">lat_col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Longitude</span>
+        <span class="n">lon_col</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">df</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;lon&#39;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lon_col</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;Multiple longitude columns found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lon_col</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">lon_col</span> <span class="o">=</span> <span class="n">lon_col</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">lat_col</span><span class="p">,</span> <span class="n">lon_col</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_nearest</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">lookup</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Lookup the indices to the nearest point</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        target : Pandas DataFrame</span>
+<span class="sd">            List of lat/lon points</span>
+<span class="sd">        lookup : Pandas DataFrame</span>
+<span class="sd">            List of lat/lon points</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">lookup</span><span class="p">)</span>  <span class="c1"># pylint: disable=not-callable</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">inds</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">inds</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_geom_is_valid</span><span class="p">(</span><span class="n">geom</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check if individual geometry is valid &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shape</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="RegionClassifier.classify"><a class="viewcode-back" href="../../../reVX/reVX.utilities.region.html#reVX.utilities.region.RegionClassifier.classify">[docs]</a>    <span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Classify the meta data with regions labels</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        force : str</span>
+<span class="sd">            Force outlier classification by finding nearest</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Get intersection classifications</span>
+            <span class="n">meta_inds</span><span class="p">,</span> <span class="n">region_inds</span><span class="p">,</span> <span class="n">outlier_inds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_intersect</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">invalid_geom_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_geometry</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">invalid_geom_ids</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;The following geometries are invalid: </span><span class="si">{}</span><span class="s1">&#39;</span>
+                               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">invalid_geom_ids</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Cannot run region classification&#39;</span><span class="p">)</span>
+                <span class="k">raise</span>
+
+        <span class="c1"># Check for any intersection outliers</span>
+        <span class="n">num_outliers</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">outlier_inds</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">num_outliers</span> <span class="ow">and</span> <span class="n">force</span><span class="p">):</span>
+            <span class="c1"># Lookup the nearest region geometry (by centroid)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;The following points are outliers:&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">outlier_inds</span><span class="p">)</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_lat_lon_labels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">)</span>
+            <span class="n">lookup</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="p">[[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;lon&#39;</span><span class="p">]]</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">outlier_inds</span><span class="p">][</span><span class="n">cols</span><span class="p">]</span>
+            <span class="n">region_inds</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nearest</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">lookup</span><span class="p">))</span>
+
+        <span class="c1"># Get full list of meta indices and region labels</span>
+        <span class="n">meta_inds</span> <span class="o">+=</span> <span class="n">outlier_inds</span>
+        <span class="n">region_labels</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">region_inds</span><span class="p">,</span>
+                                               <span class="bp">self</span><span class="o">.</span><span class="n">_regions_label</span><span class="p">])</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">num_outliers</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">):</span>
+            <span class="c1"># Fill unclassified labels</span>
+            <span class="n">region_labels</span> <span class="o">+=</span> <span class="p">[</span><span class="o">-</span><span class="mi">999</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outliers</span><span class="p">)]</span>
+
+        <span class="c1"># Build classification mapping</span>
+        <span class="n">region_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">region_labels</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
+        <span class="n">classified_meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">meta_inds</span><span class="p">]</span>
+        <span class="n">classified_meta</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_regions_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">region_labels</span>
+        <span class="n">classified_meta</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">classified_meta</span></div>
+
+    <span class="k">def</span> <span class="nf">_intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Join the meta points to regions by spatial intersection &quot;&quot;&quot;</span>
+
+        <span class="n">joined</span> <span class="o">=</span> <span class="n">gpd</span><span class="o">.</span><span class="n">sjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="p">,</span>
+                           <span class="n">how</span><span class="o">=</span><span class="s1">&#39;inner&#39;</span><span class="p">,</span> <span class="n">op</span><span class="o">=</span><span class="s1">&#39;intersects&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;index_left&#39;</span> <span class="ow">in</span> <span class="n">joined</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="n">joined</span> <span class="o">=</span> <span class="n">joined</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="s1">&#39;index_left&#39;</span><span class="p">,</span> <span class="n">keep</span><span class="o">=</span><span class="s1">&#39;last&#39;</span><span class="p">)</span>
+            <span class="n">meta_inds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">joined</span><span class="p">[</span><span class="s1">&#39;index_left&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">meta_inds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">joined</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="n">region_inds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">joined</span><span class="p">[</span><span class="s1">&#39;index_right&#39;</span><span class="p">])</span>
+        <span class="n">outliers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="o">~</span><span class="bp">self</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">meta_inds</span><span class="p">)]</span>
+        <span class="n">outlier_inds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">outliers</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">meta_inds</span><span class="p">,</span> <span class="n">region_inds</span><span class="p">,</span> <span class="n">outlier_inds</span>
+
+    <span class="k">def</span> <span class="nf">_check_geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get index list of invalid geometries &quot;&quot;&quot;</span>
+        <span class="n">geometry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="o">.</span><span class="n">geometry</span>
+        <span class="n">isvalid</span> <span class="o">=</span> <span class="n">geometry</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_geom_is_valid</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_regions</span><span class="p">[</span><span class="n">isvalid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RegionClassifier.run"><a class="viewcode-back" href="../../../reVX/reVX.utilities.region.html#reVX.utilities.region.RegionClassifier.run">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">meta_path</span><span class="p">,</span> <span class="n">regions_path</span><span class="p">,</span> <span class="n">regions_label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">fout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Run full classification</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        meta_path : str | pandas.DataFrame</span>
+<span class="sd">            Path to meta CSV file, resource .h5 file, or pre-loaded meta</span>
+<span class="sd">            DataFrame containing lat/lon points</span>
+<span class="sd">        regions_path : str</span>
+<span class="sd">            Path to regions shapefile containing labeled geometries</span>
+<span class="sd">        regions_label : str</span>
+<span class="sd">            Attribute to use a label in the regions shapefile</span>
+<span class="sd">        force : str</span>
+<span class="sd">            Force outlier classification by finding nearest</span>
+<span class="sd">        fout : str</span>
+<span class="sd">            Output CSV file path for labeled meta CSV file</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; meta_path = &#39;meta.csv&#39;</span>
+<span class="sd">        &gt;&gt;&gt; regions_path = &#39;us_states.shp&#39;</span>
+<span class="sd">        &gt;&gt;&gt; regions_label = &#39;NAME&#39;</span>
+<span class="sd">        &gt;&gt;&gt; force = True</span>
+<span class="sd">        &gt;&gt;&gt; fout = &#39;new_meta.csv&#39;</span>
+<span class="sd">        &gt;&gt;&gt;</span>
+<span class="sd">        &gt;&gt;&gt; RegionClassifier.run(meta_path=meta_path,</span>
+<span class="sd">                                 regions_path=regions_path,</span>
+<span class="sd">                                 regions_label=regions_label</span>
+<span class="sd">                                 force=force, fout=fout)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">classifier</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">meta_path</span><span class="o">=</span><span class="n">meta_path</span><span class="p">,</span> <span class="n">regions_path</span><span class="o">=</span><span class="n">regions_path</span><span class="p">,</span>
+                         <span class="n">regions_label</span><span class="o">=</span><span class="n">regions_label</span><span class="p">)</span>
+        <span class="n">classification</span> <span class="o">=</span> <span class="n">classifier</span><span class="o">.</span><span class="n">classify</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fout</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">output_to_csv</span><span class="p">(</span><span class="n">classification</span><span class="p">,</span> <span class="n">fout</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">classification</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

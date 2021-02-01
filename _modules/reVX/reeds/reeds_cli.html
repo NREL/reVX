@@ -1,0 +1,763 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.reeds.reeds_cli &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.reeds.reeds_cli</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.reeds.reeds_cli</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ReEDS Command Line Interface</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">click</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">rex.utilities.loggers</span> <span class="kn">import</span> <span class="n">init_mult</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.cli_dtypes</span> <span class="kn">import</span> <span class="n">STR</span><span class="p">,</span> <span class="n">STRLIST</span><span class="p">,</span> <span class="n">INT</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.hpc</span> <span class="kn">import</span> <span class="n">SLURM</span>
+<span class="kn">from</span> <span class="nn">rex.utilities.utilities</span> <span class="kn">import</span> <span class="n">dict_str_load</span><span class="p">,</span> <span class="n">get_class_properties</span>
+
+<span class="kn">from</span> <span class="nn">reVX.config.reeds</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ReedsConfig</span><span class="p">,</span> <span class="n">ClassifyConfigGroup</span><span class="p">,</span>
+                               <span class="n">ProfilesConfigGroup</span><span class="p">,</span> <span class="n">TimeslicesConfigGroup</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">reVX.reeds.reeds_classification</span> <span class="kn">import</span> <span class="n">ReedsClassifier</span>
+<span class="kn">from</span> <span class="nn">reVX.reeds.reeds_profiles</span> <span class="kn">import</span> <span class="n">ReedsProfiles</span>
+<span class="kn">from</span> <span class="nn">reVX.reeds.reeds_timeslices</span> <span class="kn">import</span> <span class="n">ReedsTimeslices</span>
+<span class="kn">from</span> <span class="nn">reVX.utilities.exceptions</span> <span class="kn">import</span> <span class="n">ReedsRuntimeError</span>
+<span class="kn">from</span> <span class="nn">reVX</span> <span class="kn">import</span> <span class="n">__version__</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="nd">@click</span><span class="o">.</span><span class="n">group</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;ReEDS&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Job name. Default is &quot;ReEDS&quot;.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">main</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ReEDS Command Line Interface</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">ensure_object</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">verbose</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">version</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    print version</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">__version__</span><span class="p">)</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">valid_config_keys</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Echo the valid ReEDS config keys</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">config_classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">ReedsConfig</span><span class="p">,</span> <span class="n">ClassifyConfigGroup</span><span class="p">,</span>
+                      <span class="n">ProfilesConfigGroup</span><span class="p">,</span> <span class="n">TimeslicesConfigGroup</span><span class="p">]</span>
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">config_classes</span><span class="p">:</span>
+        <span class="n">cls_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39;&gt;&quot;</span><span class="p">)</span>
+        <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="s2">&quot;Valid keys for </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cls_name</span><span class="p">,</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">get_class_properties</span><span class="p">(</span><span class="bp">cls</span><span class="p">))))</span>
+
+
+<div class="viewcode-block" id="run_local"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_cli.html#reVX.reeds.reeds_cli.run_local">[docs]</a><span class="k">def</span> <span class="nf">run_local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run reV to ReEDs locally from config</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    ctx : click.ctx</span>
+<span class="sd">        click ctx object</span>
+<span class="sd">    config : ReedsConfig</span>
+<span class="sd">        Reeds Config object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">local</span><span class="p">,</span>
+               <span class="n">out_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">dirout</span><span class="p">,</span>
+               <span class="n">log_dir</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">logdir</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">classify</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">classify</span><span class="p">,</span>
+                   <span class="n">rev_table</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">rev_table</span><span class="p">,</span>
+                   <span class="n">resource_classes</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">resource_classes</span><span class="p">,</span>
+                   <span class="n">regions</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">regions</span><span class="p">,</span>
+                   <span class="n">cap_bins</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">cap_bins</span><span class="p">,</span>
+                   <span class="n">sort_bins_by</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">sort_bins_by</span><span class="p">,</span>
+                   <span class="n">pre_filter</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">pre_filter</span><span class="p">,</span>
+                   <span class="n">trg_by_region</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">trg_by_region</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">profiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span>
+                   <span class="n">reeds_table</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">reeds_table</span><span class="p">,</span>
+                   <span class="n">cf_profiles</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">cf_profiles</span><span class="p">,</span>
+                   <span class="n">gid_col</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">gid_col</span><span class="p">,</span>
+                   <span class="n">n_profiles</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">n_profiles</span><span class="p">,</span>
+                   <span class="n">profiles_dset</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">profiles_dset</span><span class="p">,</span>
+                   <span class="n">rep_method</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">rep_method</span><span class="p">,</span>
+                   <span class="n">err_method</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">err_method</span><span class="p">,</span>
+                   <span class="n">weight</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">weight</span><span class="p">,</span>
+                   <span class="n">reg_cols</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">reg_cols</span><span class="p">,</span>
+                   <span class="n">max_workers</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">timeslices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="n">timeslices</span><span class="p">,</span>
+                   <span class="n">profiles</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">timeslices</span><span class="o">.</span><span class="n">profiles</span><span class="p">,</span>
+                   <span class="n">timeslices</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">timeslices</span><span class="o">.</span><span class="n">timeslices</span><span class="p">,</span>
+                   <span class="n">reg_cols</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">timeslices</span><span class="o">.</span><span class="n">reg_cols</span><span class="p">,</span>
+                   <span class="n">all_profiles</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">timeslices</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">)</span></div>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--config&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Filepath to reVX-REEDS config json file.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run reVX-REEDS from a config.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">config</span> <span class="o">=</span> <span class="n">ReedsConfig</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s1">&#39;VERBOSE&#39;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">((</span><span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="p">)):</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">_log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+    <span class="k">elif</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">_log_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;local&#39;</span><span class="p">:</span>
+        <span class="n">run_local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">option</span> <span class="o">==</span> <span class="s1">&#39;eagle&#39;</span><span class="p">:</span>
+        <span class="n">eagle</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+
+<span class="nd">@main</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">chain</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--out_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Directory to dump output files&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--log_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;-log&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Directory to dump log files. Default is out_dir.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--verbose&#39;</span><span class="p">,</span> <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to turn on debug logging. Default is not verbose.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">local</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">,</span> <span class="n">verbose</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run reVX-REEDS on local hardware.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_dir</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">out_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">log_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">log_dir</span> <span class="o">=</span> <span class="n">out_dir</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s1">&#39;VERBOSE&#39;</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">:</span>
+        <span class="n">verbose</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;VERBOSE&#39;</span><span class="p">],</span> <span class="n">verbose</span><span class="p">))</span>
+
+    <span class="n">log_modules</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;reVX&#39;</span><span class="p">,</span> <span class="s1">&#39;reV&#39;</span><span class="p">,</span> <span class="s1">&#39;rex&#39;</span><span class="p">]</span>
+    <span class="n">init_mult</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">log_dir</span><span class="p">,</span> <span class="n">modules</span><span class="o">=</span><span class="n">log_modules</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Running reV to ReEDS pipeline</span><span class="se">\n</span><span class="s1">&#39;</span>
+                <span class="s1">&#39;Outputs to be stored in: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out_dir</span><span class="p">))</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--rev_table&#39;</span><span class="p">,</span> <span class="s1">&#39;-rt&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to .csv containing reV aggregation or &#39;</span>
+                    <span class="s1">&#39;supply curve table&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--resource_classes&#39;</span><span class="p">,</span> <span class="s1">&#39;-rc&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;resource_classes: str | pandas.DataFrame</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;Resource classes, either provided in a .csv, .json or a &quot;</span>
+                    <span class="s2">&quot;DataFrame</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;Allowable columns:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;- &#39;class&#39; -&gt; class labels to use</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;- &#39;TRG_cap&#39; -&gt; TRG capacity bins to use to create TRG &quot;</span>
+                    <span class="s2">&quot;classes</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;- any column in &#39;rev_table&#39; -&gt; Categorical bins</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;- &#39;*_min&#39; and &#39;*_max&#39; where * is a numberical column in &quot;</span>
+                    <span class="s2">&quot;&#39;rev_table&#39; -&gt; Range binning</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;NOTE: &#39;TRG_cap&#39; can only be combined with categorical &quot;</span>
+                    <span class="s2">&quot;bins&quot;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--regions&#39;</span><span class="p">,</span> <span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;reeds_region&#39;</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Mapping of supply curve points to geographic region&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--cap_bins&#39;</span><span class="p">,</span> <span class="s1">&#39;-cb&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Number of capacity bins to create for each &#39;</span>
+                    <span class="s1">&#39;region/resource bin combination&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--sort_bins_by&#39;</span><span class="p">,</span> <span class="s1">&#39;-sb&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;trans_cap_cost&#39;</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Column(s) in rev_table to sort before binning&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--pre_filter&#39;</span><span class="p">,</span> <span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Column value pair(s) to filter on. If None do not filter&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--trg_by_region&#39;</span><span class="p">,</span> <span class="s1">&#39;-tbr&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Groupby on region when computing TRGs&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">classify</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span> <span class="n">regions</span><span class="p">,</span> <span class="n">cap_bins</span><span class="p">,</span> <span class="n">sort_bins_by</span><span class="p">,</span>
+             <span class="n">pre_filter</span><span class="p">,</span> <span class="n">trg_by_region</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract ReEDS (region, bin, class) groups</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting ReEDS (region, bin, class) groups using &#39;</span>
+                <span class="s1">&#39;reV sc table </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">rev_table</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pre_filter</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">pre_filter</span> <span class="o">=</span> <span class="n">dict_str_load</span><span class="p">(</span><span class="n">pre_filter</span><span class="p">)</span>
+
+    <span class="n">out</span> <span class="o">=</span> <span class="n">ReedsClassifier</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">rev_table</span><span class="p">,</span> <span class="n">resource_classes</span><span class="p">,</span>
+                                 <span class="n">region_map</span><span class="o">=</span><span class="n">regions</span><span class="p">,</span> <span class="n">cap_bins</span><span class="o">=</span><span class="n">cap_bins</span><span class="p">,</span>
+                                 <span class="n">sort_bins_by</span><span class="o">=</span><span class="n">sort_bins_by</span><span class="p">,</span>
+                                 <span class="n">pre_filter</span><span class="o">=</span><span class="n">pre_filter</span><span class="p">,</span>
+                                 <span class="n">trg_by_region</span><span class="o">=</span><span class="n">trg_by_region</span><span class="p">)</span>
+    <span class="n">table_full</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">agg_table_full</span><span class="p">,</span> <span class="n">agg_table</span> <span class="o">=</span> <span class="n">out</span>
+
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span>
+                            <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_supply_curve_raw_full.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">table_full</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;TABLE&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_path</span>
+
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_supply_curve_raw.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">table</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_supply_curve_full.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">agg_table_full</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_supply_curve.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">agg_table</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;reVX - ReEDS classification methods complete.&#39;</span><span class="p">)</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--reeds_table&#39;</span><span class="p">,</span> <span class="s1">&#39;-rt&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to .csv containing reeds classification table &#39;</span>
+                    <span class="s1">&#39;not needed if chained with classify command&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--cf_profiles&#39;</span><span class="p">,</span> <span class="s1">&#39;-cf&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to reV .h5 file containing desired capacity factor &#39;</span>
+                    <span class="s1">&#39;profiles&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--gid_col&#39;</span><span class="p">,</span> <span class="s1">&#39;-gc&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;gen_gids&#39;</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Column label in rev_summary that contains the generation &#39;</span>
+              <span class="s1">&#39;gids (data index in cf_profiles file path).&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--n_profiles&#39;</span><span class="p">,</span> <span class="s1">&#39;-np&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Number of profiles to extract per &quot;group&quot;.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--profiles_dset&#39;</span><span class="p">,</span> <span class="s1">&#39;-pd&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;cf_profile&quot;</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Profiles dataset name in cf_profiles file.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--rep_method&#39;</span><span class="p">,</span> <span class="s1">&#39;-rm&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;meanoid&#39;</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Method identifier for calculation of the representative &#39;</span>
+                    <span class="s1">&#39;profile.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--err_method&#39;</span><span class="p">,</span> <span class="s1">&#39;-em&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;rmse&#39;</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Method identifier for calculation of error from the &#39;</span>
+                    <span class="s1">&#39;representative profile.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--weight&#39;</span><span class="p">,</span> <span class="s1">&#39;-w&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Column in rev_summary used to apply weighted mean to &#39;</span>
+              <span class="s1">&#39;profiles. The supply curve table data in the weight column &#39;</span>
+              <span class="s1">&#39;should have weight values corresponding to the gid_col in &#39;</span>
+              <span class="s1">&#39;the same row.&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--reg_cols&#39;</span><span class="p">,</span> <span class="s1">&#39;-rcp&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STRLIST</span><span class="p">,</span>
+              <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;bin&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">),</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Label(s) for a categorical region column(s) to extract &#39;</span>
+                    <span class="s1">&#39;profiles for (default is region, bin, class)&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--max_workers&#39;</span><span class="p">,</span> <span class="s1">&#39;-mw&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">INT</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Number of parallel workers. 1 will run serial, &#39;</span>
+                    <span class="s1">&#39;None will use all available.&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">profiles</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">reeds_table</span><span class="p">,</span> <span class="n">cf_profiles</span><span class="p">,</span> <span class="n">gid_col</span><span class="p">,</span> <span class="n">n_profiles</span><span class="p">,</span> <span class="n">profiles_dset</span><span class="p">,</span>
+             <span class="n">rep_method</span><span class="p">,</span> <span class="n">err_method</span><span class="p">,</span> <span class="n">weight</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract ReEDS represntative profiles</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">reeds_table</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">reeds_table</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;TABLE&#39;</span><span class="p">]</span>
+
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting ReEDS representative profiles for </span><span class="si">{}</span><span class="s1"> groups, &#39;</span>
+                <span class="s1">&#39;from </span><span class="si">{}</span><span class="s1">.&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">reg_cols</span><span class="p">,</span> <span class="n">cf_profiles</span><span class="p">))</span>
+
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_hourly_cf.h5&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving representative hourly cf profiles to </span><span class="si">{}</span><span class="s1">.&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out_path</span><span class="p">))</span>
+
+    <span class="n">ReedsProfiles</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cf_profiles</span><span class="p">,</span> <span class="n">reeds_table</span><span class="p">,</span>
+                      <span class="n">gid_col</span><span class="o">=</span><span class="n">gid_col</span><span class="p">,</span>
+                      <span class="n">profiles_dset</span><span class="o">=</span><span class="n">profiles_dset</span><span class="p">,</span>
+                      <span class="n">rep_method</span><span class="o">=</span><span class="n">rep_method</span><span class="p">,</span>
+                      <span class="n">err_method</span><span class="o">=</span><span class="n">err_method</span><span class="p">,</span>
+                      <span class="n">n_profiles</span><span class="o">=</span><span class="n">n_profiles</span><span class="p">,</span>
+                      <span class="n">weight</span><span class="o">=</span><span class="n">weight</span><span class="p">,</span>
+                      <span class="n">reg_cols</span><span class="o">=</span><span class="n">reg_cols</span><span class="p">,</span>
+                      <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                      <span class="n">fout</span><span class="o">=</span><span class="n">out_path</span><span class="p">,</span>
+                      <span class="n">hourly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;PROFILES&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">out_path</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;reVX - ReEDS representative profile methods complete.&#39;</span><span class="p">)</span>
+
+
+<span class="nd">@local</span><span class="o">.</span><span class="n">command</span><span class="p">()</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--profiles&#39;</span><span class="p">,</span> <span class="s1">&#39;-pr&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STR</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Path to .h5 file containing (representative) profiles, &#39;</span>
+                    <span class="s1">&#39;not needed if chained with profiles command&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--timeslices&#39;</span><span class="p">,</span> <span class="s1">&#39;-ts&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="nb">type</span><span class="o">=</span><span class="n">click</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="n">exists</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;.csv containing timeslice mapping&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--reg_cols&#39;</span><span class="p">,</span> <span class="s1">&#39;-rct&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">STRLIST</span><span class="p">,</span>
+              <span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;region&#39;</span><span class="p">,</span> <span class="s1">&#39;class&#39;</span><span class="p">),</span> <span class="n">show_default</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;Label(s) for a categorical region column(s) to create &#39;</span>
+                    <span class="s1">&#39;timeslice stats for (default is region and class)&#39;</span><span class="p">))</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;--all_profiles&#39;</span><span class="p">,</span> <span class="s1">&#39;-ap&#39;</span><span class="p">,</span> <span class="n">is_flag</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+              <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Flag to calculate timeslice stats from all CF profiles &#39;</span>
+              <span class="s1">&#39;as opposed to representative profiles (default).&#39;</span><span class="p">)</span>
+<span class="nd">@click</span><span class="o">.</span><span class="n">pass_context</span>
+<span class="k">def</span> <span class="nf">timeslices</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">timeslices</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">,</span> <span class="n">all_profiles</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract timeslices from representative profiles</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;NAME&#39;</span><span class="p">]</span>
+    <span class="n">out_dir</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;OUT_DIR&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">profiles</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;PROFILES&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;You must run &quot;profiles&quot; or provide path to existing &#39;</span>
+                   <span class="s1">&#39;profiles to extract timeslices!&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">ReedsRuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;PROFILES&#39;</span><span class="p">]</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting timeslices from </span><span class="si">{}</span><span class="s1"> using mapping </span><span class="si">{}</span><span class="s1">&#39;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">timeslices</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">all_profiles</span><span class="p">:</span>
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="n">ctx</span><span class="o">.</span><span class="n">obj</span><span class="p">[</span><span class="s1">&#39;rev_table&#39;</span><span class="p">]</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting timeslice stats from all cf_profiles &#39;</span>
+                    <span class="s1">&#39;in rev_table (and not just representative profiles).&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">rev_table</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Extracting timeslice stats from representative profiles &#39;</span>
+                    <span class="s1">&#39;(and not all cf_profiles).&#39;</span><span class="p">)</span>
+
+    <span class="n">stats</span><span class="p">,</span> <span class="n">corr</span> <span class="o">=</span> <span class="n">ReedsTimeslices</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">profiles</span><span class="p">,</span> <span class="n">timeslices</span><span class="p">,</span>
+                                      <span class="n">rev_table</span><span class="o">=</span><span class="n">rev_table</span><span class="p">,</span>
+                                      <span class="n">reg_cols</span><span class="o">=</span><span class="n">reg_cols</span><span class="p">,</span>
+                                      <span class="n">legacy_format</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_performance.csv&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving timeslice performance stats to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out_path</span><span class="p">))</span>
+    <span class="n">stats</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">_correlations.h5&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Saving timeslice correlations to </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">out_path</span><span class="p">))</span>
+    <span class="n">ReedsTimeslices</span><span class="o">.</span><span class="n">save_correlation_dict</span><span class="p">(</span><span class="n">corr</span><span class="p">,</span> <span class="n">reg_cols</span><span class="p">,</span> <span class="n">out_path</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;reVX - ReEDS timeslice methods complete.&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_node_cmd"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_cli.html#reVX.reeds.reeds_cli.get_node_cmd">[docs]</a><span class="k">def</span> <span class="nf">get_node_cmd</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the node CLI call for the reVX-REEDS pipeline.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.reeds.ReedsConfig</span>
+<span class="sd">        reVX-REEDS config object.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    cmd : str</span>
+<span class="sd">        CLI call to submit to SLURM execution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;-n </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="p">)),</span>
+            <span class="s1">&#39;local&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;-o </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">dirout</span><span class="p">)),</span>
+            <span class="s1">&#39;-log </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">logdir</span><span class="p">)),</span>
+            <span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">log_level</span> <span class="o">==</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-v&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">classify</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">classify</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;classify&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;-rt </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">rev_table</span><span class="p">)),</span>
+                    <span class="s1">&#39;-rc </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">resource_classes</span><span class="p">)),</span>
+                    <span class="s1">&#39;-r </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">regions</span><span class="p">)),</span>
+                    <span class="s1">&#39;-cb </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">cap_bins</span><span class="p">)),</span>
+                    <span class="s1">&#39;-sb </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">sort_bins_by</span><span class="p">)),</span>
+                    <span class="s1">&#39;-f </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">pre_filter</span><span class="p">)),</span>
+                    <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">classify</span><span class="o">.</span><span class="n">trg_by_region</span><span class="p">:</span>
+            <span class="n">classify</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-tbr&#39;</span><span class="p">)</span>
+
+        <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">classify</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">profiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;profiles&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;-rt </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">reeds_table</span><span class="p">)),</span>
+                    <span class="s1">&#39;-cf </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">cf_profiles</span><span class="p">)),</span>
+                    <span class="s1">&#39;-gc </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">gid_col</span><span class="p">)),</span>
+                    <span class="s1">&#39;-np </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">n_profiles</span><span class="p">)),</span>
+                    <span class="s1">&#39;-pd </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">profiles_dset</span><span class="p">)),</span>
+                    <span class="s1">&#39;-rm </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">rep_method</span><span class="p">)),</span>
+                    <span class="s1">&#39;-em </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">err_method</span><span class="p">)),</span>
+                    <span class="s1">&#39;-w </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">weight</span><span class="p">)),</span>
+                    <span class="s1">&#39;-rcp </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">reg_cols</span><span class="p">)),</span>
+                    <span class="s1">&#39;-mw </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">max_workers</span><span class="p">)),</span>
+                    <span class="p">]</span>
+
+        <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">timeslices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">timeslices</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;timeslices&#39;</span><span class="p">,</span>
+                      <span class="s1">&#39;-pr </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">timeslices</span><span class="o">.</span><span class="n">profiles</span><span class="p">)),</span>
+                      <span class="s1">&#39;-ts </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">timeslices</span><span class="o">.</span><span class="n">timeslices</span><span class="p">)),</span>
+                      <span class="s1">&#39;-rct </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">SLURM</span><span class="o">.</span><span class="n">s</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">timeslices</span><span class="o">.</span><span class="n">reg_cols</span><span class="p">)),</span>
+                      <span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">timeslices</span><span class="o">.</span><span class="n">all_profiles</span><span class="p">:</span>
+            <span class="n">timeslices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-ap&#39;</span><span class="p">)</span>
+
+        <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">timeslices</span><span class="p">)</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;python -m reVX.reeds.reeds_cli </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Submitting the following cli call:</span><span class="se">\n\t</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">cmd</span></div>
+
+
+<div class="viewcode-block" id="eagle"><a class="viewcode-back" href="../../../reVX/reVX.reeds.reeds_cli.html#reVX.reeds.reeds_cli.eagle">[docs]</a><span class="k">def</span> <span class="nf">eagle</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run reVX-REEDS on Eagle HPC.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : reVX.config.reeds.ReedsConfig</span>
+<span class="sd">        reVX-REEDS config object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cmd</span> <span class="o">=</span> <span class="n">get_node_cmd</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">name</span>
+    <span class="n">log_dir</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">logdir</span>
+    <span class="n">stdout_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log_dir</span><span class="p">,</span> <span class="s1">&#39;stdout/&#39;</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Running reVX-REEDS pipeline on Eagle with &#39;</span>
+                <span class="s1">&#39;node name &quot;</span><span class="si">{}</span><span class="s1">&quot;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="n">slurm_manager</span> <span class="o">=</span> <span class="n">SLURM</span><span class="p">()</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">slurm_manager</span><span class="o">.</span><span class="n">sbatch</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span>
+                               <span class="n">alloc</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">alloc</span><span class="p">,</span>
+                               <span class="n">memory</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">node_mem</span><span class="p">,</span>
+                               <span class="n">walltime</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">walltime</span><span class="p">,</span>
+                               <span class="n">feature</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">feature</span><span class="p">,</span>
+                               <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">stdout_path</span><span class="o">=</span><span class="n">stdout_path</span><span class="p">,</span>
+                               <span class="n">conda_env</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">conda_env</span><span class="p">,</span>
+                               <span class="n">module</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">execution_control</span><span class="o">.</span><span class="n">module</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Kicked off reVX-REEDS pipeline job &quot;</span><span class="si">{}</span><span class="s1">&quot; &#39;</span>
+               <span class="s1">&#39;(SLURM jobid #</span><span class="si">{}</span><span class="s1">) on Eagle.&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">out</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Was unable to kick off reVX-REEDS pipeline job &quot;</span><span class="si">{}</span><span class="s1">&quot;. &#39;</span>
+               <span class="s1">&#39;Please see the stdout error messages&#39;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="n">click</span><span class="o">.</span><span class="n">echo</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">main</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="p">{})</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s1">&#39;Error running ReEDS CLI&#39;</span><span class="p">)</span>
+        <span class="k">raise</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

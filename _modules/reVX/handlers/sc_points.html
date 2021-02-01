@@ -1,0 +1,933 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>reVX.handlers.sc_points &mdash; reVX 0.3.19 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> reVX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3.19
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html">Installation and Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html">Installation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-1-install-from-pip-or-conda-recommended-for-analysts">Option 1: Install from PIP or Conda (recommended for analysts):</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/installation.html#option-2-clone-repo-recommended-for-developers">Option 2: Clone repo (recommended for developers)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#usage-on-eagle">Usage on Eagle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/installation.html#command-line-tools">Command Line Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc/misc.html#examples">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.rpm.html">Resource Planning Model (RPM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rev-rpm-cli">reV-RPM CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.rpm.html#rpm-sub-package">RPM sub-package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../misc/examples.reeds.html">Regional Energy Deployment System (ReEDS)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#rev-reeds-cli">reV-ReEDS CLI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../misc/examples.reeds.html#reeds-sub-package">ReEDS sub-package</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reVX/reVX.html">reVX package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.config.html">reVX.config package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.config.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.handlers.html">reVX.handlers package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.handlers.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.plexos.html">reVX.plexos package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.plexos.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.red_e.html">reVX.red_e package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.red_e.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.reeds.html">reVX.reeds package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.reeds.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.rpm.html">reVX.rpm package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.rpm.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.utilities.html">reVX.utilities package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.utilities.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html">reVX.wind_dirs package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_dirs.html#submodules">Submodules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html">reVX.wind_setbacks package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.wind_setbacks.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../reVX/reVX.html#submodules">Submodules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.cli.html">reVX.cli module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../reVX/reVX.cli.html#revx">reVX</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../../../reVX/reVX.version.html">reVX.version module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">reVX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>reVX.handlers.sc_points</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for reVX.handlers.sc_points</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Class to handle Supply Curve points</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">as_completed</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
+
+<span class="kn">from</span> <span class="nn">rex.resource</span> <span class="kn">import</span> <span class="n">Resource</span>
+<span class="kn">from</span> <span class="nn">rex.utilities</span> <span class="kn">import</span> <span class="n">parse_table</span><span class="p">,</span> <span class="n">SpawnProcessPool</span>
+
+<span class="kn">from</span> <span class="nn">reVX.utilities.exceptions</span> <span class="kn">import</span> <span class="n">SupplyCurvePointCapacityError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Point"><a class="viewcode-back" href="../../../reVX/reVX.handlers.sc_points.html#reVX.handlers.sc_points.Point">[docs]</a><span class="k">class</span> <span class="nc">Point</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to handle single Supply Curve point</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sc_gid</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">res_gids</span><span class="p">,</span> <span class="n">gid_counts</span><span class="p">,</span> <span class="n">res_cf</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_gid : int</span>
+<span class="sd">            Supply curve point gid</span>
+<span class="sd">        capacity : float</span>
+<span class="sd">            Point capacity</span>
+<span class="sd">        res_gids : list | str</span>
+<span class="sd">            Resource gids associated with Supply curve point</span>
+<span class="sd">        gid_counts : list | str</span>
+<span class="sd">            Resource gid exclusion pixel counts</span>
+<span class="sd">        res_cf : ndarray</span>
+<span class="sd">            Resource gid capacity factor means</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sc_gid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sc_gid</span><span class="p">)</span>
+        <span class="n">res_order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">res_cf</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cf_means</span> <span class="o">=</span> <span class="n">res_cf</span><span class="p">[</span><span class="n">res_order</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_res_gids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_list</span><span class="p">(</span><span class="n">res_gids</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)[</span><span class="n">res_order</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gid_counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_list</span><span class="p">(</span><span class="n">gid_counts</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">)[</span><span class="n">res_order</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_res_capacity</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_gid_counts</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gid_counts</span><span class="p">)</span> <span class="o">*</span> <span class="n">capacity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_avail_cap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res_capacity</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sc_gid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sc_gid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supply curve point gid</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        int</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc_gid</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supply curve point capacity</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_avail_cap</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">capacity</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">return</span> <span class="n">capacity</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resource_gids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resource gids associated with supply curve point</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res_gids</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">gid_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resource gid exclusion pixel counts</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gid_counts</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resource_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Capacity of resource gids</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_res_capacity</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">available_capacities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Capacity of available gids</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_avail_cap</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_avail_cap</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">available_res_gids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Index of available resource gids</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_avail_cap</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">res_idx</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cf_means</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Capacity factor means for each resource gid</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cf_means</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_list</span><span class="p">(</span><span class="n">list_in</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse json list if needed</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        list_in : str | list</span>
+<span class="sd">            List or jsonified list from supply curve table</span>
+<span class="sd">        dtype : np.dtype, optional</span>
+<span class="sd">            dtype for output array, if None infer, by default None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : ndarary</span>
+<span class="sd">            vector of values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">list_in</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">list_in</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">list_in</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">list_in</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;Must supply either a jsonified list or a list, not </span><span class="si">{}</span><span class="s1">&#39;</span>
+                   <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">list_in</span><span class="p">)))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">list_in</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">list_in</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span> <span class="nf">_drop_build_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">build_capacity</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Drop capacity from Supply Curve point in order of best resource gids</span>
+<span class="sd">        (based on cf_mean)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        build_capacity : float</span>
+<span class="sd">            Capacity to be built</span>
+<span class="sd">        drop : int | None, optional</span>
+<span class="sd">            Number of gids to drop, if None drop all, by default None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sc_point : pd.Series</span>
+<span class="sd">            Resource gids being allocated</span>
+<span class="sd">        capacity : float</span>
+<span class="sd">            Capacity being allocated</span>
+<span class="sd">        availability : bool</span>
+<span class="sd">            Whether Supply Curve point still has available capacity</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_res_gids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">drop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">s</span> <span class="o">+</span> <span class="n">drop</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">drop</span>
+
+        <span class="n">drop_slice</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span>
+        <span class="k">if</span> <span class="n">capacity</span> <span class="o">&lt;</span> <span class="n">build_capacity</span><span class="p">:</span>
+            <span class="n">build_capacity</span> <span class="o">=</span> <span class="n">capacity</span>
+
+        <span class="n">sc_point</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sc_gid</span><span class="p">,</span>
+                    <span class="s1">&#39;res_gids&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_gids</span><span class="p">[</span><span class="n">drop_slice</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="s1">&#39;gid_counts&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gid_counts</span><span class="p">[</span><span class="n">drop_slice</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="s1">&#39;cf_means&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cf_means</span><span class="p">[</span><span class="n">drop_slice</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="s1">&#39;build_capacity&#39;</span><span class="p">:</span> <span class="n">build_capacity</span><span class="p">}</span>
+        <span class="n">sc_point</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">sc_point</span><span class="p">)</span>
+
+        <span class="n">res_caps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resource_capacity</span><span class="p">[</span><span class="n">drop_slice</span><span class="p">]</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">res_caps</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">capacity</span> <span class="o">&gt;</span> <span class="n">build_capacity</span><span class="p">:</span>
+            <span class="n">gid_counts</span> <span class="o">=</span> <span class="n">sc_point</span><span class="p">[</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">]</span>
+            <span class="n">new_counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">res_caps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">capacity</span> <span class="o">-</span> <span class="n">build_capacity</span><span class="p">))</span>
+                                  <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gid_counts</span><span class="p">)</span> <span class="o">/</span> <span class="n">capacity</span><span class="p">)</span>
+            <span class="n">gid_counts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">new_counts</span><span class="p">)</span>
+            <span class="n">sc_point</span><span class="p">[</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">gid_counts</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_avail_cap</span><span class="p">[</span><span class="n">drop_slice</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">availability</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+        <span class="k">return</span> <span class="n">sc_point</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">availability</span>
+
+<div class="viewcode-block" id="Point.extract_capacity"><a class="viewcode-back" href="../../../reVX/reVX.handlers.sc_points.html#reVX.handlers.sc_points.Point.extract_capacity">[docs]</a>    <span class="k">def</span> <span class="nf">extract_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">capacity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract capacity from Supply Curve point in order of best resource gids</span>
+<span class="sd">        (based on cf_mean)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        capacity : float</span>
+<span class="sd">            Capacity to extract from Supply Curve point</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : tuple</span>
+<span class="sd">            (sc_point, capacity, availability)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">build_capacity</span> <span class="o">=</span> <span class="n">capacity</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">capacity</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">capacity</span><span class="p">:</span>
+                <span class="n">drop</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">cap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_capacities</span><span class="p">:</span>
+                    <span class="n">drop</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">capacity</span> <span class="o">-=</span> <span class="n">cap</span>
+                    <span class="k">if</span> <span class="n">capacity</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">drop</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_drop_build_capacity</span><span class="p">(</span><span class="n">build_capacity</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="n">drop</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> has no remaining capacity&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">SupplyCurvePointCapacityError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">out</span></div>
+
+<div class="viewcode-block" id="Point.create"><a class="viewcode-back" href="../../../reVX/reVX.handlers.sc_points.html#reVX.handlers.sc_points.Point.create">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sc_point</span><span class="p">,</span> <span class="n">res_cf_means</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create Point from supply curve point meta and resource meta</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_point : pandas.Series</span>
+<span class="sd">            Supply curve point meta data</span>
+<span class="sd">        res_cf_means : pandas.Series</span>
+<span class="sd">            Resource cf_means by gid</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Point</span>
+<span class="sd">            Initialized Point objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sc_gid</span> <span class="o">=</span> <span class="n">sc_point</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="n">sc_point</span><span class="p">[</span><span class="s1">&#39;capacity&#39;</span><span class="p">]</span>
+        <span class="n">res_gids</span> <span class="o">=</span> <span class="n">sc_point</span><span class="p">[</span><span class="s1">&#39;res_gids&#39;</span><span class="p">]</span>
+        <span class="n">gid_counts</span> <span class="o">=</span> <span class="n">sc_point</span><span class="p">[</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">]</span>
+        <span class="n">res_cf</span> <span class="o">=</span> <span class="n">res_cf_means</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">res_gids</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">sc_gid</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">res_gids</span><span class="p">,</span> <span class="n">gid_counts</span><span class="p">,</span> <span class="n">res_cf</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SupplyCurvePoints"><a class="viewcode-back" href="../../../reVX/reVX.handlers.sc_points.html#reVX.handlers.sc_points.SupplyCurvePoints">[docs]</a><span class="k">class</span> <span class="nc">SupplyCurvePoints</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to handle Supply Curve points and their meta</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sc_table</span><span class="p">,</span> <span class="n">res_meta</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">points_per_worker</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_table : str | pandas.DataFrame</span>
+<span class="sd">            Supply Curve table .csv or pre-loaded pandas DataFrame</span>
+<span class="sd">        res_meta : str | pandas.DataFrame</span>
+<span class="sd">            Path to resource .h5, generation .h5, or pre-extracted .csv or</span>
+<span class="sd">            pandas DataFrame</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for point creation, 1 == serial,</span>
+<span class="sd">            &gt; 1 == parallel, None == parallel using all available cpus,</span>
+<span class="sd">            by default None</span>
+<span class="sd">        points_per_worker : int, optional</span>
+<span class="sd">            Number of points to create on each worker, by default 400</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sc_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_sc_table</span><span class="p">(</span><span class="n">sc_table</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="n">offshore</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sc_points</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_capacity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_parse_sc_points</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc_table</span><span class="p">,</span> <span class="n">res_meta</span><span class="p">,</span>
+                                  <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                  <span class="n">points_per_worker</span><span class="o">=</span><span class="n">points_per_worker</span><span class="p">,</span>
+                                  <span class="n">offshore</span><span class="o">=</span><span class="n">offshore</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> with </span><span class="si">{}</span><span class="s2"> points&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc_points</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sc_gid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract the Point object for the given sc_gid</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_gid : int</span>
+<span class="sd">            Unique Supply Curve Gid</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Point : obj</span>
+<span class="sd">            Point object for given supply curve gid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc_points</span><span class="p">[</span><span class="n">sc_gid</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sc_points</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supply curve points</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc_points</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sc_table</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supply curve table</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sc_table</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sc_gids</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supply curve point gids</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sc_points</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Supply curve point capacities</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_capacity</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Bool mask of available points</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_res_meta</span><span class="p">(</span><span class="n">res_meta</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract resource meta data from .h5 file or pre-extracted .csv or</span>
+<span class="sd">        pandas DataFrame</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        res_meta : str | pandas.DataFrame</span>
+<span class="sd">            Path to resource .h5, generation .h5, or pre-extracted .csv or</span>
+<span class="sd">            pandas DataFrame</span>
+<span class="sd">        offshore : bool, optional</span>
+<span class="sd">            Include offshore points, by default False</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        res_meta : pandas.Series</span>
+<span class="sd">            Resource gid cf_mean values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res_meta</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="n">res_meta</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;.h5&#39;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="n">Resource</span><span class="p">(</span><span class="n">res_meta</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">res_meta</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">meta</span>
+                <span class="n">res_meta</span><span class="p">[</span><span class="s1">&#39;cf_mean&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="s1">&#39;cf_mean&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res_meta</span> <span class="o">=</span> <span class="n">parse_table</span><span class="p">(</span><span class="n">res_meta</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;cf_mean&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">res_meta</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;&#39;cf_mean&#39; must be appended to resource meta for &quot;</span>
+                       <span class="s2">&quot;PLEXOS plant aggregation!&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;offshore&#39;</span> <span class="ow">in</span> <span class="n">res_meta</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">offshore</span><span class="p">:</span>
+                <span class="n">res_meta</span> <span class="o">=</span> <span class="n">res_meta</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">res_meta</span><span class="p">[</span><span class="s1">&#39;offshore&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">res_meta</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;gid&#39;</span><span class="p">)[</span><span class="s1">&#39;cf_mean&#39;</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_sc_table</span><span class="p">(</span><span class="n">sc_table</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load and clean-up sc_table for use to create Point objects</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_table : str | pandas.DataFrame</span>
+<span class="sd">            Supply Curve table .csv or pre-loaded pandas DataFrame</span>
+<span class="sd">        offshore : bool, optional</span>
+<span class="sd">            Include offshore points, by default False</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sc_table : pandas.DataFrame</span>
+<span class="sd">            Parsed and cleaned supply curve table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sc_table</span> <span class="o">=</span> <span class="n">parse_table</span><span class="p">(</span><span class="n">sc_table</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="s1">&#39;offshore&#39;</span> <span class="ow">in</span> <span class="n">sc_table</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">offshore</span><span class="p">:</span>
+                <span class="n">sc_table</span> <span class="o">=</span> <span class="n">sc_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">sc_table</span><span class="p">[</span><span class="s1">&#39;offshore&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc_table</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;res_gids&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">sc_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;res_gids&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">sc_table</span><span class="p">[</span><span class="s1">&#39;res_gids&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc_table</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">sc_table</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s1">&#39;gid_counts&#39;</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">sc_table</span><span class="p">[</span><span class="s1">&#39;gid_counts&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="k">return</span> <span class="n">sc_table</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_create_worker_slices</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">points_per_worker</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the slice of sc_table to submit to each worker</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        table : pandas.DataFrame</span>
+<span class="sd">            Table to split across workers</span>
+<span class="sd">        points_per_worker : int, optional</span>
+<span class="sd">            Number of points to create on each worker, by default 400</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        slices : list</span>
+<span class="sd">            List of slices of table to submit to each worker</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">table</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">points_per_worker</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">chunks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">points</span><span class="p">:</span>
+            <span class="n">chunks</span> <span class="o">+=</span> <span class="p">[</span><span class="n">points</span><span class="p">]</span>
+
+        <span class="n">slices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">slices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">slice</span><span class="p">(</span><span class="n">chunks</span><span class="p">[</span><span class="n">s</span><span class="p">],</span> <span class="n">e</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">slices</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_create_points</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sc_table</span><span class="p">,</span> <span class="n">res_cf_means</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                       <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">points_per_worker</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create Points from all supply curve points in table</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_table : pandas.DataFrame</span>
+<span class="sd">            Supply curve table</span>
+<span class="sd">        res_cf_means : pandas.Series</span>
+<span class="sd">            Resource cf_means by gid</span>
+<span class="sd">        offshore : bool, optional</span>
+<span class="sd">            Include offshore points, by default False</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for point creation, 1 == serial,</span>
+<span class="sd">            &gt; 1 == parallel, None == parallel using all available cpus,</span>
+<span class="sd">            by default None</span>
+<span class="sd">        points_per_worker : int, optional</span>
+<span class="sd">            Number of points to create on each worker, by default 400</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        sc_points : dict</span>
+<span class="sd">            Dictionary of Points for all supply curve points in sc_table</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">max_workers</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">()</span>
+
+        <span class="n">sc_table</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_sc_table</span><span class="p">(</span><span class="n">sc_table</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="n">offshore</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;sc_gid&#39;</span> <span class="ow">in</span> <span class="n">sc_table</span><span class="p">:</span>
+            <span class="n">sc_table</span> <span class="o">=</span> <span class="n">sc_table</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">)</span>
+
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;capacity&#39;</span><span class="p">,</span> <span class="s1">&#39;res_gids&#39;</span><span class="p">,</span> <span class="s1">&#39;gid_counts&#39;</span><span class="p">]</span>
+        <span class="n">sc_table</span> <span class="o">=</span> <span class="n">sc_table</span><span class="p">[</span><span class="n">cols</span><span class="p">]</span>
+
+        <span class="n">sc_points</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">max_workers</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Creating supply curve points in parallel&#39;</span><span class="p">)</span>
+            <span class="n">loggers</span> <span class="o">=</span> <span class="p">[</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39;reVX&#39;</span><span class="p">]</span>
+            <span class="k">with</span> <span class="n">SpawnProcessPool</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+                                  <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">)</span> <span class="k">as</span> <span class="n">exe</span><span class="p">:</span>
+                <span class="n">futures</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">slices</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_create_worker_slices</span><span class="p">(</span>
+                    <span class="n">sc_table</span><span class="p">,</span> <span class="n">points_per_worker</span><span class="o">=</span><span class="n">points_per_worker</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">sc_slice</span> <span class="ow">in</span> <span class="n">slices</span><span class="p">:</span>
+                    <span class="n">table_slice</span> <span class="o">=</span> <span class="n">sc_table</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">sc_slice</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">gids</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">table_slice</span><span class="p">[</span><span class="s1">&#39;res_gids&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">))</span>
+                    <span class="n">res_slice</span> <span class="o">=</span> <span class="n">res_cf_means</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">gids</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">future</span> <span class="o">=</span> <span class="n">exe</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_create_points</span><span class="p">,</span>
+                                        <span class="n">table_slice</span><span class="p">,</span>
+                                        <span class="n">res_slice</span><span class="p">,</span>
+                                        <span class="n">max_workers</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">futures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">future</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">future</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">as_completed</span><span class="p">(</span><span class="n">futures</span><span class="p">)):</span>
+                    <span class="n">sc_points</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">())</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Completed </span><span class="si">{}</span><span class="s1"> out of </span><span class="si">{}</span><span class="s1"> Points&#39;</span>
+                                 <span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">points_per_worker</span><span class="p">,</span>
+                                         <span class="nb">len</span><span class="p">(</span><span class="n">sc_table</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Creating supply curve points in serial&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">sc_gid</span><span class="p">,</span> <span class="n">sc_point</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sc_table</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()):</span>
+                <span class="n">sc_gid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sc_gid</span><span class="p">)</span>
+                <span class="n">sc_points</span><span class="p">[</span><span class="n">sc_gid</span><span class="p">]</span> <span class="o">=</span> <span class="n">Point</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">sc_point</span><span class="p">,</span> <span class="n">res_cf_means</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Created </span><span class="si">{}</span><span class="s1"> out of </span><span class="si">{}</span><span class="s1"> Points&#39;</span>
+                             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sc_table</span><span class="p">)))</span>
+
+        <span class="k">return</span> <span class="n">sc_points</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_parse_sc_points</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">sc_table</span><span class="p">,</span> <span class="n">res_meta</span><span class="p">,</span> <span class="n">max_workers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                         <span class="n">points_per_worker</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a Point instance for all Supply curve points in sc_table.</span>
+<span class="sd">        Also create vectors of each points capacity and a boolean mask</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_table : str | pandas.DataFrame</span>
+<span class="sd">            Supply Curve table .csv or pre-loaded pandas DataFrame</span>
+<span class="sd">        res_meta : str | pandas.DataFrame</span>
+<span class="sd">            Path to resource .h5, generation .h5, or pre-extracted .csv or</span>
+<span class="sd">            pandas DataFrame</span>
+<span class="sd">        max_workers : int, optional</span>
+<span class="sd">            Number of workers to use for point creation, 1 == serial,</span>
+<span class="sd">            &gt; 1 == parallel, None == parallel using all available cpus,</span>
+<span class="sd">            by default None</span>
+<span class="sd">        points_per_worker : int, optional</span>
+<span class="sd">            Number of points to create on each worker, by default 400</span>
+<span class="sd">        offshore : bool, optional</span>
+<span class="sd">            Include offshore points, by default False</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple</span>
+<span class="sd">            (sc_points, capacity, mask)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sc_table</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_sc_table</span><span class="p">(</span><span class="n">sc_table</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="n">offshore</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;sc_gid&#39;</span> <span class="ow">in</span> <span class="n">sc_table</span><span class="p">:</span>
+            <span class="n">sc_table</span> <span class="o">=</span> <span class="n">sc_table</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;sc_gid&#39;</span><span class="p">)</span>
+
+        <span class="n">res_meta</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_parse_res_meta</span><span class="p">(</span><span class="n">res_meta</span><span class="p">,</span> <span class="n">offshore</span><span class="o">=</span><span class="n">offshore</span><span class="p">)</span>
+        <span class="n">sc_points</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_create_points</span><span class="p">(</span>
+            <span class="n">sc_table</span><span class="p">,</span> <span class="n">res_meta</span><span class="p">,</span>
+            <span class="n">offshore</span><span class="o">=</span><span class="n">offshore</span><span class="p">,</span>
+            <span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">,</span>
+            <span class="n">points_per_worker</span><span class="o">=</span><span class="n">points_per_worker</span><span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sc_table</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">capacity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">capacity</span><span class="p">[</span><span class="n">sc_table</span><span class="o">.</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc_table</span><span class="p">[</span><span class="s1">&#39;capacity&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sc_points</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">mask</span>
+
+<div class="viewcode-block" id="SupplyCurvePoints.check_sc_gid"><a class="viewcode-back" href="../../../reVX/reVX.handlers.sc_points.html#reVX.handlers.sc_points.SupplyCurvePoints.check_sc_gid">[docs]</a>    <span class="k">def</span> <span class="nf">check_sc_gid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sc_gid</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check to see if sc_gid is still available</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        sc_gid : int</span>
+<span class="sd">            Supply curve point gid to check</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        bool</span>
+<span class="sd">            Supply curve point availability</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sc_gid</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">sc_gid</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sc_gid</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mask</span><span class="p">[</span><span class="n">sc_gid</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="SupplyCurvePoints.get_capacity"><a class="viewcode-back" href="../../../reVX/reVX.handlers.sc_points.html#reVX.handlers.sc_points.SupplyCurvePoints.get_capacity">[docs]</a>    <span class="k">def</span> <span class="nf">get_capacity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sc_gid</span><span class="p">,</span> <span class="n">capacity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Extract capacity from given Supply Curve point</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        capacity : float</span>
+<span class="sd">            Capacity to extract from Supply Curve point</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        out : tuple</span>
+<span class="sd">            sc_point, capacity</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sc_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sc_points</span><span class="p">[</span><span class="n">sc_gid</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sc_point</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">sc_point</span><span class="o">.</span><span class="n">extract_capacity</span><span class="p">(</span><span class="n">capacity</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mask</span><span class="p">[</span><span class="n">sc_gid</span><span class="p">]</span> <span class="o">=</span> <span class="n">mask</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_capacity</span><span class="p">[</span><span class="n">sc_gid</span><span class="p">]</span> <span class="o">-=</span> <span class="n">capacity</span>
+        <span class="k">except</span> <span class="n">SupplyCurvePointCapacityError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;WARNING: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ex</span><span class="p">))</span>
+            <span class="n">warn</span><span class="p">(</span><span class="n">ex</span><span class="p">)</span>
+            <span class="n">capacity</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">return</span> <span class="n">sc_point</span><span class="p">,</span> <span class="n">capacity</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Alliance for Sustainable Energy, LLC.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
