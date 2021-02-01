@@ -14,6 +14,8 @@ from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.forecasts import Forecasts
 from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region import RegionClassifier
+from reVX.wind_setbacks.setbacks_converter import SetbacksConverter
+
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -141,6 +143,15 @@ def exclusions(ctx, excl_h5):
               type=click.Path(exists=True), show_default=True,
               help=(".json file containing layer descriptions as a list or "
                     "mapping to layers"))
+@click.option('--scale_factors', '-scale', default=None,
+              type=click.Path(exists=True), show_default=True,
+              help=(".json file containing layer scale_factors and final "
+                    "dtypes as a mapping to layers"))
+@click.option('-check_tiff', '-ct', is_flag=True,
+              help=("Flag to check tiff profile and coordinates against "
+                    "exclusion .h5 profile and coordinates"))
+@click.option('-setbacks', '-sb', is_flag=True,
+              help=("Flag to convert setbacks to exclusion layers"))
 @click.option('--transform_atol', '-tatol', default=0.01, type=float,
               show_default=True,
               help=("Absolute tolerance parameter when comparing geotiff "
@@ -153,7 +164,8 @@ def exclusions(ctx, excl_h5):
 @click.option('--purge', '-r', is_flag=True,
               help="Remove existing .h5 file before loading layers")
 @click.pass_context
-def layers_to_h5(ctx, layers, descriptions, transform_atol, coord_atol, purge):
+def layers_to_h5(ctx, layers, descriptions, scale_factors, check_tiff,
+                 setbacks, transform_atol, coord_atol, purge):
     """
     Add layers to exclusions .h5 file
     """
@@ -171,10 +183,23 @@ def layers_to_h5(ctx, layers, descriptions, transform_atol, coord_atol, purge):
             descriptions = {os.path.basename(layer).split('.')[0]: d
                             for layer, d in zip(layers, descriptions)}
 
-    ExclusionsConverter.layers_to_h5(excl_h5, layers,
-                                     transform_atol=transform_atol,
-                                     coord_atol=coord_atol,
-                                     descriptions=descriptions)
+    if scale_factors is not None:
+        scale_factors = safe_json_load(scale_factors)
+
+    if setbacks:
+        SetbacksConverter.layers_to_h5(excl_h5, layers,
+                                       check_tiff=check_tiff,
+                                       transform_atol=transform_atol,
+                                       coord_atol=coord_atol,
+                                       descriptions=descriptions,
+                                       scale_factors=scale_factors)
+    else:
+        ExclusionsConverter.layers_to_h5(excl_h5, layers,
+                                         check_tiff=check_tiff,
+                                         transform_atol=transform_atol,
+                                         coord_atol=coord_atol,
+                                         descriptions=descriptions,
+                                         scale_factors=scale_factors)
 
 
 @exclusions.command()

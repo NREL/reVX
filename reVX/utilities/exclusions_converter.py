@@ -10,6 +10,7 @@ import os
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import rasterio
+from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
 from reV.handlers.outputs import Outputs
@@ -24,21 +25,25 @@ class ExclusionsConverter:
     """
     Convert exclusion layers between .h5 and .tif (geotiff)
     """
-    def __init__(self, excl_h5, hsds=False, chunks=(128, 128)):
+
+    def __init__(self, excl_h5, hsds=False, chunks=(128, 128), replace=True):
         """
         Parameters
         ----------
         excl_h5 : str
             Path to .h5 file containing or to contain exclusion layers
-        hsds : bool
+        hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-            behind HSDS
-        chunks : tuple
-            Chunk size of exclusions in .h5 and Geotiffs
+            behind HSDS, by default False
+        chunks : tuple, optional
+            Chunk size of exclusions in .h5 and Geotiffs, by default (128, 128)
+        replace : bool, optional
+            Flag to replace existing layers if needed, by default True
         """
         self._excl_h5 = excl_h5
         self._hsds = hsds
         self._chunks = chunks
+        self._replace = replace
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_h5)
@@ -77,16 +82,7 @@ class ExclusionsConverter:
         geotiff : str
             Path to GeoTiff to load data from
         """
-        if not os.path.exists(self._excl_h5):
-            self._init_h5(self._excl_h5, geotiff, chunks=self._chunks)
-
-        if layer in self.layers:
-            msg = "{} is already present in {}".format(layer, self._excl_h5)
-            logger.error(msg)
-            raise KeyError(msg)
-
-        self._geotiff_to_h5(self._excl_h5, layer, geotiff,
-                            chunks=self._chunks)
+        self.geotiff_to_layer(layer, geotiff)
 
     @property
     def layers(self):
@@ -268,7 +264,7 @@ class ExclusionsConverter:
     def _write_layer(excl_h5, layer, profile, values, chunks=(128, 128),
                      description=None, scale_factor=None):
         """
-        Extract given layer from geotiff .tif and write to .h5 file
+        Write exclusion layer to .h5 file
 
         Parameters
         ----------
@@ -292,10 +288,16 @@ class ExclusionsConverter:
             chunks = (1, ) + chunks
 
         with h5py.File(excl_h5, mode='a') as f:
-            ds = f.create_dataset(layer, shape=values.shape,
-                                  dtype=values.dtype, chunks=chunks,
-                                  data=values)
-            logger.debug('\t- {} created and loaded'.format(layer))
+            if layer in f:
+                ds = f[layer]
+                ds[...] = values
+                logger.debug('\t- {} values replaced'.format(layer))
+            else:
+                ds = f.create_dataset(layer, shape=values.shape,
+                                      dtype=values.dtype, chunks=chunks,
+                                      data=values)
+                logger.debug('\t- {} created and loaded'.format(layer))
+
             ds.attrs['profile'] = json.dumps(profile)
             logger.debug('\t- Unique profile for {} added:\n{}'
                          .format(layer, profile))
@@ -373,6 +375,11 @@ class ExclusionsConverter:
         values : ndarray
             Geotiff data
         """
+        if values.shape[0] != 1:
+            values = np.expand_dims(values, 0)
+
+        profile['dtype'] = values.dtype.name
+
         with rasterio.open(geotiff, 'w', **profile) as f:
             f.write(values)
             logger.debug('\t- {} created'.format(geotiff))
@@ -447,9 +454,16 @@ class ExclusionsConverter:
             self._init_h5(self._excl_h5, geotiff, chunks=self._chunks)
 
         if layer in self.layers:
-            msg = "{} is already present in {}".format(layer, self._excl_h5)
-            logger.error(msg)
-            raise KeyError(msg)
+            msg = ("{} is already present in {}"
+                   .format(layer, self._excl_h5))
+            if self._replace:
+                msg += " and will be replaced"
+                logger.warning(msg)
+                warn(msg)
+            else:
+                msg += ", to 'replace' set to True"
+                logger.error(msg)
+                raise KeyError(msg)
 
         self._geotiff_to_h5(self._excl_h5, layer, geotiff,
                             chunks=self._chunks,
@@ -475,11 +489,13 @@ class ExclusionsConverter:
                             hsds=self._hsds)
 
     @classmethod
-    def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128), check_tiff=True,
+    def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128),
+                     replace=True, check_tiff=True,
                      transform_atol=0.01, coord_atol=0.001,
                      descriptions=None, scale_factors=None):
         """
-        Create exclusions .h5 file from provided geotiffs
+        Create exclusions .h5 file, or load layers into existing exclusion .h5
+        file from provided geotiffs
 
         Parameters
         ----------
@@ -490,6 +506,8 @@ class ExclusionsConverter:
             or dictionary mapping goetiffs to the layers to load
         chunks : tuple, optional
             Chunk size of exclusions in Geotiff, by default (128, 128)
+        replace : bool, optional
+            Flag to replace existing layers if needed, by default True
         check_tiff : bool, optional
             Flag to check tiff profile and coordinates against exclusion .h5
             profile and coordinates, by default True
@@ -499,8 +517,8 @@ class ExclusionsConverter:
         coord_atol : float, optional
             Absolute tolerance parameter when comparing new un-projected
             geotiff coordinates against previous coordinates, by default 0.001
-        description : str, optional
-            Description of exclusion layer, by default None
+        description : dict, optional
+            Description of exclusion layers, by default None
         scale_factor : dict, optional
             Scale factors and dtypes to use when scaling given layers,
             by default None
@@ -515,7 +533,7 @@ class ExclusionsConverter:
         if scale_factors is None:
             scale_factors = {}
 
-        excls = cls(excl_h5, chunks=chunks)
+        excls = cls(excl_h5, chunks=chunks, replace=replace)
         logger.info('Creating {}'.format(excl_h5))
         for layer, geotiff in layers.items():
             logger.info('- Transfering {}'.format(layer))
