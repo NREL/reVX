@@ -129,13 +129,14 @@ def test_cli(runner):
             "execution_control": {
                 "option": "local"
             },
+            "excl_h5": EXCL_H5,
             "feature_type": "structure",
             "features_path": structure_dir,
-            "hub_height": 135,
+            "hub_height": HUB_HEIGHT,
             "log_level": "INFO",
             "regs_fpath": REG_FPATH,
             "replace": True,
-            "rotor_diameter": 200
+            "rotor_diameter": ROTOR_DIAMETER
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:

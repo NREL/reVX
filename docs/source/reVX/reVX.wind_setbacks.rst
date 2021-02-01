@@ -11,5 +11,6 @@ Submodules
 
 .. toctree::
 
+   reVX.wind_setbacks.setbacks_converter
    reVX.wind_setbacks.wind_setbacks
    reVX.wind_setbacks.wind_setbacks_cli

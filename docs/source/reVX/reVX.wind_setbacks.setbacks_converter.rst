@@ -1,7 +1,7 @@
-reVX.wind\_setbacks.wind\_setbacks\_cli module
+reVX.wind\_setbacks.setbacks\_converter module
 ==============================================
 
-.. automodule:: reVX.wind_setbacks.wind_setbacks_cli
+.. automodule:: reVX.wind_setbacks.setbacks_converter
    :members:
    :undoc-members:
    :show-inheritance:

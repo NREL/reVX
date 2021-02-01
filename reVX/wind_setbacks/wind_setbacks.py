@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Handler to convert exclusion to/from .h5 and .geotiff
+Compute wind setbacks exclusions
 """
 from abc import ABC, abstractstaticmethod
 from concurrent.futures import as_completed
