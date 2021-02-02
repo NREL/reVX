@@ -26,6 +26,9 @@ reVX
 .. image:: https://codecov.io/gh/nrel/reVX/branch/master/graph/badge.svg?token=3J5M44VAA9
     :target: https://codecov.io/gh/nrel/reVX
 
+.. image:: https://mybinder.org/badge_logo.svg
+    :target: https://mybinder.org/v2/gh/NREL/reVX/master
+
 
 Renewable Energy Potential(V) eXchange Tool: reVX
 
