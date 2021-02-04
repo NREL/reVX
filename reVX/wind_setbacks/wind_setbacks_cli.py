@@ -149,7 +149,7 @@ def local(ctx, excl_h5, features_path, out_dir, hub_height, rotor_diameter,
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
 
-    log_modules = ['reVX', 'reV', 'rex']
+    log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(ctx.obj['NAME'], log_dir, modules=log_modules, verbose=verbose)
 
 
