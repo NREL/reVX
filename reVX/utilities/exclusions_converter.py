@@ -375,6 +375,11 @@ class ExclusionsConverter:
         values : ndarray
             Geotiff data
         """
+        out_dir = os.path.dirname(geotiff)
+        if not os.path.exists(out_dir):
+            logger.debug("Creating {}".format(out_dir))
+            os.makedirs(out_dir)
+
         if values.shape[0] != 1:
             values = np.expand_dims(values, 0)
 
