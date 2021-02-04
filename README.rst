@@ -1,6 +1,6 @@
-****
-reVX
-****
+************************************************************************
+Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
+************************************************************************
 
 .. image:: https://github.com/NREL/reVX/workflows/Documentation/badge.svg
     :target: https://nrel.github.io/reVX/
