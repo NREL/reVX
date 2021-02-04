@@ -73,7 +73,6 @@ def run_local(ctx, config):
     config : reVX.config.wind_setbacks.WindSetbacks
         Wind Setbacks config object.
     """
-    ctx.obj['NAME'] = config.name
     ctx.invoke(local,
                excl_h5=config.excl_h5,
                features_path=config.features_path,
