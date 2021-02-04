@@ -624,6 +624,11 @@ class BaseWindSetbacks(ABC):
             setbacks = self.compute_generic_setbacks(features_fpath)
 
         if geotiff is not None:
+            out_dir = os.path.dirname(geotiff)
+            if not os.path.exists(out_dir):
+                logger.debug("Creating {}".format(out_dir))
+                os.makedirs(out_dir)
+
             logger.debug('Writing setbacks to {}'.format(geotiff))
             self._write_setbacks(geotiff, setbacks, replace=replace)
 
@@ -725,7 +730,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
             if file.endswith('.geojson'):
                 structure_paths.append(os.path.join(structures_dir, file))
 
-        return structure_paths
+        return sorted(structure_paths)
 
     def _check_regs(self, features_fpath):
         """
@@ -885,7 +890,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
             if file.endswith('.gdb') and file.startswith('Streets_USA'):
                 roads_paths.append(os.path.join(roads_dir, file))
 
-        return roads_paths
+        return sorted(roads_paths)
 
     @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
