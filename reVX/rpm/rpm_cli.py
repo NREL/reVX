@@ -347,7 +347,7 @@ def eagle(config):
                                name=name,
                                stdout_path=stdout_path,
                                alloc=config.execution_control.allocation,
-                               memory=config.execution_control.node_mem,
+                               memory=config.execution_control.memory,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,
                                module=config.execution_control.module,

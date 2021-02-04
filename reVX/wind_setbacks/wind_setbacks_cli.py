@@ -407,7 +407,7 @@ def launch_job(config):
     slurm_manager = SLURM()
     out = slurm_manager.sbatch(cmd,
                                alloc=config.execution_control.allocation,
-                               memory=config.execution_control.node_mem,
+                               memory=config.execution_control.memory,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,
                                name=name,
