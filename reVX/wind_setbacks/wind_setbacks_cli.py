@@ -446,7 +446,7 @@ def eagle(config):
             raise ValueError(msg)
 
         cls = STATE_SETBACKS[config.feature_type]
-        features_path = cls.get_feature_paths(features_path)
+        features_path = cls._get_feature_paths(features_path)
         for fpath in features_path:
             fpath_config = deepcopy(config)
             fpath_config['features_path'] = fpath
