@@ -390,6 +390,7 @@ def get_node_cmd(name, config):
 
     cmd = ('python -m reVX.wind_setbacks.wind_setbacks_cli {}'
            .format(' '.join(args)))
+    click.echo(cmd)
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
 
     return cmd
