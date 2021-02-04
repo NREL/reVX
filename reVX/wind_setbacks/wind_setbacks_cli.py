@@ -23,7 +23,10 @@ from reVX import __version__
 logger = logging.getLogger(__name__)
 
 
-STATE_SETBACKS = {'structure': StructureWindSetbacks, 'road': RoadWindSetbacks}
+STATE_SETBACKS = {'structure': StructureWindSetbacks,
+                  'road': RoadWindSetbacks,
+                  'rail': RailWindSetbacks,
+                  'tranmission': TransmissionWindSetbacks}
 
 
 @click.group()
@@ -390,7 +393,6 @@ def get_node_cmd(name, config):
 
     cmd = ('python -m reVX.wind_setbacks.wind_setbacks_cli {}'
            .format(' '.join(args)))
-    click.echo(cmd)
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
 
     return cmd
@@ -446,22 +448,18 @@ def eagle(config):
         Wind Setbacks config object.
     """
     features_path = config.features_path
-    if os.path.isdir(features_path):
-        if config.feature_type not in STATE_SETBACKS:
-            msg = ("'features_path' must be a .shp file to run rail or "
-                   "transmission setbacks, was given: {}"
-                   .format(features_path))
-            logger.error(msg)
-            raise ValueError(msg)
+    cls = STATE_SETBACKS[config.feature_type]
+    features = cls._get_feature_paths(features_path)
+    if not features:
+        msg = ('No valid feature files were found at {}!'
+               .format(features_path))
+        logger.error(msg)
+        raise FileNotFoundError(msg)
 
-        cls = STATE_SETBACKS[config.feature_type]
-        features_path = cls._get_feature_paths(features_path)
-        for fpath in features_path:
-            fpath_config = deepcopy(config)
-            fpath_config['features_path'] = fpath
-            launch_job(fpath_config)
-    else:
-        launch_job(config)
+    for fpath in features:
+        fpath_config = deepcopy(config)
+        fpath_config['features_path'] = fpath
+        launch_job(fpath_config)
 
 
 if __name__ == '__main__':

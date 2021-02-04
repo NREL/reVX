@@ -684,29 +684,32 @@ class StructureWindSetbacks(BaseWindSetbacks):
         return state_name
 
     @staticmethod
-    def _get_feature_paths(structures_dir):
+    def _get_feature_paths(structures_path):
         """
         Find all structures .geojson files in structures dir
 
         Parameters
         ----------
-        structure_dir : str
-            Path to directory containing microsoft strucutes *.geojsons. Used
-            to identify structures to build setbacks from. Files should be
-            by state
+        structure_path : str
+            Path to structures geojson for a single state, or directory
+            containing geojsons for all states. Used to identify structures to
+            build setbacks from. Files should be by state
 
         Returns
         -------
-        structure_paths : list
+        file_paths : list
             List of file paths to all structures .geojson files in
             structures_dir
         """
-        structure_paths = []
-        for file in os.listdir(structures_dir):
-            if file.endswith('.geojson'):
-                structure_paths.append(os.path.join(structures_dir, file))
+        if structures_path.endswith('.geojson'):
+            file_paths = [structures_path]
+        else:
+            file_paths = []
+            for file in sorted(os.listdir(structures_path)):
+                if file.endswith('.geojson'):
+                    file_paths.append(os.path.join(structures_path, file))
 
-        return sorted(structure_paths)
+        return file_paths
 
     def _check_regs(self, features_fpath):
         """
@@ -785,19 +788,21 @@ class StructureWindSetbacks(BaseWindSetbacks):
                        regs_fpath=regs_fpath, multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
 
-        if structures_path.endswith('.geojson'):
-            structures_path = [structures_path]
-        else:
-            structures_path = setbacks._get_feature_paths(structures_path)
+        structures_path = setbacks._get_feature_paths(structures_path)
 
         for fpath in structures_path:
             geotiff = os.path.basename(fpath).replace('.geojson', '.geotiff')
             geotiff = os.path.join(out_dir, geotiff)
-            logger.info("Computing setbacks from structures in {} and saving "
-                        "to {}".format(fpath, geotiff))
-            setbacks.compute_setbacks(fpath, geotiff=geotiff,
-                                      max_workers=max_workers,
-                                      replace=replace)
+            if os.path.exists(geotiff) and not replace:
+                msg = ('{} already exists, setbacks will not be re-computed '
+                       'unless replace=True'.format(geotiff))
+                logger.error(msg)
+            else:
+                logger.info("Computing setbacks from structures in {} and "
+                            "saving to {}".format(fpath, geotiff))
+                setbacks.compute_setbacks(fpath, geotiff=geotiff,
+                                          max_workers=max_workers,
+                                          replace=replace)
 
 
 class RoadWindSetbacks(BaseWindSetbacks):
@@ -850,28 +855,31 @@ class RoadWindSetbacks(BaseWindSetbacks):
         return roads.to_crs(crs=crs)
 
     @staticmethod
-    def _get_feature_paths(roads_dir):
+    def _get_feature_paths(roads_path):
         """
         Find all roads gdb files in roads_dir
 
         Parameters
         ----------
-        roads_dir : str
-            Path to directory containing here streets *.gdb files. Used
-            to identify roads to build setbacks from. Files should be
-            by state
+        roads_path : str
+            Path to state here streets gdb file or directory containing
+            states gdb files. Used to identify roads to build setbacks from.
+            Files should be by state
 
         Returns
         -------
-        roads_paths : list
+        file_paths : list
             List of file paths to all roads .gdp files in roads_dir
         """
-        roads_paths = []
-        for file in os.listdir(roads_dir):
-            if file.endswith('.gdb') and file.startswith('Streets_USA'):
-                roads_paths.append(os.path.join(roads_dir, file))
+        if roads_path.endswith('.gdb'):
+            file_paths = [roads_path]
+        else:
+            file_paths = []
+            for file in sorted(os.listdir(roads_path)):
+                if file.endswith('.gdb') and file.startswith('Streets_USA'):
+                    file_paths.append(os.path.join(roads_path, file))
 
-        return sorted(roads_paths)
+        return file_paths
 
     @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
@@ -979,19 +987,21 @@ class RoadWindSetbacks(BaseWindSetbacks):
         setbacks = cls(excl_h5, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
-        if roads_path.endswith('.gdb'):
-            roads_path = [roads_path]
-        else:
-            roads_path = setbacks._get_feature_paths(roads_path)
 
+        roads_path = setbacks._get_feature_paths(roads_path)
         for fpath in roads_path:
             geotiff = os.path.basename(fpath).replace('.gdb', '.geotiff')
             geotiff = os.path.join(out_dir, geotiff)
-            logger.info("Computing setbacks from roads in {} and saving "
-                        "to {}".format(fpath, geotiff))
-            setbacks.compute_setbacks(fpath, geotiff=geotiff,
-                                      max_workers=max_workers,
-                                      replace=replace)
+            if os.path.exists(geotiff) and not replace:
+                msg = ('{} already exists, setbacks will not be re-computed '
+                       'unless replace=True'.format(geotiff))
+                logger.error(msg)
+            else:
+                logger.info("Computing setbacks from roads in {} and saving "
+                            "to {}".format(fpath, geotiff))
+                setbacks.compute_setbacks(fpath, geotiff=geotiff,
+                                          max_workers=max_workers,
+                                          replace=replace)
 
 
 class TransmissionWindSetbacks(BaseWindSetbacks):
@@ -1050,6 +1060,28 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
 
         return setbacks
 
+    @staticmethod
+    def _get_feature_paths(features_path):
+        """
+        Ensure features path is valid
+
+        Parameters
+        ----------
+        features_path : str
+            Path to features file
+
+        Returns
+        -------
+        features_path : list
+            Features path as a list
+        """
+        if not os.path.exists(features_path):
+            msg = '{} is not a valid file path!'.format(features_path)
+            logger.error(msg)
+            raise FileNotFoundError(msg)
+
+        return [features_path]
+
     @classmethod
     def run(cls, excl_h5, features_fpath, out_dir, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
@@ -1102,11 +1134,16 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         geotiff = os.path.basename(features_fpath).split('.')[0]
         geotiff += '.geotiff'
         geotiff = os.path.join(out_dir, geotiff)
-        logger.info("Computing setbacks from {} and saving "
-                    "to {}".format(features_fpath, geotiff))
-        setbacks.compute_setbacks(features_fpath, geotiff=geotiff,
-                                  max_workers=max_workers,
-                                  replace=replace)
+        if os.path.exists(geotiff) and not replace:
+            msg = ('{} already exists, setbacks will not be re-computed '
+                   'unless replace=True'.format(geotiff))
+            logger.error(msg)
+        else:
+            logger.info("Computing setbacks from {} and saving "
+                        "to {}".format(features_fpath, geotiff))
+            setbacks.compute_setbacks(features_fpath, geotiff=geotiff,
+                                      max_workers=max_workers,
+                                      replace=replace)
 
 
 class RailWindSetbacks(TransmissionWindSetbacks):
