@@ -1128,9 +1128,6 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS, by default False
         """
-        setbacks = cls(excl_h5, hub_height, rotor_diameter,
-                       regs_fpath=regs_fpath, multiplier=multiplier,
-                       hsds=hsds, chunks=chunks)
         geotiff = os.path.basename(features_fpath).split('.')[0]
         geotiff += '.geotiff'
         geotiff = os.path.join(out_dir, geotiff)
@@ -1139,6 +1136,10 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
                    'unless replace=True'.format(geotiff))
             logger.error(msg)
         else:
+            setbacks = cls(excl_h5, hub_height, rotor_diameter,
+                           regs_fpath=regs_fpath, multiplier=multiplier,
+                           hsds=hsds, chunks=chunks)
+
             logger.info("Computing setbacks from {} and saving "
                         "to {}".format(features_fpath, geotiff))
             setbacks.compute_setbacks(features_fpath, geotiff=geotiff,
