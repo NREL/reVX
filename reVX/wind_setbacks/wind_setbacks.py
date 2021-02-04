@@ -285,8 +285,6 @@ class BaseWindSetbacks(ABC):
             raise RuntimeError(msg)
 
         regs = fips_df.merge(regs, on='FIPS', how='right')
-        logger.debug('Wind regulations were provided for {} counties'
-                     .format(len(regs)))
 
         return regs
 
@@ -455,6 +453,9 @@ class BaseWindSetbacks(ABC):
         regs : geopands.GeoDataFrame | None
             Wind Regulations
         """
+        logger.debug('Computing setbacks for wind regulations in {} counties'
+                     .format(len(self.wind_regs)))
+
         return self.wind_regs
 
     def _rasterize_setbacks(self, shapes):
@@ -735,7 +736,11 @@ class StructureWindSetbacks(BaseWindSetbacks):
             logger.error(msg)
             raise RuntimeError(msg)
 
-        return wind_regs.loc[mask].reset_index(drop=True)
+        wind_regs = wind_regs.loc[mask].reset_index(drop=True)
+        logger.debug('Computing setbacks for wind regulations in {} counties'
+                     .format(len(wind_regs)))
+
+        return wind_regs
 
     @classmethod
     def run(cls, excl_h5, structures_path, out_dir, hub_height,
@@ -935,7 +940,11 @@ class RoadWindSetbacks(BaseWindSetbacks):
             logger.error(msg)
             raise RuntimeError(msg)
 
-        return wind_regs.loc[mask].reset_index(drop=True)
+        wind_regs = wind_regs.loc[mask].reset_index(drop=True)
+        logger.debug('Computing setbacks for wind regulations in {} counties'
+                     .format(len(wind_regs)))
+
+        return wind_regs
 
     @classmethod
     def run(cls, excl_h5, roads_path, out_dir, hub_height,
