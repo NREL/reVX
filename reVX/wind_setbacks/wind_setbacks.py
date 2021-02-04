@@ -1133,6 +1133,8 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         geotiff = os.path.basename(features_fpath).split('.')[0]
         geotiff += '.geotiff'
         geotiff = os.path.join(out_dir, geotiff)
+        logger.info("Computing setbacks from {} and saving "
+                    "to {}".format(features_fpath, geotiff))
         setbacks.compute_setbacks(features_fpath, geotiff=geotiff,
                                   max_workers=max_workers,
                                   replace=replace)
