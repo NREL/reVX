@@ -338,7 +338,7 @@ class BaseWindSetbacks(ABC):
 
         return setback
 
-    @abstractstaticmethod
+    @staticmethod
     def _parse_features(features_fpath, crs):
         """
         Abstract method to parse features
@@ -356,6 +356,9 @@ class BaseWindSetbacks(ABC):
             Geometries of features to setback from in exclusion coordinate
             system
         """
+        features = gpd.read_file(features_fpath)
+
+        return features.to_crs(crs=crs)
 
     @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
@@ -525,9 +528,9 @@ class BaseWindSetbacks(ABC):
         setbacks : ndarray
             Raster array of setbacks
         """
+        wind_regs = self._check_regs(features_fpath)
         setbacks = []
         features = self._parse_features(features_fpath, self.crs)
-        wind_regs = self._check_regs(features_fpath)
         if max_workers is None:
             max_workers = os.cpu_count()
 
@@ -551,7 +554,7 @@ class BaseWindSetbacks(ABC):
 
                 for i, future in enumerate(as_completed(futures)):
                     setbacks.extend(future.result())
-                    logger.debug('Computed setbacks for {} of {} states'
+                    logger.debug('Computed setbacks for {} of {} counties'
                                  .format((i + 1), len(wind_regs)))
         else:
             logger.info('Computing local setbacks in serial')
@@ -565,7 +568,7 @@ class BaseWindSetbacks(ABC):
                     setbacks.extend(self._compute_local_setbacks(cnty_feats,
                                                                  cnty,
                                                                  setback))
-                    logger.debug('Computed setbacks for {} of {} states'
+                    logger.debug('Computed setbacks for {} of {} counties'
                                  .format((i + 1), len(wind_regs)))
 
         return self._rasterize_setbacks(setbacks)
@@ -681,28 +684,6 @@ class StructureWindSetbacks(BaseWindSetbacks):
         return state_name
 
     @staticmethod
-    def _parse_features(structure_fpath, crs):
-        """
-        Load structures from geojson, convert to exclusions coordinate system
-
-        Parameters
-        ----------
-        structure_fpath : str
-            Path to Microsoft .geojson of structures in a given state
-        crs : str
-            Coordinate reference system to convert structures geometries into
-
-        Returns
-        -------
-        structures : geopandas.GeoDataFrame
-            Geometries for structures in geojson, in exclusion coordinate
-            system
-        """
-        structures = gpd.read_file(structure_fpath)
-
-        return structures.to_crs(crs=crs)
-
-    @staticmethod
     def _get_feature_paths(structures_dir):
         """
         Find all structures .geojson files in structures dir
@@ -745,6 +726,11 @@ class StructureWindSetbacks(BaseWindSetbacks):
         state = self._split_state_name(state_name)
         wind_regs = self.wind_regs
         mask = wind_regs["State"] == state
+
+        if not mask.any():
+            msg = ("There are no local regulations in {}!".format(state))
+            logger.error(msg)
+            raise RuntimeError(msg)
 
         return wind_regs.loc[mask].reset_index(drop=True)
 
@@ -936,6 +922,11 @@ class RoadWindSetbacks(BaseWindSetbacks):
         wind_regs = self.wind_regs
         mask = wind_regs['Abbr'] == state
 
+        if not mask.any():
+            msg = ("There are no local regulations in {}!".format(state))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
         return wind_regs.loc[mask].reset_index(drop=True)
 
     @classmethod
@@ -1029,28 +1020,6 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         regs = regs.loc[mask]
 
         return regs
-
-    @staticmethod
-    def _parse_features(transmission_fpath, crs):
-        """
-        Load transmission shape file, convert to exclusions coordinate system
-
-        Parameters
-        ----------
-        transmission_fpath : str
-            Path to transmission shape file
-        crs : str
-            Coordinate reference system to convert structures geometries into
-
-        Returns
-        -------
-        trans : geopandas.GeoDataFrame.sindex
-            Geometries for transmission features, in exclusion coordinate
-            system
-        """
-        trans = gpd.read_file(transmission_fpath)
-
-        return trans.to_crs(crs=crs)
 
     @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
@@ -1167,25 +1136,3 @@ class RailWindSetbacks(TransmissionWindSetbacks):
         regs = regs.loc[mask]
 
         return regs
-
-    @staticmethod
-    def _parse_features(rail_fpath, crs):
-        """
-        Load rail shape file, convert to exclusions coordinate system
-
-        Parameters
-        ----------
-        rail_fpath : str
-            Path to rail shape file
-        crs : str
-            Coordinate reference system to convert structures geometries into
-
-        Returns
-        -------
-        rail : geopandas.GeoDataFrame.sindex
-            Geometries for rail features, in exclusion coordinate
-            system
-        """
-        rail = gpd.read_file(rail_fpath)
-
-        return rail.to_crs(crs=crs)
