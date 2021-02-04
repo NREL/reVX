@@ -1130,7 +1130,8 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         setbacks = cls(excl_h5, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
-        geotiff = os.path.basename(features_fpath).replace('.shp', '.geotiff')
+        geotiff = os.path.basename(features_fpath).split('.')[0]
+        geotiff += '.geotiff'
         geotiff = os.path.join(out_dir, geotiff)
         setbacks.compute_setbacks(features_fpath, geotiff=geotiff,
                                   max_workers=max_workers,
