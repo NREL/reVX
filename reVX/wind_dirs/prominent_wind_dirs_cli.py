@@ -236,7 +236,7 @@ def eagle(config):
     logger.info('Running prominent wind directions computation on Eagle with '
                 'node name "{}"'.format(name))
     out = slurm_manager.sbatch(cmd,
-                               alloc=config.execution_control.alloc,
+                               alloc=config.execution_control.allocation,
                                memory=config.execution_control.node_mem,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,

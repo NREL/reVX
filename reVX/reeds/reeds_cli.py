@@ -460,7 +460,7 @@ def eagle(config):
                 'node name "{}"'.format(name))
     slurm_manager = SLURM()
     out = slurm_manager.sbatch(cmd,
-                               alloc=config.execution_control.alloc,
+                               alloc=config.execution_control.allocation,
                                memory=config.execution_control.node_mem,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,

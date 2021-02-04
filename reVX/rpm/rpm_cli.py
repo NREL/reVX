@@ -346,7 +346,7 @@ def eagle(config):
     out = slurm_manager.sbatch(cmd,
                                name=name,
                                stdout_path=stdout_path,
-                               alloc=config.execution_control.alloc,
+                               alloc=config.execution_control.allocation,
                                memory=config.execution_control.node_mem,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,
