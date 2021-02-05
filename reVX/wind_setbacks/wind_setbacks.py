@@ -810,7 +810,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         structures_path = setbacks._get_feature_paths(structures_path)
 
         for fpath in structures_path:
-            geotiff = os.path.basename(fpath).replace('.geojson', '.geotiff')
+            geotiff = os.path.basename(fpath).replace('.geojson', '.tif')
             geotiff = os.path.join(out_dir, geotiff)
             if os.path.exists(geotiff) and not replace:
                 msg = ('{} already exists, setbacks will not be re-computed '
@@ -981,7 +981,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
         roads_path = setbacks._get_feature_paths(roads_path)
         for fpath in roads_path:
-            geotiff = os.path.basename(fpath).replace('.gdb', '.geotiff')
+            geotiff = os.path.basename(fpath).replace('.gdb', '.tif')
             geotiff = os.path.join(out_dir, geotiff)
             if os.path.exists(geotiff) and not replace:
                 msg = ('{} already exists, setbacks will not be re-computed '
@@ -1122,7 +1122,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             behind HSDS, by default False
         """
         geotiff = os.path.basename(features_fpath).split('.')[0]
-        geotiff += '.geotiff'
+        geotiff += '.tif'
         geotiff = os.path.join(out_dir, geotiff)
         if os.path.exists(geotiff) and not replace:
             msg = ('{} already exists, setbacks will not be re-computed '

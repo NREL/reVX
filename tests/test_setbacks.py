@@ -41,7 +41,7 @@ def test_generic_structure():
     Test generic structures setbacks
     """
     baseline = os.path.join(TESTDATADIR, 'setbacks',
-                            'generic_structures.geotiff')
+                            'generic_structures.tif')
     with Geotiff(baseline) as tif:
         baseline = tif.values
 
@@ -60,7 +60,7 @@ def test_local_structures(max_workers):
     Test local structures setbacks
     """
     baseline = os.path.join(TESTDATADIR, 'setbacks',
-                            'existing_structures.geotiff')
+                            'existing_structures.tif')
     with Geotiff(baseline) as tif:
         baseline = tif.values
 
@@ -77,7 +77,7 @@ def test_generic_railroads():
     """
     Test generic rail setbacks
     """
-    baseline = os.path.join(TESTDATADIR, 'setbacks', 'generic_rails.geotiff')
+    baseline = os.path.join(TESTDATADIR, 'setbacks', 'generic_rails.tif')
     with Geotiff(baseline) as tif:
         baseline = tif.values
 
@@ -95,7 +95,7 @@ def test_local_railroads(max_workers):
     """
     Test local rail setbacks
     """
-    baseline = os.path.join(TESTDATADIR, 'setbacks', 'existing_rails.geotiff')
+    baseline = os.path.join(TESTDATADIR, 'setbacks', 'existing_rails.tif')
     with Geotiff(baseline) as tif:
         baseline = tif.values
 
@@ -154,11 +154,11 @@ def test_cli(runner):
         assert result.exit_code == 0, msg
 
         baseline = os.path.join(TESTDATADIR, 'setbacks',
-                                'generic_structures.geotiff')
+                                'generic_structures.tif')
         with Geotiff(baseline) as tif:
             baseline = tif.values
 
-        test = os.path.join(td, 'RhodeIsland.geotiff')
+        test = os.path.join(td, 'RhodeIsland.tif')
         with Geotiff(test) as tif:
             test = tif.values
 

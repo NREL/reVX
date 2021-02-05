@@ -79,7 +79,7 @@ class SetbacksConverter(ExclusionsConverter):
             logger.debug('\t- Combining setbacks in {}'.format(setbacks))
             setbacks = [os.path.join(setbacks, file)
                         for file in os.listdir(setbacks)
-                        if file.endswith('.geotiff')]
+                        if file.endswith('.tif')]
         else:
             logger.debug('\t- Loading setbacks from {}'.format(setbacks))
             setbacks = [setbacks]
