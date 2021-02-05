@@ -13,7 +13,7 @@ import re
 from shapely.geometry import shape
 from warnings import warn
 
-from rex.utilities import parse_table, SpawnProcessPool
+from rex.utilities import parse_table, SpawnProcessPool, log_mem
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 
@@ -309,6 +309,7 @@ class BaseWindSetbacks(ABC):
         """
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
+        log_mem(logger)
         mask = features.centroid.within(cnty['geometry'].values[0])
         tmp = features.loc[mask]
         tmp.loc[:, 'geometry'] = tmp.buffer(setback)
@@ -379,6 +380,7 @@ class BaseWindSetbacks(ABC):
         try:
             regs = parse_table(regs_fpath)
             regs = self._parse_county_regs(regs)
+            log_mem(logger)
 
             out_path = regs_fpath.split('.')[0] + '.gpkg'
             logger.debug('Saving wind regulations with county geometries as: '
@@ -547,6 +549,7 @@ class BaseWindSetbacks(ABC):
         if max_workers is None:
             max_workers = os.cpu_count()
 
+        log_mem(logger)
         if max_workers > 1:
             logger.info('Computing local setbacks in parallel using {} '
                         'workers'.format(max_workers))
@@ -1016,6 +1019,9 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         setbacks : list
             List of setback geometries
         """
+        logger.debug('- Computing setbacks for county FIPS {}'
+                     .format(cnty.iloc[0]['FIPS']))
+        log_mem(logger)
         tmp = gpd.clip(features, cnty)
         tmp = tmp[~tmp.is_empty]
 
