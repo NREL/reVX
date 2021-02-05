@@ -7,6 +7,7 @@ import json
 import numpy as np
 import os
 import pytest
+import shutil
 import tempfile
 import traceback
 
@@ -122,6 +123,9 @@ def test_cli(runner):
     """
     structure_dir = os.path.join(TESTDATADIR, 'setbacks')
     with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(REGS_FPATH, regs_fpath)
         config = {
             "directories": {
                 "log_directory": td,
@@ -135,7 +139,7 @@ def test_cli(runner):
             "features_path": structure_dir,
             "hub_height": HUB_HEIGHT,
             "log_level": "INFO",
-            "regs_fpath": REGS_FPATH,
+            "regs_fpath": regs_fpath,
             "replace": True,
             "rotor_diameter": ROTOR_DIAMETER
         }
