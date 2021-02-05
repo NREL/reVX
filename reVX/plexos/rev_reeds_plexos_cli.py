@@ -47,7 +47,8 @@ def main(ctx, name, job_input, out_dir, cf_years, build_years,
     ctx.obj['VERBOSE'] = verbose
 
     if ctx.invoked_subcommand is None:
-        init_mult(name, out_dir, modules=['reVX', 'reV', 'rex'],
+        log_modules = [__name__, 'reVX', 'reV', 'rex']
+        init_mult(name, out_dir, modules=log_modules,
                   verbose=verbose)
         logger.info('Running reV to PLEXOS pipeline using job input: {}'
                     .format(job_input))

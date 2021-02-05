@@ -149,7 +149,7 @@ def local(ctx, out_dir, cf_profiles, log_dir, max_workers, verbose):
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
 
-    log_modules = ['reVX', 'reV', 'rex']
+    log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
     logger.info('Running reV to RPM pipeline\n'
@@ -346,8 +346,8 @@ def eagle(config):
     out = slurm_manager.sbatch(cmd,
                                name=name,
                                stdout_path=stdout_path,
-                               alloc=config.execution_control.alloc,
-                               memory=config.execution_control.node_mem,
+                               alloc=config.execution_control.allocation,
+                               memory=config.execution_control.memory,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,
                                module=config.execution_control.module,

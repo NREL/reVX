@@ -137,16 +137,9 @@ def exclusions(ctx, excl_h5):
 
 @exclusions.command()
 @click.option('--layers', '-l', required=True, type=click.Path(exists=True),
-              help=(".json file containing list of geotiffs to load or "
-                    "mapping of layer names to geotiffs"))
-@click.option('--descriptions', '-d', default=None,
-              type=click.Path(exists=True), show_default=True,
-              help=(".json file containing layer descriptions as a list or "
-                    "mapping to layers"))
-@click.option('--scale_factors', '-scale', default=None,
-              type=click.Path(exists=True), show_default=True,
-              help=(".json file containing layer scale_factors and final "
-                    "dtypes as a mapping to layers"))
+              help=(".json file containing mapping of layer names to geotiffs."
+                    " Json can also contain layer descriptions and/or "
+                    "scale factors"))
 @click.option('-check_tiff', '-ct', is_flag=True,
               help=("Flag to check tiff profile and coordinates against "
                     "exclusion .h5 profile and coordinates"))
@@ -164,8 +157,8 @@ def exclusions(ctx, excl_h5):
 @click.option('--purge', '-r', is_flag=True,
               help="Remove existing .h5 file before loading layers")
 @click.pass_context
-def layers_to_h5(ctx, layers, descriptions, scale_factors, check_tiff,
-                 setbacks, transform_atol, coord_atol, purge):
+def layers_to_h5(ctx, layers, check_tiff, setbacks, transform_atol, coord_atol,
+                 purge):
     """
     Add layers to exclusions .h5 file
     """
@@ -173,18 +166,10 @@ def layers_to_h5(ctx, layers, descriptions, scale_factors, check_tiff,
     if purge and os.path.isfile(excl_h5):
         os.remove(excl_h5)
 
-    layers = safe_json_load(layers)
-    if 'layers' in layers:
-        layers = layers['layers']
-
-    if descriptions is not None:
-        descriptions = safe_json_load(descriptions)
-        if 'descriptions' in descriptions:
-            descriptions = {os.path.basename(layer).split('.')[0]: d
-                            for layer, d in zip(layers, descriptions)}
-
-    if scale_factors is not None:
-        scale_factors = safe_json_load(scale_factors)
+    inputs = safe_json_load(layers)
+    layers = inputs['layers']
+    descriptions = inputs.get('descriptions')
+    scale_factors = inputs.get('scale_factors')
 
     if setbacks:
         SetbacksConverter.layers_to_h5(excl_h5, layers,

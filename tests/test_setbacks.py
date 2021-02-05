@@ -7,6 +7,7 @@ import json
 import numpy as np
 import os
 import pytest
+import shutil
 import tempfile
 import traceback
 
@@ -22,7 +23,8 @@ EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
 HUB_HEIGHT = 135
 ROTOR_DIAMETER = 200
 MULTIPLIER = 3
-REG_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
+REGS_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
+REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
 CONFIG = os.path.join(TESTDATADIR, 'setbacks', 'config.json')
 
 
@@ -63,7 +65,7 @@ def test_local_structures(max_workers):
         baseline = tif.values
 
     setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
-                                     regs_fpath=REG_FPATH, multiplier=None)
+                                     regs_fpath=REGS_GPKG, multiplier=None)
     structure_path = os.path.join(TESTDATADIR, 'setbacks',
                                   'RhodeIsland.geojson')
     test = setbacks.compute_setbacks(structure_path, max_workers=max_workers)
@@ -98,7 +100,7 @@ def test_local_railroads(max_workers):
         baseline = tif.values
 
     setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
-                                regs_fpath=REG_FPATH, multiplier=None)
+                                regs_fpath=REGS_GPKG, multiplier=None)
     rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
                              'RI_Railroads.shp')
     test = setbacks.compute_setbacks(rail_path, max_workers=max_workers)
@@ -121,6 +123,9 @@ def test_cli(runner):
     """
     structure_dir = os.path.join(TESTDATADIR, 'setbacks')
     with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(REGS_FPATH, regs_fpath)
         config = {
             "directories": {
                 "log_directory": td,
@@ -134,7 +139,7 @@ def test_cli(runner):
             "features_path": structure_dir,
             "hub_height": HUB_HEIGHT,
             "log_level": "INFO",
-            "regs_fpath": REG_FPATH,
+            "regs_fpath": regs_fpath,
             "replace": True,
             "rotor_diameter": ROTOR_DIAMETER
         }

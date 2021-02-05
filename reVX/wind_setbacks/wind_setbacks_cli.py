@@ -23,27 +23,26 @@ from reVX import __version__
 logger = logging.getLogger(__name__)
 
 
-STATE_SETBACKS = {'structure': StructureWindSetbacks, 'road': RoadWindSetbacks}
+STATE_SETBACKS = {'structure': StructureWindSetbacks,
+                  'road': RoadWindSetbacks,
+                  'rail': RailWindSetbacks,
+                  'tranmission': TransmissionWindSetbacks}
 
 
 @click.group()
 @click.option('--name', '-n', default='WindSetbacks', type=STR,
               show_default=True,
               help='Job name. Default is "WindSetbaks".')
-@click.option('--log_dir', '-log', default=None, type=STR, show_default=True,
-              help='Directory to dump log files. Default is out_dir.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def main(ctx, name, log_dir, verbose):
+def main(ctx, name, verbose):
     """
     Wind Setbacks Command Line Interface
     """
     ctx.ensure_object(dict)
     ctx.obj['NAME'] = name
-
-    log_modules = ['reVX', 'reV', 'rex']
-    init_mult(name, log_dir, modules=log_modules, verbose=verbose)
+    ctx.obj['VERBOSE'] = verbose
 
 
 @main.command()
@@ -60,43 +59,6 @@ def valid_config_keys():
     Echo the valid Wind Setbacks config keys
     """
     click.echo(', '.join(get_class_properties(WindSetbacksConfig)))
-
-
-def run_local(ctx, config):
-    """
-    Run Wind Setbacks locally from config
-
-    Parameters
-    ----------
-    ctx : click.ctx
-        click ctx object
-    config : reVX.config.wind_setbacks.WindSetbacks
-        Wind Setbacks config object.
-    """
-    ctx.obj['NAME'] = config.name
-    ctx.invoke(local,
-               excl_h5=config.excl_h5,
-               features_path=config.features_path,
-               out_dir=config.dirout,
-               hub_height=config.hub_height,
-               rotor_diameter=config.rotor_diameter,
-               regs_fpath=config.regs_fpath,
-               multiplier=config.multiplier,
-               max_workers=config.max_workers,
-               replace=config.replace)
-
-    feature_type = config.feature_type
-    if feature_type == 'structure':
-        ctx.invoke(structure_setbacks)
-    elif feature_type == 'road':
-        ctx.invoke(road_setbacks)
-    elif feature_type == 'transmission':
-        ctx.invoke(transmission_setbacks)
-    elif feature_type == 'rail':
-        ctx.invoke(rail_setbacks)
-    else:
-        msg = 'Feature type must be one of {}'.format(config.FEATURE_TYPES)
-        raise RuntimeError(msg)
 
 
 @main.command()
@@ -164,9 +126,15 @@ def from_config(ctx, config):
 @click.option('--hsds', '-hsds', is_flag=True,
               help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
                     'behind HSDS'))
+@click.option('--log_dir', '-log', default=None, type=STR,
+              show_default=True,
+              help='Directory to dump log files. Default is out_dir.')
+@click.option('--verbose', '-v', is_flag=True,
+              help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def local(ctx, excl_h5, features_path, out_dir, hub_height, rotor_diameter,
-          regs_fpath, multiplier, max_workers, replace, hsds):
+          regs_fpath, multiplier, max_workers, replace, hsds, log_dir,
+          verbose):
     """
     Compute Wind Setbacks locally
     """
@@ -180,6 +148,12 @@ def local(ctx, excl_h5, features_path, out_dir, hub_height, rotor_diameter,
     ctx.obj['MAX_WORKERS'] = max_workers
     ctx.obj['REPLACE'] = replace
     ctx.obj['HSDS'] = hsds
+
+    if 'VERBOSE' in ctx.obj:
+        verbose = any((ctx.obj['VERBOSE'], verbose))
+
+    log_modules = [__name__, 'reVX', 'reV', 'rex']
+    init_mult(ctx.obj['NAME'], log_dir, modules=log_modules, verbose=verbose)
 
 
 @local.command()
@@ -331,6 +305,43 @@ def rail_setbacks(ctx):
                 .format(excl_h5, out_dir))
 
 
+def run_local(ctx, config):
+    """
+    Run Wind Setbacks locally from config
+
+    Parameters
+    ----------
+    ctx : click.ctx
+        click ctx object
+    config : reVX.config.wind_setbacks.WindSetbacks
+        Wind Setbacks config object.
+    """
+    ctx.obj['NAME'] = config.name
+    ctx.invoke(local,
+               excl_h5=config.excl_h5,
+               features_path=config.features_path,
+               out_dir=config.dirout,
+               hub_height=config.hub_height,
+               rotor_diameter=config.rotor_diameter,
+               regs_fpath=config.regs_fpath,
+               multiplier=config.multiplier,
+               max_workers=config.max_workers,
+               replace=config.replace)
+
+    feature_type = config.feature_type
+    if feature_type == 'structure':
+        ctx.invoke(structure_setbacks)
+    elif feature_type == 'road':
+        ctx.invoke(road_setbacks)
+    elif feature_type == 'transmission':
+        ctx.invoke(transmission_setbacks)
+    elif feature_type == 'rail':
+        ctx.invoke(rail_setbacks)
+    else:
+        msg = 'Feature type must be one of {}'.format(config.FEATURE_TYPES)
+        raise RuntimeError(msg)
+
+
 def get_node_cmd(name, config):
     """
     Get the node CLI call for the Wind Setbacks computation
@@ -346,7 +357,6 @@ def get_node_cmd(name, config):
         CLI call to submit to SLURM execution.
     """
     args = ['-n {}'.format(SLURM.s(name)),
-            '-log {}'.format(SLURM.s(config.logdir)),
             'local',
             '-excl {}'.format(SLURM.s(config.excl_h5)),
             '-feats {}'.format(SLURM.s(config.features_path)),
@@ -356,6 +366,7 @@ def get_node_cmd(name, config):
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
             '-mult {}'.format(SLURM.s(config.multiplier)),
             '-mw {}'.format(SLURM.s(config.max_workers)),
+            '-log {}'.format(SLURM.s(config.logdir)),
             ]
 
     if config.replace:
@@ -406,8 +417,8 @@ def launch_job(config):
                 'node name "{}"'.format(name))
     slurm_manager = SLURM()
     out = slurm_manager.sbatch(cmd,
-                               alloc=config.execution_control.alloc,
-                               memory=config.execution_control.node_mem,
+                               alloc=config.execution_control.allocation,
+                               memory=config.execution_control.memory,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,
                                name=name,
@@ -437,22 +448,18 @@ def eagle(config):
         Wind Setbacks config object.
     """
     features_path = config.features_path
-    if os.path.isdir(features_path):
-        if config.feature_type not in STATE_SETBACKS:
-            msg = ("'features_path' must be a .shp file to run rail or "
-                   "transmission setbacks, was given: {}"
-                   .format(features_path))
-            logger.error(msg)
-            raise ValueError(msg)
+    cls = STATE_SETBACKS[config.feature_type]
+    features = cls._get_feature_paths(features_path)
+    if not features:
+        msg = ('No valid feature files were found at {}!'
+               .format(features_path))
+        logger.error(msg)
+        raise FileNotFoundError(msg)
 
-        cls = STATE_SETBACKS[config.feature_type]
-        features_path = cls.get_feature_paths(features_path)
-        for fpath in features_path:
-            fpath_config = deepcopy(config)
-            fpath_config['features_path'] = fpath
-            launch_job(fpath_config)
-    else:
-        launch_job(config)
+    for fpath in features:
+        fpath_config = deepcopy(config)
+        fpath_config['features_path'] = fpath
+        launch_job(fpath_config)
 
 
 if __name__ == '__main__':

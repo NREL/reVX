@@ -163,7 +163,7 @@ def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
 
-    log_modules = ['reVX', 'reV', 'rex']
+    log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
     logger.info('Aggregating Prominent Wind Directions \n'
@@ -236,8 +236,8 @@ def eagle(config):
     logger.info('Running prominent wind directions computation on Eagle with '
                 'node name "{}"'.format(name))
     out = slurm_manager.sbatch(cmd,
-                               alloc=config.execution_control.alloc,
-                               memory=config.execution_control.node_mem,
+                               alloc=config.execution_control.allocation,
+                               memory=config.execution_control.memory,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,
                                name=name, stdout_path=stdout_path,

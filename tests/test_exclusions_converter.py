@@ -193,7 +193,7 @@ def test_cli(runner):
         assert true_profile == test_profile
 
         # Geotiff to H5
-        layers = {layer: truth}
+        layers = {'layers': {layer: truth}}
         layers_path = os.path.join(td, 'layers.json')
         with open(layers_path, 'w') as f:
             json.dump(layers, f)

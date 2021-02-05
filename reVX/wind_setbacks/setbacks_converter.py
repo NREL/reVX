@@ -129,9 +129,8 @@ class SetbacksConverter(ExclusionsConverter):
         ----------
         excl_h5 : str
             Path to .h5 file containing or to contain exclusion layers
-        layers : list | dict
-            List of setbacks to load
-            or dictionary mapping goetiffs to the layers to load
+        layers : dict
+            Dictionary mapping goetiffs to the layers to load
         chunks : tuple, optional
             Chunk size of exclusions in Geotiff, by default (128, 128)
         replace : bool, optional
