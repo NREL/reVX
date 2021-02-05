@@ -29,6 +29,8 @@ reVX
 .. image:: https://mybinder.org/badge_logo.svg
     :target: https://mybinder.org/v2/gh/NREL/reVX/master
 
+.. image:: https://zenodo.org/badge/201337735.svg
+   :target: https://zenodo.org/badge/latestdoi/201337735
 
 Renewable Energy Potential(V) eXchange Tool: reVX
 
@@ -115,3 +117,11 @@ Option 2: Clone repo (recommended for developers)
        help pages for the CLI's.
 
         - ``reVX``
+
+
+Recommended Citation
+====================
+
+Update with current version and DOI:
+
+Michael Rossol, Grant Buster, and Robert Spencer. The Renewable Energy Potential(V) eXchange Tool: reVX. https://github.com/NREL/reVX (version v0.3.20), 2021. https://doi.org/10.5281/zenodo.4507580.
