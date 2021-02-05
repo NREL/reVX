@@ -558,12 +558,12 @@ class BaseWindSetbacks(ABC):
                                   loggers=loggers) as exe:
                 futures = []
                 for i in range(len(wind_regs)):
-                    cnty = wind_regs.iloc[[i]]
+                    cnty = wind_regs.iloc[[i]].copy()
                     setback = self._get_setback(cnty.iloc[0], self.hub_height,
                                                 self.rotor_diameter)
                     if setback is not None:
                         idx = features.sindex.intersection(cnty.total_bounds)
-                        cnty_feats = features.iloc[list(idx)]
+                        cnty_feats = features.iloc[list(idx)].copy()
                         future = exe.submit(self._compute_local_setbacks,
                                             cnty_feats, cnty, setback)
                         futures.append(future)
