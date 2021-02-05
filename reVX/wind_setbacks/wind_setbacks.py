@@ -2,7 +2,7 @@
 """
 Compute wind setbacks exclusions
 """
-from abc import ABC, abstractstaticmethod
+from abc import ABC
 from concurrent.futures import as_completed
 import fiona
 import geopandas as gpd
@@ -218,76 +218,6 @@ class BaseWindSetbacks(ABC):
 
         return shape, chunks, profile
 
-    @abstractstaticmethod
-    def _parse_regs(regs_fpath):
-        """
-        Parse wind regulations
-
-        Parameters
-        ----------
-        regs_fpath : str
-            Path to wind regulations .csv file
-
-        Returns
-        -------
-        regs : pandas.DataFrame
-            Wind regulations table
-        """
-        regs = parse_table(regs_fpath)
-        if 'FIPS' not in regs:
-            msg = ('Wind regulations does not have county FIPS! Please add a '
-                   '"FIPS" columns with the unique county FIPS values.')
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        return regs
-
-    @classmethod
-    def _parse_county_regs(cls, regs_fpath, excl_h5):
-        """
-        Parse wind regulations, combine with county geometries from
-        exclusions .h5 file. The county geometries are intersected with
-        features to compute county specific setbacks.
-
-        Parameters
-        ----------
-        regs_fpath : str
-            Path to wind regulations .csv file, must have a county FIPS column
-            to match with "cnty_fips" exclusion layer.
-        excl_h5 : str
-            Path to .h5 file containing exclusion layers, will also be the
-            location of any new setback layers, one layer must be 'cnty_fips'
-
-        Returns
-        -------
-        regs: geopandas.GeoDataFrame
-            GeoDataFrame with county level wind setback regulations merged
-            with county geometries, use for intersecting with setback features
-        """
-        regs = cls._parse_regs(regs_fpath)
-
-        with ExclusionLayers(excl_h5) as exc:
-            fips = exc['cnty_fips']
-            transform = exc.profile['transform']
-            crs = exc.crs
-
-        fips_df = gpd.GeoDataFrame(columns=['geometry', 'FIPS'], crs=crs)
-        for i, (p, v) in enumerate(features.shapes(fips, transform=transform)):
-            fips_df.at[i] = shape(p), v
-
-        fips_check = regs['FIPS'].isin(fips_df['FIPS'])
-        if not fips_check.all():
-            msg = ('The following county FIPS were requested in by the wind '
-                   'regulations but were not availble in the Exclusions '
-                   '"cnty_fips" layer:\n{}'
-                   .format(regs.loc[~fips_check, 'FIPS']))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        regs = fips_df.merge(regs, on='FIPS', how='right')
-
-        return regs
-
     @staticmethod
     def _get_setback(cnty_regs, hub_height, rotor_diameter):
         """
@@ -387,6 +317,87 @@ class BaseWindSetbacks(ABC):
 
         return setbacks
 
+    def _parse_county_regs(self, regs):
+        """
+        Parse wind regulations, combine with county geometries from
+        exclusions .h5 file. The county geometries are intersected with
+        features to compute county specific setbacks.
+
+        Parameters
+        ----------
+        regs : pandas.DataFrame
+            Wind regulations table
+
+        Returns
+        -------
+        regs: geopandas.GeoDataFrame
+            GeoDataFrame with county level wind setback regulations merged
+            with county geometries, use for intersecting with setback features
+        """
+        if 'FIPS' not in regs:
+            msg = ('Wind regulations does not have county FIPS! Please add a '
+                   '"FIPS" columns with the unique county FIPS values.')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        if 'geometry' not in regs:
+            regs['geometry'] = None
+
+        regs = gpd.GeoDataFrame(regs, crs=self.crs, geometry='geometry')
+        regs = regs.set_index('FIPS')
+
+        logger.info('Merging county geometries w/ local wind '
+                    'regulations')
+        with ExclusionLayers(self._excl_h5) as exc:
+            fips = exc['cnty_fips']
+            profile = exc.get_layer_profile('cnty_fips')
+
+        tr = profile['transform']
+
+        for p, v in features.shapes(fips, transform=tr):
+            v = int(v)
+            if v in regs.index:
+                regs.at[v, 'geometry'] = shape(p)
+
+        return regs.reset_index()
+
+    def _parse_regs(self, regs_fpath):
+        """
+        Parse wind regulations
+
+        Parameters
+        ----------
+        regs_fpath : str
+            Path to wind regulations .csv file
+
+        Returns
+        -------
+        regs: geopandas.GeoDataFrame
+            GeoDataFrame with county level wind setback regulations merged
+            with county geometries, use for intersecting with setback features
+        """
+        try:
+            regs = parse_table(regs_fpath)
+            regs = self._parse_county_regs(regs)
+
+            out_path = regs_fpath.split('.')[0] + '.gpkg'
+            logger.debug('Saving wind regulations with county geometries as: '
+                         '{}'.format(out_path))
+            regs.to_file(out_path, driver='GPKG')
+        except ValueError:
+            regs = gpd.read_file(regs_fpath)
+
+        fips_check = regs['geometry'].isnull()
+        if fips_check.any():
+            msg = ('The following county FIPS were requested in the '
+                   'wind regulations but were not availble in the '
+                   'Exclusions "cnty_fips" layer:\n{}'
+                   .format(regs.loc[fips_check, 'FIPS']))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        return regs.to_crs(crs=self.crs)
+
     def _preflight_check(self, regs_fpath, multiplier):
         """
         Run preflight checks on WindSetBack inputs:
@@ -408,8 +419,9 @@ class BaseWindSetbacks(ABC):
 
         Returns
         -------
-        regs : geopands.GeoDataFrame | None
-            Wind Regulations
+        regs: geopandas.GeoDataFrame | None
+            GeoDataFrame with county level wind setback regulations merged
+            with county geometries, use for intersecting with setback features
         Multiplier : float | None
             Generic setbacks multiplier
         """
@@ -421,7 +433,7 @@ class BaseWindSetbacks(ABC):
                 warn(msg)
 
             multiplier = None
-            regs = self._parse_county_regs(regs_fpath, self._excl_h5)
+            regs = self._parse_regs(regs_fpath)
             logger.debug('Computing setbacks using regulations provided in: {}'
                          .format(regs_fpath))
         elif multiplier:
@@ -639,29 +651,6 @@ class StructureWindSetbacks(BaseWindSetbacks):
     Structure Wind setbacks
     """
     @staticmethod
-    def _parse_regs(regs_fpath):
-        """
-        Parse wind regulations, reduce table to just structures
-
-        Parameters
-        ----------
-        regs_fpath : str
-            Path to wind regulations .csv file
-
-        Returns
-        -------
-        regs : pandas.DataFrame
-            Wind regulations table
-        """
-        regs = BaseWindSetbacks._parse_regs(regs_fpath)
-
-        mask = ((regs['Feature Type'] == 'Structures')
-                & (regs['Comment'] != 'Occupied Community Buildings'))
-        regs = regs.loc[mask]
-
-        return regs
-
-    @staticmethod
     def _split_state_name(state_name):
         """
         Split state name at capitals to map .geojson files to regulations
@@ -711,6 +700,28 @@ class StructureWindSetbacks(BaseWindSetbacks):
                     file_paths.append(os.path.join(structures_path, file))
 
         return file_paths
+
+    def _parse_regs(self, regs_fpath):
+        """
+        Parse wind regulations, reduce table to just structures
+
+        Parameters
+        ----------
+        regs_fpath : str
+            Path to wind regulations .csv file
+
+        Returns
+        -------
+        regs : pandas.DataFrame
+            Wind regulations table
+        """
+        regs = super()._parse_regs(regs_fpath)
+
+        mask = ((regs['Feature Type'] == 'Structures')
+                & (regs['Comment'] != 'Occupied Community Buildings'))
+        regs = regs.loc[mask]
+
+        return regs
 
     def _check_regs(self, features_fpath):
         """
@@ -815,28 +826,6 @@ class RoadWindSetbacks(BaseWindSetbacks):
     Road Wind setbacks
     """
     @staticmethod
-    def _parse_regs(regs_fpath):
-        """
-        Parse wind regulations, reduce table to just roads
-
-        Parameters
-        ----------
-        regs_fpath : str
-            Path to wind regulations .csv file
-
-        Returns
-        -------
-        regs : pandas.DataFrame
-            Wind regulations table
-        """
-        regs = BaseWindSetbacks._parse_regs(regs_fpath)
-
-        mask = regs['Feature Type'].isin(['Roads', 'Highways', 'Highways 111'])
-        regs = regs.loc[mask]
-
-        return regs
-
-    @staticmethod
     def _parse_features(roads_fpath, crs):
         """
         Load roads from gdb file, convert to exclusions coordinate system
@@ -886,36 +875,26 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
         return file_paths
 
-    @staticmethod
-    def _compute_local_setbacks(features, cnty, setback):
+    def _parse_regs(self, regs_fpath):
         """
-        Compute local road setbacks
+        Parse wind regulations, reduce table to just roads
 
         Parameters
         ----------
-        features : geopandas.GeoDataFrame
-            Features to setback from
-        cnty : geopandas.GeoDataFrame
-            Wind regulations for a single county
-        setback : int
-            Setback distance in meters
+        regs_fpath : str
+            Path to wind regulations .csv file
 
         Returns
         -------
-        setbacks : list
-            List of setback geometries
+        regs : pandas.DataFrame
+            Wind regulations table
         """
-        logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(cnty['FIPS']))
-        tmp = features.intersection(cnty['geometry'])
-        tmp = gpd.GeoDataFrame(geometry=tmp)
-        tmp = tmp[~tmp.is_empty]
-        # Buffer setback
-        tmp.loc[:, 'geometry'] = tmp.buffer(setback)
+        regs = super()._parse_regs(regs_fpath)
 
-        setbacks = [(geom, 1) for geom in tmp['geometry']]
+        mask = regs['Feature Type'].isin(['Roads', 'Highways', 'Highways 111'])
+        regs = regs.loc[mask]
 
-        return setbacks
+        return regs
 
     def _check_regs(self, features_fpath):
         """
@@ -1019,28 +998,6 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
     features instead of against state level features
     """
     @staticmethod
-    def _parse_regs(regs_fpath):
-        """
-        Parse wind regulations, reduce table to just transmission
-
-        Parameters
-        ----------
-        regs_fpath : str
-            Path to wind regulations .csv file
-
-        Returns
-        -------
-        regs : pandas.DataFrame
-            Wind regulations table
-        """
-        regs = BaseWindSetbacks._parse_regs(regs_fpath)
-
-        mask = regs['Feature Type'] == 'Transmission'
-        regs = regs.loc[mask]
-
-        return regs
-
-    @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
         """
         Compute local county setbacks
@@ -1090,6 +1047,27 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             raise FileNotFoundError(msg)
 
         return [features_path]
+
+    def _parse_regs(self, regs_fpath):
+        """
+        Parse wind regulations, reduce table to just transmission
+
+        Parameters
+        ----------
+        regs_fpath : str
+            Path to wind regulations .csv file
+
+        Returns
+        -------
+        regs : pandas.DataFrame
+            Wind regulations table
+        """
+        regs = super()._parse_regs(regs_fpath)
+
+        mask = regs['Feature Type'] == 'Transmission'
+        regs = regs.loc[mask]
+
+        return regs
 
     @classmethod
     def run(cls, excl_h5, features_fpath, out_dir, hub_height,
@@ -1162,8 +1140,7 @@ class RailWindSetbacks(TransmissionWindSetbacks):
     instead of state level features, uses the same approach as
     TransmissionWindSetbacks
     """
-    @staticmethod
-    def _parse_regs(regs_fpath):
+    def _parse_regs(self, regs_fpath):
         """
         Parse wind regulations, reduce table to just rail
 
@@ -1177,7 +1154,8 @@ class RailWindSetbacks(TransmissionWindSetbacks):
         regs : pandas.DataFrame
             Wind regulations table
         """
-        regs = BaseWindSetbacks._parse_regs(regs_fpath)
+        # pylint: disable=bad-super-call
+        regs = super(TransmissionWindSetbacks, self)._parse_regs(regs_fpath)
 
         mask = regs['Feature Type'] == 'Railroads'
         regs = regs.loc[mask]
