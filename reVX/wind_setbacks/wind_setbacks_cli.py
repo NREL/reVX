@@ -87,7 +87,7 @@ def from_config(ctx, config):
 @click.option('--features_path', '-feats', required=True,
               type=click.Path(exists=True),
               help=('Path to:/n'
-                    '- State level structure .geotiff or directory containing '
+                    '- State level structure .geojson or directory containing '
                     'geotiff files./n'
                     '- State level roads .gdb or directory containing .gdb '
                     'files./n'
