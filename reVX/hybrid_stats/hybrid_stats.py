@@ -247,6 +247,43 @@ class HybridStats(TemporalStats):
 
         return data
 
+    @staticmethod
+    def _format_index_value(index, stat, month_map=None):
+        """
+        Format groupby index value
+
+        Parameters
+        ----------
+        index : int | tuple
+            hour, month, or (month, hour) groupby index value
+        stat : str
+            Statistic that was computed
+        month_map : dict | None, optional
+            Mapping of month int to str, by default None
+
+        Returns
+        -------
+        out : str
+
+        """
+        if isinstance(index, np.ndarray):
+            m, h = index
+            if month_map is not None:
+                m = month_map[m]
+            else:
+                m = '{:02d}'.format(m)
+
+            out = "{}-{:02d}".format(m, h)
+        else:
+            if month_map is not None:
+                out = month_map[index]
+            else:
+                out = '{:02d}'.format(index)
+
+        out += '_{}'.format(stat)
+
+        return out
+
     @classmethod
     def _create_names(cls, index, stats):
         """
@@ -270,7 +307,7 @@ class HybridStats(TemporalStats):
                      6: 'June', 7: 'July', 8: 'Aug', 9: 'Sept', 10: 'Oct',
                      11: 'Nov', 12: 'Dec'}
         index = np.array(index.to_list())
-        if len(index.shape) != 2 and index.max() > 12:
+        if len(index.shape) < 2 and 24 > index.max() > 12:
             month_map = None
 
         columns_map = {}
@@ -334,9 +371,9 @@ class HybridStats(TemporalStats):
         return out_stats
 
     @classmethod
-    def _extract_stats(cls, res_h5, res_cls, statistics, dataset, hsds=False,
-                       time_index=None, sites_slice=None, diurnal=False,
-                       month=False, combinations=False):
+    def _extract_stats(cls, solar_h5, wind_h5, sites, statistics, dataset,
+                       time_index, res_cls=Resource, hsds=False,
+                       diurnal=False, month=False, combinations=False):
         """
         Extract stats for given dataset, sites, and temporal extent
 
@@ -356,8 +393,6 @@ class HybridStats(TemporalStats):
         time_index : pandas.DatatimeIndex | None, optional
             Resource DatetimeIndex, if None extract from res_h5,
             by default None
-        sites_slice : slice | None, optional
-            Sites to extract, if None all, by default None
         diurnal : bool, optional
             Extract diurnal stats, by default False
         month : bool, optional
@@ -367,45 +402,44 @@ class HybridStats(TemporalStats):
 
         Returns
         -------
-        res_stats : pandas.DataFrame
+        out_stats : pandas.DataFrame
             DataFrame of desired statistics at desired time intervals
         """
-        if sites_slice is None:
-            sites_slice = slice(None, None, None)
+        wind_sites = sites['wind_gid'].values
+        solar_sites = sites['solar_gid'].values
 
-        with res_cls(res_h5, hsds=hsds) as f:
-            if time_index is None:
-                time_index = f.time_index
+        with res_cls(solar_h5, hsds=hsds) as f:
+            solar_data = pd.DataFrame(f[dataset, :, solar_sites],
+                                      index=time_index)
 
-            res_data = pd.DataFrame(f[dataset, :, sites_slice],
-                                    index=time_index)
+        with res_cls(wind_h5, hsds=hsds) as f:
+            wind_data = pd.DataFrame(f[dataset, :, wind_sites],
+                                     index=time_index)
+
         if combinations:
-            res_stats = [cls._compute_stats(res_data, statistics)]
+            out_stats = [cls._compute_stats(solar_data, wind_data, statistics)]
             if month:
-                res_stats.append(cls._compute_stats(res_data, statistics,
-                                                    month=True))
+                out_stats.append(cls._compute_stats(solar_data, wind_data,
+                                                    statistics, month=True))
 
             if diurnal:
-                res_stats.append(cls._compute_stats(res_data, statistics,
-                                                    diurnal=True))
+                out_stats.append(cls._compute_stats(solar_data, wind_data,
+                                                    statistics, diurnal=True))
             if month and diurnal:
-                res_stats.append(cls._compute_stats(res_data, statistics,
-                                                    month=True, diurnal=True))
+                out_stats.append(cls._compute_stats(solar_data, wind_data,
+                                                    statistics, month=True,
+                                                    diurnal=True))
 
-            res_stats = pd.concat(res_stats, axis=1)
+            out_stats = pd.concat(out_stats, axis=1)
         else:
-            res_stats = cls._compute_stats(res_data, statistics,
+            out_stats = cls._compute_stats(solar_data, wind_data, statistics,
                                            diurnal=diurnal, month=month)
 
-        if isinstance(sites_slice, slice) and sites_slice.stop:
-            res_stats.index = \
-                list(range(*sites_slice.indices(sites_slice.stop)))
-        elif isinstance(sites_slice, (list, np.ndarray)):
-            res_stats.index = sites_slice
+        out_stats.index = sites.index.values
 
-        res_stats.index.name = 'gid'
+        out_stats.index.name = 'gid'
 
-        return res_stats
+        return out_stats
 
     def _pre_flight_check(self):
         """
