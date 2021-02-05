@@ -32,8 +32,6 @@ Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
 .. image:: https://zenodo.org/badge/201337735.svg
    :target: https://zenodo.org/badge/latestdoi/201337735
 
-Renewable Energy Potential(V) eXchange Tool: reVX
-
 .. inclusion-intro
 
 reVX command line tools

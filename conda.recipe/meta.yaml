@@ -44,6 +44,7 @@ requirements:
     - xarray
   run-constrained:
     - h5pyd
+    - psycopg2-binary
 
 about:
   home: "https://github.com/NREL/reVX"

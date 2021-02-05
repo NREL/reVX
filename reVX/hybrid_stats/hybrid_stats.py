@@ -217,15 +217,84 @@ class HybridStats(TemporalStats):
         """
         return kendalltau(solar_ts, wind_ts)[0]
 
+    @staticmethod
+    def _groupby_data(data, diurnal=False, month=False):
+        """
+        Groupby data by month and/or hour
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+            DataFrame of data where index is time_index, columns are sites
+        diurnal : bool, optional
+            Extract diurnal stats, by default False
+        month : bool, optional
+            Extract monthly stats, by default False
+
+        Returns
+        -------
+        data : pandas.Groupby
+            Input DataFrame grouped by month and or hour if requested
+        """
+        groupby = [data.index.year]
+        if month:
+            groupby.append(data.index.month)
+
+        if diurnal:
+            groupby.append(data.index.hour)
+
+        data = data.groupby(groupby)
+
+        return data
+
     @classmethod
-    def _compute_stats(cls, res_data, statistics, diurnal=False, month=False):
+    def _create_names(cls, index, stats):
+        """
+        Generate statistics names
+
+        Parameters
+        ----------
+        index : pandas.Index | pandas.MultiIndex
+            Temporal index, either month, hour, or (month, hour)
+        stats : list
+            Statistics to be computed
+
+        Returns
+        -------
+        columns_map : dict
+            Dictionary of column names to use for each statistic
+        columns : list
+            Column names to use
+        """
+        month_map = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May',
+                     6: 'June', 7: 'July', 8: 'Aug', 9: 'Sept', 10: 'Oct',
+                     11: 'Nov', 12: 'Dec'}
+        index = np.array(index.to_list())
+        if len(index.shape) != 2 and index.max() > 12:
+            month_map = None
+
+        columns_map = {}
+        columns = []
+        for s in stats:
+            cols = {i: cls._format_index_value(i, s, month_map=month_map)
+                    for i in index}
+            columns_map[s] = cols
+            columns.extend(list(cols.values))
+
+        return columns_map, columns
+
+    @classmethod
+    def _compute_stats(cls, solar_data, wind_data, statistics,
+                       diurnal=False, month=False):
         """
         Compute desired stats for desired time intervals from res_data
 
         Parameters
         ----------
-        res_data : pandas.DataFrame
-            DataFrame or resource data. Index is time_index, columns are sites
+        solar_data : pandas.DataFrame
+            DataFrame of solar data. Index is time_index, columns are sites
+        wind_data : pandas.DataFrame
+            DataFrame of wind data. Index is time_index, columns are sites
         statistics : dict
             Dictionary of statistic functions/kwargs to run
         diurnal : bool, optional
@@ -235,37 +304,34 @@ class HybridStats(TemporalStats):
 
         Returns
         -------
-        res_stats : pandas.DataFrame
+        out_stats : pandas.DataFrame
             DataFrame of desired statistics at desired time intervals
         """
-        groupby = []
-        if month:
-            groupby.append(res_data.index.month)
+        sites = solar_data.columns.values
+        solar_data = cls._groupby_data(solar_data, diurnal=diurnal,
+                                       month=month)
+        wind_data = cls._groupby_data(wind_data, diurnal=diurnal,
+                                      month=month)
 
-        if diurnal:
-            groupby.append(res_data.index.hour)
+        cols_map, col_names = cls._create_names(list(solar_data.groups),
+                                                list(statistics))
+        out_stats = pd.DataFrame(columns=col_names, index=sites)
+        for grp_name, solar_grp in solar_data:
 
-        if groupby:
-            res_data = res_data.groupby(groupby)
+            wind_grp = wind_data.get_group(grp_name)
+            msg = ('solar and wind data shapes do not match! {} != {}'
+                   .format(solar_grp.shape, wind_grp.shape))
+            assert solar_grp.shape == wind_grp.shape, msg
+            for i in sites:
+                solar_ts = solar_grp.iloc[:, i]
+                wind_ts = solar_grp.ilco[:, i]
+                for name, stat in statistics.items():
+                    col = cols_map[name][grp_name]
+                    func = stat['func']
+                    kwargs = stat.get('kwargs', {})
+                    out_stats.at[i, col] = func(solar_ts, wind_ts, **kwargs)
 
-        res_stats = []
-        for name, stat in statistics.items():
-            func = stat['func']
-            kwargs = stat.get('kwargs', {})
-            s_data = res_data.aggregate(func, **kwargs)
-
-            if groupby:
-                columns = cls._create_names(s_data.index, name)
-                s_data = s_data.T
-                s_data.columns = columns
-            else:
-                s_data = s_data.to_frame(name=name)
-
-            res_stats.append(s_data)
-
-        res_stats = pd.concat(res_stats, axis=1)
-
-        return res_stats
+        return out_stats
 
     @classmethod
     def _extract_stats(cls, res_h5, res_cls, statistics, dataset, hsds=False,
@@ -392,7 +458,7 @@ class HybridStats(TemporalStats):
         """
         STATS = {'pearson': self._pearson_correlation,
                  'spearman': self._spearman_correlation,
-                 'kendall': self._kendal_tau}
+                 'kendall': self._kendall_tau}
         if isinstance(statistics, str):
             statistics = (statistics, )
 
