@@ -248,41 +248,43 @@ class HybridStats(TemporalStats):
         return data
 
     @staticmethod
-    def _format_index_value(index, stat, month_map=None):
+    def _format_grp_names(index):
         """
-        Format groupby index value
+        Format groupby index values
 
         Parameters
         ----------
-        index : int | tuple
-            hour, month, or (month, hour) groupby index value
-        stat : str
-            Statistic that was computed
-        month_map : dict | None, optional
-            Mapping of month int to str, by default None
+        index : list
+            Group by index values
 
         Returns
         -------
-        out : str
-
+        out : ndarray
+            2D array of grp index values properly formatted as strings
         """
-        if isinstance(index, np.ndarray):
-            m, h = index
-            if month_map is not None:
-                m = month_map[m]
+        month_map = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May',
+                     6: 'June', 7: 'July', 8: 'Aug', 9: 'Sept', 10: 'Oct',
+                     11: 'Nov', 12: 'Dec'}
+
+        # pylint: disable=unnecessary-lambda
+        year = lambda s: "{}".format(s)
+        month = lambda s: "{}".format(month_map[s])
+        hour = lambda s: "{:02d}".format(s)
+
+        index = np.array(index).T
+        if len(index.shape) == 1:
+            index = np.expand_dims(index, 0)
+        out = []
+        for grp_i in index:  # pylint: disable=not-an-iterable
+            grp_max = grp_i.max()
+            if grp_max <= 12:
+                out.append(list(map(month, grp_i)))
+            elif grp_max <= 23:
+                out.append(list(map(hour, grp_i)))
             else:
-                m = '{:02d}'.format(m)
+                out.append(list(map(year, grp_i)))
 
-            out = "{}-{:02d}".format(m, h)
-        else:
-            if month_map is not None:
-                out = month_map[index]
-            else:
-                out = '{:02d}'.format(index)
-
-        out += '_{}'.format(stat)
-
-        return out
+        return np.array(out).T
 
     @classmethod
     def _create_names(cls, index, stats):
@@ -303,18 +305,13 @@ class HybridStats(TemporalStats):
         columns : list
             Column names to use
         """
-        month_map = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May',
-                     6: 'June', 7: 'July', 8: 'Aug', 9: 'Sept', 10: 'Oct',
-                     11: 'Nov', 12: 'Dec'}
-        index = np.array(index.to_list())
-        if len(index.shape) < 2 and 24 > index.max() > 12:
-            month_map = None
+        column_names = cls._format_grp_names(index)
 
         columns_map = {}
         columns = []
         for s in stats:
-            cols = {i: cls._format_index_value(i, s, month_map=month_map)
-                    for i in index}
+            cols = {i: '{}_{}'.format('-'.join(n), s) for i, n
+                    in zip(index, column_names)}
             columns_map[s] = cols
             columns.extend(list(cols.values))
 
