@@ -438,7 +438,8 @@ class HybridStats:
 
         cols_map, col_names = cls._create_names(list(solar_data.groups),
                                                 list(statistics))
-        out_stats = pd.DataFrame(columns=col_names, index=sites)
+        out_stats = pd.DataFrame(columns=col_names, index=sites,
+                                 dtype=np.float32)
         for grp_name, solar_grp in solar_data:
 
             wind_grp = wind_data.get_group(grp_name)
