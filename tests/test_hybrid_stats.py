@@ -48,13 +48,22 @@ def test_hybrid_stats(max_workers, func):
     test_stats = HybridStats.cf_profile(SOLAR_H5, WIND_H5,
                                         statistics=func,
                                         month=True,
+                                        doy=True,
                                         diurnal=True,
                                         combinations=True,
                                         max_workers=max_workers)
 
     gids = META.index.values
-    msg = ('gids do not match!')
+    msg = 'gids do not match!'
     assert np.allclose(gids, test_stats.index.values), msg
+
+    coeffs = test_stats.values[:, 2:]
+    mask = np.all(np.isfinite(coeffs), axis=0)
+    coeffs = coeffs[:, mask]
+    msg = 'Correlation coeffs are outside the valid range of -1 to 1'
+    check = coeffs >= -1
+    check &= coeffs <= 1
+    assert np.all(check), msg
 
     function = FUNCS[func]
 
@@ -69,15 +78,21 @@ def test_hybrid_stats(max_workers, func):
     msg = 'January correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
+    mask = TIME_INDEX.dayofyear == 234
+    truth = compute_stats(function, SOLAR[mask], WIND[mask])
+    test = test_stats[f'2012-234_{func}'].values
+    msg = 'Day of year 234 correlations do not match!'
+    assert np.allclose(truth, test, equal_nan=True), msg
+
     mask = TIME_INDEX.hour == 18
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
-    test = test_stats[f'2012-18_{func}'].values
+    test = test_stats[f'2012-18:00UTC_{func}'].values
     msg = '18:00 correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
     mask = (TIME_INDEX.month == 7) & (TIME_INDEX.hour == 18)
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
-    test = test_stats[f'2012-July-18_{func}'].values
+    test = test_stats[f'2012-July-18:00UTC_{func}'].values
     msg = 'July-18:00 correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
