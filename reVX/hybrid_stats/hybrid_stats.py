@@ -1255,7 +1255,7 @@ class HybridStabilityCoefficient(HybridStats):
         var : pandas.DataFrame
             Daily variablility by site
         """
-        var = np.sqrt(np.sum(doy - doy.mean())**2)
+        var = np.sqrt(np.sum((doy - doy.mean())**2))
 
         return var
 
@@ -1278,12 +1278,16 @@ class HybridStabilityCoefficient(HybridStats):
             provided time-series data. Averages are by site.
         """
         mix = mix.groupby(mix.index.dayofyear)
-        mix_var = mix.aggregate(cls._daily_variability)
+        mix_var = mix.apply(cls._daily_variability)
 
         ref = ref.groupby(ref.index.dayofyear)
-        ref_var = ref.aggregate(cls._daily_variability)
+        ref_var = ref.apply(cls._daily_variability)
 
-        stab = 1 - (mix_var * ref.mean()) / (ref_var * mix.mean())
+        stab = 1 - ((mix_var / ref_var) * (ref.mean() / mix.mean()))
+
+        mask = np.isfinite(stab)
+        if not np.all(mask):
+            stab[~mask] = np.nan
 
         return stab.mean().values.astype(np.float32)
 
@@ -1410,13 +1414,13 @@ class HybridStabilityCoefficient(HybridStats):
                                      index=time_index)
 
         if combinations:
-            out_stats = [cls._compute_correlations(solar_data, wind_data,
+            out_stats = [cls._compute_coefficients(solar_data, wind_data,
                                                    solar_cap=solar_cap,
                                                    wind_cap=wind_cap,
                                                    reference=reference
                                                    )]
             if month:
-                out_stats.append(cls._compute_correlations(solar_data,
+                out_stats.append(cls._compute_coefficients(solar_data,
                                                            wind_data,
                                                            solar_cap=solar_cap,
                                                            wind_cap=wind_cap,
@@ -1425,7 +1429,7 @@ class HybridStabilityCoefficient(HybridStats):
 
             out_stats = pd.concat(out_stats, axis=1)
         else:
-            out_stats = cls._compute_correlations(solar_data,
+            out_stats = cls._compute_coefficients(solar_data,
                                                   wind_data,
                                                   solar_cap=solar_cap,
                                                   wind_cap=wind_cap,
@@ -1470,8 +1474,10 @@ class HybridStabilityCoefficient(HybridStats):
         res_stats : pandas.DataFrame
             DataFrame of desired statistics at desired time intervals
         """
-        kwargs = {'res_cls': self.res_cls,
+        kwargs = {'time_index': self.time_index,
+                  'res_cls': self.res_cls,
                   'month': month,
+                  'combinations': combinations,
                   'reference': reference}
 
         out_stats = self._compute_stats(dataset, max_workers=max_workers,
