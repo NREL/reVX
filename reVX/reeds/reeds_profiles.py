@@ -5,10 +5,11 @@ Extract representative profiles for ReEDS
 import logging
 import numpy as np
 import pandas as pd
-from reV.rep_profiles.rep_profiles import RepProfiles
 
+from reV.rep_profiles.rep_profiles import RepProfiles
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.utilities.exceptions import ReedsRuntimeError, ReedsValueError
+from rex.utilities.utilities import roll_timeseries
 
 logger = logging.getLogger(__name__)
 
@@ -188,15 +189,17 @@ class ReedsProfiles(RepProfiles):
         """
         Roll array with unique shifts for each column
         This converts timeseries to local time
+
         Parameters
         ----------
         arr : ndarray
             Input timeseries array of form (time, sites)
         shifts : ndarray | list
             Vector of shifts from UTC to local time
+
         Returns
         -------
-        local_arr : ndarray
+        arr : ndarray
             Array shifted to local time
         """
         if arr.shape[1] != len(shifts):
@@ -205,11 +208,9 @@ class ReedsProfiles(RepProfiles):
             logger.error(msg)
             raise ReedsValueError(msg)
 
-        local_arr = np.zeros(arr.shape, dtype=arr.dtype)
-        for i, s in enumerate(shifts):
-            local_arr[:, i] = np.roll(arr[:, i], int(s))
+        arr = roll_timeseries(arr, shifts)
 
-        return local_arr
+        return arr
 
     def _to_local_time(self):
         """

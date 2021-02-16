@@ -9,11 +9,12 @@ from pandas.testing import assert_frame_equal
 import pytest
 from scipy.stats import pearsonr, spearmanr, kendalltau
 
-from rex.resource import Resource
 from reVX import TESTDATADIR
 from reVX.hybrid_stats.hybrid_stats import (HybridStats,
                                             HybridCrossCorrelation,
                                             HybridStabilityCoefficient)
+from rex.resource import Resource
+from rex.utilities.utilities import roll_timeseries
 
 FUNCS = {'pearson': pearsonr, 'spearman': spearmanr, 'kendall': kendalltau}
 SOLAR_H5 = os.path.join(TESTDATADIR, 'hybrid_stats', 'hybrid_solar_2012.h5')
@@ -162,7 +163,10 @@ def test_stability_coefficient(max_workers, reference):
     """
     Test stability coefficient
     """
+    tz = META['timezone'].values.copy()
+    solar = roll_timeseries(SOLAR, tz)
     solar = pd.DataFrame(SOLAR, index=TIME_INDEX)
+    wind = roll_timeseries(WIND, tz)
     wind = pd.DataFrame(WIND, index=TIME_INDEX)
 
     test_stats = HybridStabilityCoefficient.cf_profile(SOLAR_H5, WIND_H5,

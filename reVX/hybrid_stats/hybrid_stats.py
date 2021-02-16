@@ -12,7 +12,7 @@ from scipy.stats import pearsonr, spearmanr, kendalltau
 
 from rex.resource import Resource
 from rex.utilities.execution import SpawnProcessPool
-from rex.utilities.utilities import get_lat_lon_cols
+from rex.utilities.utilities import get_lat_lon_cols, roll_timeseries
 
 logger = logging.getLogger(__name__)
 
@@ -538,20 +538,24 @@ class HybridStats:
 
         wind_sites = sites['wind_gid'].values
         solar_sites = sites['solar_gid'].values
+        tz = sites['timezone'].values.copy()
 
         solar_dataset, wind_dataset = dataset
-        with res_cls(solar_h5) as f:
-            solar_data = f[solar_dataset, solar_time_slice, solar_sites]
-            solar_data = pd.DataFrame(solar_data,
-                                      index=time_index)
-
         with res_cls(wind_h5) as f:
             if time_index is None:
                 time_index = f.time_index
 
+            tz *= len(time_index) // 8760
             wind_data = f[wind_dataset, wind_time_slice, wind_sites]
+            wind_data = roll_timeseries(wind_data, tz)
             wind_data = pd.DataFrame(wind_data,
                                      index=time_index)
+
+        with res_cls(solar_h5) as f:
+            solar_data = f[solar_dataset, solar_time_slice, solar_sites]
+            solar_data = roll_timeseries(solar_data, tz)
+            solar_data = pd.DataFrame(solar_data,
+                                      index=time_index)
 
         if combinations:
             out_stats = [cls._compute_correlations(solar_data, wind_data,
