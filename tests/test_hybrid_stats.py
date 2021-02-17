@@ -50,13 +50,23 @@ def test_hybrid_stats(max_workers, func):
     """
     Test HybridStats Correlations
     """
-    test_stats = HybridStats.cf_profile(SOLAR_H5, WIND_H5,
-                                        statistics=func,
-                                        month=True,
-                                        doy=True,
-                                        diurnal=True,
-                                        combinations=True,
-                                        max_workers=max_workers)
+    if max_workers == 1:
+        test_stats = HybridStats.cf_profile(SOLAR_H5, WIND_H5,
+                                            statistics=func,
+                                            month=True,
+                                            doy=True,
+                                            diurnal=True,
+                                            combinations=True,
+                                            max_workers=max_workers)
+    else:
+        test_stats = HybridStats.run(SOLAR_H5, WIND_H5,
+                                     DATASET,
+                                     statistics=func,
+                                     month=True,
+                                     doy=True,
+                                     diurnal=True,
+                                     combinations=True,
+                                     max_workers=max_workers)
 
     gids = META.index.values
     msg = 'gids do not match!'
@@ -107,8 +117,12 @@ def test_cross_correlation(max_workers):
     """
     Test Cross-correlations
     """
-    test = HybridCrossCorrelation.cf_profile(SOLAR_H5, WIND_H5,
-                                             max_workers=max_workers)
+    if max_workers == 1:
+        test = HybridCrossCorrelation.cf_profile(SOLAR_H5, WIND_H5,
+                                                 max_workers=max_workers)
+    else:
+        test = HybridCrossCorrelation.run(SOLAR_H5, WIND_H5,
+                                          DATASET, max_workers=max_workers)
 
     gids = META.index.values
     msg = 'gids do not match!'
@@ -169,11 +183,17 @@ def test_stability_coefficient(max_workers, reference):
     wind = roll_timeseries(WIND, tz)
     wind = pd.DataFrame(wind, index=TIME_INDEX)
 
-    test_stats = HybridStabilityCoefficient.cf_profile(SOLAR_H5, WIND_H5,
-                                                       month=True,
-                                                       combinations=True,
-                                                       reference=reference,
-                                                       max_workers=max_workers)
+    if max_workers == 1:
+        test_stats = HybridStabilityCoefficient.cf_profile(
+            SOLAR_H5, WIND_H5, month=True, combinations=True,
+            reference=reference, max_workers=max_workers)
+    else:
+        test_stats = HybridStabilityCoefficient.run(SOLAR_H5, WIND_H5,
+                                                    DATASET,
+                                                    month=True,
+                                                    combinations=True,
+                                                    reference=reference,
+                                                    max_workers=max_workers)
 
     gids = META.index.values
     msg = 'gids do not match!'

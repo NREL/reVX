@@ -11,6 +11,7 @@ from scipy.spatial import cKDTree
 from scipy.stats import pearsonr, spearmanr, kendalltau
 
 from rex.resource import Resource
+from rex.utilities.utilities import parse_year
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.utilities import get_lat_lon_cols, roll_timeseries
 
@@ -86,7 +87,7 @@ class HybridStats:
              'kendall': {'func': kendall_tau}}
 
     def __init__(self, solar_h5, wind_h5, statistics='pearson',
-                 res_cls=Resource):
+                 res_cls=Resource, year=None):
         """
         Parameters
         ----------
@@ -101,6 +102,9 @@ class HybridStats:
             by default 'pearson'
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
         """
         self._solar_h5 = solar_h5
         self._wind_h5 = wind_h5
@@ -108,7 +112,7 @@ class HybridStats:
         self.statistics = statistics
 
         self._res_cls = res_cls
-        out = self._pre_flight_check()
+        out = self._pre_flight_check(year=year)
         self._meta, self._time_index = out[:2]
         self._solar_time_slice, self._wind_time_slice = out[2:]
 
@@ -603,14 +607,14 @@ class HybridStats:
         out_stats : pandas.DataFrame
             Table of correlations to save
         out_path : str
-            Directory, .csv, or .json path to save statistics too
+            .csv, or .json path to save statistics too
         """
         if out_fpath.endswith('.csv'):
             out_stats.to_csv(out_fpath)
         elif out_fpath.endswith('.json'):
             out_stats.to_json(out_fpath)
         else:
-            msg = ("Cannot save statistics, expecting a directory, .csv, or "
+            msg = ("Cannot save statistics, expecting a .csv, or "
                    ".json path, but got: {}".format(out_fpath))
             logger.error(msg)
             raise OSError(msg)
@@ -643,10 +647,57 @@ class HybridStats:
 
         return dataset
 
-    def _pre_flight_check(self):
+    @staticmethod
+    def _parse_meta_time_index(h5_path, res_cls=Resource, year=None):
+        """
+        Parse meta data table and time_index from .h5 file. If 'year' is
+        provided extact time_index for given year.
+
+        Parameters
+        ----------
+        h5_path : str
+            Path to .h5 file to extract meta and time_index
+        res_cls : Class, optional
+            Resource class to use to access res_h5, by default Resource
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
+
+        Returns
+        -------
+        meta : pandas.DataFrame
+            Site meta data table
+        time_index: pandas.DatatimeIndex
+            Datetime Index
+        """
+        with res_cls(h5_path) as f:
+            meta = f.meta
+            if 'time_index' in f:
+                time_index = f.time_index
+            elif year is not None:
+                time_index = f[f'time_index-{year}']
+            else:
+                ti_dsets = [dset for dset in f.datasets
+                            if dset.startswith('time_index')]
+                msg = ("'time_index' is not available in {}. The following "
+                       "potential annual time_index are available: {}. Please "
+                       "specify a 'year' to use the 'time_index' for a "
+                       "specific year.".format(h5_path, ti_dsets))
+                logger.error(ti_dsets)
+                raise ValueError(msg)
+
+        return meta, time_index
+
+    def _pre_flight_check(self, year=None):
         """
         Compare solar and wind site meta data and time index to ensure
         they can be compared
+
+        Parameters
+        ----------
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
 
         Returns
         -------
@@ -662,13 +713,10 @@ class HybridStats:
             slice or boolean index of the wind timesteps that are in the
             coincident time_index
         """
-        with self.res_cls(self._solar_h5) as f:
-            solar_meta = f.meta
-            solar_ti = f.time_index
-
-        with self.res_cls(self._wind_h5) as f:
-            wind_meta = f.meta
-            wind_ti = f.time_index
+        solar_meta, solar_ti = self._parse_meta_time_index(
+            self._solar_h5, res_cls=self._res_cls, year=year)
+        wind_meta, wind_ti = self._parse_meta_time_index(
+            self._wind_h5, res_cls=self._res_cls, year=year)
 
         time_index, solar_time_slice, wind_time_slice = \
             self._check_time_index(solar_ti, wind_ti)
@@ -819,8 +867,8 @@ class HybridStats:
     @classmethod
     def run(cls, solar_h5, wind_h5, dataset, statistics='pearson',
             diurnal=False, doy=False, month=False, combinations=False,
-            res_cls=Resource, max_workers=None, sites_per_worker=1000,
-            lat_lon_only=True, out_path=None):
+            res_cls=Resource, year=None, max_workers=None,
+            sites_per_worker=1000, lat_lon_only=True, out_path=None):
         """
         Compute temporal stats between solar and wind time-series at desired
         temporal scales
@@ -850,6 +898,9 @@ class HybridStats:
             Extract all combinations of temporal stats, by default False
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
         max_workers : None | int, optional
             Number of workers to use, if 1 run in serial, if None use all
             available cores, by default None
@@ -858,16 +909,21 @@ class HybridStats:
         lat_lon_only : bool, optional
             Only append lat, lon coordinates to stats, by default True
         out_path : str, optional
-            Directory, .csv, or .json path to save statistics too,
-            by default None
+            .csv, or .json path to save statistics too, by default None
 
         Returns
         -------
         out_stats : pandas.DataFrame
             DataFrame of resource statistics
         """
+        if isinstance(dataset, str) and year is None:
+            try:
+                year = parse_year(dataset)
+            except RuntimeError:
+                year = None
+
         hybrid_stats = cls(solar_h5, wind_h5, statistics=statistics,
-                           res_cls=res_cls)
+                           res_cls=res_cls, year=year)
         out_stats = hybrid_stats.compute_stats(
             dataset, diurnal=diurnal, doy=doy, month=month,
             combinations=combinations, max_workers=max_workers,
@@ -891,8 +947,6 @@ class HybridStats:
             Path to solar h5 file(s)
         wind_h5 : str
             Path to wind h5 file(s)
-        dataset : str
-            Dataset to extract stats for
         statistics : str | tuple | dict, optional
             Statistics to extract, either a key or tuple of keys in
             cls.STATS, or a dictionary of the form
@@ -916,23 +970,19 @@ class HybridStats:
         lat_lon_only : bool, optional
             Only append lat, lon coordinates to stats, by default True
         out_path : str, optional
-            Directory, .csv, or .json path to save statistics too,
-            by default None
+            .csv, or .json path to save statistics too, by default None
 
         Returns
         -------
         out_stats : pandas.DataFrame
             DataFrame of resource statistics
         """
-        hybrid_stats = cls(solar_h5, wind_h5, statistics=statistics,
-                           res_cls=res_cls)
-        out_stats = hybrid_stats.compute_stats(
-            'cf_profile', diurnal=diurnal, doy=doy, month=month,
-            combinations=combinations, max_workers=max_workers,
-            sites_per_worker=sites_per_worker,
-            lat_lon_only=lat_lon_only)
-        if out_path is not None:
-            hybrid_stats.save_stats(out_stats, out_path)
+        out_stats = cls.run(solar_h5, wind_h5, 'cf_profile',
+                            statistics=statistics, res_cls=res_cls,
+                            diurnal=diurnal, doy=doy, month=month,
+                            combinations=combinations, max_workers=max_workers,
+                            sites_per_worker=sites_per_worker,
+                            lat_lon_only=lat_lon_only, out_path=out_path)
 
         return out_stats
 
@@ -943,7 +993,7 @@ class HybridCrossCorrelation(HybridStats):
     generation
     """
 
-    def __init__(self, solar_h5, wind_h5, res_cls=Resource):
+    def __init__(self, solar_h5, wind_h5, res_cls=Resource, year=None):
         """
         Parameters
         ----------
@@ -953,13 +1003,16 @@ class HybridCrossCorrelation(HybridStats):
             Path to wind h5 file(s)
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
         """
         self._solar_h5 = solar_h5
         self._wind_h5 = wind_h5
         self._res_cls = res_cls
         self._stats = None
 
-        out = self._pre_flight_check()
+        out = self._pre_flight_check(year=year)
         self._meta, self._time_index = out[:2]
         self._solar_time_slice, self._wind_time_slice = out[2:]
 
@@ -1112,8 +1165,8 @@ class HybridCrossCorrelation(HybridStats):
 
     @classmethod
     def run(cls, solar_h5, wind_h5, dataset, max_lag=50, lag_step=1,
-            res_cls=Resource, max_workers=None, sites_per_worker=1000,
-            lat_lon_only=True, out_path=None):
+            res_cls=Resource, year=None, max_workers=None,
+            sites_per_worker=1000, lat_lon_only=True, out_path=None):
         """
         Compute cross correlations between solar and wind time-series
 
@@ -1127,6 +1180,9 @@ class HybridCrossCorrelation(HybridStats):
             Dataset to compare, if a string, extract the same
             dataset for both with and solar, other wise a tuple of the form:
             (solar_dataset, wind_dataset)
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
         max_lag : int, optional
             Maximum lag size. Cross-correlation will be run for all lags in
             range(-max_lag, max_lag, lag_step), by default 50
@@ -1142,15 +1198,20 @@ class HybridCrossCorrelation(HybridStats):
         lat_lon_only : bool, optional
             Only append lat, lon coordinates to stats, by default True
         out_path : str, optional
-            Directory, .csv, or .json path to save statistics too,
-            by default None
+            .csv, or .json path to save statistics too, by default None
 
         Returns
         -------
         out_stats : pandas.DataFrame
             DataFrame of resource statistics
         """
-        hybrid_stats = cls(solar_h5, wind_h5, res_cls=res_cls)
+        if isinstance(dataset, str) and year is None:
+            try:
+                year = parse_year(dataset)
+            except RuntimeError:
+                year = None
+
+        hybrid_stats = cls(solar_h5, wind_h5, res_cls=res_cls, year=year)
         out_stats = hybrid_stats.compute_stats(
             dataset, max_lag=max_lag, lag_step=lag_step,
             max_workers=max_workers, sites_per_worker=sites_per_worker,
@@ -1190,22 +1251,18 @@ class HybridCrossCorrelation(HybridStats):
         lat_lon_only : bool, optional
             Only append lat, lon coordinates to stats, by default True
         out_path : str, optional
-            Directory, .csv, or .json path to save statistics too,
-            by default None
+            .csv, or .json path to save statistics too, by default None
 
         Returns
         -------
         out_stats : pandas.DataFrame
             DataFrame of resource statistics
         """
-        hybrid_stats = cls(solar_h5, wind_h5, res_cls=res_cls)
-        out_stats = hybrid_stats.compute_stats(
-            'cf_profile', max_lag=max_lag, lag_step=lag_step,
-            max_workers=max_workers,
-            sites_per_worker=sites_per_worker,
-            lat_lon_only=lat_lon_only)
-        if out_path is not None:
-            hybrid_stats.save_stats(out_stats, out_path)
+        out_stats = cls.run(solar_h5, wind_h5, 'cf_profile', res_cls=res_cls,
+                            max_lag=max_lag, lag_step=lag_step,
+                            max_workers=max_workers,
+                            sites_per_worker=sites_per_worker,
+                            lat_lon_only=lat_lon_only, out_path=out_path)
 
         return out_stats
 
@@ -1216,7 +1273,7 @@ class HybridStabilityCoefficient(HybridStats):
     solar
     """
 
-    def __init__(self, solar_h5, wind_h5, res_cls=Resource):
+    def __init__(self, solar_h5, wind_h5, res_cls=Resource, year=None):
         """
         Parameters
         ----------
@@ -1226,13 +1283,16 @@ class HybridStabilityCoefficient(HybridStats):
             Path to wind h5 file(s)
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
         """
         self._solar_h5 = solar_h5
         self._wind_h5 = wind_h5
         self._res_cls = res_cls
         self._stats = None
 
-        out = self._pre_flight_check()
+        out = self._pre_flight_check(year=year)
         self._meta, self._time_index = out[:2]
         self._solar_time_slice, self._wind_time_slice = out[2:]
 
@@ -1450,7 +1510,7 @@ class HybridStabilityCoefficient(HybridStats):
                       combinations=False, max_workers=None,
                       sites_per_worker=1000, lat_lon_only=True):
         """
-        Compute correlations
+        Compute stability coefficients
 
         Parameters
         ----------
@@ -1493,10 +1553,13 @@ class HybridStabilityCoefficient(HybridStats):
 
     @classmethod
     def run(cls, solar_h5, wind_h5, dataset, reference='solar', month=False,
-            combinations=False, res_cls=Resource, max_workers=None,
+            combinations=False, res_cls=Resource, year=None, max_workers=None,
             sites_per_worker=1000, lat_lon_only=True, out_path=None):
         """
-        Compute cross correlations between solar and wind time-series
+        Compute stability coefficient between solar and wind time-series.
+        Time-series are shifted to local time before computing the daily
+        stability coefficient. Final data is the average of daily stability
+        coefficients for each month and/or year.
 
         Parameters
         ----------
@@ -1517,6 +1580,9 @@ class HybridStabilityCoefficient(HybridStats):
             Extract all combinations of temporal stats, by default False
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
         max_workers : None | int, optional
             Number of workers to use, if 1 run in serial, if None use all
             available cores, by default None
@@ -1525,15 +1591,20 @@ class HybridStabilityCoefficient(HybridStats):
         lat_lon_only : bool, optional
             Only append lat, lon coordinates to stats, by default True
         out_path : str, optional
-            Directory, .csv, or .json path to save statistics too,
-            by default None
+            .csv, or .json path to save statistics too, by default None
 
         Returns
         -------
         out_stats : pandas.DataFrame
             DataFrame of resource statistics
         """
-        hybrid_stats = cls(solar_h5, wind_h5, res_cls=res_cls)
+        if isinstance(dataset, str) and year is None:
+            try:
+                year = parse_year(dataset)
+            except RuntimeError:
+                year = None
+
+        hybrid_stats = cls(solar_h5, wind_h5, res_cls=res_cls, year=year)
         out_stats = hybrid_stats.compute_stats(
             dataset, month=month, combinations=combinations,
             reference=reference, max_workers=max_workers,
@@ -1549,7 +1620,10 @@ class HybridStabilityCoefficient(HybridStats):
                    combinations=False, res_cls=Resource, max_workers=None,
                    sites_per_worker=1000, lat_lon_only=True, out_path=None):
         """
-        Compute cross correlations on cf_profile dataset
+        Compute stability coefficient between solar and wind time-series.
+        Time-series are shifted to local time before computing the daily
+        stability coefficient. Final data is the average of daily stability
+        coefficients for each month and/or year.
 
         Parameters
         ----------
@@ -1574,21 +1648,18 @@ class HybridStabilityCoefficient(HybridStats):
         lat_lon_only : bool, optional
             Only append lat, lon coordinates to stats, by default True
         out_path : str, optional
-            Directory, .csv, or .json path to save statistics too,
-            by default None
+            .csv, or .json path to save statistics too, by default None
 
         Returns
         -------
         out_stats : pandas.DataFrame
             DataFrame of resource statistics
         """
-        hybrid_stats = cls(solar_h5, wind_h5, res_cls=res_cls)
-        out_stats = hybrid_stats.compute_stats(
-            'cf_profile', month=month, combinations=combinations,
-            reference=reference, max_workers=max_workers,
-            sites_per_worker=sites_per_worker,
-            lat_lon_only=lat_lon_only)
-        if out_path is not None:
-            hybrid_stats.save_stats(out_stats, out_path)
+        out_stats = cls.run(solar_h5, wind_h5, 'cf_profile',
+                            reference=reference, month=month,
+                            combinations=combinations, res_cls=res_cls,
+                            max_workers=max_workers,
+                            sites_per_worker=sites_per_worker,
+                            lat_lon_only=lat_lon_only, out_path=out_path)
 
         return out_stats
