@@ -8,7 +8,7 @@ import pandas as pd
 
 from reV.rep_profiles.rep_profiles import RepProfiles
 from reVX.reeds.reeds_classification import ReedsClassifier
-from reVX.utilities.exceptions import ReedsRuntimeError, ReedsValueError
+from reVX.utilities.exceptions import ReedsRuntimeError
 from rex.utilities.utilities import roll_timeseries
 
 logger = logging.getLogger(__name__)
@@ -184,42 +184,13 @@ class ReedsProfiles(RepProfiles):
 
         return hour_of_year
 
-    @staticmethod
-    def _roll_array(arr, shifts):
-        """
-        Roll array with unique shifts for each column
-        This converts timeseries to local time
-
-        Parameters
-        ----------
-        arr : ndarray
-            Input timeseries array of form (time, sites)
-        shifts : ndarray | list
-            Vector of shifts from UTC to local time
-
-        Returns
-        -------
-        arr : ndarray
-            Array shifted to local time
-        """
-        if arr.shape[1] != len(shifts):
-            msg = ('Number of timezone shifts ({}) does not match number of '
-                   'sites ({})'.format(len(shifts), arr.shape[1]))
-            logger.error(msg)
-            raise ReedsValueError(msg)
-
-        arr = roll_timeseries(arr, shifts)
-
-        return arr
-
     def _to_local_time(self):
         """
         Shift profiles to local time from UTC
         """
         tz = self.meta['timezone'].values.copy()
-        tz *= len(self.time_index) // 8760
         # pylint: disable=W0201
-        self._profiles = {k: self._roll_array(v, tz)
+        self._profiles = {k: roll_timeseries(v, tz)
                           for k, v in self.profiles.items()}
 
     def _run(self, fout=None, hourly=True, hour_ending=True, max_workers=None):

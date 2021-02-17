@@ -545,7 +545,6 @@ class HybridStats:
             if time_index is None:
                 time_index = f.time_index
 
-            tz *= len(time_index) // 8760
             wind_data = f[wind_dataset, wind_time_slice, wind_sites]
             wind_data = roll_timeseries(wind_data, tz)
             wind_data = pd.DataFrame(wind_data,
