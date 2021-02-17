@@ -609,6 +609,7 @@ class HybridStats:
         out_path : str
             .csv, or .json path to save statistics too
         """
+        logger.info('Saving hybrid stats to {}'.format(out_fpath))
         if out_fpath.endswith('.csv'):
             out_stats.to_csv(out_fpath)
         elif out_fpath.endswith('.json'):
@@ -797,12 +798,14 @@ class HybridStats:
                    .format(self, dataset))
             logger.info(msg)
             out_stats = []
-            for sites in slices:
+            for i, sites in enumerate(slices):
                 out_stats.append(self._extract_stats(
                     solar_h5, wind_h5, dataset, sites,
                     self._solar_time_slice,
                     self._wind_time_slice,
                     **extract_stats_kwargs))
+                logger.debug('Completed {} out of {} sets of sites'
+                             .format((i + 1), len(slices)))
 
             out_stats = pd.concat(out_stats)
 
@@ -857,6 +860,8 @@ class HybridStats:
                   'time_index': self.time_index
                   }
 
+        logger.info('Computing correlations from {}'.format(dataset))
+        logger.debug('- Using the following options: {}'.format(kwargs))
         out_stats = self._compute_stats(dataset, max_workers=max_workers,
                                         sites_per_worker=sites_per_worker,
                                         lat_lon_only=lat_lon_only,
@@ -1156,6 +1161,8 @@ class HybridCrossCorrelation(HybridStats):
                   'max_lag': max_lag,
                   'lag_step': lag_step}
 
+        logger.info('Computing cross correlations from {}'.format(dataset))
+        logger.debug('- Using the following options: {}'.format(kwargs))
         out_stats = self._compute_stats(dataset, max_workers=max_workers,
                                         sites_per_worker=sites_per_worker,
                                         lat_lon_only=lat_lon_only,
@@ -1297,7 +1304,7 @@ class HybridStabilityCoefficient(HybridStats):
         self._solar_time_slice, self._wind_time_slice = out[2:]
 
     def __repr__(self):
-        msg = ('Computing cross-correlations between {} and {}'
+        msg = ('Computing stability coefficient between {} and {}'
                .format(self.solar_h5, self.wind_h5))
 
         return msg
@@ -1544,6 +1551,8 @@ class HybridStabilityCoefficient(HybridStats):
                   'combinations': combinations,
                   'reference': reference}
 
+        logger.info('Computing stability coefficients from {}'.format(dataset))
+        logger.debug('- Using the following options: {}'.format(kwargs))
         out_stats = self._compute_stats(dataset, max_workers=max_workers,
                                         sites_per_worker=sites_per_worker,
                                         lat_lon_only=lat_lon_only,
