@@ -538,7 +538,6 @@ class HybridStats:
 
         wind_sites = sites['wind_gid'].values
         solar_sites = sites['solar_gid'].values
-        tz = sites['timezone'].values.copy()
 
         solar_dataset, wind_dataset = dataset
         with res_cls(wind_h5) as f:
@@ -546,15 +545,11 @@ class HybridStats:
                 time_index = f.time_index
 
             wind_data = f[wind_dataset, wind_time_slice, wind_sites]
-            wind_data = roll_timeseries(wind_data, tz)
-            wind_data = pd.DataFrame(wind_data,
-                                     index=time_index)
+            wind_data = pd.DataFrame(wind_data, index=time_index)
 
         with res_cls(solar_h5) as f:
             solar_data = f[solar_dataset, solar_time_slice, solar_sites]
-            solar_data = roll_timeseries(solar_data, tz)
-            solar_data = pd.DataFrame(solar_data,
-                                      index=time_index)
+            solar_data = pd.DataFrame(solar_data, index=time_index)
 
         if combinations:
             out_stats = [cls._compute_correlations(solar_data, wind_data,
@@ -1394,14 +1389,16 @@ class HybridStabilityCoefficient(HybridStats):
         """
         solar_dataset, wind_dataset = dataset
         solar_sites = sites['solar_gid'].values
+        tz = sites['timezone'].values.copy()
+
         solar_cap = None
         if 'solar_cap' in sites:
             solar_cap = sites['solar_cap'].values
 
         with res_cls(solar_h5) as f:
             solar_data = f[solar_dataset, solar_time_slice, solar_sites]
-            solar_data = pd.DataFrame(solar_data,
-                                      index=time_index)
+            solar_data = roll_timeseries(solar_data, tz)
+            solar_data = pd.DataFrame(solar_data, index=time_index)
 
         wind_sites = sites['wind_gid'].values
         wind_cap = None
@@ -1413,8 +1410,8 @@ class HybridStabilityCoefficient(HybridStats):
                 time_index = f.time_index
 
             wind_data = f[wind_dataset, wind_time_slice, wind_sites]
-            wind_data = pd.DataFrame(wind_data,
-                                     index=time_index)
+            wind_data = roll_timeseries(wind_data, tz)
+            wind_data = pd.DataFrame(wind_data, index=time_index)
 
         if combinations:
             out_stats = [cls._compute_coefficients(solar_data, wind_data,

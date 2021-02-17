@@ -75,7 +75,7 @@ def test_hybrid_stats(max_workers, func):
     truth = compute_stats(function, SOLAR, WIND)
     test = test_stats[f'2012_{func}'].values
     msg = 'Correlation coefficients do not match!'
-    assert np.allclose(truth, test, equal_nan=True), msg
+    assert np.allclose(truth, test, equal_nan=True, rtol=0.001, atol=0), msg
 
     mask = TIME_INDEX.month == 1
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
@@ -165,9 +165,9 @@ def test_stability_coefficient(max_workers, reference):
     """
     tz = META['timezone'].values.copy()
     solar = roll_timeseries(SOLAR, tz)
-    solar = pd.DataFrame(SOLAR, index=TIME_INDEX)
+    solar = pd.DataFrame(solar, index=TIME_INDEX)
     wind = roll_timeseries(WIND, tz)
-    wind = pd.DataFrame(WIND, index=TIME_INDEX)
+    wind = pd.DataFrame(wind, index=TIME_INDEX)
 
     test_stats = HybridStabilityCoefficient.cf_profile(SOLAR_H5, WIND_H5,
                                                        month=True,
@@ -179,10 +179,17 @@ def test_stability_coefficient(max_workers, reference):
     msg = 'gids do not match!'
     assert np.allclose(gids, test_stats.index.values), msg
 
+    if reference == 'solar':
+        coeffs = test_stats.values[:, 2:]
+        msg = 'Stability coeffs are outside the valid range of 0 to 1'
+        check = coeffs >= 0
+        check &= coeffs <= 1
+        assert np.all(check), msg
+
     truth = stability_coeff(solar, wind, reference=reference)
     test = test_stats['2012_stability'].values
     msg = 'Stability coefficients do not match!'
-    assert np.allclose(truth, test, rtol=0.001, atol=0), msg
+    assert np.allclose(truth, test), msg
 
     mask = TIME_INDEX.month == 6
     truth = stability_coeff(solar.loc[mask], wind.loc[mask],
