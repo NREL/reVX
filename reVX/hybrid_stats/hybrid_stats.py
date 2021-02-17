@@ -831,8 +831,10 @@ class HybridStats:
             Path to solar h5 file(s)
         wind_h5 : str
             Path to wind h5 file(s)
-        dataset : str
-            Dataset to extract stats for
+        dataset : tuple | str
+            Dataset to compare, if a string, extract the same
+            dataset for both with and solar, other wise a tuple of the form:
+            (solar_dataset, wind_dataset)
         statistics : str | tuple | dict, optional
             Statistics to extract, either a key or tuple of keys in
             cls.STATS, or a dictionary of the form
@@ -1121,8 +1123,10 @@ class HybridCrossCorrelation(HybridStats):
             Path to solar h5 file(s)
         wind_h5 : str
             Path to wind h5 file(s)
-        dataset : str
-            Dataset to extract stats for
+        dataset : tuple | str
+            Dataset to compare, if a string, extract the same
+            dataset for both with and solar, other wise a tuple of the form:
+            (solar_dataset, wind_dataset)
         max_lag : int, optional
             Maximum lag size. Cross-correlation will be run for all lags in
             range(-max_lag, max_lag, lag_step), by default 50
@@ -1500,8 +1504,10 @@ class HybridStabilityCoefficient(HybridStats):
             Path to solar h5 file(s)
         wind_h5 : str
             Path to wind h5 file(s)
-        dataset : str
-            Dataset to extract stats for
+        dataset : tuple | str
+            Dataset to compare, if a string, extract the same
+            dataset for both with and solar, other wise a tuple of the form:
+            (solar_dataset, wind_dataset)
         reference : str, optional
             Which data to use as the reference (denominator) when computing
             the stability coefficient, by default 'solar'
