@@ -254,24 +254,30 @@ class HybridStats:
         # pylint: disable=not-callable
         if solar_n < wind_n:
             tree = cKDTree(solar_meta[solar_cols].values)
-            meta = wind_meta
+            meta = wind_meta.rename(columns={'cap': 'wind_cap'})
             meta.index.name = 'wind_gid'
             meta = meta.reset_index()
 
             dist, pos = tree.query(meta[wind_cols].values)
             mask = dist <= np.median(dist) * 1.5
+            pos = pos[mask]
             meta = meta.loc[mask]
-            meta['solar_gid'] = pos[mask]
+            meta['solar_gid'] = pos
+            if 'capacity' in solar_meta:
+                meta['solar_cap'] = solar_meta['capacity'].values[pos]
         else:
             tree = cKDTree(wind_meta[wind_cols].values)
-            meta = solar_meta
+            meta = solar_meta.rename(columns={'cap': 'solar_cap'})
             meta.index.name = 'solar_gid'
             meta = meta.reset_index()
 
             dist, pos = tree.query(meta[solar_cols])
             mask = dist <= np.median(dist) * 1.5
             meta = meta.loc[mask]
-            meta['wind_gid'] = pos[mask]
+            pos = pos[mask]
+            meta['wind_gid'] = pos
+            if 'capacity' in wind_meta:
+                meta['wind_cap'] = wind_meta['capacity'].values[pos]
 
         return meta
 
