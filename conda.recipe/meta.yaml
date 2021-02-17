@@ -17,7 +17,8 @@ requirements:
     - setuptools
     - dask
     - geopandas
-    - nrel-rev>=0.4.42
+    - nrel-rex>=0.2.46
+    - nrel-rev>=0.4.46
     - psycopg2
     - pyproj
     - pywavelets
@@ -32,7 +33,8 @@ requirements:
     - pip
     - dask
     - geopandas
-    - nrel-rev>=0.4.42
+    - nrel-rex>=0.2.46
+    - nrel-rev>=0.4.46
     - psycopg2
     - pyproj
     - pywavelets
@@ -44,6 +46,7 @@ requirements:
     - xarray
   run-constrained:
     - h5pyd
+    - psycopg2-binary
 
 about:
   home: "https://github.com/NREL/reVX"

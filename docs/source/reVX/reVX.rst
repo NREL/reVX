@@ -10,9 +10,11 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
    reVX.config
    reVX.handlers
+   reVX.hybrid_stats
    reVX.plexos
    reVX.red_e
    reVX.reeds
@@ -25,6 +27,7 @@ Submodules
 ----------
 
 .. toctree::
+   :maxdepth: 4
 
    reVX.cli
    reVX.version
