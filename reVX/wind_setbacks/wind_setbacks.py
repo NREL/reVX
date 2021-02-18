@@ -489,6 +489,7 @@ class BaseWindSetbacks(ABC):
         """
         logger.debug('Generating setbacks exclusion array of shape {}'
                      .format(self.arr_shape))
+        log_mem(logger)
         arr = features.rasterize(shapes=shapes,
                                  out_shape=self.arr_shape[1:],
                                  fill=0,
