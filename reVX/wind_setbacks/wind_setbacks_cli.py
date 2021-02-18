@@ -189,8 +189,7 @@ def structure_setbacks(ctx):
                               rotor_diameter, regs_fpath=regs_fpath,
                               multiplier=multiplier, max_workers=max_workers,
                               replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and writen to {} as {}'
-                .format(excl_h5, out_dir))
+    logger.info('Setbacks computed and writen {}'.format(out_dir))
 
 
 @local.command()
@@ -226,8 +225,7 @@ def road_setbacks(ctx):
                          rotor_diameter, regs_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
                          replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and writen to {} as {}'
-                .format(excl_h5, out_dir))
+    logger.info('Setbacks computed and writen {}'.format(out_dir))
 
 
 @local.command()
@@ -264,8 +262,7 @@ def transmission_setbacks(ctx):
                                  multiplier=multiplier,
                                  max_workers=max_workers, replace=replace,
                                  hsds=hsds)
-    logger.info('Setbacks computed and writen to {} as {}'
-                .format(excl_h5, out_dir))
+    logger.info('Setbacks computed and writen {}'.format(out_dir))
 
 
 @local.command()
@@ -301,8 +298,7 @@ def rail_setbacks(ctx):
                          rotor_diameter, regs_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
                          replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and writen to {} as {}'
-                .format(excl_h5, out_dir))
+    logger.info('Setbacks computed and writen {}'.format(out_dir))
 
 
 def run_local(ctx, config):
