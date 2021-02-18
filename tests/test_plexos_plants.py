@@ -20,9 +20,12 @@ def test_plant_builds():
     """
     Test to ensure plant buildouts align with baseline
     """
-    baseline = Plants.load(BASELINE)
-
     test = PlexosPlants(PLEXOS_TABLE, SC_TABLE, RES_META)
+
+    if not os.path.exists(BASELINE):
+        test.dump(out_fpath=BASELINE)
+    else:
+        baseline = Plants.load(BASELINE)
 
     msg = 'A different number of plants were built!'
     assert len(baseline) == len(test), msg
