@@ -7,6 +7,7 @@ from concurrent.futures import as_completed
 import fiona
 import geopandas as gpd
 import logging
+import numpy as np
 import os
 from rasterio import features
 import re
@@ -490,11 +491,12 @@ class BaseWindSetbacks(ABC):
         logger.debug('Generating setbacks exclusion array of shape {}'
                      .format(self.arr_shape))
         log_mem(logger)
-        arr = features.rasterize(shapes=shapes,
-                                 out_shape=self.arr_shape[1:],
-                                 fill=0,
-                                 transform=self.profile['transform'],
-                                 dtype='uint8')
+        arr = np.zeros(self.arr_shape[1:], dtype='uint8')
+        features.rasterize(shapes=shapes,
+                           out=arr,
+                           out_shape=self.arr_shape[1:],
+                           fill=0,
+                           transform=self.profile['transform'])
 
         return arr
 
