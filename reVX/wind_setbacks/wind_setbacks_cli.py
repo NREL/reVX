@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 STATE_SETBACKS = {'structure': StructureWindSetbacks,
                   'road': RoadWindSetbacks,
                   'rail': RailWindSetbacks,
-                  'tranmission': TransmissionWindSetbacks}
+                  'transmission': TransmissionWindSetbacks}
 
 
 @click.group()
