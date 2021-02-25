@@ -107,8 +107,8 @@ def test_hybrid_stats(max_workers, func):
 
     mask = (TIME_INDEX.month == 7) & (TIME_INDEX.hour == 18)
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
-    test = test_stats[f'2012-July-18:00UTC_{func}'].values
-    msg = 'July-18:00 correlations do not match!'
+    test = test_stats[f'2012-Jul-18:00UTC_{func}'].values
+    msg = 'Jul-18:00 correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
 
