@@ -220,6 +220,9 @@ class PlexosPlants(Plants):
         points_per_worker : int, optional
             Number of points to create on each worker, by default 400
         """
+
+        logger.info('Initializing PlexosPlants from plexos table with '
+                    '{} rows...'.format(len(plexos_table)))
         self._plant_table = self._parse_plant_table(plexos_table)
         self._capacity = self.plant_table['plant_capacity'].values
 
@@ -509,7 +512,7 @@ class PlexosPlants(Plants):
                                  .format((i + 1) * plants_per_worker,
                                          len(plant_table)))
         else:
-            logger.debug('Identifying plants in serial')
+            logger.info('Identifying plants in serial')
             for i, bus in plant_table.iterrows():
                 coords = \
                     bus[['latitude', 'longitude']].values.astype(float)
@@ -733,14 +736,36 @@ class PlantProfileAggregation:
         ----------
         plexos_table : str | pandas.DataFrame
             PLEXOS table of bus locations and capacity provided as a .csv,
-            .json, or pandas DataFrame
+            .json, or pandas DataFrame. Needs columns: latitude, longitude,
+            capacity
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
         cf_fpath : str
-            Path to reV generation output .h5 file
+            Path to reV Generation output .h5 file to pull CF profiles from
+        plants : PlexosPlants | None
+            Optional PlexosPlants input. If None, PlexosPlants object will
+            be Initialized from the plexos table input.
+        dist_percentile : int, optional
+            Percentile to use to compute distance threshold using sc_gid to
+            SubStation distance , by default 90
+        lcoe_col : str, optional
+            LCOE column to sort by, by default 'total_lcoe'
+        lcoe_thresh : float, optional
+            LCOE threshold multiplier, exclude sc_gids above threshold,
+            by default 1.3
+        max_workers : int, optional
+            Number of workers to use for point and plant creation, 1 == serial,
+            > 1 == parallel, None == parallel using all available cpus,
+            by default None
+        points_per_worker : int, optional
+            Number of points to create on each worker, by default 400
+        plants_per_worker : int, optional
+            Number of plants to identify on each worker, by default 40
         offshore : bool, optional
             Include offshore points, by default False
         """
+
+        logger.info('Initializing PlantProfileAggregation...')
         self._plexos_table = self._parse_plexos_table(plexos_table)
         self._cf_fpath = cf_fpath
         self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
@@ -870,6 +895,7 @@ class PlantProfileAggregation:
         plexos_table : pandas.DataFrame
             Parsed and clean PLEXOS table
         """
+        logger.info('Parsing plexos table...')
         plexos_table = parse_table(plexos_table)
         cols = ['generator', 'busid', 'busname', 'capacity', 'latitude',
                 'longitude', 'system']
@@ -926,6 +952,7 @@ class PlantProfileAggregation:
         cf_gid_map : dictionary
             Mapping of {res_gid: gen_gid}
         """
+        logger.info('Mapping reV resource GIDs to generation GIDs...')
         with Resource(cf_fpath) as f:
             res_gids = f.get_meta_arr('gid')
 
@@ -1135,7 +1162,8 @@ class PlantProfileAggregation:
         ----------
         plexos_table : str | pandas.DataFrame
             PLEXOS table of bus locations and capacity provided as a .csv,
-            .json, or pandas DataFrame
+            .json, or pandas DataFrame. Needs columns: latitude, longitude,
+            capacity
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
         cf_fpath : str
