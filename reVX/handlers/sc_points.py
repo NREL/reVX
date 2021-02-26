@@ -399,10 +399,10 @@ class SupplyCurvePoints:
         return self._mask
 
     @staticmethod
-    def _parse_res_meta(res_meta, offshore=False):
+    def _get_res_cf(res_meta, offshore=False):
         """
-        Extract resource meta data from .h5 file or pre-extracted .csv or
-        pandas DataFrame
+        Extract resource capactiy factor data from .h5 file or pre-extracted
+        .csv or pandas DataFrame
 
         Parameters
         ----------
@@ -414,8 +414,8 @@ class SupplyCurvePoints:
 
         Returns
         -------
-        res_meta : pandas.Series
-            Resource gid cf_mean values
+        res_cf : pandas.Series
+            Resource cf_mean values indexed by resource gid
         """
         if isinstance(res_meta, str) and res_meta.endswith('.h5'):
             with Resource(res_meta) as f:
@@ -452,7 +452,7 @@ class SupplyCurvePoints:
         sc_table : pandas.DataFrame
             Parsed and cleaned supply curve table
         """
-        logger.info('Parsing reV supply curve table...')
+        logger.info('Parsing reV supply curve table.')
         sc_table = parse_table(sc_table)
 
         if 'offshore' in sc_table:
@@ -523,6 +523,7 @@ class SupplyCurvePoints:
         sc_points : dict
             Dictionary of Points for all supply curve points in sc_table
         """
+
         if max_workers is None:
             max_workers = os.cpu_count()
 
@@ -557,6 +558,7 @@ class SupplyCurvePoints:
                     logger.debug('Completed {} out of {} Points'
                                  .format((i + 1) * points_per_worker,
                                          len(sc_table)))
+
         else:
             logger.info('Creating supply curve points in serial')
             for i, (sc_gid, sc_point) in enumerate(sc_table.iterrows()):
@@ -599,9 +601,9 @@ class SupplyCurvePoints:
         if 'sc_gid' in sc_table:
             sc_table = sc_table.set_index('sc_gid')
 
-        res_meta = cls._parse_res_meta(res_meta, offshore=offshore)
+        res_cf_means = cls._get_res_cf(res_meta, offshore=offshore)
         sc_points = cls._create_points(
-            sc_table, res_meta,
+            sc_table, res_cf_means,
             offshore=offshore,
             max_workers=max_workers,
             points_per_worker=points_per_worker)

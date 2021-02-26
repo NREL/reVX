@@ -222,7 +222,7 @@ class PlexosPlants(Plants):
         """
 
         logger.info('Initializing PlexosPlants from plexos table with '
-                    '{} rows...'.format(len(plexos_table)))
+                    '{} rows'.format(len(plexos_table)))
         self._plant_table = self._parse_plant_table(plexos_table)
         self._capacity = self.plant_table['plant_capacity'].values
 
@@ -765,7 +765,7 @@ class PlantProfileAggregation:
             Include offshore points, by default False
         """
 
-        logger.info('Initializing PlantProfileAggregation...')
+        logger.info('Initializing PlantProfileAggregation')
         self._plexos_table = self._parse_plexos_table(plexos_table)
         self._cf_fpath = cf_fpath
         self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
@@ -895,7 +895,7 @@ class PlantProfileAggregation:
         plexos_table : pandas.DataFrame
             Parsed and clean PLEXOS table
         """
-        logger.info('Parsing plexos table...')
+        logger.info('Parsing plexos table')
         plexos_table = parse_table(plexos_table)
         cols = ['generator', 'busid', 'busname', 'capacity', 'latitude',
                 'longitude', 'system']
@@ -952,7 +952,7 @@ class PlantProfileAggregation:
         cf_gid_map : dictionary
             Mapping of {res_gid: gen_gid}
         """
-        logger.info('Mapping reV resource GIDs to generation GIDs...')
+        logger.info('Mapping reV resource GIDs to generation GIDs.')
         with Resource(cf_fpath) as f:
             res_gids = f.get_meta_arr('gid')
 
