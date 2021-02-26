@@ -963,6 +963,17 @@ class PlantProfileAggregation:
 
         return cf_gid_map
 
+    @staticmethod
+    def _collapse_multi_list(multi_list):
+        """Collapse a list of lists into one list"""
+        if isinstance(multi_list, (pd.Series, pd.DataFrame)):
+            multi_list = multi_list.values.tolist()
+
+        if any(isinstance(x, (list, tuple)) for x in multi_list):
+            multi_list = [item for sublist in multi_list for item in sublist]
+
+        return multi_list
+
     def plants_meta(self):
         """
         Create plants meta data from filled plants DataFrames:
@@ -985,17 +996,18 @@ class PlantProfileAggregation:
         """
         plants_meta = []
         for pid, plant in self.plant_builds.items():
-            res_gids = plant['res_gids'].values.tolist()
-            plants_meta.append(pd.Series(
-                {'sc_gids': plant['sc_gid'].values.tolist(),
-                 'res_gids': res_gids,
-                 'gid_counts': plant['gid_counts'].values.tolist(),
-                 'gen_gids': [[self.cf_gid_map[gid] for gid in gids]
-                              for gids in res_gids],
-                 'res_cf_means': plant['cf_means'].values.tolist(),
-                 'build_capacity': plant['build_capacity'].values.tolist(),
-                 'cf_mean': np.hstack(plant['cf_means'].values).mean()},
-                name=pid))
+            single_meta = {
+                'sc_gids': plant['sc_gid'].values.tolist(),
+                'res_gids': plant['res_gids'].values.tolist(),
+                'gid_counts': plant['gid_counts'].values.tolist(),
+                'gen_gids': [[self.cf_gid_map[gid] for gid in gids]
+                             for gids in plant['res_gids'].values],
+                'res_cf_means': plant['cf_means'].values.tolist(),
+                'build_capacity': plant['build_capacity'].values.tolist()}
+            single_meta = {k: self._collapse_multi_list(v)
+                           for k, v in single_meta.items()}
+            single_meta['cf_mean'] = np.hstack(plant['cf_means'].values).mean()
+            plants_meta.append(pd.Series(single_meta, name=pid))
 
         plants_meta = pd.concat(plants_meta, axis=1).T
         plants_meta.index.name = 'plant_id'

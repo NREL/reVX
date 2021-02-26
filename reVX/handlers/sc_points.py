@@ -452,7 +452,7 @@ class SupplyCurvePoints:
         sc_table : pandas.DataFrame
             Parsed and cleaned supply curve table
         """
-        logger.info('Parsing reV supply curve table.')
+        logger.debug('Parsing reV supply curve table.')
         sc_table = parse_table(sc_table)
 
         if 'offshore' in sc_table:
@@ -555,12 +555,12 @@ class SupplyCurvePoints:
 
                 for i, future in enumerate(as_completed(futures)):
                     sc_points.update(future.result())
-                    logger.debug('Completed {} out of {} Points'
-                                 .format((i + 1) * points_per_worker,
-                                         len(sc_table)))
+                    logger.info('Completed {} out of {} Points'
+                                .format((i + 1) * points_per_worker,
+                                        len(sc_table)))
 
         else:
-            logger.info('Creating supply curve points in serial')
+            logger.debug('Creating supply curve points in serial')
             for i, (sc_gid, sc_point) in enumerate(sc_table.iterrows()):
                 sc_gid = int(sc_gid)
                 sc_points[sc_gid] = Point.create(sc_point, res_cf_means)
