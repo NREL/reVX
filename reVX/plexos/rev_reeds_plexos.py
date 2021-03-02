@@ -1157,7 +1157,7 @@ class Manager:
         return meta, time_index, profiles
 
     @classmethod
-    def _run_group(cls, df_group, cf_year, build_year):
+    def _run_group(cls, df_group, cf_year, build_year, plexos_columns=None):
         """Run a group of plexos node aggregations all belonging to the same
         final extent.
 
@@ -1170,6 +1170,9 @@ class Manager:
             cf_fpath).
         build_years : list | tuple
             REEDS years to run scenarios for.
+        plexos_columns : list | None
+            Additional columns from the plexos_nodes input to pass through
+            to the output meta data.
 
         Returns
         -------
@@ -1204,7 +1207,8 @@ class Manager:
                     warn('Specified CF year {} not present in ECMWF file '
                          'string: {}'.format(cf_year, forecast_fpath))
 
-            agg_kwargs = {'build_year': build_year}
+            agg_kwargs = {'build_year': build_year,
+                          'plexos_columns': plexos_columns}
             meta, ti, profiles = cls.main(plexos_nodes, rev_sc, reeds_build,
                                           cf_fpath, agg_kwargs=agg_kwargs,
                                           forecast_fpath=forecast_fpath)
@@ -1227,7 +1231,7 @@ class Manager:
 
     @classmethod
     def run(cls, job, out_dir, scenario=None, cf_year=2012,
-            build_years=(2024, 2050)):
+            build_years=(2024, 2050), plexos_columns=None):
         """Run plexos node aggregation for a job file input.
 
         Parameters
@@ -1246,6 +1250,9 @@ class Manager:
             cf_fpath).
         build_years : list | tuple | int
             REEDS years to run scenarios for.
+        plexos_columns : list | None
+            Additional columns from the plexos_nodes input to pass through
+            to the output meta data.
         """
 
         if isinstance(job, str):
@@ -1274,9 +1281,9 @@ class Manager:
                     for group, df_group in df_scenario.groupby('group'):
                         logger.info('Running group "{}"'.format(group))
 
-                        meta, time_index, profiles = cls._run_group(df_group,
-                                                                    cf_year,
-                                                                    build_year)
+                        meta, time_index, profiles = cls._run_group(
+                            df_group, cf_year, build_year,
+                            plexos_columns=plexos_columns)
 
                         logger.info('Saving result for group "{}" to file: {}'
                                     .format(group, out_fpath))
