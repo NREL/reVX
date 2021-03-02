@@ -34,11 +34,19 @@ logger = logging.getLogger(__name__)
               show_default=True,
               help='Optional list of additional columns to pass through from '
               'the plexos input table')
+@click.option('-ffb', '--force_full_build', is_flag=True,
+              help='Flag to ensure the full requested buildout is built at '
+              'each SC point. If True, the remainder of the requested build '
+              'will always be built at the last resource gid in the sc point.')
+@click.option('-fsm', '--force_shape_map', is_flag=True,
+              help='Flag to force the mapping of supply curve points to the '
+              'plexos node shape file input (if a shape file is input) via '
+              'nearest neighbor to shape centroid.')
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def main(ctx, name, job_input, out_dir, cf_years, build_years,
-         scenario, plexos_columns, verbose):
+         scenario, plexos_columns, force_full_build, force_shape_map, verbose):
     """reV-ReEDS-PLEXOS Command Line Interface"""
 
     ctx.ensure_object(dict)
@@ -49,6 +57,8 @@ def main(ctx, name, job_input, out_dir, cf_years, build_years,
     ctx.obj['BUILD_YEARS'] = build_years
     ctx.obj['SCENARIO'] = scenario
     ctx.obj['PLEXOS_COLUMNS'] = plexos_columns
+    ctx.obj['FORCE_FULL_BUILD'] = force_full_build
+    ctx.obj['FORCE_SHAPE_MAP'] = force_shape_map
     ctx.obj['VERBOSE'] = verbose
 
     if ctx.invoked_subcommand is None:
@@ -62,11 +72,14 @@ def main(ctx, name, job_input, out_dir, cf_years, build_years,
         for cf_year in cf_years:
             Manager.run(job_input, out_dir, scenario=scenario,
                         cf_year=cf_year, build_years=build_years,
-                        plexos_columns=plexos_columns)
+                        plexos_columns=plexos_columns,
+                        force_full_build=force_full_build,
+                        force_shape_map=force_shape_map)
 
 
 def get_node_cmd(name, job_input, out_dir, cf_year, build_year,
-                 scenario, plexos_columns, verbose):
+                 scenario, plexos_columns, force_full_build,
+                 force_shape_map, verbose):
     """Get a CLI call command for the plexos CLI."""
 
     args = ['-n {}'.format(SLURM.s(name)),
@@ -77,6 +90,12 @@ def get_node_cmd(name, job_input, out_dir, cf_year, build_year,
             '-s {}'.format(SLURM.s(scenario)),
             '-pc {}'.format(SLURM.s(plexos_columns)),
             ]
+
+    if force_full_build:
+        args.append('-ffb')
+
+    if force_shape_map:
+        args.append('-fsm')
 
     if verbose:
         args.append('-v')
@@ -112,6 +131,8 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
     build_years = ctx.obj['BUILD_YEARS']
     scenario = ctx.obj['SCENARIO']
     plexos_columns = ctx.obj['PLEXOS_COLUMNS']
+    force_full_build = ctx.obj['FORCE_FULL_BUILD']
+    force_shape_map = ctx.obj['FORCE_SHAPE_MAP']
     verbose = ctx.obj['VERBOSE']
 
     if stdout_path is None:
@@ -136,7 +157,7 @@ def eagle(ctx, alloc, memory, walltime, feature, stdout_path):
                                      build_year, cf_year))
                 cmd = get_node_cmd(node_name, job_input, out_dir, cf_year,
                                    build_year, scenario, plexos_columns,
-                                   verbose)
+                                   force_full_build, force_shape_map, verbose)
 
                 logger.info('Running reVX plexos aggregation on Eagle with '
                             'node name "{}"'.format(node_name))

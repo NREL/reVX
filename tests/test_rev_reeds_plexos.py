@@ -73,6 +73,25 @@ def test_plexos_agg():
     assert np.allclose(baseline_profiles.values, profiles)
 
 
+def test_bad_build_capacity():
+    """Test that the PlexosAggregation code raises an error if it can't
+    build the full requested capacity."""
+
+    build_year = 2050
+    reeds_1 = pd.read_csv(REEDS_1)
+    reeds_1 = reeds_1[reeds_1.year == build_year]
+    reeds_1['capacity_reV'] *= 1.5
+
+    with pytest.raises(RuntimeError):
+        PlexosAggregation.run(
+            PLEXOS_NODES, REV_SC, reeds_1, CF_FPATH.format(2007),
+            build_year=build_year, max_workers=1)
+
+    PlexosAggregation.run(
+        PLEXOS_NODES, REV_SC, REEDS_1, CF_FPATH.format(2007),
+        build_year=build_year, force_full_build=True)
+
+
 def test_missing_gids():
     """Test that buildouts with missing resource gids are allocated correctly.
     """
@@ -89,7 +108,8 @@ def test_missing_gids():
     reeds = reeds.append(missing_test, ignore_index=False)
     icap = reeds['capacity_reV'].sum()
 
-    pa = PlexosAggregation(PLEXOS_NODES, rev_sc, reeds, CF_FPATH.format(2007))
+    pa = PlexosAggregation(PLEXOS_NODES, rev_sc, reeds, CF_FPATH.format(2007),
+                           force_full_build=True)
     new_cap = pa._sc_build['built_capacity'].sum()
 
     assert icap == new_cap
@@ -118,7 +138,8 @@ def test_cli(runner):
         result = runner.invoke(main, ['-j', job_path,
                                       '-o', td,
                                       '-y', '[2007]',
-                                      '-by', '[2050]'])
+                                      '-by', '[2050]',
+                                      '-ffb', '-fsm'])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
@@ -188,6 +209,35 @@ def test_shape_agg(plot_buildout=False):
         plt.ylim(36, 42)
         plt.savefig('test_rev_reeds_plexos_shape.png')
         plt.close()
+
+
+def test_sc_point_out_of_shape():
+    """Test the case where sc buildouts are outside of the given plexos
+    shape file"""
+    build_year = 2050
+    reeds_0 = pd.read_csv(REEDS_0)
+    reeds_0 = reeds_0[reeds_0.year == build_year]
+
+    rev_sc = pd.read_csv(REV_SC)
+    gid = 98817
+    assert gid in rev_sc.gid.values
+    assert gid in reeds_0.gid.values
+
+    mask = rev_sc.gid.values == gid
+    assert mask.sum() > 0
+    rev_sc.loc[mask, 'lon'] = 180
+    rev_sc.loc[mask, 'lat'] = -180
+
+    with pytest.raises(RuntimeError):
+        PlexosAggregation.run(
+            PLEXOS_SHAPES, rev_sc, reeds_0, CF_FPATH.format(2007),
+            build_year=2050, plexos_columns=('PCA',),
+            max_workers=None)
+
+    PlexosAggregation.run(
+        PLEXOS_SHAPES, rev_sc, reeds_0, CF_FPATH.format(2007),
+        build_year=2050, plexos_columns=('PCA',),
+        max_workers=None, force_shape_map=True)
 
 
 def execute_pytest(capture='all', flags='-rapP'):

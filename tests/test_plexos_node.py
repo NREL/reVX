@@ -51,18 +51,18 @@ def get_cf_attrs(cf_fpath):
     """Get the time index and available resource gids from a cf file"""
     with Resource(cf_fpath) as res:
         time_index = res.time_index
-        cf_res_gids = res.get_meta_arr('gid')
+        res_gids = res.get_meta_arr('gid')
 
-    return time_index, cf_res_gids
+    return time_index, res_gids
 
 
 def test_plexos_node_build(sc_build, cf_fpath):
     """Test that a plexos node buildout has consistent results."""
-    time_index, cf_res_gids = get_cf_attrs(cf_fpath)
+    time_index, res_gids = get_cf_attrs(cf_fpath)
     sc_build = sc_build.iloc[0:5]
-    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids=cf_res_gids)
+    x = PlexosNode.run(sc_build, cf_fpath, res_gids=res_gids)
 
-    profile, res_gids, gen_gids, res_built = x
+    profile, _, res_gids, gen_gids, res_built = x
 
     assert len(profile) == len(time_index)
     assert len(res_gids) == len(gen_gids)
@@ -77,11 +77,11 @@ def test_plexos_node_build(sc_build, cf_fpath):
 
 def test_plexos_node_profile(sc_build, cf_fpath):
     """Test that a plexos node buildout profile matches source data"""
-    _, cf_res_gids = get_cf_attrs(cf_fpath)
+    _, res_gids = get_cf_attrs(cf_fpath)
     sc_build = sc_build.iloc[100:102]
-    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids=cf_res_gids)
+    x = PlexosNode.run(sc_build, cf_fpath, res_gids=res_gids)
 
-    profile, _, gen_gids, res_built = x
+    profile, _, _, gen_gids, res_built = x
 
     with Resource(cf_fpath) as res:
         arr = res['cf_profile', :, gen_gids]
@@ -96,9 +96,9 @@ def test_plexos_node_profile(sc_build, cf_fpath):
 def test_plexos_node_gid_extraction(sc_build, cf_fpath):
     """Test that a plexos node buildout profile matches source data"""
     sc_build = sc_build.iloc[100:102]
-    x = PlexosNode.run(sc_build, cf_fpath, cf_res_gids=None)
+    x = PlexosNode.run(sc_build, cf_fpath, res_gids=None)
 
-    profile, _, gen_gids, res_built = x
+    profile, _, _, gen_gids, res_built = x
 
     with Resource(cf_fpath) as res:
         arr = res['cf_profile', :, gen_gids]

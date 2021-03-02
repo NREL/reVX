@@ -4,6 +4,7 @@ Created on Wed Aug 21 13:47:43 2019
 
 @author: gbuster
 """
+import copy
 from concurrent.futures import as_completed
 import json
 import logging
@@ -27,14 +28,17 @@ logger = logging.getLogger(__name__)
 
 
 class PlexosNode:
-    """Framework to build the gen profile at a single plexos node. The plexos
+    """Framework to build a gen profile at a single plexos node. The plexos
     node is defined as a power bus or some sort of plant that is intended to
     represent the aggregated power generation profile from one or more reV
-    supply curve points that were mapped to the plexos node. Resource within
-    each supply curve point is built in order of cf_mean"""
+    supply curve points that were mapped to the plexos node. Built capacity
+    needs to be defined for each supply curve point that contributes to this
+    node. Resource within each supply curve point is built in order of cf_mean.
+    """
 
     def __init__(self, sc_build, cf_fpath, res_gids=None,
-                 forecast_fpath=None, forecast_map=None):
+                 force_full_build=False, forecast_fpath=None,
+                 forecast_map=None):
         """
         Parameters
         ----------
@@ -47,6 +51,10 @@ class PlexosNode:
         res_gids : list | np.ndarray, optional
             Resource GID's available in cf_fpath, if None pull from cf_fpath,
             by default None
+        force_full_build : bool
+            Flag to ensure the full requested buildout is built at each SC
+            point. If True, the remainder of the requested build will always
+            be built at the last resource gid in the sc point.
         forecast_fpath : str | None, optional
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file,
@@ -67,6 +75,7 @@ class PlexosNode:
         self._res_gids = res_gids
         self._forecast_fpath = forecast_fpath
         self._forecast_map = forecast_map
+        self._force_full_build = force_full_build
 
     @staticmethod
     def _get_res_gids(cf_fpath):
@@ -133,7 +142,8 @@ class PlexosNode:
         sc_meta = sc_meta.reset_index(drop=True)
 
         # infinite capacity in the last gid to make sure full buildout is done
-        sc_meta.loc[sc_meta.index[-1], 'gid_capacity'] = 1e6
+        if self._force_full_build:
+            sc_meta.loc[sc_meta.index[-1], 'gid_capacity'] = 1e6
 
         return sc_gid, sc_meta, buildout
 
@@ -203,6 +213,7 @@ class PlexosNode:
         """
         sc_gid, sc_meta, buildout = self._get_sc_point_meta(row_idx)
 
+        full_buildout = copy.deepcopy(buildout)
         sc_gids = [sc_gid]
         res_gids = []
         gen_gids = []
@@ -238,6 +249,14 @@ class PlexosNode:
 
             if buildout <= 0:
                 break
+
+        if buildout > 1e-6:
+            msg = ('PlexosNode wasnt able to build out fully for supply '
+                   'curve gid {}. {:.4e} MW of capacity remain to be built '
+                   'out of {:.4f} MW requested.'
+                   .format(sc_gid, buildout, full_buildout))
+            logger.error(msg)
+            raise RuntimeError(msg)
 
         if len(profile.shape) != 1:
             profile = profile.flatten()
@@ -280,8 +299,8 @@ class PlexosNode:
         return profile, sc_gids, res_gids, gen_gids, res_built
 
     @classmethod
-    def run(cls, sc_build, cf_fpath, res_gids=None, forecast_fpath=None,
-            forecast_map=None):
+    def run(cls, sc_build, cf_fpath, res_gids=None, force_full_build=False,
+            forecast_fpath=None, forecast_map=None):
         """Make an aggregated generation profile for a single plexos node.
 
         Parameters
@@ -295,6 +314,10 @@ class PlexosNode:
         res_gids : list | np.ndarray, optional
             Resource GID's available in cf_fpath, if None pull from cf_fpath,
             by default None
+        force_full_build : bool
+            Flag to ensure the full requested buildout is built at each SC
+            point. If True, the remainder of the requested build will always
+            be built at the last resource gid in the sc point.
         forecast_fpath : str | None, optional
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file,
@@ -319,7 +342,9 @@ class PlexosNode:
             List of built capacities at each resource GID for this plexos node.
         """
         n = cls(sc_build, cf_fpath, res_gids=res_gids,
-                forecast_fpath=forecast_fpath, forecast_map=forecast_map)
+                force_full_build=force_full_build,
+                forecast_fpath=forecast_fpath,
+                forecast_map=forecast_map)
 
         profile, sc_gids, res_gids, gen_gids, res_built = n.make_node_profile()
 
@@ -340,6 +365,7 @@ class PlexosAggregation:
 
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
+                 force_full_build=False, force_shape_map=False,
                  max_workers=None):
         """
         Parameters
@@ -363,6 +389,14 @@ class PlexosAggregation:
         plexos_columns : list | None
             Additional columns from the plexos_nodes input to pass through
             to the output meta data.
+        force_full_build : bool
+            Flag to ensure the full requested buildout is built at each SC
+            point. If True, the remainder of the requested build will always
+            be built at the last resource gid in the sc point.
+        force_shape_map : bool
+            Flag to force the mapping of supply curve points to the plexos
+            node shape file input (if a shape file is input) via nearest
+            neighbor to shape centroid.
         max_workers : int | None
             Do node aggregation on max_workers.
         """
@@ -373,6 +407,8 @@ class PlexosAggregation:
         self._res_gids = None
         self._plexos_meta = None
         self._time_index = None
+        self._force_full_build = force_full_build
+        self._force_shape_map = force_shape_map
         self.max_workers = max_workers
 
         if plexos_columns is None:
@@ -655,9 +691,14 @@ class PlexosAggregation:
         check_isin = np.isin(reeds_build[join_on].values,
                              rev_sc[join_on].values)
         if not all(check_isin):
+            missing_cap = reeds_build.loc[check_isin, 'built_capacity']
+            missing_cap = missing_cap.values.sum()
+            total_cap = reeds_build['built_capacity'].values.sum()
             wmsg = ('There are REEDS buildout GIDs that are not in the reV '
                     'supply curve table: {} out of {} total REEDS buildout '
-                    'sites.'.format(np.sum(~check_isin), len(reeds_build)))
+                    'sites which is {:.2f} MW missing out of {:.2f} MW total.'
+                    .format(np.sum(~check_isin), len(reeds_build),
+                            missing_cap, total_cap))
             warn(wmsg)
             logger.warning(wmsg)
 
@@ -819,8 +860,17 @@ class PlexosAggregation:
 
         if isinstance(self._plexos_nodes, GeoDataFrame):
             temp = RegionClassifier.run(self.sc_build, self._plexos_nodes,
-                                        regions_label='plexos_id', force=False)
+                                        regions_label='plexos_id',
+                                        force=self._force_shape_map)
             plx_node_index = temp['plexos_id'].values.astype(int)
+            if any(plx_node_index < 0):
+                msg = ('Could not find a matching shape for {} supply curve '
+                       'points: \n{}'
+                       .format((plx_node_index < 0).sum(),
+                               self.sc_build[(plx_node_index < 0)]))
+                logger.error(msg)
+                raise RuntimeError(msg)
+
         else:
             plexos_coord_labels = get_coord_labels(self._plexos_nodes)
             sc_coord_labels = get_coord_labels(self.sc_build)
@@ -914,7 +964,8 @@ class PlexosAggregation:
                                self.sc_build[mask], self._cf_fpath,
                                res_gids=self.available_res_gids,
                                forecast_fpath=self._forecast_fpath,
-                               forecast_map=self._forecast_map)
+                               forecast_map=self._forecast_map,
+                               force_full_build=self._force_full_build)
                 futures[f] = i
 
             for n, f in enumerate(as_completed(futures)):
@@ -949,7 +1000,8 @@ class PlexosAggregation:
                 self.sc_build[mask], self._cf_fpath,
                 res_gids=self.available_res_gids,
                 forecast_fpath=self._forecast_fpath,
-                forecast_map=self._forecast_map)
+                forecast_map=self._forecast_map,
+                force_full_build=self._force_full_build)
 
             profile, sc_gids, res_gids, gen_gids, res_built = p
             profiles[:, i] = profile
@@ -967,7 +1019,7 @@ class PlexosAggregation:
     @classmethod
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
             forecast_fpath=None, build_year=2050, plexos_columns=None,
-            max_workers=None):
+            force_full_build=False, force_shape_map=False, max_workers=None):
         """Run plexos aggregation.
 
         Parameters
@@ -989,6 +1041,14 @@ class PlexosAggregation:
         plexos_columns : list | None
             Additional columns from the plexos_nodes input to pass through
             to the output meta data.
+        force_full_build : bool
+            Flag to ensure the full requested buildout is built at each SC
+            point. If True, the remainder of the requested build will always
+            be built at the last resource gid in the sc point.
+        force_shape_map : bool
+            Flag to force the mapping of supply curve points to the plexos
+            node shape file input (if a shape file is input) via nearest
+            neighbor to shape centroid.
         max_workers : int | None
             Do node aggregation on max_workers.
 
@@ -1003,8 +1063,12 @@ class PlexosAggregation:
         """
 
         pa = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 forecast_fpath=forecast_fpath, build_year=build_year,
-                 plexos_columns=plexos_columns, max_workers=max_workers)
+                 forecast_fpath=forecast_fpath,
+                 build_year=build_year,
+                 plexos_columns=plexos_columns,
+                 force_full_build=force_full_build,
+                 force_shape_map=force_shape_map,
+                 max_workers=max_workers)
 
         profiles = pa._make_profiles()
 
@@ -1157,7 +1221,8 @@ class Manager:
         return meta, time_index, profiles
 
     @classmethod
-    def _run_group(cls, df_group, cf_year, build_year, plexos_columns=None):
+    def _run_group(cls, df_group, cf_year, build_year, plexos_columns=None,
+                   force_full_build=False, force_shape_map=False):
         """Run a group of plexos node aggregations all belonging to the same
         final extent.
 
@@ -1173,6 +1238,14 @@ class Manager:
         plexos_columns : list | None
             Additional columns from the plexos_nodes input to pass through
             to the output meta data.
+        force_full_build : bool
+            Flag to ensure the full requested buildout is built at each SC
+            point. If True, the remainder of the requested build will always
+            be built at the last resource gid in the sc point.
+        force_shape_map : bool
+            Flag to force the mapping of supply curve points to the plexos
+            node shape file input (if a shape file is input) via nearest
+            neighbor to shape centroid.
 
         Returns
         -------
@@ -1208,7 +1281,9 @@ class Manager:
                          'string: {}'.format(cf_year, forecast_fpath))
 
             agg_kwargs = {'build_year': build_year,
-                          'plexos_columns': plexos_columns}
+                          'plexos_columns': plexos_columns,
+                          'force_full_build': force_full_build,
+                          'force_shape_map': force_shape_map}
             meta, ti, profiles = cls.main(plexos_nodes, rev_sc, reeds_build,
                                           cf_fpath, agg_kwargs=agg_kwargs,
                                           forecast_fpath=forecast_fpath)
@@ -1231,7 +1306,8 @@ class Manager:
 
     @classmethod
     def run(cls, job, out_dir, scenario=None, cf_year=2012,
-            build_years=(2024, 2050), plexos_columns=None):
+            build_years=(2024, 2050), plexos_columns=None,
+            force_full_build=False, force_shape_map=False):
         """Run plexos node aggregation for a job file input.
 
         Parameters
@@ -1253,6 +1329,14 @@ class Manager:
         plexos_columns : list | None
             Additional columns from the plexos_nodes input to pass through
             to the output meta data.
+        force_full_build : bool
+            Flag to ensure the full requested buildout is built at each SC
+            point. If True, the remainder of the requested build will always
+            be built at the last resource gid in the sc point.
+        force_shape_map : bool
+            Flag to force the mapping of supply curve points to the plexos
+            node shape file input (if a shape file is input) via nearest
+            neighbor to shape centroid.
         """
 
         if isinstance(job, str):
@@ -1283,7 +1367,9 @@ class Manager:
 
                         meta, time_index, profiles = cls._run_group(
                             df_group, cf_year, build_year,
-                            plexos_columns=plexos_columns)
+                            plexos_columns=plexos_columns,
+                            force_full_build=force_full_build,
+                            force_shape_map=force_shape_map)
 
                         logger.info('Saving result for group "{}" to file: {}'
                                     .format(group, out_fpath))
