@@ -25,7 +25,7 @@ class DistanceToPorts:
     """
     Compute the distance to port in km
     """
-    def __init__(self, ports, excl_h5, layer='dist_to_shore'):
+    def __init__(self, ports, excl_h5, layer='dist_to_coast'):
         """
         Parameters
         ----------
@@ -33,10 +33,10 @@ class DistanceToPorts:
             Path to shape file containing ports to compute least cost distance
             to
         excl_h5: str
-            Path to exclusions .h5 file with distance to shore layer
+            Path to exclusions .h5 file with distance to coast layer
         layer : str, optional
-            Exclusions layer name with distance to shore,
-            by default 'dist_to_shore'
+            Exclusions layer name with distance to coast,
+            by default 'dist_to_coast'
         """
         self._excl_h5 = excl_h5
         self._arr, self._profile, lat_lon = self._parse_arr(excl_h5,
@@ -69,16 +69,16 @@ class DistanceToPorts:
     @staticmethod
     def _build_lat_lon(lat, lon):
         """
-        Build lat_lon table from distance to shore latitudes and longitudes
+        Build lat_lon table from distance to coast latitudes and longitudes
         table contains mapping of (lat, lon) to array (row, col) and whether
         the pixel is offshore or not
 
         Parameters
         ----------
         lat : ndarray
-            2d latitude array for distance to shore layer
+            2d latitude array for distance to coast layer
         lon : ndarray
-            2d longitude array for distance to shore layer
+            2d longitude array for distance to coast layer
 
         Returns
         -------
@@ -95,17 +95,17 @@ class DistanceToPorts:
         return lat_lon
 
     @classmethod
-    def _parse_arr(cls, excl_h5, layer='dist_to_shore'):
+    def _parse_arr(cls, excl_h5, layer='dist_to_coast'):
         """
-        Parse offshore array from distance to shore layer
+        Parse offshore array from distance to coast layer
 
         Parameters
         ----------
         excl_h5: str
-            Path to exclusions .h5 file with distance to shore layer
+            Path to exclusions .h5 file with distance to coast layer
         layer : str, optional
-            Exclusions layer name with distance to shore,
-            by default 'dist_to_shore'
+            Exclusions layer name with distance to coast values,
+            by default 'dist_to_coast'
 
         Returns
         -------
@@ -334,10 +334,12 @@ class DistanceToPorts:
                                          description=description)
 
     @classmethod
-    def run(cls, ports, excl_h5, cost_layer='dist_to_shore', dist_layer=None,
+    def run(cls, ports, excl_h5, cost_layer='dist_to_coast', dist_layer=None,
             chunks=(128, 128), max_workers=None, update=True):
         """
-        Compute the least cost distance to the nearest ports in km
+        Compute the least cost distance to the nearest ports in km, either
+        write as a new layer in the exclusion .h5 file or update an existing
+        layer
 
         Parameters
         ----------
@@ -345,17 +347,16 @@ class DistanceToPorts:
             Path to shape file containing ports to compute least cost distance
             to
         excl_h5: str
-            Path to exclusions .h5 file with distance to shore layer. Will also
+            Path to exclusions .h5 file with distance to coast layer. Will also
             be the file into which the least cost distance to port is saved.
         cost_layer : str, optional
-            Exclusions layer with distance to shore. Only used if
-            'dist_to_shore' is a .h5 exclusions file path,
-            by default 'dist_to_shore'
+            Exclusions layer with distance to coast values,
+            by default 'dist_to_coast'
         dist_layer : str, optional
             Exclusion layer under which the distance to ports layer should be
             saved, if None use the ports file-name, by default None
-        chunks : tuple
-            Chunk size of dataset in .h5 file
+        chunks : tuple, optional
+            Chunk size of dataset in .h5 file, by default (128, 128)
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
@@ -380,7 +381,7 @@ class DistanceToPorts:
         if update:
             hsds = check_res_file(excl_h5)[1]
             with ExclusionLayers(excl_h5, hsds=hsds) as tif:
-                if dist_layer in tif:
+                if dist_layer in tif.layers:
                     dist_to_ports = tif[dist_layer]
 
         if dist_to_ports is not None:

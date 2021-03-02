@@ -25,7 +25,6 @@ ROTOR_DIAMETER = 200
 MULTIPLIER = 3
 REGS_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
 REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
-CONFIG = os.path.join(TESTDATADIR, 'setbacks', 'config.json')
 
 
 @pytest.fixture(scope="module")

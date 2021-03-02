@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-reVX MeanWindDirections Configuration
+reVX DistToPorts Configuration
 """
 
 from reV.config.base_analysis_config import AnalysisConfig
 
 
-class MeanWindDirsConfig(AnalysisConfig):
-    """Config framework for mean wind direction calculation"""
+class DistToPortsConfig(AnalysisConfig):
+    """Config framework for distance to port calculation"""
 
     NAME = 'meanWindDirs'
-    REQUIREMENTS = ('res_h5_fpath', 'excl_fpath', 'wdir_dsets')
+    REQUIREMENTS = ('ports_fpath', 'excl_fpath')
 
     def __init__(self, config):
         """
@@ -20,15 +20,16 @@ class MeanWindDirsConfig(AnalysisConfig):
             Dictionary with pre-extracted config input group.
         """
         super().__init__(config)
-        self._default_tm_dset = 'techmap_wtk'
-        self._default_resolution = 128
-        self._default_chunk_point_len = 1000
-        self._default_area_filter_kernel = 'queen'
+        self._default_cost_layer = 'dist_to_coast'
+        self._default_update = True
 
     @property
-    def res_h5_fpath(self):
-        """Get the resource .h5 file path (required)."""
-        return self['res_h5_fpath']
+    def ports_fpath(self):
+        """
+        Path to shape file containing ports to compute least cost distance
+        to (required).
+        """
+        return self['ports_fpath']
 
     @property
     def excl_fpath(self):
@@ -36,51 +37,35 @@ class MeanWindDirsConfig(AnalysisConfig):
         return self['excl_fpath']
 
     @property
-    def wdir_dsets(self):
-        """Get the  dataset name."""
-        return self['wdir_dsets']
+    def cost_layer(self):
+        """
+        Exclusions layer with distance to shore. Only used if
+        'dist_to_coast' is a .h5 exclusions file path.
+        """
+        return self.get('cost_layer', self._default_cost_layer)
 
     @property
-    def tm_dset(self):
-        """Get the techmap dataset name."""
-        return self.get('tm_dset', self._default_tm_dset)
-
-    @property
-    def excl_dict(self):
-        """Get the exclusions dictionary"""
-        return self.get('excl_dict', None)
-
-    @property
-    def resolution(self):
-        """Get the supply curve resolution."""
-        return self.get('resolution', self._default_resolution)
-
-    @property
-    def excl_area(self):
-        """Get the exclusion pixel area in km2"""
-        return self.get('excl_area', None)
-
-    @property
-    def area_filter_kernel(self):
-        """Get the minimum area filter kernel name ('queen' or 'rook')."""
-        return self.get('area_filter_kernel', self._default_area_filter_kernel)
-
-    @property
-    def min_area(self):
-        """Get the minimum area filter minimum area in km2."""
-        return self.get('min_area', None)
-
-    @property
-    def check_excl_layers(self):
-        """Get the check_excl_layers flag."""
-        return self.get('check_excl_layers', False)
+    def dist_layer(self):
+        """
+        Exclusion layer under which the distance to ports layer should be
+        saved, if None use the ports file-name
+        """
+        return self.get('dist_layer', None)
 
     @property
     def max_workers(self):
-        """Get the maximum number of workers."""
+        """
+        Number of workers to use for setback computation, if 1 run in
+        serial, if > 1 run in parallel with that many workers, if None
+        run in parallel on all available cores
+        """
         return self.get('max_workers', None)
 
     @property
-    def chunk_point_len(self):
-        """Get the chunk length for parallel computation."""
-        return self.get('chunk_point_len', self._default_chunk_point_len)
+    def update(self):
+        """
+        Flag to check for an existing distance to port layer and update it
+        with new least cost distances to new ports, if None compute the
+        least cost distance from scratch
+        """
+        return self.get('update', self._default_update)
