@@ -3,6 +3,7 @@
 """
 from click.testing import CliRunner
 import numpy as np
+import json
 import os
 import pandas as pd
 from pandas.testing import assert_frame_equal
@@ -22,13 +23,16 @@ REV_SC = os.path.join(
     TESTDATADIR,
     'reV_sc/wtk_coe_2017_cem_v3_wind_conus_multiyear_colorado.csv')
 
-REEDS_0 = os.path.join(TESTDATADIR, 'reeds/BAU_wtk_coe_2017_cem_v3_wind_conus_'
+REEDS_0 = os.path.join(TESTDATADIR, 'reeds/',
+                       'BAU_wtk_coe_2017_cem_v3_wind_conus_'
                        'multiyear_US_wind_reeds_to_rev.csv')
 REEDS_1 = os.path.join(TESTDATADIR, 'plexos/reeds_build.csv')
 
 CF_FPATH = os.path.join(TESTDATADIR,
                         'reV_gen/naris_rev_wtk_gen_colorado_{}.h5')
 PLEXOS_NODES = os.path.join(TESTDATADIR, 'plexos/plexos_nodes.csv')
+PLEXOS_SHAPES = os.path.join(TESTDATADIR, 'reeds_pca_regions_test/',
+                             'NA_PCA_Map.shp')
 BASELINE = os.path.join(TESTDATADIR, 'plexos/rev_reeds_plexos.h5')
 
 
@@ -131,13 +135,59 @@ def test_cli(runner):
 
                 truth = f_true['meta']
                 test = f_test['meta']
-                assert_frame_equal(truth, test)
+                cols = [c for c in test.columns if c in truth
+                        if c not in ('voltage', )]
+                print(cols)
+                print(truth[cols])
+                print(test[cols])
+                assert_frame_equal(truth[cols], test[cols])
 
-                truth = f_true['time_index']
-                test = f_test['time_index']
-                assert truth.equals(test)
+                truth = f_true['time_index'].values
+                test = f_test['time_index'].values
+                print((truth == test).sum())
+                assert (truth == test).all()
 
     LOGGERS.clear()
+
+
+def test_shape_agg(plot_buildout=False):
+    """Test the rev_reeds_plexos pipeline aggregating to plexos nodes
+    defined by shape."""
+
+    plexos_meta, _, profiles = PlexosAggregation.run(
+        PLEXOS_SHAPES, REV_SC, REEDS_0, CF_FPATH.format(2007),
+        build_year=2050, plexos_columns=('PCA',),
+        max_workers=None)
+
+    assert len(plexos_meta) == profiles.shape[1]
+    assert 'PCA' in plexos_meta
+    assert 'geometry' in plexos_meta
+    assert 'plexos_id' in plexos_meta
+    assert (plexos_meta['PCA'].isin(('p33', 'p34'))).all()
+
+    if plot_buildout:
+        import geopandas as gpd
+        import matplotlib.pyplot as plt
+
+        df = pd.read_csv(REV_SC)
+        gdf = gpd.GeoDataFrame.from_file(PLEXOS_SHAPES)
+        gdf = gdf.to_crs({'init': 'epsg:4326'})
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+
+        for _, row in plexos_meta.iterrows():
+            sc_gids = json.loads(row['sc_gids'])
+            mask = df['gid'].isin(sc_gids)
+            plt.scatter(df.loc[mask, 'lon'], df.loc[mask, 'lat'], marker='x')
+
+        gdf.geometry.boundary.plot(ax=ax, color=None,
+                                   edgecolor='k',
+                                   linewidth=1)
+        plt.xlim(-110, -100)
+        plt.ylim(36, 42)
+        plt.savefig('test_rev_reeds_plexos_shape.png')
+        plt.close()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

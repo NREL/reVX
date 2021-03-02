@@ -104,7 +104,8 @@ class DataCleaner:
                     'resource_ids_cnts': 'gid_counts'}
 
     PLEXOS_META_COLS = ('sc_gid', 'plexos_id', 'latitude', 'longitude',
-                        'voltage', 'interconnect', 'built_capacity')
+                        'voltage', 'interconnect', 'built_capacity',
+                        'geometry')
 
     def __init__(self, plexos_meta, profiles, name_map=None):
         """
@@ -132,7 +133,8 @@ class DataCleaner:
         df : pd.DataFrame
             Input df with bad or inconsistent column names.
         name_map : dictionary, optional
-            Column rename mapping, by default None -> {'gid': 'sc_gid'}
+            Column rename mapping, by default None -> {'lat': 'latitude',
+            'lon': 'longitude'}
 
         Parameters
         ----------
@@ -140,7 +142,7 @@ class DataCleaner:
             Same as inputs but with better col names.
         """
         if name_map is None:
-            name_map = {'gid': 'sc_gid'}
+            name_map = {'lat': 'latitude', 'lon': 'longitude'}
 
         df = df.rename(columns=name_map)
         return df
@@ -191,10 +193,15 @@ class DataCleaner:
 
         # Several plexos nodes share the same location. As of 8/2019
         # Josh Novacheck suggests that the duplicate locations can be dropped.
-        plexos_meta = plexos_meta.sort_values(by='voltage', ascending=False)
+        if 'voltage' in plexos_meta:
+            plexos_meta = plexos_meta.sort_values(by='voltage',
+                                                  ascending=False)
+
         plexos_meta = plexos_meta.drop_duplicates(
             subset=['latitude', 'longitude'], keep='first')
-        plexos_meta = plexos_meta.sort_values(by='sc_gid')
+
+        if 'gid' in plexos_meta:
+            plexos_meta = plexos_meta.sort_values(by='gid')
 
         return plexos_meta
 

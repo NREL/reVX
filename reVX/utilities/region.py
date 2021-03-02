@@ -38,22 +38,25 @@ class RegionClassifier():
     CRS = "EPSG:4326"
     DEFAULT_REGIONS_LABEL = 'regions_index'
 
-    def __init__(self, meta_path, regions_path, regions_label=None):
+    def __init__(self, meta_path, regions, regions_label=None):
         """
         Parameters
         ----------
         meta_path : str | pandas.DataFrame
             Path to meta CSV file, resource .h5 file, or pre-loaded meta
             DataFrame containing lat/lon points
-        regions_path : str
-            Path to regions shapefile containing labeled geometries
+        regions : str | GeoDataFrame
+            Path to regions shapefile containing labeled geometries or
+            a pre-loaded GeoDataFrame
         regions_label : str
             Attribute to use as label in the regions shapefile
         """
         self._regions_label = regions_label
+        if self._regions_label is None:
+            self._regions_label = self.DEFAULT_REGIONS_LABEL
 
         self._meta = self._get_meta(meta_path)
-        self._regions = self._get_regions(regions_path, regions_label)
+        self._regions = self._get_regions(regions, self._regions_label)
 
     @staticmethod
     def output_to_csv(gdf, path):
@@ -73,25 +76,29 @@ class RegionClassifier():
         output_gdf.to_csv(path, index=False)
 
     @classmethod
-    def _get_regions(cls, regions_path, regions_label):
+    def _get_regions(cls, regions, regions_label):
         """ Load the regions shapefile into geopandas dataframe
 
         Parameters
         ----------
-        regions_path : str
-            Path to regions shapefile containing labeled geometries
+        regions : str | GeoDataFrame
+            Path to regions shapefile containing labeled geometries or
+            a pre-loaded GeoDataFrame
         regions_label : str
             Attribute to use as label in the regions shapefile
         """
-        regions = gpd.read_file(regions_path).to_crs(cls.CRS)
-        if regions_label not in regions.columns:
-            regions_label = cls.DEFAULT_REGIONS_LABEL
-            regions[regions_label] = regions.index
-            logger.warning('Setting regions label: {}'.format(regions_label))
+
+        if not isinstance(regions, gpd.GeoDataFrame):
+            regions = gpd.read_file(regions).to_crs(cls.CRS)
+            if regions_label not in regions.columns:
+                regions_label = cls.DEFAULT_REGIONS_LABEL
+                regions[regions_label] = regions.index
+                logger.warning('Setting regions label: {}'
+                               .format(regions_label))
 
         centroids = regions.geometry.centroid
-        regions['lon'] = centroids.x
-        regions['lat'] = centroids.y
+        regions['longitude'] = centroids.x
+        regions['latitude'] = centroids.y
 
         return regions
 
@@ -216,7 +223,7 @@ class RegionClassifier():
             logger.warning('The following points are outliers:')
             logger.warning(outlier_inds)
             cols = self._get_lat_lon_labels(self._meta)
-            lookup = self._regions[['lat', 'lon']]
+            lookup = self._regions[['latitude', 'longitude']]
             target = self._meta.loc[outlier_inds][cols]
             region_inds += list(self._nearest(target, lookup))
 
@@ -261,7 +268,7 @@ class RegionClassifier():
         return list(self._regions[isvalid == 0].index)
 
     @classmethod
-    def run(cls, meta_path, regions_path, regions_label=None,
+    def run(cls, meta_path, regions, regions_label=None,
             force=False, fout=None):
         """ Run full classification
 
@@ -270,8 +277,9 @@ class RegionClassifier():
         meta_path : str | pandas.DataFrame
             Path to meta CSV file, resource .h5 file, or pre-loaded meta
             DataFrame containing lat/lon points
-        regions_path : str
-            Path to regions shapefile containing labeled geometries
+        regions : str | GeoDataFrame
+            Path to regions shapefile containing labeled geometries or
+            a pre-loaded GeoDataFrame
         regions_label : str
             Attribute to use a label in the regions shapefile
         force : str
@@ -292,7 +300,7 @@ class RegionClassifier():
                                  regions_label=regions_label
                                  force=force, fout=fout)
         """
-        classifier = cls(meta_path=meta_path, regions_path=regions_path,
+        classifier = cls(meta_path=meta_path, regions=regions,
                          regions_label=regions_label)
         classification = classifier.classify(force=force)
         if fout:

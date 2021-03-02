@@ -11,12 +11,14 @@ import numpy as np
 import os
 import pandas as pd
 from scipy.spatial import cKDTree
+from geopandas import GeoDataFrame
 from warnings import warn
 
 from rex.rechunk_h5 import to_records_array
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.utilities import parse_table
 
+from reVX.utilities.region import RegionClassifier
 from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import (DataCleaner, get_coord_labels,
                                    parse_table_name)
@@ -101,6 +103,8 @@ class PlexosNode:
 
         Returns
         -------
+        sc_gid : int
+            Supply curve point gid for this sc point.
         sc_meta : pd.DataFrame
             Dataframe with rows corresponding to resource/generation pixels
             that are part of this SC point. Sorted by cf_mean with best
@@ -109,7 +113,7 @@ class PlexosNode:
             Total REEDS requested buildout associated with SC point i.
         """
 
-        res_gids, gid_counts, buildout, capacity = \
+        sc_gid, res_gids, gid_counts, buildout, capacity = \
             self._parse_sc_point(row_idx)
 
         gid_capacity = gid_counts / np.sum(gid_counts) * capacity
@@ -131,7 +135,7 @@ class PlexosNode:
         # infinite capacity in the last gid to make sure full buildout is done
         sc_meta.loc[sc_meta.index[-1], 'gid_capacity'] = 1e6
 
-        return sc_meta, buildout
+        return sc_gid, sc_meta, buildout
 
     def _parse_sc_point(self, row_idx):
         """Parse data from sc point.
@@ -143,6 +147,8 @@ class PlexosNode:
 
         Returns
         -------
+        sc_gid : int
+            Supply curve point gid for this sc point.
         res_gids : list
             Resource GIDs associated with SC point i.
         gid_counts : list
@@ -153,6 +159,8 @@ class PlexosNode:
         capacity : float
             Total Supply Curve Point Capacity
         """
+
+        sc_gid = int(self._sc_build.loc[row_idx, 'sc_gid'])
         buildout = float(self._sc_build.loc[row_idx, 'built_capacity'])
         capacity = float(self._sc_build.loc[row_idx, 'potential_capacity'])
 
@@ -165,7 +173,7 @@ class PlexosNode:
         if isinstance(gid_counts, str):
             gid_counts = json.loads(gid_counts)
 
-        return res_gids, gid_counts, buildout, capacity
+        return sc_gid, res_gids, gid_counts, buildout, capacity
 
     def _build_sc_point_profile(self, row_idx, profile):
         """Build a power generation profile based on a
@@ -183,6 +191,9 @@ class PlexosNode:
         ----------
         profile : np.ndarray
             (t,) array of generation in MW where t is the timeindex length.
+        sc_gids : list
+            List of supply curve point GID's that were build for this point
+            (really just a list with one integer).
         res_gids : list
             List of resource GID's that were built from this SC point.
         gen_gids : list
@@ -190,8 +201,9 @@ class PlexosNode:
         res_built : list
             List of built capacities at each resource GID from this SC point.
         """
-        sc_meta, buildout = self._get_sc_point_meta(row_idx)
+        sc_gid, sc_meta, buildout = self._get_sc_point_meta(row_idx)
 
+        sc_gids = [sc_gid]
         res_gids = []
         gen_gids = []
         res_built = []
@@ -230,7 +242,7 @@ class PlexosNode:
         if len(profile.shape) != 1:
             profile = profile.flatten()
 
-        return profile, res_gids, gen_gids, res_built
+        return profile, sc_gids, res_gids, gen_gids, res_built
 
     def make_node_profile(self):
         """Make an aggregated generation profile for a single plexos node.
@@ -239,6 +251,8 @@ class PlexosNode:
         -------
         profile : np.ndarray
             (t, ) array of generation in MW.
+        sc_gids : list
+            List of supply curve point GID's that were build for this node
         res_gids : list
             List of resource GID's that were built for this plexos node.
         gen_gids : list
@@ -248,20 +262,22 @@ class PlexosNode:
         """
 
         profile = None
+        sc_gids = []
         res_gids = []
         gen_gids = []
         res_built = []
 
         for i in self._sc_build.index.values:
 
-            profile, i_res_gids, i_gen_gids, i_res_built = \
+            profile, i_sc_gids, i_res_gids, i_gen_gids, i_res_built = \
                 self._build_sc_point_profile(i, profile)
 
+            sc_gids += i_sc_gids
             res_gids += i_res_gids
             gen_gids += i_gen_gids
             res_built += i_res_built
 
-        return profile, res_gids, gen_gids, res_built
+        return profile, sc_gids, res_gids, gen_gids, res_built
 
     @classmethod
     def run(cls, sc_build, cf_fpath, res_gids=None, forecast_fpath=None,
@@ -293,6 +309,8 @@ class PlexosNode:
         -------
         profile : np.ndarray
             (t, ) array of generation in MW.
+        sc_gids : list
+            List of supply curve point GID's that were build for this node
         res_gids : list
             List of resource GID's that were built for this plexos node.
         gen_gids : list
@@ -303,9 +321,9 @@ class PlexosNode:
         n = cls(sc_build, cf_fpath, res_gids=res_gids,
                 forecast_fpath=forecast_fpath, forecast_map=forecast_map)
 
-        profile, res_gids, gen_gids, res_built = n.make_node_profile()
+        profile, sc_gids, res_gids, gen_gids, res_built = n.make_node_profile()
 
-        return profile, res_gids, gen_gids, res_built
+        return profile, sc_gids, res_gids, gen_gids, res_built
 
 
 class PlexosAggregation:
@@ -321,7 +339,8 @@ class PlexosAggregation:
     """
 
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-                 forecast_fpath=None, build_year=2050, max_workers=None):
+                 forecast_fpath=None, build_year=2050, plexos_columns=None,
+                 max_workers=None):
         """
         Parameters
         ----------
@@ -341,11 +360,13 @@ class PlexosAggregation:
             If not None, the generation profiles are sourced from this file.
         build_year : int, optional
             REEDS year of interest, by default 2050
+        plexos_columns : list | None
+            Additional columns from the plexos_nodes input to pass through
+            to the output meta data.
         max_workers : int | None
             Do node aggregation on max_workers.
         """
 
-        self._plexos_nodes = self._parse_plexos_nodes(plexos_nodes)
         self._cf_fpath = cf_fpath
         self._forecast_fpath = forecast_fpath
         self.build_year = build_year
@@ -354,11 +375,19 @@ class PlexosAggregation:
         self._time_index = None
         self.max_workers = max_workers
 
+        if plexos_columns is None:
+            plexos_columns = tuple()
+        self._plexos_columns = plexos_columns
+        self._plexos_columns += DataCleaner.PLEXOS_META_COLS
+        self._plexos_columns = tuple(set(self._plexos_columns))
+
         logger.info('Running PLEXOS aggregation for build year: {}'
                     .format(build_year))
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build,
                                                build_year=build_year)
+        self._plexos_nodes = self._parse_plexos_nodes(plexos_nodes)
+
         missing = self._check_gids()
         self._handle_missing_resource_gids(missing)
 
@@ -404,8 +433,9 @@ class PlexosAggregation:
             self._plexos_meta['built_capacity'] = node_builds
 
             self._plexos_meta = DataCleaner.reduce_df(
-                self._plexos_meta, DataCleaner.PLEXOS_META_COLS)
+                self._plexos_meta, self._plexos_columns)
 
+            self._plexos_meta['sc_gids'] = None
             self._plexos_meta['res_gids'] = None
             self._plexos_meta['gen_gids'] = None
             self._plexos_meta['res_built'] = None
@@ -489,8 +519,7 @@ class PlexosAggregation:
         """
         return self._node_map
 
-    @staticmethod
-    def _parse_plexos_nodes(plexos_nodes):
+    def _parse_plexos_nodes(self, plexos_nodes):
         """
         Load Plexos node meta data from disc if needed, pre-filter and rename
         columns
@@ -507,9 +536,24 @@ class PlexosAggregation:
             Plexos node meta data including gid, lat/lon, voltage
         """
 
-        plexos_nodes = parse_table(plexos_nodes)
-        plexos_nodes = DataCleaner.pre_filter_plexos_meta(plexos_nodes)
+        if (isinstance(plexos_nodes, str)
+                and plexos_nodes.endswith(('.csv', '.json'))):
+            plexos_nodes = parse_table(plexos_nodes)
+        elif isinstance(plexos_nodes, str) and plexos_nodes.endswith('.shp'):
+            rc = RegionClassifier(self.sc_build, plexos_nodes,
+                                  regions_label=None)
+            plexos_nodes = rc._regions
+            if 'plexos_id' not in plexos_nodes:
+                plexos_nodes['plexos_id'] = np.arange(len(plexos_nodes))
+
+        elif not isinstance(plexos_nodes, pd.DataFrame):
+            msg = ('Did not recognize plexos_nodes input: {}'
+                   .format(plexos_nodes))
+            logger.error(msg)
+            raise NotImplementedError(msg)
+
         plexos_nodes = DataCleaner.rename_cols(plexos_nodes)
+        plexos_nodes = DataCleaner.pre_filter_plexos_meta(plexos_nodes)
 
         return plexos_nodes
 
@@ -768,32 +812,42 @@ class PlexosAggregation:
         plx_node_index : np.ndarray
             KDTree query output, (n, 1) array of plexos node indices mapped to
             the SC builds where n is the number of SC points built.
-            Values are the Plexos node index.
+            Each value in this array gives the plexos node index that the sc
+            point is mapped to. So self.node_map[10] yields the plexos node
+            index for self.sc_build[10].
         """
 
-        plexos_coord_labels = get_coord_labels(self._plexos_nodes)
-        sc_coord_labels = get_coord_labels(self.sc_build)
-        # pylint: disable=not-callable
-        tree = cKDTree(self._plexos_nodes[plexos_coord_labels])
-        d, plx_node_index = tree.query(self.sc_build[sc_coord_labels], k=1)
-        logger.info('Plexos Node KDTree distance min / mean / max: '
-                    '{} / {} / {}'
-                    .format(np.round(d.min(), decimals=3),
-                            np.round(d.mean(), decimals=3),
-                            np.round(d.max(), decimals=3)))
+        if isinstance(self._plexos_nodes, GeoDataFrame):
+            temp = RegionClassifier.run(self.sc_build, self._plexos_nodes,
+                                        regions_label='plexos_id', force=False)
+            plx_node_index = temp['plexos_id'].values.astype(int)
+        else:
+            plexos_coord_labels = get_coord_labels(self._plexos_nodes)
+            sc_coord_labels = get_coord_labels(self.sc_build)
+            # pylint: disable=not-callable
+            tree = cKDTree(self._plexos_nodes[plexos_coord_labels])
+            d, plx_node_index = tree.query(self.sc_build[sc_coord_labels], k=1)
+            logger.info('Plexos Node KDTree distance min / mean / max: '
+                        '{} / {} / {}'
+                        .format(np.round(d.min(), decimals=3),
+                                np.round(d.mean(), decimals=3),
+                                np.round(d.max(), decimals=3)))
 
         if len(plx_node_index.shape) == 1:
             plx_node_index = plx_node_index.reshape((len(plx_node_index), 1))
 
         return plx_node_index
 
-    def _ammend_plexos_meta(self, row_idx, res_gids, gen_gids, res_built):
+    def _ammend_plexos_meta(self, row_idx, sc_gids, res_gids, gen_gids,
+                            res_built):
         """Ammend the plexos meta dataframe with data about resource buildouts.
 
         Parameters
         ----------
         row_idx : int
             Index location to modify (iloc).
+        sc_gids : list
+            List of supply curve point GID's that were build for this node
         res_gids : list
             List of resource GID's that were built for this plexos node.
         gen_gids : list
@@ -805,19 +859,22 @@ class PlexosAggregation:
         index = self._plexos_meta.index.values[row_idx]
 
         if self._plexos_meta.loc[index, 'res_gids'] is None:
+            self._plexos_meta.loc[index, 'sc_gids'] = str(sc_gids)
             self._plexos_meta.loc[index, 'res_gids'] = str(res_gids)
             self._plexos_meta.loc[index, 'gen_gids'] = str(gen_gids)
             self._plexos_meta.loc[index, 'res_built'] = str(res_built)
 
         else:
-            a = json.loads(self._plexos_meta.loc[index, 'res_gids']) + res_gids
-            b = json.loads(self._plexos_meta.loc[index, 'gen_gids']) + gen_gids
-            c = (json.loads(self._plexos_meta.loc[index, 'res_built'])
+            a = json.loads(self._plexos_meta.loc[index, 'sc_gids']) + sc_gids
+            b = json.loads(self._plexos_meta.loc[index, 'res_gids']) + res_gids
+            c = json.loads(self._plexos_meta.loc[index, 'gen_gids']) + gen_gids
+            d = (json.loads(self._plexos_meta.loc[index, 'res_built'])
                  + res_built)
 
-            self._plexos_meta.loc[index, 'res_gids'] = str(a)
-            self._plexos_meta.loc[index, 'gen_gids'] = str(b)
-            self._plexos_meta.loc[index, 'res_built'] = str(c)
+            self._plexos_meta.loc[index, 'sc_gids'] = str(a)
+            self._plexos_meta.loc[index, 'res_gids'] = str(b)
+            self._plexos_meta.loc[index, 'gen_gids'] = str(c)
+            self._plexos_meta.loc[index, 'res_built'] = str(d)
 
     def _make_profiles(self):
         """Make a 2D array of aggregated plexos gen profiles.
@@ -862,9 +919,10 @@ class PlexosAggregation:
 
             for n, f in enumerate(as_completed(futures)):
                 i = futures[f]
-                profile, res_gids, gen_gids, res_built = f.result()
+                profile, sc_gids, res_gids, gen_gids, res_built = f.result()
                 profiles[:, i] = profile
-                self._ammend_plexos_meta(i, res_gids, gen_gids, res_built)
+                self._ammend_plexos_meta(i, sc_gids, res_gids, gen_gids,
+                                         res_built)
 
                 current_prog = (n + 1) // (len(futures) / 100)
                 if current_prog > progress:
@@ -893,9 +951,9 @@ class PlexosAggregation:
                 forecast_fpath=self._forecast_fpath,
                 forecast_map=self._forecast_map)
 
-            profile, res_gids, gen_gids, res_built = p
+            profile, sc_gids, res_gids, gen_gids, res_built = p
             profiles[:, i] = profile
-            self._ammend_plexos_meta(i, res_gids, gen_gids, res_built)
+            self._ammend_plexos_meta(i, sc_gids, res_gids, gen_gids, res_built)
 
             current_prog = ((i + 1)
                             // (len(np.unique(self.node_map)) / 100))
@@ -908,7 +966,8 @@ class PlexosAggregation:
 
     @classmethod
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
-            forecast_fpath=None, build_year=2050, max_workers=None):
+            forecast_fpath=None, build_year=2050, plexos_columns=None,
+            max_workers=None):
         """Run plexos aggregation.
 
         Parameters
@@ -927,6 +986,9 @@ class PlexosAggregation:
             If not None, the generation profiles are sourced from this file.
         build_year : int
             REEDS year of interest.
+        plexos_columns : list | None
+            Additional columns from the plexos_nodes input to pass through
+            to the output meta data.
         max_workers : int | None
             Do node aggregation on max_workers.
 
@@ -942,7 +1004,8 @@ class PlexosAggregation:
 
         pa = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  forecast_fpath=forecast_fpath, build_year=build_year,
-                 max_workers=max_workers)
+                 plexos_columns=plexos_columns, max_workers=max_workers)
+
         profiles = pa._make_profiles()
 
         return pa.plexos_meta, pa.time_index, profiles
