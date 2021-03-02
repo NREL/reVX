@@ -35,7 +35,7 @@ def test_region_classification():
     """Test the rpm clustering pipeline and run a baseline validation."""
 
     classification = RegionClassifier.run(meta_path=META_PATH,
-                                          regions_path=REGIONS_PATH,
+                                          regions=REGIONS_PATH,
                                           regions_label=REGIONS_LABEL,
                                           force=True)
 

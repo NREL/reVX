@@ -81,8 +81,9 @@ def test_df_reduce(plexos_nodes):
                                          DataCleaner.PLEXOS_META_COLS)
     assert 'the_geom_4326' not in plexos_nodes
     assert 'remove' not in plexos_nodes
-    assert 'gid' not in plexos_nodes
-    assert 'sc_gid' in plexos_nodes
+    assert 'plexos_id' in plexos_nodes
+    assert 'latitude' in plexos_nodes
+    assert 'longitude' in plexos_nodes
 
 
 def test_plexos_pre_filter(plexos_nodes):

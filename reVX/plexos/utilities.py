@@ -325,8 +325,8 @@ class DataCleaner:
                             len(self._plexos_meta) + len(new_meta)))
 
         for i, ind in enumerate(new_meta.index.values):
-            lookup = (self._plexos_meta['sc_gid'].values
-                      == new_meta.loc[ind, 'sc_gid'])
+            lookup = (self._plexos_meta['plexos_id'].values
+                      == new_meta.loc[ind, 'plexos_id'])
             if any(lookup):
                 i_self = np.where(lookup)[0]
                 if len(i_self) > 1:
@@ -334,12 +334,9 @@ class DataCleaner:
                 else:
                     i_self = i_self[0]
 
-                logger.debug('Merging plexos node IDs {} and {} '
-                             '(gids {} and {})'.format(
-                                 self._plexos_meta.iloc[i_self]['plexos_id'],
-                                 new_meta.iloc[i]['plexos_id'],
-                                 self._plexos_meta.iloc[i_self]['sc_gid'],
-                                 new_meta.iloc[i]['sc_gid']))
+                logger.debug('Merging plexos node IDs {} and {} '.format(
+                             self._plexos_meta.iloc[i_self]['plexos_id'],
+                             new_meta.iloc[i]['plexos_id']))
 
                 self._merge_plexos_meta(self._plexos_meta, new_meta, i_self, i)
                 self._profiles[:, i_self] += new_profiles[:, i]

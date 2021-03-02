@@ -70,7 +70,7 @@ def region_classifier(meta_path, regions_path, regions_label, fout,
     - Used to classify meta points with a label from a shapefile
     """
     RegionClassifier.run(meta_path=meta_path,
-                         regions_path=regions_path,
+                         regions=regions_path,
                          regions_label=regions_label,
                          force=force, fout=fout)
 
