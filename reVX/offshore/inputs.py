@@ -6,9 +6,10 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy.ndimage import center_of_mass
+from scipy.spatial import cKDTree
 
 from rex.resource import Resource
-from rex.utilities.utilities import parse_table
+from rex.utilities.utilities import parse_table, get_lat_lon_cols
 from reV.handlers.exclusions import ExclusionLayers
 
 logger = logging.getLogger(__name__)
@@ -18,13 +19,14 @@ class OffshoreInputs:
     """
     Class to extract offshore inputs from exclusion .h5
     """
-    def __init__(self, excl_h5, offshore_sites, tm_dset='techmap_wtk'):
-        self._excl_h5 = excl_h5
+    def __init__(self, excl_fpath, offshore_sites, tm_dset='techmap_wtk'):
+        self._excl_fpath = excl_fpath
         self._offshore_meta = self._create_offshore_meta(offshore_sites,
                                                          tm_dset)
 
     @staticmethod
-    def _reduce_tech_map(excl_h5, tm_dset='techmap_wtk', offshore_gids=None):
+    def _reduce_tech_map(excl_fpath, tm_dset='techmap_wtk',
+                         offshore_gids=None):
         """
         Find the row and column indices that correspond to the centriod of
         each offshore gid in exclusions layers. If offshore gids are not
@@ -32,19 +34,21 @@ class OffshoreInputs:
 
         Parameters
         ----------
-        excl_h5 : str
-            Path to
+        excl_fpath : str
+            Path to exclusions .h5 file
         tm_dset : str, optional
-            [description], by default 'techmap_wtk'
-        offshore_gids : [type], optional
-            [description], by default None
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
+        offshore_gids : ndarray | list, optional
+            Vector or list of offshore gids, by default None
 
         Returns
         -------
         tech_map : pandas.DataFrame
-            DataFrame mapping resource gid to exclusions latitude, longitude, r
+            DataFrame mapping resource gid to exclusions latitude, longitude,
+            row index, column index
         """
-        with ExclusionLayers(excl_h5) as f:
+        with ExclusionLayers(excl_fpath) as f:
             tech_map = f[tm_dset]
 
         if offshore_gids is None:
@@ -105,26 +109,47 @@ class OffshoreInputs:
 
     def _create_offshore_meta(self, offshore_sites, tm_dset='techmap_wtk'):
         """
-        [summary]
+        Create offshore meta from offshore sites and techmap
 
         Parameters
         ----------
-        offshore_sites : [type]
-            [description]
+        offshore_sites : str | pandas.DataFrame
+            Path to .csv file with offshore sites or offshore meta, or path
+            to a .h5 file to extact site meta from, or pre-extracted site meta
+            DataFrame
         tm_dset : str, optional
-            [description], by default 'techmap_wtk'
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
 
         Returns
         -------
-
+        offshore_sites : pandas.DataFrames
+            Offshore site meta data including mapping to exclusion
         """
         offshore_sites = self._parse_offshore_sites(offshore_sites)
         if 'gid' in offshore_sites:
             offshore_gids = offshore_sites['gid'].values
+            offshore_sites = offshore_sites.set_index('gid')
+        elif 'res_gid' in offshore_sites:
+            offshore_gids = offshore_sites['res_gid'].values
+            offshore_sites = offshore_sites.set_index('res_gid')
         else:
             offshore_gids = None
 
-        tech_map = self._reduce_tech_map(self._excl_h5, tm_dset=tm_dset,
+        tech_map = self._reduce_tech_map(self._excl_fpath, tm_dset=tm_dset,
                                          offshore_gids=offshore_gids)
 
-        return tech_map
+        if offshore_gids is not None:
+            offshore_meta = offshore_sites.join(tech_map)
+        else:
+            cols = ['latitude', 'longitude']
+            # pylint: disable=not-callable
+            tree = cKDTree(tech_map[cols].values)
+            cols = get_lat_lon_cols(offshore_sites)
+            _, pos = tree.query(offshore_sites[cols])
+
+            cols = ['res_gid', 'row_id', 'col_id']
+            tech_map = tech_map.reset_index().iloc[pos][cols]
+            offshore_meta = pd.concat([offshore_sites, tech_map])
+
+        return offshore_meta
