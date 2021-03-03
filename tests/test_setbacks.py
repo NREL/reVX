@@ -133,7 +133,7 @@ def test_cli(runner):
             "execution_control": {
                 "option": "local"
             },
-            "excl_h5": EXCL_H5,
+            "excl_fpath": EXCL_H5,
             "feature_type": "structure",
             "features_path": structure_dir,
             "hub_height": HUB_HEIGHT,

@@ -25,21 +25,21 @@ class DistanceToPorts:
     """
     Compute the distance to port in km
     """
-    def __init__(self, ports, excl_h5, layer='dist_to_coast'):
+    def __init__(self, ports, excl_fpath, layer='dist_to_coast'):
         """
         Parameters
         ----------
         ports : str
             Path to shape file containing ports to compute least cost distance
             to
-        excl_h5: str
+        excl_fpath: str
             Path to exclusions .h5 file with distance to coast layer
         layer : str, optional
             Exclusions layer name with distance to coast,
             by default 'dist_to_coast'
         """
-        self._excl_h5 = excl_h5
-        self._arr, self._profile, lat_lon = self._parse_arr(excl_h5,
+        self._excl_fpath = excl_fpath
+        self._arr, self._profile, lat_lon = self._parse_arr(excl_fpath,
                                                             layer=layer)
         self._ports = self._parse_ports(ports, lat_lon)
 
@@ -95,13 +95,13 @@ class DistanceToPorts:
         return lat_lon
 
     @classmethod
-    def _parse_arr(cls, excl_h5, layer='dist_to_coast'):
+    def _parse_arr(cls, excl_fpath, layer='dist_to_coast'):
         """
         Parse offshore array from distance to coast layer
 
         Parameters
         ----------
-        excl_h5: str
+        excl_fpath: str
             Path to exclusions .h5 file with distance to coast layer
         layer : str, optional
             Exclusions layer name with distance to coast values,
@@ -118,8 +118,8 @@ class DistanceToPorts:
             Mapping of offshore pixel coordinates (lat, lon) to array indices
             (row, col)
         """
-        hsds = check_res_file(excl_h5)[1]
-        with ExclusionLayers(excl_h5, hsds=hsds) as tif:
+        hsds = check_res_file(excl_fpath)[1]
+        with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
             arr = tif[layer]
             profile = tif.get_layer_profile(layer)
             lat = tif['latitude']
@@ -311,7 +311,7 @@ class DistanceToPorts:
 
     def save_as_layer(self, layer_name, dist_to_ports, chunks=(128, 128)):
         """
-        Save distance to ports as an exclusion layer within excl_h5
+        Save distance to ports as an exclusion layer within excl_fpath
 
         Parameters
         ----------
@@ -325,17 +325,18 @@ class DistanceToPorts:
         if len(dist_to_ports.shape) < 3:
             dist_to_ports = np.expand_dims(dist_to_ports, 0)
 
-        logger.info('Saving {} to {}'.format(layer_name, self._excl_h5))
+        logger.info('Saving {} to {}'.format(layer_name, self._excl_fpath))
         description = ("Minimum distance to the nearest {} in meters, onshore "
                        "pixels have a value of -1".format(layer_name))
-        ExclusionsConverter._write_layer(self._excl_h5, layer_name,
+        ExclusionsConverter._write_layer(self._excl_fpath, layer_name,
                                          self._profile, dist_to_ports,
                                          chunks=chunks,
                                          description=description)
 
     @classmethod
-    def run(cls, ports, excl_h5, cost_layer='dist_to_coast', dist_layer=None,
-            chunks=(128, 128), max_workers=None, update=True):
+    def run(cls, ports, excl_fpath, dist_layer='dist_to_coast',
+            ports_layer=None, chunks=(128, 128), max_workers=None,
+            update_layer=True):
         """
         Compute the least cost distance to the nearest ports in km, either
         write as a new layer in the exclusion .h5 file or update an existing
@@ -346,13 +347,13 @@ class DistanceToPorts:
         ports : str
             Path to shape file containing ports to compute least cost distance
             to
-        excl_h5: str
+        excl_fpath: str
             Path to exclusions .h5 file with distance to coast layer. Will also
             be the file into which the least cost distance to port is saved.
-        cost_layer : str, optional
+        dist_layer : str, optional
             Exclusions layer with distance to coast values,
             by default 'dist_to_coast'
-        dist_layer : str, optional
+        ports_layer : str, optional
             Exclusion layer under which the distance to ports layer should be
             saved, if None use the ports file-name, by default None
         chunks : tuple, optional
@@ -361,7 +362,7 @@ class DistanceToPorts:
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
             run in parallel on all available cores, by default None
-        update : bool, optional
+        update_layer : bool, optional
             Flag to check for an existing distance to port layer and update it
             with new least cost distances to new ports, if None compute the
             least cost distance from scratch, by default True
@@ -373,22 +374,22 @@ class DistanceToPorts:
         """
         logger.info('Computing least cost distance to ports in {}'
                     .format(ports))
-        dtp = cls(ports, excl_h5, layer=cost_layer)
-        if dist_layer is None:
-            dist_layer = os.path.basename(ports).split('.')[0]
+        dtp = cls(ports, excl_fpath, layer=dist_layer)
+        if ports_layer is None:
+            ports_layer = os.path.basename(ports).split('.')[0]
 
         dist_to_ports = None
-        if update:
-            hsds = check_res_file(excl_h5)[1]
-            with ExclusionLayers(excl_h5, hsds=hsds) as tif:
-                if dist_layer in tif.layers:
-                    dist_to_ports = tif[dist_layer]
+        if update_layer:
+            hsds = check_res_file(excl_fpath)[1]
+            with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
+                if ports_layer in tif.layers:
+                    dist_to_ports = tif[ports_layer]
 
         if dist_to_ports is not None:
-            logger.info('Updating exising layer {}'.format(dist_layer))
+            logger.info('Updating exising layer {}'.format(ports_layer))
 
         dist_to_ports = dtp.least_cost_distance(dist_to_ports=dist_to_ports,
                                                 max_workers=max_workers)
-        dtp.save_as_layer(dist_layer, dist_to_ports, chunks=chunks)
+        dtp.save_as_layer(ports_layer, dist_to_ports, chunks=chunks)
 
         return dist_to_ports

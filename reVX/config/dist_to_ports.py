@@ -20,8 +20,8 @@ class DistToPortsConfig(AnalysisConfig):
             Dictionary with pre-extracted config input group.
         """
         super().__init__(config)
-        self._default_cost_layer = 'dist_to_coast'
-        self._default_update = True
+        self._default_dist_layer = 'dist_to_coast'
+        self._default_update_layer = True
 
     @property
     def ports_fpath(self):
@@ -37,20 +37,20 @@ class DistToPortsConfig(AnalysisConfig):
         return self['excl_fpath']
 
     @property
-    def cost_layer(self):
+    def dist_layer(self):
         """
         Exclusions layer with distance to shore. Only used if
         'dist_to_coast' is a .h5 exclusions file path.
         """
-        return self.get('cost_layer', self._default_cost_layer)
+        return self.get('dist_layer', self._default_dist_layer)
 
     @property
-    def dist_layer(self):
+    def ports_layer(self):
         """
         Exclusion layer under which the distance to ports layer should be
         saved, if None use the ports file-name
         """
-        return self.get('dist_layer', None)
+        return self.get('ports_layer', None)
 
     @property
     def max_workers(self):
@@ -62,10 +62,10 @@ class DistToPortsConfig(AnalysisConfig):
         return self.get('max_workers', None)
 
     @property
-    def update(self):
+    def update_layer(self):
         """
         Flag to check for an existing distance to port layer and update it
         with new least cost distances to new ports, if None compute the
         least cost distance from scratch
         """
-        return self.get('update', self._default_update)
+        return self.get('update_layer', self._default_update_layer)

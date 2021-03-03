@@ -65,10 +65,10 @@ def run_local(ctx, config):
     ctx.invoke(local,
                ports_fpath=config.ports_fpath,
                excl_fpath=config.excl_fpath,
-               cost_layer=config.cost_layer,
                dist_layer=config.dist_layer,
+               ports_layer=config.ports_layer,
                max_workers=config.max_workers,
-               update=config.update,
+               update_layer=config.update_layer,
                log_dir=config.logdir,
                verbose=config.log_level)
 
@@ -108,10 +108,10 @@ def from_config(ctx, config, verbose):
 @click.option('--excl_fpath', '-excl', required=True,
               type=click.Path(exists=True),
               help="Filepath to exclusions h5 with techmap dataset.")
-@click.option('--cost_layer', '-cl', default='dist_to_coast',
+@click.option('--dist_layer', '-dl', default='dist_to_coast',
               show_default=True,
               help=("Exclusions layer with distance to coast values"))
-@click.option('--dist_layer', '-dl', default=None, type=STR,
+@click.option('--ports_layer', '-pl', default=None, type=STR,
               show_default=True,
               help=("Exclusion layer under which the distance to ports layer "
                     "should be saved, if None use the ports file-name"))
@@ -120,18 +120,18 @@ def from_config(ctx, config, verbose):
               help=(" Number of workers to use for setback computation, if 1 "
                     "run in serial, if > 1 run in parallel with that many "
                     "workers, if None run in parallel on all available cores"))
-@click.option('--update', '-u', is_flag=True,
+@click.option('--update_layer', '-u', is_flag=True,
               help=("Flag to check for an existing distance to port layer and "
                     "update it with new least cost distances to new ports, if "
                     "None compute the least cost distance from scratch"))
 @click.option('--log_dir', '-log', default=None, type=STR,
               show_default=True,
-              help='Directory to dump log files. Default is dist_layer.')
+              help='Directory to dump log files. Default is ports_layer.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, ports_fpath, excl_fpath, cost_layer, dist_layer,
-          max_workers, update, log_dir, verbose):
+def local(ctx, ports_fpath, excl_fpath, dist_layer, ports_layer,
+          max_workers, update_layer, log_dir, verbose):
     """
     Compute distance to ports on local hardware
     """
@@ -146,9 +146,9 @@ def local(ctx, ports_fpath, excl_fpath, cost_layer, dist_layer,
                 'Outputs to be stored in: {}'.format(ports_fpath, excl_fpath))
 
     DistanceToPorts.run(ports_fpath, excl_fpath,
-                        cost_layer=cost_layer, dist_layer=dist_layer,
+                        dist_layer=dist_layer, ports_layer=ports_layer,
                         chunks=(128, 128), max_workers=max_workers,
-                        update=update)
+                        update_layer=update_layer)
 
 
 def get_node_cmd(config):
@@ -170,13 +170,13 @@ def get_node_cmd(config):
             'local',
             '-ports {}'.format(SLURM.s(config.ports_fpath)),
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
-            '-cl {}'.format(SLURM.s(config.cost_layer)),
             '-dl {}'.format(SLURM.s(config.dist_layer)),
+            '-pl {}'.format(SLURM.s(config.ports_layer)),
             '-mw {}'.format(SLURM.s(config.max_workers)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
 
-    if config.update:
+    if config.update_layer:
         args.append('-u')
 
     if config.log_level == logging.DEBUG:

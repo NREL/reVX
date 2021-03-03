@@ -22,12 +22,12 @@ PORTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'ports',
                            'ports_operations.shp')
 
 
-def get_dist_to_ports(excl_h5, dist_layer='ports_operations'):
+def get_dist_to_ports(excl_h5, ports_layer='ports_operations'):
     """
     Extract "truth" distance to ports layer from exclusion .h5 file
     """
     with ExclusionLayers(excl_h5) as f:
-        dist_to_ports = f[dist_layer]
+        dist_to_ports = f[ports_layer]
 
     return dist_to_ports
 
@@ -53,15 +53,15 @@ def test_dist_to_ports(max_workers):
     assert np.allclose(baseline, test), msg
 
 
-@pytest.mark.parametrize('dist_layer', [None, 'test'])
-def test_cli(runner, dist_layer):
+@pytest.mark.parametrize('ports_layer', [None, 'test'])
+def test_cli(runner, ports_layer):
     """
     Test CLI
     """
     update = False
-    if dist_layer is None:
+    if ports_layer is None:
         update = True
-        dist_layer = 'ports_operations'
+        ports_layer = 'ports_operations'
 
     with tempfile.TemporaryDirectory() as td:
         print(os.listdir(td))
@@ -77,7 +77,7 @@ def test_cli(runner, dist_layer):
             },
             "excl_fpath": excl_fpath,
             "ports_fpath": PORTS_FPATH,
-            "dist_layer": dist_layer,
+            "ports_layer": ports_layer,
             "update": update
         }
         config_path = os.path.join(td, 'config.json')
@@ -91,7 +91,7 @@ def test_cli(runner, dist_layer):
         assert result.exit_code == 0, msg
 
         baseline = get_dist_to_ports(EXCL_H5)
-        test = get_dist_to_ports(excl_fpath, dist_layer=dist_layer)
+        test = get_dist_to_ports(excl_fpath, ports_layer=ports_layer)
 
         msg = 'distance to ports does not match baseline distances'
         assert np.allclose(baseline, test), msg
