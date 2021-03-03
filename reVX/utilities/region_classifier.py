@@ -58,6 +58,16 @@ class RegionClassifier():
         self._meta = self._get_meta(meta_path)
         self._regions = self._get_regions(regions, self._regions_label)
 
+    @property
+    def regions(self):
+        """Get the regions GeoDataFrame
+
+        Returns
+        -------
+        GeoDataFrame
+        """
+        return self._regions
+
     @staticmethod
     def output_to_csv(gdf, path):
         """ Export a geopandas dataframe to csv

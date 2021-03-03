@@ -19,7 +19,7 @@ from rex.rechunk_h5 import to_records_array
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.utilities import parse_table
 
-from reVX.utilities.region import RegionClassifier
+from reVX.utilities.region_classifier import RegionClassifier
 from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import (DataCleaner, get_coord_labels,
                                    parse_table_name)
@@ -575,6 +575,7 @@ class PlexosAggregation:
         if (isinstance(plexos_nodes, str)
                 and plexos_nodes.endswith(('.csv', '.json'))):
             plexos_nodes = parse_table(plexos_nodes)
+
         elif isinstance(plexos_nodes, str) and plexos_nodes.endswith('.shp'):
             rc = RegionClassifier(self.sc_build, plexos_nodes,
                                   regions_label=None)
@@ -583,8 +584,9 @@ class PlexosAggregation:
                 plexos_nodes['plexos_id'] = np.arange(len(plexos_nodes))
 
         elif not isinstance(plexos_nodes, pd.DataFrame):
-            msg = ('Did not recognize plexos_nodes input: {}'
-                   .format(plexos_nodes))
+            msg = ('Expected a DataFrame or a file path to csv, json, or '
+                   'shp for the plexos_nodes input but received: {} ({})'
+                   .format(plexos_nodes, type(plexos_nodes)))
             logger.error(msg)
             raise NotImplementedError(msg)
 
