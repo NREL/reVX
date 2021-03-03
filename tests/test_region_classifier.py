@@ -12,7 +12,7 @@ import traceback
 from rex.utilities.loggers import LOGGERS
 
 from reVX import TESTDATADIR
-from reVX.utilities.region import RegionClassifier
+from reVX.utilities.region_classifier import RegionClassifier
 from reVX.cli import main
 
 

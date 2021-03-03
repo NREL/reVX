@@ -13,7 +13,7 @@ from rex.utilities.utilities import safe_json_load
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.forecasts import Forecasts
 from reVX.utilities.output_extractor import output_extractor
-from reVX.utilities.region import RegionClassifier
+from reVX.utilities.region_classifier import RegionClassifier
 from reVX.wind_setbacks.setbacks_converter import SetbacksConverter
 
 from reVX import __version__
