@@ -16,8 +16,8 @@ class DistToPortsConfig(AnalysisConfig):
         """
         Parameters
         ----------
-        config : dict
-            Dictionary with pre-extracted config input group.
+        config : str | dict
+            Path to config .json or pre-extracted config input dictionary.
         """
         super().__init__(config)
         self._default_dist_layer = 'dist_to_coast'
@@ -37,20 +37,20 @@ class DistToPortsConfig(AnalysisConfig):
         return self['excl_fpath']
 
     @property
-    def dist_layer(self):
+    def input_dist_layer(self):
         """
         Exclusions layer with distance to shore. Only used if
         'dist_to_coast' is a .h5 exclusions file path.
         """
-        return self.get('dist_layer', self._default_dist_layer)
+        return self.get('input_dist_layer', self._default_dist_layer)
 
     @property
-    def ports_layer(self):
+    def output_dist_layer(self):
         """
         Exclusion layer under which the distance to ports layer should be
         saved, if None use the ports file-name
         """
-        return self.get('ports_layer', None)
+        return self.get('output_dist_layer', None)
 
     @property
     def max_workers(self):

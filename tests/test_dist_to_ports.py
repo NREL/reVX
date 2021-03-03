@@ -77,7 +77,7 @@ def test_cli(runner, ports_layer):
             },
             "excl_fpath": excl_fpath,
             "ports_fpath": PORTS_FPATH,
-            "ports_layer": ports_layer,
+            "output_dist_layer": ports_layer,
             "update": update
         }
         config_path = os.path.join(td, 'config.json')
