@@ -27,12 +27,12 @@ class BaseWindSetbacks(ABC):
     """
     MULTIPLIERS = {'high': 3, 'moderate': 1.1}
 
-    def __init__(self, excl_h5, hub_height, rotor_diameter, regs_fpath=None,
+    def __init__(self, excl_fpath, hub_height, rotor_diameter, regs_fpath=None,
                  multiplier=None, hsds=False, chunks=(128, 128)):
         """
         Parameters
         ----------
-        excl_h5 : str
+        excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be the
             location of any new setback layers
         hub_height : float | int
@@ -54,19 +54,19 @@ class BaseWindSetbacks(ABC):
             behind HSDS, by default False
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default chunk
-            size in excl_h5, by default (128, 128)
+            size in excl_fpath, by default (128, 128)
         """
-        self._excl_h5 = excl_h5
+        self._excl_fpath = excl_fpath
         self._hub_height = hub_height
         self._rotor_diameter = rotor_diameter
         self._hsds = hsds
         self._shape, self._chunks, self._profile = \
-            self._parse_excl_properties(excl_h5, chunks, hsds=hsds)
+            self._parse_excl_properties(excl_fpath, chunks, hsds=hsds)
 
         self._regs, self._multi = self._preflight_check(regs_fpath, multiplier)
 
     def __repr__(self):
-        msg = "{} for {}".format(self.__class__.__name__, self._excl_h5)
+        msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
         return msg
 
     @property
@@ -175,13 +175,13 @@ class BaseWindSetbacks(ABC):
         return self.profile['crs']
 
     @staticmethod
-    def _parse_excl_properties(excl_h5, chunks, hsds=False):
+    def _parse_excl_properties(excl_fpath, chunks, hsds=False):
         """
-        Parse exclusions shape, chunk size, and profile from excl_h5 file
+        Parse exclusions shape, chunk size, and profile from excl_fpath file
 
         Parameters
         ----------
-        excl_h5 : str
+        excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be the
             location of any new setback layers
         chunks : tuple | None
@@ -199,7 +199,7 @@ class BaseWindSetbacks(ABC):
         profile : str
             GeoTiff profile for exclusions datasets
         """
-        with ExclusionLayers(excl_h5, hsds=hsds) as exc:
+        with ExclusionLayers(excl_fpath, hsds=hsds) as exc:
             shape = exc.shape
             profile = exc.profile
             if chunks is None:
@@ -350,7 +350,7 @@ class BaseWindSetbacks(ABC):
 
         logger.info('Merging county geometries w/ local wind '
                     'regulations')
-        with ExclusionLayers(self._excl_h5) as exc:
+        with ExclusionLayers(self._excl_fpath) as exc:
             fips = exc['cnty_fips']
             profile = exc.get_layer_profile('cnty_fips')
 
@@ -760,7 +760,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         return wind_regs
 
     @classmethod
-    def run(cls, excl_h5, structures_path, out_dir, hub_height,
+    def run(cls, excl_fpath, structures_path, out_dir, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
@@ -771,7 +771,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
 
         Parameters
         ----------
-        excl_h5 : str
+        excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be the
             location of any new setback layers
         structure_path : str
@@ -795,7 +795,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
             max-tip height, by default None
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default chunk
-            size in excl_h5, by default (128, 128)
+            size in excl_fpath, by default (128, 128)
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
@@ -806,7 +806,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS, by default False
         """
-        setbacks = cls(excl_h5, hub_height, rotor_diameter,
+        setbacks = cls(excl_fpath, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
 
@@ -932,7 +932,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         return wind_regs
 
     @classmethod
-    def run(cls, excl_h5, roads_path, out_dir, hub_height,
+    def run(cls, excl_fpath, roads_path, out_dir, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
@@ -943,7 +943,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
         Parameters
         ----------
-        excl_h5 : str
+        excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be the
             location of any new setback layers
         road_path : str
@@ -967,7 +967,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
             max-tip height, by default None
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default chunk
-            size in excl_h5, by default (128, 128)
+            size in excl_fpath, by default (128, 128)
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
@@ -978,7 +978,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS, by default False
         """
-        setbacks = cls(excl_h5, hub_height, rotor_diameter,
+        setbacks = cls(excl_fpath, hub_height, rotor_diameter,
                        regs_fpath=regs_fpath, multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
 
@@ -1079,7 +1079,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         return regs
 
     @classmethod
-    def run(cls, excl_h5, features_fpath, out_dir, hub_height,
+    def run(cls, excl_fpath, features_fpath, out_dir, hub_height,
             rotor_diameter, regs_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
@@ -1089,7 +1089,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         tip-height.
         Parameters
         ----------
-        excl_h5 : str
+        excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be the
             location of any new setback layers
         features_fpath : str
@@ -1113,7 +1113,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             max-tip height, by default None
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default chunk
-            size in excl_h5, by default (128, 128)
+            size in excl_fpath, by default (128, 128)
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
@@ -1132,7 +1132,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
                    'unless replace=True'.format(geotiff))
             logger.error(msg)
         else:
-            setbacks = cls(excl_h5, hub_height, rotor_diameter,
+            setbacks = cls(excl_fpath, hub_height, rotor_diameter,
                            regs_fpath=regs_fpath, multiplier=multiplier,
                            hsds=hsds, chunks=chunks)
 

@@ -32,7 +32,7 @@ STATE_SETBACKS = {'structure': StructureWindSetbacks,
 @click.group()
 @click.option('--name', '-n', default='WindSetbacks', type=STR,
               show_default=True,
-              help='Job name. Default is "WindSetbaks".')
+              help='Job name. Default is "WindSetbacks".')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
@@ -80,7 +80,7 @@ def from_config(ctx, config):
 
 
 @main.group()
-@click.option('--excl_h5', '-excl', required=True,
+@click.option('--excl_fpath', '-excl', required=True,
               type=click.Path(exists=True),
               help=('Path to .h5 file containing exclusion layers, will also '
                     'be the location of any new setback layers'))
@@ -132,13 +132,13 @@ def from_config(ctx, config):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, excl_h5, features_path, out_dir, hub_height, rotor_diameter,
+def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
           regs_fpath, multiplier, max_workers, replace, hsds, log_dir,
           verbose):
     """
     Compute Wind Setbacks locally
     """
-    ctx.obj['EXCL_H5'] = excl_h5
+    ctx.obj['excl_fpath'] = excl_fpath
     ctx.obj['FEATURES_PATH'] = features_path
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['HUB_HEIGHT'] = hub_height
@@ -162,7 +162,7 @@ def structure_setbacks(ctx):
     """
     Compute wind setbacks from structures
     """
-    excl_h5 = ctx.obj['EXCL_H5']
+    excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
     out_dir = ctx.obj['OUT_DIR']
     hub_height = ctx.obj['HUB_HEIGHT']
@@ -185,7 +185,7 @@ def structure_setbacks(ctx):
                  .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                          max_workers, replace))
 
-    StructureWindSetbacks.run(excl_h5, features_path, out_dir, hub_height,
+    StructureWindSetbacks.run(excl_fpath, features_path, out_dir, hub_height,
                               rotor_diameter, regs_fpath=regs_fpath,
                               multiplier=multiplier, max_workers=max_workers,
                               replace=replace, hsds=hsds)
@@ -198,7 +198,7 @@ def road_setbacks(ctx):
     """
     Compute wind setbacks from roads
     """
-    excl_h5 = ctx.obj['EXCL_H5']
+    excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
     out_dir = ctx.obj['OUT_DIR']
     hub_height = ctx.obj['HUB_HEIGHT']
@@ -221,7 +221,7 @@ def road_setbacks(ctx):
                  .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                          max_workers, replace))
 
-    RoadWindSetbacks.run(excl_h5, features_path, out_dir, hub_height,
+    RoadWindSetbacks.run(excl_fpath, features_path, out_dir, hub_height,
                          rotor_diameter, regs_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
                          replace=replace, hsds=hsds)
@@ -234,7 +234,7 @@ def transmission_setbacks(ctx):
     """
     Compute wind setbacks from transmission
     """
-    excl_h5 = ctx.obj['EXCL_H5']
+    excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
     out_dir = ctx.obj['OUT_DIR']
     hub_height = ctx.obj['HUB_HEIGHT']
@@ -257,10 +257,12 @@ def transmission_setbacks(ctx):
                  .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                          max_workers, replace))
 
-    TransmissionWindSetbacks.run(excl_h5, features_path, out_dir, hub_height,
-                                 rotor_diameter, regs_fpath=regs_fpath,
+    TransmissionWindSetbacks.run(excl_fpath, features_path, out_dir,
+                                 hub_height, rotor_diameter,
+                                 regs_fpath=regs_fpath,
                                  multiplier=multiplier,
-                                 max_workers=max_workers, replace=replace,
+                                 max_workers=max_workers,
+                                 replace=replace,
                                  hsds=hsds)
     logger.info('Setbacks computed and writen {}'.format(out_dir))
 
@@ -271,7 +273,7 @@ def rail_setbacks(ctx):
     """
     Compute wind setbacks from railroads
     """
-    excl_h5 = ctx.obj['EXCL_H5']
+    excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
     out_dir = ctx.obj['OUT_DIR']
     hub_height = ctx.obj['HUB_HEIGHT']
@@ -294,7 +296,7 @@ def rail_setbacks(ctx):
                  .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                          max_workers, replace))
 
-    RailWindSetbacks.run(excl_h5, features_path, out_dir, hub_height,
+    RailWindSetbacks.run(excl_fpath, features_path, out_dir, hub_height,
                          rotor_diameter, regs_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
                          replace=replace, hsds=hsds)
@@ -314,7 +316,7 @@ def run_local(ctx, config):
     """
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
-               excl_h5=config.excl_h5,
+               excl_fpath=config.excl_fpath,
                features_path=config.features_path,
                out_dir=config.dirout,
                hub_height=config.hub_height,
@@ -354,7 +356,7 @@ def get_node_cmd(name, config):
     """
     args = ['-n {}'.format(SLURM.s(name)),
             'local',
-            '-excl {}'.format(SLURM.s(config.excl_h5)),
+            '-excl {}'.format(SLURM.s(config.excl_fpath)),
             '-feats {}'.format(SLURM.s(config.features_path)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-height {}'.format(SLURM.s(config.hub_height)),

@@ -10,8 +10,8 @@ class WindSetbacksConfig(AnalysisConfig):
     """Config framework for wind setbacks"""
 
     NAME = 'WindSetbacks'
-    REQUIREMENTS = ('excl_h5', 'hub_height', 'rotor_diameter', 'features_path',
-                    'feature_type')
+    REQUIREMENTS = ('excl_fpath', 'hub_height', 'rotor_diameter',
+                    'features_path', 'feature_type')
     FEATURE_TYPES = ['structure', 'road', 'rail', 'transmission']
 
     @property
@@ -27,9 +27,9 @@ class WindSetbacksConfig(AnalysisConfig):
         return feature_type
 
     @property
-    def excl_h5(self):
+    def excl_fpath(self):
         """Get the exclusions .h5 file path (required)."""
-        return self['excl_h5']
+        return self['excl_fpath']
 
     @property
     def hub_height(self):

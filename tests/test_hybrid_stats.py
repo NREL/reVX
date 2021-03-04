@@ -107,7 +107,7 @@ def test_hybrid_stats(max_workers, func):
 
     mask = (TIME_INDEX.month == 7) & (TIME_INDEX.hour == 18)
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
-    test = test_stats[f'2012-July-18:00UTC_{func}'].values
+    test = test_stats[f'2012-Jul-18:00UTC_{func}'].values
     msg = 'July-18:00 correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
@@ -214,7 +214,7 @@ def test_stability_coefficient(max_workers, reference):
     mask = TIME_INDEX.month == 6
     truth = stability_coeff(solar.loc[mask], wind.loc[mask],
                             reference=reference)
-    test = test_stats['2012-June_stability'].values
+    test = test_stats['2012-Jun_stability'].values
     msg = 'June stability coefficients do not match!'
     assert np.allclose(truth, test, rtol=0.001, atol=0), msg
 

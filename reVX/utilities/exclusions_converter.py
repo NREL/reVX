@@ -25,7 +25,6 @@ class ExclusionsConverter:
     """
     Convert exclusion layers between .h5 and .tif (geotiff)
     """
-
     def __init__(self, excl_h5, hsds=False, chunks=(128, 128), replace=True):
         """
         Parameters

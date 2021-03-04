@@ -16,7 +16,8 @@ from rex.utilities.loggers import LOGGERS
 from reV.supply_curve.points import SupplyCurveExtent
 
 from reVX import TESTDATADIR
-from reVX.wind_dirs.prominent_wind_dirs import ProminentWindDirections
+from reVX.wind_dirs.prominent_wind_dirs import (ProminentWindDirections,
+                                                row_col_indices)
 from reVX.wind_dirs.prominent_wind_dirs_cli import main
 
 PR_H5 = os.path.join(TESTDATADIR, 'wind_dirs', 'ri_100_wtk_powerrose.h5')
@@ -48,8 +49,7 @@ def test_gid_row_col_mapping():
 
     assert np.allclose(test_gids, gids), 'gids do not match'
 
-    test_rows, test_cols = \
-        ProminentWindDirections._get_row_col_inds(gids, shape[1])
+    test_rows, test_cols = row_col_indices(gids, shape[1])
 
     assert np.allclose(test_rows, rows), 'rows do not match'
     assert np.allclose(test_cols, cols), 'rows do not match'

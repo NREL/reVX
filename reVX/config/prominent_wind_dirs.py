@@ -16,8 +16,8 @@ class ProminentWindDirsConfig(AnalysisConfig):
         """
         Parameters
         ----------
-        config : dict
-            Dictionary with pre-extracted config input group.
+        config : str | dict
+            Path to config .json or pre-extracted config input dictionary.
         """
         super().__init__(config)
         self._default_agg_dset = 'powerrose_100m'

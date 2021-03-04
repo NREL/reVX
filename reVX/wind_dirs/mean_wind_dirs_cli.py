@@ -163,7 +163,7 @@ def local(ctx, res_h5_fpath, excl_fpath, wdir_dsets, out_dir, tm_dset,
           area_filter_kernel, min_area, chunk_point_len, max_workers, log_dir,
           verbose):
     """
-    Compute prominent wind directions on local hardware
+    Compute mean wind directions on local hardware
     """
     ctx.obj['OUT_DIR'] = out_dir
     if not os.path.exists(out_dir):
@@ -244,7 +244,7 @@ def get_node_cmd(config):
 
 def eagle(config):
     """
-    Run prominent wind directions on Eagle HPC.
+    Run mean wind directions on Eagle HPC.
 
     Parameters
     ----------

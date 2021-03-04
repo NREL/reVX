@@ -357,7 +357,7 @@ class PlexosPlants(Plants):
         if plant_coords.shape[0] == 1:
             dist = dist.flatten()
 
-        R = 6373.0  # radius of the earth in kilometers
+        R = 6371.0  # radius of the earth in kilometers
 
         return dist * R
 

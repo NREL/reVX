@@ -3,6 +3,7 @@
 Module to compute hybrid solar-wind generation correlations
 """
 from concurrent.futures import as_completed
+import gc
 import logging
 import numpy as np
 import os
@@ -11,9 +12,10 @@ from scipy.spatial import cKDTree
 from scipy.stats import pearsonr, spearmanr, kendalltau
 
 from rex.resource import Resource
-from rex.utilities.utilities import parse_year
 from rex.utilities.execution import SpawnProcessPool
-from rex.utilities.utilities import get_lat_lon_cols, roll_timeseries
+from rex.utilities.loggers import log_mem
+from rex.utilities.utilities import (get_lat_lon_cols, roll_timeseries,
+                                     parse_year)
 
 logger = logging.getLogger(__name__)
 
@@ -387,7 +389,7 @@ class HybridStats:
             2D array of grp index values properly formatted as strings
         """
         month_map = {1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May',
-                     6: 'June', 7: 'July', 8: 'Aug', 9: 'Sept', 10: 'Oct',
+                     6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct',
                      11: 'Nov', 12: 'Dec'}
 
         # pylint: disable=unnecessary-lambda
@@ -797,8 +799,6 @@ class HybridStats:
                     out_stats.append(future.result())
                     logger.debug('Completed {} out of {} workers'
                                  .format((i + 1), len(futures)))
-
-            out_stats = pd.concat(out_stats)
         else:
             msg = ('Extracting {} for {} in serial'
                    .format(self, dataset))
@@ -813,7 +813,9 @@ class HybridStats:
                 logger.debug('Completed {} out of {} sets of sites'
                              .format((i + 1), len(slices)))
 
-            out_stats = pd.concat(out_stats)
+        gc.collect()
+        log_mem(logger)
+        out_stats = pd.concat(out_stats)
 
         if lat_lon_only:
             meta = self.lat_lon

@@ -25,7 +25,6 @@ ROTOR_DIAMETER = 200
 MULTIPLIER = 3
 REGS_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
 REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
-CONFIG = os.path.join(TESTDATADIR, 'setbacks', 'config.json')
 
 
 @pytest.fixture(scope="module")
@@ -134,7 +133,7 @@ def test_cli(runner):
             "execution_control": {
                 "option": "local"
             },
-            "excl_h5": EXCL_H5,
+            "excl_fpath": EXCL_H5,
             "feature_type": "structure",
             "features_path": structure_dir,
             "hub_height": HUB_HEIGHT,
