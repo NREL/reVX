@@ -248,7 +248,7 @@ class DataCleaner:
             else:
                 val_final += val_orig
 
-            meta_final.loc[i_final, col] = val_final
+            meta_final.at[i_final, col] = val_final
 
         return meta_final
 

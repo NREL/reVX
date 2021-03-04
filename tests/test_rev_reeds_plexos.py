@@ -53,7 +53,7 @@ def test_plexos_agg():
     build_year = 2050
     plexos_meta, _, profiles = PlexosAggregation.run(
         PLEXOS_NODES, REV_SC, REEDS_1, CF_FPATH.format(2007),
-        build_year=build_year)
+        build_year=build_year, max_workers=1)
 
     fpath_meta = os.path.join(outdir, 'plexos_meta.csv')
     fpath_profiles = os.path.join(outdir, 'profiles.csv')
@@ -66,6 +66,9 @@ def test_plexos_agg():
 
     baseline_meta = pd.read_csv(fpath_meta, index_col=0)
     baseline_profiles = pd.read_csv(fpath_profiles, index_col=0)
+
+    for col in ('res_gids', 'res_built', 'gen_gids'):
+        baseline_meta[col] = baseline_meta[col].apply(json.loads)
 
     assert all(baseline_meta['gen_gids'] == plexos_meta['gen_gids'])
     assert np.allclose(baseline_meta['built_capacity'],
@@ -114,7 +117,7 @@ def test_missing_gids():
 
     assert icap == new_cap
 
-    profiles = pa._make_profiles()
+    profiles = pa.make_profiles()
 
     assert profiles.max(axis=0).sum() / icap > 0.9
 
@@ -131,7 +134,6 @@ def test_cli(runner):
                          'rev_sc': REV_SC,
                          'plexos_nodes': PLEXOS_NODES})
         job = job.to_frame().T
-        print(job)
         job_path = os.path.join(td, 'test.csv')
         job.to_csv(job_path, index=False)
 
@@ -156,16 +158,17 @@ def test_cli(runner):
 
                 truth = f_true['meta']
                 test = f_test['meta']
-                cols = [c for c in test.columns if c in truth
-                        if c not in ('voltage', )]
-                print(cols)
-                print(truth[cols])
-                print(test[cols])
+
+                for col in ('res_gids', 'res_built', 'gen_gids'):
+                    truth[col] = truth[col].apply(json.loads)
+                    test[col] = test[col].apply(json.loads)
+
+                cols = [c for c in test.columns if c in truth.columns]
+
                 assert_frame_equal(truth[cols], test[cols])
 
                 truth = f_true['time_index'].values
                 test = f_test['time_index'].values
-                print((truth == test).sum())
                 assert (truth == test).all()
 
     LOGGERS.clear()

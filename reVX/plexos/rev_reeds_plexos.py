@@ -4,6 +4,7 @@ Created on Wed Aug 21 13:47:43 2019
 
 @author: gbuster
 """
+from abc import ABC
 import copy
 from concurrent.futures import as_completed
 import json
@@ -12,6 +13,7 @@ import numpy as np
 import os
 import pandas as pd
 from scipy.spatial import cKDTree
+from sklearn.neighbors import BallTree
 from geopandas import GeoDataFrame
 from warnings import warn
 
@@ -47,7 +49,8 @@ class PlexosNode:
             in this plexos node. Must have resource_gid lookup, counts per
             resource_gid, and capacity at each SC point.
         cf_fpath : str
-            File path to capacity factor file to get profiles from.
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
         res_gids : list | np.ndarray, optional
             Resource GID's available in cf_fpath, if None pull from cf_fpath,
             by default None
@@ -85,7 +88,8 @@ class PlexosNode:
         Parameters
         ----------
         cf_fpath : str
-            File path to capacity factor file to get profiles from.
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
 
         Returns
         -------
@@ -122,12 +126,10 @@ class PlexosNode:
             Total REEDS requested buildout associated with SC point i.
         """
 
-        sc_gid, res_gids, gid_counts, buildout, capacity = \
-            self._parse_sc_point(row_idx)
+        sc_point = self._sc_build.loc[row_idx]
+        (sc_gid, res_gids, gen_gids, gid_counts, gid_capacity, buildout,
+            capacity) = self._parse_sc_point(sc_point, self._res_gids)
 
-        gid_capacity = gid_counts / np.sum(gid_counts) * capacity
-        gen_gids = [np.where(self._res_gids == g)[0][0]
-                    for g in res_gids]
         sc_meta = pd.DataFrame({'gen_gid': gen_gids,
                                 'res_gid': res_gids,
                                 'gid_count': gid_counts,
@@ -147,13 +149,16 @@ class PlexosNode:
 
         return sc_gid, sc_meta, buildout
 
-    def _parse_sc_point(self, row_idx):
+    @staticmethod
+    def _parse_sc_point(sc_point, all_res_gids):
         """Parse data from sc point.
 
         Parameters
         ----------
-        row_idx : int
-            Index value for the row of the target SC point in self._sc_build.
+        sc_point : pd.Series
+            Single row in the reV supply curve table to parse
+        all_res_gids : list | np.ndarray
+            ALL resource GID's available in cf_fpath
 
         Returns
         -------
@@ -161,21 +166,25 @@ class PlexosNode:
             Supply curve point gid for this sc point.
         res_gids : list
             Resource GIDs associated with SC point i.
+        gen_gids : list
+            Generation (reV gen output) GIDs associated with SC point i
         gid_counts : list
-            Number of exclusion pixels that are not excluded associated
+            Number of exclusion pixels that are included associated
             with each res_gid.
+        gid_capacity : list
+            Available capacity in MW for each res_gid.
         buildout : float
             Total REEDS requested buildout associated with SC point i.
         capacity : float
             Total Supply Curve Point Capacity
         """
 
-        sc_gid = int(self._sc_build.loc[row_idx, 'sc_gid'])
-        buildout = float(self._sc_build.loc[row_idx, 'built_capacity'])
-        capacity = float(self._sc_build.loc[row_idx, 'potential_capacity'])
+        sc_gid = int(sc_point['sc_gid'])
+        buildout = float(sc_point['built_capacity'])
+        capacity = float(sc_point['potential_capacity'])
 
-        res_gids = self._sc_build.loc[row_idx, 'res_gids']
-        gid_counts = self._sc_build.loc[row_idx, 'gid_counts']
+        res_gids = sc_point['res_gids']
+        gid_counts = sc_point['gid_counts']
 
         if isinstance(res_gids, str):
             res_gids = json.loads(res_gids)
@@ -183,7 +192,23 @@ class PlexosNode:
         if isinstance(gid_counts, str):
             gid_counts = json.loads(gid_counts)
 
-        return sc_gid, res_gids, gid_counts, buildout, capacity
+        if 'gid_capacity' in sc_point:
+            gid_capacity = sc_point['gid_capacity']
+            if isinstance(gid_capacity, str):
+                gid_capacity = json.loads(gid_capacity)
+        else:
+            gid_capacity = gid_counts / np.sum(gid_counts) * capacity
+
+        gen_gids = [np.where(all_res_gids == g)[0] for g in res_gids]
+
+        if not any(gen_gids):
+            msg = ('Could not find the following resource gids in the '
+                   'cf file input: {}'.format(res_gids))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        return (sc_gid, res_gids, gen_gids, gid_counts, gid_capacity,
+                buildout, capacity)
 
     def _build_sc_point_profile(self, row_idx, profile):
         """Build a power generation profile based on a
@@ -310,7 +335,8 @@ class PlexosNode:
             in this plexos node. Must have resource_gid lookup, counts per
             resource_gid, and capacity at each SC point.
         cf_fpath : str
-            File path to capacity factor file to get profiles from.
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
         res_gids : list | np.ndarray, optional
             Resource GID's available in cf_fpath, if None pull from cf_fpath,
             by default None
@@ -351,7 +377,183 @@ class PlexosNode:
         return profile, sc_gids, res_gids, gen_gids, res_built
 
 
-class PlexosAggregation:
+class BaseProfileAggregation(ABC):
+    """
+    Base framework to aggregate rev generation profiles to plants or plexos
+    nodes.
+    """
+
+    def __init__(self):
+        """Placeholder for concrete initialization"""
+        self._cf_fpath = None
+        self._res_gids = None
+        self._node_map = None
+        self._forecast_fpath = None
+        self._forecast_map = None
+        self._output_meta = None
+        self._time_index = None
+
+    @property
+    def time_index(self):
+        """Get the generation profile time index.
+
+        Returns
+        -------
+        time_index : pd.Datetimeindex
+            Pandas datetime index sourced from the capacity factor data.
+        """
+
+        if self._time_index is None:
+            with Outputs(self._cf_fpath, mode='r') as cf_outs:
+                self._time_index = cf_outs.time_index
+
+        return self._time_index
+
+    @property
+    def available_res_gids(self):
+        """Resource gids available in the cf file.
+
+        Returns
+        -------
+        res_gids : np.ndarray
+            Array of resource GIDs available in the cf file.
+        """
+
+        if self._res_gids is None:
+            with Outputs(self._cf_fpath, mode='r') as cf_outs:
+                self._res_gids = cf_outs.get_meta_arr('gid')
+
+            if not isinstance(self._res_gids, np.ndarray):
+                self._res_gids = np.array(list(self._res_gids))
+
+        return self._res_gids
+
+    @property
+    def node_map(self):
+        """Nearest neighbor output mapping rev supply curve points to plants
+        or plexos nodes.
+
+        Returns
+        -------
+        np.ndarray
+        """
+        return self._node_map
+
+    @property
+    def forecast_map(self):
+        """An array mapping the reV "actuals" generation data to forecast data
+        of a different resolution (if input). This is an (n, 1) array where n
+        is the number of "actuals" generation data points. So
+        self.forecast_map[9] yields the forecast index that corresponds to
+        index 9 in the cf_fpath reV generation output.
+
+        Returns
+        -------
+        np.ndarray | None
+        """
+        return self._forecast_map
+
+    @staticmethod
+    def _make_forecast_map(cf_fpath, forecast_fpath):
+        """Run ckdtree to map forecast pixels to generation pixels.
+
+        Parameters
+        ----------
+        cf_fpath : str
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, the generation profiles are sourced from this file.
+
+        Returns
+        -------
+        fmap : np.ndarray | None
+            (n, 1) array of forecast meta data indices mapped to the generation
+            meta indices where n is the number of generation points. None if
+            no forecast filepath input.
+        """
+
+        fmap = None
+        if forecast_fpath is not None:
+            logger.info('Making KDTree from forecast data: {}'
+                        .format(forecast_fpath))
+            with Outputs(cf_fpath) as out:
+                meta_cf = out.meta
+
+            with Outputs(forecast_fpath) as out:
+                meta_fo = out.meta
+
+            clabels = get_coord_labels(meta_cf)
+            tree = cKDTree(meta_fo[clabels])  # pylint: disable=not-callable
+            d, fmap = tree.query(meta_cf[clabels])
+            logger.info('Distance (min / mean / max) from generation pixels '
+                        'to forecast pixels is: {} / {} / {}'
+                        .format(d.min(), d.mean(), d.max()))
+
+        return fmap
+
+    def _init_output(self, n_profiles):
+        """Init the output array of aggregated profiles.
+
+        Parameters
+        ----------
+        n_profiles : int
+            Number of profiles that are going to be generated
+
+        Returns
+        -------
+        output : np.ndarray
+            (t, n) array of zeros where t is the timeseries length and n is
+            n_profiles.
+        """
+
+        if self._forecast_fpath is None:
+            with Outputs(self._cf_fpath, mode='r') as out:
+                t = out.shape[0]
+        else:
+            with Outputs(self._forecast_fpath, mode='r') as out:
+                t = out.shape[0]
+
+        shape = (t, n_profiles)
+        output = np.zeros(shape, dtype=np.float32)
+        return output
+
+    def _ammend_output_meta(self, row_idx, sc_gids, res_gids, gen_gids,
+                            res_built):
+        """Ammend the output meta dataframe with new info about
+        resource buildouts.
+
+        Parameters
+        ----------
+        row_idx : int
+            Index location to modify (iloc).
+        sc_gids : list
+            List of supply curve point GID's that were build for this node
+        res_gids : list
+            List of resource GID's that were built for this plexos node.
+        gen_gids : list
+            List of generation GID's that were built for this plexos node.
+        res_built : list
+            List of built capacities at each resource GID for this plexos node.
+        """
+
+        index = self._output_meta.index.values[row_idx]
+
+        if self._output_meta.at[index, 'res_gids'] is None:
+            self._output_meta.at[index, 'sc_gids'] = sc_gids
+            self._output_meta.at[index, 'res_gids'] = res_gids
+            self._output_meta.at[index, 'gen_gids'] = gen_gids
+            self._output_meta.at[index, 'res_built'] = res_built
+
+        else:
+            self._output_meta.at[index, 'sc_gids'] += sc_gids
+            self._output_meta.at[index, 'res_gids'] += res_gids
+            self._output_meta.at[index, 'gen_gids'] += gen_gids
+            self._output_meta.at[index, 'res_built'] += res_built
+
+
+class PlexosAggregation(BaseProfileAggregation):
     """
     Framework to aggregate reV gen profiles to PLEXOS node power profiles.
     This class takes as input the plexos nodes meta data (lat/lon or shape
@@ -371,16 +573,18 @@ class PlexosAggregation:
         Parameters
         ----------
         plexos_nodes : str | pd.DataFrame
-            Plexos node meta data including gid, lat/lon, voltage. Or path
-            to .csv containing plexos node meta data
+            Plexos node meta data including gid, latitude, longitude, voltage.
+            Or file path to .csv containing plexos node meta data
         rev_sc : str | pd.DataFrame
-            reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts. Or  path to reV supply curve table.
+            reV supply curve results table including SC gid, latitude,
+            longitude, res_gids, gid_counts. Or file path to reV supply
+            curve table.
         reeds_build : str | pd.DataFrame
             RdEDS buildout with rows for built capacity at each reV SC point.
             Or ReEDS buildout table
         cf_fpath : str
-            File path to capacity factor file to get profiles from.
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
@@ -398,14 +602,16 @@ class PlexosAggregation:
             node shape file input (if a shape file is input) via nearest
             neighbor to shape centroid.
         max_workers : int | None
-            Do node aggregation on max_workers.
+            Max workers for parallel profile aggregation. None uses all
+            available workers. 1 will run in serial.
         """
 
+        super().__init__()
         self._cf_fpath = cf_fpath
         self._forecast_fpath = forecast_fpath
         self.build_year = build_year
         self._res_gids = None
-        self._plexos_meta = None
+        self._output_meta = None
         self._time_index = None
         self._force_full_build = force_full_build
         self._force_shape_map = force_shape_map
@@ -428,23 +634,8 @@ class PlexosAggregation:
         self._handle_missing_resource_gids(missing)
 
         self._node_map = self._make_node_map()
-        self._forecast_map = self._make_forecast_map()
-
-    @property
-    def time_index(self):
-        """Get the generation profile time index.
-
-        Returns
-        -------
-        time_index : pd.Datetimeindex
-            Pandas datetime index sourced from the capacity factor data.
-        """
-
-        if self._time_index is None:
-            with Outputs(self._cf_fpath, mode='r') as cf_outs:
-                self._time_index = cf_outs.time_index
-
-        return self._time_index
+        self._forecast_map = self._make_forecast_map(self._cf_fpath,
+                                                     self._forecast_fpath)
 
     @property
     def plexos_meta(self):
@@ -456,7 +647,7 @@ class PlexosAggregation:
             Plexos meta dataframe reduced to the nodes in this problem.
         """
 
-        if self._plexos_meta is None:
+        if self._output_meta is None:
             inodes = np.unique(self.node_map)
 
             node_builds = []
@@ -465,18 +656,18 @@ class PlexosAggregation:
                 built_cap = self.sc_build[mask]['built_capacity'].values.sum()
                 node_builds.append(built_cap)
 
-            self._plexos_meta = self._plexos_nodes.iloc[inodes, :]
-            self._plexos_meta['built_capacity'] = node_builds
+            self._output_meta = self._plexos_nodes.iloc[inodes, :]
+            self._output_meta['built_capacity'] = node_builds
 
-            self._plexos_meta = DataCleaner.reduce_df(
-                self._plexos_meta, self._plexos_columns)
+            self._output_meta = DataCleaner.reduce_df(
+                self._output_meta, self._plexos_columns)
 
-            self._plexos_meta['sc_gids'] = None
-            self._plexos_meta['res_gids'] = None
-            self._plexos_meta['gen_gids'] = None
-            self._plexos_meta['res_built'] = None
+            self._output_meta['sc_gids'] = None
+            self._output_meta['res_gids'] = None
+            self._output_meta['gen_gids'] = None
+            self._output_meta['res_built'] = None
 
-        return self._plexos_meta
+        return self._output_meta
 
     @property
     def n_plexos_nodes(self):
@@ -512,25 +703,6 @@ class PlexosAggregation:
         return sc_res_gids
 
     @property
-    def available_res_gids(self):
-        """Resource gids available in the cf file.
-
-        Returns
-        -------
-        res_gids : np.ndarray
-            Array of resource GIDs available in the cf file.
-        """
-
-        if self._res_gids is None:
-            with Outputs(self._cf_fpath, mode='r') as cf_outs:
-                self._res_gids = cf_outs.get_meta_arr('gid')
-
-            if not isinstance(self._res_gids, np.ndarray):
-                self._res_gids = np.array(list(self._res_gids))
-
-        return self._res_gids
-
-    @property
     def sc_build(self):
         """Get the reV supply curve table reduced to just those points built
         by reeds including a built_capacity column in MW.
@@ -541,20 +713,6 @@ class PlexosAggregation:
         """
         return self._sc_build
 
-    @property
-    def node_map(self):
-        """Get the map of reV sc points to plexos node. This is a 2D array
-        with shape (n, 1) where n is the number of SC points built by reeds.
-        Each value in this array gives the plexos node index that the sc point
-        is mapped to. So self.node_map[10] yields the plexos node index for
-        self.sc_build[10].
-
-        Returns
-        -------
-        np.ndarray
-        """
-        return self._node_map
-
     def _parse_plexos_nodes(self, plexos_nodes):
         """
         Load Plexos node meta data from disc if needed, pre-filter and rename
@@ -563,13 +721,13 @@ class PlexosAggregation:
         Parameters
         ----------
         plexos_nodes : str | pd.DataFrame
-            Plexos node meta data including gid, lat/lon, voltage. Or path
-            to .csv containing plexos node meta data
+            Plexos node meta data including gid, latitude, longitude, voltage.
+            Or path to .csv containing plexos node meta data
 
         Returns
         -------
         plexos_nodes : pd.DataFrame
-            Plexos node meta data including gid, lat/lon, voltage
+            Plexos node meta data including gid, latitude, longitude, voltage
         """
 
         if (isinstance(plexos_nodes, str)
@@ -603,7 +761,7 @@ class PlexosAggregation:
         ----------
         rev_sc : pd.DataFrame
             reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts.
+            res_gids, gid_counts.
         reeds_build : pd.DataFrame
             REEDS buildout with rows for built capacity at each reV SC point.
         atol : float
@@ -653,7 +811,7 @@ class PlexosAggregation:
         ----------
         rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts. Or  path to reV supply curve table.
+            res_gids, gid_counts. Or  path to reV supply curve table.
         reeds_build : str | pd.DataFrame
             RdEDS buildout with rows for built capacity at each reV SC point.
             Or ReEDS buildout table
@@ -796,57 +954,6 @@ class PlexosAggregation:
                 logger.error(msg)
                 raise RuntimeError(msg)
 
-    def _init_output(self):
-        """Init the output array of aggregated PLEXOS profiles.
-
-        Returns
-        -------
-        output : np.ndarray
-            (t, n) array of zeros where t is the timeseries length and n is
-            the number of plexos nodes.
-        """
-
-        if self._forecast_fpath is None:
-            with Outputs(self._cf_fpath, mode='r') as out:
-                t = out.shape[0]
-        else:
-            with Outputs(self._forecast_fpath, mode='r') as out:
-                t = out.shape[0]
-
-        shape = (t, self.n_plexos_nodes)
-        output = np.zeros(shape, dtype=np.float32)
-        return output
-
-    def _make_forecast_map(self):
-        """Run ckdtree to map forecast pixels to generation pixels.
-
-        Returns
-        -------
-        fmap : np.ndarray | None
-            (n, 1) array of forecast meta data indices mapped to the generation
-            meta indices where n is the number of generation points. None if
-            no forecast filepath input.
-        """
-
-        fmap = None
-        if self._forecast_fpath is not None:
-            logger.info('Making KDTree from forecast data: {}'
-                        .format(self._forecast_fpath))
-            with Outputs(self._cf_fpath) as out:
-                meta_cf = out.meta
-
-            with Outputs(self._forecast_fpath) as out:
-                meta_fo = out.meta
-
-            clabels = get_coord_labels(meta_cf)
-            tree = cKDTree(meta_fo[clabels])  # pylint: disable=not-callable
-            d, fmap = tree.query(meta_cf[clabels])
-            logger.info('Distance (min / mean / max) from generation pixels '
-                        'to forecast pixels is: {} / {} / {}'
-                        .format(d.min(), d.mean(), d.max()))
-
-        return fmap
-
     def _make_node_map(self):
         """Run ckdtree to map built rev SC points to plexos nodes.
 
@@ -890,45 +997,7 @@ class PlexosAggregation:
 
         return plx_node_index
 
-    def _ammend_plexos_meta(self, row_idx, sc_gids, res_gids, gen_gids,
-                            res_built):
-        """Ammend the plexos meta dataframe with data about resource buildouts.
-
-        Parameters
-        ----------
-        row_idx : int
-            Index location to modify (iloc).
-        sc_gids : list
-            List of supply curve point GID's that were build for this node
-        res_gids : list
-            List of resource GID's that were built for this plexos node.
-        gen_gids : list
-            List of generation GID's that were built for this plexos node.
-        res_built : list
-            List of built capacities at each resource GID for this plexos node.
-        """
-
-        index = self._plexos_meta.index.values[row_idx]
-
-        if self._plexos_meta.loc[index, 'res_gids'] is None:
-            self._plexos_meta.loc[index, 'sc_gids'] = str(sc_gids)
-            self._plexos_meta.loc[index, 'res_gids'] = str(res_gids)
-            self._plexos_meta.loc[index, 'gen_gids'] = str(gen_gids)
-            self._plexos_meta.loc[index, 'res_built'] = str(res_built)
-
-        else:
-            a = json.loads(self._plexos_meta.loc[index, 'sc_gids']) + sc_gids
-            b = json.loads(self._plexos_meta.loc[index, 'res_gids']) + res_gids
-            c = json.loads(self._plexos_meta.loc[index, 'gen_gids']) + gen_gids
-            d = (json.loads(self._plexos_meta.loc[index, 'res_built'])
-                 + res_built)
-
-            self._plexos_meta.loc[index, 'sc_gids'] = str(a)
-            self._plexos_meta.loc[index, 'res_gids'] = str(b)
-            self._plexos_meta.loc[index, 'gen_gids'] = str(c)
-            self._plexos_meta.loc[index, 'res_built'] = str(d)
-
-    def _make_profiles(self):
+    def make_profiles(self):
         """Make a 2D array of aggregated plexos gen profiles.
 
         Returns
@@ -954,7 +1023,7 @@ class PlexosAggregation:
             (t, n) array of Plexos node generation profiles where t is the
             timeseries length and n is the number of plexos nodes.
         """
-        profiles = self._init_output()
+        profiles = self._init_output(self.n_plexos_nodes)
         progress = 0
         futures = {}
         loggers = [__name__, 'reVX']
@@ -974,7 +1043,7 @@ class PlexosAggregation:
                 i = futures[f]
                 profile, sc_gids, res_gids, gen_gids, res_built = f.result()
                 profiles[:, i] = profile
-                self._ammend_plexos_meta(i, sc_gids, res_gids, gen_gids,
+                self._ammend_output_meta(i, sc_gids, res_gids, gen_gids,
                                          res_built)
 
                 current_prog = (n + 1) // (len(futures) / 100)
@@ -994,7 +1063,7 @@ class PlexosAggregation:
             (t, n) array of Plexos node generation profiles where t is the
             timeseries length and n is the number of plexos nodes.
         """
-        profiles = self._init_output()
+        profiles = self._init_output(self.n_plexos_nodes)
         progress = 0
         for i, inode in enumerate(np.unique(self.node_map)):
             mask = (self.node_map == inode)
@@ -1007,7 +1076,7 @@ class PlexosAggregation:
 
             profile, sc_gids, res_gids, gen_gids, res_built = p
             profiles[:, i] = profile
-            self._ammend_plexos_meta(i, sc_gids, res_gids, gen_gids, res_built)
+            self._ammend_output_meta(i, sc_gids, res_gids, gen_gids, res_built)
 
             current_prog = ((i + 1)
                             // (len(np.unique(self.node_map)) / 100))
@@ -1026,15 +1095,18 @@ class PlexosAggregation:
 
         Parameters
         ----------
-        plexos_nodes : pd.DataFrame
-            Plexos node meta data including gid, lat/lon, voltage.
-        rev_sc : pd.DataFrame
-            reV supply curve results table including SC gid, lat/lon,
-            res_gids, res_id_counts.
+        plexos_nodes : str | pd.DataFrame
+            Plexos node meta data including gid, latitude, longitude, voltage.
+            Or file path to .csv containing plexos node meta data
+        rev_sc : str | pd.DataFrame
+            reV supply curve results table including SC gid, latitude,
+            longitude, res_gids, gid_counts. Or file path to reV supply
+            curve table.
         reeds_build : pd.DataFrame
             REEDS buildout with rows for built capacity at each reV SC point.
         cf_fpath : str
-            File path to capacity factor file to get profiles from.
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
@@ -1052,7 +1124,8 @@ class PlexosAggregation:
             node shape file input (if a shape file is input) via nearest
             neighbor to shape centroid.
         max_workers : int | None
-            Do node aggregation on max_workers.
+            Max workers for parallel profile aggregation. None uses all
+            available workers. 1 will run in serial.
 
         Returns
         -------
@@ -1072,13 +1145,13 @@ class PlexosAggregation:
                  force_shape_map=force_shape_map,
                  max_workers=max_workers)
 
-        profiles = pa._make_profiles()
+        profiles = pa.make_profiles()
 
         return pa.plexos_meta, pa.time_index, profiles
 
 
-class Manager:
-    """Plexos job manager."""
+class RevReedsPlexosManager:
+    """rev-reeds-plexos job manager."""
 
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  forecast_fpath=None, wait=300, db_host='gds_edit.nrel.gov',
@@ -1093,7 +1166,8 @@ class Manager:
         reeds_build : str | pd.DataFrame
             REEDS buildout results (CSV file path or database.schema.name)
         cf_fpath : str
-            Capacity factor .h5 file path.
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
@@ -1159,8 +1233,9 @@ class Manager:
             reV supply curve results (CSV file path or database.schema.name)
         reeds_build : str | pd.DataFrame
             REEDS buildout results (CSV file path or database.schema.name)
-        cf_fpath : str | pd.DataFrame
-            Capacity factor .h5 file path.
+        cf_fpath : str
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
@@ -1396,3 +1471,343 @@ class Manager:
                                              data=profiles)
 
         logger.info('Plexos aggregation complete!')
+
+
+class SimplePlantBuilder(BaseProfileAggregation):
+    """Class to build generation profiles for "plants" by aggregating resource
+    from nearest neighbor supply curve points.
+    """
+
+    def __init__(self, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
+                 max_workers=None):
+        """Run plexos aggregation.
+
+        Parameters
+        ----------
+        plant_meta : str | pd.DataFrame
+            Str filepath or extracted dataframe for plant meta data with every
+            row representing a plant with columns for latitude, longitude,
+            and capacity (in MW). Plants will compete for available capacity
+            in the reV supply curve input and will be prioritized based on the
+            row order of this input.
+        rev_sc : str | pd.DataFrame
+            reV supply curve or sc-aggregation output table including sc_gid,
+            latitude, longitude, res_gids, gid_counts, mean_cf.
+        cf_fpath : str
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, the generation profiles are sourced from this file.
+        max_workers : int | None
+            Max workers for parallel profile aggregation. None uses all
+            available workers. 1 will run in serial.
+        """
+
+        super().__init__()
+        self._res_gids = None
+        self._plant_meta = parse_table(plant_meta).reset_index(drop=True)
+        self._sc_table = parse_table(rev_sc).reset_index(drop=True)
+        self._cf_fpath = cf_fpath
+        self._forecast_fpath = forecast_fpath
+        self._output_meta = None
+        self.max_workers = max_workers
+
+        required = ('sc_gid', 'latitude', 'longitude', 'res_gids',
+                    'gid_counts', 'mean_cf')
+        missing = [r not in self._sc_table for r in required]
+        if any(missing):
+            msg = ('SimplePlantBuilder needs the following missing columns '
+                   'in the rev_sc input: {}'.format(missing))
+            logger.error(msg)
+            raise ValueError(msg)
+
+        required = ('latitude', 'longitude', 'capacity')
+        missing = [r not in self._plant_meta for r in required]
+        if any(missing):
+            msg = ('SimplePlantBuilder needs the following missing columns '
+                   'in the plant_meta input: {}'.format(missing))
+            logger.error(msg)
+            raise ValueError(msg)
+
+        self._node_map = self._make_node_map()
+        self._forecast_map = PlexosAggregation._make_forecast_map(
+            self._cf_fpath, self._forecast_fpath)
+        self._compute_gid_capacities()
+
+    def _compute_gid_capacities(self):
+        """Compute the individual resource gid capacities and make a new
+        column in the SC table."""
+
+        for label in ('res_gids', 'gid_counts'):
+            if isinstance(self._sc_table[label].values[0], str):
+                self._sc_table[label] = self._sc_table[label].apply(json.loads)
+
+        self._sc_table['gid_capacity'] = None
+        for i, row in self._sc_table.iterrows():
+            gid_counts = row['gid_counts']
+            gid_capacity = gid_counts / np.sum(gid_counts) * row['capacity']
+            self._sc_table.at[i, 'gid_capacity'] = list(gid_capacity)
+
+    def _make_node_map(self):
+        """Run ckdtree to map rev SC points to plant locations.
+
+        Returns
+        -------
+        ind : np.ndarray
+            KDTree query output, (n, m) array of plant indices mapped to
+            the SC points where n is the number of plants, m is the number
+            of SC points, and each row in the array yields the sc points m
+            closest to the plant n.
+        """
+
+        plant_coord_labels = get_coord_labels(self._plant_meta)
+        sc_coord_labels = get_coord_labels(self._sc_table)
+
+        # pylint: disable=not-callable
+        sc_coords = np.radians(self._sc_table[sc_coord_labels].values)
+        plant_coords = np.radians(self._plant_meta[plant_coord_labels])
+        tree = BallTree(sc_coords, metric='haversine')
+        ind = tree.query(plant_coords, return_distance=False,
+                         k=len(self._sc_table))
+
+        return ind
+
+    @property
+    def plant_meta(self):
+        """Get plant meta data for the requested plant buildout
+        with buildout information
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+
+        if self._output_meta is None:
+            self._output_meta = self._plant_meta.copy()
+
+            self._output_meta['sc_gids'] = None
+            self._output_meta['res_gids'] = None
+            self._output_meta['gen_gids'] = None
+            self._output_meta['res_built'] = None
+
+        return self._output_meta
+
+    def assign_plant_buildouts(self):
+        """March through the plant meta data and make subsets of the supply
+        curve table that will be built out for each plant. The supply curve
+        table attribute of this SimplePlantBuilder instance will be manipulated
+        such that total sc point capacity and resource gid capacity is reduced
+        whenever a plant is built. In this fashion, resource in SC points will
+        not be double counted, but resource within an SC point can be divided
+        up between multiple plants. Resource within an SC point is prioritized
+        by available capacity.
+
+        Returns
+        -------
+        plant_sc_builds : dict
+            Dictionary mapping the plant row indices (keys) to subsets of the
+            SC table showing what should be built for each plant. The subset
+            SC tables in this dict will no longer match the sc table attribute
+            of the SimplePlantBuilder instance, because the tables in this dict
+            show what should be built, and the sc table attribute will show
+            what is remaining.
+        """
+
+        plant_sc_builds = {}
+
+        # March through plant meta data table in order provided
+        for i, plant_row in self._plant_meta.iterrows():
+            plant_cap_to_build = float(plant_row['capacity'])
+            single_plant_sc = pd.DataFrame()
+
+            # March through the SC table in order of the node map
+            for sc_loc in self.node_map[i]:
+                sc_point = self._sc_table.loc[sc_loc].copy()
+                sc_capacity = sc_point['capacity']
+
+                # This sc point has already been built out by another plant
+                if sc_capacity == 0:
+                    pass
+
+                # Build the full sc point
+                elif sc_capacity <= plant_cap_to_build:
+                    sc_point['built_capacity'] = sc_point['capacity']
+                    single_plant_sc = single_plant_sc.append(sc_point)
+                    plant_cap_to_build -= sc_capacity
+                    gid_capacity = np.zeros(len(sc_point['gid_capacity']))
+                    gid_capacity = list(gid_capacity)
+                    self._sc_table.at[sc_loc, 'capacity'] = 0
+                    self._sc_table.at[sc_loc, 'gid_capacity'] = gid_capacity
+
+                # Build only part of the SC point
+                else:
+                    # Make arrays of gid capacities that will be built
+                    # for this plant and also saved for other plants.
+                    gids_orig = np.array(sc_point['gid_capacity'])
+                    gids_remain = gids_orig.copy()
+                    gids_build = np.zeros_like(gids_orig)
+
+                    # Build greatest available capacity first
+                    order = np.flip(np.argsort(gids_orig))
+
+                    for j in order:
+                        # add built capacity to the "to build" array
+                        # (on a resource point per supply curve point basis)
+                        # and remove from the "remaining" array
+                        built = np.minimum(plant_cap_to_build, gids_orig[j])
+                        gids_build[j] += built
+                        gids_remain[j] -= built
+                        plant_cap_to_build -= built
+
+                        # buildout for this plant is fully complete
+                        if plant_cap_to_build <= 0:
+                            break
+
+                    assert np.allclose(gids_remain + gids_build, gids_orig)
+
+                    gids_build = gids_build.tolist()
+                    gids_orig = gids_orig.tolist()
+
+                    sc_point['capacity'] = np.sum(gids_build)
+                    sc_point['gid_capacity'] = gids_build
+                    single_plant_sc = single_plant_sc.append(sc_point)
+
+                    self._sc_table.at[sc_loc, 'capacity'] -= np.sum(gids_build)
+                    self._sc_table.at[sc_loc, 'gid_capacity'] = gids_remain
+
+                # buildout for this plant is fully complete
+                if plant_cap_to_build <= 0:
+                    plant_sc_builds[i] = single_plant_sc
+                    break
+
+        return plant_sc_builds
+
+    def check_valid_buildouts(self, plant_sc_builds):
+        """Check that plant buildouts are mapped to valid resource data that
+        can be found in the cf_fpath input."""
+        for i, single_plant_sc in plant_sc_builds.items():
+            sc_res_gids = single_plant_sc['res_gids'].values.tolist()
+            sc_res_gids = [g for subset in sc_res_gids for g in subset]
+            missing = [gid for gid in sc_res_gids
+                       if gid not in self.available_res_gids]
+            if any(missing):
+                msg = ('Plant index {} was mapped to resource gids that are '
+                       'missing from the cf file: {}'.format(i, missing))
+                logger.error(msg)
+                raise RuntimeError(msg)
+
+    def make_profiles(self, plant_sc_builds):
+        """Make a 2D array of aggregated plant gen profiles.
+
+        Returns
+        -------
+        profiles : np.ndarray
+            (t, n) array of plant  eneration profiles where t is the
+            timeseries length and n is the number of plants.
+        """
+
+        if self.max_workers != 1:
+            profiles = self._make_profiles_parallel(plant_sc_builds)
+        else:
+            profiles = self._make_profiles_serial(plant_sc_builds)
+
+        return profiles
+
+    def _make_profiles_parallel(self, plant_sc_builds):
+        """Make a 2D array of aggregated plant gen profiles in parallel.
+
+        Returns
+        -------
+        profiles : np.ndarray
+            (t, n) array of plant node generation profiles where t is the
+            timeseries length and n is the number of plants.
+        """
+
+        profiles = self._init_output(len(self.plant_meta))
+        progress = 0
+        futures = {}
+        loggers = [__name__, 'reVX']
+        with SpawnProcessPool(max_workers=self.max_workers,
+                              loggers=loggers) as exe:
+            for i, plant_sc_subset in plant_sc_builds.items():
+                f = exe.submit(PlexosNode.run,
+                               plant_sc_subset, self._cf_fpath,
+                               res_gids=self.available_res_gids,
+                               forecast_fpath=self._forecast_fpath,
+                               forecast_map=self._forecast_map)
+                futures[f] = i
+
+            for n, f in enumerate(as_completed(futures)):
+                i = futures[f]
+                profile, sc_gids, res_gids, gen_gids, res_built = f.result()
+                profiles[:, i] = profile
+                self._ammend_output_meta(i, sc_gids, res_gids, gen_gids,
+                                         res_built)
+
+                current_prog = (n + 1) // (len(futures) / 100)
+                if current_prog > progress:
+                    progress = current_prog
+                    logger.info('{} % of plant node profiles built.'
+                                .format(progress))
+
+        return profiles
+
+    def _make_profiles_serial(self, plant_sc_builds):
+        """Make a 2D array of aggregated plexos gen profiles in serial.
+
+        Returns
+        -------
+        profiles : np.ndarray
+            (t, n) array of Plexos node generation profiles where t is the
+            timeseries length and n is the number of plexos nodes.
+        """
+
+        profiles = self._init_output(len(self.plant_meta))
+        progress = 0
+        for i, plant_sc_subset in plant_sc_builds.items():
+            p = PlexosNode.run(
+                plant_sc_subset, self._cf_fpath,
+                res_gids=self.available_res_gids,
+                forecast_fpath=self._forecast_fpath,
+                forecast_map=self._forecast_map)
+
+            profile, sc_gids, res_gids, gen_gids, res_built = p
+            profiles[:, i] = profile
+            self._ammend_output_meta(i, sc_gids, res_gids, gen_gids, res_built)
+
+            current_prog = ((i + 1)
+                            // (len(np.unique(self.node_map)) / 100))
+            if current_prog > progress:
+                progress = current_prog
+                logger.info('{} % of plant profiles built.'
+                            .format(progress))
+
+        return profiles
+
+    @classmethod
+    def run(cls, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
+            max_workers=None):
+        """
+        Returns
+        -------
+        plant_meta : pd.DataFrame
+            Plant meta data with built capacities and mappings to the
+            resource used.
+        time_index : pd.datetimeindex
+            Time index for the profiles.
+        profiles : np.ndarray
+            Generation profile timeseries in MW at each plant.
+        max_workers : int | None
+            Max workers for parallel profile aggregation. None uses all
+            available workers. 1 will run in serial.
+        """
+
+        pb = cls(plant_meta, rev_sc, cf_fpath, forecast_fpath=forecast_fpath,
+                 max_workers=max_workers)
+
+        plant_sc_builds = pb.assign_plant_buildouts()
+        pb.check_valid_buildouts(plant_sc_builds)
+        profiles = pb.make_profiles(plant_sc_builds)
+
+        return pb.plant_meta, pb.time_index, profiles
