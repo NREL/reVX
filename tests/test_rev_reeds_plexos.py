@@ -235,12 +235,12 @@ def test_sc_point_out_of_shape():
         PlexosAggregation.run(
             PLEXOS_SHAPES, rev_sc, reeds_0, CF_FPATH.format(2007),
             build_year=2050, plexos_columns=('PCA',),
-            max_workers=None)
+            max_workers=1)
 
     PlexosAggregation.run(
         PLEXOS_SHAPES, rev_sc, reeds_0, CF_FPATH.format(2007),
         build_year=2050, plexos_columns=('PCA',),
-        max_workers=None, force_shape_map=True)
+        max_workers=1, force_shape_map=True)
 
 
 def execute_pytest(capture='all', flags='-rapP'):

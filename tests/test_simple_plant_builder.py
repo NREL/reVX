@@ -9,7 +9,7 @@ import pytest
 
 from rex import Resource
 
-from reVX.plexos.rev_reeds_plexos import SimplePlantBuilder
+from reVX.plexos.simple_plant_builder import SimplePlantBuilder
 from reVX import TESTDATADIR
 
 REV_SC = os.path.join(TESTDATADIR,
@@ -93,6 +93,7 @@ def test_sc_point_overlap():
     pb = SimplePlantBuilder(plant_meta, REV_SC, CF_FPATH, max_workers=1)
     plant_sc_builds = pb.assign_plant_buildouts()
     pb.check_valid_buildouts(plant_sc_builds)
+    pb.make_profiles(plant_sc_builds)
     meta = pb.plant_meta
 
     p1_res_gid = meta.loc[0, 'res_gids']
