@@ -59,14 +59,13 @@ class PlexosNode:
             point. If True, the remainder of the requested build will always
             be built at the last resource gid in the sc point.
         forecast_fpath : str | None, optional
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file,
-            by default None
+            Forecasted capacity factor .h5 file path (reV results).  If not
+            None, the generation profiles are sourced from this file, by
+            default None
         forecast_map : np.ndarray | None, optional
             (n, 1) array of forecast meta data indices mapped to the generation
-            meta indices where n is the number of generation points. None if
-            no forecast data being considered,
-            by default None
+            meta indices where n is the number of generation points. None if no
+            forecast data being considered, by default None
         """
         self._sc_build = \
             DataCleaner.rename_cols(sc_build,
@@ -127,8 +126,8 @@ class PlexosNode:
         """
 
         sc_point = self._sc_build.loc[row_idx]
-        (sc_gid, res_gids, gen_gids, gid_counts, gid_capacity, buildout,
-            capacity) = self._parse_sc_point(sc_point, self._res_gids)
+        sc_gid, res_gids, gen_gids, gid_counts, gid_capacity, buildout, _ = \
+            self._parse_sc_point(sc_point, self._res_gids)
 
         sc_meta = pd.DataFrame({'gen_gid': gen_gids,
                                 'res_gid': res_gids,
@@ -245,35 +244,36 @@ class PlexosNode:
         res_built = []
 
         for _, row in sc_meta.iterrows():
+            if buildout > 1e-6 and row['gid_capacity'] > 1e-6:
 
-            if buildout <= row['gid_capacity']:
-                to_build = buildout
-            else:
-                to_build = row['gid_capacity']
+                if buildout <= row['gid_capacity']:
+                    to_build = buildout
+                else:
+                    to_build = row['gid_capacity']
 
-            buildout -= to_build
+                buildout -= to_build
 
-            res_built.append(np.round(to_build, decimals=5))
+                res_built.append(np.round(to_build, decimals=5))
 
-            gen_gid = int(row['gen_gid'])
-            if self._forecast_map is None:
-                with Outputs(self._cf_fpath, mode='r') as cf_outs:
-                    cf_profile = cf_outs['cf_profile', :, gen_gid]
-            else:
-                gen_gid = int(self._forecast_map[gen_gid])
-                with Outputs(self._forecast_fpath, mode='r') as cf_outs:
-                    cf_profile = cf_outs['cf_profile', :, gen_gid]
+                gen_gid = int(row['gen_gid'])
+                if self._forecast_map is None:
+                    with Outputs(self._cf_fpath, mode='r') as cf_outs:
+                        cf_profile = cf_outs['cf_profile', :, gen_gid]
+                else:
+                    gen_gid = int(self._forecast_map[gen_gid])
+                    with Outputs(self._forecast_fpath, mode='r') as cf_outs:
+                        cf_profile = cf_outs['cf_profile', :, gen_gid]
 
-            res_gids.append(row['res_gid'])
-            gen_gids.append(gen_gid)
+                res_gids.append(row['res_gid'])
+                gen_gids.append(gen_gid)
 
-            if profile is None:
-                profile = to_build * cf_profile
-            else:
-                profile += to_build * cf_profile
+                if profile is None:
+                    profile = to_build * cf_profile
+                else:
+                    profile += to_build * cf_profile
 
-            if buildout <= 0:
-                break
+                if buildout <= 0:
+                    break
 
         if buildout > 1e-6:
             msg = ('PlexosNode wasnt able to build out fully for supply '
@@ -367,6 +367,7 @@ class PlexosNode:
         res_built : list
             List of built capacities at each resource GID for this plexos node.
         """
+
         n = cls(sc_build, cf_fpath, res_gids=res_gids,
                 force_full_build=force_full_build,
                 forecast_fpath=forecast_fpath,
@@ -1550,15 +1551,16 @@ class SimplePlantBuilder(BaseProfileAggregation):
             self._sc_table.at[i, 'gid_capacity'] = list(gid_capacity)
 
     def _make_node_map(self):
-        """Run ckdtree to map rev SC points to plant locations.
+        """Run haversine balltree to map plant locations to nearest supply
+        supply curve points
 
         Returns
         -------
         ind : np.ndarray
-            KDTree query output, (n, m) array of plant indices mapped to
-            the SC points where n is the number of plants, m is the number
-            of SC points, and each row in the array yields the sc points m
-            closest to the plant n.
+            BallTree (haversine) query output, (n, m) array of plant indices
+            mapped to the SC points where n is the number of plants, m is the
+            number of SC points, and each row in the array yields the sc points
+            m closest to the plant n.
         """
 
         plant_coord_labels = get_coord_labels(self._plant_meta)
@@ -1670,6 +1672,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
                     gids_orig = gids_orig.tolist()
 
                     sc_point['capacity'] = np.sum(gids_build)
+                    sc_point['built_capacity'] = np.sum(gids_build)
                     sc_point['gid_capacity'] = gids_build
                     single_plant_sc = single_plant_sc.append(sc_point)
 
