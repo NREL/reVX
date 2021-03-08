@@ -409,7 +409,7 @@ class DistanceToPorts:
         if update_layer:
             hsds = check_res_file(excl_fpath)[1]
             with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
-                if output_dist_layer in tif.layers:
+                if output_dist_layer in tif:
                     dist_to_ports = tif[output_dist_layer]
 
         if dist_to_ports is not None:

@@ -239,7 +239,7 @@ class OffshoreInputs:
             Input layer data for desired offshore sites
         """
         with ExclusionLayers(self.inputs_fpath) as f:
-            if layer not in f.layers:
+            if layer not in f:
                 msg = ("{} is not a valid offshore input layers, please "
                        "choice one of: {}".format(layer, f.layers))
                 logger.error(msg)
