@@ -11,7 +11,7 @@ from rex.utilities.hpc import SLURM
 from rex.utilities.cli_dtypes import STR, INT, INTLIST, STRLIST
 from rex.utilities.loggers import init_mult
 
-from reVX.plexos.rev_reeds_plexos import Manager
+from reVX.plexos.rev_reeds_plexos import RevReedsPlexosManager
 
 logger = logging.getLogger(__name__)
 
@@ -70,11 +70,11 @@ def main(ctx, name, job_input, out_dir, cf_years, build_years,
         logger.info('Outputs to be stored in: {}'.format(out_dir))
         logger.info('Aggregating plexos scenario "{}".'.format(scenario))
         for cf_year in cf_years:
-            Manager.run(job_input, out_dir, scenario=scenario,
-                        cf_year=cf_year, build_years=build_years,
-                        plexos_columns=plexos_columns,
-                        force_full_build=force_full_build,
-                        force_shape_map=force_shape_map)
+            RevReedsPlexosManager.run(job_input, out_dir, scenario=scenario,
+                                      cf_year=cf_year, build_years=build_years,
+                                      plexos_columns=plexos_columns,
+                                      force_full_build=force_full_build,
+                                      force_shape_map=force_shape_map)
 
 
 def get_node_cmd(name, job_input, out_dir, cf_year, build_year,
