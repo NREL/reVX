@@ -50,6 +50,11 @@ class DistanceToPorts:
             input_dist_layer=input_dist_layer)
         self._ports = self._parse_ports(ports, lat_lon)
 
+    def __repr__(self):
+        msg = "{} from {}".format(self.__class__.__name__, self.ports)
+
+        return msg
+
     @property
     def ports(self):
         """

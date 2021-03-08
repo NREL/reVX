@@ -76,7 +76,7 @@ def run_local(ctx, config):
 @main.command()
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
-              help='Filepath to MeanWindDirections config json file.')
+              help='Filepath to DistToPorts config json file.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context

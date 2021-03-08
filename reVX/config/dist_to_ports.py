@@ -9,7 +9,7 @@ from reV.config.base_analysis_config import AnalysisConfig
 class DistToPortsConfig(AnalysisConfig):
     """Config framework for distance to port calculation"""
 
-    NAME = 'meanWindDirs'
+    NAME = 'DistToPorts'
     REQUIREMENTS = ('ports_fpath', 'excl_fpath')
 
     def __init__(self, config):

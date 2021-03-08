@@ -23,6 +23,92 @@ class OffshoreInputs:
         self._offshore_meta = self._create_offshore_meta(offshore_sites,
                                                          tm_dset)
 
+    def __repr__(self):
+        msg = "{} from {}".format(self.__class__.__name__, self.inputs_fpath)
+
+        return msg
+
+    def __getitem__(self, layers):
+        """
+        Extract data for the desired layers
+
+        Parameters
+        ----------
+        layers : str | list | dict
+            Input layer, list of input layers, to extract, or dictionary
+            mapping the input layers to extract to the column names to save
+            them under
+
+        Returns
+        -------
+        out : pandas.DataFrame
+            Updated meta data table with desired layers
+        """
+        if isinstance(layers, str):
+            layers = [layers]
+
+        if isinstance(layers, (tuple, list, np.ndarray)):
+            layers = {layer: layer for layer in layers}
+
+        if not isinstance(layers, dict):
+            msg = ('Expecting "layers" to be a the name of a single input '
+                   'layer, a list of input layers, or a dictionary mapping '
+                   'desired input layers to desired output column names, but '
+                   'recieved: {}'.format(type(layers)))
+            logger.error(msg)
+            raise TypeError(msg)
+
+        out = self.meta.copy()
+        for col, layer in layers.items():
+            out[col] = self.extract_input_layer(layers)
+
+        return out
+
+    @property
+    def inputs_fpath(self):
+        """
+        .h5 file containing offshore input layers
+
+        Returns
+        -------
+        str
+        """
+        return self._inputs_fpath
+
+    @property
+    def meta(self):
+        """
+        Offshore site meta data including mapping to input layer row and column
+        index
+
+        Returns
+        -------
+        pandas.DataFrame
+        """
+        return self._offshore_meta
+
+    @property
+    def row_ids(self):
+        """
+        Input layer array row ids that correspond to desired offshore sites
+
+        Returns
+        -------
+        ndarray
+        """
+        return self.meta['row_id'].values
+
+    @property
+    def column_ids(self):
+        """
+        Input layer array column ids that correspond to desired offshore sites
+
+        Returns
+        -------
+        ndarray
+        """
+        return self.meta['col_id'].values
+
     @staticmethod
     def _reduce_tech_map(inputs_fpath, tm_dset='techmap_wtk',
                          offshore_gids=None):
@@ -119,7 +205,7 @@ class OffshoreInputs:
 
         Returns
         -------
-        offshore_meta : pandas.DataFrames
+        offshore_meta : pandas.DataFrame
             Offshore sites meta data including mapping to input layers
         """
         offshore_sites = self._parse_offshore_sites(offshore_sites)
@@ -137,3 +223,66 @@ class OffshoreInputs:
         offshore_meta = pd.merge(offshore_sites, tech_map, on='gid')
 
         return offshore_meta
+
+    def extract_input_layer(self, layer):
+        """
+        Extract input data for desired layer
+
+        Parameters
+        ----------
+        layer : str
+            Desired input layer
+
+        Returns
+        -------
+        data : ndarray
+            Input layer data for desired offshore sites
+        """
+        with ExclusionLayers(self.inputs_fpath) as f:
+            if layer not in f.layers:
+                msg = ("{} is not a valid offshore input layers, please "
+                       "choice one of: {}".format(layer, f.layers))
+                logger.error(msg)
+                raise KeyError(msg)
+
+            data = f[layer, self.row_ids, self.column_ids]
+
+        return data
+
+    @classmethod
+    def extract(cls, inputs_fpath, offshore_sites, input_layers,
+                tm_dset='techmap_wtk', out_fpath=None):
+        """
+        Extract data from desired input layers for desired offshore sites
+
+        Parameters
+        ----------
+        inputs_fpath : str
+            Path to offshore inputs .h5 file
+        offshore_sites : str | list | tuple | ndarray |pandas.DataFrame
+            - Path to .csv|.json file with offshore sites meta data
+            - Path to a WIND Toolkit .h5 file to extact site meta from
+            - List, tuple, or vector of offshore gids
+            - Pre-extracted site meta DataFrame
+        layers : str | list | dict
+            Input layer, list of input layers, to extract, or dictionary
+            mapping the input layers to extract to the column names to save
+            them under
+        tm_dset : str, optional
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
+        out_fpath : str, optional
+            Output .csv path to save offshore inputs too, by default None
+
+        Returns
+        -------
+        out : pandas.DataFrame
+            Updated meta data table with desired layers
+        """
+        off_ipt = cls(inputs_fpath, offshore_sites, tm_dset=tm_dset)
+        out = off_ipt[input_layers]
+
+        if out_fpath:
+            out.to_csv(out_fpath, index=False)
+
+        return out
