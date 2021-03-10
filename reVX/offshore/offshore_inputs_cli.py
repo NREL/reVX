@@ -139,7 +139,7 @@ def local(ctx, inputs_fpath, offshore_sites, input_layers, out_dir, tm_dset,
     log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
-    out_fpath = os.path.basename(inputs_fpath).replace('.h5', '.csv')
+    out_fpath = os.path.basename(input_layers).replace('.json', '.csv')
     out_fpath = os.path.join(out_dir, out_fpath)
 
     input_layers = safe_json_load(input_layers)['input_layers']

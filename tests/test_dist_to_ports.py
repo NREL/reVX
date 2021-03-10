@@ -64,7 +64,6 @@ def test_cli(runner, ports_layer):
         ports_layer = 'ports_operations'
 
     with tempfile.TemporaryDirectory() as td:
-        print(os.listdir(td))
         excl_fpath = os.path.basename(EXCL_H5)
         excl_fpath = os.path.join(td, excl_fpath)
         shutil.copy(EXCL_H5, excl_fpath)

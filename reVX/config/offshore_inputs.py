@@ -41,13 +41,13 @@ class OffshoreInputsConfig(AnalysisConfig):
         return self['offshore_sites']
 
     @property
-    def input_layer(self):
+    def input_layers(self):
         """
         Path to json file containing input layer, list of input layers, to
         extract, or dictionary mapping the input layers to extract to
         the column names to save them under (required)
         """
-        return self['input_dist_layer']
+        return self['input_layers']
 
     @property
     def tm_dset(self):

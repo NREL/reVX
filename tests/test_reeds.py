@@ -500,8 +500,6 @@ def test_cli(runner, trg_classes):
                                               legacy_format=False,)
         path = os.path.join(td, '{}_ReEDS_correlations.h5'.format(name))
         with Resource(path) as out:
-            print(out.datasets)
-            print(truth_coeffs.keys())
             meta = out.meta
             for k, v in truth_coeffs.items():
                 dset = 'timeslice_{}'.format(k)

@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy.ndimage import center_of_mass
+from warnings import warn
 
 from rex.resource import Resource
 from rex.utilities.utilities import parse_table
@@ -59,8 +60,8 @@ class OffshoreInputs:
             raise TypeError(msg)
 
         out = self.meta.copy()
-        for col, layer in layers.items():
-            out[col] = self.extract_input_layer(layers)
+        for layer, col in layers.items():
+            out[col] = self.extract_input_layer(layer)
 
         return out
 
@@ -136,13 +137,23 @@ class OffshoreInputs:
         with ExclusionLayers(inputs_fpath) as f:
             tech_map = f[tm_dset]
 
+        gids = np.unique(tech_map)
+
         if offshore_gids is None:
-            offshore_gids = np.unique(tech_map)
-            offshore_gids = offshore_gids[offshore_gids >= 0]
+            offshore_gids = gids[gids >= 0]
+        else:
+            missing = ~np.isin(offshore_gids, gids)
+            if np.any(missing):
+                msg = ('The following offshore gids were requested but are '
+                       'not availabe in {} and will not be extracted:\n{}'
+                       .format(tm_dset, offshore_gids[missing]))
+                logger.warning(msg)
+                warn(msg)
+                offshore_gids = offshore_gids[~missing]
 
         tech_map = np.array(center_of_mass(tech_map, labels=tech_map,
                                            index=offshore_gids),
-                            dtype='float32')
+                            dtype=np.uint32)
 
         tech_map = pd.DataFrame(tech_map, columns=['row_id', 'col_id'])
         tech_map['gid'] = offshore_gids
@@ -220,7 +231,8 @@ class OffshoreInputs:
         tech_map = self._reduce_tech_map(self._inputs_fpath, tm_dset=tm_dset,
                                          offshore_gids=offshore_gids)
 
-        offshore_meta = pd.merge(offshore_sites, tech_map, on='gid')
+        offshore_meta = pd.merge(offshore_sites, tech_map, on='gid',
+                                 how='inner')
 
         return offshore_meta
 
@@ -264,7 +276,7 @@ class OffshoreInputs:
             - Path to a WIND Toolkit .h5 file to extact site meta from
             - List, tuple, or vector of offshore gids
             - Pre-extracted site meta DataFrame
-        layers : str | list | dict
+        input_layers : str | list | dict
             Input layer, list of input layers, to extract, or dictionary
             mapping the input layers to extract to the column names to save
             them under
