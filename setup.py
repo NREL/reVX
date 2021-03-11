@@ -68,7 +68,7 @@ setup(
                              "mean_wind_dirs_cli:main"),
                             ("wind-setbacks=reVX.wind_setbacks."
                              "wind_setbacks_cli:main"),
-                            ("offshore-dist_to_ports=reVX.offshore."
+                            ("offshore-dist-to-ports=reVX.offshore."
                              "dist_to_ports_cli:main"),
                             ("offshore-inputs=reVX.offshore."
                              "offshore_inputs_cli:main")
