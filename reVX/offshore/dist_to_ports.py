@@ -4,6 +4,7 @@ Compute least-cost distance to port
 """
 from concurrent.futures import as_completed
 import geopandas as gpd
+import gc
 import h5py
 import logging
 import numpy as np
@@ -165,14 +166,18 @@ class DistanceToPorts:
         with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
             arr = tif[input_dist_layer]
             profile = tif.get_layer_profile(input_dist_layer)
-            lat = tif['latitude']
-            lon = tif['longitude']
+            lat = tif['latitude'].astype(np.float32)
+            lon = tif['longitude'].astype(np.float32)
+
+        lat_lon = cls._build_lat_lon(lat, lon)
+        del lat
+        del lon
+        gc.collect()
 
         mask = arr > 0
         arr[mask] = 90
         arr[~mask] = 9999
 
-        lat_lon = cls._build_lat_lon(lat, lon)
         lat_lon = lat_lon.loc[mask.flatten()].reset_index(drop=True)
 
         return arr, profile, lat_lon
