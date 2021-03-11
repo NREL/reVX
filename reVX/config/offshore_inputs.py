@@ -43,9 +43,9 @@ class OffshoreInputsConfig(AnalysisConfig):
     @property
     def input_layers(self):
         """
-        Path to json file containing input layer, list of input layers, to
-        extract, or dictionary mapping the input layers to extract to
-        the column names to save them under (required)
+        Path to json file containing 'input_layers', list of input layers, to
+        extract, or dictionary mapping the input layers to extract (keys) to
+        the column names to save them under (values) (required)
         """
         return self['input_layers']
 

@@ -352,7 +352,7 @@ class Geotiff:
 
         lon, lat = np.meshgrid(lon, lat)
         transformer = Transformer.from_crs(self._src.attrs['crs'],
-                                           'epsg:4326')
+                                           'epsg:4326', always_xy=True)
         lon, lat = transformer.transform(lon, lat)
 
         return lat, lon

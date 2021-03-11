@@ -22,6 +22,7 @@ class DistToPortsConfig(AnalysisConfig):
         super().__init__(config)
         self._default_dist_layer = 'dist_to_coast'
         self._default_update_layer = True
+        self._default_assembly_ports_dset = 'ports_construction_nolimits'
 
     @property
     def ports_fpath(self):
@@ -69,3 +70,23 @@ class DistToPortsConfig(AnalysisConfig):
         least cost distance from scratch
         """
         return self.get('update_layer', self._default_update_layer)
+
+    @property
+    def assembly_areas(self):
+        """
+        Path to csv or json file containing assembly area locations. If
+        provided compute distance from ports to assembly areas and save as
+        a table to excl_fpath.
+        """
+        return self.get('assembly_areas', None)
+
+    @property
+    def assembly_ports_dset(self):
+        """
+        Distance to ports layer/dataset name in excl_fpath, by default
+        'ports_construction_nolimits'
+        """
+        dset = self.get('assembly_ports_dsets',
+                        self._default_assembly_ports_dset)
+
+        return dset

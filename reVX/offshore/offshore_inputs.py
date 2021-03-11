@@ -6,21 +6,51 @@ import logging
 import numpy as np
 import pandas as pd
 from scipy.ndimage import center_of_mass
+from scipy.spatial import cKDTree
 from warnings import warn
 
-from rex.resource import Resource
-from rex.utilities.utilities import parse_table
 from reV.handlers.exclusions import ExclusionLayers
+from reVX.offshore.dist_to_ports import coordinate_distance
+from rex.resource import Resource
+from rex.utilities.utilities import parse_table, get_lat_lon_cols
 
 logger = logging.getLogger(__name__)
 
 
-class OffshoreInputs:
+class OffshoreInputs(ExclusionLayers):
     """
-    Class to extract offshore inputs from offshore inputs .h5
+    Class to extract offshore inputs from offshore inputs .h5 at desired
+    offshore site gids. Mapping is based on the techmapping dataset (tm_dset).
+    Offshore input values are taken from the array pixel closest to the
+    center of mass of each offshore site gid.
     """
+    DEFAULT_INPUT_LAYERS = {
+        'array_efficiency': 'aeff',
+        'bathymetry': 'depth',
+        'assembly_areas': 'dist_a_to_s',
+        'ports_operations': 'dist_op_to_s',
+        'ports_construction': 'dist_p_to_s',
+        'ports_construction_nolimits': 'dist_p_to_s_nolimit',
+        'weather_downtime_fixed_bottom': 'fixed_downtime',
+        'weather_downtime_floating': 'floating_downtime',
+        '': 'hs_average'}
+
     def __init__(self, inputs_fpath, offshore_sites, tm_dset='techmap_wtk'):
-        self._inputs_fpath = inputs_fpath
+        """
+        Parameters
+        ----------
+        inputs_fpath : str
+            Path to offshore inputs .h5 file
+        offshore_sites : str | list | tuple | ndarray |pandas.DataFrame
+            - Path to .csv|.json file with offshore sites meta data
+            - Path to a WIND Toolkit .h5 file to extact site meta from
+            - List, tuple, or vector of offshore gids
+            - Pre-extracted site meta DataFrame
+        tm_dset : str, optional
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
+        """
+        super().__init__(inputs_fpath)
         self._offshore_meta = self._create_offshore_meta(offshore_sites,
                                                          tm_dset)
 
@@ -28,42 +58,6 @@ class OffshoreInputs:
         msg = "{} from {}".format(self.__class__.__name__, self.inputs_fpath)
 
         return msg
-
-    def __getitem__(self, layers):
-        """
-        Extract data for the desired layers
-
-        Parameters
-        ----------
-        layers : str | list | dict
-            Input layer, list of input layers, to extract, or dictionary
-            mapping the input layers to extract to the column names to save
-            them under
-
-        Returns
-        -------
-        out : pandas.DataFrame
-            Updated meta data table with desired layers
-        """
-        if isinstance(layers, str):
-            layers = [layers]
-
-        if isinstance(layers, (tuple, list, np.ndarray)):
-            layers = {layer: layer for layer in layers}
-
-        if not isinstance(layers, dict):
-            msg = ('Expecting "layers" to be a the name of a single input '
-                   'layer, a list of input layers, or a dictionary mapping '
-                   'desired input layers to desired output column names, but '
-                   'recieved: {}'.format(type(layers)))
-            logger.error(msg)
-            raise TypeError(msg)
-
-        out = self.meta.copy()
-        for layer, col in layers.items():
-            out[col] = self.extract_input_layer(layer)
-
-        return out
 
     @property
     def inputs_fpath(self):
@@ -74,7 +68,7 @@ class OffshoreInputs:
         -------
         str
         """
-        return self._inputs_fpath
+        return self.h5_file
 
     @property
     def meta(self):
@@ -87,6 +81,19 @@ class OffshoreInputs:
         pandas.DataFrame
         """
         return self._offshore_meta
+
+    @property
+    def lat_lons(self):
+        """
+        Offshore sites coordinates (lat, lons)
+
+        Returns
+        -------
+        ndarray
+        """
+        lat_lon_cols = get_lat_lon_cols(self.meta)
+
+        return self.meta[lat_lon_cols].values
 
     @property
     def row_ids(self):
@@ -109,56 +116,6 @@ class OffshoreInputs:
         ndarray
         """
         return self.meta['col_id'].values
-
-    @staticmethod
-    def _reduce_tech_map(inputs_fpath, tm_dset='techmap_wtk',
-                         offshore_gids=None):
-        """
-        Find the row and column indices that correspond to the centriod of
-        each offshore gid in exclusions layers. If offshore gids are not
-        provided the centroid of every gid is in techmap.
-
-        Parameters
-        ----------
-        inputs_fpath : str
-            Path to offshore inputs .h5 file
-        tm_dset : str, optional
-            Dataset / layer name for wind toolkit techmap,
-            by default 'techmap_wtk'
-        offshore_gids : ndarray | list, optional
-            Vector or list of offshore gids, by default None
-
-        Returns
-        -------
-        tech_map : pandas.DataFrame
-            DataFrame mapping resource gid to exclusions latitude, longitude,
-            row index, column index
-        """
-        with ExclusionLayers(inputs_fpath) as f:
-            tech_map = f[tm_dset]
-
-        gids = np.unique(tech_map)
-
-        if offshore_gids is None:
-            offshore_gids = gids[gids >= 0]
-        else:
-            missing = ~np.isin(offshore_gids, gids)
-            if np.any(missing):
-                msg = ('The following offshore gids were requested but are '
-                       'not availabe in {} and will not be extracted:\n{}'
-                       .format(tm_dset, offshore_gids[missing]))
-                logger.warning(msg)
-                warn(msg)
-                offshore_gids = offshore_gids[~missing]
-
-        tech_map = np.array(center_of_mass(tech_map, labels=tech_map,
-                                           index=offshore_gids),
-                            dtype=np.uint32)
-
-        tech_map = pd.DataFrame(tech_map, columns=['row_id', 'col_id'])
-        tech_map['gid'] = offshore_gids
-
-        return tech_map
 
     @staticmethod
     def _parse_offshore_sites(offshore_sites):
@@ -200,6 +157,53 @@ class OffshoreInputs:
 
         return offshore_sites
 
+    def _reduce_tech_map(self, tm_dset='techmap_wtk', offshore_gids=None):
+        """
+        Find the row and column indices that correspond to the centriod of
+        each offshore gid in exclusions layers. If offshore gids are not
+        provided the centroid of every gid is in techmap.
+
+        Parameters
+        ----------
+        inputs_fpath : str
+            Path to offshore inputs .h5 file
+        tm_dset : str, optional
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
+        offshore_gids : ndarray | list, optional
+            Vector or list of offshore gids, by default None
+
+        Returns
+        -------
+        tech_map : pandas.DataFrame
+            DataFrame mapping resource gid to exclusions latitude, longitude,
+            row index, column index
+        """
+        tech_map = self[tm_dset]
+
+        gids = np.unique(tech_map)
+
+        if offshore_gids is None:
+            offshore_gids = gids[gids >= 0]
+        else:
+            missing = ~np.isin(offshore_gids, gids)
+            if np.any(missing):
+                msg = ('The following offshore gids were requested but are '
+                       'not availabe in {} and will not be extracted:\n{}'
+                       .format(tm_dset, offshore_gids[missing]))
+                logger.warning(msg)
+                warn(msg)
+                offshore_gids = offshore_gids[~missing]
+
+        tech_map = np.array(center_of_mass(tech_map, labels=tech_map,
+                                           index=offshore_gids),
+                            dtype=np.uint32)
+
+        tech_map = pd.DataFrame(tech_map, columns=['row_id', 'col_id'])
+        tech_map['gid'] = offshore_gids
+
+        return tech_map
+
     def _create_offshore_meta(self, offshore_sites, tm_dset='techmap_wtk'):
         """
         Create offshore meta from offshore sites and techmap
@@ -228,13 +232,50 @@ class OffshoreInputs:
             raise RuntimeError(msg)
 
         offshore_gids = offshore_sites['gid'].values
-        tech_map = self._reduce_tech_map(self._inputs_fpath, tm_dset=tm_dset,
+        tech_map = self._reduce_tech_map(self.inputs_fpath, tm_dset=tm_dset,
                                          offshore_gids=offshore_gids)
 
         offshore_meta = pd.merge(offshore_sites, tech_map, on='gid',
                                  how='inner')
 
         return offshore_meta
+
+    def compute_assembly_dist(self, layer):
+        """
+        Extract the distance from ports to assembly area and then compute
+        the distance from nearest assembly area to sites
+
+        Parameters
+        ----------
+        layer : str
+            Name of assembly area table/dataset
+
+        Returns
+        -------
+        out : dict
+            Dictionary containing the distance from ports to assembly areas
+            ('dist_p_to_a') and distance from nearest assembly area to sites
+            ('dist_a_to_s')
+        """
+        df = pd.DataFrame(self.h5[layer])
+        df = self.h5.df_str_decode(df)
+        # pylint: disable = not-callable
+        lat_lon_cols = get_lat_lon_cols(df)
+        tree = cKDTree(df[lat_lon_cols].values)
+
+        site_lat_lons = self.lat_lons
+        _, pos = tree.query(self.lat_lons)
+
+        out = {}
+        # extract distance from ports to assembly areas
+        df = df.iloc[pos]
+        out['dist_p_to_a'] = df['dist_p_to_a'].values
+
+        # compute distance from assembly areas to sites
+        out['dist_a_to_s'] = coordinate_distance(site_lat_lons,
+                                                 df[lat_lon_cols].values)
+
+        return out
 
     def extract_input_layer(self, layer):
         """
@@ -250,19 +291,66 @@ class OffshoreInputs:
         data : ndarray
             Input layer data for desired offshore sites
         """
-        with ExclusionLayers(self.inputs_fpath) as f:
-            if layer not in f:
-                msg = ("{} is not a valid offshore input layers, please "
-                       "choice one of: {}".format(layer, f.layers))
-                logger.error(msg)
-                raise KeyError(msg)
-
-            data = f[layer, self.row_ids, self.column_ids]
+        data = self[layer, self.row_ids, self.column_ids]
 
         return data
 
+    def get_offshore_inputs(self, input_layers=None):
+        """
+        Extract data for the desired layers
+
+        Parameters
+        ----------
+        layers : str | list | dict
+            Input layer, list of input layers, to extract, or dictionary
+            mapping the input layers to extract to the column names to save
+            them under
+
+        Returns
+        -------
+        out : pandas.DataFrame
+            Updated meta data table with desired layers
+        """
+        msg = ''
+        if input_layers is None:
+            input_layers = self.DEFAULT_INPUT_LAYERS
+            msg += '"input_layers" not provided, using defaults. '
+        else:
+            if isinstance(input_layers, str):
+                input_layers = [input_layers]
+
+            if isinstance(input_layers, (tuple, list, np.ndarray)):
+                input_layers = {layer: layer for layer in input_layers}
+
+        if not isinstance(input_layers, dict):
+            msg = ('Expecting "layers" to be a the name of a single input '
+                   'layer, a list of input layers, or a dictionary mapping '
+                   'desired input layers to desired output column names, but '
+                   'recieved: {}'.format(type(input_layers)))
+            logger.error(msg)
+            raise TypeError(msg)
+
+        msg += 'Extracting {}'.format(input_layers)
+        logger.info(msg)
+
+        out = self.meta.copy()
+        for layer, col in input_layers.items():
+            if layer not in self:
+                msg = ("{} is not a valid offshore input layers, please "
+                       "choice one of: {}".format(layer, self.layers))
+                logger.error(msg)
+                raise KeyError(msg)
+
+            if layer.startswith('assembly'):
+                for col, data in self.compute_assembly_dist(layer).items():
+                    out[col] = data
+            else:
+                out[col] = self.extract_input_layer(layer)
+
+        return out
+
     @classmethod
-    def extract(cls, inputs_fpath, offshore_sites, input_layers,
+    def extract(cls, inputs_fpath, offshore_sites, input_layers=None,
                 tm_dset='techmap_wtk', out_fpath=None):
         """
         Extract data from desired input layers for desired offshore sites
@@ -291,8 +379,8 @@ class OffshoreInputs:
         out : pandas.DataFrame
             Updated meta data table with desired layers
         """
-        off_ipt = cls(inputs_fpath, offshore_sites, tm_dset=tm_dset)
-        out = off_ipt[input_layers]
+        with cls(inputs_fpath, offshore_sites, tm_dset=tm_dset) as off_ipt:
+            out = off_ipt.get_offshore_inputs(input_layers=input_layers)
 
         if out_fpath:
             out.to_csv(out_fpath, index=False)
