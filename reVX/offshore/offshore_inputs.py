@@ -33,7 +33,8 @@ class OffshoreInputs(ExclusionLayers):
         'ports_construction_nolimits': 'dist_p_to_s_nolimit',
         'weather_downtime_fixed_bottom': 'fixed_downtime',
         'weather_downtime_floating': 'floating_downtime',
-        '': 'hs_average'}
+        # '': 'hs_average'
+    }
 
     def __init__(self, inputs_fpath, offshore_sites, tm_dset='techmap_wtk'):
         """
@@ -104,7 +105,7 @@ class OffshoreInputs(ExclusionLayers):
         -------
         ndarray
         """
-        return self.meta['row_id'].values
+        return self.meta['row_idx'].values
 
     @property
     def column_ids(self):
@@ -115,7 +116,7 @@ class OffshoreInputs(ExclusionLayers):
         -------
         ndarray
         """
-        return self.meta['col_id'].values
+        return self.meta['col_idx'].values
 
     @staticmethod
     def _parse_offshore_sites(offshore_sites):
@@ -138,7 +139,10 @@ class OffshoreInputs(ExclusionLayers):
         if isinstance(offshore_sites, str):
             if offshore_sites.endswith('.h5'):
                 with Resource(offshore_sites) as f:
-                    offshore_sites = f.meta.reset_index()
+                    offshore_sites = f.meta
+                    if offshore_sites.index.name == 'gid':
+                        offshore_sites = offshore_sites.reset_index()
+
             else:
                 offshore_sites = parse_table(offshore_sites)
         elif isinstance(offshore_sites, (tuple, list, np.ndarray)):
@@ -199,7 +203,7 @@ class OffshoreInputs(ExclusionLayers):
                                            index=offshore_gids),
                             dtype=np.uint32)
 
-        tech_map = pd.DataFrame(tech_map, columns=['row_id', 'col_id'])
+        tech_map = pd.DataFrame(tech_map, columns=['row_idx', 'col_idx'])
         tech_map['gid'] = offshore_gids
 
         return tech_map
@@ -232,7 +236,7 @@ class OffshoreInputs(ExclusionLayers):
             raise RuntimeError(msg)
 
         offshore_gids = offshore_sites['gid'].values
-        tech_map = self._reduce_tech_map(self.inputs_fpath, tm_dset=tm_dset,
+        tech_map = self._reduce_tech_map(tm_dset=tm_dset,
                                          offshore_gids=offshore_gids)
 
         offshore_meta = pd.merge(offshore_sites, tech_map, on='gid',

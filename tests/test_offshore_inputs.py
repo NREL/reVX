@@ -4,6 +4,7 @@ Offshore Inputs tests
 """
 from click.testing import CliRunner
 import json
+import numpy as np
 import os
 import pandas as pd
 from pandas.testing import assert_frame_equal
@@ -20,15 +21,32 @@ INPUTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'dist_to_coast.h5')
 OFFSHORE_SITES = os.path.join(TESTDATADIR, 'wtk', 'ri_100_wtk_2012.h5')
 BASELINE = os.path.join(TESTDATADIR, 'offshore', 'inputs_baseline.csv')
 INPUT_LAYERS = {'dist_to_coast': 'dist_s_to_l',
-                'ports_operations': 'dist_op_to_s'}
+                'ports_operations': 'dist_op_to_s',
+                'ports_construction_nolimits': 'dist_p_to_s_nolimit',
+                'assembly_areas': 'dist_a_to_s'}
 
 
-def test_offshore_inputs():
+def test_site_mapping():
     """
-    Compute offshore inputs
+    [summary]
+    """
+    with OffshoreInputs(INPUTS_FPATH, OFFSHORE_SITES) as inp:
+        meta = inp.meta
+        techmap = inp['techmap_wtk']
+
+    msg = 'offshore site gids do not match techmap gids!'
+    test = meta['gid'].values
+    truth = techmap[meta['row_idx'].values, meta['col_idx'].values]
+    assert np.allclose(truth, test), msg
+
+
+def test_extract_inputs():
+    """
+    test offshore inputs extraction
     """
     baseline = pd.read_csv(BASELINE)
-    test = OffshoreInputs.extract(INPUTS_FPATH, OFFSHORE_SITES, INPUT_LAYERS)
+    test = OffshoreInputs.extract(INPUTS_FPATH, OFFSHORE_SITES,
+                                  input_layers=INPUT_LAYERS)
 
     assert_frame_equal(baseline, test, check_dtype=False)
 
