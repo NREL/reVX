@@ -137,8 +137,8 @@ class DistanceToPorts:
         lat_lon = pd.DataFrame({'latitude': lat.flatten(),
                                 'longitude': lon.flatten()})
         rows, cols = row_col_indices(lat_lon.index.values, lat.shape[1])
-        lat_lon['row'] = rows.astype(np.int32)
-        lat_lon['col'] = cols.astype(np.int32)
+        lat_lon['row'] = rows.astype(np.uint32)
+        lat_lon['col'] = cols.astype(np.uint32)
 
         return lat_lon
 
