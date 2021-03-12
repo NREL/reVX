@@ -20,7 +20,7 @@ from reVX import TESTDATADIR
 from reVX.offshore.dist_to_ports import DistanceToPorts, AssemblyAreas
 from reVX.offshore.dist_to_ports_cli import main
 
-EXCL_H5 = os.path.join(TESTDATADIR, 'offshore', 'dist_to_coast.h5')
+EXCL_H5 = os.path.join(TESTDATADIR, 'offshore', 'offshore.h5')
 PORTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'ports',
                            'ports_operations.shp')
 ASSEMBLY_AREAS = os.path.join(TESTDATADIR, 'offshore', 'assembly_areas.csv')

@@ -17,7 +17,7 @@ from reVX import TESTDATADIR
 from reVX.offshore.offshore_inputs import OffshoreInputs
 from reVX.offshore.offshore_inputs_cli import main
 
-INPUTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'dist_to_coast.h5')
+INPUTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'offshore.h5')
 OFFSHORE_SITES = os.path.join(TESTDATADIR, 'wtk', 'ri_100_wtk_2012.h5')
 BASELINE = os.path.join(TESTDATADIR, 'offshore', 'inputs_baseline.csv')
 INPUT_LAYERS = {'dist_to_coast': 'dist_s_to_l',
@@ -28,7 +28,7 @@ INPUT_LAYERS = {'dist_to_coast': 'dist_s_to_l',
 
 def test_site_mapping():
     """
-    [summary]
+    Test mapping of site gids to tech map
     """
     with OffshoreInputs(INPUTS_FPATH, OFFSHORE_SITES) as inp:
         meta = inp.meta
