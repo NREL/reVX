@@ -19,6 +19,7 @@ from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.wind_dirs import row_col_indices
 from rex.rechunk_h5.rechunk_h5 import to_records_array
 from rex.utilities.execution import SpawnProcessPool
+from rex.utilities.loggers import log_mem
 from rex.utilities.utilities import (check_res_file, get_lat_lon_cols,
                                      parse_table)
 
@@ -77,10 +78,13 @@ class DistanceToPorts:
             by default 'dist_to_coast'
         """
         self._excl_fpath = excl_fpath
+        log_mem(logger)
         self._arr, self._profile, lat_lon = self._parse_arr(
             excl_fpath,
             input_dist_layer=input_dist_layer)
+        log_mem(logger)
         self._ports = self._parse_ports(ports, lat_lon)
+        log_mem(logger)
 
     def __repr__(self):
         msg = "{} from {}".format(self.__class__.__name__, self.ports)
@@ -133,8 +137,8 @@ class DistanceToPorts:
         lat_lon = pd.DataFrame({'latitude': lat.flatten(),
                                 'longitude': lon.flatten()})
         rows, cols = row_col_indices(lat_lon.index.values, lat.shape[1])
-        lat_lon['row'] = rows
-        lat_lon['col'] = cols
+        lat_lon['row'] = rows.astype(np.int32)
+        lat_lon['col'] = cols.astype(np.int32)
 
         return lat_lon
 
@@ -301,6 +305,7 @@ class DistanceToPorts:
             raise RuntimeError(msg)
 
         n_ports = len(self.ports)
+        log_mem(logger)
         if max_workers > 1:
             logger.info('Computing least cost distance to ports in parallel '
                         'using {} workers'.format(max_workers))
@@ -330,6 +335,7 @@ class DistanceToPorts:
                 logger.debug('Computed least cost distance for {} of {} '
                              'ports'.format((i + 1), n_ports))
 
+        log_mem(logger)
         # Set onshore pixels least cost distance to -1
         dist_to_ports[self.cost_arr > 90] = -1
 
