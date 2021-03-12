@@ -355,7 +355,7 @@ class Geotiff:
                                            'epsg:4326', always_xy=True)
         lon, lat = transformer.transform(lon, lat)
 
-        return lat, lon
+        return lat.astype(np.float32), lon.astype(np.float32)
 
     def _get_data(self, ds, *ds_slice):
         """Get the flattened geotiff layer data.
