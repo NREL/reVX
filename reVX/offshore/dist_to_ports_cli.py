@@ -12,7 +12,8 @@ from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
 from reVX.config.dist_to_ports import DistToPortsConfig
-from reVX.offshore.dist_to_ports import DistanceToPorts, AssemblyAreas
+from reVX.offshore.assembly_areas import AssemblyAreas
+from reVX.offshore.dist_to_ports import DistanceToPorts
 from reVX import __version__
 
 logger = logging.getLogger(__name__)

@@ -70,6 +70,8 @@ setup(
                              "wind_setbacks_cli:main"),
                             ("offshore-dist-to-ports=reVX.offshore."
                              "dist_to_ports_cli:main"),
+                            ("offshore-assembly-areas=reVX.offshore."
+                             "assembly_areas_cli:main"),
                             ("offshore-inputs=reVX.offshore."
                              "offshore_inputs_cli:main")
                             ],
