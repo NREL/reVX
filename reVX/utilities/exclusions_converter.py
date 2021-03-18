@@ -132,12 +132,12 @@ class ExclusionsConverter:
                 logger.debug('\t- Default chunks:\n{}'.format(chunks))
 
                 dst.create_dataset('latitude', shape=lat.shape,
-                                   dtype=lat.dtype, data=lat,
+                                   dtype=np.float32, data=lat,
                                    chunks=chunks)
                 logger.debug('\t- latitude coordiantes created')
 
                 dst.create_dataset('longitude', shape=lon.shape,
-                                   dtype=lon.dtype, data=lon,
+                                   dtype=np.float32, data=lon,
                                    chunks=chunks)
                 logger.debug('\t- longitude coordiantes created')
         except Exception:

@@ -67,7 +67,13 @@ setup(
                             ("mean-wind-dirs=reVX.wind_dirs."
                              "mean_wind_dirs_cli:main"),
                             ("wind-setbacks=reVX.wind_setbacks."
-                             "wind_setbacks_cli:main")
+                             "wind_setbacks_cli:main"),
+                            ("offshore-dist-to-ports=reVX.offshore."
+                             "dist_to_ports_cli:main"),
+                            ("offshore-assembly-areas=reVX.offshore."
+                             "assembly_areas_cli:main"),
+                            ("offshore-inputs=reVX.offshore."
+                             "offshore_inputs_cli:main")
                             ],
     },
     include_package_data=True,

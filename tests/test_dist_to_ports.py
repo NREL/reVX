@@ -6,20 +6,24 @@ from click.testing import CliRunner
 import json
 import numpy as np
 import os
+import pandas as pd
+from pandas.testing import assert_frame_equal
 import pytest
 import shutil
 import tempfile
 import traceback
 
+from rex.resource import Resource
 from rex.utilities.loggers import LOGGERS
 from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.offshore.dist_to_ports import DistanceToPorts
 from reVX.offshore.dist_to_ports_cli import main
 
-EXCL_H5 = os.path.join(TESTDATADIR, 'offshore', 'dist_to_coast.h5')
+EXCL_H5 = os.path.join(TESTDATADIR, 'offshore', 'offshore.h5')
 PORTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'ports',
                            'ports_operations.shp')
+ASSEMBLY_AREAS = os.path.join(TESTDATADIR, 'offshore', 'assembly_areas.csv')
 
 
 def get_dist_to_ports(excl_h5, ports_layer='ports_operations'):
@@ -30,6 +34,16 @@ def get_dist_to_ports(excl_h5, ports_layer='ports_operations'):
         dist_to_ports = f[ports_layer]
 
     return dist_to_ports
+
+
+def get_assembly_areas(excl_h5, assembly_dset='assembly_areas'):
+    """
+    Extract "truth" assembly areas table
+    """
+    with Resource(excl_h5) as f:
+        assembly_areas = f.df_str_decode(pd.DataFrame(f[assembly_dset]))
+
+    return assembly_areas
 
 
 @pytest.fixture(scope="module")
@@ -46,8 +60,7 @@ def test_dist_to_ports(max_workers):
     Compute distance to ports
     """
     baseline = get_dist_to_ports(EXCL_H5)
-    dist = DistanceToPorts(PORTS_FPATH, EXCL_H5)
-    test = dist.least_cost_distance(max_workers=max_workers)
+    test = DistanceToPorts.run(PORTS_FPATH, EXCL_H5, max_workers=max_workers)
 
     msg = 'distance to ports does not match baseline distances'
     assert np.allclose(baseline, test), msg
@@ -64,7 +77,6 @@ def test_cli(runner, ports_layer):
         ports_layer = 'ports_operations'
 
     with tempfile.TemporaryDirectory() as td:
-        print(os.listdir(td))
         excl_fpath = os.path.basename(EXCL_H5)
         excl_fpath = os.path.join(td, excl_fpath)
         shutil.copy(EXCL_H5, excl_fpath)
@@ -78,7 +90,8 @@ def test_cli(runner, ports_layer):
             "excl_fpath": excl_fpath,
             "ports_fpath": PORTS_FPATH,
             "output_dist_layer": ports_layer,
-            "update": update
+            "update": update,
+            "assembly_areas": ASSEMBLY_AREAS
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -95,6 +108,10 @@ def test_cli(runner, ports_layer):
 
         msg = 'distance to ports does not match baseline distances'
         assert np.allclose(baseline, test), msg
+
+        truth = get_assembly_areas(EXCL_H5)
+        test = get_assembly_areas(excl_fpath)
+        assert_frame_equal(truth, test, check_dtype=False)
 
     LOGGERS.clear()
 

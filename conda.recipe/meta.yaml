@@ -18,7 +18,7 @@ requirements:
     - dask
     - geopandas
     - nrel-rex>=0.2.46
-    - nrel-rev>=0.4.46
+    - nrel-rev>=0.4.52
     - psycopg2
     - pyproj
     - pywavelets
@@ -35,7 +35,7 @@ requirements:
     - dask
     - geopandas
     - nrel-rex>=0.2.46
-    - nrel-rev>=0.4.46
+    - nrel-rev>=0.4.52
     - psycopg2
     - pyproj
     - pywavelets

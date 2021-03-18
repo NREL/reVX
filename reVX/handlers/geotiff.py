@@ -8,7 +8,7 @@ Created on Thu Jun 20 09:43:34 2019
 """
 import pandas as pd
 import numpy as np
-from pyproj import transform, Proj
+from pyproj import Transformer
 import xarray as xr
 
 from rex.utilities.parse_keys import parse_keys
@@ -351,11 +351,11 @@ class Geotiff:
         lat = self._src.coords['y'].values.astype(np.float32)[y_slice]
 
         lon, lat = np.meshgrid(lon, lat)
-        lon, lat = transform(Proj(self._src.attrs['crs']),
-                             Proj({"init": "epsg:4326"}),
-                             lon, lat)
+        transformer = Transformer.from_crs(self._src.attrs['crs'],
+                                           'epsg:4326', always_xy=True)
+        lon, lat = transformer.transform(lon, lat)
 
-        return lat, lon
+        return lat.astype(np.float32), lon.astype(np.float32)
 
     def _get_data(self, ds, *ds_slice):
         """Get the flattened geotiff layer data.

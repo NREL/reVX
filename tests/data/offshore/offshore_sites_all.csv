@@ -1,0 +1,201 @@
+gid,latitude,longitude,country,state,county,timezone,elevation,offshore
+0,41.96364,-71.79364,United States,RI,Providence,-5,202,0
+1,41.98138,-71.786194,United States,RI,Providence,-5,178,0
+2,41.999134,-71.77875,United States,RI,Providence,-5,174,0
+3,41.904865,-71.792114,United States,RI,Providence,-5,195,0
+4,41.922607,-71.78467,United States,RI,Providence,-5,201,0
+5,41.940353,-71.77722,United States,RI,Providence,-5,170,0
+6,41.958103,-71.769775,United States,RI,Providence,-5,187,0
+7,41.97585,-71.76233,United States,RI,Providence,-5,208,0
+8,41.993584,-71.75485,United States,RI,Providence,-5,180,0
+9,41.846085,-71.79059,United States,RI,Providence,-5,220,0
+10,41.86383,-71.78314,United States,RI,Providence,-5,226,0
+11,41.881584,-71.775696,United States,RI,Providence,-5,197,0
+12,41.89933,-71.76825,United States,RI,Providence,-5,230,0
+13,41.917072,-71.7608,United States,RI,Providence,-5,229,0
+14,41.934803,-71.75336,United States,RI,Providence,-5,194,0
+15,41.95256,-71.74591,United States,RI,Providence,-5,206,0
+16,41.9703,-71.738464,United States,RI,Providence,-5,183,0
+17,41.988045,-71.73099,United States,RI,Providence,-5,143,0
+18,42.005795,-71.72351,United States,RI,Providence,-5,194,0
+19,41.787315,-71.78903,United States,RI,Providence,-5,183,0
+20,41.805073,-71.78162,United States,RI,Providence,-5,157,0
+21,41.822807,-71.77417,United States,RI,Providence,-5,197,0
+22,41.84055,-71.766754,United States,RI,Providence,-5,204,0
+23,41.85829,-71.75931,United States,RI,Providence,-5,225,0
+24,41.876038,-71.75186,United States,RI,Providence,-5,210,0
+25,41.893776,-71.744415,United States,RI,Providence,-5,224,0
+26,41.911522,-71.73697,United States,RI,Providence,-5,206,0
+27,41.92927,-71.72949,United States,RI,Providence,-5,234,0
+28,41.947006,-71.722046,United States,RI,Providence,-5,203,0
+29,41.964752,-71.7146,United States,RI,Providence,-5,163,0
+30,41.982494,-71.70712,United States,RI,Providence,-5,162,0
+31,42.000237,-71.699646,United States,RI,Providence,-5,135,0
+32,41.728554,-71.787506,United States,RI,Providence,-5,172,0
+33,41.746304,-71.78009,United States,RI,Providence,-5,171,0
+34,41.764046,-71.772675,United States,RI,Providence,-5,176,0
+35,41.781784,-71.76526,United States,RI,Providence,-5,172,0
+36,41.79953,-71.75781,United States,RI,Providence,-5,195,0
+37,41.817265,-71.75037,United States,RI,Providence,-5,193,0
+38,41.83501,-71.74292,United States,RI,Providence,-5,181,0
+39,41.85274,-71.73547,United States,RI,Providence,-5,168,0
+40,41.87049,-71.72803,United States,RI,Providence,-5,212,0
+41,41.88823,-71.72058,United States,RI,Providence,-5,199,0
+42,41.905975,-71.713135,United States,RI,Providence,-5,200,0
+43,41.92371,-71.70566,United States,RI,Providence,-5,164,0
+44,41.941456,-71.69818,United States,RI,Providence,-5,172,0
+45,41.959194,-71.690735,United States,RI,Providence,-5,149,0
+46,41.976936,-71.68326,United States,RI,Providence,-5,131,0
+47,41.99467,-71.67578,United States,RI,Providence,-5,112,0
+48,41.669796,-71.78598,United States,RI,Kent,-5,117,0
+49,41.687542,-71.778564,United States,RI,Kent,-5,133,0
+50,41.70528,-71.77118,United States,RI,Kent,-5,115,0
+51,41.723022,-71.76373,United States,RI,Kent,-5,145,0
+52,41.74076,-71.75632,United States,RI,Providence,-5,150,0
+53,41.758503,-71.7489,United States,RI,Providence,-5,154,0
+54,41.77624,-71.741455,United States,RI,Providence,-5,166,0
+55,41.79398,-71.73401,United States,RI,Providence,-5,203,0
+56,41.81172,-71.72656,United States,RI,Providence,-5,161,0
+57,41.82946,-71.71912,United States,RI,Providence,-5,151,0
+58,41.847202,-71.71167,United States,RI,Providence,-5,123,0
+59,41.86494,-71.70422,United States,RI,Providence,-5,173,0
+60,41.88268,-71.69675,United States,RI,Providence,-5,170,0
+61,41.900425,-71.6893,United States,RI,Providence,-5,150,0
+62,41.91816,-71.68182,United States,RI,Providence,-5,147,0
+63,41.9359,-71.67435,United States,RI,Providence,-5,161,0
+64,41.953636,-71.66687,United States,RI,Providence,-5,149,0
+65,41.97137,-71.65939,United States,RI,Providence,-5,127,0
+66,41.98911,-71.65192,United States,RI,Providence,-5,129,0
+67,42.00685,-71.64441,United States,RI,Providence,-5,133,0
+68,41.61104,-71.784485,United States,RI,Kent,-5,151,0
+69,41.62879,-71.77707,United States,RI,Kent,-5,132,0
+70,41.64652,-71.76965,United States,RI,Kent,-5,118,0
+71,41.664257,-71.76224,United States,RI,Kent,-5,117,0
+72,41.682,-71.75482,United States,RI,Kent,-5,144,0
+73,41.699738,-71.747406,United States,RI,Kent,-5,160,0
+74,41.717472,-71.73999,United States,RI,Kent,-5,142,0
+75,41.735214,-71.732544,United States,RI,Providence,-5,160,0
+76,41.752956,-71.7251,United States,RI,Providence,-5,165,0
+77,41.77069,-71.71765,United States,RI,Providence,-5,195,0
+78,41.788437,-71.710205,United States,RI,Providence,-5,202,0
+79,41.806168,-71.70276,United States,RI,Providence,-5,150,0
+80,41.823914,-71.69531,United States,RI,Providence,-5,145,0
+81,41.841644,-71.68787,United States,RI,Providence,-5,134,0
+82,41.859386,-71.68042,United States,RI,Providence,-5,155,0
+83,41.877117,-71.67294,United States,RI,Providence,-5,188,0
+84,41.894855,-71.66547,United States,RI,Providence,-5,176,0
+85,41.912598,-71.65799,United States,RI,Providence,-5,174,0
+86,41.930332,-71.65051,United States,RI,Providence,-5,146,0
+87,41.948067,-71.643005,United States,RI,Providence,-5,141,0
+88,41.96581,-71.63553,United States,RI,Providence,-5,104,0
+89,41.983543,-71.62805,United States,RI,Providence,-5,102,0
+90,42.001278,-71.620544,United States,RI,Providence,-5,94,0
+91,41.303936,-71.88605,None,None,None,-5,0,1
+92,41.321686,-71.87872,None,None,None,-5,0,1
+93,41.410385,-71.84198,United States,CT,New London,-5,46,0
+94,41.53455,-71.790344,United States,RI,Washington,-5,130,0
+95,41.552284,-71.78296,United States,RI,Washington,-5,138,0
+96,41.570026,-71.77557,United States,RI,Washington,-5,134,0
+97,41.58777,-71.76816,United States,RI,Washington,-5,128,0
+98,41.605503,-71.76074,United States,RI,Kent,-5,122,0
+99,41.623245,-71.75333,United States,RI,Kent,-5,146,0
+100,41.640984,-71.74591,United States,RI,Kent,-5,133,0
+101,41.65872,-71.738495,United States,RI,Kent,-5,132,0
+102,41.28069,-71.86981,None,None,None,-5,0,1
+103,41.298424,-71.86246,None,None,None,-5,0,1
+104,41.25744,-71.853516,None,None,None,-5,0,1
+105,41.275173,-71.84619,None,None,None,-5,0,1
+106,41.292904,-71.83884,None,None,None,-5,0,1
+107,41.310642,-71.83148,None,None,None,-5,0,1
+108,41.23418,-71.83728,None,None,None,-5,0,1
+109,41.25192,-71.829956,None,None,None,-5,0,1
+110,41.26966,-71.8226,None,None,None,-5,0,1
+111,41.28738,-71.81525,None,None,None,-5,0,1
+112,41.305126,-71.80789,None,None,None,-5,0,1
+113,41.322857,-71.80054,None,None,None,-5,0,1
+114,41.228653,-71.81372,None,None,None,-5,0,1
+115,41.246395,-71.806335,None,None,None,-5,0,1
+116,41.264126,-71.79901,None,None,None,-5,0,1
+117,41.281864,-71.791626,None,None,None,-5,0,1
+118,41.299595,-71.7843,None,None,None,-5,0,1
+119,41.31733,-71.77692,None,None,None,-5,0,1
+120,41.2054,-71.797485,None,None,None,-5,0,1
+121,41.22313,-71.79013,None,None,None,-5,0,1
+122,41.24087,-71.782776,None,None,None,-5,0,1
+123,41.2586,-71.77542,None,None,None,-5,0,1
+124,41.27632,-71.768036,None,None,None,-5,0,1
+125,41.294052,-71.76068,None,None,None,-5,0,1
+126,41.311787,-71.753296,None,None,None,-5,0,1
+127,41.164402,-71.788605,None,None,None,-5,0,1
+128,41.182133,-71.78125,None,None,None,-5,0,1
+129,41.19987,-71.773926,None,None,None,-5,0,1
+130,41.217594,-71.76654,None,None,None,-5,0,1
+131,41.23533,-71.759186,None,None,None,-5,0,1
+132,41.253063,-71.75183,None,None,None,-5,0,1
+133,41.270786,-71.744446,None,None,None,-5,0,1
+134,41.28851,-71.73709,None,None,None,-5,0,1
+135,41.30624,-71.729706,None,None,None,-5,0,1
+136,41.32398,-71.72232,None,None,None,-5,0,1
+137,41.08796,-71.79443,None,None,None,-5,0,1
+138,41.105694,-71.78711,None,None,None,-5,0,1
+139,41.123413,-71.779755,None,None,None,-5,0,1
+140,41.141148,-71.7724,None,None,None,-5,0,1
+141,41.158875,-71.765076,None,None,None,-5,0,1
+142,41.176605,-71.75769,None,None,None,-5,0,1
+143,41.194332,-71.75037,None,None,None,-5,0,1
+144,41.212055,-71.74298,None,None,None,-5,0,1
+145,41.229786,-71.73563,None,None,None,-5,0,1
+146,41.247517,-71.72824,None,None,None,-5,0,1
+147,41.265247,-71.72089,None,None,None,-5,0,1
+148,41.282974,-71.7135,None,None,None,-5,0,1
+149,41.3007,-71.706116,None,None,None,-5,0,1
+150,41.318428,-71.69873,None,None,None,-5,0,1
+151,41.336147,-71.691315,None,None,None,-5,0,1
+152,41.011524,-71.80026,None,None,None,-5,0,1
+153,41.029255,-71.79291,None,None,None,-5,0,1
+154,41.046978,-71.78558,None,None,None,-5,0,1
+155,41.0647,-71.77826,None,None,None,-5,0,1
+156,41.082428,-71.770935,None,None,None,-5,0,1
+157,41.10016,-71.76358,None,None,None,-5,0,1
+158,41.117886,-71.756226,None,None,None,-5,0,1
+159,41.13561,-71.74887,None,None,None,-5,0,1
+160,41.15334,-71.741516,None,None,None,-5,0,1
+161,41.171062,-71.73416,None,None,None,-5,0,1
+162,41.18879,-71.72681,None,None,None,-5,0,1
+163,41.206516,-71.71942,None,None,None,-5,0,1
+164,41.22424,-71.712036,None,None,None,-5,0,1
+165,41.24197,-71.70465,None,None,None,-5,0,1
+166,41.259686,-71.697296,None,None,None,-5,0,1
+167,41.27742,-71.68988,None,None,None,-5,0,1
+168,41.29515,-71.682495,None,None,None,-5,0,1
+169,41.312866,-71.67511,None,None,None,-5,0,1
+170,41.330593,-71.667725,None,None,None,-5,0,1
+171,41.348324,-71.66031,None,None,None,-5,0,1
+172,40.952816,-71.79874,None,None,None,-5,0,1
+173,40.970547,-71.79141,None,None,None,-5,0,1
+174,40.988262,-71.78409,None,None,None,-5,0,1
+175,41.005993,-71.776764,None,None,None,-5,0,1
+176,41.02372,-71.76944,None,None,None,-5,0,1
+177,41.041447,-71.762085,None,None,None,-5,0,1
+178,41.05917,-71.75476,None,None,None,-5,0,1
+179,41.076897,-71.747406,None,None,None,-5,0,1
+180,41.094616,-71.74005,None,None,None,-5,0,1
+181,41.112343,-71.7327,None,None,None,-5,0,1
+182,41.130066,-71.72534,None,None,None,-5,0,1
+183,41.1478,-71.71799,None,None,None,-5,0,1
+184,41.165512,-71.71063,None,None,None,-5,0,1
+185,41.183247,-71.70325,None,None,None,-5,0,1
+186,41.200966,-71.69586,None,None,None,-5,0,1
+187,41.218685,-71.68848,None,None,None,-5,0,1
+188,41.236416,-71.68109,None,None,None,-5,0,1
+189,41.25414,-71.673706,None,None,None,-5,0,1
+190,41.271866,-71.66632,None,None,None,-5,0,1
+191,41.289585,-71.658936,None,None,None,-5,0,1
+192,41.307304,-71.65152,None,None,None,-5,0,1
+193,41.325035,-71.644104,None,None,None,-5,0,1
+194,41.342754,-71.63669,None,None,None,-5,0,1
+195,40.876392,-71.804535,None,None,None,-5,0,1
+196,40.89412,-71.79724,None,None,None,-5,0,1
+197,40.91184,-71.78992,None,None,None,-5,0,1
+198,40.92956,-71.78259,None,None,None,-5,0,1
+199,40.947285,-71.77527,None,None,None,-5,0,1
