@@ -5,6 +5,7 @@ Aggregate powerrose and sort directions by dominance
 import logging
 
 from reV.supply_curve.aggregation import Aggregation
+from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,7 @@ class MeanWindDirections(Aggregation):
             from the profile transform attribute in excl_fpath,
             by default None
         """
+        log_versions(logger)
         if isinstance(wdir_dsets, str):
             wdir_dsets = [wdir_dsets]
 

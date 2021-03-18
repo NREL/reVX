@@ -9,32 +9,10 @@ import pandas as pd
 
 from reV.supply_curve.aggregation import Aggregation
 from reV.supply_curve.points import SupplyCurveExtent
+from reVX.utilities.utilities import log_versions
+from rex.utilities.utilities import row_col_indices
 
 logger = logging.getLogger(__name__)
-
-
-def row_col_indices(sc_point_gids, row_length):
-    """
-    Convert supply curve point gids to row and col indices given row length
-
-    Parameters
-    ----------
-    sc_point_gids : int | list | ndarray
-        Supply curve point gid or list/array of gids
-    row_length : int
-        row length (shape[1])
-
-    Returns
-    -------
-    row : int | list | ndarray
-        row indices
-    col : int | list | ndarray
-        row indices
-    """
-    rows = sc_point_gids // row_length
-    cols = sc_point_gids % row_length
-
-    return rows, cols
 
 
 class ProminentWindDirections(Aggregation):
@@ -68,6 +46,7 @@ class ProminentWindDirections(Aggregation):
             Area of an exclusion pixel in km2. None will try to infer the area
             from the profile transform attribute in excl_fpath.
         """
+        log_versions(logger)
         super().__init__(excl_fpath, power_rose_h5_fpath, tm_dset, agg_dset,
                          resolution=resolution, excl_area=excl_area)
 

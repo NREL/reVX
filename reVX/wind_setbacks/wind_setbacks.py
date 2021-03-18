@@ -17,6 +17,7 @@ from warnings import warn
 from rex.utilities import parse_table, SpawnProcessPool, log_mem
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ class BaseWindSetbacks(ABC):
             Chunk size to use for setback layers, if None use default chunk
             size in excl_fpath, by default (128, 128)
         """
+        log_versions(logger)
         self._excl_fpath = excl_fpath
         self._hub_height = hub_height
         self._rotor_diameter = rotor_diameter

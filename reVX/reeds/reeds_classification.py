@@ -8,8 +8,9 @@ import os
 import pandas as pd
 from warnings import warn
 
-from rex.utilities.utilities import parse_table
 from reVX.utilities.exceptions import ReedsValueError, ReedsKeyError
+from reVX.utilities.utilities import log_versions
+from rex.utilities.utilities import parse_table
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class ReedsClassifier:
         trg_by_region : bool
             Groupby on region when computing TRGs
         """
+        log_versions(logger)
         rev_table = self._parse_table(rev_table)
         if pre_filter is not None:
             for col, v in pre_filter.items():

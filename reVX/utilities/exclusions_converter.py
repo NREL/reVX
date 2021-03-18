@@ -17,6 +17,7 @@ from reV.handlers.outputs import Outputs
 
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.exceptions import ExclusionsCheckError
+from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class ExclusionsConverter:
         replace : bool, optional
             Flag to replace existing layers if needed, by default True
         """
+        log_versions(logger)
         self._excl_h5 = excl_h5
         self._hsds = hsds
         self._chunks = chunks

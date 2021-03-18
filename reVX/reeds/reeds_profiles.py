@@ -9,6 +9,7 @@ import pandas as pd
 from reV.rep_profiles.rep_profiles import RepProfiles
 from reVX.reeds.reeds_classification import ReedsClassifier
 from reVX.utilities.exceptions import ReedsRuntimeError
+from reVX.version import __version__
 from rex.utilities.utilities import roll_timeseries
 
 logger = logging.getLogger(__name__)
@@ -70,6 +71,7 @@ class ReedsProfiles(RepProfiles):
             for.
             Defaulted to ReedsClassifier region and class
         """
+        logger.info('Running reVX version {}'.format(__version__))
         if resource_classes is not None:
             rev_table = ReedsClassifier.create(rev_table, resource_classes,
                                                region_map=region_map,

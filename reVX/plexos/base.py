@@ -14,6 +14,7 @@ from scipy.spatial import cKDTree
 
 from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import DataCleaner, get_coord_labels
+from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,7 @@ class PlexosNode:
             meta indices where n is the number of generation points. None if no
             forecast data being considered, by default None
         """
+        log_versions(logger)
         self._sc_build = \
             DataCleaner.rename_cols(sc_build,
                                     name_map=DataCleaner.REV_NAME_MAP)

@@ -50,7 +50,6 @@ class SimplePlantBuilder(BaseProfileAggregation):
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
         """
-
         logger.info('Initializing SimplePlantBuilder.')
         super().__init__()
         self._res_gids = None
