@@ -166,11 +166,6 @@ class ProfilesConfigGroup(BaseConfig):
         """Get the representative profile region columns to run groups on."""
         return self.get('reg_cols', self._default_reg_cols)
 
-    @property
-    def max_workers(self):
-        """Get the max_workers input (None is parallel)."""
-        return self.get('max_workers', None)
-
 
 class TimeslicesConfigGroup(BaseConfig):
     """Subclass for handling the Reeds config input group for the reVX-REEDS

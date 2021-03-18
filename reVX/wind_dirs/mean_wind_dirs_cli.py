@@ -74,7 +74,7 @@ def run_local(ctx, config):
                check_excl_layers=config.check_excl_layers,
                area_filter_kernel=config.area_filter_kernel,
                min_area=config.min_area,
-               max_workers=config.max_workers,
+               max_workers=config.execution_control.max_workers,
                chunk_point_len=config.chunk_point_len,
                log_dir=config.logdir,
                verbose=config.log_level)
@@ -227,7 +227,7 @@ def get_node_cmd(config):
             '-cel {}'.format(SLURM.s(config.check_excl_layers)),
             '-afk {}'.format(SLURM.s(config.area_filter_kernel)),
             '-ma {}'.format(SLURM.s(config.min_area)),
-            '-mw {}'.format(SLURM.s(config.max_workers)),
+            '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-cpl {}'.format(SLURM.s(config.chunk_point_len)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]

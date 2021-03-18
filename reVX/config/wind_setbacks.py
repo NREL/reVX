@@ -57,11 +57,6 @@ class WindSetbacksConfig(AnalysisConfig):
         return self.get('multiplier', None)
 
     @property
-    def max_workers(self):
-        """Get maximum number of workers to use to compute setbacks"""
-        return self.get('max_workers', None)
-
-    @property
     def replace(self):
         """Get replace flag"""
         return self.get('replace', False)

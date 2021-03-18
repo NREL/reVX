@@ -72,7 +72,7 @@ def run_local(ctx, config):
                out_dir=config.dirout,
                cf_profiles=config.cf_profiles,
                log_dir=config.logdir,
-               max_workers=config.max_workers)
+               max_workers=config.execution_control.max_workers)
 
     if config.cluster is not None:
         ctx.invoke(cluster,
@@ -284,7 +284,7 @@ def get_node_cmd(config):
             'local',
             '-o {}'.format(SLURM.s(config.dirout)),
             '-cf {}'.format(SLURM.s(config.cf_profiles)),
-            '-mw {}'.format(SLURM.s(config.max_workers)),
+            '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
 

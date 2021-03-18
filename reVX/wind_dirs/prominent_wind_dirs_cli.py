@@ -70,7 +70,7 @@ def run_local(ctx, config):
                tm_dset=config.tm_dset,
                resolution=config.resolution,
                excl_area=config.excl_area,
-               max_workers=config.max_workers,
+               max_workers=config.execution_control.max_workers,
                chunk_point_len=config.chunk_point_len,
                log_dir=config.logdir,
                verbose=config.log_level)
@@ -201,7 +201,7 @@ def get_node_cmd(config):
             '-td {}'.format(SLURM.s(config.tm_dset)),
             '-res {}'.format(SLURM.s(config.resolution)),
             '-ea {}'.format(SLURM.s(config.excl_area)),
-            '-mw {}'.format(SLURM.s(config.max_workers)),
+            '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-cpl {}'.format(SLURM.s(config.chunk_point_len)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
