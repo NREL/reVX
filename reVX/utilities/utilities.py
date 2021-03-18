@@ -56,7 +56,7 @@ def log_versions(logger):
     logger : logging.Logger
         Logger object to log memory message to.
     """
-    logger.info('Running with rex version {}'.format(__version__))
+    logger.info('Running with reVX version {}'.format(__version__))
     reV_log_versions(logger)
     logger.debug('- geopandas version {}'.format(gpd.__version__))
     logger.debug('- pyproj version {}'.format(pyproj.__version__))
