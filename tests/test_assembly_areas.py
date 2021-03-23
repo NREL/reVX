@@ -16,7 +16,7 @@ import traceback
 from rex.resource import Resource
 from rex.utilities.loggers import LOGGERS
 from reVX import TESTDATADIR
-from reVX.offshore.dist_to_ports import AssemblyAreas
+from reVX.offshore.assembly_areas import AssemblyAreas
 from reVX.offshore.assembly_areas_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'offshore', 'offshore.h5')
