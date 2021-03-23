@@ -54,8 +54,3 @@ class ProminentWindDirsConfig(AnalysisConfig):
     def excl_area(self):
         """Get the exclusion pixel area in km2"""
         return self.get('excl_area', None)
-
-    @property
-    def chunk_point_len(self):
-        """Get the chunk length for parallel computation."""
-        return self.get('chunk_point_len', self._default_chunk_point_len)

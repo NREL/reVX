@@ -70,7 +70,7 @@ class MeanWindDirections(Aggregation):
                          check_excl_layers=check_excl_layers,
                          resolution=resolution, excl_area=excl_area)
 
-    def aggregate(self, max_workers=None, chunk_point_len=1000):
+    def aggregate(self, max_workers=None, sites_per_worker=1000):
         """
         Average wind directions to sc_points
 
@@ -79,8 +79,9 @@ class MeanWindDirections(Aggregation):
         max_workers : int | None
             Number of cores to run summary on. None is all
             available cpus.
-        chunk_point_len : int
-            Number of SC points to process on a single parallel worker.
+        sites_per_worker : int, optional
+            Number of SC points to process on a single parallel worker,
+            by default 1000
 
         Returns
         -------
@@ -89,7 +90,7 @@ class MeanWindDirections(Aggregation):
         """
         agg = super().aggregate(agg_method='mean_wind_dir',
                                 max_workers=max_workers,
-                                chunk_point_len=chunk_point_len)
+                                sites_per_worker=sites_per_worker)
 
         return agg
 
@@ -98,7 +99,7 @@ class MeanWindDirections(Aggregation):
             tm_dset='techmap_wtk', excl_dict=None,
             area_filter_kernel='queen', min_area=None,
             check_excl_layers=False, resolution=128, excl_area=None,
-            max_workers=None, chunk_point_len=1000, out_fpath=None):
+            max_workers=None, sites_per_worker=1000, out_fpath=None):
         """
         Aggregate powerrose to supply curve points, find neighboring supply
         curve point gids and rank them based on prominent powerrose direction
@@ -136,9 +137,9 @@ class MeanWindDirections(Aggregation):
         max_workers : int | None, optional
             Number of cores to run summary on. None is all
             available cpus, by default None
-        chunk_point_len : int, optional
+        sites_per_worker : int, optional
             Number of SC points to process on a single parallel worker,
-            by default 100
+            by default 1000
         out_fpath : str
             Path to .h5 file to save aggregated data too
 
@@ -155,7 +156,7 @@ class MeanWindDirections(Aggregation):
                    resolution=resolution, excl_area=excl_area)
 
         agg = wdir.aggregate(max_workers=max_workers,
-                             chunk_point_len=chunk_point_len)
+                             sites_per_worker=sites_per_worker)
 
         if out_fpath is not None:
             wdir.save_agg_to_h5(out_fpath, agg)

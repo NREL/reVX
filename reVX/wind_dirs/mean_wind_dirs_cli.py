@@ -75,7 +75,7 @@ def run_local(ctx, config):
                area_filter_kernel=config.area_filter_kernel,
                min_area=config.min_area,
                max_workers=config.execution_control.max_workers,
-               chunk_point_len=config.chunk_point_len,
+               sites_per_worker=config.execution_control.sites_per_worker,
                log_dir=config.logdir,
                verbose=config.log_level)
 
@@ -145,7 +145,7 @@ def from_config(ctx, config, verbose):
 @click.option('--min_area', '-ma', type=FLOAT, default=None,
               help='Contiguous area filter minimum area, default is None '
               '(No minimum area filter).')
-@click.option('--chunk_point_len', '-cpl', default=1000, type=INT,
+@click.option('--sites_per_worker', '-spw', default=1000, type=INT,
               show_default=True,
               help="Number of SC points to process on each parallel worker")
 @click.option('--max_workers', '-mw', default=None, type=INT,
@@ -160,7 +160,7 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, res_h5_fpath, excl_fpath, wdir_dsets, out_dir, tm_dset,
           excl_dict, resolution, excl_area, check_excl_layers,
-          area_filter_kernel, min_area, chunk_point_len, max_workers, log_dir,
+          area_filter_kernel, min_area, sites_per_worker, max_workers, log_dir,
           verbose):
     """
     Compute mean wind directions on local hardware
@@ -195,7 +195,7 @@ def local(ctx, res_h5_fpath, excl_fpath, wdir_dsets, out_dir, tm_dset,
                            check_excl_layers=check_excl_layers,
                            resolution=resolution, excl_area=excl_area,
                            max_workers=max_workers,
-                           chunk_point_len=chunk_point_len,
+                           sites_per_worker=sites_per_worker,
                            out_fpath=out_fpath)
 
 
@@ -213,7 +213,7 @@ def get_node_cmd(config):
     cmd : str
         CLI call to submit to SLURM execution.
     """
-
+    spw = config.execution_control.sites_per_worker
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-res {}'.format(SLURM.s(config.res_h5_fpath)),
@@ -228,7 +228,7 @@ def get_node_cmd(config):
             '-afk {}'.format(SLURM.s(config.area_filter_kernel)),
             '-ma {}'.format(SLURM.s(config.min_area)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
-            '-cpl {}'.format(SLURM.s(config.chunk_point_len)),
+            '-spw {}'.format(SLURM.s(spw)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
 

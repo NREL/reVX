@@ -74,8 +74,3 @@ class MeanWindDirsConfig(AnalysisConfig):
     def check_excl_layers(self):
         """Get the check_excl_layers flag."""
         return self.get('check_excl_layers', False)
-
-    @property
-    def chunk_point_len(self):
-        """Get the chunk length for parallel computation."""
-        return self.get('chunk_point_len', self._default_chunk_point_len)

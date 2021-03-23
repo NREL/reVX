@@ -1,8 +1,8 @@
 dask>=2.8
 dask[array]>=2.8
 geopandas>=0.8
-NREL-reV>=0.4.52
-NREL-rex>=0.2.46
+NREL-reV>=0.4.54
+NREL-rex>=0.2.51
 psycopg2-binary>=2.8
 pyproj>=3.0.1
 pywavelets>=1.0
