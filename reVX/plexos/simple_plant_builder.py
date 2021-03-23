@@ -51,6 +51,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
             available workers. 1 will run in serial.
         """
 
+        logger.info('Initializing SimplePlantBuilder.')
         super().__init__()
         self._res_gids = None
         self._plant_meta = parse_table(plant_meta).reset_index(drop=True)
@@ -81,6 +82,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._forecast_map = self._make_forecast_map(self._cf_fpath,
                                                      self._forecast_fpath)
         self._compute_gid_capacities()
+        logger.info('Finished initializing SimplePlantBuilder.')
 
     def _compute_gid_capacities(self):
         """Compute the individual resource gid capacities and make a new
@@ -108,6 +110,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
             number of SC points, and each row in the array yields the sc points
             m closest to the plant n.
         """
+        logger.debug('Making node map...')
 
         plant_coord_labels = get_coord_labels(self._plant_meta)
         sc_coord_labels = get_coord_labels(self._sc_table)
@@ -118,6 +121,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
         tree = BallTree(sc_coords, metric='haversine')
         ind = tree.query(plant_coords, return_distance=False,
                          k=len(self._sc_table))
+        logger.debug('Finished mkaing node map.')
 
         return ind
 
@@ -166,6 +170,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
 
         # March through plant meta data table in order provided
         for i, plant_row in self._plant_meta.iterrows():
+            logger.debug('Starting plant buildout assignment for plant {} '
+                         'out of {}'.format(i + 1, len(self._plant_meta)))
+
             plant_cap_to_build = float(plant_row['capacity'])
             single_plant_sc = pd.DataFrame()
 
@@ -230,6 +237,8 @@ class SimplePlantBuilder(BaseProfileAggregation):
                     plant_sc_builds[i] = single_plant_sc
                     break
 
+        logger.info('Finished plant buildout assignment.')
+
         return plant_sc_builds
 
     def check_valid_buildouts(self, plant_sc_builds):
@@ -273,6 +282,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
             timeseries length and n is the number of plants.
         """
 
+        logger.info('Starting plant profile buildout in parallel.')
         profiles = self._init_output(len(self.plant_meta))
         progress = 0
         futures = {}
@@ -300,6 +310,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
                     logger.info('{} % of plant node profiles built.'
                                 .format(progress))
 
+        logger.info('Finished plant profile buildout.')
         return profiles
 
     def _make_profiles_serial(self, plant_sc_builds):
@@ -312,6 +323,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
             timeseries length and n is the number of plexos nodes.
         """
 
+        logger.info('Starting plant profile buildout in serial.')
         profiles = self._init_output(len(self.plant_meta))
         progress = 0
         for i, plant_sc_subset in plant_sc_builds.items():
@@ -332,6 +344,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
                 logger.info('{} % of plant profiles built.'
                             .format(progress))
 
+        logger.info('Finished plant profile buildout.')
         return profiles
 
     @classmethod
