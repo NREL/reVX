@@ -26,7 +26,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
     """
 
     def __init__(self, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
-                 max_workers=None):
+                 share_resource=True, max_workers=None):
         """Run plexos aggregation.
 
         Parameters
@@ -46,6 +46,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
+        share_resource : bool
+            Flag to share available capacity within a single resource GID
+            between multiple plants.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -57,6 +60,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._sc_table = parse_table(rev_sc).reset_index(drop=True)
         self._cf_fpath = cf_fpath
         self._forecast_fpath = forecast_fpath
+        self._share_res = share_resource
         self._output_meta = None
         self.max_workers = max_workers
 
@@ -214,11 +218,14 @@ class SimplePlantBuilder(BaseProfileAggregation):
                         gids_remain[j] -= built
                         plant_cap_to_build -= built
 
+                        # if specified to not share resource, set remaining
+                        # capacity for this resource gid to zero
+                        if not self._share_res:
+                            gids_remain[j] = 0
+
                         # buildout for this plant is fully complete
                         if plant_cap_to_build <= 0:
                             break
-
-                    assert np.allclose(gids_remain + gids_build, gids_orig)
 
                     gids_build = gids_build.tolist()
                     gids_orig = gids_orig.tolist()
@@ -243,16 +250,33 @@ class SimplePlantBuilder(BaseProfileAggregation):
     def check_valid_buildouts(self, plant_sc_builds):
         """Check that plant buildouts are mapped to valid resource data that
         can be found in the cf_fpath input."""
+
+        global_built_res_gids = []
         for i, single_plant_sc in plant_sc_builds.items():
             sc_res_gids = single_plant_sc['res_gids'].values.tolist()
             sc_res_gids = [g for subset in sc_res_gids for g in subset]
-            missing = [gid for gid in sc_res_gids
+            gid_caps = single_plant_sc['gid_capacity'].values.tolist()
+            gid_caps = [g for subset in gid_caps for g in subset]
+            assert len(gid_caps) == len(sc_res_gids)
+            plant_built_res_gids = [gid for j, gid in enumerate(sc_res_gids)
+                                    if gid_caps[j] > 0]
+            missing = [gid for gid in plant_built_res_gids
                        if gid not in self.available_res_gids]
             if any(missing):
                 msg = ('Plant index {} was mapped to resource gids that are '
                        'missing from the cf file: {}'.format(i, missing))
                 logger.error(msg)
                 raise RuntimeError(msg)
+
+            shared = [gid for gid in plant_built_res_gids
+                      if gid in global_built_res_gids]
+            if any(shared) and not self._share_res:
+                msg = ('SimplePlantBuilder shared resource gids when it '
+                       'should not have: {}'.format(shared))
+                logger.error(msg)
+                raise RuntimeError(msg)
+            else:
+                global_built_res_gids += plant_built_res_gids
 
     def make_profiles(self, plant_sc_builds):
         """Make a 2D array of aggregated plant gen profiles.
@@ -348,8 +372,33 @@ class SimplePlantBuilder(BaseProfileAggregation):
 
     @classmethod
     def run(cls, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
-            max_workers=None):
-        """
+            share_resource=True, max_workers=None):
+        """Build profiles and meta data.
+
+        Parameters
+        ----------
+        plant_meta : str | pd.DataFrame
+            Str filepath or extracted dataframe for plant meta data with every
+            row representing a plant with columns for latitude, longitude,
+            and capacity (in MW). Plants will compete for available capacity
+            in the reV supply curve input and will be prioritized based on the
+            row order of this input.
+        rev_sc : str | pd.DataFrame
+            reV supply curve or sc-aggregation output table including sc_gid,
+            latitude, longitude, res_gids, gid_counts, mean_cf.
+        cf_fpath : str
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results).
+            If not None, the generation profiles are sourced from this file.
+        share_resource : bool
+            Flag to share available capacity within a single resource GID
+            between multiple plants.
+        max_workers : int | None
+            Max workers for parallel profile aggregation. None uses all
+            available workers. 1 will run in serial.
+
         Returns
         -------
         plant_meta : pd.DataFrame
@@ -365,7 +414,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
         """
 
         pb = cls(plant_meta, rev_sc, cf_fpath, forecast_fpath=forecast_fpath,
-                 max_workers=max_workers)
+                 share_resource=share_resource, max_workers=max_workers)
 
         plant_sc_builds = pb.assign_plant_buildouts()
         pb.check_valid_buildouts(plant_sc_builds)
