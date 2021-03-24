@@ -37,11 +37,6 @@ class RPMConfig(AnalysisConfig):
         """
         return self['cf_profiles']
 
-    @property
-    def max_workers(self):
-        """Get the max_workers input (None is parallel)."""
-        return self.get('max_workers', None)
-
 
 class ClusterConfigGroup(BaseConfig):
     """

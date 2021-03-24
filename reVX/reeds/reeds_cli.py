@@ -96,7 +96,7 @@ def run_local(ctx, config):
                    err_method=config.profiles.err_method,
                    weight=config.profiles.weight,
                    reg_cols=config.profiles.reg_cols,
-                   max_workers=config.profiles.max_workers)
+                   max_workers=config.execution_control.max_workers)
 
     if config.timeslices is not None:
         ctx.invoke(timeslices,
@@ -408,6 +408,7 @@ def get_node_cmd(config):
         args.extend(classify)
 
     if config.profiles is not None:
+        max_workers = config.execution_control.max_workers
         profiles = ['profiles',
                     '-rt {}'.format(SLURM.s(config.profiles.reeds_table)),
                     '-cf {}'.format(SLURM.s(config.profiles.cf_profiles)),
@@ -418,7 +419,7 @@ def get_node_cmd(config):
                     '-em {}'.format(SLURM.s(config.profiles.err_method)),
                     '-w {}'.format(SLURM.s(config.profiles.weight)),
                     '-rcp {}'.format(SLURM.s(config.profiles.reg_cols)),
-                    '-mw {}'.format(SLURM.s(config.profiles.max_workers)),
+                    '-mw {}'.format(SLURM.s(max_workers)),
                     ]
 
         args.extend(profiles)

@@ -11,6 +11,7 @@ import pandas as pd
 from scipy.spatial import cKDTree
 from scipy.stats import pearsonr, spearmanr, kendalltau
 
+from reVX.utilities.utilities import log_versions
 from rex.resource import Resource
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
@@ -108,6 +109,7 @@ class HybridStats:
             Year to extract time-index for if running on a multi-year file,
             by default None
         """
+        log_versions(logger)
         self._solar_h5 = solar_h5
         self._wind_h5 = wind_h5
         self._stats = None

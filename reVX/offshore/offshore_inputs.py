@@ -10,7 +10,7 @@ from scipy.spatial import cKDTree
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
-from reVX.offshore.dist_to_ports import coordinate_distance
+from reVX.utilities.utilities import log_versions, coordinate_distance
 from rex.resource import Resource
 from rex.utilities.utilities import parse_table, get_lat_lon_cols
 
@@ -51,6 +51,7 @@ class OffshoreInputs(ExclusionLayers):
             Dataset / layer name for wind toolkit techmap,
             by default 'techmap_wtk'
         """
+        log_versions(logger)
         super().__init__(inputs_fpath)
         self._offshore_meta = self._create_offshore_meta(offshore_sites,
                                                          tm_dset)

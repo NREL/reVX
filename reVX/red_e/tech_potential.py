@@ -3,7 +3,9 @@
 RED-E reV based tech potential tool
 """
 import logging
+
 from reV.supply_curve.exclusions import ExclusionMaskFromDict
+from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +39,7 @@ class TechPotential(ExclusionMaskFromDict):
             Run a pre-flight check on each layer to ensure they contain
             un-excluded values
         """
+        log_versions(logger)
         layers_dict = excl_dict.copy()
         layers_dict[base_layer] = {"use_as_weights": True}
         super().__init__(h5_path, layers_dict=layers_dict, hsds=hsds,

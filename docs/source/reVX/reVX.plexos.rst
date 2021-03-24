@@ -11,9 +11,11 @@ Submodules
 
 .. toctree::
 
+   reVX.plexos.base
    reVX.plexos.dpv_plexos
-   reVX.plexos.rev_reeds_plexos_cli
    reVX.plexos.plexos_plants
    reVX.plexos.plexos_plants_cli
    reVX.plexos.rev_reeds_plexos
+   reVX.plexos.rev_reeds_plexos_cli
+   reVX.plexos.simple_plant_builder
    reVX.plexos.utilities

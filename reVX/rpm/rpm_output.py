@@ -11,13 +11,12 @@ import psutil
 from scipy.spatial import cKDTree
 from warnings import warn
 
-from rex.utilities.execution import SpawnProcessPool
-
 from reV.supply_curve.exclusions import ExclusionMask, ExclusionMaskFromDict
-
 from reVX.handlers.outputs import Outputs
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.utilities.exceptions import RPMRuntimeError, RPMTypeError
+from reVX.utilities.utilities import log_versions
+from rex.utilities.execution import SpawnProcessPool
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ class RepresentativeProfiles:
             profiles will be taken from forecast fpath instead of fpath gen
             based on a NN mapping.
         """
-
+        log_versions(logger)
         if key is not None:
             self.key = key
         elif 'rank_included_trg' in clusters:

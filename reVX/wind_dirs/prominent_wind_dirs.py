@@ -9,32 +9,10 @@ import pandas as pd
 
 from reV.supply_curve.aggregation import Aggregation
 from reV.supply_curve.points import SupplyCurveExtent
+from reVX.utilities.utilities import log_versions
+from rex.utilities.utilities import row_col_indices
 
 logger = logging.getLogger(__name__)
-
-
-def row_col_indices(sc_point_gids, row_length):
-    """
-    Convert supply curve point gids to row and col indices given row length
-
-    Parameters
-    ----------
-    sc_point_gids : int | list | ndarray
-        Supply curve point gid or list/array of gids
-    row_length : int
-        row length (shape[1])
-
-    Returns
-    -------
-    row : int | list | ndarray
-        row indices
-    col : int | list | ndarray
-        row indices
-    """
-    rows = sc_point_gids // row_length
-    cols = sc_point_gids % row_length
-
-    return rows, cols
 
 
 class ProminentWindDirections(Aggregation):
@@ -68,6 +46,7 @@ class ProminentWindDirections(Aggregation):
             Area of an exclusion pixel in km2. None will try to infer the area
             from the profile transform attribute in excl_fpath.
         """
+        log_versions(logger)
         super().__init__(excl_fpath, power_rose_h5_fpath, tm_dset, agg_dset,
                          resolution=resolution, excl_area=excl_area)
 
@@ -168,7 +147,7 @@ class ProminentWindDirections(Aggregation):
         return neighbor_gids
 
     def prominent_directions(self, max_workers=None,
-                             chunk_point_len=1000):
+                             sites_per_worker=1000):
         """
         Aggregate power rose data to supply curve points, find all neighboring
         supply curve points, sort neighbors in order of prominent powerrose
@@ -179,9 +158,9 @@ class ProminentWindDirections(Aggregation):
         max_workers : int | None, optional
             Number of cores to run summary on. None is all
             available cpus, by default None
-        chunk_point_len : int, optional
+        sites_per_worker : int, optional
             Number of SC points to process on a single parallel worker,
-            by default 100
+            by default 1000
 
         Returns
         -------
@@ -190,7 +169,7 @@ class ProminentWindDirections(Aggregation):
             and power-rose value at each cardinal direction
         """
         agg_out = self.aggregate(max_workers=max_workers,
-                                 chunk_point_len=chunk_point_len)
+                                 sites_per_worker=sites_per_worker)
 
         meta = agg_out.pop('meta')
         neighbor_gids = self._get_neighbors(self._excl_fpath,
@@ -217,7 +196,7 @@ class ProminentWindDirections(Aggregation):
     def run(cls, power_rose_h5_fpath, excl_fpath,
             agg_dset='powerrose_100m', tm_dset='techmap_wtk',
             resolution=128, excl_area=None, max_workers=None,
-            chunk_point_len=1000, out_fpath=None):
+            sites_per_worker=1000, out_fpath=None):
         """
         Aggregate powerrose to supply curve points, find neighboring supply
         curve point gids and rank them based on prominent powerrose direction
@@ -246,9 +225,9 @@ class ProminentWindDirections(Aggregation):
         max_workers : int | None, optional
             Number of cores to run summary on. None is all
             available cpus, by default None
-        chunk_point_len : int, optional
+        sites_per_worker : int, optional
             Number of SC points to process on a single parallel worker,
-            by default 100
+            by default 1000
         out_fpath : str
             Path to .csv file to save output table to
 
@@ -263,7 +242,7 @@ class ProminentWindDirections(Aggregation):
                  resolution=resolution, excl_area=excl_area)
 
         sc_pr = pr.prominent_directions(max_workers=max_workers,
-                                        chunk_point_len=chunk_point_len)
+                                        sites_per_worker=sites_per_worker)
 
         if out_fpath:
             sc_pr.to_csv(out_fpath, index=False)

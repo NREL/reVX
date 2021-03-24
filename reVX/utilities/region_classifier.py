@@ -9,6 +9,7 @@ from shapely.geometry import shape
 from scipy.spatial import cKDTree
 import logging
 
+from reVX.utilities.utilities import log_versions
 from rex import Resource
 
 logger = logging.getLogger(__name__)
@@ -51,6 +52,7 @@ class RegionClassifier():
         regions_label : str
             Attribute to use as label in the regions shapefile
         """
+        log_versions(logger)
         self._regions_label = regions_label
         if self._regions_label is None:
             self._regions_label = self.DEFAULT_REGIONS_LABEL

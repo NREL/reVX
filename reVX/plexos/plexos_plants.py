@@ -16,6 +16,7 @@ from rex.utilities import parse_table, SpawnProcessPool
 
 from reVX.handlers.outputs import Outputs
 from reVX.handlers.sc_points import SupplyCurvePoints
+from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -220,7 +221,7 @@ class PlexosPlants(Plants):
         points_per_worker : int, optional
             Number of points to create on each worker, by default 400
         """
-
+        log_versions(logger)
         logger.info('Initializing PlexosPlants from plexos table with '
                     '{} rows'.format(len(plexos_table)))
         self._plant_table = self._parse_plant_table(plexos_table)
@@ -764,7 +765,7 @@ class PlantProfileAggregation:
         offshore : bool, optional
             Include offshore points, by default False
         """
-
+        log_versions(logger)
         logger.info('Initializing PlantProfileAggregation')
         self._plexos_table = self._parse_plexos_table(plexos_table)
         self._cf_fpath = cf_fpath

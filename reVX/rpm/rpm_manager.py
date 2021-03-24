@@ -9,12 +9,12 @@ import pandas as pd
 import psutil
 from warnings import warn
 
-from rex.utilities.execution import SpawnProcessPool
-
 from reVX.handlers.outputs import Outputs
 from reVX.rpm.rpm_clusters import RPMClusters
 from reVX.rpm.rpm_output import RPMOutput
 from reVX.utilities.exceptions import RPMValueError, RPMRuntimeError
+from reVX.utilities.utilities import log_versions
+from rex.utilities.execution import SpawnProcessPool
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ class RPMClusterManager:
             Number of parallel workers. 1 will run serial, None will use all
             available., by default None
         """
+        log_versions(logger)
         if rpm_region_col is not None:
             logger.info('Initializing RPM clustering on regional column "{}".'
                         .format(rpm_region_col))

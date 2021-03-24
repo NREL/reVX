@@ -69,18 +69,3 @@ class MeanWindDirsConfig(AnalysisConfig):
     def min_area(self):
         """Get the minimum area filter minimum area in km2."""
         return self.get('min_area', None)
-
-    @property
-    def check_excl_layers(self):
-        """Get the check_excl_layers flag."""
-        return self.get('check_excl_layers', False)
-
-    @property
-    def max_workers(self):
-        """Get the maximum number of workers."""
-        return self.get('max_workers', None)
-
-    @property
-    def chunk_point_len(self):
-        """Get the chunk length for parallel computation."""
-        return self.get('chunk_point_len', self._default_chunk_point_len)

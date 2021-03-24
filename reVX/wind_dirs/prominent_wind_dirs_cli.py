@@ -70,8 +70,8 @@ def run_local(ctx, config):
                tm_dset=config.tm_dset,
                resolution=config.resolution,
                excl_area=config.excl_area,
-               max_workers=config.max_workers,
-               chunk_point_len=config.chunk_point_len,
+               max_workers=config.execution_control.max_workers,
+               sites_per_worker=config.execution_control.sites_per_worker,
                log_dir=config.logdir,
                verbose=config.log_level)
 
@@ -131,7 +131,7 @@ def from_config(ctx, config, verbose):
               show_default=True,
               help=("Number of cores to run summary on. None is all "
                     "available cpus"))
-@click.option('--chunk_point_len', '-cpl', default=1000, type=INT,
+@click.option('--sites_per_worker', '-spw', default=1000, type=INT,
               show_default=True,
               help="Number of SC points to process on each parallel worker")
 @click.option('--log_dir', '-log', default=None, type=STR,
@@ -141,11 +141,13 @@ def from_config(ctx, config, verbose):
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
-          resolution, excl_area, max_workers, chunk_point_len, log_dir,
+          resolution, excl_area, max_workers, sites_per_worker, log_dir,
           verbose):
     """
     Compute prominent wind directions on local hardware
     """
+    sites_per_worker = sites_per_worker if sites_per_worker else 1000
+
     ctx.obj['OUT_DIR'] = out_dir
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -173,7 +175,7 @@ def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
                                 agg_dset=agg_dset, tm_dset=tm_dset,
                                 resolution=resolution, excl_area=excl_area,
                                 max_workers=max_workers,
-                                chunk_point_len=chunk_point_len,
+                                sites_per_worker=sites_per_worker,
                                 out_fpath=out_fpath)
 
 
@@ -191,7 +193,7 @@ def get_node_cmd(config):
     cmd : str
         CLI call to submit to SLURM execution.
     """
-
+    spw = config.execution_control.sites_per_worker
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-prh5 {}'.format(SLURM.s(config.powerrose_h5_fpath)),
@@ -201,8 +203,8 @@ def get_node_cmd(config):
             '-td {}'.format(SLURM.s(config.tm_dset)),
             '-res {}'.format(SLURM.s(config.resolution)),
             '-ea {}'.format(SLURM.s(config.excl_area)),
-            '-mw {}'.format(SLURM.s(config.max_workers)),
-            '-cpl {}'.format(SLURM.s(config.chunk_point_len)),
+            '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
+            '-spw {}'.format(SLURM.s(spw)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
 

@@ -8,9 +8,9 @@ import numpy as np
 from scipy.spatial import cKDTree
 
 from reV.handlers.exclusions import ExclusionLayers
-from reVX.wind_dirs import row_col_indices
-from rex.rechunk_h5.rechunk_h5 import to_records_array
-from rex.utilities.utilities import (get_lat_lon_cols, parse_table)
+from reVX.utilities.utilities import log_versions
+from rex.utilities.utilities import (get_lat_lon_cols, parse_table,
+                                     row_col_indices, to_records_array)
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,7 @@ class AssemblyAreas:
         excl_fpath : str
             Path to exclusions .h5 file with distance to coast layer
         """
+        log_versions(logger)
         self._assembly_areas = parse_table(assembly_areas)
         self._excl_fpath = excl_fpath
         self._ports_dset = ports_dset

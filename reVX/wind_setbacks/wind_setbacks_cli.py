@@ -323,7 +323,7 @@ def run_local(ctx, config):
                rotor_diameter=config.rotor_diameter,
                regs_fpath=config.regs_fpath,
                multiplier=config.multiplier,
-               max_workers=config.max_workers,
+               max_workers=config.execution_control.max_workers,
                replace=config.replace)
 
     feature_type = config.feature_type
@@ -363,7 +363,7 @@ def get_node_cmd(name, config):
             '-diameter {}'.format(SLURM.s(config.rotor_diameter)),
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
             '-mult {}'.format(SLURM.s(config.multiplier)),
-            '-mw {}'.format(SLURM.s(config.max_workers)),
+            '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
 

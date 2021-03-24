@@ -70,7 +70,7 @@ def run_local(ctx, config):
                output_dist_layer=config.output_dist_layer,
                assembly_areas=config.assembly_areas,
                assembly_ports_dset=config.assembly_ports_dset,
-               max_workers=config.max_workers,
+               max_workers=config.execution_control.max_workers,
                update_layer=config.update_layer,
                log_dir=config.logdir,
                verbose=config.log_level)
@@ -200,7 +200,7 @@ def get_node_cmd(config):
             '-odl {}'.format(SLURM.s(config.output_dist_layer)),
             '-aa {}'.format(SLURM.s(config.assembly_areas)),
             '-apd {}'.format(SLURM.s(config.assembly_ports_dset)),
-            '-mw {}'.format(SLURM.s(config.max_workers)),
+            '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
 

@@ -8,6 +8,8 @@ import os
 import shutil
 from warnings import warn
 
+from reVX.utilities.utilities import log_versions
+
 from rex import Resource
 
 logger = logging.getLogger(__name__)
@@ -30,6 +32,7 @@ class Forecasts:
         actuals_dset : str, optional
             Actuals dataset, by default None
         """
+        log_versions(logger)
         self._fcst_h5 = fcst_h5
         if actuals_h5 is None:
             actuals_h5 = fcst_h5

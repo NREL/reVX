@@ -4,54 +4,22 @@ Compute least-cost distance to port
 """
 from concurrent.futures import as_completed
 import geopandas as gpd
-import h5py
 import logging
 import numpy as np
 import os
 import pandas as pd
 from scipy.spatial import cKDTree
 from skimage.graph import MCP_Geometric
-from sklearn.metrics.pairwise import haversine_distances
 
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.utilities.exclusions_converter import ExclusionsConverter
-from reVX.wind_dirs import row_col_indices
-from rex.rechunk_h5.rechunk_h5 import to_records_array
+from reVX.utilities.utilities import log_versions, coordinate_distance
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 from rex.utilities.utilities import (check_res_file, get_lat_lon_cols,
-                                     parse_table)
+                                     parse_table, row_col_indices)
 
 logger = logging.getLogger(__name__)
-
-
-def coordinate_distance(coords1, coords2):
-    """
-    Compute the haversine distance between the two sets of coordinates.
-    Results are in km
-
-    Parameters
-    ----------
-    coords1 : ndarray
-        First set of (lat, lon) coordinates
-    coords2 : ndarray
-        Second set of (lat, lon) coordinates
-
-    Returns
-    -------
-    dist : ndarray
-        Vector of haversine distances between coordinate set 1 and set 2 in km
-    """
-    dist = haversine_distances(np.radians(coords1), np.radians(coords2))
-    if len(coords1) == 1:
-        dist = dist.ravel()
-    else:
-        dist = np.diag(dist)
-
-    # radius of the earth in kilometers # radius of the earth in km
-    R = 6371.0
-
-    return dist * R
 
 
 class DistanceToPorts:
@@ -76,6 +44,7 @@ class DistanceToPorts:
             Exclusions layer name with distance to coast,
             by default 'dist_to_coast'
         """
+        log_versions(logger)
         self._excl_fpath = excl_fpath
         self._input_dist_layer = input_dist_layer
         log_mem(logger)
@@ -449,209 +418,3 @@ class DistanceToPorts:
             dtp.save_as_layer(output_dist_layer, dist_to_ports, chunks=chunks)
 
         return dist_to_ports
-
-
-class AssemblyAreas:
-    """
-    Class to compute the distance from port to assembly areas using the
-    distance to port arrays produced using DistanceToPorts
-    """
-    DIST_COL = 'dist_p_to_a'
-
-    def __init__(self, assembly_areas, excl_fpath):
-        """
-        Parameters
-        ----------
-        assembly_areas : str | pandas.DataFrame
-            DataFrame or path to csv or json containing assembly area
-            meta and locational data
-        excl_fpath : str
-            Path to exclusions .h5 file with distance to coast layer
-        """
-        self._assembly_areas = parse_table(assembly_areas)
-        self._excl_fpath = excl_fpath
-        self._assembly_idx = self._get_assembly_array_idx(self._assembly_areas,
-                                                          excl_fpath)
-
-    def __repr__(self):
-        msg = ("{} with {} areas"
-               .format(self.__class__.__name__, len(self.assembly_areas)))
-
-        return msg
-
-    @property
-    def assembly_areas(self):
-        """
-        DataFrame with assembly area meta and locational data
-
-        Returns
-        -------
-        pandas.DataFrame
-        """
-        return self._assembly_areas
-
-    @staticmethod
-    def _build_tree(excl_fpath):
-        """
-        Build cKDTree from exclusions coordinates
-
-        Parameters
-        ----------
-        excl_fpath : str
-            Path to exclusions .h5 file with distance to coast layer
-
-        Returns
-        -------
-        tree : cKDTree
-            cKDTree build on exclusions coordinates
-        shape : tuple
-            Shape of exclusion layers/arrays
-        """
-        with ExclusionLayers(excl_fpath) as f:
-            lat = f['latitude']
-            lon = f['longitude']
-
-        lat_lon = np.dstack((lat.ravel(), lon.ravel()))[0]
-
-        # pylint: disable=not-callable
-        tree = cKDTree(lat_lon)
-
-        return tree, lat.shape
-
-    @classmethod
-    def _get_assembly_array_idx(cls, assembly_areas, excl_fpath):
-        """
-        Use cKDTree to find the nearest exclusion array pixels to assembly
-        area coordinates. Return the array row and column indices for
-        nearest exclusion pixels
-
-        Parameters
-        ----------
-        assembly_areas : str | pandas.DataFrame
-            DataFrame or path to csv or json containing assembly area
-            meta and locational data
-        excl_fpath : str
-            Path to exclusions .h5 file with distance to coast layer
-
-        Returns
-        -------
-        row_idx : int | list
-            Row indices corresponding to nearest exclusions pixels to provided
-            assembly area coordinate(s)
-        col_idx : int | list
-            Column indices corresponding to nearest exclusions pixels to
-            provided assembly area coordinate(s)
-        """
-        tree, shape = cls._build_tree(excl_fpath)
-
-        assembly_areas = parse_table(assembly_areas)
-        lat_lon_cols = get_lat_lon_cols(assembly_areas)
-        assembly_coords = assembly_areas[lat_lon_cols].values
-        _, pos = tree.query(assembly_coords)
-        row_idx, col_idx = row_col_indices(pos, shape[1])
-
-        return row_idx, col_idx
-
-    def _get_dist_to_ports_dset(self,
-                                ports_dset='ports_construction_nolimits'):
-        """
-        Extract the minimum least cost distance from assembly areas to ports
-        of interest from distance to ports array
-
-        Parameters
-        ----------
-        ports_dset : str, optional
-            Distance to ports layer/dataset name in excl_fpath, by default
-            'ports_construction_nolimits'
-
-        Returns
-        -------
-        assembly_areas : pandas.DataFrame
-            Updated assembly area DataFrame with distance to specified ports
-        """
-        with ExclusionLayers(self._excl_fpath) as f:
-            excl_slice = (ports_dset, ) + self._assembly_idx
-            logger.debug('Extracting {} from {}'
-                         .format(excl_slice, self._excl_fpath))
-            dist = f[excl_slice]
-
-        self._assembly_areas.loc[:, self.DIST_COL] = dist
-
-        return self.assembly_areas
-
-    def distance_to_ports(self, ports_dset='ports_construction_nolimits',
-                          assembly_dset=None):
-        """
-        Extact the least cost distance between assembly areas and all available
-        port layers in excl_fpath. Save value to assembly areas DataFrame
-
-        Parameters
-        ----------
-        ports_dset : str, optional
-            Distance to ports layer/dataset name in excl_fpath, by default
-            'ports_construction_nolimits'
-        assembly_dset : str, optional
-            Dataset name to save assembly area table to in excl_fpath,
-            by default None
-
-        Returns
-        -------
-        assembly_areas : pandas.DataFrame
-            Updated assembly area DataFrame with distance to all ports
-        """
-        logger.info('Computing least cost distance between assembly areas and '
-                    '{}'.format(ports_dset))
-        self._get_dist_to_ports_dset(ports_dset)
-
-        if assembly_dset:
-            logger.info('Saving distance from ports to assembly areas as {} '
-                        'in {}'.format(assembly_dset, self._excl_fpath))
-            assembly_arr = to_records_array(self.assembly_areas)
-            with h5py.File(self._excl_fpath, mode='a') as f:
-                if assembly_dset in f:
-                    logger.warning('{} already exists and will be replaced!'
-                                   .format(assembly_dset))
-                    del f[assembly_dset]
-
-                f.create_dataset(assembly_dset,
-                                 shape=assembly_arr.shape,
-                                 dtype=assembly_arr.dtype,
-                                 data=assembly_arr)
-
-        return self.assembly_areas
-
-    @classmethod
-    def run(cls, assembly_areas, excl_fpath,
-            ports_dset='ports_construction_nolimits', assembly_dset=None):
-        """
-        Compute the distance from port to assembly areas using the
-        distance to port layers/arrays produced using DistanceToPorts. Save
-        to excl_fpath under given dataset name
-
-        Parameters
-        ----------
-        assembly_areas : str | pandas.DataFrame
-            DataFrame or path to csv or json containing assembly area
-            meta and locational data
-        excl_fpath : str
-            Path to exclusions .h5 file with distance to coast layer
-        ports_dset : str, optional
-            Distance to ports layer/dataset name in excl_fpath, by default
-            'ports_construction_nolimits'
-        assembly_dset : str, optional
-            Dataset name to save assembly area table to in excl_fpath,
-            by default None
-
-        Returns
-        -------
-        assembly_areas : pandas.DataFrame
-            Updated assembly area DataFrame with distance to all ports
-        """
-        logger.info('Computing least cost distance between assembly areas in '
-                    '{} to {} in {}'
-                    .format(assembly_areas, ports_dset, excl_fpath))
-        assembly = cls(assembly_areas, excl_fpath)
-        assembly.distance_to_ports(ports_dset=ports_dset,
-                                   assembly_dset=assembly_dset)
-
-        return assembly.assembly_areas

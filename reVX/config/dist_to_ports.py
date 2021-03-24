@@ -54,15 +54,6 @@ class DistToPortsConfig(AnalysisConfig):
         return self.get('output_dist_layer', None)
 
     @property
-    def max_workers(self):
-        """
-        Number of workers to use for setback computation, if 1 run in
-        serial, if > 1 run in parallel with that many workers, if None
-        run in parallel on all available cores
-        """
-        return self.get('max_workers', None)
-
-    @property
     def update_layer(self):
         """
         Flag to check for an existing distance to port layer and update it
