@@ -16,4 +16,5 @@ Submodules
    reVX.utilities.exclusions_converter
    reVX.utilities.forecasts
    reVX.utilities.output_extractor
-   reVX.utilities.region
+   reVX.utilities.region_classifier
+   reVX.utilities.utilities

@@ -42,8 +42,12 @@ reVX command line tools
 - `reV-rpm <https://nrel.github.io/reVX/reVX/reVX.rpm.rpm_cli.html#rev-rpm>`_
 - `reV-plexos <https://nrel.github.io/reVX/reVX/reVX.plexos.rev_reeds_plexos_cli.html#rev-plexos>`_
 - `plexos-plants <https://nrel.github.io/reVX/reVX/reVX.plexos.plexos_plants_cli.html#plexos-plants>`_
-- `wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.wind_dirs_cli.html#wind-dirs>`_
+- `mean-wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.mean_wind_dirs_cli.html#mean-wind-dirs>`_
+- `prominent-wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.prominent_wind_dirs_cli.html#prominent-wind-dirs>`_
 - `wind-setbacks <https://nrel.github.io/reVX/reVX/reVX.wind_setbacks.wind_setbacks_cli.html#wind-setbacks>`_
+- `offshore-assembly-areas <https://nrel.github.io/reVX/reVX/reVX.offshore.assembly_areas_cli.html#offshore-assembly-areas>`_
+- `offshore-dist-to-ports <https://nrel.github.io/reVX/reVX/reVX.offshore.dist_to_ports_cli.html#offshore-dist-to-ports>`_
+- `offshore-inputs <https://nrel.github.io/reVX/reVX/reVX.offshore.offshore_inputs_cli.html#offshore-inputs>`_
 
 Using Eagle Env
 ===============
