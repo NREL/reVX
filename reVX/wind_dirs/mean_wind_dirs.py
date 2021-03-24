@@ -19,7 +19,7 @@ class MeanWindDirections(Aggregation):
     def __init__(self, res_h5_fpath, excl_fpath, wdir_dsets,
                  tm_dset='techmap_wtk', excl_dict=None,
                  area_filter_kernel='queen', min_area=None,
-                 check_excl_layers=False, resolution=128, excl_area=None):
+                 resolution=128, excl_area=None):
         """
         Parameters
         ----------
@@ -41,9 +41,6 @@ class MeanWindDirections(Aggregation):
             by default 'queen'
         min_area : float | None, optional
             Minimum required contiguous area filter in sq-km, by default None
-        check_excl_layers : bool, optional
-            Run a pre-flight check on each exclusion layer to ensure they
-            contain un-excluded values, by default False
         resolution : int | None, optional
             SC resolution, must be input in combination with gid,
             by default 128
@@ -67,7 +64,6 @@ class MeanWindDirections(Aggregation):
                          excl_dict=excl_dict,
                          area_filter_kernel=area_filter_kernel,
                          min_area=min_area,
-                         check_excl_layers=check_excl_layers,
                          resolution=resolution, excl_area=excl_area)
 
     def aggregate(self, max_workers=None, sites_per_worker=1000):
@@ -98,7 +94,7 @@ class MeanWindDirections(Aggregation):
     def run(cls, res_h5_fpath, excl_fpath, wdir_dsets,
             tm_dset='techmap_wtk', excl_dict=None,
             area_filter_kernel='queen', min_area=None,
-            check_excl_layers=False, resolution=128, excl_area=None,
+            resolution=128, excl_area=None,
             max_workers=None, sites_per_worker=1000, out_fpath=None):
         """
         Aggregate powerrose to supply curve points, find neighboring supply
@@ -124,9 +120,6 @@ class MeanWindDirections(Aggregation):
             by default 'queen'
         min_area : float | None, optional
             Minimum required contiguous area filter in sq-km, by default None
-        check_excl_layers : bool, optional
-            Run a pre-flight check on each exclusion layer to ensure they
-            contain un-excluded values, by default False
         resolution : int | None, optional
             SC resolution, must be input in combination with gid,
             by default 128
@@ -152,7 +145,6 @@ class MeanWindDirections(Aggregation):
                    excl_dict=excl_dict,
                    area_filter_kernel=area_filter_kernel,
                    min_area=min_area,
-                   check_excl_layers=check_excl_layers,
                    resolution=resolution, excl_area=excl_area)
 
         agg = wdir.aggregate(max_workers=max_workers,

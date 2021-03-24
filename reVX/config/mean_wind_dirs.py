@@ -69,8 +69,3 @@ class MeanWindDirsConfig(AnalysisConfig):
     def min_area(self):
         """Get the minimum area filter minimum area in km2."""
         return self.get('min_area', None)
-
-    @property
-    def check_excl_layers(self):
-        """Get the check_excl_layers flag."""
-        return self.get('check_excl_layers', False)

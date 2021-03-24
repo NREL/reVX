@@ -146,6 +146,8 @@ def local(ctx, powerrose_h5_fpath, excl_fpath, out_dir, agg_dset, tm_dset,
     """
     Compute prominent wind directions on local hardware
     """
+    sites_per_worker = sites_per_worker if sites_per_worker else 1000
+
     ctx.obj['OUT_DIR'] = out_dir
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)

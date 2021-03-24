@@ -71,7 +71,6 @@ def run_local(ctx, config):
                excl_dict=config.excl_dict,
                resolution=config.resolution,
                excl_area=config.excl_area,
-               check_excl_layers=config.check_excl_layers,
                area_filter_kernel=config.area_filter_kernel,
                min_area=config.min_area,
                max_workers=config.execution_control.max_workers,
@@ -137,9 +136,6 @@ def from_config(ctx, config, verbose):
 @click.option('--excl_area', '-ea', default=None, type=float,
               show_default=True,
               help="Area of an exclusion cell (square km)")
-@click.option('--check_excl_layers', '-cel', is_flag=True,
-              help=('run a pre-flight check on each exclusion layer to '
-                    'ensure they contain un-excluded values'))
 @click.option('--area_filter_kernel', '-afk', type=STR, default='queen',
               help='Contiguous area filter kernel name ("queen", "rook").')
 @click.option('--min_area', '-ma', type=FLOAT, default=None,
@@ -159,12 +155,13 @@ def from_config(ctx, config, verbose):
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def local(ctx, res_h5_fpath, excl_fpath, wdir_dsets, out_dir, tm_dset,
-          excl_dict, resolution, excl_area, check_excl_layers,
-          area_filter_kernel, min_area, sites_per_worker, max_workers, log_dir,
-          verbose):
+          excl_dict, resolution, excl_area, area_filter_kernel, min_area,
+          sites_per_worker, max_workers, log_dir, verbose):
     """
     Compute mean wind directions on local hardware
     """
+    sites_per_worker = sites_per_worker if sites_per_worker else 1000
+
     ctx.obj['OUT_DIR'] = out_dir
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -189,11 +186,12 @@ def local(ctx, res_h5_fpath, excl_fpath, wdir_dsets, out_dir, tm_dset,
                 'Outputs to be stored in: {}'.format(out_dir))
 
     MeanWindDirections.run(res_h5_fpath, excl_fpath, wdir_dsets,
-                           tm_dset=tm_dset, excl_dict=excl_dict,
+                           tm_dset=tm_dset,
+                           excl_dict=excl_dict,
                            area_filter_kernel=area_filter_kernel,
                            min_area=min_area,
-                           check_excl_layers=check_excl_layers,
-                           resolution=resolution, excl_area=excl_area,
+                           resolution=resolution,
+                           excl_area=excl_area,
                            max_workers=max_workers,
                            sites_per_worker=sites_per_worker,
                            out_fpath=out_fpath)
@@ -224,7 +222,6 @@ def get_node_cmd(config):
             '-exd {}'.format(SLURM.s(config.excl_dict)),
             '-res {}'.format(SLURM.s(config.resolution)),
             '-ea {}'.format(SLURM.s(config.excl_area)),
-            '-cel {}'.format(SLURM.s(config.check_excl_layers)),
             '-afk {}'.format(SLURM.s(config.area_filter_kernel)),
             '-ma {}'.format(SLURM.s(config.min_area)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
