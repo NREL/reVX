@@ -170,6 +170,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
         """
 
         plant_sc_builds = {}
+        built_res_gids = []
 
         # March through plant meta data table in order provided
         for i, plant_row in self._plant_meta.iterrows():
@@ -184,59 +185,46 @@ class SimplePlantBuilder(BaseProfileAggregation):
                 sc_point = self._sc_table.loc[sc_loc].copy()
                 sc_capacity = sc_point['capacity']
 
-                # This sc point has already been built out by another plant
-                if sc_capacity == 0:
-                    pass
-
-                # Build the full sc point
-                elif sc_capacity <= plant_cap_to_build:
-                    sc_point['built_capacity'] = sc_point['capacity']
-                    single_plant_sc = single_plant_sc.append(sc_point)
-                    plant_cap_to_build -= sc_capacity
-                    gid_capacity = np.zeros(len(sc_point['gid_capacity']))
-                    gid_capacity = list(gid_capacity)
-                    self._sc_table.at[sc_loc, 'capacity'] = 0
-                    self._sc_table.at[sc_loc, 'gid_capacity'] = gid_capacity
-
-                # Build only part of the SC point
-                else:
+                # Buildout capacity in this sc point
+                if sc_capacity >= 0:
                     # Make arrays of gid capacities that will be built
-                    # for this plant and also saved for other plants.
-                    gids_orig = np.array(sc_point['gid_capacity'])
-                    gids_remain = gids_orig.copy()
-                    gids_build = np.zeros_like(gids_orig)
+                    # for this plant and also saved for subsequent plants.
+                    sc_point_res_gids = np.array(sc_point['res_gids'])
+                    cap_orig = np.array(sc_point['gid_capacity'])
+                    cap_remain = cap_orig.copy()
+                    cap_build = np.zeros_like(cap_orig)
 
                     # Build greatest available capacity first
-                    order = np.flip(np.argsort(gids_orig))
+                    order = np.flip(np.argsort(cap_orig))
 
                     for j in order:
-                        # add built capacity to the "to build" array
-                        # (on a resource point per supply curve point basis)
-                        # and remove from the "remaining" array
-                        built = np.minimum(plant_cap_to_build, gids_orig[j])
-                        gids_build[j] += built
-                        gids_remain[j] -= built
-                        plant_cap_to_build -= built
-
-                        # if specified to not share resource, set remaining
-                        # capacity for this resource gid to zero
-                        if not self._share_res:
-                            gids_remain[j] = 0
+                        res_gid = sc_point_res_gids[j]
+                        if self._share_res or res_gid not in built_res_gids:
+                            # add built capacity to the "to build" array
+                            # (on a resource point per sc point basis)
+                            # and remove from the "remaining" array
+                            built = np.minimum(plant_cap_to_build, cap_orig[j])
+                            cap_build[j] += built
+                            cap_remain[j] -= built
+                            plant_cap_to_build -= built
+                            built_res_gids.append(res_gid)
 
                         # buildout for this plant is fully complete
                         if plant_cap_to_build <= 0:
                             break
 
-                    gids_build = gids_build.tolist()
-                    gids_orig = gids_orig.tolist()
+                    if cap_build.sum() > 0:
+                        # Capacity was built in this SC point
+                        cap_build = cap_build.tolist()
+                        cap_orig = cap_orig.tolist()
 
-                    sc_point['capacity'] = np.sum(gids_build)
-                    sc_point['built_capacity'] = np.sum(gids_build)
-                    sc_point['gid_capacity'] = gids_build
-                    single_plant_sc = single_plant_sc.append(sc_point)
+                        sc_point['capacity'] = sum(cap_build)
+                        sc_point['built_capacity'] = sum(cap_build)
+                        sc_point['gid_capacity'] = cap_build
+                        single_plant_sc = single_plant_sc.append(sc_point)
 
-                    self._sc_table.at[sc_loc, 'capacity'] -= np.sum(gids_build)
-                    self._sc_table.at[sc_loc, 'gid_capacity'] = gids_remain
+                        self._sc_table.at[sc_loc, 'capacity'] -= sum(cap_build)
+                        self._sc_table.at[sc_loc, 'gid_capacity'] = cap_remain
 
                 # buildout for this plant is fully complete
                 if plant_cap_to_build <= 0:

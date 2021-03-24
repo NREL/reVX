@@ -14,7 +14,6 @@ from scipy.spatial import cKDTree
 
 from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import DataCleaner, get_coord_labels
-from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +56,6 @@ class PlexosNode:
             meta indices where n is the number of generation points. None if no
             forecast data being considered, by default None
         """
-        log_versions(logger)
         self._sc_build = \
             DataCleaner.rename_cols(sc_build,
                                     name_map=DataCleaner.REV_NAME_MAP)
@@ -271,6 +269,12 @@ class PlexosNode:
                    'curve gid {}. {:.4e} MW of capacity remain to be built '
                    'out of {:.4f} MW requested.'
                    .format(sc_gid, buildout, full_buildout))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        if profile is None:
+            msg = ('PlexosNode object could not build profile for '
+                   'sc buildout: {}'.format(self._sc_build))
             logger.error(msg)
             raise RuntimeError(msg)
 
