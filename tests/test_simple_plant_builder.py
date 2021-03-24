@@ -79,6 +79,36 @@ def test_res_gid_overlap():
     sc_point = pb._sc_table[(pb._sc_table['sc_gid'] == p1_sc_gid[0])]
     point_res_gids = sc_point['res_gids'].values[0]
     assert p1_res_gid[0] in point_res_gids
+    assert p2_res_gid[0] in point_res_gids
+
+
+def test_res_gid_overlap_noshare():
+    """Test that two plants will NOT buildout at the same resource pixel
+    when share_resource is False"""
+    power_scalar = 0.00001
+    plant_meta = PLANT_META.copy()
+    plant_meta['capacity'] *= power_scalar
+
+    pb = SimplePlantBuilder(plant_meta, REV_SC, CF_FPATH)
+    meta, _, _ = SimplePlantBuilder.run(plant_meta, REV_SC, CF_FPATH,
+                                        share_resource=False, max_workers=1)
+
+    p1_res_gid = meta.loc[0, 'res_gids']
+    p2_res_gid = meta.loc[1, 'res_gids']
+    p1_sc_gid = meta.loc[0, 'sc_gids']
+    p2_sc_gid = meta.loc[1, 'sc_gids']
+    p1_cap = meta.loc[0, 'res_built']
+    p2_cap = meta.loc[1, 'res_built']
+
+    assert p1_res_gid != p2_res_gid
+    assert p1_sc_gid == p2_sc_gid
+    assert p1_cap == p2_cap
+    assert len(p1_sc_gid) == 1
+
+    sc_point = pb._sc_table[(pb._sc_table['sc_gid'] == p1_sc_gid[0])]
+    point_res_gids = sc_point['res_gids'].values[0]
+    assert p1_res_gid[0] in point_res_gids
+    assert p2_res_gid[0] in point_res_gids
 
 
 def test_sc_point_overlap():
