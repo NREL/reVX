@@ -140,10 +140,10 @@ def test_sc_point_overlap():
 
     assert len(p1_sc_gid) == 1
     assert p1_sc_gid == p2_sc_gid
-    assert any([gid in p2_res_gid for gid in p1_res_gid])
+    assert any(gid in p2_res_gid for gid in p1_res_gid)
 
-    assert all([gid in point_res_gids for gid in p1_res_gid])
-    assert all([gid in point_res_gids for gid in p2_res_gid])
+    assert all(gid in point_res_gids for gid in p1_res_gid)
+    assert all(gid in point_res_gids for gid in p2_res_gid)
     assert sum(p1_cap) + sum(p2_cap) < float(sc_point_raw['capacity'])
     assert sum(p1_cap) + sum(p2_cap) > (0.9 * float(sc_point_raw['capacity']))
 
