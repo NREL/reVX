@@ -255,7 +255,12 @@ class SimplePlantBuilder(BaseProfileAggregation):
         for i, single_plant_sc in plant_sc_builds.items():
             sc_res_gids = single_plant_sc['res_gids'].values.tolist()
             sc_res_gids = [g for subset in sc_res_gids for g in subset]
-            missing = [gid for gid in sc_res_gids
+            gid_caps = single_plant_sc['gid_capacity'].values.tolist()
+            gid_caps = [g for subset in gid_caps for g in subset]
+            assert len(gid_caps) == len(sc_res_gids)
+            plant_built_res_gids = [gid for j, gid in enumerate(sc_res_gids)
+                                    if gid_caps[j] > 0]
+            missing = [gid for gid in plant_built_res_gids
                        if gid not in self.available_res_gids]
             if any(missing):
                 msg = ('Plant index {} was mapped to resource gids that are '
@@ -263,23 +268,15 @@ class SimplePlantBuilder(BaseProfileAggregation):
                 logger.error(msg)
                 raise RuntimeError(msg)
 
-            gid_caps = single_plant_sc['gid_capacity'].values.tolist()
-            gid_caps = [g for subset in gid_caps for g in subset]
-            assert len(gid_caps) == len(sc_res_gids)
-
-            plant_res_gids = [gid for i, gid in enumerate(sc_res_gids)
-                              if gid_caps[i] > 0]
-
-            shared = [gid for gid in plant_res_gids
+            shared = [gid for gid in plant_built_res_gids
                       if gid in global_built_res_gids]
-
             if any(shared) and not self._share_res:
                 msg = ('SimplePlantBuilder shared resource gids when it '
                        'should not have: {}'.format(shared))
                 logger.error(msg)
                 raise RuntimeError(msg)
             else:
-                global_built_res_gids += plant_res_gids
+                global_built_res_gids += plant_built_res_gids
 
     def make_profiles(self, plant_sc_builds):
         """Make a 2D array of aggregated plant gen profiles.
