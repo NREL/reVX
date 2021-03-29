@@ -10,9 +10,9 @@ import pandas as pd
 from sklearn.metrics.pairwise import haversine_distances
 from warnings import warn
 
-from rex.rechunk_h5 import to_records_array
 from rex.resource import Resource
 from rex.utilities import parse_table, SpawnProcessPool
+from rex.utilities.utilities import to_records_array
 
 from reVX.handlers.outputs import Outputs
 from reVX.handlers.sc_points import SupplyCurvePoints

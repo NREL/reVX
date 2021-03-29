@@ -14,9 +14,8 @@ from scipy.spatial import cKDTree
 from geopandas import GeoDataFrame
 from warnings import warn
 
-from rex.rechunk_h5 import to_records_array
 from rex.utilities.execution import SpawnProcessPool
-from rex.utilities.utilities import parse_table
+from rex.utilities.utilities import parse_table, to_records_array
 
 from reVX.utilities.region_classifier import RegionClassifier
 from reVX.handlers.outputs import Outputs
