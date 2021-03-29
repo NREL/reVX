@@ -365,7 +365,7 @@ class PlexosAggregation(BaseProfileAggregation):
                 gid_col = list(gid_col)
 
             for i, sc_gids in enumerate(gid_col):
-                if any([m in sc_gids for m in missing]):
+                if any(m in sc_gids for m in missing):
                     bad_sc_points.append(self.sc_build.iloc[i]['sc_gid'])
 
             wmsg = ('There are {} SC points with missing gids: {}'
