@@ -10,6 +10,7 @@ import os
 import pandas as pd
 from scipy.spatial import cKDTree
 from skimage.graph import MCP_Geometric
+from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.utilities.exclusions_converter import ExclusionsConverter
@@ -132,6 +133,30 @@ class DistanceToPorts:
 
         return lat_lon.reset_index(drop=True), profile, mask
 
+    @staticmethod
+    def _check_ports_coords(port_coords, lat_lon):
+        lat_min, lat_max = np.sort(lat_lon[:, 0])[[0, -1]]
+        lon_min, lon_max = np.sort(lat_lon[:, 1])[[0, -1]]
+
+        lat = port_coords[:, 0]
+        check = lat < lat_min
+        check |= lat > lat_max
+
+        lon = port_coords[:, 1]
+        check |= lon < lon_min
+        check |= lon > lon_max
+
+        if any(check):
+            bad_coords = port_coords[check]
+            msg = ("Ports with coordinates ({}) are outsides of the "
+                   "resource domain: (({}, {}), ({}, {})) and will not be used"
+                   " to to compute the least cost distance!"
+                   .format(bad_coords, lat_min, lon_min, lat_max, lon_max))
+            logger.warning(msg)
+            warn(msg)
+
+        return ~check
+
     @classmethod
     def _parse_ports(cls, ports, excl_fpath, input_dist_layer='dist_to_coast'):
         """
@@ -167,10 +192,15 @@ class DistanceToPorts:
             cls._parse_lat_lons(excl_fpath, input_dist_layer=input_dist_layer)
         lat_lon_cols = get_lat_lon_cols(offshore_lat_lon)
         pixel_coords = offshore_lat_lon[lat_lon_cols].values
+
         tree = cKDTree(pixel_coords)  # pylint: disable=not-callable
 
         lat_lon_cols = get_lat_lon_cols(ports)
-        port_coords = ports[lat_lon_cols].values
+        port_coords = ports[lat_lon_cols].values.astype('float32')
+        # remove ports that are outside pixel bounds
+        p_mask = cls._check_ports_coords(port_coords, pixel_coords)
+        port_coords = port_coords[p_mask]
+        ports = ports.loc[p_mask]
         _, idx = tree.query(port_coords)
 
         pixels = offshore_lat_lon.iloc[idx]
@@ -199,8 +229,8 @@ class DistanceToPorts:
         Returns
         -------
         arr : ndarray
-            Cost array with offshore pixels set to 90 (pixel width) and on
-            shore pixels set to 9999.
+            Cost array with offshore pixels set to 90 (pixel width) and
+            onshore pixels set to 9999.
         """
         hsds = check_res_file(excl_fpath)[1]
         with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
