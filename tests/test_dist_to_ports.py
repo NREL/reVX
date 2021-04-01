@@ -15,10 +15,12 @@ import traceback
 
 from rex.resource import Resource
 from rex.utilities.loggers import LOGGERS
+from rex.utilities.utilities import get_lat_lon_cols
 from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.offshore.dist_to_ports import DistanceToPorts
 from reVX.offshore.dist_to_ports_cli import main
+from reVX.utilities.utilities import coordinate_distance
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'offshore', 'offshore.h5')
 PORTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'ports',
@@ -54,8 +56,65 @@ def runner():
     return CliRunner()
 
 
+def test_dist_to_port():
+    """
+    Compare distance to points versus haversine distance
+    """
+    dtp = DistanceToPorts(PORTS_FPATH, EXCL_H5)
+    test = dtp.least_cost_distance(max_workers=1).ravel()
+    mask = test != -1
+
+    cols = get_lat_lon_cols(dtp.ports)
+    ports_coords = dtp.ports[cols].values
+
+    with ExclusionLayers(EXCL_H5) as f:
+        lat = f.latitude
+        lon = f.longitude
+
+    pixel_coords = np.dstack((lat.ravel(), lon.ravel()))[0]
+
+    for p in ports_coords:
+        p = np.expand_dims(p, 0)
+        dist_to_ports = coordinate_distance(p, pixel_coords)
+        msg = 'Least cost distance to port is less than haversine distance!'
+        check = test[mask] > dist_to_ports[mask]
+        assert np.all(check), msg
+
+
+def test_dist_to_ports():
+    """
+    Compare distance to points versus haversine distance
+    """
+    dtp = DistanceToPorts(PORTS_FPATH, EXCL_H5)
+    test = dtp.least_cost_distance(max_workers=1).ravel()
+
+    cols = get_lat_lon_cols(dtp.ports)
+    ports_coords = dtp.ports[cols].values
+
+    with ExclusionLayers(EXCL_H5) as f:
+        lat = f.latitude
+        lon = f.longitude
+
+    pixel_coords = np.dstack((lat.ravel(), lon.ravel()))[0]
+
+    dist_to_ports = np.full((len(pixel_coords), ), np.finfo('float32').max,
+                            dtype='float32')
+    for p in ports_coords:
+        p = np.expand_dims(p, 0)
+        dist_to_ports = np.minimum(dist_to_ports,
+                                   coordinate_distance(p, pixel_coords))
+
+    mask = test != -1
+    msg = 'Least cost distance to ports is less than haversine distance!'
+    check = test[mask] > dist_to_ports[mask]
+    print(np.min(test[mask][~check] - dist_to_ports[mask][~check]))
+    print(ports_coords, pixel_coords[mask][~check])
+    check = np.allclose(test[mask][~check], dist_to_ports[mask][~check])
+    assert check, msg
+
+
 @pytest.mark.parametrize('max_workers', [None, 1])
-def test_dist_to_ports(max_workers):
+def test_baseline(max_workers):
     """
     Compute distance to ports
     """
