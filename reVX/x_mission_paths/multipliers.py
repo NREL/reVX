@@ -17,8 +17,8 @@ NLCD_LAND_USE_CLASSES = {
 
 DEFAULT_HILL_MULT = 1
 DEFAULT_MTN_MULT = 1
-DEFAULT_HILL_SLOPE = 50
-DEFAULT_MTN_SLOPE = 100
+DEFAULT_HILL_SLOPE = 2
+DEFAULT_MTN_SLOPE = 8
 
 
 class CostMultiplier:
@@ -86,7 +86,7 @@ class CostMultiplier:
         hilly = (arr >= hill_slope) & (arr < mtn_slope)
         mountainous = arr >= mtn_slope
 
-        mult_raster = np.ones(arr.shape)
+        mult_raster = np.ones(arr.shape, dtype=np.float32)
         mult_raster[hilly] = hill_mult
         mult_raster[mountainous] = mtn_mult
 
@@ -109,7 +109,7 @@ class CostMultiplier:
         numpy.ndarray
             Multiplier raster. Minimum value for any cell is 1.
         """
-        mult_raster = np.ones(arr.shape)
+        mult_raster = np.ones(arr.shape, dtype=np.float32)
 
         indices = []  # [(index0, multiplier0, _class_value0), ...]
         for _class, multiplier in multipliers.items():
@@ -169,7 +169,7 @@ class CostMultiplier:
         assert iso_regions.shape == land_use.shape == slope.shape, \
             'All arrays must be the same shape'
 
-        mults_arr = np.ones(iso_regions.shape)
+        mults_arr = np.ones(iso_regions.shape, dtype=np.float32)
         regions_mask = np.full(mults_arr.shape, False, dtype=bool)
 
         for r_conf in iso_config:
