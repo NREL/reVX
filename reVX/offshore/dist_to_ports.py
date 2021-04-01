@@ -196,11 +196,11 @@ class DistanceToPorts:
         tree = cKDTree(pixel_coords)  # pylint: disable=not-callable
 
         lat_lon_cols = get_lat_lon_cols(ports)
-        port_coords = ports[lat_lon_cols].values
+        port_coords = ports[lat_lon_cols].values.astype('float32')
         # remove ports that are outside pixel bounds
-        mask = cls._check_ports_coords(port_coords, pixel_coords)
-        port_coords = port_coords[mask]
-        ports = ports.loc[mask]
+        p_mask = cls._check_ports_coords(port_coords, pixel_coords)
+        port_coords = port_coords[p_mask]
+        ports = ports.loc[p_mask]
         _, idx = tree.query(port_coords)
 
         pixels = offshore_lat_lon.iloc[idx]
@@ -229,8 +229,8 @@ class DistanceToPorts:
         Returns
         -------
         arr : ndarray
-            Cost array with offshore pixels set to 90 (pixel width) and on
-            shore pixels set to 9999.
+            Cost array with offshore pixels set to 90 (pixel width) and
+            onshore pixels set to 9999.
         """
         hsds = check_res_file(excl_fpath)[1]
         with ExclusionLayers(excl_fpath, hsds=hsds) as tif:

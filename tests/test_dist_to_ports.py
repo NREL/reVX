@@ -56,16 +56,12 @@ def runner():
     return CliRunner()
 
 
-def test_dist_to_port():
+def test_haversine_versus_dist_to_port():
     """
     Compare distance to points versus haversine distance
     """
     dtp = DistanceToPorts(PORTS_FPATH, EXCL_H5)
-    test = dtp.least_cost_distance(max_workers=1).ravel()
-    mask = test != -1
-
     cols = get_lat_lon_cols(dtp.ports)
-    ports_coords = dtp.ports[cols].values
 
     with ExclusionLayers(EXCL_H5) as f:
         lat = f.latitude
@@ -73,48 +69,31 @@ def test_dist_to_port():
 
     pixel_coords = np.dstack((lat.ravel(), lon.ravel()))[0]
 
-    for p in ports_coords:
-        p = np.expand_dims(p, 0)
-        dist_to_ports = coordinate_distance(p, pixel_coords)
-        msg = 'Least cost distance to port is less than haversine distance!'
-        check = test[mask] > dist_to_ports[mask]
-        assert np.all(check), msg
+    hav_dist = np.full(lat.shape, np.finfo('float32').max, dtype='float32')
+    for i, port in dtp.ports.iterrows():
+        port_idx = port[['row', 'col']].values
+        port_dist = port['dist_to_pixel']
+        port_coords = np.expand_dims(port[cols].values, 0).astype('float32')
+        h_dist = \
+            coordinate_distance(port_coords, pixel_coords).reshape(lat.shape)
+        l_dist = dtp._lc_dist_to_port(EXCL_H5, port_idx, port_dist)
 
+        err = (l_dist - h_dist) / h_dist
+        msg = ("Haversine distance is greater than least cost distance for "
+               "port {}!".format(i))
+        assert np.all(err > -0.05), msg
 
-def test_dist_to_ports():
-    """
-    Compare distance to points versus haversine distance
-    """
-    dtp = DistanceToPorts(PORTS_FPATH, EXCL_H5)
-    test = dtp.least_cost_distance(max_workers=1).ravel()
+        hav_dist = np.minimum(hav_dist, h_dist)
 
-    cols = get_lat_lon_cols(dtp.ports)
-    ports_coords = dtp.ports[cols].values
-
-    with ExclusionLayers(EXCL_H5) as f:
-        lat = f.latitude
-        lon = f.longitude
-
-    pixel_coords = np.dstack((lat.ravel(), lon.ravel()))[0]
-
-    dist_to_ports = np.full((len(pixel_coords), ), np.finfo('float32').max,
-                            dtype='float32')
-    for p in ports_coords:
-        p = np.expand_dims(p, 0)
-        dist_to_ports = np.minimum(dist_to_ports,
-                                   coordinate_distance(p, pixel_coords))
-
+    test = dtp.least_cost_distance(max_workers=1)
     mask = test != -1
-    msg = 'Least cost distance to ports is less than haversine distance!'
-    check = test[mask] > dist_to_ports[mask]
-    print(np.min(test[mask][~check] - dist_to_ports[mask][~check]))
-    print(ports_coords, pixel_coords[mask][~check])
-    check = np.allclose(test[mask][~check], dist_to_ports[mask][~check])
-    assert check, msg
+    err = (test[mask] - hav_dist[mask]) / hav_dist[mask]
+    msg = "Haversine distance is greater than distance to closest port!"
+    assert np.all(err > -0.05), msg
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
-def test_baseline(max_workers):
+def test_dist_to_ports(max_workers):
     """
     Compute distance to ports
     """
@@ -173,6 +152,59 @@ def test_cli(runner, ports_layer):
         assert_frame_equal(truth, test, check_dtype=False)
 
     LOGGERS.clear()
+
+
+def plot():
+    """
+    Plot least cost distance vs haversine distance
+    """
+    import matplotlib.pyplot as plt
+
+    dtp = DistanceToPorts(PORTS_FPATH, EXCL_H5)
+    test = dtp.least_cost_distance(max_workers=1)
+    mask = test != -1
+
+    cols = get_lat_lon_cols(dtp.ports)
+
+    with ExclusionLayers(EXCL_H5) as f:
+        lat = f.latitude
+        lon = f.longitude
+
+    pixel_coords = np.dstack((lat.ravel(), lon.ravel()))[0]
+
+    for _, port in dtp.ports.iterrows():
+        port_idx = port[['row', 'col']].values
+        port_dist = port['dist_to_pixel']
+        port_coords = np.expand_dims(port[cols].values, 0).astype('float32')
+        h_dist = \
+            coordinate_distance(port_coords, pixel_coords).reshape(lat.shape)
+        l_dist = dtp._lc_dist_to_port(EXCL_H5, port_idx, port_dist)
+
+        print(port)
+        plt.imshow(mask)
+        plt.plot(port_idx[1], port_idx[0], 'ro')
+        plt.colorbar()
+        plt.show()
+
+        vmax = l_dist[mask].max()
+        plt.imshow(l_dist, vmin=0, vmax=vmax, cmap='viridis')
+        plt.plot(port_idx[1], port_idx[0], 'ko')
+        plt.colorbar()
+        plt.show()
+
+        diff = l_dist - h_dist
+        plt.imshow(diff, vmin=np.min(diff), vmax=0.09)
+        plt.plot(port_idx[1], port_idx[0], 'ro')
+        plt.colorbar()
+        plt.show()
+
+        err = diff / h_dist
+        vmax = err[mask].max()
+        vmax = 0
+        plt.imshow(err, vmin=-0.05, vmax=vmax, cmap='rainbow')
+        plt.plot(port_idx[1], port_idx[0], 'ko')
+        plt.colorbar()
+        plt.show()
 
 
 def execute_pytest(capture='all', flags='-rapP'):
