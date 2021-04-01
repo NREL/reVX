@@ -123,8 +123,11 @@ class PlexosNode:
                                 'gid_count': gid_counts,
                                 'gid_capacity': gid_capacity})
         sc_meta = sc_meta.sort_values(by='gen_gid')
+        sc_meta = sc_meta[(sc_meta.gid_capacity > 0)]
 
         with Outputs(self._cf_fpath, mode='r') as cf_outs:
+            gen_gids = list(sc_meta['gen_gid'].values)
+            gen_gids = [a for b in gen_gids for a in b]
             cf_mean = cf_outs['cf_mean', list(sc_meta['gen_gid'].values)]
 
         sc_meta['cf_mean'] = cf_mean
