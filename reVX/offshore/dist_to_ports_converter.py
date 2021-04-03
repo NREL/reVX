@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Convert setback geotiff to .h5 exclusion layers
+Convert dist_to_ports geotiff to .h5 exclusion layers
 """
 import logging
 import numpy as np
 import os
 from warnings import warn
+
+from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.handlers.geotiff import Geotiff
 from reVX.handlers.outputs import Outputs
@@ -14,49 +16,51 @@ from reVX.utilities.exclusions_converter import ExclusionsConverter
 logger = logging.getLogger(__name__)
 
 
-class SetbacksConverter(ExclusionsConverter):
+class DistToPortsConverter(ExclusionsConverter):
     """
-    Convert setbacks goetiff(s) to excl .h5 layers
+    Convert Distance to Ports goetiff(s) to excl .h5 layers
     """
     @classmethod
-    def _parse_setbacks(cls, setbacks, chunks=(128, 128)):
+    def _parse_dist_to_ports(cls, dist_to_ports, chunks=(128, 128)):
         """
-        Load setbacks, combine multiple setbacks by state if needed
+        Load dist_to_ports, combine multiple dist_to_ports by state if needed
 
         Parameters
         ----------
-        setbacks : list
-            List of paths to setback geotiffs to load and combine
+        dist_to_ports : list
+            List of paths to dist_to_ports geotiffs to load and combine
         chunks : tuple, optional
             Chunk size of exclusions in Geotiff, by default (128, 128)
 
         Returns
         -------
         values : ndarray
-            Setbacks exclusion array
+            dist_to_ports exclusion array
         """
         values = None
-        for geotiff in setbacks:
+        for geotiff in dist_to_ports:
             v = cls._parse_tiff(geotiff, chunks=chunks, check_tiff=False)[1]
             if values is None:
                 values = v
             else:
-                values = np.maximum(values, v)
+                values = np.minimum(values, v)
 
         return values
 
-    def setbacks_to_layer(self, layer, setbacks, check_tiff=True,
-                          transform_atol=0.01, coord_atol=0.001,
-                          description=None, scale_factor=None, dtype='uint8'):
+    def dist_to_ports_to_layer(self, layer, dist_to_ports, check_tiff=True,
+                               transform_atol=0.01, coord_atol=0.001,
+                               description=None, scale_factor=None,
+                               dtype='float32'):
         """
         Transfer geotiff exclusions to h5 confirming they match existing layers
 
         Parameters
         ----------
         layer : str
-            Layer to extract
-        geotiff : str
-            Path to geotiff file
+            Layer to create
+        dist_to_ports : str
+            Path to directory containing distance to port geotiff files or
+            a list of the distance to port geotiff filepaths
         check_tiff : bool, optional
             Flag to check tiff profile and coordinates against exclusion .h5
             profile and coordinates, by default True
@@ -73,46 +77,46 @@ class SetbacksConverter(ExclusionsConverter):
             file, by default None
         dtype : str, optional
             Dtype to save geotiff data as in the .h5 file. Only used when
-            'scale_factor' is not None, by default 'uint8'
+            'scale_factor' is not None, by default 'float32'
         """
-        if os.path.isdir(setbacks):
-            setbacks = [os.path.join(setbacks, file)
-                        for file in os.listdir(setbacks)
-                        if file.endswith('.tif')]
+        if os.path.isdir(dist_to_ports):
+            dist_to_ports = [os.path.join(dist_to_ports, file)
+                             for file in os.listdir(dist_to_ports)
+                             if file.endswith('.tif')]
         else:
-            setbacks = [setbacks]
+            dist_to_ports = [dist_to_ports]
 
-        logger.debug('\t- Combining setbacks in {}'.format(setbacks))
+        logger.debug('\t- Computing minimum distance to ports from {}'
+                     .format(dist_to_ports))
 
         if not os.path.exists(self._excl_h5):
-            self._init_h5(self._excl_h5, setbacks[0], chunks=self._chunks)
-
-        msg = ("{} is already present in {}".format(layer, self._excl_h5))
-        if layer in self.layers:
-            if self._replace:
-                msg += " and will be replaced"
-                logger.warning(msg)
-                warn(msg)
-            else:
-                msg += ", to 'replace' set to True"
-                logger.error(msg)
-                raise KeyError(msg)
+            self._init_h5(self._excl_h5, dist_to_ports[0],
+                          chunks=self._chunks)
 
         if check_tiff:
-            self._check_geotiff(self._excl_h5, setbacks[0],
+            self._check_geotiff(self._excl_h5, dist_to_ports[0],
                                 chunks=self._chunks,
                                 transform_atol=transform_atol,
                                 coord_atol=coord_atol)
 
-        with Geotiff(setbacks[0], chunks=self._chunks) as tif:
+        with Geotiff(dist_to_ports[0], chunks=self._chunks) as tif:
             profile = tif.profile
 
-        setbacks = self._parse_setbacks(setbacks, chunks=self._chunks)
-        if scale_factor is not None:
-            setbacks = Outputs._check_data_dtype(setbacks, dtype,
-                                                 scale_factor=scale_factor)
+        dist_to_ports = self._parse_dist_to_ports(dist_to_ports,
+                                                  chunks=self._chunks)
+        if layer in self.layers:
+            msg = ("{} is already present in {} and will be updated"
+                   .format(layer, self._excl_h5))
+            logger.warning(msg)
+            warn(msg)
+            with ExclusionLayers(self._excl_h5) as exc:
+                dist_to_ports = np.minimum(dist_to_ports, exc[layer])
 
-        self._write_layer(self._excl_h5, layer, profile, setbacks,
+        if scale_factor is not None:
+            dist_to_ports = Outputs._check_data_dtype(
+                dist_to_ports, dtype, scale_factor=scale_factor)
+
+        self._write_layer(self._excl_h5, layer, profile, dist_to_ports,
                           chunks=self._chunks, description=description,
                           scale_factor=scale_factor)
 
@@ -123,7 +127,7 @@ class SetbacksConverter(ExclusionsConverter):
                      descriptions=None, scale_factors=None):
         """
         Create exclusions .h5 file, or load layers into existing exclusion .h5
-        file from provided setbacks
+        file from provided dist_to_ports
 
         Parameters
         ----------
@@ -150,19 +154,19 @@ class SetbacksConverter(ExclusionsConverter):
             Scale factors and dtypes to use when scaling given layers,
             by default None
         """
-        if isinstance(layers, list):
-            layers = {os.path.basename(lyr).split('.')[0]: lyr
-                      for lyr in layers}
-
         if scale_factors is None:
             scale_factors = {}
 
         if descriptions is None:
             descriptions = {}
 
+        if isinstance(layers, list):
+            layers = {os.path.basename(lyr).split('.')[0]: lyr
+                      for lyr in layers}
+
         excls = cls(excl_h5, chunks=chunks, replace=replace)
         logger.info('Creating {}'.format(excl_h5))
-        for layer, setbacks in layers.items():
+        for layer, dist_to_ports in layers.items():
             logger.info('- Transfering {}'.format(layer))
             scale = scale_factors.get(layer, None)
             if scale is not None:
@@ -174,9 +178,10 @@ class SetbacksConverter(ExclusionsConverter):
 
             description = descriptions.get(layer, None)
 
-            excls.setbacks_to_layer(layer, setbacks, check_tiff=check_tiff,
-                                    transform_atol=transform_atol,
-                                    coord_atol=coord_atol,
-                                    description=description,
-                                    scale_factor=scale_factor,
-                                    dtype=dtype)
+            excls.dist_to_ports_to_layer(layer, dist_to_ports,
+                                         check_tiff=check_tiff,
+                                         transform_atol=transform_atol,
+                                         coord_atol=coord_atol,
+                                         description=description,
+                                         scale_factor=scale_factor,
+                                         dtype=dtype)
