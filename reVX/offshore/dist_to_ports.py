@@ -48,7 +48,6 @@ class DistanceToPorts:
         log_versions(logger)
         self._excl_fpath = excl_fpath
         self._input_dist_layer = input_dist_layer
-        log_mem(logger)
         self._ports_fpath = ports
         self._ports = self._parse_ports(
             ports, excl_fpath, input_dist_layer=input_dist_layer)
