@@ -69,35 +69,6 @@ class DistanceToPorts:
         """
         return self._ports
 
-    @staticmethod
-    def _build_lat_lon(lat, lon):
-        """
-        Build lat_lon table from distance to coast latitudes and longitudes
-        table contains mapping of (lat, lon) to array (row, col) and whether
-        the pixel is offshore or not
-
-        Parameters
-        ----------
-        lat : ndarray
-            2d latitude array for distance to coast layer
-        lon : ndarray
-            2d longitude array for distance to coast layer
-
-        Returns
-        -------
-        lat_lon : pandas.DataFrame
-            Mapping of (lat, lon) to array (row, col) and whether the exclusion
-            pixel is offshore or not
-        """
-        rows, cols = row_col_indices(np.arange(lat.size, dtype=np.uint32),
-                                     lat.shape[1])
-        lat_lon = pd.DataFrame({'latitude': lat.ravel(),
-                                'longitude': lon.ravel(),
-                                'row': rows,
-                                'col': cols})
-
-        return lat_lon
-
     @classmethod
     def _parse_lat_lons(cls, excl_fpath, input_dist_layer='dist_to_coast'):
         """
@@ -123,9 +94,22 @@ class DistanceToPorts:
             lat = tif['latitude'].astype(np.float32)
             lon = tif['longitude'].astype(np.float32)
 
-        lat_lon = cls._build_lat_lon(lat, lon).loc[mask.ravel()]
+        mask = mask.ravel()
+        ids = np.arange(lat.size, dtype=np.uint32)[mask]
+        row_len = lat.shape[1]
+        lat = lat.ravel()[mask]
+        lon = lon.ravel()[mask]
 
-        return lat_lon.reset_index(drop=True)
+        rows, cols = row_col_indices(ids, row_len)
+        del ids
+        del row_len
+
+        lat_lon = pd.DataFrame({'latitude': lat,
+                                'longitude': lon,
+                                'row': rows,
+                                'col': cols})
+
+        return lat_lon
 
     @staticmethod
     def _check_ports_coords(port_coords, lat_lon):
@@ -250,10 +234,10 @@ class DistanceToPorts:
         else:
             ports = parse_table(ports)
 
-        offshore_lat_lon = cls._parse_lat_lons(
-            excl_fpath, input_dist_layer=input_dist_layer)
-        lat_lon_cols = get_lat_lon_cols(offshore_lat_lon)
-        pixel_coords = offshore_lat_lon[lat_lon_cols].values
+        pixels = cls._parse_lat_lons(excl_fpath,
+                                     input_dist_layer=input_dist_layer)
+        lat_lon_cols = get_lat_lon_cols(pixels)
+        pixel_coords = pixels[lat_lon_cols].values
 
         tree = cKDTree(pixel_coords)  # pylint: disable=not-callable
 
@@ -265,12 +249,12 @@ class DistanceToPorts:
         ports = ports.loc[mask]
         _, idx = tree.query(port_coords)
 
-        pixels = offshore_lat_lon.iloc[idx]
+        pixels = pixels.iloc[idx]
+        pixel_coords = pixel_coords[idx]
 
         ports['row'] = pixels['row'].values
         ports['col'] = pixels['col'].values
-        ports['dist_to_pixel'] = coordinate_distance(port_coords,
-                                                     pixel_coords[idx])
+        ports['dist_to_pixel'] = coordinate_distance(port_coords, pixel_coords)
 
         ports = cls._create_port_names(ports)
 
