@@ -108,7 +108,7 @@ def from_config(ctx, config, verbose):
 @click.option('--excl_fpath', '-excl', required=True,
               type=click.Path(exists=True),
               help="Filepath to exclusions h5 with techmap dataset.")
-@click.option('--out_dir', '-o', required=True, type=click.Path(exists=True),
+@click.option('--out_dir', '-o', required=True, type=click.Path(),
               help='Directory to save distance to port geotiffs too.')
 @click.option('--input_dist_layer', '-idl', default='dist_to_coast',
               show_default=True,
