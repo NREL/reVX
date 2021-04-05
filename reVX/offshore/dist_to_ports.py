@@ -129,6 +129,22 @@ class DistanceToPorts:
 
     @staticmethod
     def _check_ports_coords(port_coords, lat_lon):
+        """
+        Check port coordinates to make sure they are within the resource domain
+
+        Parameters
+        ----------
+        port_coords : ndarray
+            nx2 array of (lat, lon) port coordinates
+        lat_lon : ndarray
+            nx2 array of (lat, lon) offshore coordinates
+
+        Returns
+        -------
+        check : ndarray
+            Boolean array indicating which ports are outside (True) the
+            resource domain.
+        """
         lat_min, lat_max = np.sort(lat_lon[:, 0])[[0, -1]]
         lon_min, lon_max = np.sort(lat_lon[:, 1])[[0, -1]]
 
@@ -150,6 +166,58 @@ class DistanceToPorts:
             warn(msg)
 
         return ~check
+
+    @staticmethod
+    def _create_port_names(ports):
+        """
+        Create port names from "PORT_NAME" and "STATE", confirm all names are
+        unique
+
+        Parameters
+        ----------
+        ports : geopandas.GeoDataFrame | pandas.DataFrame
+            DataFrame of port locations and their mapping to the offshore
+            pixels for least cost distance computation
+
+        Returns
+        -------
+        ports : geopandas.GeoDataFrame | pandas.DataFrame
+            DataFrame of port locations and their mapping to the offshore
+            pixels for least cost distance computation which a unique port
+            name added
+        """
+        name = None
+        state = None
+        for c in ports.columns:
+            if c.lower() == 'port_name':
+                if name is not None:
+                    msg = ('Multiple potential "port names" were found: '
+                           '({}, {})!'.format(name, c))
+                    logger.error(msg)
+                    raise RuntimeError(msg)
+                else:
+                    name = c.lower()
+
+            if 'state' in c.lower():
+                if state is not None:
+                    msg = ('Multiple potential "states" were found: '
+                           '({}, {})!'.format(state, c))
+                    logger.error(msg)
+                    raise RuntimeError(msg)
+
+            if state is not None and name is not None:
+                break
+
+        ports['name'] = (ports['PORT_NAME'].astype(str) + '_'
+                         + ports['ps_STATE'].astype(str))
+        counts = ports['name'].value_counts()
+        if np.any(counts > 1):
+            msg = ('Ports must have unique names! The following duplicate '
+                   'names were provided: {}'.format(counts[counts > 1]))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        return ports
 
     @classmethod
     def _parse_ports(cls, ports, excl_fpath, input_dist_layer='dist_to_coast'):
@@ -173,7 +241,7 @@ class DistanceToPorts:
 
         Returns
         -------
-        ports : geopandas.GeoDataFrame
+        ports : geopandas.GeoDataFrame | pandas.DataFrame
             DataFrame of port locations and their mapping to the offshore
             pixels for least cost distance computation
         """
@@ -204,29 +272,9 @@ class DistanceToPorts:
         ports['dist_to_pixel'] = coordinate_distance(port_coords,
                                                      pixel_coords[idx])
 
-        name_col = [c for c in ports.columns
-                    if c.lower() == 'port_name']
-        if not name_col:
-            msg = ('Could not find a name for the ports! Ports require either '
-                   'a "port_name" or "PORT_NAME" columns. The following '
-                   'columns were supplied: {}'.format(list(ports.columns)))
-            logger.error(msg)
-            raise RuntimeError(msg)
-        elif len(name_col) > 1:
-            msg = ('Multiple columns were provided with name for the ports! {}'
-                   .format(name_col))
-            logger.error(msg)
-            raise RuntimeError(msg)
-        else:
-            name_col = name_col[0]
-            counts = ports[name_col].value_counts()
-            if np.any(counts > 1):
-                msg = ('Ports must have unique names! The following duplicate '
-                       'names were provided: {}'.format(counts[counts > 1]))
-                logger.error(msg)
-                raise RuntimeError(msg)
+        ports = cls._create_port_names(ports)
 
-        return ports.rename(columns={name_col: 'name'})
+        return ports
 
     @staticmethod
     def _parse_cost_arr(excl_fpath, input_dist_layer='dist_to_coast'):
