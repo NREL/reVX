@@ -10,6 +10,7 @@ from rex.utilities.cli_dtypes import STR, STRLIST, FLOAT
 from rex.utilities.loggers import init_logger
 from rex.utilities.utilities import safe_json_load
 
+from reVX.offshore.dist_to_ports_converter import DistToPortsConverter
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.forecasts import Forecasts
 from reVX.utilities.output_extractor import output_extractor
@@ -143,8 +144,10 @@ def exclusions(ctx, excl_h5):
 @click.option('-check_tiff', '-ct', is_flag=True,
               help=("Flag to check tiff profile and coordinates against "
                     "exclusion .h5 profile and coordinates"))
-@click.option('-setbacks', '-sb', is_flag=True,
+@click.option('--setbacks', '-sb', is_flag=True,
               help=("Flag to convert setbacks to exclusion layers"))
+@click.option('--distance_to_ports', '-dtp', is_flag=True,
+              help=("Flag to convert distances to ports to exclusion layers"))
 @click.option('--transform_atol', '-tatol', default=0.01, type=float,
               show_default=True,
               help=("Absolute tolerance parameter when comparing geotiff "
@@ -157,8 +160,8 @@ def exclusions(ctx, excl_h5):
 @click.option('--purge', '-r', is_flag=True,
               help="Remove existing .h5 file before loading layers")
 @click.pass_context
-def layers_to_h5(ctx, layers, check_tiff, setbacks, transform_atol, coord_atol,
-                 purge):
+def layers_to_h5(ctx, layers, check_tiff, setbacks, distance_to_ports,
+                 transform_atol, coord_atol, purge):
     """
     Add layers to exclusions .h5 file
     """
@@ -171,6 +174,14 @@ def layers_to_h5(ctx, layers, check_tiff, setbacks, transform_atol, coord_atol,
     descriptions = inputs.get('descriptions')
     scale_factors = inputs.get('scale_factors')
 
+    if setbacks and distance_to_ports:
+        msg = ('Both the setbacks "--setbacks/-sb" and distance to ports '
+               '"--distance_to_ports/-dtp" flags were supplied! Setbacks and '
+               'distance to ports and computed differently, please only '
+               'select one!')
+        logger.error(msg)
+        raise RuntimeError(msg)
+
     if setbacks:
         SetbacksConverter.layers_to_h5(excl_h5, layers,
                                        check_tiff=check_tiff,
@@ -178,6 +189,13 @@ def layers_to_h5(ctx, layers, check_tiff, setbacks, transform_atol, coord_atol,
                                        coord_atol=coord_atol,
                                        descriptions=descriptions,
                                        scale_factors=scale_factors)
+    elif distance_to_ports:
+        DistToPortsConverter.layers_to_h5(excl_h5, layers,
+                                          check_tiff=check_tiff,
+                                          transform_atol=transform_atol,
+                                          coord_atol=coord_atol,
+                                          descriptions=descriptions,
+                                          scale_factors=scale_factors)
     else:
         ExclusionsConverter.layers_to_h5(excl_h5, layers,
                                          check_tiff=check_tiff,

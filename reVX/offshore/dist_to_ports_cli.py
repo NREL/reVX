@@ -12,7 +12,6 @@ from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
 from reVX.config.dist_to_ports import DistToPortsConfig
-from reVX.offshore.assembly_areas import AssemblyAreas
 from reVX.offshore.dist_to_ports import DistanceToPorts
 from reVX import __version__
 
@@ -66,12 +65,10 @@ def run_local(ctx, config):
     ctx.invoke(local,
                ports_fpath=config.ports_fpath,
                excl_fpath=config.excl_fpath,
+               out_dir=config.dirout,
                input_dist_layer=config.input_dist_layer,
-               output_dist_layer=config.output_dist_layer,
-               assembly_areas=config.assembly_areas,
-               assembly_ports_dset=config.assembly_ports_dset,
                max_workers=config.execution_control.max_workers,
-               update_layer=config.update_layer,
+               replace=config.replace,
                log_dir=config.logdir,
                verbose=config.log_level)
 
@@ -111,39 +108,26 @@ def from_config(ctx, config, verbose):
 @click.option('--excl_fpath', '-excl', required=True,
               type=click.Path(exists=True),
               help="Filepath to exclusions h5 with techmap dataset.")
+@click.option('--out_dir', '-o', required=True, type=click.Path(exists=True),
+              help='Directory to save distance to port geotiffs too.')
 @click.option('--input_dist_layer', '-idl', default='dist_to_coast',
               show_default=True,
               help=("Exclusions layer with distance to coast values"))
-@click.option('--output_dist_layer', '-odl', default=None, type=STR,
-              show_default=True,
-              help=("Exclusion layer under which the distance to ports layer "
-                    "should be saved, if None use the ports file-name"))
-@click.option('--assembly_areas', '-aa', type=click.Path(exists=True),
-              default=None, show_default=True,
-              help=("Path to csv or json file containing assembly area "
-                    "locations. If provided compute distance from ports to "
-                    "assembly areas and save as a table to excl_fpath."))
-@click.option('--assembly_ports_dset', '-apd', type=str, show_choices=True,
-              default='ports_construction_nolimits',
-              help="Distance to ports layer/dataset name in excl_fpath")
 @click.option('--max_workers', '-mw', default=None, type=INT,
               show_default=True,
               help=(" Number of workers to use for setback computation, if 1 "
                     "run in serial, if > 1 run in parallel with that many "
                     "workers, if None run in parallel on all available cores"))
-@click.option('--update_layer', '-u', is_flag=True,
-              help=("Flag to check for an existing distance to port layer and "
-                    "update it with new least cost distances to new ports, if "
-                    "None compute the least cost distance from scratch"))
+@click.option('--replace', '-rm', is_flag=True,
+              help="Flag to replace existing ports geotiffs")
 @click.option('--log_dir', '-log', default=None, type=STR,
               show_default=True,
               help='Directory to dump log files.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, ports_fpath, excl_fpath, input_dist_layer, output_dist_layer,
-          assembly_areas, assembly_ports_dset, max_workers, update_layer,
-          log_dir, verbose):
+def local(ctx, ports_fpath, excl_fpath, out_dir, input_dist_layer, max_workers,
+          replace, log_dir, verbose):
     """
     Compute distance to ports on local hardware
     """
@@ -157,24 +141,10 @@ def local(ctx, ports_fpath, excl_fpath, input_dist_layer, output_dist_layer,
     logger.info('Computing distance to ports in {} \n'
                 'Outputs to be stored in: {}'.format(ports_fpath, excl_fpath))
 
-    if output_dist_layer is None:
-        output_dist_layer = os.path.basename(ports_fpath).split('.')[0]
-
-    DistanceToPorts.run(ports_fpath, excl_fpath,
+    DistanceToPorts.run(ports_fpath, excl_fpath, out_dir,
                         input_dist_layer=input_dist_layer,
-                        output_dist_layer=output_dist_layer,
-                        chunks=(128, 128),
                         max_workers=max_workers,
-                        update_layer=update_layer)
-
-    if assembly_areas:
-        logger.info('Computing distance from ports to assembly areas in {} \n'
-                    'Outputs to be stored in: {}'
-                    .format(assembly_areas, excl_fpath))
-        assembly_dset = os.path.basename(assembly_areas).split('.')[0]
-        AssemblyAreas.run(assembly_areas, excl_fpath,
-                          ports_dset=assembly_ports_dset,
-                          assembly_dset=assembly_dset)
+                        replace=replace)
 
 
 def get_node_cmd(config):
@@ -196,16 +166,15 @@ def get_node_cmd(config):
             'local',
             '-ports {}'.format(SLURM.s(config.ports_fpath)),
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
+            '-o {}'.format(SLURM.s(config.dirout)),
             '-idl {}'.format(SLURM.s(config.input_dist_layer)),
             '-odl {}'.format(SLURM.s(config.output_dist_layer)),
-            '-aa {}'.format(SLURM.s(config.assembly_areas)),
-            '-apd {}'.format(SLURM.s(config.assembly_ports_dset)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
 
-    if config.update_layer:
-        args.append('-u')
+    if config.replace:
+        args.append('-r')
 
     if config.log_level == logging.DEBUG:
         args.append('-v')

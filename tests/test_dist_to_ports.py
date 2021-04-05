@@ -6,26 +6,35 @@ from click.testing import CliRunner
 import json
 import numpy as np
 import os
-import pandas as pd
-from pandas.testing import assert_frame_equal
 import pytest
 import shutil
 import tempfile
 import traceback
 
-from rex.resource import Resource
 from rex.utilities.loggers import LOGGERS
 from rex.utilities.utilities import get_lat_lon_cols
 from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
+from reVX.handlers.geotiff import Geotiff
 from reVX.offshore.dist_to_ports import DistanceToPorts
-from reVX.offshore.dist_to_ports_cli import main
+from reVX.offshore.dist_to_ports_cli import main as dtp_main
+from reVX.offshore.dist_to_ports_converter import DistToPortsConverter
+from reVX.cli import main as revx_main
 from reVX.utilities.utilities import coordinate_distance
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'offshore', 'offshore.h5')
 PORTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'ports',
                            'ports_operations.shp')
-ASSEMBLY_AREAS = os.path.join(TESTDATADIR, 'offshore', 'assembly_areas.csv')
+
+
+def get_dist_to_port(geotiff):
+    """
+    Extract "truth" dist_to_port from geotiff
+    """
+    with Geotiff(geotiff) as tif:
+        dist_to_port = tif.values
+
+    return dist_to_port
 
 
 def get_dist_to_ports(excl_h5, ports_layer='ports_operations'):
@@ -36,16 +45,6 @@ def get_dist_to_ports(excl_h5, ports_layer='ports_operations'):
         dist_to_ports = f[ports_layer]
 
     return dist_to_ports
-
-
-def get_assembly_areas(excl_h5, assembly_dset='assembly_areas'):
-    """
-    Extract "truth" assembly areas table
-    """
-    with Resource(excl_h5) as f:
-        assembly_areas = f.df_str_decode(pd.DataFrame(f[assembly_dset]))
-
-    return assembly_areas
 
 
 @pytest.fixture(scope="module")
@@ -68,26 +67,28 @@ def test_haversine_versus_dist_to_port():
         lon = f.longitude
 
     pixel_coords = np.dstack((lat.ravel(), lon.ravel()))[0]
-
     hav_dist = np.full(lat.shape, np.finfo('float32').max, dtype='float32')
-    for i, port in dtp.ports.iterrows():
+    dist_to_ports = hav_dist.copy()
+    for _, port in dtp.ports.iterrows():
         port_idx = port[['row', 'col']].values
         port_dist = port['dist_to_pixel']
-        port_coords = np.expand_dims(port[cols].values, 0).astype('float32')
-        h_dist = \
-            coordinate_distance(port_coords, pixel_coords).reshape(lat.shape)
-        l_dist = dtp._lc_dist_to_port(EXCL_H5, port_idx, port_dist)
+        port_coords = np.expand_dims(port[cols].values, 0)
+        port_coords = port_coords.astype('float32')
+        h_dist = coordinate_distance(port_coords, pixel_coords)
+        h_dist = h_dist.reshape(lat.shape)
+        l_dist = dtp.mc_dist_to_port(EXCL_H5, port_idx, port_dist)
+        mask = l_dist != -1
 
-        err = (l_dist - h_dist) / h_dist
-        msg = ("Haversine distance is greater than least cost distance for "
-               "port {}!".format(i))
+        err = (l_dist[mask] - h_dist[mask]) / h_dist[mask]
+        msg = ("Haversine distance is greater than least cost distance "
+               "for port {}!".format(port['name']))
         assert np.all(err > -0.05), msg
 
         hav_dist = np.minimum(hav_dist, h_dist)
+        dist_to_ports = np.minimum(dist_to_ports, l_dist)
 
-    test = dtp.least_cost_distance(max_workers=1)
-    mask = test != -1
-    err = (test[mask] - hav_dist[mask]) / hav_dist[mask]
+    mask = dist_to_ports != -1
+    err = (dist_to_ports[mask] - hav_dist[mask]) / hav_dist[mask]
     msg = "Haversine distance is greater than distance to closest port!"
     assert np.all(err > -0.05), msg
 
@@ -97,9 +98,29 @@ def test_dist_to_ports(max_workers):
     """
     Compute distance to ports
     """
-    baseline = get_dist_to_ports(EXCL_H5)
-    test = DistanceToPorts.run(PORTS_FPATH, EXCL_H5, max_workers=max_workers)
 
+    with tempfile.TemporaryDirectory() as td:
+        excl_fpath = os.path.basename(EXCL_H5)
+        excl_fpath = os.path.join(td, excl_fpath)
+        shutil.copy(EXCL_H5, excl_fpath)
+
+        DistanceToPorts.run(PORTS_FPATH, EXCL_H5, td, max_workers=max_workers)
+
+        for f in os.listdir(td):
+            if f.endswith('.tif'):
+                baseline = os.path.join(TESTDATADIR, 'offshore', f)
+                baseline = get_dist_to_port(baseline)
+                test = get_dist_to_port(os.path.join(td, f))
+                msg = ('distance to {} does not match baseline distances'
+                       .format(f))
+                assert np.allclose(baseline, test), msg
+
+        convert = DistToPortsConverter(excl_fpath)
+        convert.dist_to_ports_to_layer('test', td)
+
+        test = get_dist_to_ports(excl_fpath, ports_layer='test')
+
+    baseline = get_dist_to_ports(EXCL_H5)
     msg = 'distance to ports does not match baseline distances'
     assert np.allclose(baseline, test), msg
 
@@ -109,47 +130,60 @@ def test_cli(runner, ports_layer):
     """
     Test CLI
     """
-    update = False
-    if ports_layer is None:
-        update = True
-        ports_layer = 'ports_operations'
-
     with tempfile.TemporaryDirectory() as td:
-        excl_fpath = os.path.basename(EXCL_H5)
-        excl_fpath = os.path.join(td, excl_fpath)
-        shutil.copy(EXCL_H5, excl_fpath)
         config = {
             "directories": {
                 "log_directory": td,
             },
             "execution_control": {
-                "option": "local"
+                "option": "local",
+                "max_workers": 1
             },
-            "excl_fpath": excl_fpath,
+            "excl_fpath": EXCL_H5,
             "ports_fpath": PORTS_FPATH,
-            "output_dist_layer": ports_layer,
-            "update": update,
-            "assembly_areas": ASSEMBLY_AREAS
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(dtp_main, ['from-config',
+                                          '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
+
+        for f in os.listdir(td):
+            if f.endswith('.tif'):
+                baseline = os.path.join(TESTDATADIR, 'offshore', f)
+                baseline = get_dist_to_port(baseline)
+                test = get_dist_to_port(os.path.join(td, f))
+                msg = ('distance to {} does not match baseline distances'
+                       .format(f))
+                assert np.allclose(baseline, test), msg
+
+        excl_fpath = os.path.basename(EXCL_H5)
+        excl_fpath = os.path.join(td, excl_fpath)
+        shutil.copy(EXCL_H5, excl_fpath)
+
+        if ports_layer is None:
+            ports_layer = 'ports_operations'
+
+        layers = {'layers': {ports_layer: td}}
+        layers_path = os.path.join(td, 'layers.json')
+        with open(layers_path, 'w') as f:
+            json.dump(layers, f)
+
+        result = runner.invoke(revx_main, ['exclusions',
+                                           '-h5', excl_fpath,
+                                           'layers-to-h5',
+                                           '-l', layers_path,
+                                           '-dtp'])
 
         baseline = get_dist_to_ports(EXCL_H5)
         test = get_dist_to_ports(excl_fpath, ports_layer=ports_layer)
 
         msg = 'distance to ports does not match baseline distances'
         assert np.allclose(baseline, test), msg
-
-        truth = get_assembly_areas(EXCL_H5)
-        test = get_assembly_areas(excl_fpath)
-        assert_frame_equal(truth, test, check_dtype=False)
 
     LOGGERS.clear()
 
@@ -161,14 +195,12 @@ def plot():
     import matplotlib.pyplot as plt
 
     dtp = DistanceToPorts(PORTS_FPATH, EXCL_H5)
-    test = dtp.least_cost_distance(max_workers=1)
-    mask = test != -1
-
     cols = get_lat_lon_cols(dtp.ports)
 
     with ExclusionLayers(EXCL_H5) as f:
         lat = f.latitude
         lon = f.longitude
+        mask = f['dist_to_coast'] > 0
 
     pixel_coords = np.dstack((lat.ravel(), lon.ravel()))[0]
 
@@ -178,7 +210,7 @@ def plot():
         port_coords = np.expand_dims(port[cols].values, 0).astype('float32')
         h_dist = \
             coordinate_distance(port_coords, pixel_coords).reshape(lat.shape)
-        l_dist = dtp._lc_dist_to_port(EXCL_H5, port_idx, port_dist)
+        l_dist = dtp.mc_dist_to_port(EXCL_H5, port_idx, port_dist)
 
         print(port)
         plt.imshow(mask)

@@ -21,8 +21,7 @@ class DistToPortsConfig(AnalysisConfig):
         """
         super().__init__(config)
         self._default_dist_layer = 'dist_to_coast'
-        self._default_update_layer = True
-        self._default_assembly_ports_dset = 'ports_construction_nolimits'
+        self._default_replace = False
 
     @property
     def ports_fpath(self):
@@ -46,38 +45,8 @@ class DistToPortsConfig(AnalysisConfig):
         return self.get('input_dist_layer', self._default_dist_layer)
 
     @property
-    def output_dist_layer(self):
+    def replace(self):
         """
-        Exclusion layer under which the distance to ports layer should be
-        saved, if None use the ports file-name
+        Flag to replace existing ports geotiffs, by default False
         """
-        return self.get('output_dist_layer', None)
-
-    @property
-    def update_layer(self):
-        """
-        Flag to check for an existing distance to port layer and update it
-        with new least cost distances to new ports, if None compute the
-        least cost distance from scratch
-        """
-        return self.get('update_layer', self._default_update_layer)
-
-    @property
-    def assembly_areas(self):
-        """
-        Path to csv or json file containing assembly area locations. If
-        provided compute distance from ports to assembly areas and save as
-        a table to excl_fpath.
-        """
-        return self.get('assembly_areas', None)
-
-    @property
-    def assembly_ports_dset(self):
-        """
-        Distance to ports layer/dataset name in excl_fpath, by default
-        'ports_construction_nolimits'
-        """
-        dset = self.get('assembly_ports_dsets',
-                        self._default_assembly_ports_dset)
-
-        return dset
+        return self.get('replace', self._default_replace)

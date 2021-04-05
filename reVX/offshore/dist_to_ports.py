@@ -49,9 +49,9 @@ class DistanceToPorts:
         self._excl_fpath = excl_fpath
         self._input_dist_layer = input_dist_layer
         log_mem(logger)
-        self._ports, self._profile, self._mask = \
-            self._parse_ports(ports, excl_fpath,
-                              input_dist_layer=input_dist_layer)
+        self._ports_fpath = ports
+        self._ports = self._parse_ports(
+            ports, excl_fpath, input_dist_layer=input_dist_layer)
         log_mem(logger)
 
     def __repr__(self):
@@ -116,22 +116,16 @@ class DistanceToPorts:
         lat_lon : pandas.DataFrame
             Table mapping the offshore pixel coordiantes (lat, lon) to thier
             position (row, col) within the distance to shore array/layer/raster
-        profile : dict
-            Profile (transform, crs, etc.) of arr raster
-        mask : ndarray
-            Boolean mask of input_dist_layer showing offshore (True) vs
-            onshore (False) pixels
         """
         hsds = check_res_file(excl_fpath)[1]
         with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
             mask = tif[input_dist_layer] > 0
-            profile = tif.get_layer_profile(input_dist_layer)
             lat = tif['latitude'].astype(np.float32)
             lon = tif['longitude'].astype(np.float32)
 
         lat_lon = cls._build_lat_lon(lat, lon).loc[mask.ravel()]
 
-        return lat_lon.reset_index(drop=True), profile, mask
+        return lat_lon.reset_index(drop=True)
 
     @staticmethod
     def _check_ports_coords(port_coords, lat_lon):
@@ -188,8 +182,8 @@ class DistanceToPorts:
         else:
             ports = parse_table(ports)
 
-        offshore_lat_lon, profile, mask = \
-            cls._parse_lat_lons(excl_fpath, input_dist_layer=input_dist_layer)
+        offshore_lat_lon = cls._parse_lat_lons(
+            excl_fpath, input_dist_layer=input_dist_layer)
         lat_lon_cols = get_lat_lon_cols(offshore_lat_lon)
         pixel_coords = offshore_lat_lon[lat_lon_cols].values
 
@@ -198,9 +192,9 @@ class DistanceToPorts:
         lat_lon_cols = get_lat_lon_cols(ports)
         port_coords = ports[lat_lon_cols].values.astype('float32')
         # remove ports that are outside pixel bounds
-        p_mask = cls._check_ports_coords(port_coords, pixel_coords)
-        port_coords = port_coords[p_mask]
-        ports = ports.loc[p_mask]
+        mask = cls._check_ports_coords(port_coords, pixel_coords)
+        port_coords = port_coords[mask]
+        ports = ports.loc[mask]
         _, idx = tree.query(port_coords)
 
         pixels = offshore_lat_lon.iloc[idx]
@@ -210,7 +204,29 @@ class DistanceToPorts:
         ports['dist_to_pixel'] = coordinate_distance(port_coords,
                                                      pixel_coords[idx])
 
-        return ports, profile, mask
+        name_col = [c for c in ports.columns
+                    if c.lower() == 'port_name']
+        if not name_col:
+            msg = ('Could not find a name for the ports! Ports require either '
+                   'a "port_name" or "PORT_NAME" columns. The following '
+                   'columns were supplied: {}'.format(list(ports.columns)))
+            logger.error(msg)
+            raise RuntimeError(msg)
+        elif len(name_col) > 1:
+            msg = ('Multiple columns were provided with name for the ports! {}'
+                   .format(name_col))
+            logger.error(msg)
+            raise RuntimeError(msg)
+        else:
+            name_col = name_col[0]
+            counts = ports[name_col].value_counts()
+            if np.any(counts > 1):
+                msg = ('Ports must have unique names! The following duplicate '
+                       'names were provided: {}'.format(counts[counts > 1]))
+                logger.error(msg)
+                raise RuntimeError(msg)
+
+        return ports.rename(columns={name_col: 'name'})
 
     @staticmethod
     def _parse_cost_arr(excl_fpath, input_dist_layer='dist_to_coast'):
@@ -231,18 +247,25 @@ class DistanceToPorts:
         arr : ndarray
             Cost array with offshore pixels set to 90 (pixel width) and
             onshore pixels set to 9999.
+        profile : dict
+            Profile (transform, crs, etc.) of arr raster
+        mask : ndarray
+            Boolean mask of input_dist_layer showing offshore (True) vs
+            onshore (False) pixels
         """
         hsds = check_res_file(excl_fpath)[1]
         with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
+            profile = tif.profile
             arr = tif[input_dist_layer]
 
-        arr = np.where(arr > 0, 90, 9999).astype(np.uint16)
+        mask = arr > 0
+        arr = np.where(mask, 90, 9999).astype(np.uint16)
 
-        return arr
+        return arr, profile, mask
 
     @classmethod
-    def _lc_dist_to_port(cls, excl_fpath, port_idx, port_dist,
-                         input_dist_layer='dist_to_coast'):
+    def mc_dist_to_port(cls, excl_fpath, port_idx, port_dist,
+                        geotiff=None, input_dist_layer='dist_to_coast'):
         """
         Compute the least cost dist from the port coordinates to all
         offshore coordinates in km
@@ -256,13 +279,16 @@ class DistanceToPorts:
             distance
         port_dist : float
             Distance from port to pixel that corresponds to port_idx in meters
+        geotiff : str, optional
+            Output geotiff file path to save least cost distance to ports,
+            by default None
         input_dist_layer : str, optional
             Exclusions layer name with distance to coast values,
             by default 'dist_to_coast'
 
         Returns
         -------
-        lc_dist : ndarray
+        mc_dist : ndarray, optional
             Least cost distance from port to all offshore pixels in km
         """
         logger.debug('Computing least cost distance from port that is {}km '
@@ -274,50 +300,41 @@ class DistanceToPorts:
         if len(port_idx) == 2:
             port_idx = np.expand_dims(port_idx, 0)
 
-        cost_arr = cls._parse_cost_arr(excl_fpath,
-                                       input_dist_layer=input_dist_layer)
+        cost_arr, profile, mask = cls._parse_cost_arr(
+            excl_fpath, input_dist_layer=input_dist_layer)
 
         mcp = MCP_Geometric(cost_arr)
-        lc_dist, _ = mcp.find_costs(starts=port_idx)
-        lc_dist = lc_dist.astype('float32') / 1000
-        lc_dist += port_dist
+        mc_dist, _ = mcp.find_costs(starts=port_idx)
+        mc_dist = mc_dist.astype('float32') / 1000
+        mc_dist += port_dist
 
-        return lc_dist
+        mc_dist[~mask] = -1
 
-    def least_cost_distance(self, dist_to_ports=None, max_workers=None):
+        if geotiff is not None:
+            ExclusionsConverter._write_geotiff(geotiff, profile, mc_dist)
+        else:
+            return mc_dist
+
+    def distance_to_ports(self, out_dir, max_workers=None, replace=False):
         """
         Compute the least cost distance from each offshore pixel to the nearest
         port in km
 
         Parameters
         ----------
-        dist_to_ports : ndarray, optional
-            Existing minimum distance to port layer, can be used if new ports
-            are being added, by default None
+        out_dir : str
+            Directory to save distance to port geotiffs too.
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
             run in parallel on all available cores, by default None
-
-        Returns
-        -------
-        dist_to_ports : ndarray
-            Least cost distance to nearest port for all offshore pixels in km
+        replace : bool, optional
+            Flag to replace existing ports geotiffs, by default False
         """
         if max_workers is None:
             max_workers = os.cpu_count()
 
-        shape = self._mask.shape
-        if dist_to_ports is None:
-            dist_to_ports = np.full(shape, np.finfo('float32').max,
-                                    dtype='float32')
-        elif dist_to_ports.shape != shape:
-            msg = ("Starting 'dist_to_ports' shape {} does not match the "
-                   "the 'cost_arr' shape {}"
-                   .format(dist_to_ports.shape, shape))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
+        f_name = name = os.path.basename(self._ports_fpath).split('.')[0]
         n_ports = len(self.ports)
         log_mem(logger)
         if max_workers > 1:
@@ -328,66 +345,51 @@ class DistanceToPorts:
                                   loggers=loggers) as exe:
                 futures = []
                 for _, port in self.ports.iterrows():
-                    port_idx = port[['row', 'col']].values
-                    port_dist = port['dist_to_pixel']
-                    future = exe.submit(
-                        self._lc_dist_to_port, self._excl_fpath,
-                        port_idx, port_dist,
-                        input_dist_layer=self._input_dist_layer)
-                    futures.append(future)
+                    name = port['name'].replace(' ', '_')
+                    geotiff = '{}-{}.tif'.format(f_name, name)
+                    geotiff = os.path.join(out_dir, geotiff)
+                    if os.path.exists(geotiff) and not replace:
+                        msg = ('{} already exists and will be skipped! To '
+                               'replace it set "replace=True"'
+                               .format(geotiff))
+                        logger.warning(msg)
+                        warn(msg)
+                    else:
+                        port_idx = port[['row', 'col']].values
+                        port_dist = port['dist_to_pixel']
+                        future = exe.submit(
+                            self.mc_dist_to_port, self._excl_fpath,
+                            port_idx, port_dist, geotiff=geotiff,
+                            input_dist_layer=self._input_dist_layer)
+                        futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
-                    dist_to_ports = np.minimum(dist_to_ports, future.result())
                     logger.debug('Computed least cost distance for {} of {} '
                                  'ports'.format((i + 1), n_ports))
         else:
             logger.info('Computing least cost distance to ports in serial')
             for i, port in self.ports.iterrows():
-                port_idx = port[['row', 'col']].values
-                port_dist = port['dist_to_pixel']
-                dist = self._lc_dist_to_port(
-                    self._excl_fpath, port_idx, port_dist,
-                    input_dist_layer=self._input_dist_layer)
-                dist_to_ports = np.minimum(dist_to_ports, dist)
-                logger.debug('Computed least cost distance for {} of {} '
-                             'ports'.format((i + 1), n_ports))
-
-        log_mem(logger)
-        # Set onshore pixels least cost distance to -1
-        dist_to_ports[~self._mask] = -1
-
-        return dist_to_ports
-
-    def save_as_layer(self, output_layer_name, dist_to_ports,
-                      chunks=(128, 128)):
-        """
-        Save distance to ports as an exclusion layer within excl_fpath
-
-        Parameters
-        ----------
-        layer_name : str
-            Name of layer under which distance to ports is to be saved
-        dist_to_ports : ndarray
-            Distance to ports data
-        chunks : tuple
-            Chunk size of dataset in .h5 file
-        """
-        if len(dist_to_ports.shape) < 3:
-            dist_to_ports = np.expand_dims(dist_to_ports, 0)
-
-        logger.info('Saving {} to {}'
-                    .format(output_layer_name, self._excl_fpath))
-        description = ("Minimum distance to the nearest {} in meters, onshore "
-                       "pixels have a value of -1".format(output_layer_name))
-        ExclusionsConverter._write_layer(self._excl_fpath, output_layer_name,
-                                         self._profile, dist_to_ports,
-                                         chunks=chunks,
-                                         description=description)
+                name = port['name'].replace(' ', '_')
+                geotiff = '{}-{}.tif'.format(f_name, name)
+                geotiff = os.path.join(out_dir, geotiff)
+                if os.path.exists(geotiff) and not replace:
+                    msg = ('{} already exists and will be skipped! To '
+                           'replace it set "replace=True"'
+                           .format(geotiff))
+                    logger.warning(msg)
+                    warn(msg)
+                else:
+                    port_idx = port[['row', 'col']].values
+                    port_dist = port['dist_to_pixel']
+                    self.mc_dist_to_port(
+                        self._excl_fpath, port_idx, port_dist, geotiff=geotiff,
+                        input_dist_layer=self._input_dist_layer)
+                    logger.debug('Computed least cost distance for {} of {} '
+                                 'ports'.format((i + 1), n_ports))
 
     @classmethod
-    def run(cls, ports, excl_fpath, input_dist_layer='dist_to_coast',
-            output_dist_layer=None, chunks=(128, 128), max_workers=None,
-            update_layer=True):
+    def run(cls, ports, excl_fpath, out_dir, input_dist_layer='dist_to_coast',
+            max_workers=None, replace=False):
         """
         Compute the least cost distance from offshore pixels to port
         locations in km. The distance to coast exclusion layer will be used to
@@ -404,47 +406,21 @@ class DistanceToPorts:
         excl_fpath: str
             Path to exclusions .h5 file with distance to coast layer. Will also
             be the file into which the least cost distance to port is saved.
+        out_dir : str
+            Directory to save distance to port geotiffs too.
         input_dist_layer : str, optional
             Exclusions layer with distance to coast values,
             by default 'dist_to_coast'
-        output_dist_layer : str, optional
-            Exclusion layer under which the distance to ports layer should be
-            saved, by default None
-        chunks : tuple, optional
-            Chunk size of dataset in .h5 file, by default (128, 128)
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
             run in parallel on all available cores, by default None
-        update_layer : bool, optional
-            Flag to check for an existing distance to port layer and update it
-            with new least cost distances to new ports. If True and distance
-            to port layer does not exist, then the least cost distance will be
-            computed from scratch, by default True
-
-        Returns
-        -------
-        dist_to_ports : ndarray
-            Least cost distance to nearest port for all offshore pixels in km
+        replace : bool, optional
+            Flag to replace existing ports geotiffs, by default False
         """
         logger.info('Computing least cost distance to ports in {}'
                     .format(ports))
         dtp = cls(ports, excl_fpath, input_dist_layer=input_dist_layer)
 
-        dist_to_ports = None
-        if update_layer:
-            hsds = check_res_file(excl_fpath)[1]
-            with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
-                if output_dist_layer in tif:
-                    dist_to_ports = tif[output_dist_layer]
-
-        if dist_to_ports is not None:
-            logger.info('Updating exising layer {}'.format(output_dist_layer))
-
-        dist_to_ports = dtp.least_cost_distance(dist_to_ports=dist_to_ports,
-                                                max_workers=max_workers)
-
-        if output_dist_layer:
-            dtp.save_as_layer(output_dist_layer, dist_to_ports, chunks=chunks)
-
-        return dist_to_ports
+        dtp.distance_to_ports(out_dir, max_workers=max_workers,
+                              replace=replace)
