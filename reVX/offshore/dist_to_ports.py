@@ -312,7 +312,7 @@ class DistanceToPorts:
         return arr, profile, mask
 
     @classmethod
-    def mc_dist_to_port(cls, excl_fpath, port_idx, port_dist,
+    def lc_dist_to_port(cls, excl_fpath, port_idx, port_dist,
                         geotiff=None, input_dist_layer='dist_to_coast'):
         """
         Compute the least cost dist from the port coordinates to all
@@ -336,7 +336,7 @@ class DistanceToPorts:
 
         Returns
         -------
-        mc_dist : ndarray, optional
+        lc_dist : ndarray, optional
             Least cost distance from port to all offshore pixels in km
         """
         logger.debug('Computing least cost distance from port that is {}km '
@@ -352,16 +352,17 @@ class DistanceToPorts:
             excl_fpath, input_dist_layer=input_dist_layer)
 
         mcp = MCP_Geometric(cost_arr)
-        mc_dist, _ = mcp.find_costs(starts=port_idx)
-        mc_dist = mc_dist.astype('float32') / 1000
-        mc_dist += port_dist
+        lc_dist, _ = mcp.find_costs(starts=port_idx)
+        lc_dist = lc_dist.astype('float32') / 1000
+        lc_dist += port_dist
 
-        mc_dist[~mask] = -1
+        lc_dist[~mask] = -1
 
         if geotiff is not None:
-            ExclusionsConverter._write_geotiff(geotiff, profile, mc_dist)
+            logger.debug(f'Saving least cost distance to port to {geotiff}')
+            ExclusionsConverter._write_geotiff(geotiff, profile, lc_dist)
         else:
-            return mc_dist
+            return lc_dist
 
     def distance_to_ports(self, out_dir, max_workers=None, replace=False):
         """
@@ -406,7 +407,7 @@ class DistanceToPorts:
                         port_idx = port[['row', 'col']].values
                         port_dist = port['dist_to_pixel']
                         future = exe.submit(
-                            self.mc_dist_to_port, self._excl_fpath,
+                            self.lc_dist_to_port, self._excl_fpath,
                             port_idx, port_dist, geotiff=geotiff,
                             input_dist_layer=self._input_dist_layer)
                         futures.append(future)
@@ -430,7 +431,7 @@ class DistanceToPorts:
                 else:
                     port_idx = port[['row', 'col']].values
                     port_dist = port['dist_to_pixel']
-                    self.mc_dist_to_port(
+                    self.lc_dist_to_port(
                         self._excl_fpath, port_idx, port_dist, geotiff=geotiff,
                         input_dist_layer=self._input_dist_layer)
                     logger.debug('Computed least cost distance for {} of {} '
