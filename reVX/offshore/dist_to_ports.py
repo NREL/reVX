@@ -414,6 +414,7 @@ class DistanceToPorts:
                 for i, future in enumerate(as_completed(futures)):
                     logger.debug('Computed least cost distance for {} of {} '
                                  'ports'.format((i + 1), n_ports))
+                    log_mem(logger)
         else:
             logger.info('Computing least cost distance to ports in serial')
             for i, port in self.ports.iterrows():
@@ -434,6 +435,7 @@ class DistanceToPorts:
                         input_dist_layer=self._input_dist_layer)
                     logger.debug('Computed least cost distance for {} of {} '
                                  'ports'.format((i + 1), n_ports))
+                    log_mem(logger)
 
     @classmethod
     def run(cls, ports, excl_fpath, out_dir, input_dist_layer='dist_to_coast',
