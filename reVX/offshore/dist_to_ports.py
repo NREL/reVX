@@ -90,11 +90,12 @@ class DistanceToPorts:
             Mapping of (lat, lon) to array (row, col) and whether the exclusion
             pixel is offshore or not
         """
+        rows, cols = row_col_indices(np.arange(lat.size, dtype=np.uint32),
+                                     lat.shape[1])
         lat_lon = pd.DataFrame({'latitude': lat.ravel(),
-                                'longitude': lon.ravel()})
-        rows, cols = row_col_indices(lat_lon.index.values, lat.shape[1])
-        lat_lon['row'] = rows.astype(np.uint32)
-        lat_lon['col'] = cols.astype(np.uint32)
+                                'longitude': lon.ravel(),
+                                'row': rows,
+                                'col': cols})
 
         return lat_lon
 
