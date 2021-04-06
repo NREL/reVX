@@ -323,8 +323,8 @@ class DistanceToPorts:
         lc_dist : ndarray, optional
             Least cost distance from port to all offshore pixels in km
         """
-        logger.debug('Computing least cost distance from port that is {}km '
-                     'from pixel {} to all offshore pixels.'
+        logger.debug('Computing least cost distance from port that is '
+                     '{:.4f} km from offshore pixel {} to all offshore pixels.'
                      .format(port_dist, port_idx))
         if not isinstance(port_idx, np.ndarray):
             port_idx = np.array(port_idx)
@@ -336,8 +336,8 @@ class DistanceToPorts:
             excl_fpath, input_dist_layer=input_dist_layer)
 
         mcp = MCP_Geometric(cost_arr)
-        lc_dist, _ = mcp.find_costs(starts=port_idx)
-        lc_dist = lc_dist.astype('float32') / 1000
+        lc_dist = mcp.find_costs(starts=port_idx)[0].astype('float32')
+        lc_dist /= 1000
         lc_dist += port_dist
 
         lc_dist[~mask] = -1
