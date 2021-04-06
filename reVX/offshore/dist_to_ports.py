@@ -319,8 +319,7 @@ class DistanceToPorts:
         lc_dist : ndarray, optional
             Least cost distance from port to all offshore pixels in km
         """
-        logger.debug('Computing least cost distance from port that is '
-                     '{:.4f} km from offshore pixel {} to all offshore pixels.'
+        logger.debug('Port that is {:.4f} km from nearest offshore pixel {}.'
                      .format(port_dist, port_idx))
         if not isinstance(port_idx, np.ndarray):
             port_idx = np.array(port_idx)
