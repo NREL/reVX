@@ -281,19 +281,15 @@ class DistanceToPorts:
             onshore pixels set to 9999.
         profile : dict
             Profile (transform, crs, etc.) of arr raster
-        mask : ndarray
-            Boolean mask of input_dist_layer showing offshore (True) vs
-            onshore (False) pixels
         """
         hsds = check_res_file(excl_fpath)[1]
         with ExclusionLayers(excl_fpath, hsds=hsds) as tif:
             profile = tif.profile
             arr = tif[input_dist_layer]
 
-        mask = arr > 0
-        arr = np.where(mask, 90, 9999).astype(np.uint16)
+        arr = np.where(arr > 0, 90, 9999).astype(np.uint16)
 
-        return arr, profile, mask
+        return arr, profile
 
     @classmethod
     def lc_dist_to_port(cls, excl_fpath, port_idx, port_dist,
@@ -332,7 +328,7 @@ class DistanceToPorts:
         if len(port_idx) == 2:
             port_idx = np.expand_dims(port_idx, 0)
 
-        cost_arr, profile, mask = cls._parse_cost_arr(
+        cost_arr, profile = cls._parse_cost_arr(
             excl_fpath, input_dist_layer=input_dist_layer)
 
         mcp = MCP_Geometric(cost_arr)
@@ -340,7 +336,7 @@ class DistanceToPorts:
         lc_dist /= 1000
         lc_dist += port_dist
 
-        lc_dist[~mask] = -1
+        lc_dist[cost_arr == 9999] = -1
 
         if geotiff is not None:
             logger.debug(f'Saving least cost distance to port to {geotiff}')
