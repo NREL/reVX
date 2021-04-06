@@ -384,6 +384,8 @@ class DistanceToPorts:
                         logger.warning(msg)
                         warn(msg)
                     else:
+                        logger.debug('Computing least cost distance to {}'
+                                     .format(name))
                         port_idx = port[['row', 'col']].values
                         port_dist = port['dist_to_pixel']
                         future = exe.submit(
@@ -409,6 +411,8 @@ class DistanceToPorts:
                     logger.warning(msg)
                     warn(msg)
                 else:
+                    logger.debug('Computing least cost distance to {}'
+                                 .format(name))
                     port_idx = port[['row', 'col']].values
                     port_dist = port['dist_to_pixel']
                     self.lc_dist_to_port(
