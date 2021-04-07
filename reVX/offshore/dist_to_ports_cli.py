@@ -113,7 +113,7 @@ def from_config(ctx, config, verbose):
 @click.option('--input_dist_layer', '-idl', default='dist_to_coast',
               show_default=True,
               help=("Exclusions layer with distance to coast values"))
-@click.option('--max_workers', '-mw', default=None, type=INT,
+@click.option('--max_workers', '-mw', default=1, type=INT,
               show_default=True,
               help=(" Number of workers to use for setback computation, if 1 "
                     "run in serial, if > 1 run in parallel with that many "

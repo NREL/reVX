@@ -349,7 +349,7 @@ class DistanceToPorts:
         except Exception:
             logger.exception('- Error computing least cost distance to port!')
 
-    def distance_to_ports(self, out_dir, max_workers=None, replace=False):
+    def distance_to_ports(self, out_dir, max_workers=1, replace=False):
         """
         Compute the least cost distance from each offshore pixel to the nearest
         port in km
@@ -361,7 +361,7 @@ class DistanceToPorts:
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
+            run in parallel on all available cores, by default 1
         replace : bool, optional
             Flag to replace existing ports geotiffs, by default False
         """
@@ -428,7 +428,7 @@ class DistanceToPorts:
 
     @classmethod
     def run(cls, ports, excl_fpath, out_dir, input_dist_layer='dist_to_coast',
-            max_workers=None, replace=False):
+            max_workers=1, replace=False):
         """
         Compute the least cost distance from offshore pixels to port
         locations in km. The distance to coast exclusion layer will be used to
@@ -453,7 +453,7 @@ class DistanceToPorts:
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run in
             serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
+            run in parallel on all available cores, by default 1
         replace : bool, optional
             Flag to replace existing ports geotiffs, by default False
         """
