@@ -363,7 +363,6 @@ class DistanceToPorts:
             max_workers = os.cpu_count()
 
         f_name = name = os.path.basename(self._ports_fpath).split('.')[0]
-        n_ports = len(self.ports)
         log_mem(logger)
         if max_workers > 1:
             logger.info('Computing least cost distance to ports in parallel '
@@ -395,7 +394,7 @@ class DistanceToPorts:
 
                 for i, future in enumerate(as_completed(futures)):
                     logger.debug('Computed least cost distance for {} of {} '
-                                 'ports'.format((i + 1), n_ports))
+                                 'ports'.format((i + 1), len(futures)))
                     log_mem(logger)
         else:
             logger.info('Computing least cost distance to ports in serial')
@@ -418,7 +417,7 @@ class DistanceToPorts:
                         self._excl_fpath, port_idx, port_dist, geotiff=geotiff,
                         input_dist_layer=self._input_dist_layer)
                     logger.debug('Computed least cost distance for {} of {} '
-                                 'ports'.format((i + 1), n_ports))
+                                 'ports'.format((i + 1), len(self.ports)))
                     log_mem(logger)
 
     @classmethod
