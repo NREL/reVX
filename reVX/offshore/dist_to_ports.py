@@ -100,6 +100,7 @@ class DistanceToPorts:
         row_len = lat.shape[1]
         lat = lat.ravel()[mask]
         lon = lon.ravel()[mask]
+        del mask
 
         rows, cols = row_col_indices(ids, row_len)
         del ids
@@ -127,7 +128,7 @@ class DistanceToPorts:
         Returns
         -------
         check : ndarray
-            Boolean array indicating which ports are outside (True) the
+            Boolean array indicating which ports are outside (False) the
             resource domain.
         """
         lat_min, lat_max = np.sort(lat_lon[:, 0])[[0, -1]]
