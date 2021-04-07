@@ -319,29 +319,33 @@ class DistanceToPorts:
         lc_dist : ndarray, optional
             Least cost distance from port to all offshore pixels in km
         """
-        logger.debug('Port that is {:.4f} km from nearest offshore pixel {}.'
-                     .format(port_dist, port_idx))
-        if not isinstance(port_idx, np.ndarray):
-            port_idx = np.array(port_idx)
+        try:
+            logger.debug('Port that is {:.4f} km from nearest offshore pixel '
+                         '{}.'.format(port_dist, port_idx))
+            if not isinstance(port_idx, np.ndarray):
+                port_idx = np.array(port_idx)
 
-        if len(port_idx) == 2:
-            port_idx = np.expand_dims(port_idx, 0)
+            if len(port_idx) == 2:
+                port_idx = np.expand_dims(port_idx, 0)
 
-        cost_arr, profile = cls._parse_cost_arr(
-            excl_fpath, input_dist_layer=input_dist_layer)
+            cost_arr, profile = cls._parse_cost_arr(
+                excl_fpath, input_dist_layer=input_dist_layer)
 
-        mcp = MCP_Geometric(cost_arr)
-        lc_dist = mcp.find_costs(starts=port_idx)[0].astype('float32')
-        lc_dist /= 1000
-        lc_dist += port_dist
+            mcp = MCP_Geometric(cost_arr)
+            lc_dist = mcp.find_costs(starts=port_idx)[0].astype('float32')
+            lc_dist /= 1000
+            lc_dist += port_dist
 
-        lc_dist[cost_arr == 9999] = -1
+            lc_dist[cost_arr == 9999] = -1
 
-        if geotiff is not None:
-            logger.debug(f'Saving least cost distance to port to {geotiff}')
-            ExclusionsConverter._write_geotiff(geotiff, profile, lc_dist)
-        else:
-            return lc_dist
+            if geotiff is not None:
+                logger.debug('Saving least cost distance to port to '
+                             f'{geotiff}')
+                ExclusionsConverter._write_geotiff(geotiff, profile, lc_dist)
+            else:
+                return lc_dist
+        except Exception:
+            logger.exception('- Error computing least cost distance to port!')
 
     def distance_to_ports(self, out_dir, max_workers=None, replace=False):
         """
