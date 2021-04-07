@@ -369,7 +369,6 @@ class DistanceToPorts:
             max_workers = os.cpu_count()
 
         f_name = name = os.path.basename(self._ports_fpath).split('.')[0]
-        log_mem(logger)
         if max_workers > 1:
             logger.info('Computing least cost distance to ports in parallel '
                         'using {} workers'.format(max_workers))
