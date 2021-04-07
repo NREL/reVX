@@ -10,6 +10,7 @@ import os
 import pandas as pd
 from scipy.spatial import cKDTree
 from skimage.graph import MCP_Geometric
+import time
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
@@ -320,6 +321,7 @@ class DistanceToPorts:
             Least cost distance from port to all offshore pixels in km
         """
         try:
+            ts = time.time()
             logger.debug('Port that is {:.4f} km from nearest offshore pixel '
                          '{}.'.format(port_dist, port_idx))
             if not isinstance(port_idx, np.ndarray):
@@ -338,6 +340,9 @@ class DistanceToPorts:
 
             lc_dist[cost_arr == 9999] = -1
 
+            tt = (time.time() - ts) / 60
+            logger.debug('- Least cost distance computed in {:.4f} minutes'
+                         .format(tt))
             if geotiff is not None:
                 logger.debug('Saving least cost distance to port to '
                              f'{geotiff}')
