@@ -32,6 +32,10 @@ class DistanceToPorts:
     the least cost distance from each offshore pixel to the nearest port. If
     a distance to port layer already exists it can be updated with the least
     cost distance to new ports.
+
+    NOTE: Computing the least cost distance is both memory and computationally
+    intensive! One EAGLE a bigmem node was needed to run in parallel and a
+    medium (178GB) memory node is needed to run in serial.
     """
     def __init__(self, ports, excl_fpath, input_dist_layer='dist_to_coast'):
         """
