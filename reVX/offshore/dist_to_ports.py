@@ -78,7 +78,7 @@ class DistanceToPorts:
         """
         Cost array, used to compute least cost distance to ports
         Offshore pixels have a value of 90 (pixel size), onshore pixels have a
-        value of 9999
+        value of -1
 
         Returns
         -------
@@ -106,7 +106,7 @@ class DistanceToPorts:
             position (row, col) within the distance to shore array/layer/raster
         cost_arr : ndarray
             Cost array with offshore pixels set to 90 (pixel width) and
-            onshore pixels set to 9999.
+            onshore pixels set to -1.
         profile : dict
             Profile (transform, crs, etc.) of arr raster
         """
@@ -118,7 +118,7 @@ class DistanceToPorts:
             lon = tif['longitude'].astype(np.float32)
 
         mask = cost_arr > 0
-        cost_arr = np.where(mask, 90, 9999).astype(np.uint16)
+        cost_arr = np.where(mask, 90, -1).astype(np.int8)
 
         mask = mask.ravel()
         ids = np.arange(lat.size, dtype=np.uint32)[mask]
@@ -257,7 +257,7 @@ class DistanceToPorts:
             pixels for least cost distance computation
         cost_arr : ndarray
             Cost array with offshore pixels set to 90 (pixel width) and
-            onshore pixels set to 9999.
+            onshore pixels set to -1.
         profile : dict
             Profile (transform, crs, etc.) of arr raster
         """
@@ -303,7 +303,7 @@ class DistanceToPorts:
         ----------
         cost_arr : ndarray
             Cost array with offshore pixels set to 90 (pixel width) and
-            onshore pixels set to 9999.
+            onshore pixels set to -1.
         port_idx : list | tuple | ndarray
             Port (row, col) index, used as starting point for least cost
             distance
@@ -336,7 +336,7 @@ class DistanceToPorts:
             lc_dist /= 1000
             lc_dist += port_dist
 
-            lc_dist[cost_arr == 9999] = -1
+            lc_dist[cost_arr == -1] = -1
 
             tt = (time.time() - ts) / 60
             logger.debug('- Least cost distance computed in {:.4f} minutes'
