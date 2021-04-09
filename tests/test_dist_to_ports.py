@@ -76,7 +76,7 @@ def test_haversine_versus_dist_to_port():
         port_coords = port_coords.astype('float32')
         h_dist = coordinate_distance(port_coords, pixel_coords)
         h_dist = h_dist.reshape(lat.shape)
-        l_dist = dtp.mc_dist_to_port(EXCL_H5, port_idx, port_dist)
+        l_dist = dtp.lc_dist_to_port(dtp.cost_arr, port_idx, port_dist)
         mask = l_dist != -1
 
         err = (l_dist[mask] - h_dist[mask]) / h_dist[mask]
@@ -210,7 +210,7 @@ def plot():
         port_coords = np.expand_dims(port[cols].values, 0).astype('float32')
         h_dist = \
             coordinate_distance(port_coords, pixel_coords).reshape(lat.shape)
-        l_dist = dtp.mc_dist_to_port(EXCL_H5, port_idx, port_dist)
+        l_dist = dtp.lc_dist_to_port(dtp.cost_arr, port_idx, port_dist)
 
         print(port)
         plt.imshow(mask)
