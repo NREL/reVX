@@ -33,7 +33,6 @@ class OffshoreInputs(ExclusionLayers):
         'ports_construction_nolimits': 'dist_p_to_s_nolimit',
         'weather_downtime_fixed_bottom': 'fixed_downtime',
         'weather_downtime_floating': 'floating_downtime',
-        # '': 'hs_average'
     }
 
     def __init__(self, inputs_fpath, offshore_sites, tm_dset='techmap_wtk'):
