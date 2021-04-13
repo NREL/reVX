@@ -227,13 +227,13 @@ class OffshoreInputs(ExclusionLayers):
             DataFrame mapping resource gid to exclusions latitude, longitude,
             row index, column index
         """
+
         tech_map = self[tm_dset]
 
         gids = np.unique(tech_map)
 
         if offshore_gids is None:
-            gids = gids[gids >= 0]
-            offshore_gids = gids.copy()
+            offshore_gids = gids[gids > 0]
         else:
             missing = ~np.isin(offshore_gids, gids)
             if np.any(missing):
@@ -244,18 +244,17 @@ class OffshoreInputs(ExclusionLayers):
                 warn(msg)
                 offshore_gids = offshore_gids[~missing]
 
-            gids = offshore_gids.copy()
-
-        if 0 in gids:
-            gids += 1
-            tech_map += 1
+        # Increment techmap and gids by 1 as center of mass cannot use an
+        # index of 0
+        tech_map += 1
+        offshore_gids += 1
 
         tech_map = np.array(center_of_mass(tech_map, labels=tech_map,
-                                           index=gids),
+                                           index=offshore_gids),
                             dtype=np.uint32)
 
         tech_map = pd.DataFrame(tech_map, columns=['row_idx', 'col_idx'])
-        tech_map['gid'] = offshore_gids
+        tech_map['gid'] = offshore_gids - 1
 
         return tech_map
 
@@ -312,23 +311,27 @@ class OffshoreInputs(ExclusionLayers):
             ('dist_p_to_a') and distance from nearest assembly area to sites
             ('dist_a_to_s')
         """
-        df = pd.DataFrame(self.h5[layer])
-        df = self.h5.df_str_decode(df)
+        assembly_areas = pd.DataFrame(self.h5[layer])
+        assembly_areas = self.h5.df_str_decode(assembly_areas)
+        lat_lon_cols = get_lat_lon_cols(assembly_areas)
+        area_coords = assembly_areas[lat_lon_cols].values.astype(np.float32)
         # pylint: disable = not-callable
-        lat_lon_cols = get_lat_lon_cols(df)
-        tree = cKDTree(df[lat_lon_cols].values)
+        tree = cKDTree(area_coords)
 
         site_lat_lons = self.lat_lons
-        _, pos = tree.query(self.lat_lons)
+        _, pos = tree.query(site_lat_lons)
 
-        out = {}
-        # extract distance from ports to assembly areas
-        df = df.iloc[pos]
-        out['dist_p_to_a'] = df['dist_p_to_a'].values
+        out = {'dist_p_to_a': np.zeros(len(site_lat_lons), dtype=np.float32),
+               'dist_a_to_s': np.zeros(len(site_lat_lons), dtype=np.float32)}
 
-        # compute distance from assembly areas to sites
-        out['dist_a_to_s'] = coordinate_distance(site_lat_lons,
-                                                 df[lat_lon_cols].values)
+        for i, area in assembly_areas.iterrows():
+            a_pos = np.where(pos == i)[0]
+            # extract distance from ports to assembly areas
+            out['dist_p_to_a'][a_pos] = area['dist_p_to_a']
+
+            # compute distance from assembly areas to sites
+            out['dist_a_to_s'][a_pos] = coordinate_distance(
+                area_coords, site_lat_lons[a_pos])
 
         return out
 
