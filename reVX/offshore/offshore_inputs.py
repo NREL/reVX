@@ -232,7 +232,8 @@ class OffshoreInputs(ExclusionLayers):
         gids = np.unique(tech_map)
 
         if offshore_gids is None:
-            offshore_gids = gids[gids >= 0]
+            gids = gids[gids >= 0]
+            offshore_gids = gids.copy()
         else:
             missing = ~np.isin(offshore_gids, gids)
             if np.any(missing):
@@ -243,8 +244,14 @@ class OffshoreInputs(ExclusionLayers):
                 warn(msg)
                 offshore_gids = offshore_gids[~missing]
 
+            gids = offshore_gids.copy()
+
+        if 0 in gids:
+            gids += 1
+            tech_map += 1
+
         tech_map = np.array(center_of_mass(tech_map, labels=tech_map,
-                                           index=offshore_gids),
+                                           index=gids),
                             dtype=np.uint32)
 
         tech_map = pd.DataFrame(tech_map, columns=['row_idx', 'col_idx'])
@@ -279,7 +286,7 @@ class OffshoreInputs(ExclusionLayers):
             logger.error(msg)
             raise RuntimeError(msg)
 
-        offshore_gids = offshore_sites['gid'].values
+        offshore_gids = offshore_sites['gid'].values.astype(np.int32)
         tech_map = self._reduce_tech_map(tm_dset=tm_dset,
                                          offshore_gids=offshore_gids)
 
