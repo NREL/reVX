@@ -107,7 +107,7 @@ def from_config(ctx, config, verbose):
 @click.option('--excl_fpath', '-excl', required=True,
               type=click.Path(exists=True),
               help="Filepath to exclusions h5 with techmap dataset.")
-@click.option('--ports_dset', '-ports', type=str, show_choices=True,
+@click.option('--ports_dset', '-ports', type=str, show_default=True,
               default='ports_construction_nolimits',
               help="Assembly Areas layer/dataset name in excl_fpath")
 @click.option('--log_dir', '-log', default=None, type=STR,
