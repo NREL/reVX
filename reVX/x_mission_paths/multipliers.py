@@ -5,6 +5,7 @@ Mike Bannister
 4/2/2021
 """
 import numpy as np
+import rasterio as rio
 
 # Mapping NLCD land codes to land use types
 NLCD_LAND_USE_CLASSES = {
@@ -230,3 +231,32 @@ class CostMultiplier:
         mults = cm.create_mults_raster(iso_regions, land_use, slope,
                                        iso_config, default)
         return mults
+
+    @staticmethod
+    def save_geotiff(mults, template, outf):
+        """
+        Save multiplier raster to geotiff
+
+        Parameters
+        ----------
+        mults : numpy.array
+            Multipliers array
+        template : str
+            Filename for CONUS template raster
+        outf : str
+            Filename for geotiff
+        """
+        ras = rio.open(template)
+        ras_out = rio.open(outf,
+                           'w',
+                           driver='GTiff',
+                           height=ras.shape[0],
+                           width=ras.shape[1],
+                           count=1,
+                           dtype=mults.dtype,
+                           crs=ras.crs,
+                           transform=ras.transform,
+                           compress='lzw'
+                           )
+        ras_out.write(mults, 1)
+        ras_out.close()
