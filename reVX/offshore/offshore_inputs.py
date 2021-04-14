@@ -164,6 +164,51 @@ class OffshoreInputs(ExclusionLayers):
 
         return offshore_sites
 
+    @classmethod
+    def _parse_input_layers(cls, input_layers=None):
+        """
+        Parse offshore inputs to extract from .h5 exclusion layers.
+        "input_layers" can be:
+        - A single layer to extract
+        - A list of layers to extract
+        - A dictionary with the output column name mapped to the layer to
+          extract
+
+        Parameters
+        ----------
+        input_layers : str | list | dict
+            Input layer, list of input layers, to extract, or dictionary
+            mapping the input layers to extract to the column names to save
+            them under
+        Returns
+        -------
+        dict
+            Dictionary mapping the column name to the layer to extract
+        """
+        msg = ''
+        if input_layers is None:
+            input_layers = cls.DEFAULT_INPUT_LAYERS
+            msg += '"input_layers" not provided, using defaults. '
+        else:
+            if isinstance(input_layers, str):
+                input_layers = [input_layers]
+
+            if isinstance(input_layers, (tuple, list, np.ndarray)):
+                input_layers = {layer: layer for layer in input_layers}
+
+        if not isinstance(input_layers, dict):
+            msg = ('Expecting "layers" to be a the name of a single input '
+                   'layer, a list of input layers, or a dictionary mapping '
+                   'desired input layers to desired output column names, but '
+                   'recieved: {}'.format(type(input_layers)))
+            logger.error(msg)
+            raise TypeError(msg)
+
+        msg += 'Extracting {}'.format(input_layers)
+        logger.info(msg)
+
+        return input_layers
+
     def _preflight_multi_file(self):
         """Run simple multi-file exclusion checks."""
         lat_shape = self.h5.shapes['latitude']
@@ -207,7 +252,8 @@ class OffshoreInputs(ExclusionLayers):
                             logger.error(msg)
                             raise MultiFileExclusionError(msg)
 
-    def _reduce_tech_map(self, tm_dset='techmap_wtk', offshore_gids=None):
+    def _reduce_tech_map(self, tm_dset='techmap_wtk', offshore_gids=None,
+                         offshore_dset='dist_to_coast'):
         """
         Find the row and column indices that correspond to the centriod of
         each offshore gid in exclusions layers. If offshore gids are not
@@ -222,6 +268,9 @@ class OffshoreInputs(ExclusionLayers):
             by default 'techmap_wtk'
         offshore_gids : ndarray | list, optional
             Vector or list of offshore gids, by default None
+        offshore_dset : str, optional
+            Exclusions layer to differentiate between onshore and offshore
+            pixels, by default 'dist_to_coast'
 
         Returns
         -------
@@ -231,6 +280,8 @@ class OffshoreInputs(ExclusionLayers):
         """
 
         tech_map = self[tm_dset]
+        # exclude onshore pixels
+        tech_map[self[offshore_dset] <= 0] = -1
 
         gids = np.unique(tech_map)
 
@@ -376,27 +427,7 @@ class OffshoreInputs(ExclusionLayers):
         out : pandas.DataFrame
             Updated meta data table with desired layers
         """
-        msg = ''
-        if input_layers is None:
-            input_layers = self.DEFAULT_INPUT_LAYERS
-            msg += '"input_layers" not provided, using defaults. '
-        else:
-            if isinstance(input_layers, str):
-                input_layers = [input_layers]
-
-            if isinstance(input_layers, (tuple, list, np.ndarray)):
-                input_layers = {layer: layer for layer in input_layers}
-
-        if not isinstance(input_layers, dict):
-            msg = ('Expecting "layers" to be a the name of a single input '
-                   'layer, a list of input layers, or a dictionary mapping '
-                   'desired input layers to desired output column names, but '
-                   'recieved: {}'.format(type(input_layers)))
-            logger.error(msg)
-            raise TypeError(msg)
-
-        msg += 'Extracting {}'.format(input_layers)
-        logger.info(msg)
+        input_layers = self._parse_input_layers(input_layers=input_layers)
 
         out = self.meta.copy()
         for layer, col in input_layers.items():
@@ -410,7 +441,13 @@ class OffshoreInputs(ExclusionLayers):
                 for col, data in self.compute_assembly_dist(layer).items():
                     out[col] = data
             else:
-                out[col] = self.extract_input_layer(layer)
+                layer_out = self.extract_input_layer(layer)
+                if layer == 'bathymetry':
+                    layer_out = np.abs(layer_out)
+                elif layer == 'dist_to_coast':
+                    layer_out /= 1000
+
+                out[col] = layer_out
 
         return out
 

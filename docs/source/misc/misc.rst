@@ -5,7 +5,7 @@ Installation and Usage
     installation
 
 Examples
-============
+========
 .. toctree::
 
    examples.rpm
