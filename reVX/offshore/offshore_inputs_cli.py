@@ -8,7 +8,7 @@ import logging
 import os
 
 from rex.utilities.loggers import init_mult
-from rex.utilities.cli_dtypes import STR
+from rex.utilities.cli_dtypes import STR, STR_OR_LIST
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, safe_json_load
 
@@ -102,8 +102,8 @@ def from_config(ctx, config, verbose):
 
 @main.command()
 @click.option('--inputs_fpath', '-h5', required=True,
-              type=click.Path(exists=True),
-              help=("Path to offshore inputs .h5 file"))
+              type=STR_OR_LIST,
+              help=("Path to offshore inputs .h5 file(s)"))
 @click.option('--offshore_sites', '-sites', required=True,
               type=click.Path(exists=True),
               help=("- Path to .csv | .json file with offshore sites meta data"

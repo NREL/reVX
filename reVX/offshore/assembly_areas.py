@@ -87,7 +87,10 @@ class AssemblyAreas:
             mask = (f[ports_dset] != -1).ravel()
 
         lat_lon = np.dstack((lat.ravel(), lon.ravel()))[0][mask]
-        rows, cols = row_col_indices(np.arange(len(mask)), lat.shape[1])
+        del lon
+        rows, cols = row_col_indices(np.arange(len(mask), dtype=np.int32),
+                                     lat.shape[1])
+        del lat
 
         # pylint: disable=not-callable
         tree = cKDTree(lat_lon)

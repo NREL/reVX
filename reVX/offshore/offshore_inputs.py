@@ -10,6 +10,7 @@ from scipy.spatial import cKDTree
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
+from reV.utilities.exceptions import MultiFileExclusionError
 from reVX.utilities.utilities import log_versions, coordinate_distance
 from rex.resource import Resource
 from rex.utilities.utilities import parse_table, get_lat_lon_cols
@@ -33,7 +34,6 @@ class OffshoreInputs(ExclusionLayers):
         'ports_construction_nolimits': 'dist_p_to_s_nolimit',
         'weather_downtime_fixed_bottom': 'fixed_downtime',
         'weather_downtime_floating': 'floating_downtime',
-        # '': 'hs_average'
     }
 
     def __init__(self, inputs_fpath, offshore_sites, tm_dset='techmap_wtk'):
@@ -162,6 +162,49 @@ class OffshoreInputs(ExclusionLayers):
 
         return offshore_sites
 
+    def _preflight_multi_file(self):
+        """Run simple multi-file exclusion checks."""
+        lat_shape = self.h5.shapes['latitude']
+        lon_shape = self.h5.shapes['longitude']
+        for layer in self.layers:
+            if layer not in ['assembly_areas', 'array_efficiency']:
+                lshape = self.h5.shapes[layer]
+                lshape = lshape[1:] if len(lshape) > 2 else lshape
+                if lshape != lon_shape or lshape != lat_shape:
+                    msg = ('Shape of layer "{}" is {} which does not match '
+                           'latitude and longitude shapes of {} and {}. '
+                           'Check your exclusion file inputs: {}'
+                           .format(layer, self.h5.shapes[layer],
+                                   lat_shape, lon_shape, self.h5._h5_files))
+                    logger.error(msg)
+                    raise MultiFileExclusionError(msg)
+
+        check_attrs = ('height', 'width', 'crs', 'transform')
+        base_profile = {}
+        for fp in self.h5_file:
+            with ExclusionLayers(fp) as f:
+                if not base_profile:
+                    base_profile = f.profile
+                else:
+                    for attr in check_attrs:
+                        if attr not in base_profile or attr not in f.profile:
+                            msg = ('Multi-file exclusion inputs from {} '
+                                   'dont have profiles with height, width, '
+                                   'crs, and transform: {} and {}'
+                                   .format(self.h5_file, base_profile,
+                                           f.profile))
+                            logger.error(msg)
+                            raise MultiFileExclusionError(msg)
+
+                        if base_profile[attr] != f.profile[attr]:
+                            msg = ('Multi-file exclusion inputs from {} '
+                                   'dont have matching "{}": {} and {}'
+                                   .format(self.h5_file, attr,
+                                           base_profile[attr],
+                                           f.profile[attr]))
+                            logger.error(msg)
+                            raise MultiFileExclusionError(msg)
+
     def _reduce_tech_map(self, tm_dset='techmap_wtk', offshore_gids=None):
         """
         Find the row and column indices that correspond to the centriod of
@@ -184,12 +227,13 @@ class OffshoreInputs(ExclusionLayers):
             DataFrame mapping resource gid to exclusions latitude, longitude,
             row index, column index
         """
+
         tech_map = self[tm_dset]
 
         gids = np.unique(tech_map)
 
         if offshore_gids is None:
-            offshore_gids = gids[gids >= 0]
+            offshore_gids = gids[gids > 0]
         else:
             missing = ~np.isin(offshore_gids, gids)
             if np.any(missing):
@@ -200,12 +244,17 @@ class OffshoreInputs(ExclusionLayers):
                 warn(msg)
                 offshore_gids = offshore_gids[~missing]
 
+        # Increment techmap and gids by 1 as center of mass cannot use an
+        # index of 0
+        tech_map += 1
+        offshore_gids += 1
+
         tech_map = np.array(center_of_mass(tech_map, labels=tech_map,
                                            index=offshore_gids),
                             dtype=np.uint32)
 
         tech_map = pd.DataFrame(tech_map, columns=['row_idx', 'col_idx'])
-        tech_map['gid'] = offshore_gids
+        tech_map['gid'] = offshore_gids - 1
 
         return tech_map
 
@@ -236,7 +285,7 @@ class OffshoreInputs(ExclusionLayers):
             logger.error(msg)
             raise RuntimeError(msg)
 
-        offshore_gids = offshore_sites['gid'].values
+        offshore_gids = offshore_sites['gid'].values.astype(np.int32)
         tech_map = self._reduce_tech_map(tm_dset=tm_dset,
                                          offshore_gids=offshore_gids)
 
@@ -262,23 +311,32 @@ class OffshoreInputs(ExclusionLayers):
             ('dist_p_to_a') and distance from nearest assembly area to sites
             ('dist_a_to_s')
         """
-        df = pd.DataFrame(self.h5[layer])
-        df = self.h5.df_str_decode(df)
+        assembly_areas = pd.DataFrame(self.h5[layer])
+        assembly_areas = self.h5.df_str_decode(assembly_areas)
+        lat_lon_cols = get_lat_lon_cols(assembly_areas)
+        area_coords = assembly_areas[lat_lon_cols].values.astype(np.float32)
         # pylint: disable = not-callable
-        lat_lon_cols = get_lat_lon_cols(df)
-        tree = cKDTree(df[lat_lon_cols].values)
+        tree = cKDTree(area_coords)
 
         site_lat_lons = self.lat_lons
-        _, pos = tree.query(self.lat_lons)
+        _, pos = tree.query(site_lat_lons)
+        assert len(pos) == len(site_lat_lons)
 
-        out = {}
-        # extract distance from ports to assembly areas
-        df = df.iloc[pos]
-        out['dist_p_to_a'] = df['dist_p_to_a'].values
+        out = {'dist_p_to_a': np.zeros(len(site_lat_lons), dtype=np.float32),
+               'dist_a_to_s': np.zeros(len(site_lat_lons), dtype=np.float32)}
 
-        # compute distance from assembly areas to sites
-        out['dist_a_to_s'] = coordinate_distance(site_lat_lons,
-                                                 df[lat_lon_cols].values)
+        for i, area in assembly_areas.iterrows():
+            logger.debug("Computing distance from assembly area {} to "
+                         "all offshore sites".format(area))
+            a_pos = np.where(pos == i)[0]
+            # extract distance from ports to assembly areas
+            out['dist_p_to_a'][a_pos] = area['dist_p_to_a']
+
+            # compute distance from assembly areas to sites
+            area_coords = area[lat_lon_cols].values.astype(np.float32)
+            area_coords = np.expand_dims(area_coords, 0)
+            out['dist_a_to_s'][a_pos] = coordinate_distance(
+                area_coords, site_lat_lons[a_pos])
 
         return out
 
