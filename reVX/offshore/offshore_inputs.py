@@ -28,12 +28,14 @@ class OffshoreInputs(ExclusionLayers):
     DEFAULT_INPUT_LAYERS = {
         'array_efficiency': 'aeff',
         'bathymetry': 'depth',
+        'dist_to_coast': 'dist_s_to_l',
         'assembly_areas': 'dist_a_to_s',
         'ports_operations': 'dist_op_to_s',
         'ports_construction': 'dist_p_to_s',
         'ports_construction_nolimits': 'dist_p_to_s_nolimit',
         'weather_downtime_fixed_bottom': 'fixed_downtime',
         'weather_downtime_floating': 'floating_downtime',
+        'weather_downtime_mean_wave_height_bouy': 'hs_average'
     }
 
     def __init__(self, inputs_fpath, offshore_sites, tm_dset='techmap_wtk'):
