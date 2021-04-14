@@ -320,6 +320,7 @@ class OffshoreInputs(ExclusionLayers):
 
         site_lat_lons = self.lat_lons
         _, pos = tree.query(site_lat_lons)
+        assert len(pos) == len(site_lat_lons)
 
         out = {'dist_p_to_a': np.zeros(len(site_lat_lons), dtype=np.float32),
                'dist_a_to_s': np.zeros(len(site_lat_lons), dtype=np.float32)}
@@ -332,7 +333,8 @@ class OffshoreInputs(ExclusionLayers):
             out['dist_p_to_a'][a_pos] = area['dist_p_to_a']
 
             # compute distance from assembly areas to sites
-            area_coords = np.expand_dims(area[lat_lon_cols].values, 0)
+            area_coords = area[lat_lon_cols].values.astype(np.float32)
+            area_coords = np.expand_dims(area_coords, 0)
             out['dist_a_to_s'][a_pos] = coordinate_distance(
                 area_coords, site_lat_lons[a_pos])
 
