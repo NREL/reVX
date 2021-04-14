@@ -325,11 +325,14 @@ class OffshoreInputs(ExclusionLayers):
                'dist_a_to_s': np.zeros(len(site_lat_lons), dtype=np.float32)}
 
         for i, area in assembly_areas.iterrows():
+            logger.debug("Computing distance from assembly area {} to "
+                         "all offshore sites".format(area))
             a_pos = np.where(pos == i)[0]
             # extract distance from ports to assembly areas
             out['dist_p_to_a'][a_pos] = area['dist_p_to_a']
 
             # compute distance from assembly areas to sites
+            area_coords = np.expand_dims(area[lat_lon_cols].values, 0)
             out['dist_a_to_s'][a_pos] = coordinate_distance(
                 area_coords, site_lat_lons[a_pos])
 
