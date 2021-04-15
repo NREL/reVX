@@ -286,7 +286,7 @@ class OffshoreInputs(ExclusionLayers):
         gids = np.unique(tech_map)
 
         if offshore_gids is None:
-            offshore_gids = gids[gids > 0]
+            offshore_gids = gids[gids != -1]
         else:
             missing = ~np.isin(offshore_gids, gids)
             if np.any(missing):
