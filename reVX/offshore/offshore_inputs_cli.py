@@ -139,8 +139,8 @@ def local(ctx, inputs_fpath, offshore_sites, input_layers, out_dir, tm_dset,
 
     logger.info('Extracting {} from {} and saving to {}'
                 .format(input_layers, inputs_fpath, out_fpath))
-    OffshoreInputs.extract(inputs_fpath, offshore_sites, input_layers,
-                           tm_dset=tm_dset, out_fpath=out_fpath)
+    OffshoreInputs.extract(inputs_fpath, offshore_sites, tm_dset=tm_dset,
+                           input_layers=input_layers, out_fpath=out_fpath)
 
 
 def get_node_cmd(config):

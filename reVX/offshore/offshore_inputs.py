@@ -411,16 +411,20 @@ class OffshoreInputs(ExclusionLayers):
 
         return data
 
-    def get_offshore_inputs(self, input_layers=None):
+    def get_offshore_inputs(self, input_layers=None,
+                            downtime_tolerance=0.01):
         """
         Extract data for the desired layers
 
         Parameters
         ----------
-        layers : str | list | dict
+        input_layers : str | list | dict
             Input layer, list of input layers, to extract, or dictionary
             mapping the input layers to extract to the column names to save
-            them under
+            them under, by default None
+        downtime_tolerance : float
+            Amount to shift weather downtime layer by so they are > 0 and/or
+            < 1, by default 0.01
 
         Returns
         -------
@@ -446,14 +450,18 @@ class OffshoreInputs(ExclusionLayers):
                     layer_out = np.abs(layer_out)
                 elif layer == 'dist_to_coast':
                     layer_out /= 1000
+                elif layer.startswith('weather_downtime'):
+                    layer_out[layer_out <= 0] = downtime_tolerance
+                    if 'wave_height' not in layer:
+                        layer_out[layer_out >= 1] = 1 - downtime_tolerance
 
                 out[col] = layer_out
 
         return out
 
     @classmethod
-    def extract(cls, inputs_fpath, offshore_sites, input_layers=None,
-                tm_dset='techmap_wtk', out_fpath=None):
+    def extract(cls, inputs_fpath, offshore_sites, tm_dset='techmap_wtk',
+                input_layers=None, downtime_tolerance=0.01, out_fpath=None):
         """
         Extract data from desired input layers for desired offshore sites
 
@@ -466,13 +474,16 @@ class OffshoreInputs(ExclusionLayers):
             - Path to a WIND Toolkit .h5 file to extact site meta from
             - List, tuple, or vector of offshore gids
             - Pre-extracted site meta DataFrame
-        input_layers : str | list | dict
-            Input layer, list of input layers, to extract, or dictionary
-            mapping the input layers to extract to the column names to save
-            them under
         tm_dset : str, optional
             Dataset / layer name for wind toolkit techmap,
             by default 'techmap_wtk'
+        input_layers : str | list | dict
+            Input layer, list of input layers, to extract, or dictionary
+            mapping the input layers to extract to the column names to save
+            them under, by default None
+        downtime_tolerance : float
+            Amount to shift weather downtime layer by so they are > 0 and/or
+            < 1, by default 0.01
         out_fpath : str, optional
             Output .csv path to save offshore inputs too, by default None
 
@@ -482,7 +493,9 @@ class OffshoreInputs(ExclusionLayers):
             Updated meta data table with desired layers
         """
         with cls(inputs_fpath, offshore_sites, tm_dset=tm_dset) as off_ipt:
-            out = off_ipt.get_offshore_inputs(input_layers=input_layers)
+            out = off_ipt.get_offshore_inputs(
+                input_layers=input_layers,
+                downtime_tolerance=downtime_tolerance)
 
         if out_fpath:
             out.to_csv(out_fpath, index=False)
