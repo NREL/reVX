@@ -40,10 +40,18 @@ class DistToPortsConverter(ExclusionsConverter):
         values = None
         for geotiff in dist_to_ports:
             v = cls._parse_tiff(geotiff, chunks=chunks, check_tiff=False)[1]
-            if values is None:
-                values = v
+            if not np.any(v):
+                msg = ('{} is invalid and only contains zeros and will be '
+                       'skipped. It is advised to recreate the file and '
+                       'update the distance to ports layer!'
+                       .format(geotiff))
+                logger.warning(msg)
+                warn(msg)
             else:
-                values = np.minimum(values, v)
+                if values is None:
+                    values = v
+                else:
+                    values = np.minimum(values, v)
 
         return values
 

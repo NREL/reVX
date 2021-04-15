@@ -75,7 +75,7 @@ or
 .. **NOTE: Loading the reVX module can take several minutes**
 
 Installing reVX
-=================
+===============
 
 Option 1: Install from PIP or Conda (recommended for analysts):
 ---------------------------------------------------------------
