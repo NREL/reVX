@@ -11,11 +11,13 @@ from rex.utilities.hpc import SLURM
 from rex.utilities.loggers import init_mult
 
 from reVX.plexos.plexos_plants import PlantProfileAggregation
+from reVX import __version__
 
 logger = logging.getLogger(__name__)
 
 
 @click.group(invoke_without_command=True)
+@click.version_option(version=__version__)
 @click.option('--name', '-n', default='plexos-plants', type=STR,
               help='Job name. Default is "plexos-plants".')
 @click.option('--plexos_table', '-pt', required=True,

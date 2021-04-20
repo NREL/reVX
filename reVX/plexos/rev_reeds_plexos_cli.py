@@ -12,11 +12,13 @@ from rex.utilities.cli_dtypes import STR, INT, INTLIST, STRLIST
 from rex.utilities.loggers import init_mult
 
 from reVX.plexos.rev_reeds_plexos import RevReedsPlexosManager
+from reVX import __version__
 
 logger = logging.getLogger(__name__)
 
 
 @click.group(invoke_without_command=True)
+@click.version_option(version=__version__)
 @click.option('--name', '-n', default='plx', type=STR,
               help='Job name. Default is "plx".')
 @click.option('--job_input', '-j', required=True,

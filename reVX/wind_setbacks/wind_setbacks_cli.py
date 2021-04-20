@@ -30,6 +30,7 @@ STATE_SETBACKS = {'structure': StructureWindSetbacks,
 
 
 @click.group()
+@click.version_option(version=__version__)
 @click.option('--name', '-n', default='WindSetbacks', type=STR,
               show_default=True,
               help='Job name. Default is "WindSetbacks".')
@@ -43,14 +44,6 @@ def main(ctx, name, verbose):
     ctx.ensure_object(dict)
     ctx.obj['NAME'] = name
     ctx.obj['VERBOSE'] = verbose
-
-
-@main.command()
-def version():
-    """
-    print version
-    """
-    click.echo(__version__)
 
 
 @main.command()

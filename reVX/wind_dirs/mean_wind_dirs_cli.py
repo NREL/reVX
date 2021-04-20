@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
+@click.version_option(version=__version__)
 @click.option('--name', '-n', default='MeanWindDirs', type=STR,
               show_default=True,
               help='Job name.')
@@ -40,14 +41,6 @@ def valid_config_keys():
     Echo the valid Mean Wind Dirs config keys
     """
     click.echo(', '.join(get_class_properties(MeanWindDirsConfig)))
-
-
-@main.command()
-def version():
-    """
-    print version
-    """
-    click.echo(__version__)
 
 
 def run_local(ctx, config):
