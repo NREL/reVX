@@ -82,8 +82,7 @@ def test_cli(runner, excl_dict, baseline_name):
             "log_level": "INFO",
             "res_h5_fpath": RES_H5,
             "wdir_dsets": DSET,
-            "resolution": 64,
-            'chunks_point_len': 10
+            "resolution": 64
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
