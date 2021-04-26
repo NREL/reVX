@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Aggregate powerrose and sort directions by dominance
+Compute the mean wind direction for each supply curve point
 """
 import logging
 
