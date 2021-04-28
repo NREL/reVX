@@ -2,19 +2,24 @@
 """
 Turbine Flicker exclusions calculator
 """
+from concurrent.futures import as_completed
 from hybrid.flicker.flicker_mismatch_grid import FlickerMismatch
 import logging
 import numpy as np
+import os
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.points import (SupplyCurveExtent,
                                      AggregationSupplyCurvePoint)
+from reV.supply_curve.tech_mapping import TechMapping
+from reVX.utilities.exclusions_converter import ExclusionsConverter
+from rex.utilities.execution import SpawnProcessPool
 
 logger = logging.getLogger(__name__)
 
 
-class TurbineFlicker(SupplyCurveExtent):
+class TurbineFlicker:
     """
     Class to compute turbine shadow flicker and exclude sites that will
     cause excessive flicker on building
@@ -23,8 +28,8 @@ class TurbineFlicker(SupplyCurveExtent):
     GRIDCELL_SIZE = 90
     FLICKER_ARRAY_LEN = 129
 
-    def __init__(self, excl_fpath, res_fpath, building_layer, hub_height,
-                 tm_dset='techmap_wtk', resolution=128):
+    def __init__(self, excl_fpath, res_fpath, building_layer,
+                 tm_dset='techmap_wtk'):
         """
         Parameters
         ----------
@@ -37,29 +42,19 @@ class TurbineFlicker(SupplyCurveExtent):
         building_layer : str
             Exclusion layer containing buildings from which turbine flicker
             exclusions will be computed.
-        hub_height : int
-            Hub-height in meters to compute turbine shadow flicker for
         tm_dset : str, optional
             Dataset / layer name for wind toolkit techmap,
             by default 'techmap_wtk'
-        resolution : int, optional
-            SC resolution, must be input in combination with gid,
-            by default 128
         """
         self._excl_h5 = excl_fpath
         self._res_h5 = res_fpath
         self._bld_layer = building_layer
-        self._hub_height = hub_height
         self._tm_dset = tm_dset
         self._preflight_check()
 
-        super().__init__(excl_fpath, resolution=resolution)
-
     def __repr__(self):
-        msg = ("{} from {}m turbines and {}"
-               .format(self.__class__.__name__,
-                       self._hub_height,
-                       self._bld_layer))
+        msg = ("{} from {}"
+               .format(self.__class__.__name__, self._bld_layer))
 
         return msg
 
@@ -68,7 +63,8 @@ class TurbineFlicker(SupplyCurveExtent):
                              tm_dset='techmap_wtk', resolution=128,
                              exclusion_shape=None):
         """
-        [summary]
+        Compute the mean wind direction profile (time-series) for the given
+        supply curve point gid at the desired hub-height
 
         Parameters
         ----------
@@ -291,7 +287,12 @@ class TurbineFlicker(SupplyCurveExtent):
                                  building_threshold=0.5, flicker_threshold=30,
                                  tm_dset='techmap_wtk', resolution=128):
         """
-        [summary]
+        Exclude all pixels that will cause flicker exceeding the
+        "flicker_threshold" on any building in "building_layer". Buildings
+        are defined as pixels with >= the "building_threshold value in
+        "building_layer". Shadow flicker is computed at the supply curve point
+        resolution and applied to all buildings within that supply curve point
+        sub-array.
 
         Parameters
         ----------
@@ -361,6 +362,188 @@ class TurbineFlicker(SupplyCurveExtent):
         Check to ensure building_layer and tm_dset are in exclusion .h5 file
         """
         with ExclusionLayers(self._excl_h5) as f:
-            for dset in [self._bld_layer, self._tm_dset]:
-                msg = "{} is not available in {}".format(dset, self._excl_h5)
-                assert dset in f, msg
+            if self._bld_layer not in f:
+                msg = ("{} is not available in {}"
+                       .format(self._bld_layer, self._excl_h5))
+                logger.error(msg)
+                raise RuntimeError(msg)
+
+            if self._tm_dset not in f:
+                logger.warning('Could not find techmap "{}" in {}. '
+                               'Creating {} using reV TechMapping'
+                               .format(self._tm_dset, self._excl_h5,
+                                       self._tm_dset))
+            try:
+                TechMapping.run(self._excl_h5, self._res_h5,
+                                dset=self._tm_dset)
+            except Exception as e:
+                logger.exception('TechMapping process failed. Received the '
+                                 'following error:\n{}'.format(e))
+                raise e
+
+    def compute_exclusions(self, hub_height, building_threshold=0.5,
+                           flicker_threshold=30, resolution=128,
+                           max_workers=None, out_layer=None):
+        """
+        Exclude all pixels that will cause flicker exceeding the
+        "flicker_threshold" on any building in "building_layer". Buildings
+        are defined as pixels with >= the "building_threshold value in
+        "building_layer". Shadow flicker is computed at the supply curve point
+        resolution based on a turbine with "hub_height" (m) and applied to all
+        buildings within that supply curve point sub-array.
+
+        Parameters
+        ----------
+        hub_height : int
+            Hub-height in meters to compute turbine shadow flicker for
+        building_threshold : float, optional
+            Threshold for exclusion layer values to identify pixels with
+            buildings, by default 0.5
+        flicker_threshold : int, optional
+            Maximum number of allowable flicker hours, by default 30
+        resolution : int, optional
+            SC resolution, must be input in combination with gid,
+            by default 128
+        max_workers : None | int, optional
+            Number of workers to use, if 1 run in serial, if None use all
+            available cores, by default None
+        out_layer : str, optional
+            Layer to save exclusions under. Layer will be saved in
+            "excl_fpath", by default None
+
+        Returns
+        -------
+        flicker_excl : ndarray
+            2D array of pixels to exclude to prevent shadow flicker on
+            buildings in "building_layer"
+        """
+        with SupplyCurveExtent(self._excl_h5, resolution=resolution) as sc:
+            exclusion_shape = sc.exclusions.shape
+            profile = sc.exclusions.profile
+            gids = sc.valid_sc_points(self._tm_dset)
+
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        etf_kwargs = {"building_threshold": building_threshold,
+                      "flicker_threshold": flicker_threshold,
+                      "tm_dset": self._tm_dset,
+                      "resolution": resolution}
+        flicker_excl = np.zeros(exclusion_shape, dtype=np.int8)
+        if max_workers > 1:
+            msg = ('Computing exclusions from {} based on {}m turbines '
+                   'in parallel using {} workers'
+                   .format(self, hub_height, max_workers))
+            logger.info(msg)
+
+            loggers = [__name__, 'reVX', 'rex']
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
+                futures = []
+                for gid in gids:
+                    future = exe.submit(self._exclude_turbine_flicker,
+                                        gid, self._excl_h5, self._res_h5,
+                                        self._bld_layer, hub_height,
+                                        **etf_kwargs)
+                    futures.append(future)
+
+                row_idx = []
+                col_idx = []
+                for i, future in enumerate(as_completed(futures)):
+                    gid_row_idx, gid_col_idx = future.result()
+                    row_idx.extend(gid_row_idx)
+                    col_idx.extend(gid_col_idx)
+                    logger.debug('Completed {} out of {} gids'
+                                 .format((i + 1), len(gids)))
+        else:
+            msg = ('Computing exclusions from {} based on {}m turbines in '
+                   'serial'.format(self, hub_height))
+            logger.info(msg)
+            row_idx = []
+            col_idx = []
+            for i, gid in enumerate(gids):
+                gid_row_idx, gid_col_idx = self._exclude_turbine_flicker(
+                    gid, self._excl_h5, self._res_h5, self._bld_layer,
+                    hub_height, **etf_kwargs)
+                row_idx.extend(gid_row_idx)
+                col_idx.extend(gid_col_idx)
+                logger.debug('Completed {} out of {} gids'
+                             .format((i + 1), len(gids)))
+
+        flicker_excl[row_idx, col_idx] = 1
+
+        if out_layer:
+            logger.info('Saving flicker exclusions to {} as {}'
+                        .format(self._excl_h5, out_layer))
+            description = ("Pixels with value 1 will cause greater than {} "
+                           "hours of flicker on buildings in {}. Shadow "
+                           "flicker is computed using a {}m turbine."
+                           .format(flicker_threshold, self._bld_layer,
+                                   hub_height))
+            ExclusionsConverter._write_layer(self._excl_h5, out_layer,
+                                             profile, flicker_excl,
+                                             description=description)
+
+        return flicker_excl
+
+    @classmethod
+    def run(cls, excl_fpath, res_fpath, building_layer, hub_height,
+            tm_dset='techmap_wtk', building_threshold=0.5,
+            flicker_threshold=30, resolution=128,
+            max_workers=None, out_layer=None):
+        """
+        Exclude all pixels that will cause flicker exceeding the
+        "flicker_threshold" on any building in "building_layer". Buildings
+        are defined as pixels with >= the "building_threshold value in
+        "building_layer". Shadow flicker is computed at the supply curve point
+        resolution based on a turbine with "hub_height" (m) and applied to all
+        buildings within that supply curve point sub-array.
+
+        Parameters
+        ----------
+        excl_fpath : str
+            Filepath to exclusions h5 file. File must contain "building_layer"
+            and "tm_dset".
+        res_fpath : str
+            Filepath to wind resource .h5 file containing hourly wind
+            direction data
+        building_layer : str
+            Exclusion layer containing buildings from which turbine flicker
+            exclusions will be computed.
+        hub_height : int
+            Hub-height in meters to compute turbine shadow flicker for
+        tm_dset : str, optional
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
+        building_threshold : float, optional
+            Threshold for exclusion layer values to identify pixels with
+            buildings, by default 0.5
+        flicker_threshold : int, optional
+            Maximum number of allowable flicker hours, by default 30
+        resolution : int, optional
+            SC resolution, must be input in combination with gid,
+            by default 128
+        max_workers : None | int, optional
+            Number of workers to use, if 1 run in serial, if None use all
+            available cores, by default None
+        out_layer : str, optional
+            Layer to save exclusions under. Layer will be saved in
+            "excl_fpath", by default None
+
+        Returns
+        -------
+        flicker_excl : ndarray
+            2D array of pixels to exclude to prevent shadow flicker on
+            buildings in "building_layer"
+        """
+        flicker = cls(excl_fpath, res_fpath, building_layer,
+                      tm_dset=tm_dset)
+        out_excl = flicker.compute_exclusions(
+            hub_height,
+            building_threshold=building_threshold,
+            flicker_threshold=flicker_threshold,
+            resolution=resolution,
+            max_workers=max_workers,
+            out_layer=out_layer)
+
+        return out_excl
