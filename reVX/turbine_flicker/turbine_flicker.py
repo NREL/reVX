@@ -213,15 +213,18 @@ class TurbineFlicker(SupplyCurveExtent):
 
         Parameters
         ----------
-        shadow_flicker : [type]
-            [description]
+        shadow_flicker : ndarray
+            2D array centered on the turbine with the number of flicker hours
+            per "exclusion" pixel
         flicker_threshold : int, optional
-            [description], by default 30
+            Maximum number of allowable flicker hours, by default 30
 
         Returns
         -------
-        [type]
-            [description]
+        row_shifts : ndarray
+            Shifts along axis 0 from building location to pixels to be excluded
+        col_shifts : ndarray
+            Shifts along axis 1 from building location to pixels to be excluded
         """
         # ensure shadow_flicker array is regularly shaped
         shadow_flicker = cls._check_shadow_flicker_arr(shadow_flicker)
@@ -234,43 +237,98 @@ class TurbineFlicker(SupplyCurveExtent):
 
         return row_shifts, col_shifts
 
+    @staticmethod
+    def _get_building_indices(excl_fpath, building_layer, gid,
+                              resolution=128, building_threshold=0.5):
+        """
+        Find buildings in sc point sub-array and convert indices to full
+        exclusion indices
+
+        Parameters
+        ----------
+        excl_fpath : str
+            Filepath to exclusions h5 file. File must contain "building_layer"
+            and "tm_dset".
+        building_layer : str
+            Exclusion layer containing buildings from which turbine flicker
+            exclusions will be computed.
+        gid : int
+            sc point gid to extract buildings for
+        resolution : int, optional
+            SC resolution, must be input in combination with gid,
+            by default 128
+        building_threshold : float, optional
+            Threshold for exclusion layer values to identify pixels with
+            buildings, by default 0.5
+
+        Returns
+        -------
+        row_idx : ndarray
+            Axis 0 indices of building in sc point sub-array in full exclusion
+            array
+        col_idx : ndarray
+            Axis 1 indices of building in sc point sub-array in full exclusion
+            array
+        shape : tuple
+            Exclusion shape
+        """
+        with ExclusionLayers(excl_fpath) as f:
+            shape = f.shape
+            row_slice, col_slice = AggregationSupplyCurvePoint.get_agg_slices(
+                gid, shape, resolution)
+
+            sc_blds = f[building_layer, row_slice, col_slice]
+
+        row_idx = np.array(range(*row_slice.indices(row_slice.stop)))
+        col_idx = np.array(range(*col_slice.indices(col_slice.stop)))
+        bld_row_idx, bld_col_idx = np.where(sc_blds >= building_threshold)
+
+        return row_idx[bld_row_idx], col_idx[bld_col_idx], shape
+
     @classmethod
     def _exclude_turbine_flicker(cls, gid, excl_fpath, res_fpath,
                                  building_layer, hub_height,
-                                 bld_threshold=0.5, flicker_threshold=30,
+                                 building_threshold=0.5, flicker_threshold=30,
                                  tm_dset='techmap_wtk', resolution=128):
         """
         [summary]
 
         Parameters
         ----------
-        gid : [type]
-            [description]
-        excl_fpath : [type]
-            [description]
-        res_fpath : [type]
-            [description]
-        building_layer : [type]
-            [description]
-        hub_height : int, optional
-            [description], by default 100
+        gid : int
+            Supply curve point gid to aggregate wind directions for
+        excl_fpath : str
+            Filepath to exclusions h5 file. File must contain "tm_dset".
+        res_fpath : str
+            Filepath to wind resource .h5 file containing hourly wind
+            direction data
+        building_layer : str
+            Exclusion layer containing buildings from which turbine flicker
+            exclusions will be computed.
+        hub_height : int
+            Hub-height in meters to compute turbine shadow flicker for
+        building_threshold : float, optional
+            Threshold for exclusion layer values to identify pixels with
+            buildings, by default 0.5
+        flicker_threshold : int, optional
+            Maximum number of allowable flicker hours, by default 30
         tm_dset : str, optional
-            [description], by default 'techmap_wtk'
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
         resolution : int, optional
-            [description], by default 128
+            SC resolution, must be input in combination with gid,
+            by default 128
 
         Returns
         -------
-        flicker_exclusions : ndarray
-
+        excl_row_idx : ndarray
+            Axis 0 indices of pixels to be excluded
+        excl_col_idx : ndarray
+            Axis 1 indices of pixels to be excluded
         """
-        gid_slice = (building_layer, )
-        with ExclusionLayers(excl_fpath) as f:
-            shape = f.shape
-            gid_slice += AggregationSupplyCurvePoint.get_agg_slices(gid,
-                                                                    shape,
-                                                                    resolution)
-            sc_blds = f[gid_slice]
+        row_idx, col_idx, shape = cls._get_building_indices(
+            excl_fpath, building_layer, gid,
+            resolution=resolution, building_threshold=building_threshold)
 
         meta, wind_dir = cls._aggregate_wind_dirs(gid,
                                                   excl_fpath,
@@ -288,11 +346,13 @@ class TurbineFlicker(SupplyCurveExtent):
         row_shifts, col_shifts = cls._threshod_flicker(
             shadow_flicker, flicker_threshold=flicker_threshold)
 
-        # TODO: shift indices to base exclusion idx from gid idx
-        row_idx, col_idx = np.where(sc_blds >= bld_threshold)
-
         excl_row_idx = (row_idx + row_shifts[:, None]).ravel()
+        excl_row_idx[excl_row_idx < 0] = 0
+        excl_row_idx[excl_row_idx > shape[0]] = shape[0]
+
         excl_col_idx = (col_idx + col_shifts[:, None]).ravel()
+        excl_col_idx[excl_col_idx < 0] = 0
+        excl_col_idx[excl_col_idx > shape[1]] = shape[1]
 
         return excl_row_idx, excl_col_idx
 
