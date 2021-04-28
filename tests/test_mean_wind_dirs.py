@@ -77,7 +77,8 @@ def test_cli(runner, excl_dict, baseline_name):
             "excl_fpath": EXCL_H5,
             "excl_dict": excl_dict,
             "execution_control": {
-                "option": "local"
+                "option": "local",
+                "sites_per_worker": 10
             },
             "log_level": "INFO",
             "res_h5_fpath": RES_H5,

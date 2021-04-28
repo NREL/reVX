@@ -10,9 +10,9 @@ import os
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
-from reV.supply_curve.points import (SupplyCurveExtent,
-                                     AggregationSupplyCurvePoint)
+from reV.supply_curve.points import SupplyCurveExtent
 from reV.supply_curve.tech_mapping import TechMapping
+from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from rex.utilities.execution import SpawnProcessPool
 
@@ -26,7 +26,7 @@ class TurbineFlicker:
     """
     STEPS_PER_HOUR = 1
     GRIDCELL_SIZE = 90
-    FLICKER_ARRAY_LEN = 129
+    FLICKER_ARRAY_LEN = 65
 
     def __init__(self, excl_fpath, res_fpath, building_layer,
                  tm_dset='techmap_wtk'):
@@ -96,13 +96,12 @@ class TurbineFlicker:
             supply curve point gid and hub-height
         """
         wind_dir_dset = 'winddirection_{}m'.format(hub_height)
-        out = AggregationSupplyCurvePoint.run(
+        out = MeanWindDirectionsPoint.run(
             gid,
             excl_fpath,
             res_fpath,
             tm_dset,
             wind_dir_dset,
-            agg_method='mean_wind_dir',
             resolution=resolution,
             exclusion_shape=exclusion_shape)
 
@@ -138,7 +137,7 @@ class TurbineFlicker:
             per "exclusion" pixel
         """
         mult = (cls.FLICKER_ARRAY_LEN * cls.GRIDCELL_SIZE) / 2
-        mult = int(np.ceil(mult / (blade_length * 2)))
+        mult = mult / (blade_length * 2)
         FlickerMismatch.diam_mult_nwe = mult
         FlickerMismatch.diam_mult_s = mult
         FlickerMismatch.steps_per_hour = cls.STEPS_PER_HOUR
@@ -153,9 +152,8 @@ class TurbineFlicker:
                                          gridcell_height=cls.GRIDCELL_SIZE,
                                          gridcell_width=cls.GRIDCELL_SIZE,
                                          gridcells_per_string=1)
-        # pylint: disable=unbalanced-tuple-unpacking
-        shadow_flicker, _ = shadow_flicker.create_heat_maps(range(0, 8760),
-                                                            ("time", ))
+        shadow_flicker = shadow_flicker.create_heat_maps(range(0, 8760),
+                                                         ("time", ))[0]
 
         return shadow_flicker
 
@@ -227,15 +225,25 @@ class TurbineFlicker:
 
         # normalize by number of time-steps to match shadow flicker results
         flicker_threshold /= 8760
-        row_shifts, col_shifts = np.where(shadow_flicker >= flicker_threshold)
-        row_shifts -= shadow_flicker.shape[0] // 2
-        col_shifts -= shadow_flicker.shape[1] // 2
+        shape = shadow_flicker.shape
+        row_shifts, col_shifts = np.where(shadow_flicker > flicker_threshold)
+        check = (np.any(row_shifts.isin([0, shape[0] - 1]))
+                 or np.any(col_shifts.isin([0, shape[1] - 1])))
+        if check:
+            msg = ("Turbine flicker exceeding {} appears to extend beyond the "
+                   "FlickerModel domain! Please increase the "
+                   "FLICKER_ARRAY_LEN and try again!")
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        row_shifts -= shape[0] // 2
+        col_shifts -= shape[1] // 2
 
         return row_shifts, col_shifts
 
     @staticmethod
     def _get_building_indices(excl_fpath, building_layer, gid,
-                              resolution=128, building_threshold=0.5):
+                              resolution=128, building_threshold=0):
         """
         Find buildings in sc point sub-array and convert indices to full
         exclusion indices
@@ -255,7 +263,7 @@ class TurbineFlicker:
             by default 128
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, by default 0.5
+            buildings, by default 0
 
         Returns
         -------
@@ -270,21 +278,21 @@ class TurbineFlicker:
         """
         with ExclusionLayers(excl_fpath) as f:
             shape = f.shape
-            row_slice, col_slice = AggregationSupplyCurvePoint.get_agg_slices(
+            row_slice, col_slice = MeanWindDirectionsPoint.get_agg_slices(
                 gid, shape, resolution)
 
             sc_blds = f[building_layer, row_slice, col_slice]
 
         row_idx = np.array(range(*row_slice.indices(row_slice.stop)))
         col_idx = np.array(range(*col_slice.indices(col_slice.stop)))
-        bld_row_idx, bld_col_idx = np.where(sc_blds >= building_threshold)
+        bld_row_idx, bld_col_idx = np.where(sc_blds > building_threshold)
 
         return row_idx[bld_row_idx], col_idx[bld_col_idx], shape
 
     @classmethod
     def _exclude_turbine_flicker(cls, gid, excl_fpath, res_fpath,
                                  building_layer, hub_height,
-                                 building_threshold=0.5, flicker_threshold=30,
+                                 building_threshold=0, flicker_threshold=30,
                                  tm_dset='techmap_wtk', resolution=128):
         """
         Exclude all pixels that will cause flicker exceeding the
@@ -310,7 +318,7 @@ class TurbineFlicker:
             Hub-height in meters to compute turbine shadow flicker for
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, by default 0.5
+            buildings, by default 0
         flicker_threshold : int, optional
             Maximum number of allowable flicker hours, by default 30
         tm_dset : str, optional
@@ -349,11 +357,11 @@ class TurbineFlicker:
 
         excl_row_idx = (row_idx + row_shifts[:, None]).ravel()
         excl_row_idx[excl_row_idx < 0] = 0
-        excl_row_idx[excl_row_idx > shape[0]] = shape[0]
+        excl_row_idx[excl_row_idx >= shape[0]] = shape[0] - 1
 
         excl_col_idx = (col_idx + col_shifts[:, None]).ravel()
         excl_col_idx[excl_col_idx < 0] = 0
-        excl_col_idx[excl_col_idx > shape[1]] = shape[1]
+        excl_col_idx[excl_col_idx >= shape[1]] = shape[1] - 1
 
         return excl_row_idx, excl_col_idx
 
@@ -381,7 +389,7 @@ class TurbineFlicker:
                                  'following error:\n{}'.format(e))
                 raise e
 
-    def compute_exclusions(self, hub_height, building_threshold=0.5,
+    def compute_exclusions(self, hub_height, building_threshold=0,
                            flicker_threshold=30, resolution=128,
                            max_workers=None, out_layer=None):
         """
@@ -398,7 +406,7 @@ class TurbineFlicker:
             Hub-height in meters to compute turbine shadow flicker for
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, by default 0.5
+            buildings, by default 0
         flicker_threshold : int, optional
             Maximum number of allowable flicker hours, by default 30
         resolution : int, optional
@@ -488,7 +496,7 @@ class TurbineFlicker:
 
     @classmethod
     def run(cls, excl_fpath, res_fpath, building_layer, hub_height,
-            tm_dset='techmap_wtk', building_threshold=0.5,
+            tm_dset='techmap_wtk', building_threshold=0,
             flicker_threshold=30, resolution=128,
             max_workers=None, out_layer=None):
         """
@@ -517,7 +525,7 @@ class TurbineFlicker:
             by default 'techmap_wtk'
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, by default 0.5
+            buildings, by default 0
         flicker_threshold : int, optional
             Maximum number of allowable flicker hours, by default 30
         resolution : int, optional
