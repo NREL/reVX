@@ -198,7 +198,7 @@ class TurbineFlicker:
         return shadow_flicker[::-1]
 
     @classmethod
-    def _threshod_flicker(cls, shadow_flicker, flicker_threshold=30):
+    def _threshold_flicker(cls, shadow_flicker, flicker_threshold=30):
         """
         Determine locations of shadow flicker that exceed the given threshold,
         convert to row and column shifts. These are the locations turbines
@@ -227,8 +227,8 @@ class TurbineFlicker:
         flicker_threshold /= 8760
         shape = shadow_flicker.shape
         row_shifts, col_shifts = np.where(shadow_flicker > flicker_threshold)
-        check = (np.any(row_shifts.isin([0, shape[0] - 1]))
-                 or np.any(col_shifts.isin([0, shape[1] - 1])))
+        check = (np.any(np.isin(row_shifts, [0, shape[0] - 1]))
+                 or np.any(np.isin(col_shifts, [0, shape[1] - 1])))
         if check:
             msg = ("Turbine flicker exceeding {} appears to extend beyond the "
                    "FlickerModel domain! Please increase the "
@@ -352,7 +352,7 @@ class TurbineFlicker:
                                                      blade_length,
                                                      wind_dir)
 
-        row_shifts, col_shifts = cls._threshod_flicker(
+        row_shifts, col_shifts = cls._threshold_flicker(
             shadow_flicker, flicker_threshold=flicker_threshold)
 
         excl_row_idx = (row_idx + row_shifts[:, None]).ravel()
@@ -370,17 +370,19 @@ class TurbineFlicker:
         Check to ensure building_layer and tm_dset are in exclusion .h5 file
         """
         with ExclusionLayers(self._excl_h5) as f:
-            if self._bld_layer not in f:
-                msg = ("{} is not available in {}"
-                       .format(self._bld_layer, self._excl_h5))
-                logger.error(msg)
-                raise RuntimeError(msg)
+            layers = f.layers
 
-            if self._tm_dset not in f:
-                logger.warning('Could not find techmap "{}" in {}. '
-                               'Creating {} using reV TechMapping'
-                               .format(self._tm_dset, self._excl_h5,
-                                       self._tm_dset))
+        if self._bld_layer not in layers:
+            msg = ("{} is not available in {}"
+                   .format(self._bld_layer, self._excl_h5))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        if self._tm_dset not in layers:
+            logger.warning('Could not find techmap "{}" in {}. '
+                           'Creating {} using reV TechMapping'
+                           .format(self._tm_dset, self._excl_h5,
+                                   self._tm_dset))
             try:
                 TechMapping.run(self._excl_h5, self._res_h5,
                                 dset=self._tm_dset)
