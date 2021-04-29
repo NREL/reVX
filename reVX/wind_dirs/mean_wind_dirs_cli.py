@@ -192,12 +192,12 @@ def local(ctx, res_h5_fpath, excl_fpath, wdir_dsets, out_dir, tm_dset,
 
 def get_node_cmd(config):
     """
-    Get the node CLI call for prominent wind direction computation.
+    Get the node CLI call for mean wind direction computation.
 
     Parameters
     ----------
-    config : reVX.config.wind_dirs.WindDirsConfig
-        Wind Directions config object.
+    config : reVX.config.mean_wind_dirs.MeanWindDirsConfig
+        Mean Wind Directions config object.
 
     Returns
     -------

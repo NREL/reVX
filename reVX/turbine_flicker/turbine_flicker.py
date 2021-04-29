@@ -263,7 +263,8 @@ class TurbineFlicker:
             by default 128
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, by default 0
+            buildings, values are % of pixel containing a building,
+            by default 0
 
         Returns
         -------
@@ -318,7 +319,8 @@ class TurbineFlicker:
             Hub-height in meters to compute turbine shadow flicker for
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, by default 0
+            buildings, values are % of pixel containing a building,
+            by default 0
         flicker_threshold : int, optional
             Maximum number of allowable flicker hours, by default 30
         tm_dset : str, optional
@@ -408,7 +410,8 @@ class TurbineFlicker:
             Hub-height in meters to compute turbine shadow flicker for
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, by default 0
+            buildings, values are % of pixel containing a building,
+            by default 0
         flicker_threshold : int, optional
             Maximum number of allowable flicker hours, by default 30
         resolution : int, optional
@@ -527,7 +530,8 @@ class TurbineFlicker:
             by default 'techmap_wtk'
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, by default 0
+            buildings, values are % of pixel containing a building,
+            by default 0
         flicker_threshold : int, optional
             Maximum number of allowable flicker hours, by default 30
         resolution : int, optional

@@ -9,7 +9,7 @@ from reV.config.base_analysis_config import AnalysisConfig
 class MeanWindDirsConfig(AnalysisConfig):
     """Config framework for mean wind direction calculation"""
 
-    NAME = 'meanWindDirs'
+    NAME = 'MeanWindDirs'
     REQUIREMENTS = ('res_h5_fpath', 'excl_fpath', 'wdir_dsets')
 
     def __init__(self, config):
