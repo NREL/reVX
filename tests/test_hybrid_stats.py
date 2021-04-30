@@ -89,25 +89,25 @@ def test_hybrid_stats(max_workers, func):
 
     mask = TIME_INDEX.month == 1
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
-    test = test_stats[f'2012-Jan_{func}'].values
+    test = test_stats[f'Jan_{func}'].values
     msg = 'January correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
     mask = TIME_INDEX.dayofyear == 234
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
-    test = test_stats[f'2012-234_{func}'].values
+    test = test_stats[f'234_{func}'].values
     msg = 'Day of year 234 correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
     mask = TIME_INDEX.hour == 18
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
-    test = test_stats[f'2012-18:00UTC_{func}'].values
+    test = test_stats[f'18:00UTC_{func}'].values
     msg = '18:00 correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
     mask = (TIME_INDEX.month == 7) & (TIME_INDEX.hour == 18)
     truth = compute_stats(function, SOLAR[mask], WIND[mask])
-    test = test_stats[f'2012-Jul-18:00UTC_{func}'].values
+    test = test_stats[f'Jul-18:00UTC_{func}'].values
     msg = 'July-18:00 correlations do not match!'
     assert np.allclose(truth, test, equal_nan=True), msg
 
@@ -130,6 +130,9 @@ def test_cross_correlation(max_workers):
 
     baseline = os.path.join(TESTDATADIR, 'hybrid_stats',
                             'cross_correlations.csv')
+    if not os.path.exists(baseline):
+        test.to_csv(baseline)
+
     baseline = pd.read_csv(baseline, index_col=0)
 
     test.columns = test.columns.astype(str)
@@ -214,7 +217,7 @@ def test_stability_coefficient(max_workers, reference):
     mask = TIME_INDEX.month == 6
     truth = stability_coeff(solar.loc[mask], wind.loc[mask],
                             reference=reference)
-    test = test_stats['2012-Jun_stability'].values
+    test = test_stats['Jun_stability'].values
     msg = 'June stability coefficients do not match!'
     assert np.allclose(truth, test, rtol=0.001, atol=0), msg
 
