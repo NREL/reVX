@@ -288,6 +288,9 @@ class ExclusionsConverter:
         if len(chunks) < 3:
             chunks = (1, ) + chunks
 
+        if values.ndim < 3:
+            values = np.expand_dims(values, 0)
+
         with h5py.File(excl_h5, mode='a') as f:
             if layer in f:
                 ds = f[layer]
@@ -355,8 +358,8 @@ class ExclusionsConverter:
             transform_atol=transform_atol, coord_atol=coord_atol)
 
         if scale_factor is not None:
-            values = Outputs._check_data_dtype(values, dtype,
-                                               scale_factor=scale_factor)
+            attrs = {'scale_factor': scale_factor}
+            values = Outputs._check_data_dtype(values, dtype, attrs=attrs)
 
         cls._write_layer(excl_h5, layer, profile, values,
                          chunks=chunks, description=description,

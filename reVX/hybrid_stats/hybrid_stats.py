@@ -232,7 +232,41 @@ class HybridStats:
         return self.meta[lat_lon_cols]
 
     @staticmethod
-    def _map_sites(solar_meta, wind_meta):
+    def _clean_meta(meta, tech, drop=False):
+        """
+        Clean up input meta data:
+        - rename and move index to table
+        - rename capacity and any mean_* columns
+        - drop all but capacity, gid and mean columns if `drop=True`
+
+        Parameters
+        ----------
+        meta : pandas.DataFrame
+            Sites meta data table for given technology
+        tech : str
+            Technology of meta data table, either 'solar' or 'wind'
+
+        Returns
+        -------
+        meta : pandas.DataFrame
+            updated site meta data table
+        """
+        meta.index.name = f"{tech}_gid"
+        cols = {}
+        for c in meta:
+            if c.startswith('cap'):
+                cols[c] = f'{tech}_cap'
+            elif c.startswith('mean'):
+                cols[c] = f'{tech}_res_gid'
+
+        meta = meta.rename(columns=cols)
+        if drop:
+            meta = meta[cols.values()]
+
+        return meta.reset_index()
+
+    @classmethod
+    def _map_sites(cls, solar_meta, wind_meta):
         """
         Map solar to wind sites retaining the higher resolution meta data.
         Mapping it done using a cKDTree to determine the closest coarser
@@ -250,38 +284,40 @@ class HybridStats:
         meta : pandas.DataFrame
             Meta data table mapping the finer resolution data to the coarser
         """
+        solar_coords = solar_meta[get_lat_lon_cols(solar_meta)].values
+        wind_coords = wind_meta[get_lat_lon_cols(wind_meta)].values
         solar_n = len(solar_meta)
-        solar_cols = get_lat_lon_cols(solar_meta)
         wind_n = len(wind_meta)
-        wind_cols = get_lat_lon_cols(wind_meta)
 
         # pylint: disable=not-callable
         if solar_n < wind_n:
-            tree = cKDTree(solar_meta[solar_cols].values)
-            meta = wind_meta.rename(columns={'cap': 'wind_cap'})
-            meta.index.name = 'wind_gid'
-            meta = meta.reset_index()
+            solar_meta = cls._clean_meta(solar_meta, 'solar', drop=True)
+            wind_meta = cls._clean_meta(wind_meta, 'wind')
+            tree = cKDTree(solar_coords)
+            meta = wind_meta.copy()
 
-            dist, pos = tree.query(meta[wind_cols].values)
+            dist, pos = tree.query(wind_coords)
             mask = dist <= np.median(dist) * 1.5
             pos = pos[mask]
-            meta = meta.loc[mask]
-            meta['solar_gid'] = pos
-            if 'capacity' in solar_meta:
-                meta['solar_cap'] = solar_meta['capacity'].values[pos]
+            meta = meta.loc[mask].reset_index(drop=True)
+
+            meta = pd.concat((meta,
+                              solar_meta.iloc[pos].reset_index(drop=True)),
+                             axis=1)
         else:
-            tree = cKDTree(wind_meta[wind_cols].values)
-            meta = solar_meta.rename(columns={'cap': 'solar_cap'})
-            meta.index.name = 'solar_gid'
-            meta = meta.reset_index()
+            solar_meta = cls._clean_meta(solar_meta, 'solar')
+            wind_meta = cls._clean_meta(wind_meta, 'wind', drop=True)
+            tree = cKDTree(wind_coords)
+            meta = solar_meta.copy()
 
-            dist, pos = tree.query(meta[solar_cols])
+            dist, pos = tree.query(solar_coords)
             mask = dist <= np.median(dist) * 1.5
-            meta = meta.loc[mask]
             pos = pos[mask]
-            meta['wind_gid'] = pos
-            if 'capacity' in wind_meta:
-                meta['wind_cap'] = wind_meta['capacity'].values[pos]
+            meta = meta.loc[mask].reset_index(drop=True)
+
+            meta = pd.concat((meta,
+                              wind_meta.iloc[pos].reset_index(drop=True)),
+                             axis=1)
 
         return meta
 
@@ -340,7 +376,8 @@ class HybridStats:
         return time_index, solar_time_slice, wind_time_slice
 
     @staticmethod
-    def _groupby_data(data, diurnal=False, doy=False, month=False):
+    def _groupby_data(data, annual=True, diurnal=False, doy=False,
+                      month=False):
         """
         Groupby data by month and/or hour
 
@@ -348,6 +385,8 @@ class HybridStats:
         ----------
         data : pandas.DataFrame
             DataFrame of data where index is time_index, columns are sites
+        annual : bool, optional
+            Extract annaul stats, by default True
         diurnal : bool, optional
             Extract diurnal stats, by default False
         doy : bool, optional
@@ -360,7 +399,10 @@ class HybridStats:
         data : pandas.Groupby
             Input DataFrame grouped by month and or hour if requested
         """
-        groupby = [data.index.year]
+        groupby = []
+        if annual:
+            groupby.append(data.index.year)
+
         if month:
             groupby.append(data.index.month)
 
@@ -369,6 +411,9 @@ class HybridStats:
 
         if diurnal:
             groupby.append(data.index.hour)
+
+        m = "Data must be groupby year, month, day of year or dirunal (hour)!"
+        assert groupby, m
 
         data = data.groupby(groupby)
 
@@ -448,7 +493,8 @@ class HybridStats:
 
     @classmethod
     def _compute_correlations(cls, solar_data, wind_data, statistics,
-                              diurnal=False, doy=False, month=False):
+                              annual=True, diurnal=False, doy=False,
+                              month=False):
         """
         Compute desired correlations for desired time intervals between
         solar and wind data
@@ -461,6 +507,9 @@ class HybridStats:
             DataFrame of wind data. Index is time_index, columns are sites
         statistics : dict
             Dictionary of statistic functions/kwargs to run
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         diurnal : bool, optional
             Extract diurnal stats, by default False
         doy : bool, optional
@@ -474,9 +523,11 @@ class HybridStats:
             DataFrame of desired statistics at desired time intervals
         """
         sites = solar_data.columns.values
-        solar_data = cls._groupby_data(solar_data, diurnal=diurnal, doy=doy,
+        solar_data = cls._groupby_data(solar_data, annual=annual,
+                                       diurnal=diurnal, doy=doy,
                                        month=month)
-        wind_data = cls._groupby_data(wind_data, diurnal=diurnal, doy=doy,
+        wind_data = cls._groupby_data(wind_data, annual=annual,
+                                      diurnal=diurnal, doy=doy,
                                       month=month)
 
         cols_map, col_names = cls._create_names(list(solar_data.groups),
@@ -503,8 +554,9 @@ class HybridStats:
     @classmethod
     def _extract_stats(cls, solar_h5, wind_h5, dataset, sites,
                        solar_time_slice, wind_time_slice, statistics=None,
-                       time_index=None, res_cls=Resource, diurnal=False,
-                       doy=False, month=False, combinations=False):
+                       time_index=None, res_cls=Resource, annual=True,
+                       diurnal=False, doy=False, month=False,
+                       combinations=False):
         """
         Extract stats for given dataset, sites, and temporal extent
 
@@ -533,6 +585,9 @@ class HybridStats:
             by default None
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         diurnal : bool, optional
             Extract diurnal stats, by default False
         doy : bool, optional
@@ -572,23 +627,27 @@ class HybridStats:
                 out_stats.append(cls._compute_correlations(solar_data,
                                                            wind_data,
                                                            statistics,
+                                                           annual=False,
                                                            month=True))
 
             if doy:
                 out_stats.append(cls._compute_correlations(solar_data,
                                                            wind_data,
                                                            statistics,
+                                                           annual=False,
                                                            doy=True))
 
             if diurnal:
                 out_stats.append(cls._compute_correlations(solar_data,
                                                            wind_data,
                                                            statistics,
+                                                           annual=False,
                                                            diurnal=True))
             if month and diurnal:
                 out_stats.append(cls._compute_correlations(solar_data,
                                                            wind_data,
                                                            statistics,
+                                                           annual=False,
                                                            month=True,
                                                            diurnal=True))
 
@@ -597,6 +656,7 @@ class HybridStats:
             out_stats = cls._compute_correlations(solar_data,
                                                   wind_data,
                                                   statistics,
+                                                  annual=annual,
                                                   diurnal=diurnal,
                                                   doy=doy,
                                                   month=month)
@@ -828,8 +888,8 @@ class HybridStats:
 
         return out_stats
 
-    def compute_stats(self, dataset, diurnal=False, doy=False, month=False,
-                      combinations=False, max_workers=None,
+    def compute_stats(self, dataset, annual=True, diurnal=False, doy=False,
+                      month=False, combinations=False, max_workers=None,
                       sites_per_worker=1000, lat_lon_only=True):
         """
         Compute correlations
@@ -840,6 +900,9 @@ class HybridStats:
             Dataset to compare, if a string, extract the same
             dataset for both with and solar, other wise a tuple of the form:
             (solar_dataset, wind_dataset)
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         diurnal : bool, optional
             Extract diurnal stats, by default False
         doy : bool, optional
@@ -862,6 +925,7 @@ class HybridStats:
             DataFrame of desired statistics at desired time intervals
         """
         kwargs = {'res_cls': self.res_cls,
+                  'annual': annual,
                   'diurnal': diurnal,
                   'doy': doy,
                   'month': month,
@@ -880,7 +944,7 @@ class HybridStats:
         return out_stats
 
     @classmethod
-    def run(cls, solar_h5, wind_h5, dataset, statistics='pearson',
+    def run(cls, solar_h5, wind_h5, dataset, statistics='pearson', annual=True,
             diurnal=False, doy=False, month=False, combinations=False,
             res_cls=Resource, year=None, max_workers=None,
             sites_per_worker=1000, lat_lon_only=True, out_path=None):
@@ -903,6 +967,9 @@ class HybridStats:
             cls.STATS, or a dictionary of the form
             {'stat_name': {'func': *, 'kwargs: {**}}},
             by default 'pearson'
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         diurnal : bool, optional
             Extract diurnal stats, by default False
         doy : bool, optional
@@ -940,7 +1007,7 @@ class HybridStats:
         hybrid_stats = cls(solar_h5, wind_h5, statistics=statistics,
                            res_cls=res_cls, year=year)
         out_stats = hybrid_stats.compute_stats(
-            dataset, diurnal=diurnal, doy=doy, month=month,
+            dataset, annual=annual, diurnal=diurnal, doy=doy, month=month,
             combinations=combinations, max_workers=max_workers,
             sites_per_worker=sites_per_worker, lat_lon_only=lat_lon_only)
         if out_path is not None:
@@ -949,7 +1016,7 @@ class HybridStats:
         return out_stats
 
     @classmethod
-    def cf_profile(cls, solar_h5, wind_h5, statistics='pearson',
+    def cf_profile(cls, solar_h5, wind_h5, statistics='pearson', annual=True,
                    diurnal=False, doy=False, month=False, combinations=False,
                    res_cls=Resource, max_workers=None,
                    sites_per_worker=1000, lat_lon_only=True, out_path=None):
@@ -967,6 +1034,9 @@ class HybridStats:
             cls.STATS, or a dictionary of the form
             {'stat_name': {'func': *, 'kwargs: {**}}},
             by default 'pearson'
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         diurnal : bool, optional
             Extract diurnal stats, by default False
         doy : bool, optional
@@ -994,8 +1064,9 @@ class HybridStats:
         """
         out_stats = cls.run(solar_h5, wind_h5, 'cf_profile',
                             statistics=statistics, res_cls=res_cls,
-                            diurnal=diurnal, doy=doy, month=month,
-                            combinations=combinations, max_workers=max_workers,
+                            annual=annual, diurnal=diurnal, doy=doy,
+                            month=month, combinations=combinations,
+                            max_workers=max_workers,
                             sites_per_worker=sites_per_worker,
                             lat_lon_only=lat_lon_only, out_path=out_path)
 
@@ -1372,7 +1443,8 @@ class HybridStabilityCoefficient(HybridStats):
 
     @classmethod
     def _compute_coefficients(cls, solar_data, wind_data, solar_cap=None,
-                              wind_cap=None, month=False, reference='solar'):
+                              wind_cap=None, annual=True, month=False,
+                              reference='solar'):
         """
         Compute compute average stability coefficient of solar and wind data
         over desired time intervals
@@ -1383,6 +1455,9 @@ class HybridStabilityCoefficient(HybridStats):
             DataFrame of solar data. Index is time_index, columns are sites
         wind_data : pandas.DataFrame
             DataFrame of wind data. Index is time_index, columns are sites
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         month : bool, optional
             Extract monthly stats, by default False
         reference : str, optional
@@ -1402,12 +1477,14 @@ class HybridStabilityCoefficient(HybridStats):
             mix = ((solar_data * solar_cap + wind_data * wind_cap)
                    / (solar_cap + wind_cap))
 
-        mix = cls._groupby_data(mix, month=month)
+        mix = cls._groupby_data(mix, annual=annual, month=month)
+        solar_data = cls._groupby_data(solar_data, annual=annual, month=month)
+        wind_data = cls._groupby_data(wind_data, annual=annual, month=month)
 
         if reference.lower() == 'solar':
-            ref = cls._groupby_data(solar_data, month=month)
+            ref = solar_data
         else:
-            ref = cls._groupby_data(wind_data, month=month)
+            ref = wind_data
 
         cols_map, _ = cls._create_names(list(mix.groups),
                                         ['stability'])
@@ -1420,16 +1497,24 @@ class HybridStabilityCoefficient(HybridStats):
             assert mix_grp.shape == ref_grp.shape, msg
             out_stats[col] = cls.stability_coefficient(mix_grp, ref_grp)
 
-        out_stats = out_stats = pd.DataFrame(out_stats, index=sites,
-                                             dtype=np.float32)
+        out_stats = [pd.DataFrame(out_stats, index=sites, dtype=np.float32)]
 
-        return out_stats
+        means = zip(['solar', 'wind', 'reference', 'mixed'],
+                    [solar_data, wind_data, ref, mix])
+        for name, data in means:
+            _, cols = cls._create_names(list(data.groups),
+                                        [f'{name}_cf'])
+            mean_data = data.aggregate(np.nanmean).T.astype(np.float32)
+            mean_data.columns = cols
+            out_stats.append(mean_data)
+
+        return pd.concat(out_stats, axis=1)
 
     @classmethod
     def _extract_stats(cls, solar_h5, wind_h5, dataset, sites,
                        solar_time_slice, wind_time_slice,
                        time_index=None, res_cls=Resource,
-                       reference='solar', month=False,
+                       reference='solar', annual=True, month=False,
                        combinations=False):
         """
         Extract stats for given dataset, sites, and temporal extent
@@ -1458,6 +1543,9 @@ class HybridStabilityCoefficient(HybridStats):
         reference : str, optional
             Which data to use as the reference (denominator) when computing
             the stability coefficient, by default 'solar'
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         month : bool, optional
             Extract monthly stats, by default False
         combinations : bool, optional
@@ -1506,6 +1594,7 @@ class HybridStabilityCoefficient(HybridStats):
                                                            solar_cap=solar_cap,
                                                            wind_cap=wind_cap,
                                                            reference=reference,
+                                                           annual=False,
                                                            month=True))
 
             out_stats = pd.concat(out_stats, axis=1)
@@ -1515,6 +1604,7 @@ class HybridStabilityCoefficient(HybridStats):
                                                   solar_cap=solar_cap,
                                                   wind_cap=wind_cap,
                                                   reference=reference,
+                                                  annual=annual,
                                                   month=month)
 
         out_stats.index = sites.index.values
@@ -1523,8 +1613,8 @@ class HybridStabilityCoefficient(HybridStats):
 
         return out_stats
 
-    def compute_stats(self, dataset, reference='solar', month=False,
-                      combinations=False, max_workers=None,
+    def compute_stats(self, dataset, reference='solar', annual=True,
+                      month=False, combinations=False, max_workers=None,
                       sites_per_worker=1000, lat_lon_only=True):
         """
         Compute stability coefficients
@@ -1538,6 +1628,9 @@ class HybridStabilityCoefficient(HybridStats):
         reference : str, optional
             Which data to use as the reference (denominator) when computing
             the stability coefficient, by default 'solar'
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         month : bool, optional
             Extract monthly stats, by default False
         combinations : bool, optional
@@ -1557,6 +1650,7 @@ class HybridStabilityCoefficient(HybridStats):
         """
         kwargs = {'time_index': self.time_index,
                   'res_cls': self.res_cls,
+                  'annual': annual,
                   'month': month,
                   'combinations': combinations,
                   'reference': reference}
@@ -1571,9 +1665,10 @@ class HybridStabilityCoefficient(HybridStats):
         return out_stats
 
     @classmethod
-    def run(cls, solar_h5, wind_h5, dataset, reference='solar', month=False,
-            combinations=False, res_cls=Resource, year=None, max_workers=None,
-            sites_per_worker=1000, lat_lon_only=True, out_path=None):
+    def run(cls, solar_h5, wind_h5, dataset, reference='solar', annual=True,
+            month=False, combinations=False, res_cls=Resource, year=None,
+            max_workers=None, sites_per_worker=1000, lat_lon_only=True,
+            out_path=None):
         """
         Compute stability coefficient between solar and wind time-series.
         Time-series are shifted to local time before computing the daily
@@ -1593,6 +1688,9 @@ class HybridStabilityCoefficient(HybridStats):
         reference : str, optional
             Which data to use as the reference (denominator) when computing
             the stability coefficient, by default 'solar'
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         month : bool, optional
             Extract monthly stats, by default False
         combinations : bool, optional
@@ -1625,7 +1723,7 @@ class HybridStabilityCoefficient(HybridStats):
 
         hybrid_stats = cls(solar_h5, wind_h5, res_cls=res_cls, year=year)
         out_stats = hybrid_stats.compute_stats(
-            dataset, month=month, combinations=combinations,
+            dataset, annual=annual, month=month, combinations=combinations,
             reference=reference, max_workers=max_workers,
             sites_per_worker=sites_per_worker,
             lat_lon_only=lat_lon_only)
@@ -1635,9 +1733,10 @@ class HybridStabilityCoefficient(HybridStats):
         return out_stats
 
     @classmethod
-    def cf_profile(cls, solar_h5, wind_h5, reference='solar', month=False,
-                   combinations=False, res_cls=Resource, max_workers=None,
-                   sites_per_worker=1000, lat_lon_only=True, out_path=None):
+    def cf_profile(cls, solar_h5, wind_h5, reference='solar', annual=True,
+                   month=False, combinations=False, res_cls=Resource,
+                   max_workers=None, sites_per_worker=1000, lat_lon_only=True,
+                   out_path=None):
         """
         Compute stability coefficient between solar and wind time-series.
         Time-series are shifted to local time before computing the daily
@@ -1653,6 +1752,9 @@ class HybridStabilityCoefficient(HybridStats):
         reference : str, optional
             Which data to use as the reference (denominator) when computing
             the stability coefficient, by default 'solar'
+        annual : bool, optional,
+            Extract stats annualy. To extract multi-year monthly stats set
+            `annual=False` and month=True`, by default True
         month : bool, optional
             Extract monthly stats, by default False
         combinations : bool, optional
@@ -1675,7 +1777,7 @@ class HybridStabilityCoefficient(HybridStats):
             DataFrame of resource statistics
         """
         out_stats = cls.run(solar_h5, wind_h5, 'cf_profile',
-                            reference=reference, month=month,
+                            reference=reference, annual=annual, month=month,
                             combinations=combinations, res_cls=res_cls,
                             max_workers=max_workers,
                             sites_per_worker=sites_per_worker,
