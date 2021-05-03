@@ -3,7 +3,6 @@
 Turbine Flicker exclusions calculator
 """
 from concurrent.futures import as_completed
-from hybrid.flicker.flicker_mismatch_grid import FlickerMismatch
 import logging
 import numpy as np
 import os
@@ -136,6 +135,9 @@ class TurbineFlicker:
             2D array centered on the turbine with the number of flicker hours
             per "exclusion" pixel
         """
+        # Import HOPP dynamically so its not a requirement
+        from hybrid.flicker.flicker_mismatch_grid import FlickerMismatch
+
         mult = (cls.FLICKER_ARRAY_LEN * cls.GRIDCELL_SIZE) / 2
         mult = mult / (blade_length * 2)
         FlickerMismatch.diam_mult_nwe = mult
@@ -162,7 +164,7 @@ class TurbineFlicker:
         """
         Check to ensure the shadow_flicker array is odd in shape, i.e. both
         dimensions are odd allowing for a central pixel for the turbine to
-        sit on. Flip 0-axis to mimic the turbine sitting on each building.
+        sit on. Flip both axes to mimic the turbine sitting on each building.
         All flicker pixels will now indicate locations where a turbine would
         need to be to cause flicker on said building
 
@@ -175,7 +177,7 @@ class TurbineFlicker:
         Returns
         -------
         shadow_flicker : ndarray
-            Updated 2D shadow flicker array with odd dimensions if needed
+            Inverted 2D shadow flicker array with odd dimensions if needed.
         """
         reduce_slice = ()
         reduce_arr = False
@@ -195,10 +197,10 @@ class TurbineFlicker:
             logger.warning(msg)
             warn(msg)
 
-        return shadow_flicker[::-1]
+        return shadow_flicker[::-1, ::-1]
 
     @classmethod
-    def _threshold_flicker(cls, shadow_flicker, flicker_threshold=30):
+    def _get_flicker_excl_shifts(cls, shadow_flicker, flicker_threshold=30):
         """
         Determine locations of shadow flicker that exceed the given threshold,
         convert to row and column shifts. These are the locations turbines
@@ -275,7 +277,7 @@ class TurbineFlicker:
             Axis 1 indices of building in sc point sub-array in full exclusion
             array
         shape : tuple
-            Exclusion shape
+            Full exclusion array shape
         """
         with ExclusionLayers(excl_fpath) as f:
             shape = f.shape
@@ -290,6 +292,49 @@ class TurbineFlicker:
 
         return row_idx[bld_row_idx], col_idx[bld_col_idx], shape
 
+    @staticmethod
+    def _create_excl_indices(bld_idx, flicker_shifts, shape):
+        """
+        Create 2D (row, col) indices of pixels to be excluded based on
+        building indices and shadow flicker shifts.
+
+        Parameters
+        ----------
+        bld_idx : tuple
+            (row, col) indices of building onto which shadow flicker exclusions
+            are to be mapped.
+        flicker_shifts : tuple
+            Index shifts (row, col) from building locations to exclude based
+            on shadow flicker results. Shifts are based on shadow flicker
+            threshold. Shadow flicker array is inverted to represent mapping of
+            shadow onto buildings
+        shape : tuple
+            Full exclusion array shape
+
+        Returns
+        -------
+        excl_row_idx : ndarray
+            Row (axis 0) indices of pixels to be excluded because they will
+            cause excessive shadow flicker on building in supply curve point
+            gid subset
+        excl_col_idx : ndarray
+            Column (axis 1) indices of pixels to be excluded because they will
+            cause excessive shadow flicker on building in supply curve point
+            gid subset
+        """
+        row_idx, col_idx = bld_idx
+        row_shifts, col_shifts = flicker_shifts
+
+        excl_row_idx = (row_idx + row_shifts[:, None]).ravel()
+        excl_row_idx[excl_row_idx < 0] = 0
+        excl_row_idx[excl_row_idx >= shape[0]] = shape[0] - 1
+
+        excl_col_idx = (col_idx + col_shifts[:, None]).ravel()
+        excl_col_idx[excl_col_idx < 0] = 0
+        excl_col_idx[excl_col_idx >= shape[1]] = shape[1] - 1
+
+        return excl_row_idx, excl_col_idx
+
     @classmethod
     def _exclude_turbine_flicker(cls, gid, excl_fpath, res_fpath,
                                  building_layer, hub_height,
@@ -297,11 +342,13 @@ class TurbineFlicker:
                                  tm_dset='techmap_wtk', resolution=128):
         """
         Exclude all pixels that will cause flicker exceeding the
-        "flicker_threshold" on any building in "building_layer". Buildings
-        are defined as pixels with >= the "building_threshold value in
-        "building_layer". Shadow flicker is computed at the supply curve point
+        "flicker_threshold" on buildings that exist within
+        supply curve point gid subset of "building_layer". Buildings
+        are defined as pixels with >= the "building_threshold".
+        Shadow flicker is computed at the supply curve point
         resolution and applied to all buildings within that supply curve point
-        sub-array.
+        sub-array. Excluded pixels can extend beyond the supply curve point
+        gid subset, for example if a building sits at the edge of the subset.
 
         Parameters
         ----------
@@ -332,10 +379,10 @@ class TurbineFlicker:
 
         Returns
         -------
-        excl_row_idx : ndarray
-            Axis 0 indices of pixels to be excluded
-        excl_col_idx : ndarray
-            Axis 1 indices of pixels to be excluded
+        excl_idx : tuple
+            (row, col) indices of pixels to be excluded because they will cause
+            excessive shadow flicker on building in supply curve point gid
+            subset
         """
         row_idx, col_idx, shape = cls._get_building_indices(
             excl_fpath, building_layer, gid,
@@ -354,18 +401,13 @@ class TurbineFlicker:
                                                      blade_length,
                                                      wind_dir)
 
-        row_shifts, col_shifts = cls._threshold_flicker(
+        flicker_shifts = cls._get_flicker_excl_shifts(
             shadow_flicker, flicker_threshold=flicker_threshold)
 
-        excl_row_idx = (row_idx + row_shifts[:, None]).ravel()
-        excl_row_idx[excl_row_idx < 0] = 0
-        excl_row_idx[excl_row_idx >= shape[0]] = shape[0] - 1
+        excl_idx = cls._create_excl_indices((row_idx, col_idx),
+                                            flicker_shifts, shape)
 
-        excl_col_idx = (col_idx + col_shifts[:, None]).ravel()
-        excl_col_idx[excl_col_idx < 0] = 0
-        excl_col_idx[excl_col_idx >= shape[1]] = shape[1] - 1
-
-        return excl_row_idx, excl_col_idx
+        return excl_idx
 
     def _preflight_check(self):
         """
@@ -426,9 +468,9 @@ class TurbineFlicker:
 
         Returns
         -------
-        flicker_excl : ndarray
-            2D array of pixels to exclude to prevent shadow flicker on
-            buildings in "building_layer"
+        flicker_arr : ndarray
+            2D inclusion array. Pixels to exclude (0) to prevent shadow
+            flicker on buildings in "building_layer"
         """
         with SupplyCurveExtent(self._excl_h5, resolution=resolution) as sc:
             exclusion_shape = sc.exclusions.shape
@@ -442,7 +484,6 @@ class TurbineFlicker:
                       "flicker_threshold": flicker_threshold,
                       "tm_dset": self._tm_dset,
                       "resolution": resolution}
-        flicker_excl = np.zeros(exclusion_shape, dtype=np.int8)
         if max_workers > 1:
             msg = ('Computing exclusions from {} based on {}m turbines '
                    'in parallel using {} workers'
@@ -483,7 +524,8 @@ class TurbineFlicker:
                 logger.debug('Completed {} out of {} gids'
                              .format((i + 1), len(gids)))
 
-        flicker_excl[row_idx, col_idx] = 1
+        flicker_arr = np.ones(exclusion_shape, dtype=np.int8)
+        flicker_arr[row_idx, col_idx] = 0
 
         if out_layer:
             logger.info('Saving flicker exclusions to {} as {}'
@@ -494,10 +536,10 @@ class TurbineFlicker:
                            .format(flicker_threshold, self._bld_layer,
                                    hub_height))
             ExclusionsConverter._write_layer(self._excl_h5, out_layer,
-                                             profile, flicker_excl,
+                                             profile, flicker_arr,
                                              description=description)
 
-        return flicker_excl
+        return flicker_arr
 
     @classmethod
     def run(cls, excl_fpath, res_fpath, building_layer, hub_height,
@@ -546,7 +588,7 @@ class TurbineFlicker:
 
         Returns
         -------
-        flicker_excl : ndarray
+        flicker_arr : ndarray
             2D array of pixels to exclude to prevent shadow flicker on
             buildings in "building_layer"
         """

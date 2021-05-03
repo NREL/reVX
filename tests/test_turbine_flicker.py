@@ -46,14 +46,37 @@ def test_shadow_flicker(flicker_threshold):
                                                             blade_length,
                                                             wind_dir)
 
-    baseline = (shadow_flicker[::-1].copy()
+    baseline = (shadow_flicker[::-1, ::-1].copy()
                 > (flicker_threshold / 8760)).astype(np.int8)
-    row_shifts, col_shifts = TurbineFlicker._threshold_flicker(
+    row_shifts, col_shifts = TurbineFlicker._get_flicker_excl_shifts(
         shadow_flicker, flicker_threshold=flicker_threshold)
 
-    test = np.zeros((65, 65), dtype=np.int8)
-    test[32, 32] = 1
-    test[row_shifts + 32, col_shifts + 32] = 1
+    test = np.ones((65, 65), dtype=np.int8)
+    test[32, 32] = 0
+    test[row_shifts + 32, col_shifts + 32] = 0
+
+    assert np.allclose(baseline, test)
+
+
+def test_excl_indices_mapping():
+    """
+    Test mapping of shadow flicker shifts to building locations to create
+    exclusion indices
+    """
+    shape = (129, 129)
+    arr = np.random.rand(shape[0] - 2, shape[1] - 2)
+    arr = np.pad(arr, 1)
+    baseline = (arr <= 0.8).astype(np.int8)
+
+    bld_idx = (np.array([64]), np.array([64]))
+    flicker_shifts = TurbineFlicker._get_flicker_excl_shifts(
+        arr[::-1, ::-1], flicker_threshold=(0.8 * 8760))
+
+    row_idx, col_idx = TurbineFlicker._create_excl_indices(bld_idx,
+                                                           flicker_shifts,
+                                                           shape)
+    test = np.ones(shape, dtype=np.int8)
+    test[row_idx, col_idx] = 0
 
     assert np.allclose(baseline, test)
 

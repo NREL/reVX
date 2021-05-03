@@ -49,7 +49,6 @@ requirements:
   run-constrained:
     - h5pyd
     - psycopg2-binary
-    - HOPP
 
 about:
   home: "https://github.com/NREL/reVX"
