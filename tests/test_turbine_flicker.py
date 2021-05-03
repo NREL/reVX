@@ -33,6 +33,30 @@ def runner():
     return CliRunner()
 
 
+@pytest.mark.parametrize('shadow_loc',
+                         [(2, 2),
+                          (-2, -2),
+                          (2, -2),
+                          (-2, 2)])
+def test_shadow_mapping(shadow_loc):
+    """
+    Test basic logic of shadow to exclusion mapping
+    """
+    shape = (7, 7)
+    bld_idx = (np.array([3]), np.array([3]))
+    baseline_row_idx = bld_idx[0] - shadow_loc[0]
+    baseline_col_idx = bld_idx[1] - shadow_loc[1]
+    shadow_arr = np.zeros(shape, dtype=np.int8)
+    shadow_arr[bld_idx[0] + shadow_loc[0], bld_idx[1] + shadow_loc[1]] = 1
+
+    flicker_shifts = TurbineFlicker._get_flicker_excl_shifts(shadow_arr)
+    test_row_idx, test_col_idx = TurbineFlicker._create_excl_indices(
+        bld_idx, flicker_shifts, shape)
+
+    assert np.allclose(baseline_row_idx, test_row_idx)
+    assert np.allclose(baseline_col_idx, test_col_idx)
+
+
 @pytest.mark.parametrize('flicker_threshold', [10, 30])
 def test_shadow_flicker(flicker_threshold):
     """
@@ -47,7 +71,7 @@ def test_shadow_flicker(flicker_threshold):
                                                             wind_dir)
 
     baseline = (shadow_flicker[::-1, ::-1].copy()
-                > (flicker_threshold / 8760)).astype(np.int8)
+                <= (flicker_threshold / 8760)).astype(np.int8)
     row_shifts, col_shifts = TurbineFlicker._get_flicker_excl_shifts(
         shadow_flicker, flicker_threshold=flicker_threshold)
 

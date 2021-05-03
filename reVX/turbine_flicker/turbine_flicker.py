@@ -160,7 +160,7 @@ class TurbineFlicker:
         return shadow_flicker
 
     @staticmethod
-    def _check_shadow_flicker_arr(shadow_flicker):
+    def _invert_shadow_flicker_arr(shadow_flicker):
         """
         Check to ensure the shadow_flicker array is odd in shape, i.e. both
         dimensions are odd allowing for a central pixel for the turbine to
@@ -222,8 +222,9 @@ class TurbineFlicker:
         col_shifts : ndarray
             Shifts along axis 1 from building location to pixels to be excluded
         """
-        # ensure shadow_flicker array is regularly shaped
-        shadow_flicker = cls._check_shadow_flicker_arr(shadow_flicker)
+        # ensure shadow_flicker array is regularly shaped and invert for
+        # mapping to buildings
+        shadow_flicker = cls._invert_shadow_flicker_arr(shadow_flicker)
 
         # normalize by number of time-steps to match shadow flicker results
         flicker_threshold /= 8760
@@ -589,8 +590,8 @@ class TurbineFlicker:
         Returns
         -------
         flicker_arr : ndarray
-            2D array of pixels to exclude to prevent shadow flicker on
-            buildings in "building_layer"
+            2D inclusion array. Pixels to exclude (0) to prevent shadow
+            flicker on buildings in "building_layer"
         """
         flicker = cls(excl_fpath, res_fpath, building_layer,
                       tm_dset=tm_dset)
