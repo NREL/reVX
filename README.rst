@@ -97,7 +97,7 @@ Option 1: Install from PIP or Conda (recommended for analysts):
                you will need to install `HOPP <https://github.com/nrel/HOPP>`_
                manually: ``pip install HOPP``
 
-        - NOTE: If you install using pip and want to run `Wind Setbacks <https://nrel.github.io/reVX/reVX/reVX.wind_setbacks.wind_setbacks.html>_`
+        - NOTE: If you install using pip and want to run `Wind Setbacks <https://nrel.github.io/reVX/reVX/reVX.wind_setbacks.wind_setbacks.html>`_
            you will need to install rtree manually:
             * ``conda install rtree``
             * `pip installation instructions <https://pypi.org/project/Rtree/#:~:text=Rtree%20is%20a%20ctypes%20Python,Multi%2Ddimensional%20indexes>`_
