@@ -93,7 +93,7 @@ Option 1: Install from PIP or Conda (recommended for analysts):
         - NOTE: If you install using conda and you want to use:
             * `HSDS <https://github.com/NREL/hsds-examples>`_
                you will also need to install h5pyd manually: ``pip install h5pyd``
-            * `Turbine Flicker <https://nrel.github.io/reVX/reVX/reVX.turbine_flicker.turbine_flicker.html>_`
+            * `Turbine Flicker <https://nrel.github.io/reVX/reVX/reVX.turbine_flicker.turbine_flicker.html>`_
                you will need to install `HOPP <https://github.com/nrel/HOPP>`_
                manually: ``pip install HOPP``
 
