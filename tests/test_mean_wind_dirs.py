@@ -27,8 +27,8 @@ EXCL_DICT = {'ri_srtm_slope': {'inclusion_range': (None, 5),
              'ri_reeds_regions': {'inclusion_range': (None, 400),
                                   'exclude_nodata': True}}
 
-RTOL = 0.01
-ATOL = 0.001
+RTOL = 0.001
+ATOL = 0
 
 
 @pytest.fixture(scope="module")
@@ -53,11 +53,11 @@ def check_h5(test_h5, baseline_h5):
                         test[c] = test[c].astype(str)
 
                     assert_frame_equal(truth, test, check_dtype=False,
-                                       rtol=0.0001)
+                                       rtol=RTOL, atol=ATOL)
                 elif dset == 'time_index':
                     truth.equals(test)
                 else:
-                    assert np.allclose(truth, test)
+                    assert np.allclose(truth, test, rtol=RTOL, atol=ATOL)
 
 
 @pytest.mark.parametrize(('excl_dict', 'baseline_name'),
@@ -77,7 +77,8 @@ def test_cli(runner, excl_dict, baseline_name):
             "excl_fpath": EXCL_H5,
             "excl_dict": excl_dict,
             "execution_control": {
-                "option": "local"
+                "option": "local",
+                "sites_per_worker": 10
             },
             "log_level": "INFO",
             "res_h5_fpath": RES_H5,

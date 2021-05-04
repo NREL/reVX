@@ -73,7 +73,9 @@ setup(
                             ("offshore-assembly-areas=reVX.offshore."
                              "assembly_areas_cli:main"),
                             ("offshore-inputs=reVX.offshore."
-                             "offshore_inputs_cli:main")
+                             "offshore_inputs_cli:main"),
+                            ("turbine-flicker=reVX.turbine_flicker."
+                             "turbine_flicker_cli:main")
                             ],
     },
     include_package_data=True,
