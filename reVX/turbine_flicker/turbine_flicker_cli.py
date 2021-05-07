@@ -102,7 +102,7 @@ def from_config(ctx, config, verbose):
 @click.option('--excl_fpath', '-excl', required=True,
               type=click.Path(exists=True),
               help="Filepath to exclusions h5 with techmap dataset.")
-@click.option('--res_fpath', '-res', required=True,
+@click.option('--res_fpath', '-ref', required=True,
               type=click.Path(exists=True),
               help="Filepath to .h5 file containing wind direction data")
 @click.option('--building_layer', '-bldl', required=True, type=str,
@@ -187,7 +187,7 @@ def get_node_cmd(config):
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
-            '-res {}'.format(SLURM.s(config.res_fpath)),
+            '-resf {}'.format(SLURM.s(config.res_fpath)),
             '-bldl {}'.format(SLURM.s(config.building_layer)),
             '-h {}'.format(SLURM.s(config.hub_height)),
             '-o {}'.format(SLURM.s(config.out_layer)),
