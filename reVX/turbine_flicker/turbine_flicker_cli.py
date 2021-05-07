@@ -187,7 +187,7 @@ def get_node_cmd(config):
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
-            '-resf {}'.format(SLURM.s(config.res_fpath)),
+            '-ref {}'.format(SLURM.s(config.res_fpath)),
             '-bldl {}'.format(SLURM.s(config.building_layer)),
             '-h {}'.format(SLURM.s(config.hub_height)),
             '-o {}'.format(SLURM.s(config.out_layer)),
