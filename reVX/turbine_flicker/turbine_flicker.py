@@ -13,6 +13,7 @@ from reV.supply_curve.points import SupplyCurveExtent
 from reV.supply_curve.tech_mapping import TechMapping
 from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
 from reVX.utilities.exclusions_converter import ExclusionsConverter
+from rex.resource_extraction.resource_extraction import ResourceX
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
@@ -29,7 +30,7 @@ class TurbineFlicker:
     FLICKER_ARRAY_LEN = 65
 
     def __init__(self, excl_fpath, res_fpath, building_layer,
-                 tm_dset='techmap_wtk'):
+                 resolution=640, tm_dset='techmap_wtk'):
         """
         Parameters
         ----------
@@ -45,74 +46,22 @@ class TurbineFlicker:
         tm_dset : str, optional
             Dataset / layer name for wind toolkit techmap,
             by default 'techmap_wtk'
+        resolution : int, optional
+            SC resolution, must be input in combination with gid,
+            by default 640
         """
         self._excl_h5 = excl_fpath
         self._res_h5 = res_fpath
         self._bld_layer = building_layer
-        self._tm_dset = tm_dset
-        self._preflight_check()
+        self._res = resolution
+        self._preflight_check(tm_dset=tm_dset)
+        self._sc_points = self._get_sc_points()
 
     def __repr__(self):
         msg = ("{} from {}"
                .format(self.__class__.__name__, self._bld_layer))
 
         return msg
-
-    @staticmethod
-    def _aggregate_wind_dirs(gid, excl_fpath, res_fpath, hub_height,
-                             tm_dset='techmap_wtk', resolution=128,
-                             exclusion_shape=None):
-        """
-        Compute the mean wind direction profile (time-series) for the given
-        supply curve point gid at the desired hub-height
-
-        Parameters
-        ----------
-        gid : int
-            Supply curve point gid to aggregate wind directions for
-        excl_fpath : str
-            Filepath to exclusions h5 file. File must contain "tm_dset".
-        res_fpath : str
-            Filepath to wind resource .h5 file containing hourly wind
-            direction data
-        hub_height : int
-            Hub-height in meters to compute turbine shadow flicker for
-        tm_dset : str, optional
-            Dataset / layer name for wind toolkit techmap,
-            by default 'techmap_wtk'
-        resolution : int, optional
-            SC resolution, must be input in combination with gid,
-            by default 128
-        exclusion_shape : tuple, optional
-            Shape of the full exclusions extent (rows, cols). Inputing this
-            will speed things up considerably. by default None
-
-        Returns
-        -------
-        site_meta : pandas.Series
-            Meta data for supply curve point
-        wind_dir : ndarray
-            Hourly time-series of aggregated mean wind direction for desired
-            supply curve point gid and hub-height
-        """
-        wind_dir_dset = 'winddirection_{}m'.format(hub_height)
-        out = MeanWindDirectionsPoint.run(
-            gid,
-            excl_fpath,
-            res_fpath,
-            tm_dset,
-            wind_dir_dset,
-            resolution=resolution,
-            exclusion_shape=exclusion_shape)
-
-        meta = out['meta']
-        wind_dir = out[wind_dir_dset]
-
-        # Drop last day of leap years
-        if len(wind_dir) == 8784:
-            wind_dir = wind_dir[:-24]
-
-        return meta, wind_dir
 
     @classmethod
     def _compute_shadow_flicker(cls, lat, lon, blade_length, wind_dir):
@@ -247,7 +196,7 @@ class TurbineFlicker:
 
     @staticmethod
     def _get_building_indices(excl_fpath, building_layer, gid,
-                              resolution=128, building_threshold=0):
+                              resolution=640, building_threshold=0):
         """
         Find buildings in sc point sub-array and convert indices to full
         exclusion indices
@@ -264,7 +213,7 @@ class TurbineFlicker:
             sc point gid to extract buildings for
         resolution : int, optional
             SC resolution, must be input in combination with gid,
-            by default 128
+            by default 640
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
             buildings, values are % of pixel containing a building,
@@ -338,10 +287,10 @@ class TurbineFlicker:
         return excl_row_idx, excl_col_idx
 
     @classmethod
-    def _exclude_turbine_flicker(cls, gid, excl_fpath, res_fpath,
+    def _exclude_turbine_flicker(cls, point, excl_fpath, res_fpath,
                                  building_layer, hub_height,
                                  building_threshold=0, flicker_threshold=30,
-                                 tm_dset='techmap_wtk', resolution=128):
+                                 resolution=640):
         """
         Exclude all pixels that will cause flicker exceeding the
         "flicker_threshold" on buildings that exist within
@@ -372,12 +321,9 @@ class TurbineFlicker:
             by default 0
         flicker_threshold : int, optional
             Maximum number of allowable flicker hours, by default 30
-        tm_dset : str, optional
-            Dataset / layer name for wind toolkit techmap,
-            by default 'techmap_wtk'
         resolution : int, optional
             SC resolution, must be input in combination with gid,
-            by default 128
+            by default 640
 
         Returns
         -------
@@ -387,19 +333,19 @@ class TurbineFlicker:
             subset
         """
         row_idx, col_idx, shape = cls._get_building_indices(
-            excl_fpath, building_layer, gid,
+            excl_fpath, building_layer, point.name,
             resolution=resolution, building_threshold=building_threshold)
 
-        meta, wind_dir = cls._aggregate_wind_dirs(gid,
-                                                  excl_fpath,
-                                                  res_fpath,
-                                                  hub_height,
-                                                  tm_dset=tm_dset,
-                                                  resolution=resolution,
-                                                  exclusion_shape=shape)
+        with ResourceX(res_fpath) as f:
+            dset = 'winddirection_{}m'.format(hub_height)
+            wind_dir = f[dset, :, point['res_gid']]
+
+            if len(wind_dir) == 8784:
+                wind_dir = wind_dir[:-24]
+
         blade_length = hub_height / 2.5
-        shadow_flicker = cls._compute_shadow_flicker(meta['latitude'],
-                                                     meta['longitude'],
+        shadow_flicker = cls._compute_shadow_flicker(point['latitude'],
+                                                     point['longitude'],
                                                      blade_length,
                                                      wind_dir)
 
@@ -411,9 +357,15 @@ class TurbineFlicker:
 
         return excl_idx
 
-    def _preflight_check(self):
+    def _preflight_check(self, tm_dset='techmap_wtk'):
         """
         Check to ensure building_layer and tm_dset are in exclusion .h5 file
+
+        Parameters
+        ----------
+        tm_dset : str, optional
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
         """
         with ExclusionLayers(self._excl_h5) as f:
             layers = f.layers
@@ -424,22 +376,49 @@ class TurbineFlicker:
             logger.error(msg)
             raise RuntimeError(msg)
 
-        if self._tm_dset not in layers:
-            logger.warning('Could not find techmap "{}" in {}. '
-                           'Creating {} using reV TechMapping'
-                           .format(self._tm_dset, self._excl_h5,
-                                   self._tm_dset))
+        if tm_dset not in layers:
+            logger.warning('Could not find techmap "{t}" in {e}. '
+                           'Creating {t} using reV TechMapping'
+                           .format(t=tm_dset, e=self._excl_h5))
             try:
                 TechMapping.run(self._excl_h5, self._res_h5,
-                                dset=self._tm_dset)
+                                dset=tm_dset)
             except Exception as e:
                 logger.exception('TechMapping process failed. Received the '
                                  'following error:\n{}'.format(e))
                 raise e
 
+    def _get_sc_points(self, tm_dset='techmap_wtk'):
+        """
+        Get the valid sc points to run turbine flicker for
+
+        Parameters
+        ----------
+        tm_dset : str, optional
+            [description], by default 'techmap_wtk'
+
+        Returns
+        -------
+        points : pandas.DataFrame
+            DataFrame of valid sc point gids with their latitude and longitude
+            coordinates and nearest resource gid
+        """
+        with SupplyCurveExtent(self._excl_h5, resolution=self._res) as sc:
+            points = sc.points
+            points['latitude'] = sc.latitude
+            points['longitude'] = sc.longitude
+            gids = sc.valid_sc_points(tm_dset)
+            points = points.loc[gids]
+
+        with ResourceX(self._res_h5) as f:
+            res_gids = f.lat_lon_gid(points[['latitude', 'longitude']].values)
+            points['res_gid'] = res_gids
+
+        return points
+
     def compute_exclusions(self, hub_height, building_threshold=0,
-                           flicker_threshold=30, resolution=128,
-                           max_workers=None, out_layer=None):
+                           flicker_threshold=30, max_workers=None,
+                           out_layer=None):
         """
         Exclude all pixels that will cause flicker exceeding the
         "flicker_threshold" on any building in "building_layer". Buildings
@@ -460,7 +439,7 @@ class TurbineFlicker:
             Maximum number of allowable flicker hours, by default 30
         resolution : int, optional
             SC resolution, must be input in combination with gid,
-            by default 128
+            by default 640
         max_workers : None | int, optional
             Number of workers to use, if 1 run in serial, if None use all
             available cores, by default None
@@ -474,18 +453,18 @@ class TurbineFlicker:
             2D inclusion array. Pixels to exclude (0) to prevent shadow
             flicker on buildings in "building_layer"
         """
-        with SupplyCurveExtent(self._excl_h5, resolution=resolution) as sc:
-            exclusion_shape = sc.exclusions.shape
-            profile = sc.exclusions.profile
-            gids = sc.valid_sc_points(self._tm_dset)
+        with ExclusionLayers(self._excl_h5) as f:
+            exclusion_shape = f.shape
+            profile = f.profile
 
         if max_workers is None:
             max_workers = os.cpu_count()
 
         etf_kwargs = {"building_threshold": building_threshold,
                       "flicker_threshold": flicker_threshold,
-                      "tm_dset": self._tm_dset,
-                      "resolution": resolution}
+                      "resolution": self._res}
+        row_idx = []
+        col_idx = []
         if max_workers > 1:
             msg = ('Computing exclusions from {} based on {}m turbines '
                    'in parallel using {} workers'
@@ -496,36 +475,32 @@ class TurbineFlicker:
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 futures = []
-                for gid in gids:
+                for _, point in self._sc_points.iterrows():
                     future = exe.submit(self._exclude_turbine_flicker,
-                                        gid, self._excl_h5, self._res_h5,
+                                        point, self._excl_h5, self._res_h5,
                                         self._bld_layer, hub_height,
                                         **etf_kwargs)
                     futures.append(future)
 
-                row_idx = []
-                col_idx = []
                 for i, future in enumerate(as_completed(futures)):
                     gid_row_idx, gid_col_idx = future.result()
                     row_idx.extend(gid_row_idx)
                     col_idx.extend(gid_col_idx)
                     logger.debug('Completed {} out of {} gids'
-                                 .format((i + 1), len(gids)))
+                                 .format((i + 1), len(futures)))
                     log_mem(logger)
         else:
             msg = ('Computing exclusions from {} based on {}m turbines in '
                    'serial'.format(self, hub_height))
             logger.info(msg)
-            row_idx = []
-            col_idx = []
-            for i, gid in enumerate(gids):
+            for i, (_, point) in enumerate(self._sc_points.iterrows()):
                 gid_row_idx, gid_col_idx = self._exclude_turbine_flicker(
-                    gid, self._excl_h5, self._res_h5, self._bld_layer,
+                    point, self._excl_h5, self._res_h5, self._bld_layer,
                     hub_height, **etf_kwargs)
                 row_idx.extend(gid_row_idx)
                 col_idx.extend(gid_col_idx)
                 logger.debug('Completed {} out of {} gids'
-                             .format((i + 1), len(gids)))
+                             .format((i + 1), len(self._sc_points)))
                 log_mem(logger)
 
         flicker_arr = np.ones(exclusion_shape, dtype=np.int8)
@@ -548,7 +523,7 @@ class TurbineFlicker:
     @classmethod
     def run(cls, excl_fpath, res_fpath, building_layer, hub_height,
             tm_dset='techmap_wtk', building_threshold=0,
-            flicker_threshold=30, resolution=128,
+            flicker_threshold=30, resolution=640,
             max_workers=None, out_layer=None):
         """
         Exclude all pixels that will cause flicker exceeding the
@@ -582,7 +557,7 @@ class TurbineFlicker:
             Maximum number of allowable flicker hours, by default 30
         resolution : int, optional
             SC resolution, must be input in combination with gid,
-            by default 128
+            by default 640
         max_workers : None | int, optional
             Number of workers to use, if 1 run in serial, if None use all
             available cores, by default None
@@ -597,12 +572,12 @@ class TurbineFlicker:
             flicker on buildings in "building_layer"
         """
         flicker = cls(excl_fpath, res_fpath, building_layer,
+                      resolution=resolution,
                       tm_dset=tm_dset)
         out_excl = flicker.compute_exclusions(
             hub_height,
             building_threshold=building_threshold,
             flicker_threshold=flicker_threshold,
-            resolution=resolution,
             max_workers=max_workers,
             out_layer=out_layer)
 
