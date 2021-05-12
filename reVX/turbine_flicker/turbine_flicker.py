@@ -14,6 +14,7 @@ from reV.supply_curve.tech_mapping import TechMapping
 from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from rex.utilities.execution import SpawnProcessPool
+from rex.utilities.loggers import log_mem
 
 logger = logging.getLogger(__name__)
 
@@ -510,6 +511,7 @@ class TurbineFlicker:
                     col_idx.extend(gid_col_idx)
                     logger.debug('Completed {} out of {} gids'
                                  .format((i + 1), len(gids)))
+                    log_mem(logger)
         else:
             msg = ('Computing exclusions from {} based on {}m turbines in '
                    'serial'.format(self, hub_height))
@@ -524,6 +526,7 @@ class TurbineFlicker:
                 col_idx.extend(gid_col_idx)
                 logger.debug('Completed {} out of {} gids'
                              .format((i + 1), len(gids)))
+                log_mem(logger)
 
         flicker_arr = np.ones(exclusion_shape, dtype=np.int8)
         flicker_arr[row_idx, col_idx] = 0
