@@ -15,10 +15,12 @@ Subpackages
    reVX.config
    reVX.handlers
    reVX.hybrid_stats
+   reVX.offshore
    reVX.plexos
    reVX.red_e
    reVX.reeds
    reVX.rpm
+   reVX.turbine_flicker
    reVX.utilities
    reVX.wind_dirs
    reVX.wind_setbacks
