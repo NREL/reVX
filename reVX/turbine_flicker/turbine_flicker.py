@@ -338,7 +338,7 @@ class TurbineFlicker:
 
         with WindX(res_fpath) as f:
             dset = 'winddirection_{}m'.format(hub_height)
-            wind_dir = f[dset, :, point['res_gid']]
+            wind_dir = f[dset, :, int(point['res_gid'])]
 
             if len(wind_dir) == 8784:
                 wind_dir = wind_dir[:-24]
