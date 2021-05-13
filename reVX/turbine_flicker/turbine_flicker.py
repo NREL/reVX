@@ -55,7 +55,7 @@ class TurbineFlicker:
         self._bld_layer = building_layer
         self._res = resolution
         self._preflight_check(tm_dset=tm_dset)
-        self._sc_points = self._get_sc_points()
+        self._sc_points = self._get_sc_points(tm_dset=tm_dset)
 
     def __repr__(self):
         msg = ("{} from {}"
@@ -412,7 +412,7 @@ class TurbineFlicker:
 
         with WindX(self._res_h5) as f:
             res_gids = f.lat_lon_gid(points[['latitude', 'longitude']].values,
-                                     check_dist=False)
+                                     check_lat_lon=False)
             points['res_gid'] = res_gids
 
         return points
