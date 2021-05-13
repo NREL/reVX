@@ -91,15 +91,15 @@ Option 1: Install from PIP or Conda (recommended for analysts):
     2) ``conda install nrel-revx --channel=nrel``
 
         - NOTE: If you install using conda and you want to use:
-            * `HSDS <https://github.com/NREL/hsds-examples>`_ you will also
-              need to install h5pyd manually: ``pip install h5pyd``
-            * `Turbine Flicker <https://nrel.github.io/reVX/reVX/reVX.turbine_flicker.turbine_flicker.html>`_
-              you will need to install `HOPP <https://github.com/nrel/HOPP>`_
-              manually: ``pip install HOPP``
+            * | `HSDS <https://github.com/NREL/hsds-examples>`_ you will also
+              | need to install h5pyd manually: ``pip install h5pyd``
+            * | `Turbine Flicker <https://nrel.github.io/reVX/reVX/reVX.turbine_flicker.turbine_flicker.html>`_
+              | you will need to install `HOPP <https://github.com/nrel/HOPP>`_
+              | manually: ``pip install HOPP``
 
-        - NOTE: If you install using pip and want to run
-          `Wind Setbacks <https://nrel.github.io/reVX/reVX/reVX.wind_setbacks.wind_setbacks.html>`_
-          you will need to install rtree manually:
+        - | NOTE: If you install using pip and want to run
+          | `Wind Setbacks <https://nrel.github.io/reVX/reVX/reVX.wind_setbacks.wind_setbacks.html>`_
+          | you will need to install rtree manually:
             * ``conda install rtree``
             * `pip installation instructions <https://pypi.org/project/Rtree/#:~:text=Rtree%20is%20a%20ctypes%20Python,Multi%2Ddimensional%20indexes>`_
 
@@ -114,15 +114,15 @@ Option 2: Clone repo (recommended for developers)
     1) Create a conda env: ``conda create -n revx``
     2) Run the command: ``conda activate revx``
     3) cd into the repo cloned in 1.
-    4) prior to running ``pip`` below, make sure the branch is correct (install
-       from master!)
-    5) Install ``reVX`` and its dependencies by running:
-       ``pip install .`` (or ``pip install -e .`` if running a dev branch
-       or working on the source code)
+    4) | prior to running ``pip`` below, make sure the branch is correct (install
+       | from master!)
+    5) | Install ``reVX`` and its dependencies by running:
+       | ``pip install .`` (or ``pip install -e .`` if running a dev branch
+       | or working on the source code)
 
 3. Check that ``reVX`` was installed successfully
-    1) From any directory, run the following commands. This should return the
-       help pages for the CLI's.
+    1) | From any directory, run the following commands. This should return the
+       | help pages for the CLI's.
 
         - ``reVX``
 
