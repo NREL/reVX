@@ -464,7 +464,7 @@ class TurbineFlicker:
         etf_kwargs = {"building_threshold": building_threshold,
                       "flicker_threshold": flicker_threshold,
                       "resolution": self._res}
-        flicker_arr = np.ones(exclusion_shape, dtype=np.int8)
+        flicker_arr = np.ones(exclusion_shape, dtype=np.uint8)
         if max_workers > 1:
             msg = ('Computing exclusions from {} based on {}m turbines '
                    'in parallel using {} workers'
