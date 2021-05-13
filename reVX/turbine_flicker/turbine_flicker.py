@@ -13,7 +13,7 @@ from reV.supply_curve.points import SupplyCurveExtent
 from reV.supply_curve.tech_mapping import TechMapping
 from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
 from reVX.utilities.exclusions_converter import ExclusionsConverter
-from rex.resource_extraction.resource_extraction import ResourceX
+from rex.resource_extraction.resource_extraction import WindX
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
@@ -336,7 +336,7 @@ class TurbineFlicker:
             excl_fpath, building_layer, point.name,
             resolution=resolution, building_threshold=building_threshold)
 
-        with ResourceX(res_fpath) as f:
+        with WindX(res_fpath) as f:
             dset = 'winddirection_{}m'.format(hub_height)
             wind_dir = f[dset, :, point['res_gid']]
 
@@ -410,7 +410,7 @@ class TurbineFlicker:
             gids = sc.valid_sc_points(tm_dset)
             points = points.loc[gids]
 
-        with ResourceX(self._res_h5) as f:
+        with WindX(self._res_h5) as f:
             res_gids = f.lat_lon_gid(points[['latitude', 'longitude']].values,
                                      check_dist=False)
             points['res_gid'] = res_gids
