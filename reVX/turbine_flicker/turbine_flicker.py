@@ -411,7 +411,8 @@ class TurbineFlicker:
             points = points.loc[gids]
 
         with ResourceX(self._res_h5) as f:
-            res_gids = f.lat_lon_gid(points[['latitude', 'longitude']].values)
+            res_gids = f.lat_lon_gid(points[['latitude', 'longitude']].values,
+                                     check_dist=False)
             points['res_gid'] = res_gids
 
         return points
