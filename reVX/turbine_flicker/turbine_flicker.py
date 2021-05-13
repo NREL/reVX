@@ -464,8 +464,7 @@ class TurbineFlicker:
         etf_kwargs = {"building_threshold": building_threshold,
                       "flicker_threshold": flicker_threshold,
                       "resolution": self._res}
-        row_idx = []
-        col_idx = []
+        flicker_arr = np.ones(exclusion_shape, dtype=np.int8)
         if max_workers > 1:
             msg = ('Computing exclusions from {} based on {}m turbines '
                    'in parallel using {} workers'
@@ -484,9 +483,8 @@ class TurbineFlicker:
                     futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
-                    gid_row_idx, gid_col_idx = future.result()
-                    row_idx.extend(gid_row_idx)
-                    col_idx.extend(gid_col_idx)
+                    row_idx, col_idx = future.result()
+                    flicker_arr[row_idx, col_idx] = 0
                     logger.debug('Completed {} out of {} gids'
                                  .format((i + 1), len(futures)))
                     log_mem(logger)
@@ -495,17 +493,13 @@ class TurbineFlicker:
                    'serial'.format(self, hub_height))
             logger.info(msg)
             for i, (_, point) in enumerate(self._sc_points.iterrows()):
-                gid_row_idx, gid_col_idx = self._exclude_turbine_flicker(
+                row_idx, col_idx = self._exclude_turbine_flicker(
                     point, self._excl_h5, self._res_h5, self._bld_layer,
                     hub_height, **etf_kwargs)
-                row_idx.extend(gid_row_idx)
-                col_idx.extend(gid_col_idx)
+                flicker_arr[row_idx, col_idx] = 0
                 logger.debug('Completed {} out of {} gids'
                              .format((i + 1), len(self._sc_points)))
                 log_mem(logger)
-
-        flicker_arr = np.ones(exclusion_shape, dtype=np.int8)
-        flicker_arr[row_idx, col_idx] = 0
 
         if out_layer:
             logger.info('Saving flicker exclusions to {} as {}'
