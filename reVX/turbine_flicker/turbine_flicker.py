@@ -284,7 +284,7 @@ class TurbineFlicker:
         excl_col_idx[excl_col_idx < 0] = 0
         excl_col_idx[excl_col_idx >= shape[1]] = shape[1] - 1
 
-        return excl_row_idx, excl_col_idx
+        return excl_row_idx.astype(np.uint32), excl_col_idx.astype(np.uint32)
 
     @classmethod
     def _exclude_turbine_flicker(cls, point, excl_fpath, res_fpath,
