@@ -17,7 +17,7 @@ requirements:
     - setuptools
     - dask
     - geopandas
-    - nrel-rex>=0.2.54
+    - nrel-rex>=0.2.57
     - nrel-rev>=0.5.1
     - psycopg2
     - pyproj
@@ -34,7 +34,7 @@ requirements:
     - pip
     - dask
     - geopandas
-    - nrel-rex>=0.2.54
+    - nrel-rex>=0.2.57
     - nrel-rev>=0.5.1
     - psycopg2
     - pyproj
