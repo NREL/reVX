@@ -387,7 +387,14 @@ class ExclusionsConverter:
         if values.shape[0] != 1:
             values = np.expand_dims(values, 0)
 
-        profile['dtype'] = values.dtype.name
+        dtype = values.dtype.name
+        profile['dtype'] = dtype
+        if np.issubdtype(dtype, np.integer):
+            dtype_max = np.iinfo(dtype).max
+        else:
+            dtype_max = np.finfo(dtype).max
+
+        profile['nodata'] = dtype_max
 
         with rasterio.open(geotiff, 'w', **profile) as f:
             f.write(values)
