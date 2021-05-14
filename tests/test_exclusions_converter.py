@@ -142,7 +142,7 @@ def test_geotiff_to_h5(tif):
                 cols = list(set(true_crs.columns) & set(test_crs.columns))
                 assert_frame_equal(true_crs[cols], test_crs[cols],
                                    check_dtype=False, check_exact=False)
-            else:
+            elif profile_k != 'nodata':
                 msg = ("Profile {} does not match: {} != {}"
                        .format(profile_k, true_v, test_v))
                 assert true_v == test_v, msg
