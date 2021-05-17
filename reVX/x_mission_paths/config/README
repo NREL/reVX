@@ -1,0 +1,8 @@
+Configuration JSON files with costs, etc. for lines, substations, and transformers
+
+
+transformer_costs.json:
+     Transformer costs in $/MVA. First key is tie line voltage, second key is
+     existing t-line voltage, but that doesn't matter much as the data is
+     symmetrical. From MISO table.
+

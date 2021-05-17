@@ -8,7 +8,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from skimage.graph import MCP_Geometric
-from collections import namedtuple
 
 from shapely.geometry import Point
 from shapely.ops import nearest_points
@@ -82,6 +81,9 @@ class TransFeature:
         self.col = col
         self.dist = dist
 
+        if self.trans_type == 't-line':
+            self.id += 100000
+
     def __repr__(self):
         return f'id={self.id}, coords=({self.x}, {self.y}), ' +\
                f'r/c=({self.row}, {self.col}), dist={self.dist}, ' +\
@@ -89,27 +91,41 @@ class TransFeature:
 
 
 # TODO - does this include substation attachemnt cost?
-TransmissionCost = namedtuple('TransmissionCost',
-                              'sc_id trans_id name trans_type cost length')
-TransmissionCost.__doc__ = """
-Cost of building transmission line from supply curve point to transmission
-feature.
+class TransmissionCost:
+    def __init__(self, sc_id, trans_id, name, trans_type, cost, length):
+        """
+        Cost of building transmission line from supply curve point to
+        transmission feature.
 
-Parameters
-----------
-sc_id : int
-    Supply curve point id
-trans_id : int
-    Supply curve point id
-name : str
-    Name of transmission feature
-trans_type : str
-    Type of transmission feature, e.g. 'subs', 't-line', etc.
-cost : float
-    Cost of building t-line from supply curve point to trans feature
-length : float
-    Minimum cost path length in meters of new line
-"""
+        Parameters
+        ----------
+        sc_id : int
+            Supply curve point id
+        trans_id : int
+            Supply curve point id
+        name : str
+            Name of transmission feature
+        trans_type : str
+            Type of transmission feature, e.g. 'subs', 't-line', etc.
+        cost : float
+            Cost of building t-line from supply curve point to trans feature
+        length : float
+            Minimum cost path length in meters of new line
+        """
+        self.sc_id = sc_id
+        self.trans_id = trans_id
+        self.name = name
+        self.trans_type = trans_type
+        self.cost = cost
+        self.length = length
+
+    def as_dict(self):
+        return {'sc_id': self.sc_id, 'trans_id': self.trans_id,
+                'name': self.name, 'trans_type': self.trans_type,
+                'tline_cost': self.cost, 'length': self.length}
+
+    def __repr__(self):
+        return str(self.as_dict())
 
 
 class SubstationDistanceCalculator:
