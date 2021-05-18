@@ -1,0 +1,66 @@
+[
+  {
+    "iso": "TEPPC",
+    "land_use": {
+      "cropland": "1.05",
+      "suburban": "1.61",
+      "urban": "1.59",
+      "forest": "2.25",
+      "wetland": "1.2"
+    },
+    "slope": {
+      "hill_mult": "1.4",
+      "mtn_mult": "1.75",
+      "hill_slope": "2",
+      "mtn_slope": "8"
+    }
+  },
+  {
+    "iso": "SCE",
+    "land_use": {
+      "cropland": "1.05",
+      "suburban": "2",
+      "urban": "3",
+      "forest": "3",
+      "wetland": "1.4"
+    },
+    "slope": {
+      "hill_mult": "1.5",
+      "mtn_mult": "2",
+      "hill_slope": "2",
+      "mtn_slope": "8"
+    }
+  },
+  {
+    "iso": "MISO",
+    "land_use": {
+      "cropland": "1.05",
+      "suburban": "1.08",
+      "urban": "1.903",
+      "forest": "1.2",
+      "wetland": "1.8"
+    },
+    "slope": {
+      "hill_mult": "1.45",
+      "mtn_mult": "1.21",
+      "hill_slope": "2",
+      "mtn_slope": "8"
+    }
+  },
+  {
+    "iso": "Southeast",
+    "land_use": {
+      "cropland": "1.05",
+      "suburban": "1.75",
+      "urban": "1.12",
+      "forest": "",
+      "wetland": "1.21"
+    },
+    "slope": {
+      "hill_mult": "1.45",
+      "mtn_mult": "1.65",
+      "hill_slope": "2",
+      "mtn_slope": "8"
+    }
+  }
+]
