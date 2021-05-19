@@ -13,43 +13,8 @@ from shapely.geometry import Point
 from shapely.ops import nearest_points
 
 
-class SupplyCurvePoint:
-    def __init__(self, id, x, y, row, col):
-        """
-        Parameters
-        ----------
-        id : int
-            Id of supply curve point
-        x : float
-            Projected easting coordinate
-        y : float
-            Projected northing coordinate
-        row : int
-            Row in template raster that corresponds to y
-        col : int
-            Column in template raster that corresponds to x
-        """
-        self.id = id
-        self.x = x
-        self.y = y
-        self.row = row
-        self.col = col
-
-    @property
-    def point(self):
-        """
-        Return point as shapley.geometry.Point object
-
-        """
-        return Point(self.x, self.y)
-
-    def __repr__(self):
-        return f'id={self.id}, coords=({self.x}, {self.y}), ' +\
-               f'r/c=({self.row}, {self.col})'
-
-
 class TransFeature:
-    """ Represents a substation, t-line, etc """
+    """ Represents an existing substation, t-line, etc """
     def __init__(self, id, name, trans_type, x, y, row, col, dist):
         """
         Parameters
