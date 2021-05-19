@@ -10,7 +10,7 @@ import traceback
 
 from reVX.cli import main
 from reVX import TESTDATADIR
-from reVX.utilities.forecasts import Forecasts
+from reVX.utilities.forecasts import FcstUtils
 
 from rex import Resource
 from rex.utilities.loggers import LOGGERS
@@ -49,7 +49,7 @@ def test_bias_correction():
     """Test Forecast bias correction"""
     with tempfile.TemporaryDirectory() as td:
         OUT_H5 = os.path.join(td, 'corrected.h5')
-        Forecasts.bias_correct(FCST_H5, FCST_DSET, OUT_H5,
+        FcstUtils.bias_correct(FCST_H5, FCST_DSET, OUT_H5,
                                actuals_dset=ACT_DSET)
 
         fcst, actuals = read_data(FCST_H5, actuals=True)
@@ -68,7 +68,7 @@ def test_blend(perc):
     """Test Forecast blending"""
     with tempfile.TemporaryDirectory() as td:
         OUT_H5 = os.path.join(td, 'corrected.h5')
-        Forecasts.blend(FCST_H5, FCST_DSET, OUT_H5, perc,
+        FcstUtils.blend(FCST_H5, FCST_DSET, OUT_H5, perc,
                         actuals_dset=ACT_DSET)
 
         fcst, actuals = read_data(FCST_H5, actuals=True)

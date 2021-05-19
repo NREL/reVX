@@ -24,7 +24,12 @@ between reV and other renewable energy focused models, for example,
   :caption: Contents:
 
   misc/misc
-  reVX/reVX
+
+.. autosummary::
+   :toctree: _reVX
+   :recursive:
+
+   reVX
 
 Indices and tables
 ==================
