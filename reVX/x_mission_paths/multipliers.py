@@ -204,6 +204,9 @@ class CostMultiplier:
 
         return mults_arr
 
+    # TODO - this run() is redundant, should we save mults raster, or just
+    # keep it in memeory? Actually should save it as it only needs to be
+    # calculated once, then can be used for parallel processing
     @classmethod
     def run(cls, iso_regions, land_use, slope, iso_config, default):
         """
@@ -232,6 +235,7 @@ class CostMultiplier:
                                        iso_config, default)
         return mults
 
+    # TODO - this is nice, but current processing pipeline is using npy
     @staticmethod
     def save_geotiff(mults, template, outf):
         """
