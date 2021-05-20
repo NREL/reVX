@@ -15,9 +15,9 @@ from rex import Resource
 logger = logging.getLogger(__name__)
 
 
-class Forecasts:
+class FcstUtils:
     """
-    Forecast Utility
+    Forecast bias correcting and blending utilties
     """
     def __init__(self, fcst_h5, fcst_dset, actuals_h5=None, actuals_dset=None):
         """
