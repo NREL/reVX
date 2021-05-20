@@ -14,3 +14,6 @@ with open(os.path.join(CONFIGDIR, 'multipliers.json'), 'rt') as f:
 
 with open(os.path.join(CONFIGDIR, 'transformer_costs.json'), 'rt') as f:
     transformer_costs = json.load(f)
+
+with open(os.path.join(CONFIGDIR, 'iso_lookup.json'), 'rt') as f:
+    iso_lookup = json.load(f)
