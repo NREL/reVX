@@ -8,9 +8,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from skimage.graph import MCP_Geometric
-
-from shapely.geometry import Point
 from shapely.ops import nearest_points
+
+from .config import CELL_SIZE
 
 
 class TransFeature:
@@ -82,6 +82,10 @@ class TransmissionCost:
         self.name = name
         self.trans_type = trans_type
         self.cost = cost
+        # self.line_cost
+        # self.xformer_cost
+        # self.new_sub_cost
+        # self.total_cost?
         self.length = length
 
     def as_dict(self):
@@ -207,34 +211,34 @@ class PathFinder:
     """
     Find least cost paths to transmission features from SC point
     """
-    def __init__(self, sc_pt, mults, subs_dc, tls_dc):
+    def __init__(self, sc_pt, cost_arr, subs_dc, tls_dc):
         """
         sc_pt : SupplyCurvePoint
             Supply curve point of interest
-        mults : numpy.ndarray
-            Multiplier raster
+        cost_arr : numpy.ndarray
+            Line costs raster
         subs_dc : DistanceCalculator
             Distance calculator for substations
         tls_dc : DistanceCalculator
             Distance calculator for t-lines
         """
         self._sc_pt = sc_pt
-        self._mults = mults
+        self._cost_arr = cost_arr
         self._subs_dc = subs_dc
         self._tls_dc = tls_dc
 
-        self.cell_size = 90  # meters, size of cell. Both dims must be equal
+        self.cell_size = CELL_SIZE  # (meters) Both dimensions must be equal
 
         self._near_trans = None
         self._row_offset = None
         self._col_offset = None
-        self._mults_clip = None
+        self._cost_arr_clip = None
         self._costs = None
         self._tb = None
 
     @classmethod
-    def run(cls, sc_pt,  mults, subs_dc, tls_dc):
-        pf = cls(sc_pt, mults, subs_dc, tls_dc)
+    def run(cls, sc_pt,  cost_arr, subs_dc, tls_dc):
+        pf = cls(sc_pt, cost_arr, subs_dc, tls_dc)
         pf._clip_cost_raster()
         pf._find_paths()
         return pf
@@ -255,12 +259,12 @@ class PathFinder:
         self._row_offset = min(rows)
         self._col_offset = min(cols)
 
-        self._mults_clip = self._mults[min(rows):max(rows)+1,
-                                       min(cols):max(cols)+1]
+        self._cost_arr_clip = self._cost_arr[min(rows):max(rows)+1,
+                                             min(cols):max(cols)+1]
 
     def _find_paths(self):
         """ Find minimum cost paths from sc_pt to nearest trans features """
-        self._mcp = MCP_Geometric(self._mults_clip)
+        self._mcp = MCP_Geometric(self._cost_arr_clip)
         self._costs, self._tb = self._mcp.find_costs(starts=[self._start])
 
     @property
@@ -277,6 +281,7 @@ class PathFinder:
 
         costs = []
         for feat in self._near_trans:
+            # TODO - look out for paths that do not exist due to exlusions
             length = self._path_length(feat)
             cost = self._path_cost(feat)
             this_cost = TransmissionCost(self._sc_pt.id, feat.id, feat.name,
@@ -287,7 +292,7 @@ class PathFinder:
     @property
     def _start(self):
         """
-        Return supply curve point row/col location for clipped mults raster
+        Return supply curve point row/col location for clipped cost_arr raster
         """
         start = (self._sc_pt.row - self._row_offset,
                  self._sc_pt.col - self._col_offset)
@@ -339,32 +344,36 @@ class PathFinder:
         col = feat.col - self._col_offset
         return row, col
 
-    def plot_paths(self):
+    def plot_paths(self, cmap='viridis'):
         """ Plot least cost paths for QAQC"""
         assert self._tb is not None, 'Must run _find_paths() first'
 
         plt.figure(figsize=(30, 15))
-        plt.imshow(self._mults_clip)
+        plt.imshow(self._cost_arr_clip, cmap=cmap)
 
-        # Plot substations
+        # Plot trans features
         subs = [(x.row, x.col, x) for x in self._near_trans]
         for r, c, sub in subs:
             plt.plot(c - self._col_offset, r - self._row_offset,
                      marker='o', color="red")
             plt.text(c - self._col_offset, r - self._row_offset,
-                     sub.name, color='white')
+                     sub.name, color='black')
 
-        # Plot paths
+        # Plot paths to trans features
         for sub in self._near_trans:
             r, c = self._feat_row_col(sub)
-            indices = self._mcp.traceback((r, c))
+            try:
+                indices = self._mcp.traceback((r, c))
+            except ValueError:
+                print('Cant find path to', sub)
+                continue
             path_xs = [x[1] for x in indices]
             path_ys = [x[0] for x in indices]
             plt.plot(path_xs, path_ys, color='white')
 
         # Plot SC point
         print(f'Plotting start as {self._start}')
-        plt.plot(self._start[1], self._start[0],
-                 marker='o', color='black', markersize=18)
-        plt.plot(self._start[1], self._start[0],
-                 marker='o', color='yellow', markersize=10)
+        plt.plot(self._start[1], self._start[0], marker='o', color='black',
+                 markersize=18)
+        plt.plot(self._start[1], self._start[0], marker='o', color='yellow',
+                 markersize=10)
