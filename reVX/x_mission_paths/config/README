@@ -25,3 +25,9 @@ base_line_costs.json:
     Costs for lines in US$ / mile. Keys are max line capacity in MW. Note that
     TEPPC does not include ROW in base line cost, but all other ISOs do.
 
+power_classes.json:
+    Keys are reV power classes. Values are appropriate line capacities for 
+    that class.
+
+power_to_voltage.json:
+    Keys are line capacities in MW. Values are line voltages in kV.
