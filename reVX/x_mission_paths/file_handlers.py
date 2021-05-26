@@ -27,7 +27,8 @@ class LoadData:
                  slope_f='data/slope.npy',
                  sc_points_f='data/sc_points/sc32_points_updated.shp',
                  t_lines_f='data/t_lines/t_lines_conus.shp',
-                 subs_f='data/substations/substations_conus_updated.shp'):
+                 subs_f='data/substations/substations_conus_updated.shp',
+                 iso_regions_f='data/iso_regions.tiff'):
         """
         Parameters
         ----------
@@ -49,13 +50,13 @@ class LoadData:
         self.t_lines = TransLineLoader(t_lines_f)
 
         # Real world power capacity (MW)
-        self.trans_power = power_classes[capacity]
+        self.tie_power = power_classes[capacity]
 
-        # Voltage (kV) corresponding to self.trans_power
-        self.trans_voltage = power_to_voltage[str(self.trans_power)]
+        # Voltage (kV) corresponding to self.tie_power
+        self.tie_voltage = power_to_voltage[str(self.tie_power)]
 
         costs_f = os.path.join(costs_raster_dir,
-                               f'costs_{self.trans_power}MW.tif')
+                               f'costs_{self.tie_power}MW.tif')
         self.costs_arr = load_raster(costs_f)
 
 
@@ -72,8 +73,8 @@ class FilterData:
         """
         self._ld = ld
 
-        self.subs = ld.subs.filter(ld.trans_voltage)
-        self.t_lines = ld.t_lines.filter(ld.trans_voltage)
+        self.subs = ld.subs.filter(ld.tie_voltage)
+        self.t_lines = ld.t_lines.filter(ld.tie_voltage)
 
 
 class SubstationsLoader:
@@ -87,11 +88,11 @@ class SubstationsLoader:
             Path to substations shapefile
         """
         subs = gpd.read_file(substations_f)
-        self.subs = subs.drop(['Owner', 'Tap', 'Min_Voltag', 'Proposed',
-                               'County', 'State', 'Location_C', 'Source',
-                               'Owner2', 'Notes', 'row', 'column', 'Entity_ID',
-                               'Owner_ID', 'Owner2_ID', 'Layer_ID', 'Rec_ID'],
-                              axis=1)
+        subs = subs[subs.Proposed == "In Service"]
+        self.subs = subs.drop(['Owner', 'Tap', 'Proposed', 'County', 'State',
+                               'Location_C', 'Source', 'Owner2', 'Notes',
+                               'row', 'column', 'Entity_ID', 'Owner_ID',
+                               'Owner2_ID', 'Layer_ID', 'Rec_ID'], axis=1)
 
     def filter(self, cutoff_voltage):
         """

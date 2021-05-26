@@ -11,8 +11,10 @@ import pandas as pd
 
 from .path_finder import SubstationDistanceCalculator, \
     TLineDistanceCalculator, PathFinder
-from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF
+from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF, \
+    transformer_costs
 from .file_handlers import LoadData, FilterData
+from .utilities import int_capacity
 
 
 class DoThisForAllPowerClasses:
@@ -37,11 +39,11 @@ class ProcessSCs:
     Serial process tie line costs for Supply Curve points
 
     """
-    def __init__(self, capacity, resolution=32, n=10):
+    def __init__(self, capacity_class='100MW', resolution=32, n=10):
         """
         Parameters
         ----------
-        capacity : String
+        capacity_class : String
             Desired reV power capacity class, one of "100MW", "200MW", "400MW",
             "1000MW"
         resolution : Int
@@ -50,16 +52,15 @@ class ProcessSCs:
             Number of nearby transmission features to search for
         """
         print(dt.now(), 'loading data')
-        self._ld = LoadData(capacity, resolution)
-        print(dt.now(), 'filtering data')
+        self._ld = LoadData(capacity_class, resolution)
         self._fd = FilterData(self._ld)
 
-        print(dt.now(), 'creating distance calculators')
         rct = self._ld.rct
         subs_dc = SubstationDistanceCalculator(self._fd.subs, rct, n=n)
         tls_dc = TLineDistanceCalculator(self._fd.t_lines, rct, n=n)
         self._cccfsc = CalcConnectCostsForSC(self._ld.costs_arr, subs_dc,
-                                             tls_dc)
+                                             tls_dc, capacity_class,
+                                             self._ld.tie_voltage)
         print(dt.now(), 'done initing')
 
     def process(self, _slice=slice(None, None, None), plot=False):
@@ -81,11 +82,11 @@ class ProcessSCs:
 
         all_costs = pd.DataFrame()
         for sc_pt in sc_points:
-            print(dt.now(), f'Calculating costs for {sc_pt}')
+            print(dt.now(), f'--- Calculating costs for {sc_pt}')
             costs = self._cccfsc.calculate(sc_pt, plot=plot)
             print(dt.now(), f'Calculating costs complete')
             all_costs = pd.concat([all_costs, costs], axis=0)
-        all_costs.reset_index(inplace=True)
+        all_costs.reset_index(inplace=True, drop=True)
         return all_costs
 
 
@@ -95,7 +96,8 @@ class CalcConnectCostsForSC:
     cost, all multipliers, new substations, substation upgrades and
     transformers. All transmission features should be valid for power class.
     """
-    def __init__(self, costs_arr, subs_dc, tls_dc):
+    def __init__(self, costs_arr, subs_dc, tls_dc, capacity_class,
+                 tie_voltage):
         """
         Parameters
         ----------
@@ -106,10 +108,21 @@ class CalcConnectCostsForSC:
             Distance calculator for substations
         tls_dc : .path_finder.TlineDistanceCalculator
             Distance calculator for existing transmission lines
+        capacity_class : String
+            Desired reV power capacity class, one of "100MW", "200MW", "400MW",
+            "1000MW"
+        tie_voltage : int
+            Line voltage for capacity_class (kV)
         """
         self._costs_arr = costs_arr
         self._subs_dc = subs_dc
         self._tls_dc = tls_dc
+        self._capacity_class = capacity_class
+        self._tie_voltage = tie_voltage
+
+        xfc = transformer_costs[str(tie_voltage)]
+        self._xformer_costs = {int(k): v for k, v in xfc.items()}
+        print(self._xformer_cost)
 
     def calculate(self, sc_pt, plot=False):
         """
@@ -127,11 +140,9 @@ class CalcConnectCostsForSC:
             Costs for tie lines, and new/upgraded substations include
             transformers to each existing grid feature.
         """
-
         pf = PathFinder.run(sc_pt, self._costs_arr, self._subs_dc,
                             self._tls_dc)
-        costs = pf.costs
-        cdf = pd.DataFrame([tc.as_dict() for tc in costs])
+        cdf = pd.DataFrame([c.as_dict() for c in pf.costs])
 
         # Length multiplier
         cdf['length_mult'] = 1.0
@@ -139,9 +150,53 @@ class CalcConnectCostsForSC:
         cdf.loc[cdf.length < SHORT_CUTOFF, 'length_mult'] = SHORT_MULT
         cdf['adj_line_cost'] = cdf.tline_cost * cdf.length_mult
 
-        # TODO - add transformer and substation costs
+        # Transformer costs
+        print(f'Processing transformer costs. v={self._tie_voltage}kV, '
+              f'power={self._capacity_class}')
+        tcpm = cdf.apply(lambda row: self._xformer_cost(row.min_volts), axis=1)
+        cdf['xformer_cost_p_mw'] = tcpm
+        cdf['xformer_cost'] = tcpm * int_capacity(self._capacity_class)
+
+        # TODO - substation costs
+
+        # Total cost
+        cdf['total_cost'] = cdf.adj_line_cost + cdf.xformer_cost
 
         if plot:
             pf.plot_paths()
 
         return cdf
+
+    def _xformer_cost(self, min_voltage):
+        """
+        Calculate transformer cost
+
+        Parameters
+        ----------
+        min_voltage : int
+            Minimum voltage of existing transmission feature. Substations may
+            connect to lines of multiple voltages. For t-lines min and max
+            V are the same.
+
+        Returns
+        -------
+        cost : float
+            Cost of transformer to bring tie line up to existing trans volts
+        """
+        if self._tie_voltage >= min_voltage:
+            return 0
+
+        # If min_voltage is not in lookup table, get next largest value
+        v_class = 0
+        for volts in self._xformer_costs.keys():
+            if volts <= min_voltage:
+                v_class = volts
+            else:
+                break
+
+        if v_class == 0:
+            print(f'Trying to connect to transmission feature v={min_voltage}')
+            v_class = 500
+
+        cost_per_mw = self._xformer_costs[v_class]
+        return cost_per_mw

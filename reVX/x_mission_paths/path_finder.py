@@ -13,9 +13,14 @@ from shapely.ops import nearest_points
 from .config import CELL_SIZE
 
 
+class BlockedTransFeature(Exception):
+    pass
+
+
 class TransFeature:
     """ Represents an existing substation, t-line, etc """
-    def __init__(self, id, name, trans_type, x, y, row, col, dist):
+    def __init__(self, id, name, trans_type, x, y, row, col, dist, min_volts,
+                 max_volts):
         """
         Parameters
         ----------
@@ -36,6 +41,10 @@ class TransFeature:
         dist : float
             Straight line distance from feature to supply curve point, in
             projected units.
+        min_volts : int
+            Minimum voltage (kV) of feature
+        max_volts : int
+            Maximum voltage (kV) of feature
         """
         self.id = id
         self.name = name
@@ -45,6 +54,8 @@ class TransFeature:
         self.row = row
         self.col = col
         self.dist = dist
+        self.min_volts = min_volts
+        self.max_volts = max_volts
 
         if self.trans_type == 't-line':
             self.id += 100000
@@ -57,7 +68,8 @@ class TransFeature:
 
 # TODO - does this include substation attachemnt cost?
 class TransmissionCost:
-    def __init__(self, sc_id, trans_id, name, trans_type, cost, length):
+    def __init__(self, sc_id, trans_id, name, trans_type, cost, length,
+                 min_volts, max_volts):
         """
         Cost of building transmission line from supply curve point to
         transmission feature.
@@ -76,6 +88,12 @@ class TransmissionCost:
             Cost of building t-line from supply curve point to trans feature
         length : float
             Minimum cost path length in meters of new line
+        min_volts : int
+            Minimum voltage (kV) of existing transmission feature being
+            connected to
+        max_volts : int
+            Maximum voltage (kV) of existing transmission feature being
+            connected to
         """
         self.sc_id = sc_id
         self.trans_id = trans_id
@@ -87,11 +105,14 @@ class TransmissionCost:
         # self.new_sub_cost
         # self.total_cost?
         self.length = length
+        self.min_volts = min_volts
+        self.max_volts = max_volts
 
     def as_dict(self):
         return {'sc_id': self.sc_id, 'trans_id': self.trans_id,
                 'name': self.name, 'trans_type': self.trans_type,
-                'tline_cost': self.cost, 'length': self.length}
+                'tline_cost': self.cost, 'length': self.length,
+                'min_volts': self.min_volts, 'max_volts': self.max_volts}
 
     def __repr__(self):
         return str(self.as_dict())
@@ -146,7 +167,8 @@ class SubstationDistanceCalculator:
             if row is None:
                 continue
             new_sub = TransFeature(_id, sub.Name, 'sub', sub.geometry.x,
-                                   sub.geometry.y, row, col, sub.dist)
+                                   sub.geometry.y, row, col, sub.dist,
+                                   sub.Min_Voltag, sub.Max_Voltag)
             close_subs.append(new_sub)
         return close_subs
 
@@ -202,7 +224,8 @@ class TLineDistanceCalculator:
             if row is None:
                 continue
             new_tl = TransFeature(_id, tl.Name, 't-line', near_pt.x,
-                                  near_pt.y, row, col, tl.dist)
+                                  near_pt.y, row, col, tl.dist, tl.Voltage_kV,
+                                  tl.Voltage_kV)
             close_tls.append(new_tl)
         return close_tls
 
@@ -236,6 +259,9 @@ class PathFinder:
         self._costs = None
         self._tb = None
 
+        # Keep list of inaccessible trans features
+        self._blocked_feats = []
+
     @classmethod
     def run(cls, sc_pt,  cost_arr, subs_dc, tls_dc):
         pf = cls(sc_pt, cost_arr, subs_dc, tls_dc)
@@ -258,7 +284,6 @@ class PathFinder:
 
         self._row_offset = min(rows)
         self._col_offset = min(cols)
-
         self._cost_arr_clip = self._cost_arr[min(rows):max(rows)+1,
                                              min(cols):max(cols)+1]
 
@@ -281,12 +306,22 @@ class PathFinder:
 
         costs = []
         for feat in self._near_trans:
-            # TODO - look out for paths that do not exist due to exlusions
-            length = self._path_length(feat)
+            # TODO - don't calculate paths for fully excluded SC points
+            # TODO - make sure 'n' features are returned
+            try:
+                length = self._path_length(feat)
+            except BlockedTransFeature:
+                self._blocked_feats.append(feat)
+                continue
             cost = self._path_cost(feat)
             this_cost = TransmissionCost(self._sc_pt.id, feat.id, feat.name,
-                                         feat.trans_type, cost, length)
+                                         feat.trans_type, cost, length,
+                                         feat.min_volts, feat.max_volts)
             costs.append(this_cost)
+
+        if len(costs) == 0:
+            costs = [TransmissionCost(self._sc_pt.id, -1, 'None found', 'none',
+                                      -1, -1, -1, -1)]
         return costs
 
     @property
@@ -316,7 +351,11 @@ class PathFinder:
         float : length of minimum cost path in meters
         """
         r, c = self._feat_row_col(feat)
-        indices = self._mcp.traceback((r, c))
+        try:
+            indices = self._mcp.traceback((r, c))
+        except ValueError:
+            raise BlockedTransFeature
+
         apts = np.array(indices)
 
         # Use phythagorean theorem to calulate lengths between cells
@@ -352,28 +391,37 @@ class PathFinder:
         plt.imshow(self._cost_arr_clip, cmap=cmap)
 
         # Plot trans features
-        subs = [(x.row, x.col, x) for x in self._near_trans]
-        for r, c, sub in subs:
+        feats = [(x.row, x.col, x) for x in self._near_trans]
+        for r, c, feat in feats:
             plt.plot(c - self._col_offset, r - self._row_offset,
                      marker='o', color="red")
             plt.text(c - self._col_offset, r - self._row_offset,
-                     sub.name, color='black')
+                     feat.name, color='black')
 
         # Plot paths to trans features
-        for sub in self._near_trans:
-            r, c = self._feat_row_col(sub)
+        for feat in self._near_trans:
+            r, c = self._feat_row_col(feat)
             try:
                 indices = self._mcp.traceback((r, c))
             except ValueError:
-                print('Cant find path to', sub)
+                print('Cant find path to', feat)
                 continue
             path_xs = [x[1] for x in indices]
             path_ys = [x[0] for x in indices]
             plt.plot(path_xs, path_ys, color='white')
 
+        # Plot inaccessible features
+        feats = [(x.row, x.col, x) for x in self._blocked_feats]
+        for r, c, feat in feats:
+            plt.plot(c - self._col_offset, r - self._row_offset,
+                     marker='x', color="black")
+            plt.text(c - self._col_offset, r - self._row_offset,
+                     feat.name, color='red')
+
         # Plot SC point
-        print(f'Plotting start as {self._start}')
         plt.plot(self._start[1], self._start[0], marker='o', color='black',
                  markersize=18)
         plt.plot(self._start[1], self._start[0], marker='o', color='yellow',
                  markersize=10)
+        plt.title(str(self._sc_pt))
+        plt.show()
