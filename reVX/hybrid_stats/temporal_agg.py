@@ -7,7 +7,7 @@ import numpy as np
 import os
 import pandas as pd
 
-# from reVX.handlers.outputs import Outputs
+from reVX.handlers.outputs import Outputs
 from rex.resource import Resource
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.utilities import slice_sites
@@ -27,12 +27,9 @@ class DatasetAgg():
             Path to source h5 filepath
         dset : str
             Dataset to aggregate
-        freq : str, optional
-            Aggregation frequency, by default '1d'
-        method : str, optional
-            Aggregation method, by default 'mean'
         time_index : pandas.DatetimeIndex, optional
-            Dataset datetime index, if false, extract from h5_fpath
+            Dataset datetime index, if None, extract from h5_fpath,
+            by default None
         """
         self._h5_fpath = h5_fpath
         self._dset = dset
@@ -44,24 +41,38 @@ class DatasetAgg():
             if self._time_index is None:
                 self._time_index = f.time_index
 
+    def __repr__(self):
+        msg = ('{} of {} in {}'
+               .format(self.__class__.__name__, self._dset, self._h5_fpath))
+
+        return msg
+
     @staticmethod
     def _aggregate_sites(h5_fpath, dset, site_slice=None, freq='1d',
-                         method='mean', time_index=None):
+                         method='mean', time_index=None, **resample_kwargs):
         """
         Aggregate given sites in dataset
 
         Parameters
         ----------
-        h5_fpath : [type]
-            [description]
-        dset : [type]
-            [description]
-        site_slice : [type], optional
-            [description], by default None
+        h5_fpath : str
+            Path to source h5 filepath
+        dset : str
+            Dataset to aggregate
+        site_slice : slice, optional
+            Sites to aggregate, if None aggregate all sites, by default None
         freq : str, optional
-            [description], by default '1d'
+            Aggregation frequency, by default '1d'
         method : str, optional
-            [description], by default 'mean'
+            Aggregation method, either 'mean' or 'sum', by default 'mean'
+        time_index : pandas.DatetimeIndex, optional
+            Dataset datetime index, if None, extract from h5_fpath,
+            by default None
+        resample_kwargs : dict, optional
+            Kwargs for pandas.DataFrame.resample
+
+        Returns
+        -------
         """
         if site_slice is None:
             site_slice = slice(None)
@@ -70,21 +81,21 @@ class DatasetAgg():
             if time_index is None:
                 time_index = f.time_index
 
-            data = pd.DataFrame(f[dset, :, site_slice], index=time_index)
+            agg_data = pd.DataFrame(f[dset, :, site_slice], index=time_index)
 
-        data = data.resample(freq)
+        agg_data = agg_data.resample(freq, **resample_kwargs)
 
         if method.lower() == 'mean':
-            data = data.mean()
+            agg_data = agg_data.mean()
         elif method.lower() == 'sum':
-            data = data.sum()
+            agg_data = agg_data.sum()
         else:
             msg = ('Invalid aggregation method {}, must be "mean" or '
                    '"sum"!'.format(method))
             logger.error(msg)
             raise ValueError(msg)
 
-        return data.values
+        return agg_data.values
 
     def _get_slices(self, dset, chunks_per_slice=5):
         """
@@ -94,8 +105,6 @@ class DatasetAgg():
         ----------
         dset : str
             Dataset to aggregate
-        sites : list | slice, optional
-            Subset of sites to extract, by default None or all sites
         chunks_per_slice : int, optional
             Number of chunks to extract in each slice, by default 5
 
@@ -118,7 +127,7 @@ class DatasetAgg():
 
         return slices, shape
 
-    def _create_agg_arr(self, shape, freq='1d'):
+    def _create_agg_arr(self, shape, freq='1d', **resample_kwargs):
         """
         Create empty aggregation array
 
@@ -126,6 +135,10 @@ class DatasetAgg():
         ----------
         shape : tuple
             Dataset shape
+        freq : str, optional
+            Aggregation frequency, by default '1d'
+        resample_kwargs : dict, optional
+            Kwargs for pandas.DataFrame.resample
 
         Returns
         -------
@@ -133,23 +146,29 @@ class DatasetAgg():
             Output array for aggregated dataset
         """
         out = pd.Series(0, index=self._time_index)
-        out = out.resample(freq=freq).mean()
+        out = out.resample(freq, **resample_kwargs).mean()
         shape = (out.shape[0], shape[1])
 
         return np.zeros(shape, dtype=np.float32)
 
     def aggregate(self, freq='1d', method='mean', max_workers=None,
-                  chunks_per_worker=5):
+                  chunks_per_worker=5, **resample_kwargs):
         """
         Aggregate dataset to desired frequency using desired method
 
         Parameters
         ----------
+        freq : str, optional
+            Aggregation frequency, by default '1d'
+        method : str, optional
+            Aggregation method, either 'mean' or 'sum', by default 'mean'
         max_workers : None | int, optional
             Number of workers to use, if 1 run in serial, if None use all
             available cores, by default None
         chunks_per_worker : int, optional
             Number of chunks to extract on each worker, by default 5
+        resample_kwargs : dict, optional
+            Kwargs for pandas.DataFrame.resample
 
         Returns
         -------
@@ -164,7 +183,7 @@ class DatasetAgg():
         if len(slices) == 1:
             max_workers = 1
 
-        dset_agg = self._create_agg_arr(shape, freq=freq)
+        dset_agg = self._create_agg_arr(shape, freq=freq, **resample_kwargs)
 
         if max_workers > 1:
             msg = ('Aggregating {} in parallel using {} workers'
@@ -182,7 +201,8 @@ class DatasetAgg():
                                         site_slice=sites_slice,
                                         freq=freq,
                                         method=method,
-                                        time_index=self._time_index)
+                                        time_index=self._time_index,
+                                        **resample_kwargs)
                     futures.append(future)
 
                 for i, future in enumerate(futures):
@@ -199,18 +219,62 @@ class DatasetAgg():
                     site_slice=sites_slice,
                     freq=freq,
                     method=method,
-                    time_index=self._time_index)
+                    time_index=self._time_index,
+                    **resample_kwargs)
                 logger.debug('Completed {} out of {} sets of sites'
                              .format((i + 1), len(slices)))
 
         return dset_agg
+
+    @classmethod
+    def run(cls, h5_fpath, dset, time_index=None, freq='1d', method='mean',
+            max_workers=None, chunks_per_worker=5, **resample_kwargs):
+        """
+        Temporally aggregate dataset to given frequency using given method
+
+        Parameters
+        ----------
+        h5_fpath : str
+            Path to source h5 filepath
+        dset : str
+            Dataset to aggregate
+        time_index : pandas.DatetimeIndex, optional
+            Dataset datetime index, if None, extract from h5_fpath,
+            by default None
+        freq : str, optional
+            Aggregation frequency, by default '1d'
+        method : str, optional
+            Aggregation method, either 'mean' or 'sum', by default 'mean'
+        max_workers : None | int, optional
+            Number of workers to use, if 1 run in serial, if None use all
+            available cores, by default None
+        chunks_per_worker : int, optional
+            Number of chunks to extract on each worker, by default 5
+        resample_kwargs : dict, optional
+            Kwargs for pandas.DataFrame.resample
+
+        Returns
+        -------
+        agg_data : ndarray
+            Dataset aggregated do given frequency using given method
+        """
+        logger.info('Aggregating {} in {} to {} using {}'
+                    .format(dset, h5_fpath, freq, method))
+        agg = cls(h5_fpath, dset, time_index=time_index)
+        agg_dset = agg.aggregate(freq=freq, method=method,
+                                 max_workers=max_workers,
+                                 chunks_per_worker=chunks_per_worker,
+                                 **resample_kwargs)
+
+        return agg_dset
 
 
 class TemporalAgg():
     """
     Class to temporally aggregate time-series data
     """
-    def __init__(self, src_fpath, dst_fpath, freq='1d', method='mean'):
+    def __init__(self, src_fpath, dst_fpath, freq='1d', dsets=None,
+                 **resample_kwargs):
         """
         Parameters
         ----------
@@ -220,15 +284,160 @@ class TemporalAgg():
             Path to destination h5 file to save aggregated datasets to.
         freq : str, optional
             Aggregation frequency, by default '1d'
-        method : str, optional
-            Aggregation method, by default 'mean'
+        dsets : list, optional
+            Datasets to aggregate, if None aggregate all datasets in src_fpath,
+            by default None
+        resample_kwargs : dict, optional
+            Kwargs for pandas.DataFrame.resample
         """
         self._src_fpath = src_fpath
         self._dst_fpath = dst_fpath
         self._freq = freq
-        self._method = method
+        self._dsets, self._time_index = self._get_dsets(src_fpath, dsets=dsets)
+        self._resample_kwargs = resample_kwargs
+
+        self._init_agg_h5()
 
     def __repr__(self):
         msg = '{} of {}'.format(self.__class__.__name__, self._src_fpath)
 
         return msg
+
+    @property
+    def dsets(self):
+        """
+        Datasets to aggregate
+
+        Returns
+        -------
+        list
+        """
+        return self._dsets
+
+    @staticmethod
+    def _get_dsets(h5_fpath, dsets=None):
+        """
+        Get datasets to aggregate, or if given ensure they are in source
+        h5 file. Also extract time_index
+
+        Parameters
+        ----------
+        h5_fpath : str
+            Path to .h5 file to source dataset for aggregation from
+        dsets : list, optional
+            Datasets to aggregate, if None aggregate all datasets in src_fpath,
+            by default None
+
+        Returns
+        -------
+        dsets : list
+            List of datasets to aggregate
+        time_index : pandas.DatetimeIndex
+            DatetimeIndex of datasets being aggregated
+        """
+        with Resource(h5_fpath) as f:
+            time_index = f.time_index
+            if dsets is None:
+                dsets = f.resource_datasets
+            else:
+                for ds in dsets:
+                    msg = "{} is not available in {}".format(ds, h5_fpath)
+                    assert ds in f, msg
+
+        return dsets, time_index
+
+    def _init_agg_h5(self):
+        """
+        Initialize the dst .h5 file that will contain the aggregated datasets
+        """
+        logger.info('Initializing {}'.format(self._dst_fpath))
+        time_index = pd.Series(0, index=self._time_index)
+        time_index = time_index.resample(self._freq, **self._resample_kwargs)
+        time_index = time_index.mean().index
+        dset_len = len(time_index)
+
+        shapes = {}
+        dtypes = {}
+        chunks = {}
+        attrs = {}
+        with Resource(self._src_fpath) as f:
+            meta = f.meta
+            for ds in self.dsets:
+                shape, dtype, chunks = f.get_dset_properties(ds)
+                shapes[ds] = (dset_len, shape[1])
+                dtypes[ds] = dtype
+                chunks[ds] = (dset_len, chunks[1])
+                attrs[ds] = f.attrs[ds]
+                logger.debug('Aggregated {} properties:'
+                             '\nshape: {}'
+                             '\ndtype: {}'
+                             '\nchunks: {}'
+                             '\nattrs: {}'
+                             .format(ds, shapes[ds], dtypes[ds], chunks[ds],
+                                     attrs[ds]))
+
+        Outputs.init_h5(self._dst_fpath, self.dsets, shapes, attrs, chunks,
+                        dtypes, meta, time_index=time_index)
+
+    def aggregate(self, method='mean', max_workers=None, chunks_per_worker=5):
+        """
+        Aggregate desired datasets and write to disk
+
+        Parameters
+        ----------
+        method : str, optional
+            Aggregation method, either 'mean' or 'sum', by default 'mean'
+        max_workers : None | int, optional
+            Number of workers to use, if 1 run in serial, if None use all
+            available cores, by default None
+        chunks_per_worker : int, optional
+            Number of chunks to extract on each worker, by default 5
+        """
+        for ds in self.dsets:
+            ds_agg = DatasetAgg.run(self._src_fpath, ds,
+                                    time_index=self._time_index,
+                                    freq=self._freq,
+                                    method=method,
+                                    max_workers=max_workers,
+                                    chunks_per_worker=chunks_per_worker,
+                                    **self._resample_kwargs)
+            with Outputs(self._dst_fpath, mode='a') as f:
+                logger.info('Writing aggregated data for {} to disk'
+                            .format(ds))
+                f[ds] = ds_agg
+
+    @classmethod
+    def run(cls, src_fpath, dst_fpath, freq='1d', dsets=None, method='mean',
+            max_workers=None, chunks_per_worker=5, **resample_kwargs):
+        """
+        Temporally aggregate the desired datasets in the src .h5 file to the
+        given frequency using the given method. Save the aggregated datasets
+        to the dst .h5 file.
+
+        Parameters
+        ----------
+        src_fpath : str
+            Path to source h5 file
+        dst_fpath : str
+            Path to destination h5 file to save aggregated datasets to.
+        freq : str, optional
+            Aggregation frequency, by default '1d'
+        dsets : list, optional
+            Datasets to aggregate, if None aggregate all datasets in src_fpath,
+            by default None
+        method : str, optional
+            Aggregation method, either 'mean' or 'sum', by default 'mean'
+        max_workers : None | int, optional
+            Number of workers to use, if 1 run in serial, if None use all
+            available cores, by default None
+        chunks_per_worker : int, optional
+            Number of chunks to extract on each worker, by default 5
+        resample_kwargs : dict, optional
+            Kwargs for pandas.DataFrame.resample
+        """
+        logger.info('Aggregating datasets in {} to {} using {} and saving to '
+                    '{}'.format(src_fpath, freq, method, dst_fpath))
+        agg = cls(src_fpath, dst_fpath, freq=freq, dsets=dsets,
+                  **resample_kwargs)
+        agg.run(method=method, max_workers=max_workers,
+                chunks_per_worker=chunks_per_worker)
