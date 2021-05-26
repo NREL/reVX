@@ -1,5 +1,7 @@
 import rasterio as rio
 
+from .config import power_classes, power_to_voltage
+
 
 class RowColTransformer:
     """
@@ -64,3 +66,41 @@ def save_geotiff(data, template, outf):
                        )
     ras_out.write(data, 1)
     ras_out.close()
+
+
+def OLD_capacity_to_kv(capacity):
+    """
+    Determine transmission kV for reV power class
+
+    Parameters
+    ----------
+    capacity : String
+       Desired reV power capacity class, one of "100MW", "200MW", "400MW",
+       "1000MW"
+
+    Returns
+    -------
+    volts : int
+        Real world line voltage in kV
+    """
+    power = power_classes[capacity]
+    volts = power_to_voltage[str(power)]
+    return volts
+
+
+def int_capacity(capacity):
+    """
+    Convert string capacity to int, e.g. "100MW" -> 100
+
+    Parameters
+    ----------
+    capacity : String
+       Desired reV power capacity class, one of "100MW", "200MW", "400MW",
+       "1000MW"
+
+    Returns
+    -------
+    capacity : int
+        Capcity as int (MW)
+    """
+    return int(capacity[:len(capacity)-2])
