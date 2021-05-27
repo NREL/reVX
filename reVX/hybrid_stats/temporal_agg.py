@@ -393,9 +393,17 @@ class TemporalAgg():
         """
         with Resource(h5_fpath) as f:
             if dsets is None:
-                dsets = f.resource_datasets
+                res_dsets = f.resource_datasets
                 if year is not None:
-                    dsets = [ds for ds in dsets if str(year) in ds]
+                    res_dsets = [ds for ds in res_dsets
+                                 if str(year) in ds
+                                 and 'time_index' not in ds]
+
+                dsets = []
+                for ds in res_dsets:
+                    if len(f.shapes[ds]) == 2:
+                        dsets.append(ds)
+
             else:
                 for ds in dsets:
                     msg = "{} is not available in {}".format(ds, h5_fpath)
