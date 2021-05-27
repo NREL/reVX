@@ -438,7 +438,6 @@ class TemporalAgg():
                 for ds in self.dsets:
                     shape, dtype, chunks = f_in.get_dset_properties(ds)
                     shape = (dset_len, shape[1])
-                    chunks = (dset_len, chunks[1])
                     attrs = f_in.attrs[ds]
                     logger.debug('Initializing aggregated {} w/ properties:'
                                  '\nshape: {}'
