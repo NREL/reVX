@@ -351,7 +351,7 @@ class TemporalAgg():
                                                         year=year)
         self._resample_kwargs = resample_kwargs
 
-        self._init_agg_h5()
+        self._init_agg_h5(year=year)
 
     def __repr__(self):
         msg = '{} of {}'.format(self.__class__.__name__, self._src_fpath)
@@ -405,38 +405,50 @@ class TemporalAgg():
 
         return dsets, time_index
 
-    def _init_agg_h5(self):
+    def _init_agg_h5(self, year=None):
         """
         Initialize the dst .h5 file that will contain the aggregated datasets
+
+        Parameter
+        ---------
+        year : str | int, optional
+            Year to extract time-index and datasets for, needed  if running
+            on a multi-year file, by default None
         """
         logger.info('Initializing {}'.format(self._dst_fpath))
         time_index = pd.Series(0, index=self._time_index)
         time_index = time_index.resample(self._freq, **self._resample_kwargs)
         time_index = time_index.mean().index
         dset_len = len(time_index)
+        ti_dset = 'time_index'
 
-        shapes = {}
-        dtypes = {}
-        chunks = {}
-        attrs = {}
-        with Resource(self._src_fpath) as f:
-            meta = f.meta
-            for ds in self.dsets:
-                shape, dtype, chunks = f.get_dset_properties(ds)
-                shapes[ds] = (dset_len, shape[1])
-                dtypes[ds] = dtype
-                chunks[ds] = (dset_len, chunks[1])
-                attrs[ds] = f.attrs[ds]
-                logger.debug('Aggregated {} properties:'
-                             '\nshape: {}'
-                             '\ndtype: {}'
-                             '\nchunks: {}'
-                             '\nattrs: {}'
-                             .format(ds, shapes[ds], dtypes[ds], chunks[ds],
-                                     attrs[ds]))
+        if year is not None:
+            ti_dset += '-{}'.format(year)
 
-        Outputs.init_h5(self._dst_fpath, self.dsets, shapes, attrs, chunks,
-                        dtypes, meta, time_index=time_index, mode='a')
+        with Outputs(self._dst_fpath, mode='a') as f_out:
+            with Resource(self._src_fpath) as f_in:
+                meta = f_in.meta
+                if 'meta' not in f_out:
+                    logger.debug('Copying meta data')
+                    f_out['meta'] = meta
+
+                logger.debug('Copying {}'.format(ti_dset))
+                f_out._set_time_index(ti_dset, time_index)
+
+                for ds in self.dsets:
+                    shape, dtype, chunks = f_in.get_dset_properties(ds)
+                    shape = (dset_len, shape[1])
+                    chunks = (dset_len, chunks[1])
+                    attrs = f_in.attrs[ds]
+                    logger.debug('Initializing aggregated {} w/ properties:'
+                                 '\nshape: {}'
+                                 '\ndtype: {}'
+                                 '\nchunks: {}'
+                                 '\nattrs: {}'
+                                 .format(ds, shape, dtype, chunks, attrs))
+
+                    f_out._create_dset(ds, shape, dtype, chunks=chunks,
+                                       attrs=attrs)
 
     def aggregate(self, method='mean', max_workers=None, chunks_per_worker=5):
         """
