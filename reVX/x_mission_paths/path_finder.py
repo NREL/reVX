@@ -77,7 +77,8 @@ class PathFinder:
     """
     Find least cost paths to transmission features from SC point
     """
-    def __init__(self, sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc):
+    def __init__(self, sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc,
+                 sinks_dc):
         """
         sc_pt : SupplyCurvePoint
             Supply curve point of interest
@@ -89,12 +90,15 @@ class PathFinder:
             Distance calculator for t-lines
         lcs_dc : DistanceCalculator
             Distance calculator for load centers
+        sinks_dc : DistanceCalculator
+            Distance calculator for sinks
         """
         self._sc_pt = sc_pt
         self._cost_arr = cost_arr
         self._subs_dc = subs_dc
         self._tls_dc = tls_dc
         self._lcs_dc = lcs_dc
+        self._sinks_dc = sinks_dc
 
         self.cell_size = CELL_SIZE  # (meters) Both dimensions must be equal
 
@@ -114,8 +118,8 @@ class PathFinder:
         self._blocked_feats = []
 
     @classmethod
-    def run(cls, sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc):
-        pf = cls(sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc)
+    def run(cls, sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc, sinks_dc):
+        pf = cls(sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc, sinks_dc)
         pf._update_start_point()
         pf._clip_cost_raster()
         pf._find_paths()
@@ -176,6 +180,7 @@ class PathFinder:
                 break
         else:
             # print(f'Unable to find non-excluded start for {self._sc_pt}')
+            # TODO - raise exception and return marked cost list
             return
 
         print('val', window[locs[0][0], locs[1][0]], 'i', i)
@@ -184,15 +189,18 @@ class PathFinder:
         self._start_dist = sqrt((self._start_row - self._sc_pt.row)**2 +
                                 (self._start_col - self._sc_pt.col)**2)
         self._start_dist *= self.cell_size
-        print('start_dist is', self._start_dist)
+        print(f'Had to move start for sc_pt {self._sc_pt.id}, '
+              f'{self._start_dist}m')
 
     def _clip_cost_raster(self):
         """ Clip cost raster to nearest transmission features with a buffer """
         subs = self._subs_dc.get_closest(self._sc_pt)
         tls = self._tls_dc.get_closest(self._sc_pt)
         lcs = self._lcs_dc.get_closest(self._sc_pt)
+        sinks = self._sinks_dc.get_closest(self._sc_pt)
 
-        self._near_trans = subs + tls + lcs
+        # TODO - only include lcs if necessary?
+        self._near_trans = subs + tls + lcs + sinks
         self._near_trans.sort(key=lambda x: x.dist)
 
         rows = [x.row for x in self._near_trans]
@@ -210,6 +218,8 @@ class PathFinder:
 
         self._cost_arr_clip = self._cost_arr[min(rows)-h_buf:max(rows)+h_buf+1,
                                              min(cols)-w_buf:max(cols)+w_buf+1]
+
+        breakpoint()
 
     def _find_paths(self):
         """ Find minimum cost paths from sc_pt to nearest trans features """
@@ -296,7 +306,7 @@ class PathFinder:
             try:
                 indices = self._mcp.traceback((r, c))
             except ValueError:
-                print('Cant find path to', feat)
+                print('Cant find path to', feat.name)
                 continue
             path_xs = [x[1] for x in indices]
             path_ys = [x[0] for x in indices]
