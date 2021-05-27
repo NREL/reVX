@@ -112,3 +112,4 @@ ENV/
 # vim
 *.swp
 tags
+*.swo

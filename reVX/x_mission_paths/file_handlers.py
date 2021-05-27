@@ -20,7 +20,7 @@ class LoadData:
     """
     Load data from disk
     """
-    def __init__(self, capacity, resolution,
+    def __init__(self, capacity_class, resolution,
                  costs_raster_dir='cost_rasters',
                  template_f='data/conus_template.tif',
                  landuse_f='data/nlcd.npy',
@@ -32,16 +32,16 @@ class LoadData:
         """
         Parameters
         ----------
-        capacity : String
+        capacity_class : String
             Desired reV power capacity class, one of "100MW", "200MW", "400MW",
             "1000MW"
         resolution : Int
             Desired Supply Curve Point resolution, one of: 32, 64, 128
 
         """
-        assert capacity in power_classes.keys()
+        assert capacity_class in power_classes.keys()
 
-        self.capacity = capacity
+        self.capacity_class = capacity_class
         self.rct = RowColTransformer(template_f)
 
         # TODO - make this resolution aware
@@ -50,7 +50,7 @@ class LoadData:
         self.t_lines = TransLineLoader(t_lines_f)
 
         # Real world power capacity (MW)
-        self.tie_power = power_classes[capacity]
+        self.tie_power = power_classes[capacity_class]
 
         # Voltage (kV) corresponding to self.tie_power
         self.tie_voltage = power_to_voltage[str(self.tie_power)]
@@ -69,7 +69,7 @@ class FilterData:
         Parameters
         ----------
         ld : LoadData
-            LoadData instance for desired capacity and resolution
+            LoadData instance for desired capacity_class and resolution
         """
         self._ld = ld
 
