@@ -5,12 +5,13 @@ Mike Bannister
 4/13/2021
 """
 import numpy as np
+from math import sqrt
 import matplotlib.pyplot as plt
 
 from skimage.graph import MCP_Geometric
 from shapely.ops import nearest_points
 
-from .config import CELL_SIZE
+from .config import CELL_SIZE, NON_EXCLUSION_SEARCH_RANGE, CLIP_RASTER_BUFFER
 
 
 class BlockedTransFeature(Exception):
@@ -68,8 +69,8 @@ class TransFeature:
 
 # TODO - does this include substation attachemnt cost?
 class TransmissionCost:
-    def __init__(self, sc_id, trans_id, name, trans_type, cost, length,
-                 min_volts, max_volts):
+    def __init__(self, sc_id, excluded, start_dist, trans_id, name, trans_type,
+                 cost, length, min_volts, max_volts):
         """
         Cost of building transmission line from supply curve point to
         transmission feature.
@@ -78,6 +79,11 @@ class TransmissionCost:
         ----------
         sc_id : int
             Supply curve point id
+        excluded : Boolean
+            If true, SC point is in exclusion zone
+        start_dist : float
+            Distance from SC point to path-finding start point if SC point it
+            in an exclusion zone.
         trans_id : int
             Supply curve point id
         name : str
@@ -96,20 +102,19 @@ class TransmissionCost:
             connected to
         """
         self.sc_id = sc_id
+        self.excluded = excluded
+        self.start_dist = start_dist
         self.trans_id = trans_id
         self.name = name
         self.trans_type = trans_type
         self.cost = cost
-        # self.line_cost
-        # self.xformer_cost
-        # self.new_sub_cost
-        # self.total_cost?
         self.length = length
         self.min_volts = min_volts
         self.max_volts = max_volts
 
     def as_dict(self):
-        return {'sc_id': self.sc_id, 'trans_id': self.trans_id,
+        return {'sc_id': self.sc_id, 'excluded': self.excluded,
+                'start_dist': self.start_dist, 'trans_id': self.trans_id,
                 'name': self.name, 'trans_type': self.trans_type,
                 'tline_cost': self.cost, 'length': self.length,
                 'min_volts': self.min_volts, 'max_volts': self.max_volts}
@@ -259,38 +264,21 @@ class PathFinder:
         self._costs = None
         self._tb = None
 
+        self._excluded = False
+        self._start_row = sc_pt.row
+        self._start_col = sc_pt.col
+        self._start_dist = 0
+
         # Keep list of inaccessible trans features
         self._blocked_feats = []
 
     @classmethod
     def run(cls, sc_pt,  cost_arr, subs_dc, tls_dc):
         pf = cls(sc_pt, cost_arr, subs_dc, tls_dc)
+        pf._update_start_point()
         pf._clip_cost_raster()
         pf._find_paths()
         return pf
-
-    def _clip_cost_raster(self):
-        """ Clip cost raster to nearest transmission features """
-        subs = self._subs_dc.get_closest(self._sc_pt)
-        tls = self._tls_dc.get_closest(self._sc_pt)
-
-        self._near_trans = subs + tls
-        self._near_trans.sort(key=lambda x: x.dist)
-
-        rows = [x.row for x in self._near_trans]
-        cols = [x.col for x in self._near_trans]
-        rows.append(self._sc_pt.row)
-        cols.append(self._sc_pt.col)
-
-        self._row_offset = min(rows)
-        self._col_offset = min(cols)
-        self._cost_arr_clip = self._cost_arr[min(rows):max(rows)+1,
-                                             min(cols):max(cols)+1]
-
-    def _find_paths(self):
-        """ Find minimum cost paths from sc_pt to nearest trans features """
-        self._mcp = MCP_Geometric(self._cost_arr_clip)
-        self._costs, self._tb = self._mcp.find_costs(starts=[self._start])
 
     @property
     def costs(self):
@@ -314,23 +302,85 @@ class PathFinder:
                 self._blocked_feats.append(feat)
                 continue
             cost = self._path_cost(feat)
-            this_cost = TransmissionCost(self._sc_pt.id, feat.id, feat.name,
+            this_cost = TransmissionCost(self._sc_pt.id, self._excluded,
+                                         self._start_dist, feat.id, feat.name,
                                          feat.trans_type, cost, length,
                                          feat.min_volts, feat.max_volts)
             costs.append(this_cost)
 
         if len(costs) == 0:
-            costs = [TransmissionCost(self._sc_pt.id, -1, 'None found', 'none',
-                                      -1, -1, -1, -1)]
+            costs = [TransmissionCost(self._sc_pt.id, 'True', -1, -1,
+                                      'None found', 'none', -1, -1, -1, -1)]
         return costs
+
+    def _update_start_point(self):
+        """
+        If SC point is in an exclusion zone, move path-finding start to nearest
+        non-excluded point. Search starting at SC point, expanding search
+        rectangle one pixel on all sides each iteration.
+        """
+        if self._cost_arr[self._start_row, self._start_col] > 0:
+            return
+
+        self._excluded = True
+
+        r = self._start_row
+        c = self._start_col
+        for i in range(1, NON_EXCLUSION_SEARCH_RANGE):
+            # TODO - make sure we don't exceed bounds of array
+            window = self._cost_arr[r-i:r+i+1, c-i:c+i+1]
+            locs = np.where(window > 0)
+            if locs[0].shape != (0,):
+                print('locs', locs)
+                break
+        else:
+            # print(f'Unable to find non-excluded start for {self._sc_pt}')
+            return
+
+        print('val', window[locs[0][0], locs[1][0]], 'i', i)
+        self._start_row = r - i + locs[0][0]
+        self._start_col = c - i + locs[1][0]
+        self._start_dist = sqrt((self._start_row - self._sc_pt.row)**2 +
+                                (self._start_col - self._sc_pt.col)**2)
+        self._start_dist *= self.cell_size
+        print('start_dist is', self._start_dist)
+
+    def _clip_cost_raster(self):
+        """ Clip cost raster to nearest transmission features with a buffer """
+        subs = self._subs_dc.get_closest(self._sc_pt)
+        tls = self._tls_dc.get_closest(self._sc_pt)
+
+        self._near_trans = subs + tls
+        self._near_trans.sort(key=lambda x: x.dist)
+
+        rows = [x.row for x in self._near_trans]
+        cols = [x.col for x in self._near_trans]
+        rows.append(self._sc_pt.row)
+        cols.append(self._sc_pt.col)
+        rows.append(self._start_row)
+        cols.append(self._start_col)
+
+        w_buf = int((max(cols) - min(cols)) * CLIP_RASTER_BUFFER)
+        h_buf = int((max(rows) - min(rows)) * CLIP_RASTER_BUFFER)
+
+        self._row_offset = min(rows) - h_buf
+        self._col_offset = min(cols) - w_buf
+
+        self._cost_arr_clip = self._cost_arr[min(rows)-h_buf:max(rows)+h_buf+1,
+                                             min(cols)-w_buf:max(cols)+w_buf+1]
+
+    def _find_paths(self):
+        """ Find minimum cost paths from sc_pt to nearest trans features """
+        self._mcp = MCP_Geometric(self._cost_arr_clip)
+        self._costs, self._tb = self._mcp.find_costs(starts=[self._start])
 
     @property
     def _start(self):
         """
         Return supply curve point row/col location for clipped cost_arr raster
         """
-        start = (self._sc_pt.row - self._row_offset,
-                 self._sc_pt.col - self._col_offset)
+        start = (self._start_row - self._row_offset,
+                 self._start_col - self._col_offset)
         return start
 
     def _path_cost(self, feat):
@@ -418,10 +468,19 @@ class PathFinder:
             plt.text(c - self._col_offset, r - self._row_offset,
                      feat.name, color='red')
 
-        # Plot SC point
-        plt.plot(self._start[1], self._start[0], marker='o', color='black',
+        # Plot start point
+        plt.plot(self._start[1], self._start[0], marker='P', color='black',
                  markersize=18)
-        plt.plot(self._start[1], self._start[0], marker='o', color='yellow',
+        plt.plot(self._start[1], self._start[0], marker='P', color='yellow',
                  markersize=10)
+
+        # Plot SC point
+        sc_pt = (self._sc_pt.row - self._row_offset,
+                 self._sc_pt.col - self._col_offset)
+        plt.plot(sc_pt[1], sc_pt[0], marker='o', color='black',
+                 markersize=18)
+        plt.plot(sc_pt[1], sc_pt[0], marker='o', color='yellow',
+                 markersize=10)
+
         plt.title(str(self._sc_pt))
         plt.show()

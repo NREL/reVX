@@ -14,6 +14,12 @@ MEDIUM_CUTOFF = 10*5280/3.28084
 CELL_SIZE = 90  # meters, size of cell. Both dims must be equal
 TEMPLATE_SHAPE = (33792, 48640)
 
+NON_EXCLUSION_SEARCH_RANGE = 300  # pixels
+
+# % distance to buffer clipped cost raster by. Larger values are more likely
+# to find a valid path in areas with complex exclusions, but will run slower
+CLIP_RASTER_BUFFER = 0.2  #
+
 
 # Load json files
 with open(os.path.join(CONFIGDIR, 'power_to_voltage.json'), 'rt') as f:
