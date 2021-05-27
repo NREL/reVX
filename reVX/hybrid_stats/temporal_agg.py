@@ -437,7 +437,7 @@ class TemporalAgg():
             with Resource(self._src_fpath) as f_in:
                 meta = f_in.meta
                 shape += (len(meta), )
-                f_in._shape = shape
+                f_out._shape = shape
                 if 'meta' not in f_out:
                     logger.debug('Copying meta data')
                     f_out['meta'] = meta
