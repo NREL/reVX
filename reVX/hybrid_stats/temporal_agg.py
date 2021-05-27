@@ -427,7 +427,7 @@ class TemporalAgg():
         time_index = pd.Series(0, index=self._time_index)
         time_index = time_index.resample(self._freq, **self._resample_kwargs)
         time_index = time_index.mean().index
-        dset_len = len(time_index)
+        shape = (len(time_index), )
         ti_dset = 'time_index'
 
         if year is not None:
@@ -436,6 +436,8 @@ class TemporalAgg():
         with Outputs(self._dst_fpath, mode='a') as f_out:
             with Resource(self._src_fpath) as f_in:
                 meta = f_in.meta
+                shape += (len(meta), )
+                f_in._shape = shape
                 if 'meta' not in f_out:
                     logger.debug('Copying meta data')
                     f_out['meta'] = meta
@@ -444,8 +446,7 @@ class TemporalAgg():
                 f_out._set_time_index(ti_dset, time_index)
 
                 for ds in self.dsets:
-                    shape, dtype, chunks = f_in.get_dset_properties(ds)
-                    shape = (dset_len, shape[1])
+                    _, dtype, chunks = f_in.get_dset_properties(ds)
                     attrs = f_in.attrs[ds]
                     logger.debug('Initializing aggregated {} w/ properties:'
                                  '\nshape: {}'
