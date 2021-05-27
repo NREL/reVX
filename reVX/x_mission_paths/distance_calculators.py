@@ -90,11 +90,8 @@ class SubstationDistanceCalculator:
         close_subs : list
             List of n nearest substations to location
         """
-        # Get shapely point for geometry calcs
-        pt = sc_pt.point
-
         # Find nearest subs to sc_pt
-        self._subs['dist'] = self._subs.distance(pt)
+        self._subs['dist'] = self._subs.distance(sc_pt.point)
         subs = self._subs.sort_values(by='dist')
         near_subs = subs[:self._n].copy()
 
@@ -224,3 +221,58 @@ class LoadCenterDistanceCalculator:
                                   0, 1000)
             close_lcs.append(new_lc)
         return close_lcs
+
+
+class SinkDistanceCalculator:
+    """
+    Calculate nearest sinks to SC point. Also calculate distance and
+    row/col in template raster.
+    """
+    def __init__(self, sinks, rct, n=1):
+        """
+        Parameters
+        ----------
+        sinks : geopandas.DataFrame
+            Sinks to search
+        rct : RowColTransformer
+            Transformer for template raster
+        n : int
+            Number of nearest sinks to return
+        """
+        self._sinks = sinks
+        self._rct = rct
+        self._n = n
+
+    def get_closest(self, sc_pt):
+        """
+        Get n closest sinks to a supply curve point
+
+        Parameters
+        ----------
+        sc_pt : SupplyCurvePoint
+            Supply curve point to search around
+
+        Returns
+        -------
+        close_sinks : list
+            List of n nearest sinks to location
+        """
+        # Find nearest sinks to sc_pt
+        self._sinks['dist'] = self._sinks.distance(sc_pt.point)
+        sinks = self._sinks.sort_values(by='dist')
+        near_sinks = sinks[:self._n].copy()
+
+        # Determine row/col and convert to TransFeature
+        close_sinks = []
+        for _id, sink in near_sinks.iterrows():
+            # Load centers are very short lines, use the first point
+            row, col = self._rct.get_row_col(sink.geometry.coords[0][0],
+                                             sink.geometry.coords[0][1])
+            if row is None:
+                continue
+            new_sink = TransFeature(_id, sink.gid, 'sink',
+                                    sink.geometry.coords[0][0],
+                                    sink.geometry.coords[0][1], row, col,
+                                    sink.dist, 0, 1000)
+            close_sinks.append(new_sink)
+        return close_sinks
