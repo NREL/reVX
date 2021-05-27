@@ -14,11 +14,14 @@ MEDIUM_CUTOFF = 10*5280/3.28084
 CELL_SIZE = 90  # meters, size of cell. Both dims must be equal
 TEMPLATE_SHAPE = (33792, 48640)
 
-NON_EXCLUSION_SEARCH_RANGE = 300  # pixels
+NON_EXCLUSION_SEARCH_RANGE = 75  # pixels, slightly bigger than 128 agg area
 
 # % distance to buffer clipped cost raster by. Larger values are more likely
 # to find a valid path in areas with complex exclusions, but will run slower
-CLIP_RASTER_BUFFER = 0.2  #
+CLIP_RASTER_BUFFER = 0.05  #
+
+NUM_LOAD_CENTERS = 2
+NUM_SINKS = 1
 
 
 # Load json files

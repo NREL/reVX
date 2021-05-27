@@ -9,10 +9,11 @@ from datetime import datetime as dt
 
 import pandas as pd
 
-from .path_finder import SubstationDistanceCalculator, \
-    TLineDistanceCalculator, PathFinder
+from .path_finder import PathFinder
+from .distance_calculators import SubstationDistanceCalculator, \
+    TLineDistanceCalculator, LoadCenterDistanceCalculator
 from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF, \
-    transformer_costs
+    transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS
 from .file_handlers import LoadData, FilterData
 from .utilities import int_capacity
 
@@ -58,8 +59,10 @@ class ProcessSCs:
         rct = self._ld.rct
         subs_dc = SubstationDistanceCalculator(self._fd.subs, rct, n=n)
         tls_dc = TLineDistanceCalculator(self._fd.t_lines, rct, n=n)
+        lcs_dc = LoadCenterDistanceCalculator(self._ld.lcs, rct,
+                                              n=NUM_LOAD_CENTERS)
         self._cccfsc = CalcConnectCostsForSC(self._ld.costs_arr, subs_dc,
-                                             tls_dc, capacity_class,
+                                             tls_dc, lcs_dc, capacity_class,
                                              self._ld.tie_voltage)
         print(dt.now(), 'done initing')
 
@@ -96,7 +99,7 @@ class CalcConnectCostsForSC:
     cost, all multipliers, new substations, substation upgrades and
     transformers. All transmission features should be valid for power class.
     """
-    def __init__(self, costs_arr, subs_dc, tls_dc, capacity_class,
+    def __init__(self, costs_arr, subs_dc, tls_dc, lcs_dc, capacity_class,
                  tie_voltage):
         """
         Parameters
@@ -104,10 +107,12 @@ class CalcConnectCostsForSC:
         costs_arr : numpy.ndarray
             Costs raster, value is cost in US$ to build line across cell,
             including all multipliers
-        subs_dc : .path_finder.SubstationDistanceCalculator
+        subs_dc : SubstationDistanceCalculator
             Distance calculator for substations
-        tls_dc : .path_finder.TlineDistanceCalculator
+        tls_dc : TlineDistanceCalculator
             Distance calculator for existing transmission lines
+        lcs_dc : LoadCenterDistanceCalculator
+            Distance calculator for load centers
         capacity_class : String
             Desired reV power capacity class, one of "100MW", "200MW", "400MW",
             "1000MW"
@@ -117,6 +122,7 @@ class CalcConnectCostsForSC:
         self._costs_arr = costs_arr
         self._subs_dc = subs_dc
         self._tls_dc = tls_dc
+        self._lcs_dc = lcs_dc
         self._capacity_class = capacity_class
         self._tie_voltage = tie_voltage
 
@@ -141,7 +147,7 @@ class CalcConnectCostsForSC:
             transformers to each existing grid feature.
         """
         pf = PathFinder.run(sc_pt, self._costs_arr, self._subs_dc,
-                            self._tls_dc)
+                            self._tls_dc, self._lcs_dc)
         cdf = pd.DataFrame([c.as_dict() for c in pf.costs])
 
         # Length multiplier

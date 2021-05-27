@@ -28,6 +28,7 @@ class LoadData:
                  sc_points_f='data/sc_points/sc32_points_updated.shp',
                  t_lines_f='data/t_lines/t_lines_conus.shp',
                  subs_f='data/substations/substations_conus_updated.shp',
+                 load_centers_f='data/load_centers/load_centers_proj.shp',
                  iso_regions_f='data/iso_regions.tiff'):
         """
         Parameters
@@ -37,7 +38,7 @@ class LoadData:
             "1000MW"
         resolution : Int
             Desired Supply Curve Point resolution, one of: 32, 64, 128
-
+        TODO
         """
         assert capacity_class in power_classes.keys()
 
@@ -46,8 +47,11 @@ class LoadData:
 
         # TODO - make this resolution aware
         self.sc_points = load_sc_points(sc_points_f, self.rct)
+
         self.subs = SubstationsLoader(subs_f)
         self.t_lines = TransLineLoader(t_lines_f)
+        self.lcs = load_load_centers(load_centers_f)
+        self.sinks = load_sinks(load_centers_f)
 
         # Real world power capacity (MW)
         self.tie_power = power_classes[capacity_class]
@@ -146,6 +150,44 @@ class TransLineLoader:
         """
         tls = self.tls[self.tls.Voltage_kV >= cutoff_voltage]
         return tls
+
+
+def load_load_centers(load_centers_f):
+    """
+    Load load centers (i.e., cities)from disk.
+
+    Parameters
+    ----------
+    load_centers_f : String
+        Path to load centers shapefile
+
+    Returns
+    -------
+        lcs : Geopandas.DataFrame
+    """
+    lcs = gpd.read_file(load_centers_f)
+    lcs = lcs[lcs.category == "LoadCen"]
+    lcs = lcs.drop(['egid', 'trans_gids'], axis=1)
+    return lcs
+
+
+def load_sinks(load_centers_f):
+    """
+    Load infinite sinks from disk.
+
+    Parameters
+    ----------
+    load_centers_f : String
+        Path to load centers shapefile
+
+    Returns
+    -------
+        sinks : Geopandas.DataFrame
+    """
+    sinks = gpd.read_file(load_centers_f)
+    sinks = sinks[sinks.category == "PCALoadCen"]
+    sinks = sinks.drop(['egid', 'trans_gids'], axis=1)
+    return sinks
 
 
 class SupplyCurvePoint:
