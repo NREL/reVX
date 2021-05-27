@@ -15,11 +15,47 @@ from rex.utilities.utilities import slice_sites
 logger = logging.getLogger(__name__)
 
 
+def get_time_index(h5_path, year=None):
+    """
+    Extract time_index from .h5 file. If 'year' is
+    provided extact time_index for given year.
+
+    Parameters
+    ----------
+    h5_path : str
+        Path to .h5 file to extract meta and time_index
+    year : str | int, optional
+        Year to extract time-index for if running on a multi-year file,
+        by default None
+
+    Returns
+    -------
+    time_index: pandas.DatatimeIndex
+        Datetime Index
+    """
+    with Resource(h5_path) as f:
+        if 'time_index' in f:
+            time_index = f.time_index
+        elif year is not None:
+            time_index = f[f'time_index-{year}']
+        else:
+            ti_dsets = [dset for dset in f.datasets
+                        if dset.startswith('time_index')]
+            msg = ("'time_index' is not available in {}. The following "
+                   "potential annual time_index are available: {}. Please "
+                   "specify a 'year' to use the 'time_index' for a "
+                   "specific year.".format(h5_path, ti_dsets))
+            logger.error(ti_dsets)
+            raise ValueError(msg)
+
+    return time_index
+
+
 class DatasetAgg():
     """
     Temporaly Aggregate Dataset
     """
-    def __init__(self, h5_fpath, dset, time_index=None):
+    def __init__(self, h5_fpath, dset, time_index=None, year=None):
         """
         Parameters
         ----------
@@ -30,16 +66,21 @@ class DatasetAgg():
         time_index : pandas.DatetimeIndex, optional
             Dataset datetime index, if None, extract from h5_fpath,
             by default None
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
         """
         self._h5_fpath = h5_fpath
         self._dset = dset
+        if time_index is None:
+            time_index = get_time_index(h5_fpath, year=year)
+
         self._time_index = time_index
+        self._year = year
 
         with Resource(h5_fpath) as f:
             msg = '{} is not present in {}'.format(dset, h5_fpath)
             assert dset in f, msg
-            if self._time_index is None:
-                self._time_index = f.time_index
 
     def __repr__(self):
         msg = ('{} of {} in {}'
@@ -49,7 +90,8 @@ class DatasetAgg():
 
     @staticmethod
     def _aggregate_sites(h5_fpath, dset, site_slice=None, freq='1d',
-                         method='mean', time_index=None, **resample_kwargs):
+                         method='mean', time_index=None, year=None,
+                         **resample_kwargs):
         """
         Aggregate given sites in dataset
 
@@ -68,6 +110,9 @@ class DatasetAgg():
         time_index : pandas.DatetimeIndex, optional
             Dataset datetime index, if None, extract from h5_fpath,
             by default None
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
+            by default None
         resample_kwargs : dict, optional
             Kwargs for pandas.DataFrame.resample
 
@@ -77,10 +122,10 @@ class DatasetAgg():
         if site_slice is None:
             site_slice = slice(None)
 
-        with Resource(h5_fpath) as f:
-            if time_index is None:
-                time_index = f.time_index
+        if time_index is None:
+            time_index = get_time_index(h5_fpath, year=year)
 
+        with Resource(h5_fpath) as f:
             agg_data = pd.DataFrame(f[dset, :, site_slice], index=time_index)
 
         agg_data = agg_data.resample(freq, **resample_kwargs)
@@ -202,6 +247,7 @@ class DatasetAgg():
                                         freq=freq,
                                         method=method,
                                         time_index=self._time_index,
+                                        year=self._year,
                                         **resample_kwargs)
                     futures.append(future)
 
@@ -220,6 +266,7 @@ class DatasetAgg():
                     freq=freq,
                     method=method,
                     time_index=self._time_index,
+                    year=self._year,
                     **resample_kwargs)
                 logger.debug('Completed {} out of {} sets of sites'
                              .format((i + 1), len(slices)))
@@ -227,8 +274,9 @@ class DatasetAgg():
         return dset_agg
 
     @classmethod
-    def run(cls, h5_fpath, dset, time_index=None, freq='1d', method='mean',
-            max_workers=None, chunks_per_worker=5, **resample_kwargs):
+    def run(cls, h5_fpath, dset, time_index=None, year=None, freq='1d',
+            method='mean', max_workers=None, chunks_per_worker=5,
+            **resample_kwargs):
         """
         Temporally aggregate dataset to given frequency using given method
 
@@ -240,6 +288,9 @@ class DatasetAgg():
             Dataset to aggregate
         time_index : pandas.DatetimeIndex, optional
             Dataset datetime index, if None, extract from h5_fpath,
+            by default None
+        year : str | int, optional
+            Year to extract time-index for if running on a multi-year file,
             by default None
         freq : str, optional
             Aggregation frequency, by default '1d'
@@ -260,7 +311,7 @@ class DatasetAgg():
         """
         logger.info('Aggregating {} in {} to {} using {}'
                     .format(dset, h5_fpath, freq, method))
-        agg = cls(h5_fpath, dset, time_index=time_index)
+        agg = cls(h5_fpath, dset, time_index=time_index, year=year)
         agg_dset = agg.aggregate(freq=freq, method=method,
                                  max_workers=max_workers,
                                  chunks_per_worker=chunks_per_worker,
@@ -273,7 +324,7 @@ class TemporalAgg():
     """
     Class to temporally aggregate time-series data
     """
-    def __init__(self, src_fpath, dst_fpath, freq='1d', dsets=None,
+    def __init__(self, src_fpath, dst_fpath, freq='1d', dsets=None, year=None,
                  **resample_kwargs):
         """
         Parameters
@@ -287,13 +338,17 @@ class TemporalAgg():
         dsets : list, optional
             Datasets to aggregate, if None aggregate all datasets in src_fpath,
             by default None
+        year : str | int, optional
+            Year to extract time-index and datasets for, needed  if running
+            on a multi-year file, by default None
         resample_kwargs : dict, optional
             Kwargs for pandas.DataFrame.resample
         """
         self._src_fpath = src_fpath
         self._dst_fpath = dst_fpath
         self._freq = freq
-        self._dsets, self._time_index = self._get_dsets(src_fpath, dsets=dsets)
+        self._dsets, self._time_index = self._get_dsets(src_fpath, dsets=dsets,
+                                                        year=year)
         self._resample_kwargs = resample_kwargs
 
         self._init_agg_h5()
@@ -315,7 +370,7 @@ class TemporalAgg():
         return self._dsets
 
     @staticmethod
-    def _get_dsets(h5_fpath, dsets=None):
+    def _get_dsets(h5_fpath, dsets=None, year=None):
         """
         Get datasets to aggregate, or if given ensure they are in source
         h5 file. Also extract time_index
@@ -328,6 +383,7 @@ class TemporalAgg():
             Datasets to aggregate, if None aggregate all datasets in src_fpath,
             by default None
 
+
         Returns
         -------
         dsets : list
@@ -336,13 +392,16 @@ class TemporalAgg():
             DatetimeIndex of datasets being aggregated
         """
         with Resource(h5_fpath) as f:
-            time_index = f.time_index
             if dsets is None:
                 dsets = f.resource_datasets
+                if year is not None:
+                    dsets = [ds for ds in dsets if str(year) in ds]
             else:
                 for ds in dsets:
                     msg = "{} is not available in {}".format(ds, h5_fpath)
                     assert ds in f, msg
+
+        time_index = get_time_index(h5_fpath, year=year)
 
         return dsets, time_index
 
@@ -377,7 +436,7 @@ class TemporalAgg():
                                      attrs[ds]))
 
         Outputs.init_h5(self._dst_fpath, self.dsets, shapes, attrs, chunks,
-                        dtypes, meta, time_index=time_index)
+                        dtypes, meta, time_index=time_index, mode='a')
 
     def aggregate(self, method='mean', max_workers=None, chunks_per_worker=5):
         """
@@ -407,8 +466,9 @@ class TemporalAgg():
                 f[ds] = ds_agg
 
     @classmethod
-    def run(cls, src_fpath, dst_fpath, freq='1d', dsets=None, method='mean',
-            max_workers=None, chunks_per_worker=5, **resample_kwargs):
+    def run(cls, src_fpath, dst_fpath, freq='1d', dsets=None, year=None,
+            method='mean', max_workers=None, chunks_per_worker=5,
+            **resample_kwargs):
         """
         Temporally aggregate the desired datasets in the src .h5 file to the
         given frequency using the given method. Save the aggregated datasets
@@ -425,6 +485,9 @@ class TemporalAgg():
         dsets : list, optional
             Datasets to aggregate, if None aggregate all datasets in src_fpath,
             by default None
+        year : str | int, optional
+            Year to extract time-index and datasets for, needed  if running
+            on a multi-year file, by default None
         method : str, optional
             Aggregation method, either 'mean' or 'sum', by default 'mean'
         max_workers : None | int, optional
@@ -437,7 +500,7 @@ class TemporalAgg():
         """
         logger.info('Aggregating datasets in {} to {} using {} and saving to '
                     '{}'.format(src_fpath, freq, method, dst_fpath))
-        agg = cls(src_fpath, dst_fpath, freq=freq, dsets=dsets,
+        agg = cls(src_fpath, dst_fpath, freq=freq, dsets=dsets, year=year,
                   **resample_kwargs)
         agg.run(method=method, max_workers=max_workers,
                 chunks_per_worker=chunks_per_worker)
