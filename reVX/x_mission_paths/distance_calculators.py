@@ -215,10 +215,10 @@ class LoadCenterDistanceCalculator:
                                              lc.geometry.coords[0][1])
             if row is None:
                 continue
-            new_lc = TransFeature(_id, lc.gid, 'load_center',
+            new_lc = TransFeature(_id, 'lc'+str(int(lc.gid)), 'load_center',
                                   lc.geometry.coords[0][0],
                                   lc.geometry.coords[0][1], row, col, lc.dist,
-                                  0, 1000)
+                                  0, 9999)
             close_lcs.append(new_lc)
         return close_lcs
 
@@ -270,9 +270,9 @@ class SinkDistanceCalculator:
                                              sink.geometry.coords[0][1])
             if row is None:
                 continue
-            new_sink = TransFeature(_id, sink.gid, 'sink',
+            new_sink = TransFeature(_id, 's'+str(int(sink.gid)), 'sink',
                                     sink.geometry.coords[0][0],
                                     sink.geometry.coords[0][1], row, col,
-                                    sink.dist, 0, 1000)
+                                    sink.dist, 0, 9999)
             close_sinks.append(new_sink)
         return close_sinks
