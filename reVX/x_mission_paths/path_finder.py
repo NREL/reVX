@@ -29,8 +29,10 @@ class TransmissionCost:
         ----------
         sc_id : int
             Supply curve point id
-        excluded : Boolean
-            If true, SC point is in exclusion zone
+        excluded : str | bool
+            True, False, or 'Fully Excluded'. Indicates whether SC point is in
+            exclusion zone. 'Fully Excluded' means no valid nearby start point
+            was found.
         start_dist : float
             Distance from SC point to path-finding start point if SC point it
             in an exclusion zone.
@@ -106,10 +108,15 @@ class PathFinder:
         self._row_offset = None
         self._col_offset = None
         self._cost_arr_clip = None
+        self._mcp = None
         self._costs = None
         self._tb = None
 
-        self._excluded = False
+        self._excluded = False  # SC point lands in exclusion zone
+
+        # True if not able to find a non-excluded nearby cell
+        self._fully_excluded = False
+
         self._start_row = sc_pt.row
         self._start_col = sc_pt.col
         self._start_dist = 0
@@ -119,10 +126,16 @@ class PathFinder:
 
     @classmethod
     def run(cls, sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc, sinks_dc):
+        """
+        TODO
+        """
         pf = cls(sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc, sinks_dc)
         pf._update_start_point()
         pf._clip_cost_raster()
-        pf._find_paths()
+
+        if not pf._fully_excluded:
+            pf._find_paths()
+
         return pf
 
     @property
@@ -135,11 +148,14 @@ class PathFinder:
         costs : list of TransmissionCost
             Costs data for minimum cost paths to nearest x-mission features
         """
-        assert self._costs is not None, 'Please start class with run()'
+        if self._fully_excluded:
+            return [TransmissionCost(self._sc_pt.id, 'Fully Excluded', -1, -1,
+                                     'Fully Excluded', 'Fully Excluded', -1,
+                                     -1, -1, -1)]
 
+        assert self._costs is not None, 'Please start class with run()'
         costs = []
         for feat in self._near_trans:
-            # TODO - don't calculate paths for fully excluded SC points
             # TODO - make sure 'n' features are returned
             try:
                 length = self._path_length(feat)
@@ -154,15 +170,18 @@ class PathFinder:
             costs.append(this_cost)
 
         if len(costs) == 0:
-            costs = [TransmissionCost(self._sc_pt.id, 'True', -1, -1,
-                                      'None found', 'none', -1, -1, -1, -1)]
+            # There's a valid start point, but no paths. Something went wrong
+            costs = [TransmissionCost(self._sc_pt.id, self._excluded, -1, -1,
+                                      'Error',
+                                      'Error finding paths', -1, -1, -1, -1)]
         return costs
 
     def _update_start_point(self):
         """
         If SC point is in an exclusion zone, move path-finding start to nearest
         non-excluded point. Search starting at SC point, expanding search
-        rectangle one pixel on all sides each iteration.
+        rectangle one pixel on all sides each iteration, until finding a non-
+        excluded cell.
         """
         if self._cost_arr[self._start_row, self._start_col] > 0:
             return
@@ -176,21 +195,19 @@ class PathFinder:
             window = self._cost_arr[r-i:r+i+1, c-i:c+i+1]
             locs = np.where(window > 0)
             if locs[0].shape != (0,):
-                print('locs', locs)
                 break
         else:
-            # print(f'Unable to find non-excluded start for {self._sc_pt}')
-            # TODO - raise exception and return marked cost list
+            print(f'Unable to find non-excluded start for {self._sc_pt}')
+            self._fully_excluded = True
             return
 
-        print('val', window[locs[0][0], locs[1][0]], 'i', i)
         self._start_row = r - i + locs[0][0]
         self._start_col = c - i + locs[1][0]
         self._start_dist = sqrt((self._start_row - self._sc_pt.row)**2 +
                                 (self._start_col - self._sc_pt.col)**2)
         self._start_dist *= self.cell_size
-        print(f'Had to move start for sc_pt {self._sc_pt.id}, '
-              f'{self._start_dist}m')
+        print(f'Moved start for sc_pt {self._sc_pt.id} by '
+              f'{int(self._start_dist)}m to new cell')
 
     def _clip_cost_raster(self):
         """ Clip cost raster to nearest transmission features with a buffer """
@@ -213,13 +230,27 @@ class PathFinder:
         w_buf = int((max(cols) - min(cols)) * CLIP_RASTER_BUFFER)
         h_buf = int((max(rows) - min(rows)) * CLIP_RASTER_BUFFER)
 
-        self._row_offset = min(rows) - h_buf
-        self._col_offset = min(cols) - w_buf
+        min_rows = min(rows) - h_buf
+        min_cols = min(cols) - w_buf
+        max_rows = max(rows) + h_buf
+        max_cols = max(cols) + h_buf
 
-        self._cost_arr_clip = self._cost_arr[min(rows)-h_buf:max(rows)+h_buf+1,
-                                             min(cols)-w_buf:max(cols)+w_buf+1]
+        if min_rows < 0:
+            min_rows = 0
+        if min_cols < 0:
+            min_cols = 0
+        if max_rows > self._cost_arr.shape[0]:
+            max_rows = self._cost_arr.shape[0]
+        if max_cols > self._cost_arr.shape[1]:
+            max_cols = self._cost_arr.shape[1]
 
-        breakpoint()
+        self._row_offset = min_rows
+        self._col_offset = min_cols
+
+        print(f'Clipping cost arr to r=[{min_rows}:{max_rows}+1], '
+              f'c=[{min_cols}:{max_cols}+1]')
+        self._cost_arr_clip = self._cost_arr[min_rows:max_rows+1,
+                                             min_cols:max_cols+1]
 
     def _find_paths(self):
         """ Find minimum cost paths from sc_pt to nearest trans features """
@@ -287,7 +318,7 @@ class PathFinder:
 
     def plot_paths(self, cmap='viridis'):
         """ Plot least cost paths for QAQC"""
-        assert self._tb is not None, 'Must run _find_paths() first'
+        # assert self._tb is not None, 'Must run _find_paths() first'
 
         plt.figure(figsize=(30, 15))
         plt.imshow(self._cost_arr_clip, cmap=cmap)
@@ -301,16 +332,17 @@ class PathFinder:
                      feat.name, color='black')
 
         # Plot paths to trans features
-        for feat in self._near_trans:
-            r, c = self._feat_row_col(feat)
-            try:
-                indices = self._mcp.traceback((r, c))
-            except ValueError:
-                print('Cant find path to', feat.name)
-                continue
-            path_xs = [x[1] for x in indices]
-            path_ys = [x[0] for x in indices]
-            plt.plot(path_xs, path_ys, color='white')
+        if not self._fully_excluded:
+            for feat in self._near_trans:
+                r, c = self._feat_row_col(feat)
+                try:
+                    indices = self._mcp.traceback((r, c))
+                except ValueError:
+                    print('Error: can\'t find path to', feat.name)
+                    continue
+                path_xs = [x[1] for x in indices]
+                path_ys = [x[0] for x in indices]
+                plt.plot(path_xs, path_ys, color='white')
 
         # Plot inaccessible features
         feats = [(x.row, x.col, x) for x in self._blocked_feats]
