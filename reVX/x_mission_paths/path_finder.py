@@ -17,18 +17,20 @@ class BlockedTransFeature(Exception):
     pass
 
 
-# TODO - does this include substation attachemnt cost?
 class TransmissionCost:
-    def __init__(self, sc_id, excluded, start_dist, trans_id, name, trans_type,
-                 cost, length, min_volts, max_volts):
+    def __init__(self, sc_id, region, excluded, start_dist, trans_id, name,
+                 trans_type, cost, length, min_volts, max_volts):
         """
         Cost of building transmission line from supply curve point to
-        transmission feature.
+        transmission feature. Does not include substation construction/upgrades
+        or transformers.
 
         Parameters
         ----------
         sc_id : int
             Supply curve point id
+        region : int
+            ISO region code
         excluded : str | bool
             True, False, or 'Fully Excluded'. Indicates whether SC point is in
             exclusion zone. 'Fully Excluded' means no valid nearby start point
@@ -54,6 +56,7 @@ class TransmissionCost:
             connected to
         """
         self.sc_id = sc_id
+        self.region = region
         self.excluded = excluded
         self.start_dist = start_dist
         self.trans_id = trans_id
@@ -65,11 +68,12 @@ class TransmissionCost:
         self.max_volts = max_volts
 
     def as_dict(self):
-        return {'sc_id': self.sc_id, 'excluded': self.excluded,
-                'start_dist': self.start_dist, 'trans_id': self.trans_id,
-                'name': self.name, 'trans_type': self.trans_type,
-                'tline_cost': self.cost, 'length': self.length,
-                'min_volts': self.min_volts, 'max_volts': self.max_volts}
+        return {'sc_id': self.sc_id, 'region': self.region,
+                'excluded': self.excluded, 'start_dist': self.start_dist,
+                'trans_id': self.trans_id, 'name': self.name,
+                'trans_type': self.trans_type, 'tline_cost': self.cost,
+                'length': self.length, 'min_volts': self.min_volts,
+                'max_volts': self.max_volts}
 
     def __repr__(self):
         return str(self.as_dict())
@@ -149,7 +153,8 @@ class PathFinder:
             Costs data for minimum cost paths to nearest x-mission features
         """
         if self._fully_excluded:
-            return [TransmissionCost(self._sc_pt.id, 'Fully Excluded', -1, -1,
+            return [TransmissionCost(self._sc_pt.id, self._sc_pt.region,
+                                     'Fully Excluded', -1, -1,
                                      'Fully Excluded', 'Fully Excluded', -1,
                                      -1, -1, -1)]
 
@@ -163,16 +168,17 @@ class PathFinder:
                 self._blocked_feats.append(feat)
                 continue
             cost = self._path_cost(feat)
-            this_cost = TransmissionCost(self._sc_pt.id, self._excluded,
-                                         self._start_dist, feat.id, feat.name,
-                                         feat.trans_type, cost, length,
-                                         feat.min_volts, feat.max_volts)
+            this_cost = TransmissionCost(self._sc_pt.id, self._sc_pt.region,
+                                         self._excluded, self._start_dist,
+                                         feat.id, feat.name, feat.trans_type,
+                                         cost, length, feat.min_volts,
+                                         feat.max_volts)
             costs.append(this_cost)
 
         if len(costs) == 0:
             # There's a valid start point, but no paths. Something went wrong
-            costs = [TransmissionCost(self._sc_pt.id, self._excluded, -1, -1,
-                                      'Error',
+            costs = [TransmissionCost(self._sc_pt.id, self._sc_pt.region,
+                                      self._excluded, -1, -1, 'Error',
                                       'Error finding paths', -1, -1, -1, -1)]
         return costs
 

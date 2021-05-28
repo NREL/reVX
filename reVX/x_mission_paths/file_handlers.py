@@ -29,7 +29,7 @@ class LoadData:
                  t_lines_f='data/t_lines/t_lines_conus.shp',
                  subs_f='data/substations/substations_conus_updated.shp',
                  load_centers_f='data/load_centers/load_centers_proj.shp',
-                 iso_regions_f='data/iso_regions.tiff'):
+                 iso_regions_f='data/iso_regions.tif'):
         """
         Parameters
         ----------
@@ -45,9 +45,6 @@ class LoadData:
         self.capacity_class = capacity_class
         self.rct = RowColTransformer(template_f)
 
-        # TODO - make this resolution aware
-        self.sc_points = load_sc_points(sc_points_f, self.rct)
-
         self.subs = SubstationsLoader(subs_f)
         self.t_lines = TransLineLoader(t_lines_f)
         self.lcs = load_load_centers(load_centers_f)
@@ -62,6 +59,33 @@ class LoadData:
         costs_f = os.path.join(costs_raster_dir,
                                f'costs_{self.tie_power}MW.tif')
         self.costs_arr = load_raster(costs_f)
+        self.regions_arr = load_raster(iso_regions_f)
+
+        # TODO - make this resolution aware
+        self.sc_points = self._load_sc_points(sc_points_f)
+
+    def _load_sc_points(self, sc_points_f):
+        """
+        Load supply curve points from disk
+
+        Parameters
+        ----------
+        sc_points_f : String
+            Path to supply curve points
+
+        Returns
+        -------
+        sc_points : List of SupplyCurvePoint
+        """
+        sc_points = []
+        with fiona.open(sc_points_f) as src:
+            for feat in src:
+                sc_pt = SupplyCurvePoint(feat['properties']['sc_gid'],
+                                         feat['geometry']['coordinates'][0],
+                                         feat['geometry']['coordinates'][1],
+                                         self.rct, self.regions_arr)
+                sc_points.append(sc_pt)
+        return sc_points
 
 
 class FilterData:
@@ -191,7 +215,7 @@ def load_sinks(load_centers_f):
 
 
 class SupplyCurvePoint:
-    def __init__(self, id, x, y, rct):
+    def __init__(self, id, x, y, rct, regions_arr):
         """
         Represents a supply curve point for possible renewable energy plant.
 
@@ -205,6 +229,8 @@ class SupplyCurvePoint:
             Projected northing coordinate
         rct : RowColTransformer
             Transformer for template raster
+        regions_arr : numpy.ndarray
+            ISO regions raster
         """
         self.id = id
         self.x = x
@@ -214,6 +240,8 @@ class SupplyCurvePoint:
         row, col = rct.get_row_col(x, y)
         self.row = row
         self.col = col
+
+        self.region = regions_arr[row, col]
 
     @property
     def point(self):
@@ -226,32 +254,6 @@ class SupplyCurvePoint:
     def __repr__(self):
         return f'id={self.id}, coords=({self.x}, {self.y}), ' +\
                f'r/c=({self.row}, {self.col})'
-
-
-def load_sc_points(sc_points_f, rct):
-    """
-    Load supply curve points from disk
-
-    Parameters
-    ----------
-    sc_points_f : String
-        Path to supply curve points
-    rct : RowColTransformer
-        Transformer for template raster
-
-    Returns
-    -------
-    sc_points : List of SupplyCurvePoint
-    """
-    sc_points = []
-    with fiona.open(sc_points_f) as src:
-        for feat in src:
-            sc_pt = SupplyCurvePoint(feat['properties']['sc_gid'],
-                                     feat['geometry']['coordinates'][0],
-                                     feat['geometry']['coordinates'][1],
-                                     rct)
-            sc_points.append(sc_pt)
-    return sc_points
 
 
 def load_raster(f_name):

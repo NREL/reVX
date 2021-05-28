@@ -14,7 +14,7 @@ from .distance_calculators import SubstationDistanceCalculator, \
     TLineDistanceCalculator, LoadCenterDistanceCalculator, \
     SinkDistanceCalculator
 from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF, \
-    transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS
+    transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS, iso_lookup
 from .file_handlers import LoadData, FilterData
 from .utilities import int_capacity
 
@@ -166,49 +166,85 @@ class CalcConnectCostsForSC:
         # Transformer costs
         print(f'Processing transformer costs. v={self._tie_voltage}kV, '
               f'power={self._capacity_class}')
-        tcpm = cdf.apply(lambda row: self._xformer_cost(row.min_volts), axis=1)
-        cdf['xformer_cost_p_mw'] = tcpm
-        cdf['xformer_cost'] = tcpm * int_capacity(self._capacity_class)
+        cdf['xformer_cost_p_mw'] = cdf.apply(self._xformer_cost, axis=1)
+        cdf['xformer_cost'] = cdf.xformer_cost_p_mw * \
+            int_capacity(self._capacity_class)
 
-        # TODO - substation costs
+        # Substation costs
+        cdf['sub_upgrade_cost'] = cdf.apply(self._sub_upgrade_cost, axis=1)
+        cdf['new_sub_cost'] = cdf.apply(self._new_sub_cost, axis=1)
 
         # Total cost
-        cdf['total_cost'] = cdf.adj_line_cost + cdf.xformer_cost
+        cdf['total_cost'] = cdf.adj_line_cost + cdf.xformer_cost + \
+            cdf.sub_upgrade_cost + cdf.new_sub_cost
 
         if plot:
             pf.plot_paths()
 
         return cdf
 
-    def _xformer_cost(self, min_voltage):
+    def _sub_upgrade_cost(self, row):
+        """
+        Calculate upgraded substation cost
+
+        Parameters
+        ----------
+        row : pandas.DataFrame row
+            Cost row for one tie-line
+
+        Returns
+        -------
+        cost : float
+            Cost to upgrade substation
+        """
+        return 0
+
+    def _new_sub_cost(self, row):
+        """
+        Calculate cost to build new substation
+
+        Parameters
+        ----------
+        row : pandas.DataFrame row
+            Cost row for one tie-line
+
+        Returns
+        -------
+        cost : float
+            Cost to build new substation
+        """
+        return 0
+
+    def _xformer_cost(self, row):
         """
         Calculate transformer cost
 
         Parameters
         ----------
-        min_voltage : int
-            Minimum voltage of existing transmission feature. Substations may
-            connect to lines of multiple voltages. For t-lines min and max
-            V are the same.
+        TODO
 
         Returns
         -------
         cost : float
             Cost of transformer to bring tie line up to existing trans volts
         """
-        if self._tie_voltage >= min_voltage:
+        if self._tie_voltage >= row.min_volts:
+            return 0
+
+        if row.region == iso_lookup['TEPPC']:
             return 0
 
         # If min_voltage is not in lookup table, get next largest value
         v_class = 0
         for volts in self._xformer_costs.keys():
-            if volts <= min_voltage:
+            if volts <= row.min_volts:
                 v_class = volts
             else:
                 break
 
         if v_class == 0:
-            print(f'Trying to connect to transmission feature v={min_voltage}')
+            print(f'Failed to find proper transformer voltage for {row}, '
+                  'defaulting to 500kV')
             v_class = 500
 
         cost_per_mw = self._xformer_costs[v_class]
