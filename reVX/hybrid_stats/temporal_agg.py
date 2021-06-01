@@ -502,5 +502,5 @@ class TemporalAgg():
                     '{}'.format(src_fpath, freq, method, dst_fpath))
         agg = cls(src_fpath, dst_fpath, freq=freq, dsets=dsets, year=year,
                   **resample_kwargs)
-        agg.run(method=method, max_workers=max_workers,
-                chunks_per_worker=chunks_per_worker)
+        agg.aggregate(method=method, max_workers=max_workers,
+                      chunks_per_worker=chunks_per_worker)
