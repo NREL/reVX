@@ -4,6 +4,7 @@ Calculate least cost paths from supply curve points to transmission features
 Mike Bannister
 4/13/2021
 """
+import logging
 import numpy as np
 from math import sqrt
 import matplotlib.pyplot as plt
@@ -11,6 +12,8 @@ import matplotlib.pyplot as plt
 from skimage.graph import MCP_Geometric
 
 from .config import CELL_SIZE, NON_EXCLUSION_SEARCH_RANGE, CLIP_RASTER_BUFFER
+
+logger = logging.getLogger(__name__)
 
 
 class BlockedTransFeature(Exception):
@@ -163,6 +166,9 @@ class PathFinder:
         for feat in self._near_trans:
             # TODO - make sure 'n' features are returned
             try:
+                # TODO - use minimum length of ~5.5km
+                # TODO - probably use average sample of cost raster for
+                # cost per cell
                 length = self._path_length(feat)
             except BlockedTransFeature:
                 self._blocked_feats.append(feat)
@@ -180,6 +186,9 @@ class PathFinder:
             costs = [TransmissionCost(self._sc_pt.id, self._sc_pt.region,
                                       self._excluded, -1, -1, 'Error',
                                       'Error finding paths', -1, -1, -1, -1)]
+            msg = f'Unable to find any tie-line paths for {self._sc_pt.id}'
+            logger.warning(msg)
+
         return costs
 
     def _update_start_point(self):
@@ -203,7 +212,8 @@ class PathFinder:
             if locs[0].shape != (0,):
                 break
         else:
-            print(f'Unable to find non-excluded start for {self._sc_pt}')
+            logger.debug('Unable to find non-excluded start for '
+                         f'{self._sc_pt}')
             self._fully_excluded = True
             return
 
@@ -212,8 +222,8 @@ class PathFinder:
         self._start_dist = sqrt((self._start_row - self._sc_pt.row)**2 +
                                 (self._start_col - self._sc_pt.col)**2)
         self._start_dist *= self.cell_size
-        print(f'Moved start for sc_pt {self._sc_pt.id} by '
-              f'{int(self._start_dist)}m to new cell')
+        logger.debug(f'Moved start for sc_pt {self._sc_pt.id} by '
+                     f'{int(self._start_dist)}m to new cell')
 
     def _clip_cost_raster(self):
         """ Clip cost raster to nearest transmission features with a buffer """
@@ -253,8 +263,8 @@ class PathFinder:
         self._row_offset = min_rows
         self._col_offset = min_cols
 
-        print(f'Clipping cost arr to r=[{min_rows}:{max_rows}+1], '
-              f'c=[{min_cols}:{max_cols}+1]')
+        logger.debug(f'Clipping cost arr to r=[{min_rows}:{max_rows}+1], '
+                     f'c=[{min_cols}:{max_cols}+1]')
         self._cost_arr_clip = self._cost_arr[min_rows:max_rows+1,
                                              min_cols:max_cols+1]
 
@@ -344,7 +354,8 @@ class PathFinder:
                 try:
                     indices = self._mcp.traceback((r, c))
                 except ValueError:
-                    print('Error: can\'t find path to', feat.name)
+                    msg = f'Can\'t find path to {feat.name} from {self._sc_pt}'
+                    logger.info(msg)
                     continue
                 path_xs = [x[1] for x in indices]
                 path_ys = [x[0] for x in indices]

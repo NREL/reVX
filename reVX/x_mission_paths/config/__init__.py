@@ -24,6 +24,9 @@ CLIP_RASTER_BUFFER = 0.05
 NUM_LOAD_CENTERS = 1
 NUM_SINKS = 1
 
+# Number of times to report on progress of SC point processing, e.g. 5 means
+# about every 20%
+REPORTING_STEPS = 10
 
 # Load json files
 with open(os.path.join(CONFIGDIR, 'power_to_voltage.json'), 'rt') as f:
@@ -43,3 +46,11 @@ with open(os.path.join(CONFIGDIR, 'iso_lookup.json'), 'rt') as f:
 
 with open(os.path.join(CONFIGDIR, 'power_classes.json'), 'rt') as f:
     power_classes = json.load(f)
+
+with open(os.path.join(CONFIGDIR, 'new_substation_costs.json'), 'rt') as f:
+    new_sub_costs = json.load(f)
+
+with open(os.path.join(CONFIGDIR, 'upgrade_substation_costs.json'), 'rt') as f:
+    upgrade_sub_costs = json.load(f)
+
+# TODO - check that the iso regions in the cost filesmatch the iso regions
