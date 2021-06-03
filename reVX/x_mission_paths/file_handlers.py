@@ -5,6 +5,7 @@ Mike Bannister
 5/18/2021
 """
 import os
+import logging
 
 import numpy as np
 import geopandas as gpd
@@ -14,6 +15,8 @@ import rasterio as rio
 
 from .config import TEMPLATE_SHAPE, power_classes, power_to_voltage
 from .utilities import RowColTransformer
+
+logger = logging.getLogger(__name__)
 
 
 class LoadData:
@@ -25,7 +28,7 @@ class LoadData:
                  template_f='data/conus_template.tif',
                  landuse_f='data/nlcd.npy',
                  slope_f='data/slope.npy',
-                 sc_points_f='data/sc_points/sc32_points_updated.shp',
+                 sc_points_f='data/sc_points/fips_run_agg_128_projected.shp',
                  t_lines_f='data/t_lines/t_lines_conus.shp',
                  subs_f='data/substations/substations_conus_updated.shp',
                  load_centers_f='data/load_centers/load_centers_proj.shp',
@@ -40,7 +43,8 @@ class LoadData:
             Desired Supply Curve Point resolution, one of: 32, 64, 128
         TODO
         """
-        assert capacity_class in power_classes.keys()
+        assert capacity_class in power_classes.keys(), 'capacity must be ' + \
+            f'one of {list(power_classes.keys())}'
 
         self.capacity_class = capacity_class
         self.rct = RowColTransformer(template_f)
@@ -85,6 +89,7 @@ class LoadData:
                                          feat['geometry']['coordinates'][1],
                                          self.rct, self.regions_arr)
                 sc_points.append(sc_pt)
+        sc_points
         return sc_points
 
 

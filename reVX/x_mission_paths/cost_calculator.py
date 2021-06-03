@@ -5,7 +5,10 @@ points.
 5/21/2021
 Mike Bannister
 """
+import logging
+import math
 from datetime import datetime as dt
+from datetime import timedelta
 
 import pandas as pd
 
@@ -14,26 +17,12 @@ from .distance_calculators import SubstationDistanceCalculator, \
     TLineDistanceCalculator, LoadCenterDistanceCalculator, \
     SinkDistanceCalculator
 from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF, \
-    transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS, iso_lookup
+    transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS, iso_lookup, \
+    new_sub_costs, upgrade_sub_costs, REPORTING_STEPS
 from .file_handlers import LoadData, FilterData
 from .utilities import int_capacity
 
-
-class DoThisForAllPowerClasses:
-    # Theres only four, maybe do it by hand?
-    pass
-
-
-class DoThisForAllResolutions:
-    # Theres only three, maybe do it by hand?
-    pass
-
-
-class ParallelProcessSCs:
-    """
-    Run a bunch, possibly with a slice
-    """
-    pass
+logger = logging.getLogger(__name__)
 
 
 class ProcessSCs:
@@ -53,31 +42,35 @@ class ProcessSCs:
         n : Int
             Number of nearby transmission features to search for
         """
-        print(dt.now(), 'loading data')
-        self._ld = LoadData(capacity_class, resolution)
-        self._fd = FilterData(self._ld)
+        logger.info('Loading data')
+        self.ld = LoadData(capacity_class, resolution)
+        self._fd = FilterData(self.ld)
 
-        rct = self._ld.rct
+        rct = self.ld.rct
         subs_dc = SubstationDistanceCalculator(self._fd.subs, rct, n=n)
         tls_dc = TLineDistanceCalculator(self._fd.t_lines, rct, n=n)
-        lcs_dc = LoadCenterDistanceCalculator(self._ld.lcs, rct,
+        lcs_dc = LoadCenterDistanceCalculator(self.ld.lcs, rct,
                                               n=NUM_LOAD_CENTERS)
-        sinks_dc = SinkDistanceCalculator(self._ld.sinks, rct, n=NUM_SINKS)
+        sinks_dc = SinkDistanceCalculator(self.ld.sinks, rct, n=NUM_SINKS)
 
-        self._cccfsc = CalcConnectCostsForSC(self._ld.costs_arr, subs_dc,
+        self._cccfsc = CalcConnectCostsForSC(self.ld.costs_arr, subs_dc,
                                              tls_dc, lcs_dc, sinks_dc,
                                              capacity_class,
-                                             self._ld.tie_voltage)
-        print(dt.now(), 'done initing')
+                                             self.ld.tie_voltage)
+        logger.info('Finished loading data')
 
-    def process(self, _slice=slice(None, None, None), plot=False):
+    def process(self, indices=None, plot=False, chunk_id=''):
         """
         Process all or a slice of SC points
 
         Parameters
         ----------
-        _slice : Slice
-            Slice of SC points to process. Defaults to all
+        indices : List | None
+            List of sc point indices to process. Process all if None
+        plot : bool
+            Plot graphs if true
+        chunk_id : str
+            Id of chunk being run for multiprocessing logging
 
         Returns
         -------
@@ -85,14 +78,32 @@ class ProcessSCs:
             Table of tie line costs to nearest transmission features for each
             SC point.
         """
-        sc_points = self._ld.sc_points[_slice]
+        sc_points = self.ld.sc_points
+
+        if indices is None:
+            indices = range(len(sc_points))
+
+        # keep track of run times and report progress
+        step = math.ceil(len(indices)/REPORTING_STEPS)
+        report_steps = indices[::step][1:]
+        run_times = []
 
         all_costs = pd.DataFrame()
-        for sc_pt in sc_points:
-            print(dt.now(), f'--- Calculating costs for {sc_pt}')
+        for i, index in enumerate(indices):
+            now = dt.now()
+            sc_pt = sc_points[index]
             costs = self._cccfsc.calculate(sc_pt, plot=plot)
-            print(dt.now(), f'Calculating costs complete')
             all_costs = pd.concat([all_costs, costs], axis=0)
+            run_times.append(dt.now() - now)
+
+            if index in report_steps:
+                progress = int(i/len(indices)*100)
+                avg = sum(run_times, timedelta(0))/len(run_times)
+                left = (len(indices)-i)*avg
+                msg = (f'{chunk_id}Finished SC pt {sc_pt.id}. {progress}% '
+                       f'complete. Average time of {avg} per SC pt. '
+                       f'Approx {left} left for this chunk.')
+                logger.info(msg)
         all_costs.reset_index(inplace=True, drop=True)
         return all_costs
 
@@ -135,7 +146,7 @@ class CalcConnectCostsForSC:
 
         xfc = transformer_costs[str(tie_voltage)]
         self._xformer_costs = {int(k): v for k, v in xfc.items()}
-        print(self._xformer_cost)
+        self._reverse_iso = {v: k for k, v in iso_lookup.items()}
 
     def calculate(self, sc_pt, plot=False):
         """
@@ -164,8 +175,6 @@ class CalcConnectCostsForSC:
         cdf['adj_line_cost'] = cdf.tline_cost * cdf.length_mult
 
         # Transformer costs
-        print(f'Processing transformer costs. v={self._tie_voltage}kV, '
-              f'power={self._capacity_class}')
         cdf['xformer_cost_p_mw'] = cdf.apply(self._xformer_cost, axis=1)
         cdf['xformer_cost'] = cdf.xformer_cost_p_mw * \
             int_capacity(self._capacity_class)
@@ -197,6 +206,10 @@ class CalcConnectCostsForSC:
         cost : float
             Cost to upgrade substation
         """
+        if row.trans_type == 'sub':
+            volts = str(self._tie_voltage)
+            return upgrade_sub_costs[self._reverse_iso[row.region]][volts]
+
         return 0
 
     def _new_sub_cost(self, row):
@@ -213,6 +226,10 @@ class CalcConnectCostsForSC:
         cost : float
             Cost to build new substation
         """
+        if row.trans_type == 't-line':
+            volts = str(self._tie_voltage)
+            return new_sub_costs[self._reverse_iso[row.region]][volts]
+
         return 0
 
     def _xformer_cost(self, row):
@@ -243,8 +260,8 @@ class CalcConnectCostsForSC:
                 break
 
         if v_class == 0:
-            print(f'Failed to find proper transformer voltage for {row}, '
-                  'defaulting to 500kV')
+            logger.warning('Failed to find proper transformer voltage for '
+                           f'{row}, defaulting to 500kV')
             v_class = 500
 
         cost_per_mw = self._xformer_costs[v_class]
