@@ -33,7 +33,9 @@ class Runner:
         n : int
             Number of existing transmission lines and substations to search for
         cores : int
-            Number of cores to use
+            Number of cores to use, this is limited by memory. 25 cores seems
+            to work OK for 100MW with 250GB of RAM. Larger power classes will
+            run out of memory faster.
         _slice : slice instance
             Subset of SC points to process
         save_costs : Bool
@@ -129,8 +131,8 @@ class Runner:
         costs : pandas.DataFrame
             Tie line costs
         """
-        logger.info(f'Processing chunk min={min(chunk)}, max={max(chunk)}, '
-                    f'len={len(chunk)}')
+        logger.info(f'Processing {chunk_id}min={min(chunk)}, '
+                    f'max={max(chunk)}, len={len(chunk)}')
         costs = self._psc.process(chunk, plot=False, chunk_id=chunk_id)
         return costs
 

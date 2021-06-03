@@ -186,7 +186,8 @@ class PathFinder:
             costs = [TransmissionCost(self._sc_pt.id, self._sc_pt.region,
                                       self._excluded, -1, -1, 'Error',
                                       'Error finding paths', -1, -1, -1, -1)]
-            msg = f'Unable to find any tie-line paths for {self._sc_pt.id}'
+            msg = ('Unable to find any tie-line paths for pt '
+                  f'{self._sc_pt.id}')
             logger.warning(msg)
 
         return costs
@@ -354,7 +355,8 @@ class PathFinder:
                 try:
                     indices = self._mcp.traceback((r, c))
                 except ValueError:
-                    msg = f'Can\'t find path to {feat.name} from {self._sc_pt}'
+                    msg = (f"Can't find path to trans {feat.id} from "
+                           f"SC pt {self._sc_pt.id}")
                     logger.info(msg)
                     continue
                 path_xs = [x[1] for x in indices]

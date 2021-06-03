@@ -100,7 +100,8 @@ class ProcessSCs:
                 progress = int(i/len(indices)*100)
                 avg = sum(run_times, timedelta(0))/len(run_times)
                 left = (len(indices)-i)*avg
-                msg = (f'{chunk_id}Finished SC pt {sc_pt.id}. {progress}% '
+                msg = (f'{chunk_id}Finished SC pt {sc_pt.id} ({i} of '
+                       f'{len(indices)}). {progress}% '
                        f'complete. Average time of {avg} per SC pt. '
                        f'Approx {left} left for this chunk.')
                 logger.info(msg)

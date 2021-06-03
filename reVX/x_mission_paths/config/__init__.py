@@ -16,8 +16,9 @@ TEMPLATE_SHAPE = (33792, 48640)
 
 NON_EXCLUSION_SEARCH_RANGE = 75  # pixels, slightly bigger than 128 agg area
 
-# % distance to buffer clipped cost raster by. Larger values are more likely
-# to find a valid path in areas with complex exclusions, but will run slower
+# Decimal % distance to buffer clipped cost raster by. Larger values are more
+# likely to find a valid path in areas with complex exclusions, but will run
+# slower
 CLIP_RASTER_BUFFER = 0.05
 
 # Number of load centers and sinks to connect to
