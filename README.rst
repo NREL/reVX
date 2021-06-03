@@ -26,9 +26,6 @@ Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
 .. image:: https://codecov.io/gh/nrel/reVX/branch/master/graph/badge.svg?token=3J5M44VAA9
     :target: https://codecov.io/gh/nrel/reVX
 
-.. image:: https://mybinder.org/badge_logo.svg
-    :target: https://mybinder.org/v2/gh/NREL/reVX/master
-
 .. image:: https://zenodo.org/badge/201337735.svg
    :target: https://zenodo.org/badge/latestdoi/201337735
 
