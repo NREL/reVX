@@ -19,7 +19,7 @@ from .distance_calculators import SubstationDistanceCalculator, \
 from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF, \
     transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS, iso_lookup, \
     new_sub_costs, upgrade_sub_costs, REPORTING_STEPS
-from .file_handlers import LoadData, FilterData
+from .file_handlers import LoadData
 from .utilities import int_capacity
 
 logger = logging.getLogger(__name__)
@@ -44,11 +44,10 @@ class ProcessSCs:
         """
         logger.info('Loading data')
         self.ld = LoadData(capacity_class, resolution)
-        self._fd = FilterData(self.ld)
 
         rct = self.ld.rct
-        subs_dc = SubstationDistanceCalculator(self._fd.subs, rct, n=n)
-        tls_dc = TLineDistanceCalculator(self._fd.t_lines, rct, n=n)
+        subs_dc = SubstationDistanceCalculator(self.ld.subs, rct, n=n)
+        tls_dc = TLineDistanceCalculator(self.ld.t_lines, rct, n=n)
         lcs_dc = LoadCenterDistanceCalculator(self.ld.lcs, rct,
                                               n=NUM_LOAD_CENTERS)
         sinks_dc = SinkDistanceCalculator(self.ld.sinks, rct, n=NUM_SINKS)
@@ -61,12 +60,12 @@ class ProcessSCs:
 
     def process(self, indices=None, plot=False, chunk_id=''):
         """
-        Process all or a slice of SC points
+        Process all or a subset of SC points
 
         Parameters
         ----------
         indices : List | None
-            List of sc point indices to process. Process all if None
+            List of SC point indices to process. Process all if None
         plot : bool
             Plot graphs if true
         chunk_id : str
@@ -179,6 +178,7 @@ class CalcConnectCostsForSC:
         cdf['xformer_cost_p_mw'] = cdf.apply(self._xformer_cost, axis=1)
         cdf['xformer_cost'] = cdf.xformer_cost_p_mw * \
             int_capacity(self._capacity_class)
+            # TODO int_capacity might not be needed
 
         # Substation costs
         cdf['sub_upgrade_cost'] = cdf.apply(self._sub_upgrade_cost, axis=1)

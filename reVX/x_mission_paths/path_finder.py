@@ -355,9 +355,10 @@ class PathFinder:
                 try:
                     indices = self._mcp.traceback((r, c))
                 except ValueError:
+                    # No path to trans feature. This shouldn't be possible
                     msg = (f"Can't find path to trans {feat.id} from "
                            f"SC pt {self._sc_pt.id}")
-                    logger.info(msg)
+                    logger.warning(msg)
                     continue
                 path_xs = [x[1] for x in indices]
                 path_ys = [x[0] for x in indices]
