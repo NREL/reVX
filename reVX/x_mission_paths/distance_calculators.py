@@ -5,6 +5,8 @@ Mike Bannister
 5/2021
 """
 from shapely.ops import nearest_points
+from shapely.geometry.multilinestring import MultiLineString
+from shapely.geometry.linestring import LineString
 
 
 class TransFeature:
@@ -56,6 +58,23 @@ class TransFeature:
                f'name={self.name}, type={self.trans_type}'
 
 
+def coords(geo):
+    """
+    Return coordinate as (x, y) tuple
+
+    TODO
+    """
+    if isinstance(geo, LineString):
+        x, y = geo.coords[0][0], geo.coords[0][1]
+        return (x, y)
+    elif isinstance(geo, MultiLineString):
+        x, y = geo.geoms[0].coords[0][0], geo.geoms[0].coords[0][1]
+    else:
+        x, y = geo.x, geo.y
+
+    return (x, y)
+
+
 class SubstationDistanceCalculator:
     """
     Calculate nearest substations to SC point. Also calculate distance and
@@ -98,12 +117,16 @@ class SubstationDistanceCalculator:
         # Determine row/col and convert to TransFeature
         close_subs = []
         for _id, sub in near_subs.iterrows():
-            row, col = self._rct.get_row_col(sub.geometry.x, sub.geometry.y)
+            # Substations are represented by short lines with the first point
+            # at the actual location of the substation
+            row, col = self._rct.get_row_col(sub.geometry.coords[0][0],
+                                             sub.geometry.coords[0][1])
             if row is None:
                 continue
-            new_sub = TransFeature(_id, sub.Name, 'sub', sub.geometry.x,
-                                   sub.geometry.y, row, col, sub.dist,
-                                   sub.Min_Voltag, sub.Max_Voltag)
+            new_sub = TransFeature(_id, f'sub{sub.gid}', 'sub',
+                                   sub.geometry.coords[0][0],
+                                   sub.geometry.coords[0][1], row, col,
+                                   sub.dist, sub.min_volts, sub.max_volts)
             close_subs.append(new_sub)
         return close_subs
 
@@ -158,9 +181,9 @@ class TLineDistanceCalculator:
             row, col = self._rct.get_row_col(near_pt.x, near_pt.y)
             if row is None:
                 continue
-            new_tl = TransFeature(_id, tl.Name, 't-line', near_pt.x,
-                                  near_pt.y, row, col, tl.dist, tl.Voltage_kV,
-                                  tl.Voltage_kV)
+            new_tl = TransFeature(_id, f'tl_{tl.gid}', 't-line', near_pt.x,
+                                  near_pt.y, row, col, tl.dist, tl.voltage,
+                                  tl.voltage)
             close_tls.append(new_tl)
         return close_tls
 
@@ -211,14 +234,13 @@ class LoadCenterDistanceCalculator:
         close_lcs = []
         for _id, lc in near_lcs.iterrows():
             # Load centers are very short lines, use the first point
-            row, col = self._rct.get_row_col(lc.geometry.coords[0][0],
-                                             lc.geometry.coords[0][1])
+            x, y = coords(lc.geometry)
+            row, col = self._rct.get_row_col(x, y)
+
             if row is None:
                 continue
-            new_lc = TransFeature(_id, 'lc'+str(int(lc.gid)), 'load_center',
-                                  lc.geometry.coords[0][0],
-                                  lc.geometry.coords[0][1], row, col, lc.dist,
-                                  0, 9999)
+            new_lc = TransFeature(_id, 'lc_'+str(int(lc.gid)), 'load_center',
+                                  x, y, row, col, lc.dist, 0, 9999)
             close_lcs.append(new_lc)
         return close_lcs
 
@@ -265,14 +287,11 @@ class SinkDistanceCalculator:
         # Determine row/col and convert to TransFeature
         close_sinks = []
         for _id, sink in near_sinks.iterrows():
-            # Load centers are very short lines, use the first point
-            row, col = self._rct.get_row_col(sink.geometry.coords[0][0],
-                                             sink.geometry.coords[0][1])
+            x, y = coords(sink.geometry)
+            row, col = self._rct.get_row_col(x, y)
             if row is None:
                 continue
-            new_sink = TransFeature(_id, 's'+str(int(sink.gid)), 'sink',
-                                    sink.geometry.coords[0][0],
-                                    sink.geometry.coords[0][1], row, col,
-                                    sink.dist, 0, 9999)
+            new_sink = TransFeature(_id, 'sink_'+str(int(sink.gid)), 'sink',
+                                    x, y, row, col, sink.dist, 0, 9999)
             close_sinks.append(new_sink)
         return close_sinks
