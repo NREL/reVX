@@ -16,9 +16,8 @@ TEMPLATE_SHAPE = (33792, 48640)
 
 NON_EXCLUSION_SEARCH_RANGE = 75  # pixels, slightly bigger than 128 agg area
 
-# Decimal % distance to buffer clipped cost raster by. Larger values are more
-# likely to find a valid path in areas with complex exclusions, but will run
-# slower
+# Decimal % distance to buffer clipped cost raster by. This help to find the
+# cheapest path. Larger values will run slower
 CLIP_RASTER_BUFFER = 0.05
 
 # Number of load centers and sinks to connect to
@@ -28,6 +27,9 @@ NUM_SINKS = 1
 # Number of times to report on progress of SC point processing, e.g. 5 means
 # about every 20%
 REPORTING_STEPS = 10
+
+# Costs multiplier for cells affected by transmission barriers
+BARRIERS_MULT = 100
 
 # Load json files
 with open(os.path.join(CONFIGDIR, 'power_to_voltage.json'), 'rt') as f:
