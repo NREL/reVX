@@ -86,13 +86,15 @@ class PathFinder:
     """
     Find least cost paths to transmission features from SC point
     """
-    def __init__(self, sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc,
-                 sinks_dc):
+    def __init__(self, sc_pt, cost_arr, paths_arr, subs_dc, tls_dc, lcs_dc,
+                 sinks_dc, plot_costs_arr=None):
         """
         sc_pt : SupplyCurvePoint
             Supply curve point of interest
         cost_arr : numpy.ndarray
             Line costs raster
+        paths_arr : numpy.ndarray
+            Costs raster including transmission barriers multiplier
         subs_dc : DistanceCalculator
             Distance calculator for substations
         tls_dc : DistanceCalculator
@@ -101,13 +103,19 @@ class PathFinder:
             Distance calculator for load centers
         sinks_dc : DistanceCalculator
             Distance calculator for sinks
+        plot_costs_arr : numpy.ndarray | None
+            Costs raster with barriers layer included for plotting
         """
         self._sc_pt = sc_pt
+        assert cost_arr.min() > 0, 'All costs must have a positive value'
+        assert cost_arr.shape == paths_arr.shape
         self._cost_arr = cost_arr
+        self._paths_arr = paths_arr
         self._subs_dc = subs_dc
         self._tls_dc = tls_dc
         self._lcs_dc = lcs_dc
         self._sinks_dc = sinks_dc
+        self._plot_costs_arr = plot_costs_arr
 
         self.cell_size = CELL_SIZE  # (meters) Both dimensions must be equal
 
@@ -115,6 +123,7 @@ class PathFinder:
         self._row_offset = None
         self._col_offset = None
         self._cost_arr_clip = None
+        self._plot_costs_clip = None
         self._mcp = None
         self._costs = None
         self._tb = None
@@ -132,12 +141,14 @@ class PathFinder:
         self._blocked_feats = []
 
     @classmethod
-    def run(cls, sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc, sinks_dc):
+    def run(cls, sc_pt, cost_arr, paths_arr, subs_dc, tls_dc, lcs_dc,
+            sinks_dc, plot_costs_arr=None):
         """
         TODO
         """
-        pf = cls(sc_pt, cost_arr, subs_dc, tls_dc, lcs_dc, sinks_dc)
-        pf._update_start_point()
+        pf = cls(sc_pt, cost_arr, paths_arr, subs_dc, tls_dc, lcs_dc,
+                 sinks_dc, plot_costs_arr)
+        # pf._update_start_point()
         pf._clip_cost_raster()
 
         if not pf._fully_excluded:
@@ -161,7 +172,7 @@ class PathFinder:
                                      'Fully Excluded', 'Fully Excluded', -1,
                                      -1, -1, -1)]
 
-        assert self._costs is not None, 'Please start class with run()'
+        assert self._mcp is not None, 'Please start class with run()'
         costs = []
         for feat in self._near_trans:
             # TODO - make sure 'n' features are returned
@@ -192,39 +203,39 @@ class PathFinder:
 
         return costs
 
-    def _update_start_point(self):
-        """
-        If SC point is in an exclusion zone, move path-finding start to nearest
-        non-excluded point. Search starting at SC point, expanding search
-        rectangle one pixel on all sides each iteration, until finding a non-
-        excluded cell.
-        """
-        if self._cost_arr[self._start_row, self._start_col] > 0:
-            return
-
-        self._excluded = True
-
-        r = self._start_row
-        c = self._start_col
-        for i in range(1, NON_EXCLUSION_SEARCH_RANGE):
-            # TODO - make sure we don't exceed bounds of array
-            window = self._cost_arr[r-i:r+i+1, c-i:c+i+1]
-            locs = np.where(window > 0)
-            if locs[0].shape != (0,):
-                break
-        else:
-            logger.debug('Unable to find non-excluded start for '
-                         f'{self._sc_pt}')
-            self._fully_excluded = True
-            return
-
-        self._start_row = r - i + locs[0][0]
-        self._start_col = c - i + locs[1][0]
-        self._start_dist = sqrt((self._start_row - self._sc_pt.row)**2 +
-                                (self._start_col - self._sc_pt.col)**2)
-        self._start_dist *= self.cell_size
-        logger.debug(f'Moved start for sc_pt {self._sc_pt.id} by '
-                     f'{int(self._start_dist)}m to new cell')
+#    def OLD_update_start_point(self):
+#        """
+#        If SC point is in an exclusion zone, move path-finding start to nearest
+#        non-excluded point. Search starting at SC point, expanding search
+#        rectangle one pixel on all sides each iteration, until finding a non-
+#        excluded cell.
+#        """
+#        if self._cost_arr[self._start_row, self._start_col] > 0:
+#            return
+#
+#        self._excluded = True
+#
+#        r = self._start_row
+#        c = self._start_col
+#        for i in range(1, NON_EXCLUSION_SEARCH_RANGE):
+#            # TODO - make sure we don't exceed bounds of array
+#            window = self._cost_arr[r-i:r+i+1, c-i:c+i+1]
+#            locs = np.where(window > 0)
+#            if locs[0].shape != (0,):
+#                break
+#        else:
+#            logger.debug('Unable to find non-excluded start for '
+#                         f'{self._sc_pt}')
+#            self._fully_excluded = True
+#            return
+#
+#        self._start_row = r - i + locs[0][0]
+#        self._start_col = c - i + locs[1][0]
+#        self._start_dist = sqrt((self._start_row - self._sc_pt.row)**2 +
+#                                (self._start_col - self._sc_pt.col)**2)
+#        self._start_dist *= self.cell_size
+#        logger.debug(f'Moved start for sc_pt {self._sc_pt.id} by '
+#                     f'{int(self._start_dist)}m to new cell')
 
     def _clip_cost_raster(self):
         """ Clip cost raster to nearest transmission features with a buffer """
@@ -268,11 +279,18 @@ class PathFinder:
                      f'c=[{min_cols}:{max_cols}+1]')
         self._cost_arr_clip = self._cost_arr[min_rows:max_rows+1,
                                              min_cols:max_cols+1]
+        self._paths_arr_clip = self._paths_arr[min_rows:max_rows+1,
+                                               min_cols:max_cols+1]
+        if self._plot_costs_arr is not None:
+            self._plot_costs_clip = self._plot_costs_arr[min_rows:max_rows+1,
+                                                         min_cols:max_cols+1]
 
     def _find_paths(self):
         """ Find minimum cost paths from sc_pt to nearest trans features """
-        self._mcp = MCP_Geometric(self._cost_arr_clip)
-        self._costs, self._tb = self._mcp.find_costs(starts=[self._start])
+        # TODO - add ends
+        self._mcp = MCP_Geometric(self._paths_arr_clip)
+        # self._costs, self._tb = self._mcp.find_costs(starts=[self._start])
+        _ , _ = self._mcp.find_costs(starts=[self._start])
 
     @property
     def _start(self):
@@ -285,7 +303,52 @@ class PathFinder:
 
     def _path_cost(self, feat):
         r, c = self._feat_row_col(feat)
-        return self._costs[r, c]
+        try:
+            indices = self._mcp.traceback((r, c))
+        except ValueError:
+            # No path to trans feature. This shouldn't be possible
+            msg = (f"Can't find path to trans {feat.id} from "
+                    f"SC pt {self._sc_pt.id}")
+            logger.warning(msg)
+
+        return self.calc_path_cost(self._cost_arr_clip, indices)
+
+    @staticmethod
+    def calc_path_cost(cost_arr, indices):
+        """
+        Determine cost of path indicated by indices across cost_arr
+
+        Parameter
+        ---------
+        cost_arr : numpy.ndarray
+            Costs array to build line per cell, likely clipped to AOI
+        indices : list of tuples
+            Path to determine cost for. Output of MCP_Geometric.traceback()
+        """
+        # Extract costs of cells
+        rows = [i[0] for i in indices]
+        cols = [i[1] for i in indices]
+        cell_costs = cost_arr[rows, cols]
+
+        # Use c**2 = a**2 + b**2 to determine length of individual paths
+        lens = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
+
+        # Need to determine distance coming into and out of any cell. Assume
+        # paths start and end at the center of a cell. Therefore, distance
+        # traveled in the cell is half the distance entering it and half the
+        # distance exiting it. Duplicate all lengths, pad 0s on ends for start
+        # and end cells, and divide all distance by half.
+        lens = np.repeat(lens, 2)
+        lens = np.insert(np.append(lens, 0), 0, 0)
+        lens = lens/2
+
+        # Group entrance and exits distance together, and add them
+        lens = lens.reshape((int(lens.shape[0]/2),2))
+        lens = np.sum(lens, axis=1)
+
+        # Multiple distance travel through cell by cost and sum it!
+        cost = np.sum(cell_costs*lens)
+        return cost
 
     def _path_length(self, feat):
         """
@@ -335,10 +398,13 @@ class PathFinder:
 
     def plot_paths(self, cmap='viridis'):
         """ Plot least cost paths for QAQC"""
-        # assert self._tb is not None, 'Must run _find_paths() first'
+        if self._plot_costs_arr is None:
+            logger.warning('Must pass plot_costs_arr to enable plotting')
+            return
 
         plt.figure(figsize=(30, 15))
-        plt.imshow(self._cost_arr_clip, cmap=cmap)
+        plt.imshow(self._plot_costs_clip, cmap=cmap)
+        plt.colorbar()
 
         # Plot trans features
         feats = [(x.row, x.col, x) for x in self._near_trans]

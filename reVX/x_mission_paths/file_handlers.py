@@ -13,7 +13,8 @@ import fiona
 from shapely.geometry import Point
 import rasterio as rio
 
-from .config import TEMPLATE_SHAPE, power_classes, power_to_voltage
+from .config import TEMPLATE_SHAPE, power_classes, power_to_voltage, \
+    BARRIERS_MULT
 from .utilities import RowColTransformer
 
 logger = logging.getLogger(__name__)
@@ -41,6 +42,9 @@ class LoadData:
         resolution : Int
             Desired Supply Curve Point resolution, one of: 32, 64, 128
         TODO
+       exclusions : numpy.ndarray(int) | None
+            Exclusions layer. Any cell that is > 0 will have a final
+            multiplier of -1, which blocks it from least cost paths.
         """
         assert capacity_class in power_classes.keys(), 'capacity must be ' + \
             f'one of {list(power_classes.keys())}'
@@ -64,9 +68,18 @@ class LoadData:
         logger.debug('Loading rasters')
         costs_f = os.path.join(costs_raster_dir,
                                f'costs_{self.tie_power}MW.tif')
+        logger.debug(f'Loading costs from {costs_f}')
         self.costs_arr = load_raster(costs_f)
         self.regions_arr = load_raster(iso_regions_f)
-        self.barriers_arr = load_raster(barriers_f)
+        self._barriers_arr = load_raster(barriers_f)
+        assert self.costs_arr.shape == self.regions_arr.shape == \
+            self._barriers_arr.shape, 'All rasters must have the same shape'
+
+        self._barriers_arr[self._barriers_arr == 1] = BARRIERS_MULT
+        self._barriers_arr[self._barriers_arr == 0] = 1
+        self.paths_arr = self.costs_arr * self._barriers_arr
+
+        self._plot_costs_arr = None
 
         logger.debug('Loading SC points')
         # TODO - make this resolution aware
@@ -95,6 +108,17 @@ class LoadData:
                 sc_points.append(sc_pt)
         sc_points
         return sc_points
+
+    @property
+    def plot_costs_arr(self):
+        """
+        Return costs array for plotting with transmission barriers set to -1
+        """
+        if self._plot_costs_arr is None:
+            self._plot_costs_arr = self.costs_arr.copy()
+            self._plot_costs_arr[self._barriers_arr == BARRIERS_MULT] = -1
+
+        return self._plot_costs_arr
 
 
 class AllConnsLoader:

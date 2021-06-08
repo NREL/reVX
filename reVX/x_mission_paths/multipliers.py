@@ -19,6 +19,7 @@ NLCD_LAND_USE_CLASSES = {
     'wetland': [90, 95],
     'suburban': [21, 22, 23],
     'urban': [24],
+    'water': [11],
 }
 
 DEFAULT_HILL_MULT = 1
@@ -29,12 +30,12 @@ DEFAULT_MTN_SLOPE = 8
 METERS_IN_MILE = 1609.344
 
 
-def buildCostRasters(iso_regions_f, nlcd_f, slope_f, exclusions_f, template_f,
+def buildCostRasters(iso_regions_f, nlcd_f, slope_f, template_f,
                      mults=c.iso_mults, base_line_costs=c.base_line_costs,
                      iso_lookup=c.iso_lookup, power_classes=c.power_classes,
                      save_steps=True, out_dir='cost_rasters'):
     """
-    Build cost raster using base line costs, multipliers, and exclusions
+    Build cost raster using base line costs and multipliers
     TODO
 
     """
@@ -42,11 +43,10 @@ def buildCostRasters(iso_regions_f, nlcd_f, slope_f, exclusions_f, template_f,
     iso_regions = load_raster(iso_regions_f)
     land_use = load_raster(nlcd_f)
     slope = load_raster(slope_f)
-    exclusions = load_raster(exclusions_f)
     print('Done')
 
     cm = CostMultiplier.run(iso_regions, land_use, slope, mults,
-                            iso_lookup=iso_lookup, exclusions=exclusions)
+                            iso_lookup=iso_lookup)
     mults_arr = cm.mults_arr
 
     try:
@@ -186,7 +186,7 @@ class CostMultiplier:
         return mult_raster
 
     def create_mults_raster(self, iso_regions, land_use, slope, iso_config,
-                            default, iso_lookup=None, exclusions=None):
+                            default, iso_lookup=None):
         """
         Create x-mission line cost multiplier raster
 
@@ -220,9 +220,7 @@ class CostMultiplier:
         iso_lookup : dict | None
             Table to convert iso_config keys to numbers for iso_regions
             raster.
-        exclusions : numpy.ndarray(int) | None
-            Exclusions layer. Any cell that is > 0 will have a final
-            multiplier of -1, which blocks it from least cost paths.
+        TODO
 
         Returns
         -------
@@ -256,6 +254,9 @@ class CostMultiplier:
                 slope_mult = self._create_slope_mult(r_slope, r_conf['slope'])
                 mults_arr[mask] = mults_arr[mask] * slope_mult
 
+            # TODO - set water to water mult so we don't get super high values
+            # on water edges when water and slope mult combine
+
         # Calculate multipliers for regions not defined in `config`
         print('Processing default region')
         default_mask = ~regions_mask
@@ -270,16 +271,11 @@ class CostMultiplier:
             slope_mult = self._create_slope_mult(r_slope, default['slope'])
             mults_arr[default_mask] = mults_arr[default_mask] * slope_mult
 
-        if exclusions is not None:
-            assert iso_regions.shape == exclusions.shape, \
-                'All arrays must be the same shape'
-            mults_arr[exclusions > 0] = -1
-
         return mults_arr
 
     @classmethod
     def run(cls, iso_regions, land_use, slope, iso_config, default={},
-            iso_lookup=None, exclusions=None):
+            iso_lookup=None):
         """
         Create x-mission line cost multiplier raster
 
@@ -298,9 +294,6 @@ class CostMultiplier:
         iso_lookup : dict | None
             Table to convert iso_config keys to numbers for iso_regions
             raster.
-        exclusions : numpy.ndarray(int) | None
-            Exclusions layer. Any cell that is > 0 will have a final
-            multiplier of -1, which blocks it from least cost paths.
 
         Returns
         -------
@@ -309,8 +302,7 @@ class CostMultiplier:
         cm = cls()
         cm.mults_arr = cm.create_mults_raster(iso_regions, land_use, slope,
                                               iso_config, default,
-                                              iso_lookup=iso_lookup,
-                                              exclusions=exclusions)
+                                              iso_lookup=iso_lookup)
         return cm
 
     def save_geotiff(self, template, outf):
@@ -341,7 +333,7 @@ class CostMultiplier:
 
 
 def getBaseLineCost(base_line_costs, capacity, iso_regions, iso_lookup,
-                    cell_size=90):
+                    cell_size=c.CELL_SIZE):
     """
     Get base line cost per cell raster for a given voltage
 
@@ -371,7 +363,7 @@ def getBaseLineCost(base_line_costs, capacity, iso_regions, iso_lookup,
     cost_arr : numpy.ndarray
         Cost per cell raster in same shape as iso_regions
     """
-    cost_arr = np.full(iso_regions.shape, -1, dtype=np.float32)
+    cost_arr = np.full(iso_regions.shape, float('inf'), dtype=np.float32)
 
     for iso in base_line_costs:
         print(f'Processing costs for {iso} for {capacity}MW')

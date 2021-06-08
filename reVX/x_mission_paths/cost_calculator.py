@@ -52,7 +52,8 @@ class ProcessSCs:
                                               n=NUM_LOAD_CENTERS)
         sinks_dc = SinkDistanceCalculator(self.ld.sinks, rct, n=NUM_SINKS)
 
-        self._cccfsc = CalcConnectCostsForSC(self.ld.costs_arr, subs_dc,
+        self._cccfsc = CalcConnectCostsForSC(self.ld.costs_arr,
+                                             self.ld.paths_arr, subs_dc,
                                              tls_dc, lcs_dc, sinks_dc,
                                              capacity_class,
                                              self.ld.tie_voltage)
@@ -87,11 +88,15 @@ class ProcessSCs:
         report_steps = indices[::step][1:]
         run_times = []
 
+        plot_costs_arr = None
+        if plot:
+            plot_costs_arr = self.ld.plot_costs_arr
+
         all_costs = pd.DataFrame()
         for i, index in enumerate(indices):
             now = dt.now()
             sc_pt = sc_points[index]
-            costs = self._cccfsc.calculate(sc_pt, plot=plot)
+            costs = self._cccfsc.calculate(sc_pt, plot_costs_arr)
             all_costs = pd.concat([all_costs, costs], axis=0)
             run_times.append(dt.now() - now)
 
@@ -114,14 +119,16 @@ class CalcConnectCostsForSC:
     cost, all multipliers, new substations, substation upgrades and
     transformers. All transmission features should be valid for power class.
     """
-    def __init__(self, costs_arr, subs_dc, tls_dc, lcs_dc, sinks_dc,
-                 capacity_class, tie_voltage):
+    def __init__(self, costs_arr, paths_arr, subs_dc, tls_dc, lcs_dc,
+                 sinks_dc, capacity_class, tie_voltage):
         """
         Parameters
         ----------
         costs_arr : numpy.ndarray
             Costs raster, value is cost in US$ to build line across cell,
             including all multipliers
+        paths_arr : numpy.ndarray
+            Costs raster include transmission barriers multiplier
         subs_dc : SubstationDistanceCalculator
             Distance calculator for substations
         tls_dc : TlineDistanceCalculator
@@ -137,6 +144,7 @@ class CalcConnectCostsForSC:
             Line voltage for capacity_class (kV)
         """
         self._costs_arr = costs_arr
+        self._paths_arr = paths_arr
         self._subs_dc = subs_dc
         self._tls_dc = tls_dc
         self._lcs_dc = lcs_dc
@@ -148,7 +156,7 @@ class CalcConnectCostsForSC:
         self._xformer_costs = {int(k): v for k, v in xfc.items()}
         self._reverse_iso = {v: k for k, v in iso_lookup.items()}
 
-    def calculate(self, sc_pt, plot=False):
+    def calculate(self, sc_pt, plot_costs_arr=None):
         """
         Calculate costs to connect supply curve point to existing transmission
         features
@@ -157,6 +165,8 @@ class CalcConnectCostsForSC:
         ----------
         sc_pt : .file_handlers.SupplyCurvePoint
             Supply Curve point to calculate costs for
+        plot_costs_arr : numpy.ndarray | None
+            Costs raster with transmission barriers layer included for plotting
 
         Returns
         -------
@@ -164,8 +174,10 @@ class CalcConnectCostsForSC:
             Costs for tie lines, and new/upgraded substations include
             transformers to each existing grid feature.
         """
-        pf = PathFinder.run(sc_pt, self._costs_arr, self._subs_dc,
-                            self._tls_dc, self._lcs_dc, self._sinks_dc)
+
+        pf = PathFinder.run(sc_pt, self._costs_arr, self._paths_arr,
+                            self._subs_dc, self._tls_dc, self._lcs_dc,
+                            self._sinks_dc, plot_costs_arr=plot_costs_arr)
         cdf = pd.DataFrame([c.as_dict() for c in pf.costs])
 
         # Length multiplier
@@ -188,7 +200,7 @@ class CalcConnectCostsForSC:
         cdf['total_cost'] = cdf.adj_line_cost + cdf.xformer_cost + \
             cdf.sub_upgrade_cost + cdf.new_sub_cost
 
-        if plot:
+        if plot_costs_arr is not None:
             pf.plot_paths()
 
         return cdf
