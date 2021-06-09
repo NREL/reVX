@@ -19,7 +19,6 @@ NLCD_LAND_USE_CLASSES = {
     'wetland': [90, 95],
     'suburban': [21, 22, 23],
     'urban': [24],
-    'water': [11],
 }
 
 DEFAULT_HILL_MULT = 1
@@ -28,6 +27,9 @@ DEFAULT_HILL_SLOPE = 2
 DEFAULT_MTN_SLOPE = 8
 
 METERS_IN_MILE = 1609.344
+
+WATER_NLCD_CODE = 11
+WATER_MULT = 20
 
 
 def buildCostRasters(iso_regions_f, nlcd_f, slope_f, template_f,
@@ -254,9 +256,6 @@ class CostMultiplier:
                 slope_mult = self._create_slope_mult(r_slope, r_conf['slope'])
                 mults_arr[mask] = mults_arr[mask] * slope_mult
 
-            # TODO - set water to water mult so we don't get super high values
-            # on water edges when water and slope mult combine
-
         # Calculate multipliers for regions not defined in `config`
         print('Processing default region')
         default_mask = ~regions_mask
@@ -270,6 +269,10 @@ class CostMultiplier:
             r_slope = slope[default_mask]
             slope_mult = self._create_slope_mult(r_slope, default['slope'])
             mults_arr[default_mask] = mults_arr[default_mask] * slope_mult
+
+        # Set water multiplier last so we don't get super high multipliers at
+        # water body boundaries next to steep slopes
+        mults_arr[land_use == WATER_NLCD_CODE] = WATER_MULT
 
         return mults_arr
 

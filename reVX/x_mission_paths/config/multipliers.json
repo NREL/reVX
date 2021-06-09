@@ -6,9 +6,7 @@
       "suburban": 1.61,
       "urban": 1.59,
       "forest": 2.25,
-      "wetland": 1.2,
-      "water": 20
-
+      "wetland": 1.2
     },
     "slope": {
       "hill_mult": 1.4,
@@ -24,8 +22,7 @@
       "suburban": 2,
       "urban": 3,
       "forest": 3,
-      "wetland": 1.4,
-      "water": 20
+      "wetland": 1.4
     },
     "slope": {
       "hill_mult": 1.5,
@@ -41,8 +38,7 @@
       "suburban": 1.08,
       "urban": 1.903,
       "forest": 1.2,
-      "wetland": 1.8,
-      "water": 20
+      "wetland": 1.8
     },
     "slope": {
       "hill_mult": 1.45,
@@ -58,8 +54,7 @@
       "suburban": 1.75,
       "urban": 1.12,
       "forest": 2.15,
-      "wetland": 1.21,
-      "water": 20
+      "wetland": 1.21
     },
     "slope": {
       "hill_mult": 1.45,
