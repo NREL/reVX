@@ -393,6 +393,35 @@ class OffshoreInputs(ExclusionLayers):
 
         return out
 
+    def extract_array_efficiency(self, layer):
+        """
+        Extract array efficiency
+
+        Parameters
+        ----------
+        layer : str
+            Name of array efficiency table/dataset
+
+        Returns
+        -------
+        aeff : ndarray
+            Vector of array efficiency 'aeff' values for desired offshore sites
+        """
+        aeff = pd.DataFrame(self.h5[layer])
+        aeff = self.h5.df_str_decode(aeff)
+        lat_lon_cols = get_lat_lon_cols(aeff)
+        aeff_coords = aeff[lat_lon_cols].values.astype(np.float32)
+        # pylint: disable = not-callable
+        tree = cKDTree(aeff_coords)
+
+        site_lat_lons = self.lat_lons
+        _, pos = tree.query(site_lat_lons)
+        assert len(pos) == len(site_lat_lons)
+
+        aeff = aeff['aeff'].values.astype(np.float32)
+
+        return aeff[pos]
+
     def extract_input_layer(self, layer):
         """
         Extract input data for desired layer
@@ -444,6 +473,8 @@ class OffshoreInputs(ExclusionLayers):
             if layer.startswith('assembly'):
                 for col, data in self.compute_assembly_dist(layer).items():
                     out[col] = data
+            elif layer.startswith('array'):
+                out[col] = self.extract_array_efficiency(layer)
             else:
                 layer_out = self.extract_input_layer(layer)
                 if layer == 'bathymetry':

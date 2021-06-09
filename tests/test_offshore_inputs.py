@@ -20,7 +20,8 @@ from reVX.offshore.offshore_inputs_cli import main
 INPUTS_FPATH = os.path.join(TESTDATADIR, 'offshore', 'offshore.h5')
 OFFSHORE_SITES = os.path.join(TESTDATADIR, 'wtk', 'ri_100_wtk_2012.h5')
 BASELINE = os.path.join(TESTDATADIR, 'offshore', 'inputs_baseline.csv')
-INPUT_LAYERS = {'dist_to_coast': 'dist_s_to_l',
+INPUT_LAYERS = {'array_efficiency': 'aeff',
+                'dist_to_coast': 'dist_s_to_l',
                 'ports_operations': 'dist_op_to_s',
                 'ports_construction_nolimits': 'dist_p_to_s_nolimit',
                 'assembly_areas': 'dist_a_to_s'}
