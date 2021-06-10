@@ -107,7 +107,6 @@ class PathFinder:
             Costs raster with barriers layer included for plotting
         """
         self._sc_pt = sc_pt
-        assert cost_arr.min() > 0, 'All costs must have a positive value'
         assert cost_arr.shape == paths_arr.shape
         self._cost_arr = cost_arr
         self._paths_arr = paths_arr
@@ -287,9 +286,8 @@ class PathFinder:
 
     def _find_paths(self):
         """ Find minimum cost paths from sc_pt to nearest trans features """
-        # TODO - add ends
         self._mcp = MCP_Geometric(self._paths_arr_clip)
-        # self._costs, self._tb = self._mcp.find_costs(starts=[self._start])
+        # Including the ends is actually slightly slower
         _ , _ = self._mcp.find_costs(starts=[self._start])
 
     @property

@@ -25,7 +25,7 @@ class LoadData:
     Load data from disk
     """
     def __init__(self, capacity_class, resolution,
-                 costs_raster_dir='cost_rasters',
+                 costs_dir='cost_rasters',
                  template_f='data/conus_template.tif',
                  landuse_f='data/nlcd.npy',
                  slope_f='data/slope.npy',
@@ -66,10 +66,11 @@ class LoadData:
         self.sinks = cl.sinks
 
         logger.debug('Loading rasters')
-        costs_f = os.path.join(costs_raster_dir,
-                               f'costs_{self.tie_power}MW.tif')
+        costs_f = os.path.join(costs_dir, f'costs_{self.tie_power}MW.tif')
         logger.debug(f'Loading costs from {costs_f}')
         self.costs_arr = load_raster(costs_f)
+        assert self.costs_arr.min() > 0, 'All costs must have a positive value'
+
         self.regions_arr = load_raster(iso_regions_f)
         self._barriers_arr = load_raster(barriers_f)
         assert self.costs_arr.shape == self.regions_arr.shape == \
