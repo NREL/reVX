@@ -8,6 +8,7 @@ import os
 import logging
 
 import numpy as np
+import pandas as pd
 import geopandas as gpd
 import fiona
 from shapely.geometry import Point
@@ -30,7 +31,7 @@ class LoadData:
                  landuse_f='data/nlcd.npy',
                  slope_f='data/slope.npy',
                  barriers_f='data/transmission_barriers.tif',
-                 sc_points_f='data/sc_points/fips_run_agg_128_projected.shp',
+                 sc_points_f='data/sc_points/fips_run_agg_new.csv',
                  all_conns_f='data/conus_allconns.gpkg',
                  iso_regions_f='data/iso_regions.tif'):
         """
@@ -51,6 +52,9 @@ class LoadData:
 
         self.capacity_class = capacity_class
         self.rct = RowColTransformer(template_f)
+
+        with rio.open(template_f) as ras:
+            self.crs = ras.profile['crs']
 
         # Real world power capacity (MW)
         self.tie_power = power_classes[capacity_class]
@@ -86,27 +90,30 @@ class LoadData:
         # TODO - make this resolution aware
         self.sc_points = self._load_sc_points(sc_points_f)
 
-    def _load_sc_points(self, sc_points_f):
+    def _load_sc_points(self, sc_points_f, raw_crs='epsg:4326'):
         """
         Load supply curve points from disk
 
         Parameters
         ----------
         sc_points_f : String
-            Path to supply curve points
+            Path to supply curve points CSV
+        raw_crs : String
+            CRS string for SC points file
 
         Returns
         -------
         sc_points : List of SupplyCurvePoint
         """
+        pts = pd.read_csv(sc_points_f)
+        geo = [Point(xy) for xy in zip(pts.longitude, pts.latitude)]
+        pts = gpd.GeoDataFrame(pts, crs=raw_crs, geometry=geo).to_crs(self.crs)
+
         sc_points = []
-        with fiona.open(sc_points_f) as src:
-            for feat in src:
-                sc_pt = SupplyCurvePoint(feat['properties']['sc_gid'],
-                                         feat['geometry']['coordinates'][0],
-                                         feat['geometry']['coordinates'][1],
-                                         self.rct, self.regions_arr)
-                sc_points.append(sc_pt)
+        for _, row in pts.iterrows():
+            sc_pt = SupplyCurvePoint(row.sc_gid,row.geometry, self.rct,
+                                        self.regions_arr)
+            sc_points.append(sc_pt)
         sc_points
         return sc_points
 
@@ -189,7 +196,7 @@ class AllConnsLoader:
 
 
 class SupplyCurvePoint:
-    def __init__(self, id, x, y, rct, regions_arr):
+    def __init__(self, id, geo, rct, regions_arr):
         """
         Represents a supply curve point for possible renewable energy plant.
 
@@ -197,33 +204,24 @@ class SupplyCurvePoint:
         ----------
         id : int
             Id of supply curve point
-        x : float
-            Projected easting coordinate
-        y : float
-            Projected northing coordinate
+        geo : shapely.geometry.Point
+            Point projected to template raster
         rct : RowColTransformer
             Transformer for template raster
         regions_arr : numpy.ndarray
             ISO regions raster
         """
         self.id = id
-        self.x = x
-        self.y = y
+        self.x = geo.x
+        self.y = geo.y
 
         # Calculate and save location on template raster
-        row, col = rct.get_row_col(x, y)
+        row, col = rct.get_row_col(self.x, self.y)
         self.row = row
         self.col = col
 
         self.region = regions_arr[row, col]
-
-    @property
-    def point(self):
-        """
-        Return point as shapley.geometry.Point object
-
-        """
-        return Point(self.x, self.y)
+        self.point = geo
 
     def __repr__(self):
         return f'id={self.id}, coords=({self.x}, {self.y}), ' +\
