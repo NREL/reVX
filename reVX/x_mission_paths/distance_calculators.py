@@ -12,16 +12,16 @@ from shapely.geometry.linestring import LineString
 class TransFeature:
     """ Represents an existing substation, t-line, etc """
     def __init__(self, id, name, trans_type, x, y, row, col, dist, min_volts,
-                 max_volts):
+                 max_volts, ac_cap, trans_gids=''):
         """
         Parameters
         ----------
         id : int
             Id of transmission feature
         name : str
-            Name of feature
+            Name of transmision feature
         trans_type : str
-            Type of transmission feature, e.g. 'subs', 't-line', etc.
+            Type of transmission feature, e.g. 'PCALoadCen', 'TransLine', etc.
         x : float
             Projected easting coordinate
         y : float
@@ -32,11 +32,15 @@ class TransFeature:
             Column in template raster that corresponds to x
         dist : float
             Straight line distance from feature to supply curve point, in
-            projected units.
+            projected units. (m)
         min_volts : int
             Minimum voltage (kV) of feature
         max_volts : int
             Maximum voltage (kV) of feature
+        ac_cap : int
+            AC capacity (I think? TODO)
+        trans_gids : str
+            String of features connected to substation
         """
         self.id = id
         self.name = name
@@ -48,14 +52,13 @@ class TransFeature:
         self.dist = dist
         self.min_volts = min_volts
         self.max_volts = max_volts
-
-        if self.trans_type == 't-line':
-            self.id += 100000
+        self.ac_cap = ac_cap
+        self.trans_gids = trans_gids
 
     def __repr__(self):
         return f'id={self.id}, coords=({self.x}, {self.y}), ' +\
                f'r/c=({self.row}, {self.col}), dist={self.dist}, ' +\
-               f'name={self.name}, type={self.trans_type}'
+               f'type={self.trans_type}'
 
 
 def coords(geo):
@@ -116,17 +119,18 @@ class SubstationDistanceCalculator:
 
         # Determine row/col and convert to TransFeature
         close_subs = []
-        for _id, sub in near_subs.iterrows():
+        for _, sub in near_subs.iterrows():
             # Substations are represented by short lines with the first point
             # at the actual location of the substation
-            row, col = self._rct.get_row_col(sub.geometry.coords[0][0],
-                                             sub.geometry.coords[0][1])
+            x, y = coords(sub.geometry)
+            row, col = self._rct.get_row_col(x, y)
             if row is None:
                 continue
-            new_sub = TransFeature(_id, f'sub{sub.gid}', 'sub',
-                                   sub.geometry.coords[0][0],
-                                   sub.geometry.coords[0][1], row, col,
-                                   sub.dist, sub.min_volts, sub.max_volts)
+
+            new_sub = TransFeature(sub.gid, f'sub_{sub.gid}', 'Substation', x,
+                                   y, row, col, sub.dist, sub.min_volts,
+                                   sub.max_volts, sub.ac_cap,
+                                   trans_gids=sub.trans_gids)
             close_subs.append(new_sub)
         return close_subs
 
@@ -175,15 +179,15 @@ class TLineDistanceCalculator:
 
         # Determine row/col of nearest pt on line and convert to TransFeature
         close_tls = []
-        for _id, tl in near_tls.iterrows():
+        for _, tl in near_tls.iterrows():
             # Find pt on t-line closest to sc
             near_pt, _ = nearest_points(tl.geometry, pt)
             row, col = self._rct.get_row_col(near_pt.x, near_pt.y)
             if row is None:
                 continue
-            new_tl = TransFeature(_id, f'tl_{tl.gid}', 't-line', near_pt.x,
+            new_tl = TransFeature(tl.gid, f'tl_{tl.gid}', 'TransLine', near_pt.x,
                                   near_pt.y, row, col, tl.dist, tl.voltage,
-                                  tl.voltage)
+                                  tl.voltage, tl.ac_cap)
             close_tls.append(new_tl)
         return close_tls
 
@@ -232,15 +236,15 @@ class LoadCenterDistanceCalculator:
 
         # Determine row/col and convert to TransFeature
         close_lcs = []
-        for _id, lc in near_lcs.iterrows():
+        for _, lc in near_lcs.iterrows():
             # Load centers are very short lines, use the first point
             x, y = coords(lc.geometry)
             row, col = self._rct.get_row_col(x, y)
 
             if row is None:
                 continue
-            new_lc = TransFeature(_id, 'lc_'+str(int(lc.gid)), 'load_center',
-                                  x, y, row, col, lc.dist, 0, 9999)
+            new_lc = TransFeature(lc.gid, 'lc_'+str(int(lc.gid)), 'LoadCen',
+                                  x, y, row, col, lc.dist, 0, 9999, lc.ac_cap)
             close_lcs.append(new_lc)
         return close_lcs
 
@@ -286,12 +290,13 @@ class SinkDistanceCalculator:
 
         # Determine row/col and convert to TransFeature
         close_sinks = []
-        for _id, sink in near_sinks.iterrows():
+        for _, sink in near_sinks.iterrows():
             x, y = coords(sink.geometry)
             row, col = self._rct.get_row_col(x, y)
             if row is None:
                 continue
-            new_sink = TransFeature(_id, 'sink_'+str(int(sink.gid)), 'sink',
-                                    x, y, row, col, sink.dist, 0, 9999)
+            new_sink = TransFeature(sink.gid, 'sink_'+str(int(sink.gid)),
+                                    'PCALoadCen', x, y, row, col, sink.dist, 0,
+                                    9999, sink.ac_cap)
             close_sinks.append(new_sink)
         return close_sinks

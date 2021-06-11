@@ -7,16 +7,14 @@ CONFIGDIR = os.path.dirname(os.path.realpath(__file__))
 SHORT_MULT = 1.5
 MEDIUM_MULT = 1.2
 
-# Cut offs are originally in miles but are converted to meters
-SHORT_CUTOFF = 3*5280/3.28084
-MEDIUM_CUTOFF = 10*5280/3.28084
+# Cut offs are originally in miles but are converted to kilometers
+SHORT_CUTOFF = 3*5280/3.28084/1000
+MEDIUM_CUTOFF = 10*5280/3.28084/1000
 
 CELL_SIZE = 90  # meters, size of cell. Both dims must be equal
 TEMPLATE_SHAPE = (33792, 48640)
 
-NON_EXCLUSION_SEARCH_RANGE = 75  # pixels, slightly bigger than 128 agg area
-
-# Decimal % distance to buffer clipped cost raster by. This help to find the
+# Decimal % distance to buffer clipped cost raster by. This helps to find the
 # cheapest path. Larger values will run slower
 CLIP_RASTER_BUFFER = 0.05
 

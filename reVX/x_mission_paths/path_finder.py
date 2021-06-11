@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from skimage.graph import MCP_Geometric
 
-from .config import CELL_SIZE, NON_EXCLUSION_SEARCH_RANGE, CLIP_RASTER_BUFFER
+from .config import CELL_SIZE, CLIP_RASTER_BUFFER
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +21,9 @@ class BlockedTransFeature(Exception):
 
 
 class TransmissionCost:
-    def __init__(self, sc_id, region, excluded, start_dist, trans_id, name,
-                 trans_type, cost, length, min_volts, max_volts):
+    def __init__(self, sc_id, sc_row_ind, sc_col_ind, region, trans_id, name,
+                 trans_type, cost, length, min_volts, max_volts, ac_cap,
+                 trans_gids):
         """
         Cost of building transmission line from supply curve point to
         transmission feature. Does not include substation construction/upgrades
@@ -32,15 +33,12 @@ class TransmissionCost:
         ----------
         sc_id : int
             Supply curve point id
+        sc_row_ind : int
+            Row of SC point in grid by resolution
+        sc_col_ind : int
+            Column of SC point in grid by resolution
         region : int
             ISO region code
-        excluded : str | bool
-            True, False, or 'Fully Excluded'. Indicates whether SC point is in
-            exclusion zone. 'Fully Excluded' means no valid nearby start point
-            was found.
-        start_dist : float
-            Distance from SC point to path-finding start point if SC point it
-            in an exclusion zone.
         trans_id : int
             Supply curve point id
         name : str
@@ -50,7 +48,7 @@ class TransmissionCost:
         cost : float
             Cost of building t-line from supply curve point to trans feature
         length : float
-            Minimum cost path length in meters of new line
+            Minimum cost path length in kilometers of new line
         min_volts : int
             Minimum voltage (kV) of existing transmission feature being
             connected to
@@ -59,9 +57,9 @@ class TransmissionCost:
             connected to
         """
         self.sc_id = sc_id
+        self.sc_row_ind = sc_row_ind
+        self.sc_col_ind = sc_col_ind
         self.region = region
-        self.excluded = excluded
-        self.start_dist = start_dist
         self.trans_id = trans_id
         self.name = name
         self.trans_type = trans_type
@@ -69,14 +67,17 @@ class TransmissionCost:
         self.length = length
         self.min_volts = min_volts
         self.max_volts = max_volts
+        self.ac_cap = ac_cap
+        self.trans_gids = trans_gids
 
     def as_dict(self):
-        return {'sc_id': self.sc_id, 'region': self.region,
-                'excluded': self.excluded, 'start_dist': self.start_dist,
-                'trans_id': self.trans_id, 'name': self.name,
-                'trans_type': self.trans_type, 'tline_cost': self.cost,
-                'length': self.length, 'min_volts': self.min_volts,
-                'max_volts': self.max_volts}
+        return {'sc_point_gid': self.sc_id, 'sc_point_row_id': self.sc_row_ind,
+                'sc_point_col_id': self.sc_col_ind, 'region': self.region,
+                'trans_gid': self.trans_id, 'name': self.name,
+                'category': self.trans_type, 'raw_line_cost': self.cost,
+                'dist_km': self.length, 'min_volts': self.min_volts,
+                'max_volts': self.max_volts, 'ac_cap': self.ac_cap,
+                'trans_gids': self.trans_gids}
 
     def __repr__(self):
         return str(self.as_dict())
@@ -127,11 +128,6 @@ class PathFinder:
         self._costs = None
         self._tb = None
 
-        self._excluded = False  # SC point lands in exclusion zone
-
-        # True if not able to find a non-excluded nearby cell
-        self._fully_excluded = False
-
         self._start_row = sc_pt.row
         self._start_col = sc_pt.col
         self._start_dist = 0
@@ -147,11 +143,8 @@ class PathFinder:
         """
         pf = cls(sc_pt, cost_arr, paths_arr, subs_dc, tls_dc, lcs_dc,
                  sinks_dc, plot_costs_arr)
-        # pf._update_start_point()
         pf._clip_cost_raster()
-
-        if not pf._fully_excluded:
-            pf._find_paths()
+        pf._find_paths()
 
         return pf
 
@@ -165,16 +158,9 @@ class PathFinder:
         costs : list of TransmissionCost
             Costs data for minimum cost paths to nearest x-mission features
         """
-        if self._fully_excluded:
-            return [TransmissionCost(self._sc_pt.id, self._sc_pt.region,
-                                     'Fully Excluded', -1, -1,
-                                     'Fully Excluded', 'Fully Excluded', -1,
-                                     -1, -1, -1)]
-
         assert self._mcp is not None, 'Please start class with run()'
         costs = []
         for feat in self._near_trans:
-            # TODO - make sure 'n' features are returned
             try:
                 # TODO - use minimum length of ~5.5km
                 # TODO - probably use average sample of cost raster for
@@ -184,57 +170,27 @@ class PathFinder:
                 self._blocked_feats.append(feat)
                 continue
             cost = self._path_cost(feat)
-            this_cost = TransmissionCost(self._sc_pt.id, self._sc_pt.region,
-                                         self._excluded, self._start_dist,
-                                         feat.id, feat.name, feat.trans_type,
-                                         cost, length, feat.min_volts,
-                                         feat.max_volts)
+            this_cost = TransmissionCost(self._sc_pt.id,
+                                         self._sc_pt.sc_row_ind,
+                                         self._sc_pt.sc_col_ind,
+                                         self._sc_pt.region, feat.id,
+                                         feat.name, feat.trans_type, cost,
+                                         length/1000, feat.min_volts,
+                                         feat.max_volts, feat.ac_cap,
+                                         feat.trans_gids)
             costs.append(this_cost)
 
         if len(costs) == 0:
-            # There's a valid start point, but no paths. Something went wrong
-            costs = [TransmissionCost(self._sc_pt.id, self._sc_pt.region,
-                                      self._excluded, -1, -1, 'Error',
-                                      'Error finding paths', -1, -1, -1, -1)]
+            # There are no paths. Something went wrong
+            costs = [TransmissionCost(self._sc_pt.id, self._sc_row_ind,
+                                      self._sc_col_ind, self._sc_pt.region,
+                                       -1, 'Error', 'Error finding paths',
+                                      -1, -1, -1, -1, -1, 'Error')]
             msg = ('Unable to find any tie-line paths for pt '
                   f'{self._sc_pt.id}')
             logger.warning(msg)
 
         return costs
-
-#    def OLD_update_start_point(self):
-#        """
-#        If SC point is in an exclusion zone, move path-finding start to nearest
-#        non-excluded point. Search starting at SC point, expanding search
-#        rectangle one pixel on all sides each iteration, until finding a non-
-#        excluded cell.
-#        """
-#        if self._cost_arr[self._start_row, self._start_col] > 0:
-#            return
-#
-#        self._excluded = True
-#
-#        r = self._start_row
-#        c = self._start_col
-#        for i in range(1, NON_EXCLUSION_SEARCH_RANGE):
-#            # TODO - make sure we don't exceed bounds of array
-#            window = self._cost_arr[r-i:r+i+1, c-i:c+i+1]
-#            locs = np.where(window > 0)
-#            if locs[0].shape != (0,):
-#                break
-#        else:
-#            logger.debug('Unable to find non-excluded start for '
-#                         f'{self._sc_pt}')
-#            self._fully_excluded = True
-#            return
-#
-#        self._start_row = r - i + locs[0][0]
-#        self._start_col = c - i + locs[1][0]
-#        self._start_dist = sqrt((self._start_row - self._sc_pt.row)**2 +
-#                                (self._start_col - self._sc_pt.col)**2)
-#        self._start_dist *= self.cell_size
-#        logger.debug(f'Moved start for sc_pt {self._sc_pt.id} by '
-#                     f'{int(self._start_dist)}m to new cell')
 
     def _clip_cost_raster(self):
         """ Clip cost raster to nearest transmission features with a buffer """
@@ -412,21 +368,19 @@ class PathFinder:
             plt.text(c - self._col_offset, r - self._row_offset,
                      feat.name, color='black')
 
-        # Plot paths to trans features
-        if not self._fully_excluded:
-            for feat in self._near_trans:
-                r, c = self._feat_row_col(feat)
-                try:
-                    indices = self._mcp.traceback((r, c))
-                except ValueError:
-                    # No path to trans feature. This shouldn't be possible
-                    msg = (f"Can't find path to trans {feat.id} from "
-                           f"SC pt {self._sc_pt.id}")
-                    logger.warning(msg)
-                    continue
-                path_xs = [x[1] for x in indices]
-                path_ys = [x[0] for x in indices]
-                plt.plot(path_xs, path_ys, color='white')
+        for feat in self._near_trans:
+            r, c = self._feat_row_col(feat)
+            try:
+                indices = self._mcp.traceback((r, c))
+            except ValueError:
+                # No path to trans feature. This shouldn't be possible
+                msg = (f"Can't find path to trans {feat.id} from "
+                        f"SC pt {self._sc_pt.id}")
+                logger.warning(msg)
+                continue
+            path_xs = [x[1] for x in indices]
+            path_ys = [x[0] for x in indices]
+            plt.plot(path_xs, path_ys, color='white')
 
         # Plot inaccessible features
         feats = [(x.row, x.col, x) for x in self._blocked_feats]

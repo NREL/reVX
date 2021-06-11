@@ -12,7 +12,7 @@ from .file_handlers import load_raster
 from .utilities import save_geotiff
 from . import config as c
 
-# Mapping NLCD land codes to land use types
+# Mapping NLCD land codes to land use types, water is handled separately
 NLCD_LAND_USE_CLASSES = {
     'cropland': [80, 81],
     'forest': [41, 42, 43],
