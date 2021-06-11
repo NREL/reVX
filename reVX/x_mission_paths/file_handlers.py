@@ -10,7 +10,6 @@ import logging
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import fiona
 from shapely.geometry import Point
 import rasterio as rio
 
@@ -25,14 +24,14 @@ class LoadData:
     """
     Load data from disk
     """
-    def __init__(self, capacity_class, resolution,
+    def __init__(self, capacity_class, resolution=128,
                  costs_dir='cost_rasters',
                  template_f='data/conus_template.tif',
                  landuse_f='data/nlcd.npy',
                  slope_f='data/slope.npy',
                  barriers_f='data/transmission_barriers.tif',
                  sc_points_f='data/sc_points/fips_run_agg_new.csv',
-                 all_conns_f='data/conus_allconns.gpkg',
+                 all_conns_f='/home/mbannist/conus_allconns.gpkg',
                  iso_regions_f='data/iso_regions.tif'):
         """
         Parameters
@@ -41,6 +40,7 @@ class LoadData:
             Desired reV power capacity class, one of "100MW", "200MW", "400MW",
             "1000MW"
         resolution : Int
+            resolution is CURRENTLY IGNORED
             Desired Supply Curve Point resolution, one of: 32, 64, 128
         TODO
        exclusions : numpy.ndarray(int) | None
@@ -49,6 +49,9 @@ class LoadData:
         """
         assert capacity_class in power_classes.keys(), 'capacity must be ' + \
             f'one of {list(power_classes.keys())}'
+
+        assert resolution == 128, 'Only resolutions of 128 are currently ' + \
+            'supported'
 
         self.capacity_class = capacity_class
         self.rct = RowColTransformer(template_f)
@@ -62,7 +65,7 @@ class LoadData:
         # Voltage (kV) corresponding to self.tie_power
         self.tie_voltage = power_to_voltage[str(self.tie_power)]
 
-        logger.debug('Loading transmission features')
+        logger.debug(f'Loading transmission features from {all_conns_f}')
         cl = AllConnsLoader(all_conns_f)
         self.subs = cl.subs[cl.subs.max_volts >= self.tie_voltage]
         self.t_lines = cl.t_lines[cl.t_lines.voltage >= self.tie_voltage]
@@ -86,7 +89,7 @@ class LoadData:
 
         self._plot_costs_arr = None
 
-        logger.debug('Loading SC points')
+        logger.debug(f'Loading SC points from {sc_points_f}')
         # TODO - make this resolution aware
         self.sc_points = self._load_sc_points(sc_points_f)
 
@@ -111,8 +114,8 @@ class LoadData:
 
         sc_points = []
         for _, row in pts.iterrows():
-            sc_pt = SupplyCurvePoint(row.sc_gid,row.geometry, self.rct,
-                                        self.regions_arr)
+            sc_pt = SupplyCurvePoint(row.sc_gid, row.geometry, self.rct,
+                                     self.regions_arr)
             sc_points.append(sc_pt)
         sc_points
         return sc_points

@@ -29,7 +29,7 @@ DEFAULT_MTN_SLOPE = 8
 METERS_IN_MILE = 1609.344
 
 WATER_NLCD_CODE = 11
-WATER_MULT = 20
+WATER_MULT = 10
 
 
 def buildCostRasters(iso_regions_f, nlcd_f, slope_f, template_f,
