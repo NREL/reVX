@@ -30,7 +30,7 @@ class ProcessSCs:
     Serial process tie line costs for Supply Curve points
 
     """
-    def __init__(self, capacity_class='100MW', resolution=32, n=10):
+    def __init__(self, capacity_class='100MW', resolution=128, n=10):
         """
         Parameters
         ----------
@@ -43,7 +43,7 @@ class ProcessSCs:
             Number of nearby transmission features to search for
         """
         logger.info('Loading data')
-        self.ld = LoadData(capacity_class, resolution)
+        self.ld = LoadData(capacity_class, resolution=resolution)
 
         rct = self.ld.rct
         subs_dc = SubstationDistanceCalculator(self.ld.subs, rct, n=n)
@@ -190,7 +190,7 @@ class CalcConnectCostsForSC:
         cdf['xformer_cost_p_mw'] = cdf.apply(self._xformer_cost, axis=1)
         cdf['xformer_cost'] = cdf.xformer_cost_p_mw * \
             int_capacity(self._capacity_class)
-            # TODO int_capacity might not be needed
+        # TODO int_capacity might not be needed
 
         # Substation costs
         cdf['sub_upgrade_cost'] = cdf.apply(self._sub_upgrade_cost, axis=1)

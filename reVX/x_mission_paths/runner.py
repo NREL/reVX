@@ -4,7 +4,7 @@ import math
 from datetime import datetime as dt
 
 import pandas as pd
-from concurrent.futures import as_completed
+from concurrent.futures import as_completed, ProcessPoolExecutor
 from rex.utilities.execution import SpawnProcessPool
 
 from .cost_calculator import ProcessSCs
@@ -17,7 +17,7 @@ class Runner:
         self._capacity_class = capacity_class
         self._n = n
         self._plot = plot
-        self._psc = ProcessSCs(capacity_class, n)
+        self._psc = ProcessSCs(capacity_class=capacity_class, n=n)
 
     @classmethod
     def run(cls, capacity_class, n, cores=25, _slice=slice(None, None, None),
@@ -90,7 +90,7 @@ class Runner:
         loggers = [__name__, 'reVX']
 
         # with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
-        with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
+        with ProcessPoolExecutor(max_workers=cores) as exe:
             for i, chunk in enumerate(chunks):
                 if len(chunk) == 0:
                     continue
