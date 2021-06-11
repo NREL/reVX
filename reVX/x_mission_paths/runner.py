@@ -4,7 +4,7 @@ import math
 from datetime import datetime as dt
 
 import pandas as pd
-from concurrent.futures import as_completed, ProcessPoolExecutor
+from concurrent.futures import as_completed # , ProcessPoolExecutor
 from rex.utilities.execution import SpawnProcessPool
 
 from .cost_calculator import ProcessSCs
@@ -21,7 +21,8 @@ class Runner:
 
     @classmethod
     def run(cls, capacity_class, n, cores=25, _slice=slice(None, None, None),
-            save_costs=True, f_name=None, plot=False):
+            save_costs=True, f_name=None, plot=False, drop_list=None,
+            drop_fields=True):
         """
         Calculate tie-line costs using one or more cores
 
@@ -42,6 +43,7 @@ class Runner:
             If true, write costs table to disk
         f_name : String
             Filename for saving costs
+        TODO
 
         Returns
         -------
@@ -57,6 +59,14 @@ class Runner:
         else:
             chunks = runner._chunk_it(indices, cores)
             costs = runner._run_multi(chunks, cores)
+
+        if drop_fields:
+            if drop_list is None:
+                drop_list = ['name', 'min_volts', 'max_volts', 'raw_line_cost',
+                             'length_mult', 'xformer_cost_p_mw',
+                             'xformer_cost', 'sub_upgrade_cost',
+                             'new_sub_cost']
+            costs.drop(drop_list, axis=1, inplace=True)
 
         if save_costs:
             if f_name is None:
@@ -89,8 +99,8 @@ class Runner:
         print(os.cpu_count())
         loggers = [__name__, 'reVX']
 
-        # with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
-        with ProcessPoolExecutor(max_workers=cores) as exe:
+        # with ProcessPoolExecutor(max_workers=cores) as exe:
+        with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
             for i, chunk in enumerate(chunks):
                 if len(chunk) == 0:
                     continue

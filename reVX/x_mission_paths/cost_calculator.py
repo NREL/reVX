@@ -42,6 +42,7 @@ class ProcessSCs:
         n : Int
             Number of nearby transmission features to search for
         """
+        self._capacity_class = capacity_class
         logger.info('Loading data')
         self.ld = LoadData(capacity_class, resolution=resolution)
 
@@ -110,6 +111,13 @@ class ProcessSCs:
                        f'Approx {left} left for this chunk.')
                 logger.info(msg)
         all_costs.reset_index(inplace=True, drop=True)
+
+        avg = sum(run_times, timedelta(0))/len(run_times)
+        msg = (f'{chunk_id}Finished processing chunk ({i+1} of '
+               f'{len(indices)} pts). Average time of {avg} per SC pt.')
+        logger.info(msg)
+
+        all_costs['max_cap'] = int_capacity(self._capacity_class)
         return all_costs
 
 
@@ -182,9 +190,9 @@ class CalcConnectCostsForSC:
 
         # Length multiplier
         cdf['length_mult'] = 1.0
-        cdf.loc[cdf.length <= MEDIUM_CUTOFF, 'length_mult'] = MEDIUM_MULT
-        cdf.loc[cdf.length < SHORT_CUTOFF, 'length_mult'] = SHORT_MULT
-        cdf['adj_line_cost'] = cdf.tline_cost * cdf.length_mult
+        cdf.loc[cdf.dist_km <= MEDIUM_CUTOFF, 'length_mult'] = MEDIUM_MULT
+        cdf.loc[cdf.dist_km < SHORT_CUTOFF, 'length_mult'] = SHORT_MULT
+        cdf['tie_line_cost'] = cdf.raw_line_cost * cdf.length_mult
 
         # Transformer costs
         cdf['xformer_cost_p_mw'] = cdf.apply(self._xformer_cost, axis=1)
@@ -197,8 +205,9 @@ class CalcConnectCostsForSC:
         cdf['new_sub_cost'] = cdf.apply(self._new_sub_cost, axis=1)
 
         # Total cost
-        cdf['total_cost'] = cdf.adj_line_cost + cdf.xformer_cost + \
-            cdf.sub_upgrade_cost + cdf.new_sub_cost
+        cdf['connection_cost'] = cdf.xformer_cost + cdf.sub_upgrade_cost +\
+            cdf.new_sub_cost
+        cdf['trans_cap_cost'] = cdf.tie_line_cost + cdf.connection_cost
 
         if plot_costs_arr is not None:
             pf.plot_paths()
@@ -219,7 +228,7 @@ class CalcConnectCostsForSC:
         cost : float
             Cost to upgrade substation
         """
-        if row.trans_type == 'sub':
+        if row.category == 'Substation':
             volts = str(self._tie_voltage)
             return upgrade_sub_costs[self._reverse_iso[row.region]][volts]
 
@@ -239,7 +248,7 @@ class CalcConnectCostsForSC:
         cost : float
             Cost to build new substation
         """
-        if row.trans_type == 't-line':
+        if row.category == 'TransLine':
             volts = str(self._tie_voltage)
             return new_sub_costs[self._reverse_iso[row.region]][volts]
 
