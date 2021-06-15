@@ -50,14 +50,13 @@ class Runner:
         costs : pandas.DataFrame
             Tie line costs
         """
-        runner = cls(capacity_class, n, plot)
-        sc_points = runner._psc.ld.sc_points
-        indices = range(len(sc_points))[_slice]
+        runner = cls(capacity_class, n, plot=plot)
+        pts = runner._psc.ld.sc_points[_slice]
 
         if cores == 1:
-            costs = runner._run_chunk(indices)
+            costs = runner._run_chunk(pts)
         else:
-            chunks = runner._chunk_it(indices, cores)
+            chunks = runner._chunk_it(pts, cores)
             costs = runner._run_multi(chunks, cores)
 
         if drop_fields:
@@ -84,7 +83,7 @@ class Runner:
         Parameters
         ----------
         chunks : list of list
-            SC point indices separated in groups by self._chunk_it
+            SC points separated in groups by self._chunk_it
         cores : int
             Number of cores to use
 
@@ -141,9 +140,9 @@ class Runner:
         costs : pandas.DataFrame
             Tie line costs
         """
-        logger.info(f'Processing {chunk_id}min={min(chunk)}, '
-                    f'max={max(chunk)}, len={len(chunk)}')
-        costs = self._psc.process(chunk, plot=False, chunk_id=chunk_id)
+        logger.info(f'Processing {chunk_id}first={chunk[0].id}, '
+                    f'last={chunk[-1].id}, len={len(chunk)}')
+        costs = self._psc.process(chunk, plot=self._plot, chunk_id=chunk_id)
         return costs
 
     @staticmethod
