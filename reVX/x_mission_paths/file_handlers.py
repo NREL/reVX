@@ -119,7 +119,6 @@ class LoadData:
                                      row.sc_col_ind, row.geometry, self.rct,
                                      self.regions_arr)
             sc_points.append(sc_pt)
-        sc_points
         return sc_points
 
     @property

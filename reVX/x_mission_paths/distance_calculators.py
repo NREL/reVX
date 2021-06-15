@@ -12,7 +12,7 @@ from shapely.geometry.linestring import LineString
 class TransFeature:
     """ Represents an existing substation, t-line, etc """
     def __init__(self, id, name, trans_type, x, y, row, col, dist, min_volts,
-                 max_volts, ac_cap, trans_gids=''):
+                 max_volts, ac_cap, trans_line_gids=''):
         """
         Parameters
         ----------
@@ -39,7 +39,7 @@ class TransFeature:
             Maximum voltage (kV) of feature
         ac_cap : int
             AC capacity (I think? TODO)
-        trans_gids : str
+        trans_line_gids : str
             String of features connected to substation
         """
         self.id = id
@@ -53,7 +53,7 @@ class TransFeature:
         self.min_volts = min_volts
         self.max_volts = max_volts
         self.ac_cap = ac_cap
-        self.trans_gids = trans_gids
+        self.trans_line_gids = trans_line_gids
 
     def __repr__(self):
         return f'id={self.id}, coords=({self.x}, {self.y}), ' +\
@@ -130,7 +130,7 @@ class SubstationDistanceCalculator:
             new_sub = TransFeature(sub.gid, f'sub_{sub.gid}', 'Substation', x,
                                    y, row, col, sub.dist, sub.min_volts,
                                    sub.max_volts, sub.ac_cap,
-                                   trans_gids=sub.trans_gids)
+                                   trans_line_gids=sub.trans_gids)
             close_subs.append(new_sub)
         return close_subs
 

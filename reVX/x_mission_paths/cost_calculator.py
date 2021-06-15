@@ -19,7 +19,7 @@ from .distance_calculators import SubstationDistanceCalculator, \
 from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF, \
     transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS, iso_lookup, \
     new_sub_costs, upgrade_sub_costs, REPORTING_STEPS
-from .file_handlers import LoadData
+from .file_handlers import LoadData, SupplyCurvePoint
 from .utilities import int_capacity
 
 logger = logging.getLogger(__name__)
@@ -60,14 +60,16 @@ class ProcessSCs:
                                              self.ld.tie_voltage)
         logger.info('Finished loading data')
 
-    def process(self, indices=None, plot=False, chunk_id=''):
+    def process(self, sc_pts=None, plot=False, chunk_id=''):
         """
         Process all or a subset of SC points
 
         Parameters
         ----------
-        indices : List | None
-            List of SC point indices to process. Process all if None
+        sc_pts : List | Slice | None
+            List of SC points to process. List may be a list of SC point
+            ids (ints) or SupplyCurvePoint instances. If Slice, process
+            that slice of the SC points. Process all points if None
         plot : bool
             Plot graphs if true
         chunk_id : str
@@ -79,14 +81,24 @@ class ProcessSCs:
             Table of tie line costs to nearest transmission features for each
             SC point.
         """
-        sc_points = self.ld.sc_points
+        if isinstance(sc_pts, list) and isinstance(sc_pts[0], int):
+            sc_pts = [x for x in self.ld.sc_points if x.id in sc_pts]
+        elif isinstance(sc_pts, slice):
+            sc_pts = self.ld.sc_points[sc_pts]
+        elif sc_pts is None:
+            sc_pts = self.ld.sc_points
+        elif isinstance(sc_pts, list) and \
+             isinstance(sc_pts[0], SupplyCurvePoint):
+            pass
+        else:
+            msg = 'sc_pts must be either list, slice, or None. ' +\
+                  f'Got {type(sc_pts)}'
+            logger.error(msg)
+            raise AttributeError(msg)
 
-        if indices is None:
-            indices = range(len(sc_points))
-
-        # keep track of run times and report progress
-        step = math.ceil(len(indices)/REPORTING_STEPS)
-        report_steps = indices[::step][1:]
+        # Keep track of run times and report progress
+        step = math.ceil(len(sc_pts)/REPORTING_STEPS)
+        report_steps = range(step-1, len(sc_pts), step)
         run_times = []
 
         plot_costs_arr = None
@@ -94,19 +106,18 @@ class ProcessSCs:
             plot_costs_arr = self.ld.plot_costs_arr
 
         all_costs = pd.DataFrame()
-        for i, index in enumerate(indices):
+        for i, sc_pt in enumerate(sc_pts):
             now = dt.now()
-            sc_pt = sc_points[index]
             costs = self._cccfsc.calculate(sc_pt, plot_costs_arr)
             all_costs = pd.concat([all_costs, costs], axis=0)
             run_times.append(dt.now() - now)
 
-            if index in report_steps:
-                progress = int(i/len(indices)*100)
+            if i in report_steps:
+                progress = int((i+1)/len(sc_pts)*100)
                 avg = sum(run_times, timedelta(0))/len(run_times)
-                left = (len(indices)-i)*avg
-                msg = (f'{chunk_id}Finished SC pt {sc_pt.id} ({i} of '
-                       f'{len(indices)}). {progress}% '
+                left = (len(sc_pts)-i-1)*avg
+                msg = (f'{chunk_id}Finished SC pt {sc_pt.id} ({i+1} of '
+                       f'{len(sc_pts)}). {progress}% '
                        f'complete. Average time of {avg} per SC pt. '
                        f'Approx {left} left for this chunk.')
                 logger.info(msg)
@@ -114,7 +125,7 @@ class ProcessSCs:
 
         avg = sum(run_times, timedelta(0))/len(run_times)
         msg = (f'{chunk_id}Finished processing chunk ({i+1} of '
-               f'{len(indices)} pts). Average time of {avg} per SC pt.')
+               f'{len(sc_pts)} pts). Average time of {avg} per SC pt.')
         logger.info(msg)
 
         all_costs['max_cap'] = int_capacity(self._capacity_class)

@@ -23,7 +23,7 @@ class BlockedTransFeature(Exception):
 class TransmissionCost:
     def __init__(self, sc_id, sc_row_ind, sc_col_ind, region, trans_id, name,
                  trans_type, cost, length, min_volts, max_volts, ac_cap,
-                 trans_gids):
+                 trans_line_gids):
         """
         Cost of building transmission line from supply curve point to
         transmission feature. Does not include substation construction/upgrades
@@ -55,6 +55,7 @@ class TransmissionCost:
         max_volts : int
             Maximum voltage (kV) of existing transmission feature being
             connected to
+            TODO
         """
         self.sc_id = sc_id
         self.sc_row_ind = sc_row_ind
@@ -68,7 +69,7 @@ class TransmissionCost:
         self.min_volts = min_volts
         self.max_volts = max_volts
         self.ac_cap = ac_cap
-        self.trans_gids = trans_gids
+        self.trans_line_gids = trans_line_gids
 
     def as_dict(self):
         return {'sc_point_gid': self.sc_id, 'sc_point_row_id': self.sc_row_ind,
@@ -77,7 +78,7 @@ class TransmissionCost:
                 'category': self.trans_type, 'raw_line_cost': self.cost,
                 'dist_km': self.length, 'min_volts': self.min_volts,
                 'max_volts': self.max_volts, 'ac_cap': self.ac_cap,
-                'trans_gids': self.trans_gids}
+                'trans_line_gids': self.trans_line_gids}
 
     def __repr__(self):
         return str(self.as_dict())
@@ -177,7 +178,7 @@ class PathFinder:
                                          feat.name, feat.trans_type, cost,
                                          length/1000, feat.min_volts,
                                          feat.max_volts, feat.ac_cap,
-                                         feat.trans_gids)
+                                         feat.trans_line_gids)
             costs.append(this_cost)
 
         if len(costs) == 0:
