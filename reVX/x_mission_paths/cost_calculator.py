@@ -18,7 +18,7 @@ from .distance_calculators import SubstationDistanceCalculator, \
     SinkDistanceCalculator
 from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF, \
     transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS, iso_lookup, \
-    new_sub_costs, upgrade_sub_costs, REPORTING_STEPS
+    new_sub_costs, upgrade_sub_costs, REPORTING_STEPS, min_power_classes
 from .file_handlers import LoadData, SupplyCurvePoint
 from .utilities import int_capacity
 
@@ -129,6 +129,7 @@ class ProcessSCs:
         logger.info(msg)
 
         all_costs['max_cap'] = int_capacity(self._capacity_class)
+        all_costs['min_cap'] = min_power_classes[self._capacity_class]
         return all_costs
 
 

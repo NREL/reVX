@@ -4,7 +4,7 @@ import math
 from datetime import datetime as dt
 
 import pandas as pd
-from concurrent.futures import as_completed # , ProcessPoolExecutor
+from concurrent.futures import as_completed  # , ProcessPoolExecutor
 from rex.utilities.execution import SpawnProcessPool
 
 from .cost_calculator import ProcessSCs
@@ -105,9 +105,9 @@ class Runner:
                     continue
                 future = exe.submit(self._run_chunk, chunk,
                                     chunk_id=f'Chunk {i}: ')
-                meta = {'id': i, 'min': min(chunk), 'max': max(chunk), 'len':
-                        len(chunk)}
-                logger.info(f'Future {meta} started with {chunk}')
+                meta = {'id': i, 'first': chunk[0].id, 'last': chunk[-1].id,
+                        'len': len(chunk)}
+                logger.info(f'Future {meta} started')
                 futures[future] = meta
 
             logger.info(f'Started all futures in {dt.now() - now}')
