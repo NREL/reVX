@@ -48,10 +48,13 @@ with open(os.path.join(CONFIGDIR, 'iso_lookup.json'), 'rt') as f:
 with open(os.path.join(CONFIGDIR, 'power_classes.json'), 'rt') as f:
     power_classes = json.load(f)
 
+with open(os.path.join(CONFIGDIR, 'min_power_classes.json'), 'rt') as f:
+    min_power_classes = json.load(f)
+
 with open(os.path.join(CONFIGDIR, 'new_substation_costs.json'), 'rt') as f:
     new_sub_costs = json.load(f)
 
 with open(os.path.join(CONFIGDIR, 'upgrade_substation_costs.json'), 'rt') as f:
     upgrade_sub_costs = json.load(f)
 
-# TODO - check that the iso regions in the cost filesmatch the iso regions
+# TODO - check that the iso regions in the cost files match the iso regions
