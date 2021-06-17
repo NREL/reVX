@@ -33,6 +33,10 @@ BARRIERS_MULT = 100
 # value
 MINIMUM_DIST_KM = 5.5
 
+# Cost to connect to PCA load center. Completely synthetic and prevents REEDS
+# from  connecting unless absolutely mandatory
+SINK_CONNECTION_COST = 1e11
+
 # Load json files
 with open(os.path.join(CONFIGDIR, 'power_to_voltage.json'), 'rt') as f:
     power_to_voltage = json.load(f)
