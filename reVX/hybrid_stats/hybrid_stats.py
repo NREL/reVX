@@ -1133,12 +1133,12 @@ class HybridCrossCorrelation(HybridStats):
         """
         solar_u = solar_data.mean(axis=0)
         solar_s = solar_data.std(axis=0)
-        solar_data = np.abs((solar_data - solar_u) / solar_s)
+        solar_data = (solar_data - solar_u) / solar_s
 
+        wind_data = np.roll(wind_data, m, axis=0)
         wind_u = wind_data.mean(axis=0)
         wind_s = wind_data.mean(axis=0)
-        wind_data = np.roll(wind_data, m, axis=0)
-        wind_data = np.abs((wind_data - wind_u) / wind_s)
+        wind_data = (wind_data - wind_u) / wind_s
 
         n = len(solar_data)
         corr = (1 / (n - 1)) * np.sum(solar_data * wind_data, axis=0)
@@ -1148,7 +1148,7 @@ class HybridCrossCorrelation(HybridStats):
     @classmethod
     def _extract_stats(cls, solar_h5, wind_h5, dataset, sites,
                        solar_time_slice, wind_time_slice,
-                       max_lag=50, lag_step=1, res_cls=Resource):
+                       lag_range=(-50, 51, 1), res_cls=Resource):
         """
         Extract stats for given dataset, sites, and temporal extent
 
@@ -1168,15 +1168,13 @@ class HybridCrossCorrelation(HybridStats):
         wind_time_slice : slice | ndarray
             slice or boolean index of the wind timesteps that are in the
             coincident time_index
-        max_lag : int, optional
-            Maximum lag size. Cross-correlation will be run for all lags in
-            range(-max_lag, max_lag + lag_step, lag_step), each value in the
+        lag_range : tuple, optional
+            The range of lag (m) values to compute the cross-correlation for
+            (start, stop, step). Cross-correlation will be run for all lags in
+            range(start, stop, step), each value in the
             range is the number of timesteps by which the time-series will be
             shifted to compute the cross-correlation.
-            by default 50
-        lag_step : int, optional
-            Step size used between lag sizes. Is the number of time-steps
-            between lag sizes, by default 1
+            by default (-50, 51, 1)
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
 
@@ -1196,7 +1194,7 @@ class HybridCrossCorrelation(HybridStats):
             wind_data = f[wind_dataset, wind_time_slice, wind_sites]
 
         out_stats = {}
-        for m in range(-max_lag, max_lag + lag_step, lag_step):
+        for m in range(*lag_range):
             out_stats[m] = cls.cross_correlation(solar_data, wind_data, m)
 
         index = pd.Index(sites.index.values, name='gid')
@@ -1208,7 +1206,7 @@ class HybridCrossCorrelation(HybridStats):
 
         return out_stats
 
-    def compute_stats(self, dataset, max_lag=50, lag_step=1,
+    def compute_stats(self, dataset, lag_range=(-50, 51, 1),
                       max_workers=None, sites_per_worker=1000,
                       lat_lon_only=True):
         """
@@ -1220,11 +1218,13 @@ class HybridCrossCorrelation(HybridStats):
             Dataset to compare, if a string, extract the same
             dataset for both with and solar, other wise a tuple of the form:
             (solar_dataset, wind_dataset)
-        max_lag : int, optional
-            Maximum lag size. Cross-correlation will be run for all lags in
-            range(-max_lag, max_lag, lag_step), by default 50
-        lag_step : int, optional
-            Step size used between lag sizes, by default 1
+        lag_range : tuple, optional
+            The range of lag (m) values to compute the cross-correlation for
+            (start, stop, step). Cross-correlation will be run for all lags in
+            range(start, stop, step), each value in the
+            range is the number of timesteps by which the time-series will be
+            shifted to compute the cross-correlation.
+            by default (-50, 51, 1)
         max_workers : None | int, optional
             Number of workers to use, if 1 run in serial, if None use all
             available cores, by default None
@@ -1239,8 +1239,7 @@ class HybridCrossCorrelation(HybridStats):
             DataFrame of desired statistics at desired time intervals
         """
         kwargs = {'res_cls': self.res_cls,
-                  'max_lag': max_lag,
-                  'lag_step': lag_step}
+                  'lag_range': lag_range}
 
         logger.info('Computing cross correlations from {}'.format(dataset))
         logger.debug('- Using the following options: {}'.format(kwargs))
@@ -1252,7 +1251,7 @@ class HybridCrossCorrelation(HybridStats):
         return out_stats
 
     @classmethod
-    def run(cls, solar_h5, wind_h5, dataset, max_lag=50, lag_step=1,
+    def run(cls, solar_h5, wind_h5, dataset, lag_range=(-50, 51, 1),
             res_cls=Resource, year=None, max_workers=None,
             sites_per_worker=1000, lat_lon_only=True, out_path=None):
         """
@@ -1271,11 +1270,13 @@ class HybridCrossCorrelation(HybridStats):
         year : str | int, optional
             Year to extract time-index for if running on a multi-year file,
             by default None
-        max_lag : int, optional
-            Maximum lag size. Cross-correlation will be run for all lags in
-            range(-max_lag, max_lag, lag_step), by default 50
-        lag_step : int, optional
-            Step size used between lag sizes, by default 1
+        lag_range : tuple, optional
+            The range of lag (m) values to compute the cross-correlation for
+            (start, stop, step). Cross-correlation will be run for all lags in
+            range(start, stop, step), each value in the
+            range is the number of timesteps by which the time-series will be
+            shifted to compute the cross-correlation.
+            by default (-50, 51, 1)
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
         max_workers : None | int, optional
@@ -1301,7 +1302,7 @@ class HybridCrossCorrelation(HybridStats):
 
         hybrid_stats = cls(solar_h5, wind_h5, res_cls=res_cls, year=year)
         out_stats = hybrid_stats.compute_stats(
-            dataset, max_lag=max_lag, lag_step=lag_step,
+            dataset, lag_range=lag_range,
             max_workers=max_workers, sites_per_worker=sites_per_worker,
             lat_lon_only=lat_lon_only)
         if out_path is not None:
@@ -1310,7 +1311,7 @@ class HybridCrossCorrelation(HybridStats):
         return out_stats
 
     @classmethod
-    def cf_profile(cls, solar_h5, wind_h5, max_lag=50, lag_step=1,
+    def cf_profile(cls, solar_h5, wind_h5, lag_range=(-50, 51, 1),
                    res_cls=Resource, max_workers=None,
                    sites_per_worker=1000, lat_lon_only=True, out_path=None):
         """
@@ -1324,11 +1325,13 @@ class HybridCrossCorrelation(HybridStats):
             Path to wind h5 file(s)
         dataset : str
             Dataset to extract stats for
-        max_lag : int, optional
-            Maximum lag size. Cross-correlation will be run for all lags in
-            range(-max_lag, max_lag, lag_step), by default 50
-        lag_step : int, optional
-            Step size used between lag sizes, by default 1
+        lag_range : tuple, optional
+            The range of lag (m) values to compute the cross-correlation for
+            (start, stop, step). Cross-correlation will be run for all lags in
+            range(start, stop, step), each value in the
+            range is the number of timesteps by which the time-series will be
+            shifted to compute the cross-correlation.
+            by default (-50, 51, 1)
         res_cls : Class, optional
             Resource class to use to access res_h5, by default Resource
         max_workers : None | int, optional
@@ -1347,7 +1350,7 @@ class HybridCrossCorrelation(HybridStats):
             DataFrame of resource statistics
         """
         out_stats = cls.run(solar_h5, wind_h5, 'cf_profile', res_cls=res_cls,
-                            max_lag=max_lag, lag_step=lag_step,
+                            lag_range=lag_range,
                             max_workers=max_workers,
                             sites_per_worker=sites_per_worker,
                             lat_lon_only=lat_lon_only, out_path=out_path)

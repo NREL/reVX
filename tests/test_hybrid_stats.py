@@ -128,6 +128,15 @@ def test_cross_correlation(max_workers):
     msg = 'gids do not match!'
     assert np.allclose(gids, test.index.values), msg
 
+    coeffs = test.values[:, 2:-1]
+    mask = np.all(np.isfinite(coeffs), axis=0)
+    coeffs = coeffs[:, mask]
+    check = coeffs >= -1
+    check &= coeffs <= 1
+    msg = ('Cross-Correlation coeffs are outside the valid range of -1 to 1: '
+           '{}'.format(coeffs[~check]))
+    assert np.all(check), msg
+
     baseline = os.path.join(TESTDATADIR, 'hybrid_stats',
                             'cross_correlations.csv')
     if not os.path.exists(baseline):
