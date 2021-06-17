@@ -20,8 +20,8 @@ def test_path_cost():
     i1 = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (1, 5), (2, 5),
           (3, 5), (4, 5), (5, 5)]
     i2 = [(0, 0), (0, 1), (1, 2), (2, 2), (2, 3), (3, 4), (4, 5), (5, 5)]
-    assert round(PathFinder.calc_path_cost(costs, i1), 5) == 16.0
-    assert round(PathFinder.calc_path_cost(costs, i2), 5) ==  17.27817
+    assert round(PathFinder._calc_path_cost(costs, i1), 5) == 16.0
+    assert round(PathFinder._calc_path_cost(costs, i2), 5) ==  17.27817
 
 
 def test_land_use_multiplier():

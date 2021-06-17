@@ -18,7 +18,8 @@ from .distance_calculators import SubstationDistanceCalculator, \
     SinkDistanceCalculator
 from .config import SHORT_MULT, MEDIUM_MULT, SHORT_CUTOFF, MEDIUM_CUTOFF, \
     transformer_costs, NUM_LOAD_CENTERS, NUM_SINKS, iso_lookup, \
-    new_sub_costs, upgrade_sub_costs, REPORTING_STEPS, min_power_classes
+    new_sub_costs, upgrade_sub_costs, REPORTING_STEPS, min_power_classes, \
+    SINK_CONNECTION_COST
 from .file_handlers import LoadData, SupplyCurvePoint
 from .utilities import int_capacity
 
@@ -215,11 +216,9 @@ class CalcConnectCostsForSC:
         cdf['sub_upgrade_cost'] = cdf.apply(self._sub_upgrade_cost, axis=1)
         cdf['new_sub_cost'] = cdf.apply(self._new_sub_cost, axis=1)
 
-        # Load center costs
-        # TODO
-
         # Sink costs
-        # TODO
+        cdf.loc[cdf.category == 'PCALoadCen', 'new_sub_cost'] = \
+            SINK_CONNECTION_COST
 
         # Total cost
         cdf['connection_cost'] = cdf.xformer_cost + cdf.sub_upgrade_cost +\
@@ -233,7 +232,7 @@ class CalcConnectCostsForSC:
 
     def _sub_upgrade_cost(self, row):
         """
-        Calculate upgraded substation cost
+        Calculate upgraded substation cost for substations and load centers
 
         Parameters
         ----------
@@ -245,7 +244,7 @@ class CalcConnectCostsForSC:
         cost : float
             Cost to upgrade substation
         """
-        if row.category == 'Substation':
+        if row.category == 'Substation' or row.category == 'LoadCen':
             volts = str(self._tie_voltage)
             return upgrade_sub_costs[self._reverse_iso[row.region]][volts]
 
@@ -277,7 +276,8 @@ class CalcConnectCostsForSC:
 
         Parameters
         ----------
-        TODO
+        row : pandas.DataFrame row
+            Cost row for one tie-line
 
         Returns
         -------
