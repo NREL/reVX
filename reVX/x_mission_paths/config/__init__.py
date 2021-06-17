@@ -29,6 +29,10 @@ REPORTING_STEPS = 10
 # Costs multiplier for cells affected by transmission barriers
 BARRIERS_MULT = 100
 
+# Minimum transmission path length (km), anything less will be set to this
+# value
+MINIMUM_DIST_KM = 5.5
+
 # Load json files
 with open(os.path.join(CONFIGDIR, 'power_to_voltage.json'), 'rt') as f:
     power_to_voltage = json.load(f)
