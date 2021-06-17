@@ -6,12 +6,13 @@ Mike Bannister
 """
 import logging
 import numpy as np
+import pandas as pd
 from math import sqrt
 import matplotlib.pyplot as plt
 
 from skimage.graph import MCP_Geometric
 
-from .config import CELL_SIZE, CLIP_RASTER_BUFFER
+from .config import CELL_SIZE, CLIP_RASTER_BUFFER, MINIMUM_DIST_KM
 
 logger = logging.getLogger(__name__)
 
@@ -156,7 +157,7 @@ class PathFinder:
 
         Returns
         -------
-        costs : list of TransmissionCost
+        costs : pandas.DataFrame
             Costs data for minimum cost paths to nearest x-mission features
         """
         assert self._mcp is not None, 'Please start class with run()'
@@ -186,10 +187,55 @@ class PathFinder:
             costs = [TransmissionCost(self._sc_pt.id, self._sc_row_ind,
                                       self._sc_col_ind, self._sc_pt.region,
                                        -1, 'Error', 'Error finding paths',
-                                      -1, -1, -1, -1, -1, 'Error')]
+                                      -1, 999999, -1, -1, -1, 'Error')]
             msg = ('Unable to find any tie-line paths for pt '
                   f'{self._sc_pt.id}')
             logger.warning(msg)
+
+        costs = pd.DataFrame([c.as_dict() for c in costs])
+        if (costs.dist_km < MINIMUM_DIST_KM).any():
+            costs = self._enforce_minimum_dist(costs)
+
+        return costs
+
+    def _enforce_minimum_dist(self, costs):
+        """
+        Enforce minimum line lengths and update costs. Zero length lines use
+        the average cost per km of non-zero length lines. Short lines are
+        costed based on the averge cost per km of the short lines themselves.
+
+        Parameters
+        ----------
+        costs : pandas.DataFrame
+            Line costs
+
+        Returns
+        -------
+        costs : pandas.DataFrame
+            Line costs, with short lines updated
+        """
+        logger.debug('Updating minimum lengths and costs for '
+                     f'{self._sc_pt.id}')
+
+        zero = costs.dist_km == 0
+        if zero.any():
+            pos_dist_costs = costs[costs.dist_km > 0]
+            cost_per_km = pos_dist_costs.raw_line_cost / pos_dist_costs.dist_km
+            cost_per_km = cost_per_km.mean()
+            logger.debug(f'Using an average cost of ${round(cost_per_km, -3)}'
+                         '/km to fill in zero length paths for '
+                         f'{zero.sum()} paths')
+
+            costs.loc[zero, 'raw_line_cost'] = MINIMUM_DIST_KM * cost_per_km
+            costs.loc[zero, 'dist_km'] = MINIMUM_DIST_KM
+
+        short = costs.dist_km < MINIMUM_DIST_KM
+        if short.any():
+            logger.debug(f'Updating line lengths of {short.sum()} non-zero '
+                         f'length lines to {MINIMUM_DIST_KM} km.')
+            costs.loc[short, 'raw_line_cost'] = (costs[short].raw_line_cost /
+                costs[short].dist_km) * MINIMUM_DIST_KM
+            costs.loc[short, 'dist_km'] = MINIMUM_DIST_KM
 
         return costs
 
@@ -266,10 +312,10 @@ class PathFinder:
                     f"SC pt {self._sc_pt.id}")
             logger.warning(msg)
 
-        return self.calc_path_cost(self._cost_arr_clip, indices)
+        return self._calc_path_cost(self._cost_arr_clip, indices)
 
     @staticmethod
-    def calc_path_cost(cost_arr, indices):
+    def _calc_path_cost(cost_arr, indices):
         """
         Determine cost of path indicated by indices across cost_arr
 

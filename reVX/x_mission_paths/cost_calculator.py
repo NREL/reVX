@@ -198,7 +198,7 @@ class CalcConnectCostsForSC:
         pf = PathFinder.run(sc_pt, self._costs_arr, self._paths_arr,
                             self._subs_dc, self._tls_dc, self._lcs_dc,
                             self._sinks_dc, plot_costs_arr=plot_costs_arr)
-        cdf = pd.DataFrame([c.as_dict() for c in pf.costs])
+        cdf = pf.costs
 
         # Length multiplier
         cdf['length_mult'] = 1.0
@@ -210,11 +210,16 @@ class CalcConnectCostsForSC:
         cdf['xformer_cost_p_mw'] = cdf.apply(self._xformer_cost, axis=1)
         cdf['xformer_cost'] = cdf.xformer_cost_p_mw * \
             int_capacity(self._capacity_class)
-        # TODO int_capacity might not be needed
 
         # Substation costs
         cdf['sub_upgrade_cost'] = cdf.apply(self._sub_upgrade_cost, axis=1)
         cdf['new_sub_cost'] = cdf.apply(self._new_sub_cost, axis=1)
+
+        # Load center costs
+        # TODO
+
+        # Sink costs
+        # TODO
 
         # Total cost
         cdf['connection_cost'] = cdf.xformer_cost + cdf.sub_upgrade_cost +\
