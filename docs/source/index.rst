@@ -27,6 +27,7 @@ between reV and other renewable energy focused models, for example,
 
 .. autosummary::
    :toctree: _reVX
+   :template: custom-module-template.rst
    :recursive:
 
    reVX
