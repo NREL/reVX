@@ -30,17 +30,20 @@ def test_land_use_multiplier():
     arr = np.array([[[0, 95, 90], [42, 41, 15]]])
     cm = CostMultiplier()
     out = cm._create_land_use_mult(arr, lu_mults)
-    expected = np.array([[[1.0, 1.5, 1.5], [1.63, 1.63, 1.0]]])
+    expected = np.array([[[1.0, 1.5, 1.5], [1.63, 1.63, 1.0]]],
+                        dtype=np.float32)
     assert np.array_equal(out, expected)
 
 
 def test_slope_multiplier():
     """ Test slope multiplier creation """
-    arr = np.array([[[0, 95, 90], [42, 41, 1500]]])
-    config = {'hill_mult': 1.2, 'mtn_mult': 1.5}
+    arr = np.array([[[0, 1, 10], [20, 1, 6]]])
+    config = {'hill_mult': 1.2, 'mtn_mult': 1.5,
+              'hill_slope': 2, 'mtn_slope': 8}
     cm = CostMultiplier()
     out = cm._create_slope_mult(arr, config)
-    expected = np.array([[[1.0, 1.2, 1.2], [1.0, 1.0, 1.5]]])
+    expected = np.array([[[1.0, 1.0, 1.5], [1.5, 1.0, 1.2]]],
+                        dtype=np.float32)
     assert np.array_equal(out, expected)
 
 
@@ -65,13 +68,14 @@ def test_create_multiplier():
 
     default_config = {
         'land_use': {'forest': 10, 'wetland': 20},
-        'slope': {'hill_mult': 10, 'mtn_mult': 30}
+        'slope': {'hill_mult': 2, 'mtn_mult': 3,
+                  'hill_slope': 25, 'mtn_slope': 50}
     }
 
     iso_regions = np.array([[[1, 1, 2, 2],
                              [1, 1, 2, 2],
                              [3, 3, 4, 4],
-                             [3, 3, 4, 1]]])
+                             [3, 3, 4, 4]]])
 
     land_use = np.array([[[41, 95, 41, 95],
                           [41, 30, 41, 30],
@@ -81,15 +85,16 @@ def test_create_multiplier():
     slope = np.array([[[10, 20, 10, 20],  # flat
                        [30, 30, 30, 30],  # hills
                        [10, 20, 30, 30],  # flat and hills
-                       [60, 60, 100, 60]]])  # mountains
+                       [30, 60, 30, 60]]])  # hills and mountains
 
     expected = np.array([[[3., 6., 0.2, 0.5],
                           [6., 2., 0.02, 0.1],
-                          [10., 20., 10., 20.],
-                          [100., 10., 300., 4.]]])
+                          [10., 20., 20., 40.],
+                          [20., 3., 20., 3.]]], dtype=np.float32)
 
-    out = CostMultiplier.run(iso_regions, land_use, slope, iso_config,
+    cm = CostMultiplier.run(iso_regions, land_use, slope, iso_config,
                              default_config)
+    out = cm.mults_arr
     assert np.isclose(out, expected).all()
 
 
