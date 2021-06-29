@@ -31,8 +31,8 @@ class LoadData:
                  slope_f='data/slope.npy',
                  barriers_f='data/transmission_barriers.tif',
                  sc_points_f='data/sc_points/fips_run_agg_new.csv',
-                 # all_conns_f='/home/mbannist/conus_allconns.gpkg',
-                 all_conns_f='data/conus_allconns.gpkg',
+                 all_conns_f='/home/mbannist/conus_allconns.gpkg',
+                 # all_conns_f='data/conus_allconns.gpkg',
                  iso_regions_f='data/iso_regions.tif'):
         """
         Parameters

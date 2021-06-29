@@ -146,11 +146,31 @@ class Runner:
         return costs
 
     @staticmethod
-    def _chunk_it(lst, n):
+    def _chunk_it(lst, n, sequential=False):
         """
         Split list 'lst' into 'n' smaller lists. For short lists, the
         number of lists may be less than n.
+
+        Parameters
+        ----------
+        lst : list
+            List of items to split
+        n : int
+            Number of smaller lists to make
+        sequential : bool
+            If True, chunks will contain sequential items from lst, otherwise,
+            items will be more evenly distributed among chunks. False tends
+            to run faster, True can be better for debugging.
+
+        Returns
+        -------
+        list
+            Each chunk is returned as a list
         """
-        step = math.ceil(len(lst)/n)
-        for i in range(n):
-            yield lst[step*i:step*(i+1)]
+        if sequential:
+            step = math.ceil(len(lst)/n)
+            for i in range(n):
+                yield lst[step*i:step*(i+1)]
+        else:
+            for i in range(n):
+                yield lst[i:len(lst):n]
