@@ -18,12 +18,13 @@ Documentation config file
 import os
 import sphinx_rtd_theme
 import sys
+sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
 project = 'reVX'
 copyright = '2020, Alliance for Sustainable Energy, LLC'
-author = 'Michael Rossol'
+author = 'Michael Rossol, Grant Buster'
 
 pkg = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 pkg = os.path.dirname(pkg)
@@ -61,9 +62,9 @@ extensions = [
     'sphinx_click.ext',
 ]
 
-autosummary_generate = True
-
-intersphinx_mapping = {'python': ('http://docs.python.org/3.8', None)}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -88,11 +89,16 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path .
-exclude_patterns = ["_build", ".DS_Store"]
+exclude_patterns = [
+    "**.ipynb_checkpoints",
+    "**__pycache__**",
+    # to ensure that include files (partial pages) aren't built, exclude them
+    # https://github.com/sphinx-doc/sphinx/issues/1965#issuecomment-124732907
+    "**/includes/**",
+]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -107,12 +113,13 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # documentation.
 #
 html_theme_options = {"navigation_depth": 4, "collapse_navigation": False}
+html_css_file = ["custom.css"]
 
 html_context = {
     "display_github": True,
     "github_user": "nrel",
     "github_repo": "reVX",
-    "github_version": "master",
+    "github_version": "main",
     "conf_py_path": "/docs/source/",
     "source_suffix": source_suffix,
 }
@@ -120,7 +127,7 @@ html_context = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = []
+html_static_path = ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
@@ -137,7 +144,6 @@ html_static_path = []
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'reVXdoc'
-
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -164,9 +170,8 @@ latex_elements = {
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
     (master_doc, 'reVX.tex', 'reVX Documentation',
-     'Michael Rossol', 'manual'),
+     'Michael Rossol, Grant Buster', 'manual'),
 ]
-
 
 # -- Options for manual page output ------------------------------------------
 
@@ -177,7 +182,6 @@ man_pages = [
      [author], 1)
 ]
 
-
 # -- Options for Texinfo output ----------------------------------------------
 
 # Grouping the document tree into Texinfo files. List of tuples
@@ -185,15 +189,19 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'reVX', 'reVX Documentation',
-     author, 'reVX', 'Renewable Energy Potential(V) EXchange Tool',
+     author, 'reVX', 'One line description of project.',
      'Miscellaneous'),
 ]
 
-
 # -- Extension configuration -------------------------------------------------
 
-autoclass_content = 'both'
+autosummary_generate = True  # Turn on sphinx.ext.autosummary
+autoclass_content = "both"  # Add __init__ doc (ie. params) to class summaries
 autodoc_member_order = 'bysource'
+autodoc_inherit_docstrings = True  # If no docstring, inherit from base class
+add_module_names = False  # Remove namespaces from class/method signatures
+# Remove 'view source code' from top of page (for html, not python)
+html_show_sourcelink = False
 numpy_show_class_member = True
 napoleon_google_docstring = False
 napoleon_use_param = False

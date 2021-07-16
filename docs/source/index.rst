@@ -1,7 +1,11 @@
-.. reVX documentation master file, created by
-   sphinx-quickstart on Thu Jun 14 10:26:46 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. toctree::
+   :hidden:
+
+   Home page <self>
+   Installation and Usage <misc/installation_usage>
+   Examples <misc/examples>
+   API reference <_autosummary/reVX>
+   CLI reference <_cli/cli>
 
 reVX documentation
 *******************
@@ -18,23 +22,3 @@ between reV and other renewable energy focused models, for example,
 
 .. include:: ../../README.rst
    :start-after: inclusion-intro
-
-.. toctree::
-  :maxdepth: 2
-  :caption: Contents:
-
-  misc/misc
-
-.. autosummary::
-   :toctree: _reVX
-   :template: custom-module-template.rst
-   :recursive:
-
-   reVX
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
