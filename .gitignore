@@ -4,10 +4,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# vim
-tags
-*.swp
-
 # Distribution / packaging
 .Python
 env/
