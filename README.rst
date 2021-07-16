@@ -23,7 +23,7 @@ Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
 .. image:: https://anaconda.org/nrel/nrel-revx/badges/license.svg
     :target: https://anaconda.org/nrel/nrel-revx
 
-.. image:: https://codecov.io/gh/nrel/reVX/branch/master/graph/badge.svg?token=3J5M44VAA9
+.. image:: https://codecov.io/gh/nrel/reVX/branch/main/graph/badge.svg?token=3J5M44VAA9
     :target: https://codecov.io/gh/nrel/reVX
 
 .. image:: https://zenodo.org/badge/201337735.svg
@@ -34,17 +34,17 @@ Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
 reVX command line tools
 =======================
 
-- `reVX <https://nrel.github.io/reVX/reVX/reVX.cli.html#revx>`_
-- `reV-ReEDS <https://nrel.github.io/reVX/reVX/reVX.reeds.reeds_cli.html#rev-reeds>`_
-- `reV-rpm <https://nrel.github.io/reVX/reVX/reVX.rpm.rpm_cli.html#rev-rpm>`_
-- `reV-plexos <https://nrel.github.io/reVX/reVX/reVX.plexos.rev_reeds_plexos_cli.html#rev-plexos>`_
-- `plexos-plants <https://nrel.github.io/reVX/reVX/reVX.plexos.plexos_plants_cli.html#plexos-plants>`_
-- `mean-wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.mean_wind_dirs_cli.html#mean-wind-dirs>`_
-- `prominent-wind-dirs <https://nrel.github.io/reVX/reVX/reVX.wind_dirs.prominent_wind_dirs_cli.html#prominent-wind-dirs>`_
-- `wind-setbacks <https://nrel.github.io/reVX/reVX/reVX.wind_setbacks.wind_setbacks_cli.html#wind-setbacks>`_
-- `offshore-assembly-areas <https://nrel.github.io/reVX/reVX/reVX.offshore.assembly_areas_cli.html#offshore-assembly-areas>`_
-- `offshore-dist-to-ports <https://nrel.github.io/reVX/reVX/reVX.offshore.dist_to_ports_cli.html#offshore-dist-to-ports>`_
-- `offshore-inputs <https://nrel.github.io/reVX/reVX/reVX.offshore.offshore_inputs_cli.html#offshore-inputs>`_
+- `reVX <https://nrel.github.io/reVX/_cli/reVX.html#revx>`_
+- `reV-ReEDS <https://nrel.github.io/reVX/_cli/reV-ReEDS.html#rev-reeds>`_
+- `reV-rpm <https://nrel.github.io/reVX/_cli/reV-rpm.html#rev-rpm>`_
+- `reV-plexos <https://nrel.github.io/reVX/_cli/reVX-plexos.html#rev-plexos>`_
+- `plexos-plants <https://nrel.github.io/reVX/_cli/plexos-plants.html#plexos-plants>`_
+- `mean-wind-dirs <https://nrel.github.io/reVX/_cli/mean-wind-dirs.html#mean-wind-dirs>`_
+- `prominent-wind-dirs <https://nrel.github.io/reVX/_cli/prominent-wind-dirs.html#prominent-wind-dirs>`_
+- `wind-setbacks <https://nrel.github.io/reVX/_cli/wind-setbacks.html#wind-setbacks>`_
+- `offshore-assembly-areas <https://nrel.github.io/reVX/_cli/offshore-assembly-areas.html#offshore-assembly-areas>`_
+- `offshore-dist-to-ports <https://nrel.github.io/reVX/_cli/offshore-dist-to-ports.html#offshore-dist-to-ports>`_
+- `offshore-inputs <https://nrel.github.io/reVX/_cli/offshore-inputs.html#offshore-inputs>`_
 
 Using Eagle Env
 ===============
@@ -90,12 +90,12 @@ Option 1: Install from PIP or Conda (recommended for analysts):
         - NOTE: If you install using conda and you want to use:
             * | `HSDS <https://github.com/NREL/hsds-examples>`_ you will also
               | need to install h5pyd manually: ``pip install h5pyd``
-            * | `Turbine Flicker <https://nrel.github.io/reVX/reVX/reVX.turbine_flicker.turbine_flicker.html>`_
+            * | `Turbine Flicker <https://nrel.github.io/reVX/_cli/reVX.turbine_flicker.turbine_flicker.html>`_
               | you will need to install `HOPP <https://github.com/nrel/HOPP>`_
               | manually: ``pip install HOPP``
 
         - | NOTE: If you install using pip and want to run
-          | `Wind Setbacks <https://nrel.github.io/reVX/reVX/reVX.wind_setbacks.wind_setbacks.html>`_
+          | `Wind Setbacks <https://nrel.github.io/reVX/_cli/reVX.wind_setbacks.wind_setbacks.html>`_
           | you will need to install rtree manually:
             * ``conda install rtree``
             * `pip installation instructions <https://pypi.org/project/Rtree/#:~:text=Rtree%20is%20a%20ctypes%20Python,Multi%2Ddimensional%20indexes>`_
@@ -112,7 +112,7 @@ Option 2: Clone repo (recommended for developers)
     2) Run the command: ``conda activate revx``
     3) cd into the repo cloned in 1.
     4) | prior to running ``pip`` below, make sure the branch is correct (install
-       | from master!)
+       | from main!)
     5) | Install ``reVX`` and its dependencies by running:
        | ``pip install .`` (or ``pip install -e .`` if running a dev branch
        | or working on the source code)
