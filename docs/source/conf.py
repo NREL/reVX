@@ -24,16 +24,13 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 project = 'reVX'
 copyright = '2020, Alliance for Sustainable Energy, LLC'
-author = 'Michael Rossol, Grant Buster'
+author = 'NREL: Michael Rossol, Grant Buster'
 
 pkg = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 pkg = os.path.dirname(pkg)
 sys.path.append(pkg)
 
-with open(os.path.join(pkg, "reVX", "version.py"), encoding="utf-8") as f:
-    v = f.read()
-
-v = v.split('=')[-1].strip().strip('"').strip("'")
+from reVX.version import __version__ as v
 # The short X.Y version
 version = v
 # The full version, including alpha/beta/rc tags
