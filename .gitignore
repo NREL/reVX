@@ -68,6 +68,7 @@ instance/
 
 # Sphinx documentation
 docs/_build/
+docs/source/_autosummary/
 
 # PyBuilder
 target/
@@ -106,11 +107,12 @@ ENV/
 .mypy_cache/
 
 # OS Files
-
-# VSCode
-*.vscode
 .DS_Store
 */.DS_Store
 
 # VSCode
-.vscode
+*.vscode
+
+# vim
+*.swp
+tags
