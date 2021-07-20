@@ -64,8 +64,9 @@ class XmissionCostsLayers(ExclusionLayers):
         layers = ['base_costs', 'multipliers_{}mw'.format(self._capacity)]
         for layer_name in layers:
             if layer_name not in self.layers:
-                msg = ('{} not in available layers: {}'
-                       .format(layer_name, self.layers))
+                msg = ('{} is needed to compute costs but is not in available '
+                       'layers: {}. Please add it to {} and try again!'
+                       .format(layer_name, self.layers, self.h5_file))
                 logger.error(msg)
                 raise HandlerKeyError(msg)
 
@@ -91,8 +92,10 @@ class XmissionCostsLayers(ExclusionLayers):
                   'transmission_barrier']
         for layer_name in layers:
             if layer_name not in self.layers:
-                msg = ('{} not in available layers: {}'
-                       .format(layer_name, self.layers))
+                msg = ('{} is needed to compute mcp_costs but is not in '
+                       'available layers: {}. Please add it to {} and try '
+                       'again!'
+                       .format(layer_name, self.layers, self.h5_file))
                 logger.error(msg)
                 raise HandlerKeyError(msg)
 
