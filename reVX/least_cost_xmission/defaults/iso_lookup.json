@@ -1,6 +1,6 @@
 {
-    "TEPPC": 1, 
-    "SCE": 2, 
-    "MISO": 3, 
-    "Southeast": 4
+  "MISO": 3,
+  "SCE": 2,
+  "Southeast": 4,
+  "TEPPC": 1
 }
