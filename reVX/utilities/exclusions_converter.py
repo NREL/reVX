@@ -272,7 +272,7 @@ class ExclusionsConverter:
         excl_h5 : str
             Path to .h5 file containing exclusion layers
         layer : str
-            Exclusion layer to extract
+            Dataset name in .h5 file
         profile : dict
             Geotiff profile (attributes)
         values : ndarray
