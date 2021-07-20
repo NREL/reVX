@@ -47,7 +47,7 @@ class XmissionCostsLayers(ExclusionLayers):
 
         return out
 
-    def _get_cost(self, *ds_slice):
+    def _get_costs(self, *ds_slice):
         """
         Compute the raw tie-line costs for the given slice
 
@@ -73,7 +73,7 @@ class XmissionCostsLayers(ExclusionLayers):
 
         return costs
 
-    def _get_mcp_cost(self, *ds_slice):
+    def _get_mcp_costs(self, *ds_slice):
         """
         Compute the MinimumCostPath costs for the given slice
 
