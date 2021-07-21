@@ -64,14 +64,16 @@ class Geotiff:
             Slicing args similar to a numpy array slice. See examples above.
         """
         ds, ds_slice = parse_keys(keys)
+        out = None
+        if isinstance(ds, str):
+            if ds == 'meta':
+                out = self._get_meta(*ds_slice)
+            elif ds.lower().startswith('lat'):
+                out = self._get_lat_lon(*ds_slice)[0]
+            elif ds.lower().startswith('lon'):
+                out = self._get_lat_lon(*ds_slice)[1]
 
-        if ds == 'meta':
-            out = self._get_meta(*ds_slice)
-        elif ds.lower().startswith('lat'):
-            out = self._get_lat_lon(*ds_slice)[0]
-        elif ds.lower().startswith('lon'):
-            out = self._get_lat_lon(*ds_slice)[1]
-        else:
+        if out is None:
             out = self._get_data(ds, *ds_slice)
 
         return out
@@ -374,6 +376,7 @@ class Geotiff:
         """
         y_slice, x_slice = self._unpack_slices(*ds_slice)
         data = self._src.data[ds, y_slice, x_slice].flatten().compute()
+
         return data
 
     def _create_profile(self, chunks=(128, 128)):
