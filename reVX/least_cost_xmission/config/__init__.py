@@ -4,6 +4,8 @@ Transmission Least Cost Defaults
 """
 import os
 
+from .xmission_config import XmissionConfig
+
 DEFAULTSDIR = os.path.dirname(os.path.realpath(__file__))
 
 # Cost multipliers for medium and short lines
@@ -11,6 +13,7 @@ SHORT_MULT = 1.5
 MEDIUM_MULT = 1.2
 
 # Cut offs are originally in miles but are converted to kilometers
+# Note that minimum tie-line distance may be greater than these distances
 SHORT_CUTOFF = 3 * 5280 / 3.28084 / 1000
 MEDIUM_CUTOFF = 10 * 5280 / 3.28084 / 1000
 
