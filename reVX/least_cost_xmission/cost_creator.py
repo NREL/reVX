@@ -29,19 +29,10 @@ class XmissionCostCreator(ExclusionsConverter):
         """
         Parameters
         ----------
-
-        TODO
-
         h5_fpath : str
             H5 file to save costs to
         iso_regions_fpath : str
             ISO regions raster file
-        land_use_classes : dict
-            NLCD land use codes corresponding to use types
-        iso_mults : list of dict
-            Line cost multipliers for land use and terrain by ISO
-        base_line_costs : dict
-            Dict with per miles line costs for various capacities by ISO.
         iso_lookup : dict
             Keys are ISO names used in various dicts with keys being int codes
             use in the iso_regions_fpath.
@@ -65,28 +56,27 @@ class XmissionCostCreator(ExclusionsConverter):
     def build_cost_rasters(cls, h5_fpath, iso_regions_fpath, input_h5_fpath,
                            iso_mults_fpath=None, base_line_costs_fpath=None,
                            iso_lookup_fpath=None, power_classes_fpath=None,
+                           slope_lyr='srtm_slope',
+                           nlcd_lyr='usa_mrlc_nlcd2011',
+                           land_use_classes=None,
+                           default_mults=None, tiff_dir=None,
+                           cell_size=CELL_SIZE,
 
                            # TODO - ditch this in a bit
                            save_layer=True,
-
-                           slope_lyr='srtm_slope',
-                           nlcd_lyr='usa_mrlc_nlcd2011',
-                           land_use_classes=NLCD_LAND_USE_CLASSES,
-                           default_mults=None, tiff_dir=None,
-                           cell_size=CELL_SIZE):
+                           ):
         """
         Build cost rasters using base line costs and multipliers. Save to
         h5 file or tiff
 
         Parameters
         ----------
-        TODO
+        h5_fpath : str
+            H5 file to save costs to
         iso_regions_fpath : str
             File with raster of ISO regions
-        h5_fpath: str
-            H5 file to save costs to
-        land_use_classes : dict
-            NCLD land use codes corresponding to use classes for multipliers
+        input_h5_fpath : str
+            File with NLCD and slope layers
         iso_mults_fpath : None | str
             ISO multipliers JSON file. Use default if None
         base_line_costs_fpath : None | str
@@ -96,10 +86,21 @@ class XmissionCostCreator(ExclusionsConverter):
         power_classes_fpath : None | str
             JSON of line capacities to use for reV power classes. Use default
             if None
-        default_mults : dict
-            Multipliers for regions not specified in iso_mults_fpath.
-        save_to_h5 : bool
-            Save output to h5 if true, save to geotiff if false
+        sloper_lyr : str
+            Name of slope layer in input_h5_fpath
+        ncld_lyr : str
+            Name of NLCD (land use) layer in input_h5_fpath
+        land_use_classes : dict | None
+            NCLD land use codes corresponding to use classes for multipliers.
+            If None use defaults.
+        default_mults : None | dict
+            Multipliers for regions not specified in iso_mults_fpath. Use
+            defaults if None..
+        tiff_dir : str | None
+            Path to save costs and intermediary rasters as geotiffs in. Don't
+            save to geotiff if None.
+        cell_size : int
+            Raster cell size for all layers (meters). Assumed to be square.
         """
         # TODO - verify profile for iso_regions_fpath and input_h5_fpath are
         # comparable.
@@ -116,8 +117,11 @@ class XmissionCostCreator(ExclusionsConverter):
         else:
             save_geotiff = True
 
-        mults_arr = xcc.compute_multipliers(slope_lyr, nlcd_lyr,
-                                            input_h5_fpath, land_use_classes,
+        if land_use_classes is None:
+            land_use_classes = NLCD_LAND_USE_CLASSES
+
+        mults_arr = xcc.compute_multipliers(input_h5_fpath, slope_lyr,
+                                            nlcd_lyr, land_use_classes,
                                             xc['iso_mults'], default_mults)
 
         if save_geotiff:
@@ -145,14 +149,23 @@ class XmissionCostCreator(ExclusionsConverter):
                 xcc.create_geotiff(tiff_dir, f'tie_line_costs{capacity}MW.tif',
                                    costs_arr)
 
-    def compute_multipliers(self, slope_lyr, nlcd_lyr, input_h5_fpath,
+    def compute_multipliers(self, input_h5_fpath, slope_lyr, nlcd_lyr,
                             land_use_classes, iso_mults, d_mults):
         """
         Create costs multiplier raster
 
         Parameters
         ----------
-        TODO
+        input_h5_fpath : str
+            File with NLCD and slope layers
+        sloper_lyr : str
+            Name of slope layer in input_h5_fpath
+        ncld_lyr : str
+            Name of NLCD (land use) layer in input_h5_fpath
+        land_use_classes : dict
+            NCLD land use codes corresponding to use classes for multipliers
+        iso_mults : dict
+            Land use and slope multipliers for ISOs
         d_mults : dict | None
             Default line cost multipliers for areas not covered by the ISO
             regions.
@@ -227,6 +240,10 @@ class XmissionCostCreator(ExclusionsConverter):
         ----------
         capacity : int
             Desired line capacity (MW). This must be in base_line_costs.
+        base_line_costs : dict
+            Base line cost per mile for ISOs
+        cell_size : int
+            Raster cell size for all layers (meters). Assumed to be square.
 
         Returns
         -------
@@ -240,7 +257,7 @@ class XmissionCostCreator(ExclusionsConverter):
             logger.info(f'Processing costs for {iso} for {capacity}MW')
             iso_code = self._iso_lookup[iso]
             cost_per_mile = base_line_costs[iso][str(capacity)]
-            cost_per_cell = cost_per_mile/METERS_IN_MILE*cell_size
+            cost_per_cell = cost_per_mile / METERS_IN_MILE * cell_size
             logger.debug(f'$/mile is {cost_per_mile}, $/cell is '
                          f'{cost_per_cell}')
             mask = self._iso_regions == iso_code
@@ -269,6 +286,8 @@ class XmissionCostCreator(ExclusionsConverter):
 
         Parameters
         ----------
+        tiff_dir : str
+            Directory to save tiffs in
         geotiff_fpath : str
             File name of tiff including extension
         data : np.ndarray
@@ -281,7 +300,7 @@ class XmissionCostCreator(ExclusionsConverter):
         self._write_geotiff(geotiff_fpath, self._profile, data)
 
         # _write_geotiff sets nodata to the max for the dtype. For float32 this
-        # then breaks JSONifying the profile. Reset it.
+        # then breaks JSONifying the profile when writing h5s. Reset it.
         self._profile['nodata'] = nodata
 
     @staticmethod
@@ -294,8 +313,9 @@ class XmissionCostCreator(ExclusionsConverter):
         ----------
         slope : numpy.ndarray
             Slope raster clipped to a region- "Terrain slope in % of grade"
-        config : dict
-            Multipliers and slope cut offs for hilly and mountain terrain
+        config : dict | None
+            Multipliers and slope cut offs for hilly and mountain terrain.
+            Use defaults if None.
         config['hill_mult'] : float
             Multiplier for hilly terrain
         config['mtn_slope'] : float
@@ -338,6 +358,8 @@ class XmissionCostCreator(ExclusionsConverter):
            NLCD land user raster clipped to a region
         multipliers : dict
             Multiplier for for land classes, E.g. {'forest': 1.5}
+        land_use_classes : dict
+            NCLD land use codes corresponding to use classes for multipliers
 
         Returns
         -------
