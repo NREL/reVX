@@ -1,3 +1,9 @@
+"""
+Load default configuration for tie-line cost determination
+
+Mike Bannister
+7/27/21
+"""
 import os
 
 from rex.utilities.utilities import safe_json_load
@@ -14,7 +20,28 @@ class XmissionConfig(dict):
                  min_power_classes_fpath=None, new_sub_costs_fpath=None,
                  upgrade_sub_costs_fpath=None):
         """
-        TODO
+        Use default values for all parameters if None.
+
+        Parameters
+        ----------
+        power_to_voltage_fpath : None | str
+            JSON file linking line voltages with capacities.
+        base_line_costs_fpath : None | str
+            Base line cost per mile for ISOs file. Use default if None
+        iso_mults_fpath : None | str
+            ISO multipliers JSON file. Use default if None
+        transformer_costs_fpath: None | str
+            JSON file with transformer costs.
+        iso_lookup_fpath : None | str
+            JSON file linking ISO region code to name. Use default if None
+        power_classes_fpath : None | str
+            JSON of line capacities to use for reV power classes.
+        min_power_classes_fpath : None | str
+            JSON file with actual line capacities to use for reV power classes.
+        new_sub_costs_fpath : None | str
+            JSON file with existing new substation construction costs
+        upgrade_sub_costs_fpath : None | str
+            JSON file with existing substation upgrade costs
         """
         super().__init__()
 
@@ -56,5 +83,6 @@ class XmissionConfig(dict):
 
         if upgrade_sub_costs_fpath is None:
             upgrade_sub_costs_fpath = os.path.join(D_DIR,
-                                               'upgrade_substation_costs.json')
+                                                   'upgrade_substation_costs.'
+                                                   'json')
         self['upgrade_sub_costs'] = safe_json_load(upgrade_sub_costs_fpath)
