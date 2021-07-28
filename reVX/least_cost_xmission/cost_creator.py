@@ -12,7 +12,7 @@ from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from .config import XmissionConfig, WATER_NLCD_CODE, WATER_MULT, \
     METERS_IN_MILE, NLCD_LAND_USE_CLASSES, HILL_MULT, MTN_MULT, HILL_SLOPE, \
-    MTN_SLOPE, CELL_SIZE
+    MTN_SLOPE, CELL_SIZE, TEST_DEFAULT_MULTS
 
 logger = logging.getLogger(__name__)
 
@@ -60,10 +60,7 @@ class XmissionCostCreator(ExclusionsConverter):
                            nlcd_lyr='usa_mrlc_nlcd2011',
                            land_use_classes=None,
                            default_mults=None, tiff_dir=None,
-                           cell_size=CELL_SIZE,
-
-                           # TODO - ditch this in a bit
-                           save_layer=True,
+                           cell_size=CELL_SIZE
                            ):
         """
         Build cost rasters using base line costs and multipliers. Save to
@@ -95,7 +92,7 @@ class XmissionCostCreator(ExclusionsConverter):
             If None use defaults.
         default_mults : None | dict
             Multipliers for regions not specified in iso_mults_fpath. Use
-            defaults if None..
+            defaults if None. Note that there are no default line costs.
         tiff_dir : str | None
             Path to save costs and intermediary rasters as geotiffs in. Don't
             save to geotiff if None.
@@ -127,9 +124,6 @@ class XmissionCostCreator(ExclusionsConverter):
         if save_geotiff:
             xcc.create_geotiff(tiff_dir, 'multipliers.tif', mults_arr)
 
-        # TODO - remove
-        xcc.save_layer('mults', mults_arr)
-
         for power_class, capacity in xc['power_classes'].items():
             logger.info(f'Calculating costs for class {power_class} using a '
                         f'{capacity}MW line')
@@ -142,12 +136,39 @@ class XmissionCostCreator(ExclusionsConverter):
 
             costs_arr = blc_arr * mults_arr
 
-            if save_layer:
-                xcc.save_layer(f'tie_line_costs_{capacity}MW', costs_arr)
+            xcc.save_layer(f'tie_line_costs_{capacity}MW', costs_arr)
 
             if save_geotiff:
                 xcc.create_geotiff(tiff_dir, f'tie_line_costs{capacity}MW.tif',
                                    costs_arr)
+
+    @classmethod
+    def build_test_costs(cls, h5_fpath, iso_regions_fpath, input_h5_fpath,
+                         slope_lyr='ri_srtm_slope', nlcd_lyr='ri_nlcd',
+                         tiff_dir=None):
+        """
+        Compute costs for RI test dataset and save to h5
+
+        Parameters
+        ----------
+        h5_fpath : str
+            H5 file to save costs to
+        iso_regions_fpath : str
+            File with raster of ISO regions
+        input_h5_fpath : str
+            File with NLCD and slope layers
+        sloper_lyr : str
+            Name of slope layer in input_h5_fpath
+        ncld_lyr : str
+            Name of NLCD (land use) layer in input_h5_fpath
+        tiff_dir : str | None
+            Path to save costs and intermediary rasters as geotiffs in. Don't
+            save to geotiff if None.
+        """
+        cls.build_cost_rasters(h5_fpath, iso_regions_fpath, input_h5_fpath,
+                               slope_lyr=slope_lyr, nlcd_lyr=nlcd_lyr,
+                               tiff_dir=tiff_dir,
+                               default_mults=TEST_DEFAULT_MULTS)
 
     def compute_multipliers(self, input_h5_fpath, slope_lyr, nlcd_lyr,
                             land_use_classes, iso_mults, d_mults):
@@ -218,7 +239,8 @@ class XmissionCostCreator(ExclusionsConverter):
 
         if 'land_use' in d_mults:
             rlu = land_use[default_mask]
-            lu_mult = self._compute_land_use_mult(rlu, d_mults['land_use'])
+            lu_mult = self._compute_land_use_mult(rlu, d_mults['land_use'],
+                                                  land_use_classes)
             mults_arr[default_mask] = lu_mult
 
         if 'slope' in d_mults:
