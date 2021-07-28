@@ -6,30 +6,37 @@ import os
 import pytest
 import numpy as np
 
-# from rex.utilities.loggers import LOGGERS
+from reV.handlers.exclusions import ExclusionLayers
 
-# from reVX import TESTDATADIR
-from reVX.x_mission_paths.multipliers import CostMultiplier
-from reVX.x_mission_paths.path_finder import PathFinder
+from reVX import TESTDATADIR
+from reVX.least_cost_xmission.cost_creator import XmissionCostCreator, \
+    XmissionConfig
+from reVX.least_cost_xmission.path_finder import PathFinder
+from reVX.least_cost_xmission.config import NLCD_LAND_USE_CLASSES, CELL_SIZE, \
+    TEST_DEFAULT_MULTS
+
+RI_DATA_DIR = os.path.join(TESTDATADIR, 'ri_exclusions')
+INPUT_H5F = os.path.join(RI_DATA_DIR, 'ri_exclusions.h5')
+ISO_REGIONS_F = os.path.join(RI_DATA_DIR, 'ri_iso_regions.tif')
 
 
 def test_path_cost():
     """ Test calulating path cost"""
-    costs = np.array([ [1,1,1,1,1,1], [2,2,2,2,2,2], [3,3,3,3,3,3],
+    costs = np.array([[1,1,1,1,1,1], [2,2,2,2,2,2], [3,3,3,3,3,3],
                       [2,2,2,2,2,2], [1,1,1,1,1,1], [5,5,5,5,5,5], ])
     i1 = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (1, 5), (2, 5),
           (3, 5), (4, 5), (5, 5)]
     i2 = [(0, 0), (0, 1), (1, 2), (2, 2), (2, 3), (3, 4), (4, 5), (5, 5)]
     assert round(PathFinder._calc_path_cost(costs, i1), 5) == 16.0
-    assert round(PathFinder._calc_path_cost(costs, i2), 5) ==  17.27817
+    assert round(PathFinder._calc_path_cost(costs, i2), 5) == 17.27817
 
 
 def test_land_use_multiplier():
     """ Test land use multiplier creation """
     lu_mults = {'forest': 1.63, 'wetland': 1.5}
     arr = np.array([[[0, 95, 90], [42, 41, 15]]])
-    cm = CostMultiplier()
-    out = cm._create_land_use_mult(arr, lu_mults)
+    xcc = XmissionCostCreator(INPUT_H5F, ISO_REGIONS_F, {})
+    out = xcc._compute_land_use_mult(arr, lu_mults, NLCD_LAND_USE_CLASSES)
     expected = np.array([[[1.0, 1.5, 1.5], [1.63, 1.63, 1.0]]],
                         dtype=np.float32)
     assert np.array_equal(out, expected)
@@ -40,62 +47,35 @@ def test_slope_multiplier():
     arr = np.array([[[0, 1, 10], [20, 1, 6]]])
     config = {'hill_mult': 1.2, 'mtn_mult': 1.5,
               'hill_slope': 2, 'mtn_slope': 8}
-    cm = CostMultiplier()
-    out = cm._create_slope_mult(arr, config)
+    xcc = XmissionCostCreator(INPUT_H5F, ISO_REGIONS_F, {})
+    out = xcc._compute_slope_mult(arr, config)
     expected = np.array([[[1.0, 1.0, 1.5], [1.5, 1.0, 1.2]]],
                         dtype=np.float32)
     assert np.array_equal(out, expected)
 
 
-def test_create_multiplier():
+def test_full_costs_workflow():
     """
-    Test multiplier creation for multiple regions with land use and slope
+    Test full cost calculator workflow for RI against known costs
     """
-    iso_config = [
-        {
-            'iso': 1,
-            'land_use': {'forest': 3, 'wetland': 6},
-            'slope': {'hill_mult': 2, 'mtn_mult': 4,
-                      'hill_slope': 25, 'mtn_slope': 50}
-        },
-        {
-            'iso': 2,
-            'land_use': {'forest': 0.2, 'wetland': 0.5},
-            'slope': {'hill_mult': 0.1, 'mtn_mult': 0.1,
-                      'hill_slope': 25, 'mtn_slope': 50}
-        },
-    ]
+    xc = XmissionConfig(iso_mults_fpath=None, base_line_costs_fpath=None,
+                        iso_lookup_fpath=None, power_classes_fpath=None)
 
-    default_config = {
-        'land_use': {'forest': 10, 'wetland': 20},
-        'slope': {'hill_mult': 2, 'mtn_mult': 3,
-                  'hill_slope': 25, 'mtn_slope': 50}
-    }
+    xcc = XmissionCostCreator(INPUT_H5F, ISO_REGIONS_F, xc['iso_lookup'])
 
-    iso_regions = np.array([[[1, 1, 2, 2],
-                             [1, 1, 2, 2],
-                             [3, 3, 4, 4],
-                             [3, 3, 4, 4]]])
+    mults_arr = xcc.compute_multipliers(INPUT_H5F, 'ri_srtm_slope', 'ri_nlcd',
+                                        NLCD_LAND_USE_CLASSES, xc['iso_mults'],
+                                        TEST_DEFAULT_MULTS)
 
-    land_use = np.array([[[41, 95, 41, 95],
-                          [41, 30, 41, 30],
-                          [41, 95, 41, 95],
-                          [41, 30, 41, 30]]])
+    for power_class, capacity in xc['power_classes'].items():
+        with ExclusionLayers(INPUT_H5F) as el:
+            known_costs = el['tie_line_costs_{}MW'.format(capacity)]
 
-    slope = np.array([[[10, 20, 10, 20],  # flat
-                       [30, 30, 30, 30],  # hills
-                       [10, 20, 30, 30],  # flat and hills
-                       [30, 60, 30, 60]]])  # hills and mountains
-
-    expected = np.array([[[3., 6., 0.2, 0.5],
-                          [6., 2., 0.02, 0.1],
-                          [10., 20., 20., 40.],
-                          [20., 3., 20., 3.]]], dtype=np.float32)
-
-    cm = CostMultiplier.run(iso_regions, land_use, slope, iso_config,
-                             default_config)
-    out = cm.mults_arr
-    assert np.isclose(out, expected).all()
+        blc_arr = xcc.compute_base_line_costs(capacity,
+                                              xc['base_line_costs'],
+                                              CELL_SIZE)
+        costs_arr = blc_arr * mults_arr
+        assert np.isclose(known_costs, costs_arr).all()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

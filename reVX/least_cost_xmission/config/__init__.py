@@ -59,3 +59,20 @@ METERS_IN_MILE = 1609.344
 
 WATER_NLCD_CODE = 11
 WATER_MULT = 10
+
+# Default test multipliers for RI
+TEST_DEFAULT_MULTS = {
+    "land_use": {
+        "cropland": 1,
+        "forest": 4,
+        "suburban": 5,
+        "urban": 6,
+        "wetland": 7
+    },
+    "slope": {
+        "hill_mult": 2,
+        "hill_slope": 2,
+        "mtn_mult": 5,
+        "mtn_slope": 8
+    }
+}
