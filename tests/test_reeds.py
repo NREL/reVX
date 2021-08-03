@@ -22,6 +22,7 @@ from reVX.reeds.reeds_timeslices import ReedsTimeslices
 from reVX import TESTDATADIR
 
 ROOT_DIR = os.path.join(TESTDATADIR, 'reeds')
+RTOL = 0.01
 
 
 @pytest.fixture(scope="module")
@@ -207,7 +208,7 @@ def test_rep_timeslices():
     truth = pd.read_csv(path)
     assert_frame_equal(truth, test_stats, check_dtype=False,
                        check_categorical=False,
-                       rtol=0, atol=0.05)
+                       rtol=RTOL, atol=0)
 
     path = os.path.join(ROOT_DIR, 'ReEDS_Timeslice_rep_coeffs.csv')
     truth = pd.read_csv(path)
@@ -259,7 +260,8 @@ def test_timeslice_h5_output():
                 dset = 'timeslice_{}'.format(k)
                 data = \
                     ReedsTimeslices.unsparsify_corr_matrix(out[dset], indices)
-                assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
+                assert np.allclose(data, np.round(v, decimals=3),
+                                   rtol=RTOL, atol=0)
                 assert len(meta) == len(data)
 
 
@@ -498,7 +500,7 @@ def test_cli(runner, trg_classes):
         test_stats = pd.read_csv(path)
         assert_frame_equal(truth_stats, test_stats, check_dtype=False,
                            check_categorical=False,
-                           rtol=0, atol=0.05)
+                           rtol=RTOL, atol=0)
 
         path = os.path.join(td, '{}_ReEDS_hourly_cf.h5'.format(name))
         _, truth_coeffs = ReedsTimeslices.run(path, timeslice_map,
@@ -510,7 +512,8 @@ def test_cli(runner, trg_classes):
             for k, v in truth_coeffs.items():
                 dset = 'timeslice_{}'.format(k)
                 data = out[dset]
-                assert np.allclose(data, np.round(v, decimals=3), atol=0.001)
+                assert np.allclose(data, np.round(v, decimals=3),
+                                   atol=0, rtol=RTOL)
                 assert len(meta) == len(data)
 
     LOGGERS.clear()
