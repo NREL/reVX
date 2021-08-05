@@ -14,6 +14,7 @@ from sklearn.neighbors import BallTree
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.utilities import parse_table
 
+from reVX.handlers.outputs import Outputs
 from reVX.plexos.base import BaseProfileAggregation, PlexosNode
 from reVX.plexos.utilities import get_coord_labels
 
@@ -360,7 +361,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
 
     @classmethod
     def run(cls, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
-            share_resource=True, max_workers=None):
+            share_resource=True, max_workers=None, out_fpath=None):
         """Build profiles and meta data.
 
         Parameters
@@ -386,6 +387,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
+        out_fpath : str, optional
+            Path to .h5 file into which plant buildout should be saved,
+            by default None
 
         Returns
         -------
@@ -396,9 +400,6 @@ class SimplePlantBuilder(BaseProfileAggregation):
             Time index for the profiles.
         profiles : np.ndarray
             Generation profile timeseries in MW at each plant.
-        max_workers : int | None
-            Max workers for parallel profile aggregation. None uses all
-            available workers. 1 will run in serial.
         """
 
         pb = cls(plant_meta, rev_sc, cf_fpath, forecast_fpath=forecast_fpath,
@@ -407,5 +408,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
         plant_sc_builds = pb.assign_plant_buildouts()
         pb.check_valid_buildouts(plant_sc_builds)
         profiles = pb.make_profiles(plant_sc_builds)
+
+        if out_fpath is not None:
+            Outputs.write_profiles(out_fpath, pb.plant_meta, pb.time_index,
+                                   'cf_profile', profiles, profiles.dtype)
 
         return pb.plant_meta, pb.time_index, profiles

@@ -75,7 +75,9 @@ setup(
                             ("offshore-inputs=reVX.offshore."
                              "offshore_inputs_cli:main"),
                             ("turbine-flicker=reVX.turbine_flicker."
-                             "turbine_flicker_cli:main")
+                             "turbine_flicker_cli:main"),
+                            ("simple-plant-builder=reVX.plexos."
+                             "simple_plant_builder_cli:main")
                             ],
     },
     include_package_data=True,
