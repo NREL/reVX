@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
-"""reVX PLEXOS unit test module
+"""reVX Simple Plant Builder unit test module
 """
+from click.testing import CliRunner
 import numpy as np
 import json
 import os
 import pandas as pd
 import pytest
+import tempfile
+import traceback
 
 from rex import Resource
+from rex.utilities.loggers import LOGGERS
 
 from reVX.plexos.simple_plant_builder import SimplePlantBuilder
+from reVX.plexos.simple_plant_builder_cli import main
 from reVX import TESTDATADIR
 
 REV_SC = os.path.join(TESTDATADIR,
@@ -38,6 +43,14 @@ PLANT_META = pd.DataFrame({'latitude': [37.24, 37.24, 40.9],
                            'capacity': [100, 100, 50],
                            'names': ['plant1', 'plant2', 'plant3'],
                            })
+
+
+@pytest.fixture(scope="module")
+def runner():
+    """
+    cli runner
+    """
+    return CliRunner()
 
 
 def test_init():
@@ -222,3 +235,52 @@ def test_incomplete_cf_file():
                                })
     with pytest.raises(RuntimeError):
         SimplePlantBuilder.run(plant_meta, REV_SC, CF_FPATH)
+
+
+def test_cli(runner):
+    """
+    Test CLI
+    """
+    with tempfile.TemporaryDirectory() as td:
+        plant_meta = os.path.join(td, 'plant_meta.csv')
+        PLANT_META.to_csv(plant_meta)
+
+        rev_sc = os.path.join(td, 'rev_sc.csv')
+        REV_SC.to_csv(rev_sc, index=False)
+
+        out_fpath = os.path.join(td, 'test.h5')
+
+        result = runner.invoke(main, ['-pm', plant_meta,
+                                      '-sc', rev_sc,
+                                      '-cf', CF_FPATH,
+                                      '-o', out_fpath])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        with Resource(out_fpath) as f:
+            meta = f.meta
+            ti = f.time_index
+            profiles = f['cf_profile']
+
+        for plant_id, plant_build in meta.iterrows():
+            res_gids = json.loads(plant_build['res_gids'])
+            gen_gids = json.loads(plant_build['gen_gids'])
+            gid_caps = json.loads(plant_build['res_built'])
+
+            with Resource(CF_FPATH) as res:
+                cf_meta = res.meta
+                cf_profiles = res['cf_profile']
+
+                for rgid, ggid in zip(res_gids, gen_gids):
+                    assert cf_meta.loc[ggid, 'gid'] == rgid
+
+                true_profile = np.zeros(len(ti))
+                for cap, ggid in zip(gid_caps, gen_gids):
+                    true_profile += cap * cf_profiles[:, ggid]
+
+                # pylint: disable=unsubscriptable-object
+                assert np.allclose(true_profile, profiles[:, plant_id],
+                                   atol=0, rtol=0.001)
+
+    LOGGERS.clear()
