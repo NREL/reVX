@@ -1,6 +1,6 @@
 import rasterio as rio
 
-from .config import power_classes, power_to_voltage
+# from .config import power_classes, power_to_voltage
 
 
 class RowColTransformer:
@@ -36,6 +36,27 @@ class RowColTransformer:
         if row > 0 and col > 0 and row < self._height and col < self._width:
             return row, col
         return None, None
+
+    def get_x_y(self, row, col):
+        """
+        Convert row, col in raster to x, y in projection
+
+        Parameters
+        ----------
+        row : int
+            Row in template raster
+        col : int
+            Column in template raster
+
+        Returns
+        -------
+        x : float
+            Projected easting coordinate
+        y : float
+            Projected northing coordinate
+        """
+        x, y = rio.transform.xy(self._transform, row, col)
+        return x, y
 
 
 def save_geotiff(data, template, outf):

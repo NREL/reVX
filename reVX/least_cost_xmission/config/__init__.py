@@ -5,7 +5,6 @@ Transmission Least Cost Defaults
 import os
 
 from .xmission_config import XmissionConfig
-
 DEFAULTSDIR = os.path.dirname(os.path.realpath(__file__))
 
 # Cost multipliers for medium and short lines
@@ -20,8 +19,9 @@ MEDIUM_CUTOFF = 10 * 5280 / 3.28084 / 1000
 CELL_SIZE = 90  # meters, size of cell. Both dims must be equal
 
 # Decimal % distance to buffer clipped cost raster by. This helps to find the
-# cheapest path. Larger values will run slower
-CLIP_RASTER_BUFFER = 0.05
+# cheapest path. Larger values will run slower. Should be greater than 1 or
+# clip will be too small.
+CLIP_RASTER_BUFFER = 1.05
 
 # Number of load centers and sinks to connect to
 NUM_LOAD_CENTERS = 1
@@ -39,7 +39,8 @@ BARRIERS_MULT = 100
 MINIMUM_DIST_KM = 5.5
 
 # Cost to connect to PCA load center. Completely synthetic and prevents REEDS
-# from  connecting unless absolutely mandatory
+# from connecting unless absolutely mandatory
+FAR_T_LINE_COST = 1e10
 SINK_CONNECTION_COST = 1e11
 
 NLCD_LAND_USE_CLASSES = {
