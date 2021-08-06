@@ -99,20 +99,19 @@ class TieLineCosts:
 
     def _path_length_cost(self, feat):
         """
-        TODO
         Calculate length of minimum cost path to substation
 
         Parameters
         ----------
         feat : TransFeature
-            Transmission feature of interest
+            Transmission feature to find path to
 
         Returns
         -------
-        TODO
         length : float
-
+            Length of path (km)
         cost : float
+            Cost of path including terrain and land use multipliers
         """
         shp = self._paths.shape
         if feat.row < 0 or feat.col < 0 or feat.row >= shp[0] or \
@@ -406,29 +405,6 @@ class LeastCostXmission:
             row, col = self._rct.get_row_col(near_pt.x, near_pt.y)
             t_lines.loc[index, 'row'] = row
             t_lines.loc[index, 'col'] = col
-
-        # Drop any t-lines that share a row, col with a substation they're
-        # connected to
-        # TODO - Just don't worry about this. we need the in the table anyway
-        if False:
-            logger.debug('-- Dropping t-lines that duplicate SC points')
-            subs = trans_feats[trans_feats.category == SUBSTATION_CAT]
-            for index, sub in subs.iterrows():
-                # print('sub', sub.gid)
-                for gid in sub.trans_gids:
-                    # print('--trans_gid', gid)
-                    tl = t_lines[t_lines.gid == gid]
-
-                    if len(tl) == 0:
-                        # already dropped
-                        continue
-
-                    assert len(tl) == 1
-                    tl = tl.squeeze()
-                    assert tl.category == TRANS_LINE_CAT
-                    if sub.row == tl.row and sub.col == tl.col:
-                        # print ('--dropping gid', gid,'name ', tl.name)
-                        t_lines = t_lines.drop(index=tl.name)
 
         trans_feats = pd.concat([trans_feats, t_lines]).copy()
 
