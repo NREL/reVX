@@ -8,26 +8,26 @@ The following ISOs are used in the multipliers and base line cost files.
 - MISO
 - Southeast
 
-power_to_voltage.json:
+power_to_voltage:
     Line capacity to voltage conversion table. Keys are capacity in MW, values
     are voltages in kV. Note that there are two capacities for 230kV lines and
     should be two sets of costs in the cost tables.
 
-multipliers.json
+iso_multipliers
     Baseline cost multipliers for ISOs. Slopes are in %, e.g. "2" = 2%.
 
-transformer_costs.json:
+transformer_costs:
      Transformer costs in $/MVA. First key is tie line voltage, second key is
      existing t-line voltage, but that doesn't matter much as the data is
      symmetrical. From MISO table.
 
-base_line_costs.json:
+base_line_costs:
     Costs for lines in US$ / mile. Keys are max line capacity in MW. Note that
     TEPPC does not include ROW in base line cost, but all other ISOs do.
 
-power_classes.json:
+power_classes:
     Keys are reV power classes. Values are appropriate line capacities for
     that class.
 
-power_to_voltage.json:
+power_to_voltage:
     Keys are line capacities in MW. Values are line voltages in kV.
