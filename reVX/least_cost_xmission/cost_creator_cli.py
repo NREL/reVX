@@ -10,7 +10,7 @@ import os
 from rex.utilities.loggers import init_mult
 from rex.utilities.cli_dtypes import STR
 from rex.utilities.hpc import SLURM
-from rex.utilities.utilities import get_class_properties
+from rex.utilities.utilities import get_class_properties, safe_json_load
 
 from reVX.config.least_cost_xmission import CostCreatorConfig
 from reVX.least_cost_xmission.cost_creator import XmissionCostCreator
@@ -120,7 +120,7 @@ def from_config(ctx, config, verbose):
               help=("Name of NLCD (land use) layer in excl_h5"))
 @click.option('--default_mults', '-dm', type=click.Path(exists=True),
               show_default=True, default=None,
-              help=("JSON of Multipliers for regions not specified in"
+              help=("JSON of Multipliers for regions not specified in "
                     "iso_mults_fpath"))
 @click.option('--tiff_dir', '-tiff', type=click.Path(exists=True),
               show_default=True, default=None,
@@ -146,6 +146,12 @@ def local(ctx, h5_fpath, iso_regions, excl_h5, cost_configs, slope_layer,
 
     log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
+
+    if isinstance(default_mults, str):
+        default_mults = safe_json_load(default_mults)
+
+    if isinstance(extra_layers, str):
+        extra_layers = safe_json_load(extra_layers)
 
     logger.info('Computing Xmission Cost layers and writing them to {}'
                 .format(h5_fpath))

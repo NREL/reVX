@@ -53,9 +53,8 @@ class XmissionCostCreator(ExclusionsConverter):
 
         if not os.path.exists(h5_fpath):
             self._init_h5(h5_fpath, iso_regions_fpath)
-        # TODO: fix profile crs
-        # else:
-        #     self._check_geotiff(h5_fpath, iso_regions_fpath)
+        else:
+            self._check_geotiff(h5_fpath, iso_regions_fpath)
 
     @staticmethod
     def _compute_slope_mult(slope, config=None):
