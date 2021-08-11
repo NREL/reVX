@@ -11,7 +11,7 @@ from rex.utilities.cli_dtypes import STR, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reVX.config.prominent_wind_dirs import ProminentWindDirsConfig
+from reVX.config.wind_dirs import ProminentWindDirsConfig
 from reVX.wind_dirs.prominent_wind_dirs import ProminentWindDirections
 from reVX import __version__
 

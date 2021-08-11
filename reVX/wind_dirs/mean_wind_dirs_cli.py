@@ -11,7 +11,7 @@ from rex.utilities.cli_dtypes import STR, INT, STRLIST, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reVX.config.mean_wind_dirs import MeanWindDirsConfig
+from reVX.config.wind_dirs import MeanWindDirsConfig
 from reVX.wind_dirs.mean_wind_dirs import MeanWindDirections
 from reVX import __version__
 

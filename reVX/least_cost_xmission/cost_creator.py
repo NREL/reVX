@@ -53,8 +53,9 @@ class XmissionCostCreator(ExclusionsConverter):
 
         if not os.path.exists(h5_fpath):
             self._init_h5(h5_fpath, iso_regions_fpath)
-        else:
-            self._check_geotiff(h5_fpath, iso_regions_fpath)
+        # TODO: fix profile crs
+        # else:
+        #     self._check_geotiff(h5_fpath, iso_regions_fpath)
 
     @staticmethod
     def _compute_slope_mult(slope, config=None):
@@ -142,8 +143,8 @@ class XmissionCostCreator(ExclusionsConverter):
         return mult_raster
 
     def compute_multipliers(self, iso_mults, excl_h5=None,
-                            slope_lyr='srtm_slope',
-                            nlcd_lyr='usa_mrlc_nlcd2011',
+                            slope_layer='srtm_slope',
+                            nlcd_layer='usa_mrlc_nlcd2011',
                             land_use_classes=None,
                             default_mults=None):
         """
@@ -157,9 +158,9 @@ class XmissionCostCreator(ExclusionsConverter):
             Path to exclusion .h5 file containing NLCD and slope layers,
             if None assume NLCD and slope layers are in self._excl_h5,
             by default None
-        sloper_lyr : str, optional
+        sloper_layer : str, optional
             Name of slope layer in excl_h5, by default 'srtm_slope'
-        ncld_lyr : str, optional
+        ncld_layer : str, optional
             Name of NLCD (land use) layer in excl_h5, by default
             'usa_mrlc_nlcd2011'
         land_use_classes : dict, optional
@@ -179,8 +180,8 @@ class XmissionCostCreator(ExclusionsConverter):
 
         logger.debug('Loading slope and land use rasters')
         with ExclusionLayers(excl_h5) as el:
-            slope = el[slope_lyr]
-            land_use = el[nlcd_lyr]
+            slope = el[slope_layer]
+            land_use = el[nlcd_layer]
 
         logger.debug('Loading complete')
 
@@ -311,8 +312,8 @@ class XmissionCostCreator(ExclusionsConverter):
 
     @classmethod
     def run(cls, h5_fpath, iso_regions_fpath, excl_h5=None,
-            cost_configs=None, slope_lyr='srtm_slope',
-            nlcd_lyr='usa_mrlc_nlcd2011', default_mults=None, tiff_dir=None,
+            cost_configs=None, slope_layer='srtm_slope',
+            nlcd_layer='usa_mrlc_nlcd2011', default_mults=None, tiff_dir=None,
             extra_layers=None):
         """
         Build cost rasters using base line costs and multipliers. Save to
@@ -334,9 +335,9 @@ class XmissionCostCreator(ExclusionsConverter):
             or dictionary of configuration values,
             or dictionary of paths to config jsons,
             if None use defaults, by default None
-        sloper_lyr : str, optional
+        sloper_layer : str, optional
             Name of slope layer in excl_h5, by default 'srtm_slope'
-        ncld_lyr : str, optional
+        ncld_layer : str, optional
             Name of NLCD (land use) layer in excl_h5, by default
             'usa_mrlc_nlcd2011'
         default_mults : dict, optional
@@ -366,8 +367,8 @@ class XmissionCostCreator(ExclusionsConverter):
         mults_arr = xcc.compute_multipliers(
             xc['iso_multipliers'],
             excl_h5=excl_h5,
-            slope_lyr=slope_lyr,
-            nlcd_lyr=nlcd_lyr,
+            slope_layer=slope_layer,
+            nlcd_layer=nlcd_layer,
             land_use_classes=xc['land_use_classes'],
             default_mults=default_mults)
 

@@ -57,9 +57,15 @@ def run_local(ctx, config):
     """
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
-               assembly_areas=config.assembly_areas,
-               excl_fpath=config.excl_fpath,
-               ports_dset=config.ports_dset,
+               h5_fpath=config.h5_fpath,
+               iso_regions=config.iso_regions,
+               excl_h5=config.excl_h5,
+               cost_configs=config.cost_configs,
+               slope_layer=config.slope_layer,
+               nlcd_layer=config.nlcd_layer,
+               default_mults=config.default_mults,
+               tiff_dir=config.tiff_dir,
+               extra_layers=config.extra_layers,
                log_dir=config.logdir,
                verbose=config.log_level)
 
@@ -116,10 +122,10 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("JSON of Multipliers for regions not specified in"
                     "iso_mults_fpath"))
-@click.option('--tiff_dirs', '-tiff', type=click.Path(exists=True),
+@click.option('--tiff_dir', '-tiff', type=click.Path(exists=True),
               show_default=True, default=None,
               help=("Path to save costs and intermediary rasters as geotiffs"))
-@click.option('--extra_layers', '-lyr', type=click.Path(exists=True),
+@click.option('--extra_layers', '-lyrs', type=click.Path(exists=True),
               show_default=True, default=None,
               help=("JSON with Extra layers to add to h5 file, for example "
                     "dist_to_coast"))
@@ -129,8 +135,8 @@ def from_config(ctx, config, verbose):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, h5_fpath, iso_regions, excl_h5, cost_configs, slope_lyr,
-          nlcd_lyr, default_mults, tiff_dir, extra_layers, log_dir, verbose):
+def local(ctx, h5_fpath, iso_regions, excl_h5, cost_configs, slope_layer,
+          nlcd_layer, default_mults, tiff_dir, extra_layers, log_dir, verbose):
     """
     Run Least Cost Xmission Cost Creator on local hardware
     """
@@ -145,7 +151,7 @@ def local(ctx, h5_fpath, iso_regions, excl_h5, cost_configs, slope_lyr,
                 .format(h5_fpath))
     XmissionCostCreator.run(h5_fpath, iso_regions, excl_h5=excl_h5,
                             cost_configs=cost_configs,
-                            slope_lyr=slope_lyr, nlcd_lyr=nlcd_lyr,
+                            slope_layer=slope_layer, nlcd_layer=nlcd_layer,
                             default_mults=default_mults, tiff_dir=tiff_dir,
                             extra_layers=extra_layers)
 
@@ -167,9 +173,15 @@ def get_node_cmd(config):
 
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
-            '-areas {}'.format(SLURM.s(config.assembly_areas)),
-            '-excl {}'.format(SLURM.s(config.excl_fpath)),
-            '-ports {}'.format(SLURM.s(config.ports_dset)),
+            '-h5 {}'.format(SLURM.s(config.h5_fpath)),
+            '-iso {}'.format(SLURM.s(config.iso_regions)),
+            '-excl {}'.format(SLURM.s(config.excl_h5)),
+            '-cc {}'.format(SLURM.s(config.cost_configs)),
+            '-slope {}'.format(SLURM.s(config.slope_layer)),
+            '-nlcd {}'.format(SLURM.s(config.nlcd_layer)),
+            '-dm {}'.format(SLURM.s(config.default_mults)),
+            '-tiff {}'.format(SLURM.s(config.tiff_dir)),
+            '-lyrs {}'.format(SLURM.s(config.extra_layers)),
             '-log {}'.format(SLURM.s(config.logdir)),
             ]
 
