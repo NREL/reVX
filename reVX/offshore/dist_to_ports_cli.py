@@ -11,7 +11,7 @@ from rex.utilities.cli_dtypes import STR, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reVX.config.dist_to_ports import DistToPortsConfig
+from reVX.config.offshore import DistToPortsConfig
 from reVX.offshore.dist_to_ports import DistanceToPorts
 from reVX import __version__
 

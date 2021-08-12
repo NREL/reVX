@@ -4,7 +4,8 @@ Transmission Least Cost Defaults
 """
 import os
 
-from .xmission_config import XmissionConfig
+from reVX.least_cost_xmission.config.xmission_config import XmissionConfig
+
 DEFAULTSDIR = os.path.dirname(os.path.realpath(__file__))
 
 # Cost multipliers for medium and short lines

@@ -12,7 +12,7 @@ from rex.utilities.cli_dtypes import STR
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reVX.config.assembly_areas import AssemblyAreasConfig
+from reVX.config.offshore import AssemblyAreasConfig
 from reVX.offshore.assembly_areas import AssemblyAreas
 from reVX import __version__
 

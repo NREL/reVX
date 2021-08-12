@@ -12,5 +12,6 @@ Command Line Interphases (CLIs)
    reV-plexos
    reV-rpm
    reVX
+   simple-plant-builder
    turbine-flicker
    wind-setbacks
