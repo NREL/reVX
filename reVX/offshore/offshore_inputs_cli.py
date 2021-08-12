@@ -12,7 +12,7 @@ from rex.utilities.cli_dtypes import STR, STR_OR_LIST
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, safe_json_load
 
-from reVX.config.offshore_inputs import OffshoreInputsConfig
+from reVX.config.offshore import OffshoreInputsConfig
 from reVX.offshore.offshore_inputs import OffshoreInputs
 from reVX import __version__
 
