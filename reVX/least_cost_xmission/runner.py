@@ -98,12 +98,12 @@ class Runner:
         now = dt.now()
         loggers = [__name__, 'reVX']
 
-        with ProcessPoolExecutor(max_workers=cores) as exe:
-        # with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
+        # with ProcessPoolExecutor(max_workers=cores) as exe:
+        with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
             for i, chunk in enumerate(chunks):
                 if len(chunk) == 0:
                     continue
-                future = exe.submit(self._run_chunk, chunk,
+                future = exe.submit(self._run_chunk, chunk, self._lcx,
                                     chunk_id='Chunk {}: '.format(i))
                 meta = {'id': i, 'first': chunk.iloc[0].name, 'last':
                         chunk.iloc[-1].name, 'len': len(chunk)}
@@ -124,7 +124,8 @@ class Runner:
         all_costs = pd.concat(all_costs)
         return all_costs
 
-    def _run_chunk(self, chunk, chunk_id=''):
+    @staticmethod
+    def _run_chunk(chunk, lcx, chunk_id=''):
         """
         Process using single core
 
@@ -142,8 +143,8 @@ class Runner:
         """
         logger.info('Processing {}first={}, last={}, len={}'.format(
             chunk_id, chunk.iloc[0].name, chunk.iloc[-1].name, len(chunk)))
-        costs = self._lcx.process_sc_points(sc_pts=chunk, plot=self._plot,
-                                            chunk_id=chunk_id)
+        # add plot or git rid of it
+        costs = lcx.process_sc_points(sc_pts=chunk, chunk_id=chunk_id)
         return costs
 
     @staticmethod
