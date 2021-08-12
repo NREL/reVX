@@ -38,10 +38,19 @@ BARRIERS_MULT = 100
 # value
 MINIMUM_DIST_KM = 5.5
 
-# Cost to connect to PCA load center. Completely synthetic and prevents REEDS
-# from connecting unless absolutely mandatory
-FAR_T_LINE_COST = 1e10
+# Cost to connect to PCA load center. Completely synthetic and should only be
+# used if no other connection is available
 SINK_CONNECTION_COST = 1e11
+
+# Cost to connect to a t-line that is outside of the cost calculation area.
+# These are only to make reV happy and should never be connected to. Must
+# be higher than the SINK cost
+FAR_T_LINE_COST = SINK_CONNECTION_COST * 1000
+FAR_T_LINE_LENGTH = 999991
+
+# Connection costs for t-lines w/ inadequate voltage for tie line
+LOW_VOLT_T_LINE_COST = FAR_T_LINE_COST * 2
+LOW_VOLT_T_LINE_LENGTH = FAR_T_LINE_LENGTH + 1
 
 NLCD_LAND_USE_CLASSES = {
     'cropland': [80, 81],
@@ -77,3 +86,9 @@ TEST_DEFAULT_MULTS = {
         "mtn_slope": 8
     }
 }
+
+# Category strings for transmission features
+TRANS_LINE_CAT = 'TransLine'
+LOAD_CENTER_CAT = 'LoadCen'
+SINK_CAT = 'PCALoadCen'
+SUBSTATION_CAT = 'Substation'

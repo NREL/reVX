@@ -11,24 +11,12 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.least_cost_xmission.cost_creator import XmissionCostCreator, \
     XmissionConfig
-from reVX.least_cost_xmission.path_finder import PathFinder
 from reVX.least_cost_xmission.config import NLCD_LAND_USE_CLASSES, CELL_SIZE, \
     TEST_DEFAULT_MULTS
 
 RI_DATA_DIR = os.path.join(TESTDATADIR, 'ri_exclusions')
 INPUT_H5F = os.path.join(RI_DATA_DIR, 'ri_exclusions.h5')
 ISO_REGIONS_F = os.path.join(RI_DATA_DIR, 'ri_iso_regions.tif')
-
-
-def test_path_cost():
-    """ Test calulating path cost"""
-    costs = np.array([[1,1,1,1,1,1], [2,2,2,2,2,2], [3,3,3,3,3,3],
-                      [2,2,2,2,2,2], [1,1,1,1,1,1], [5,5,5,5,5,5], ])
-    i1 = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (1, 5), (2, 5),
-          (3, 5), (4, 5), (5, 5)]
-    i2 = [(0, 0), (0, 1), (1, 2), (2, 2), (2, 3), (3, 4), (4, 5), (5, 5)]
-    assert round(PathFinder._calc_path_cost(costs, i1), 5) == 16.0
-    assert round(PathFinder._calc_path_cost(costs, i2), 5) == 17.27817
 
 
 def test_land_use_multiplier():

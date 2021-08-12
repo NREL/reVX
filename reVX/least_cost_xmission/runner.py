@@ -4,25 +4,27 @@ import math
 from datetime import datetime as dt
 
 import pandas as pd
-from concurrent.futures import as_completed  # , ProcessPoolExecutor
+from concurrent.futures import as_completed, ProcessPoolExecutor
 from rex.utilities.execution import SpawnProcessPool
 
-from .cost_calculator import ProcessSCs
+from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission \
+    as LCX
 
 logger = logging.getLogger(__name__)
 
 
 class Runner:
-    def __init__(self, capacity_class, n, plot=False):
-        self._capacity_class = capacity_class
-        self._n = n
+    def __init__(self, cost_fpath, features_fpath, barriers_fpath,
+                 regions_fpath, capacity_classes=None, resolution=128,
+                 dist_thresh=None, plot=False):
         self._plot = plot
-        self._psc = ProcessSCs(capacity_class=capacity_class, n=n)
+        self._lcx = LCX(cost_fpath, features_fpath, barriers_fpath,
+                        regions_fpath, capacity_classes=capacity_classes,
+                        resolution=resolution, dist_thresh=dist_thresh)
 
-    @classmethod
-    def run(cls, capacity_class, n, cores=25, _slice=slice(None, None, None),
-            save_costs=True, f_name=None, plot=False, drop_list=None,
-            drop_fields=True):
+    def run(self, capacity_class, cores=10, _slice=slice(None, None, None),
+            save_costs=True, f_name=None, drop_fields=True, drop_list=None,
+            sequential=False):
         """
         Calculate tie-line costs using one or more cores
 
@@ -31,9 +33,8 @@ class Runner:
         capacity_class : String
             Desired reV power capacity class, one of "100MW", "200MW", "400MW",
             "1000MW"
-        n : int
-            Number of existing transmission lines and substations to search for
         cores : int
+            TODO - recalculate default # of cores
             Number of cores to use, this is limited by memory. 25 cores seems
             to work OK for 100MW with 250GB of RAM. Larger power classes will
             run out of memory faster.
@@ -50,14 +51,13 @@ class Runner:
         costs : pandas.DataFrame
             Tie line costs
         """
-        runner = cls(capacity_class, n, plot=plot)
-        pts = runner._psc.ld.sc_points[_slice]
+        pts = self._lcx.sc_points.loc[_slice]
 
         if cores == 1:
-            costs = runner._run_chunk(pts)
+            costs = self._run_chunk(pts)
         else:
-            chunks = runner._chunk_it(pts, cores)
-            costs = runner._run_multi(chunks, cores)
+            chunks = self._chunk_it(pts, cores, sequential=sequential)
+            costs = self._run_multi(chunks, cores)
 
         if drop_fields:
             if drop_list is None:
@@ -69,9 +69,9 @@ class Runner:
 
         if save_costs:
             if f_name is None:
-                volts = runner._psc.ld.tie_voltage
                 date = dt.now().strftime('%y-%m-%d_%H:%M')
-                f_name = f'cost_{capacity_class}_{volts}_{date}_{_slice}.csv'
+                f_name = 'cost_{}_{}_{}.csv'.format(capacity_class, date,
+                                                    _slice)
             costs.to_csv(f_name)
 
         return costs
@@ -92,34 +92,34 @@ class Runner:
         costs : pandas.DataFrame
             Tie line costs
         """
-        logger.info(f'Kicking off futures with {cores} cores')
+        logger.info('Kicking off futures with {} cores. {} cores total'.format(
+            cores, os.cpu_count()))
         futures = {}
         now = dt.now()
-        print(os.cpu_count())
         loggers = [__name__, 'reVX']
 
-        # with ProcessPoolExecutor(max_workers=cores) as exe:
-        with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
+        with ProcessPoolExecutor(max_workers=cores) as exe:
+        # with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
             for i, chunk in enumerate(chunks):
                 if len(chunk) == 0:
                     continue
                 future = exe.submit(self._run_chunk, chunk,
-                                    chunk_id=f'Chunk {i}: ')
-                meta = {'id': i, 'first': chunk[0].id, 'last': chunk[-1].id,
-                        'len': len(chunk)}
-                logger.info(f'Future {meta} started')
+                                    chunk_id='Chunk {}: '.format(i))
+                meta = {'id': i, 'first': chunk.iloc[0].name, 'last':
+                        chunk.iloc[-1].name, 'len': len(chunk)}
+                logger.info('Future {} started'.format(meta))
                 futures[future] = meta
 
-            logger.info(f'Started all futures in {dt.now() - now}')
+            logger.info('Started all futures in {}'.format(dt.now() - now))
 
             now = dt.now()
             all_costs = []
             for i, future in enumerate(as_completed(futures)):
                 all_costs.append(future.result())
-                logger.info(f'Future {futures[future]["id"]} completed in '
-                            f'{dt.now() - now}.')
-                logger.info(f'{i + 1} out of {len(futures)} futures '
-                            f'completed')
+                logger.info('Future {} completed in {}.'.format(
+                    futures[future]['id'], dt.now() - now))
+                logger.info('{} out of {} futures completed'.format(
+                    i + 1, len(futures)))
         logger.info('Done processing')
         all_costs = pd.concat(all_costs)
         return all_costs
@@ -140,13 +140,15 @@ class Runner:
         costs : pandas.DataFrame
             Tie line costs
         """
-        logger.info(f'Processing {chunk_id}first={chunk[0].id}, '
-                    f'last={chunk[-1].id}, len={len(chunk)}')
-        costs = self._psc.process(chunk, plot=self._plot, chunk_id=chunk_id)
+        logger.info('Processing {}first={}, last={}, len={}'.format(
+            chunk_id, chunk.iloc[0].name, chunk.iloc[-1].name, len(chunk)))
+        costs = self._lcx.process_sc_points(sc_pts=chunk, plot=self._plot,
+                                            chunk_id=chunk_id)
         return costs
 
     @staticmethod
     def _chunk_it(lst, n, sequential=False):
+        # TODO - add random option: 'sequential', 'striped', 'random'
         """
         Split list 'lst' into 'n' smaller lists. For short lists, the
         number of lists may be less than n.

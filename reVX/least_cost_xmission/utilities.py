@@ -59,56 +59,6 @@ class RowColTransformer:
         return x, y
 
 
-def save_geotiff(data, template, outf):
-    """
-    Save numpy array to geotiff based on a template. No attempts are made to
-    verify data matches the shape of the template
-
-    Parameters
-    ----------
-    data : numpy.ndarray
-        Data to save
-    template : str
-        Filename of template raster
-    outf : str
-        Filename for geotiff
-    """
-    ras = rio.open(template)
-    ras_out = rio.open(outf,
-                       'w',
-                       driver='GTiff',
-                       height=ras.shape[0],
-                       width=ras.shape[1],
-                       count=1,
-                       dtype=data.dtype,
-                       crs=ras.crs,
-                       transform=ras.transform,
-                       compress='lzw'
-                       )
-    ras_out.write(data, 1)
-    ras_out.close()
-
-
-def OLD_capacity_to_kv(capacity):
-    """
-    Determine transmission kV for reV power class
-
-    Parameters
-    ----------
-    capacity : String
-       Desired reV power capacity class, one of "100MW", "200MW", "400MW",
-       "1000MW"
-
-    Returns
-    -------
-    volts : int
-        Real world line voltage in kV
-    """
-    power = power_classes[capacity]
-    volts = power_to_voltage[str(power)]
-    return volts
-
-
 def int_capacity(capacity):
     """
     Convert string capacity to int, e.g. "100MW" -> 100

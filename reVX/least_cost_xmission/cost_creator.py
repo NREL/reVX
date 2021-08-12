@@ -122,7 +122,7 @@ class XmissionCostCreator(ExclusionsConverter):
                                             xc['iso_mults'], default_mults)
 
         if save_geotiff:
-            xcc.create_geotiff(tiff_dir, 'multipliers.tif', mults_arr)
+            xcc.create_geotiff(tiff_dir, 'tie_line_multipliers.tif', mults_arr)
 
         for power_class, capacity in xc['power_classes'].items():
             logger.info(f'Calculating costs for class {power_class} using a '
@@ -132,7 +132,8 @@ class XmissionCostCreator(ExclusionsConverter):
                                                   cell_size)
 
             if save_geotiff:
-                xcc.create_geotiff(tiff_dir, f'blc_{capacity}MW.tif', blc_arr)
+                xcc.create_geotiff(tiff_dir,
+                                   f'base_line_cost_{capacity}MW.tif', blc_arr)
 
             costs_arr = blc_arr * mults_arr
 
