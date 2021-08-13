@@ -259,8 +259,7 @@ class XmissionCostCreator(ExclusionsConverter):
         base_cost : numpy.ndarray
             Cost per cell raster in same shape as iso_regions
         """
-        base_cost = np.full(self._iso_regions.shape, float('inf'),
-                            dtype=np.float32)
+        base_cost = np.ones(self._iso_regions.shape, dtype=np.float32)
 
         for iso in base_line_costs:
             logger.info(f'Processing costs for {iso} for {capacity}MW')

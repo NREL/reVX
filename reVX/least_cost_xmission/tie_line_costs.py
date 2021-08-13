@@ -30,7 +30,7 @@ class TieLineCosts:
     Compute least cost tie-line path to all features to be connected a single
     supply curve point
     """
-    def __init__(self, h5f, sc_point, row_slice, col_slice):
+    def __init__(self, h5f, sc_point, row_slice, col_slice, capacity):
         """
         Parameters
         ----------
@@ -43,13 +43,21 @@ class TieLineCosts:
             Rows of clipped cost area
         col_slice : slice
             Coumns of clipped cost area
+        capacity : str
+            Capacity (class?) TODO
         """
         self._sc_point = sc_point
 
         with ExclusionLayers(h5f) as f:
-            self._cost = f['tie_line_cost_100mw', row_slice, col_slice]
+            self._cost = f['tie_line_cost_{}'.format(capacity), row_slice,
+                           col_slice]
             barrier = f['transmission_barrier', row_slice, col_slice]
-        self._mcp_cost = self._cost * barrier * BARRIERS_MULT
+
+        # TODO - this should happen before adding to h5 file
+        barrier[barrier == 1] = BARRIERS_MULT
+        barrier[barrier == 0] = 1
+
+        self._mcp_cost = self._cost * barrier
         self._sc_point = sc_point
 
         logger.debug('Initing mcp geo')
@@ -59,7 +67,7 @@ class TieLineCosts:
 
     @classmethod
     def run(cls, h5f, sc_point, row_slice, col_slice, x_feats, tie_voltage,
-            plot=False, plot_labels=False):
+            capacity, plot=False, plot_labels=False):
         """
         Compute least cost tie-line path to all features to be connected a
         single supply curve point.
@@ -79,6 +87,7 @@ class TieLineCosts:
             Real and synthetic transmission features in clipped area
         tie_voltage : int
             Voltage of tie line (kV)
+        capacity : TODO
         plot : bool
             Plot paths if true
         plot_labels : bool
@@ -89,7 +98,7 @@ class TieLineCosts:
         costs : pd.DataFrame
             Costs to build tie line to each feature from SC point
         """
-        tlc = cls(h5f, sc_point, row_slice, col_slice)
+        tlc = cls(h5f, sc_point, row_slice, col_slice, capacity)
 
         x_feats['raw_line_cost'] = 0
         x_feats['dist_km'] = 0
