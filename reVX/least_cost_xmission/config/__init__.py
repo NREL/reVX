@@ -32,7 +32,9 @@ NUM_SINKS = 1
 # about every 20%
 REPORTING_STEPS = 10
 
-# Costs multiplier for cells affected by transmission barriers
+# Costs multiplier for cells affected by transmission barriers This should be
+# greater than the largest possible cost multiplier * number of cells to
+# discourage from crossing
 BARRIERS_MULT = 100
 
 # Minimum transmission path length (km), anything less will be set to this
