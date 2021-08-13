@@ -55,14 +55,6 @@ FAR_T_LINE_LENGTH = 999991
 LOW_VOLT_T_LINE_COST = FAR_T_LINE_COST * 2
 LOW_VOLT_T_LINE_LENGTH = FAR_T_LINE_LENGTH + 1
 
-NLCD_LAND_USE_CLASSES = {
-    'cropland': [80, 81],
-    'forest': [41, 42, 43],
-    'wetland': [90, 95],
-    'suburban': [21, 22, 23],
-    'urban': [24],
-}
-
 HILL_MULT = 1
 MTN_MULT = 1
 HILL_SLOPE = 2

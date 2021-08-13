@@ -62,3 +62,9 @@ class SupplyCurvePointCapacityError(Exception):
     """
     Error for supply curve point with zero capacity
     """
+
+
+class TransFeatureNotFoundError(Exception):
+    """
+    Error for missing Transmission Features
+    """
