@@ -28,10 +28,6 @@ CLIP_RASTER_BUFFER = 1.05
 NUM_LOAD_CENTERS = 1
 NUM_SINKS = 1
 
-# Number of times to report on progress of SC point processing, e.g. 5 means
-# about every 20%
-REPORTING_STEPS = 10
-
 # Costs multiplier for cells affected by transmission barriers This should be
 # greater than the largest possible cost multiplier * number of cells to
 # discourage from crossing
