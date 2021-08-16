@@ -1,0 +1,113 @@
+# -*- coding: utf-8 -*-
+"""
+Tie Line Costs tests
+"""
+import matplotlib.pyplot as plt
+import matplotlib.patheffects as PathEffects
+import matplotlib.colors as colors
+import numpy as np
+import os
+import pytest
+
+
+def plot_paths(tie_line_costs, x_feats, cmap='viridis', label=False,
+               plot_paths_arr=True):
+    """
+    Plot least cost paths for QAQC
+    """
+    plt.figure(figsize=(30, 15))
+    if plot_paths_arr:
+        tie_line_costs._mcp_cost[tie_line_costs._mcp_cost == np.inf] = 0.1
+        norm = colors.LogNorm(vmin=tie_line_costs._mcp_cost.min(),
+                              vmax=tie_line_costs._mcp_cost.max())
+        plt.imshow(tie_line_costs._mcp_cost, cmap=cmap, norm=norm)
+    else:
+        plt.imshow(tie_line_costs._cost, cmap=cmap)
+
+    plt.colorbar()
+
+    # Plot paths
+    for _, feat in x_feats.iterrows():
+        if feat.raw_line_cost == FAR_T_LINE_COST:
+            continue
+
+        name = feat.category[0] + str(feat.trans_gid)
+        try:
+            indices = tie_line_costs._mcp.traceback((feat.row, feat.col))
+        except ValueError:
+            # No path to trans feature.
+            name = feat.category[0] + str(feat.trans_gid)
+            msg = ("Can't find path to trans {} from "
+                    "SC pt {}".format(feat.trans_gid, tie_line_costs._sc_point.name))
+            logger.exception(msg)
+            raise ValueError(msg)
+
+        path_xs = [x[1] for x in indices]
+        path_ys = [x[0] for x in indices]
+        plt.plot(path_xs, path_ys, color='white')
+
+    # Plot trans features
+    style = {
+        SUBSTATION_CAT: {
+            'marker': 'd',
+            'color': 'red',
+            't_offset': 0,
+        },
+        TRANS_LINE_CAT: {
+            'marker': '^',
+            'color': 'lightblue',
+            't_offset': 50,
+        },
+        LOAD_CENTER_CAT: {
+            'marker': 'v',
+            'color': 'green',
+            't_offset': 0,
+        },
+        SINK_CAT: {
+            'marker': 'X',
+            'color': 'orange',
+            't_offset': 0,
+        },
+    }
+
+    path_effects = [PathEffects.withStroke(linewidth=3, foreground='w')]
+
+    for _, feat in x_feats.iterrows():
+        marker = style[feat.category]['marker']
+        color = style[feat.category]['color']
+        offset = style[feat.category]['t_offset']
+        name = feat.category[0] + str(feat.trans_gid)
+
+        if label:
+            plt.text(feat.col + 20, feat.row + offset, name, color='black',
+                        path_effects=path_effects, fontdict={'size': 13})
+        plt.plot(feat.col, feat.row, marker=marker, color=color)
+
+    # Plot sc_point
+    plt.plot(tie_line_costs._sc_point.col, tie_line_costs._sc_point.row, marker='P',
+                color='black', markersize=18)
+    plt.plot(tie_line_costs._sc_point.col, tie_line_costs._sc_point.row, marker='P',
+                color='yellow', markersize=10)
+
+    plt.title(str(tie_line_costs._sc_point.name))
+    plt.show()
+
+
+def execute_pytest(capture='all', flags='-rapP'):
+    """Execute module as pytest with detailed summary report.
+
+    Parameters
+    ----------
+    capture : str
+        Log or stdout/stderr capture option. ex: log (only logger),
+        all (includes stdout/stderr)
+    flags : str
+        Which tests to show logs and results for.
+    """
+
+    fname = os.path.basename(__file__)
+    pytest.main(['-q', '--show-capture={}'.format(capture), fname, flags])
+
+
+if __name__ == '__main__':
+    execute_pytest()
