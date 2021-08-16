@@ -26,7 +26,7 @@ from rex.utilities.execution import SpawnProcessPool
 
 from reVX.handlers.geotiff import Geotiff
 
-from .tie_line_costs import TieLineCosts
+from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
 from .utilities import RowColTransformer, int_capacity
 from .config import XmissionConfig,\
     CLIP_RASTER_BUFFER, TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, \
@@ -80,6 +80,7 @@ class LeastCostXmission:
 
         logger.debug('Creating supply curve points')
         self.sc_points = self._create_sc_points(cost_fpath, resolution)
+        self._cost_fpath = cost_fpath
 
         logger.info('Done loading data')
 
@@ -209,6 +210,7 @@ class LeastCostXmission:
                     ''.format(len(sc_pts), sc_pts.iloc[0].name,
                               sc_pts.iloc[-1].name))
 
+        capacity = int(capacity_class)
         line_cap = self._xmc['power_classes'][capacity_class]
         tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
         logger.debug('Using capacity class {}, line capacity {}MW, and line '
@@ -232,8 +234,8 @@ class LeastCostXmission:
                 radius, x_feats = self._clip_aoi(sc_pt, tie_voltage,
                                                  dist_thresh=dist_thresh)
 
-                future = exe.submit(TieLineCosts.run, sc_pt, radius, x_feats,
-                                    tie_voltage)
+                future = exe.submit(TransCapCosts.run, self._cost_fpath, sc_pt,
+                                    radius, x_feats, capacity)
 
             logger.info('Started all futures in {}'.format(dt.now() -
                                                            start_time))
@@ -309,6 +311,7 @@ class LeastCostXmission:
                     ''.format(len(sc_pts), sc_pts.iloc[0].name,
                               sc_pts.iloc[-1].name))
 
+        capacity = int(capacity_class)
         line_cap = self._xmc['power_classes'][capacity_class]
         tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
         logger.debug('Using capacity class {}, line capacity {}MW, and line '
@@ -326,8 +329,8 @@ class LeastCostXmission:
             start_time = dt.now()
             radius, x_feats = self._clip_aoi(sc_pt, tie_voltage,
                                              dist_thresh=dist_thresh)
-            costs = TieLineCosts.run(sc_pt, radius, x_feats, tie_voltage,
-                                     plot=plot, plot_labels=plot_labels)
+            costs = TransCapCosts.run(sc_pt, radius, x_feats, capacity,
+                                      tie_voltage)
             all_costs.append(costs)
             run_times.append(dt.now() - start_time)
 
@@ -378,6 +381,7 @@ class LeastCostXmission:
         pd.DataFrame
             Transmission costs to existing trans features for SC point
         """
+        capacity = int(capacity_class)
         line_cap = self._xmc['power_classes'][capacity_class]
         tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
 
@@ -385,8 +389,8 @@ class LeastCostXmission:
                                          dist_thresh=dist_thresh)
 
         logger.debug('Calculating least cost paths')
-        costs = TieLineCosts.run(sc_point, radius, x_feats, tie_voltage,
-                                 plot=plot, plot_labels=plot_labels)
+        costs = TransCapCosts.run(self._cost_fpath, sc_point, radius, x_feats,
+                                  capacity, tie_voltage)
 
         return costs
 

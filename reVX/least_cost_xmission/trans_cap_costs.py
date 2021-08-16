@@ -7,7 +7,8 @@ import logging
 import numpy as np
 
 from skimage.graph import MCP_Geometric
-from .config import XmissionConfig, TRANS_LINE_CAT
+from .config import XmissionConfig, TRANS_LINE_CAT,\
+    LOW_VOLT_T_LINE_COST, LOW_VOLT_T_LINE_LENGTH
 from reVX.utilities.exceptions import TransFeatureNotFoundError
 
 from reV.handlers.exclusions import ExclusionLayers
@@ -28,7 +29,7 @@ class TransCapCosts:
         ----------
         excl_fpath : str
             Full path of .h5 file with cost arrays
-        sc_point : gpd.series
+        sc_point : gpd.GeoSeries
             SC point to find paths from. Row and col are relative to clipped
             area.
         radius : int
@@ -41,13 +42,25 @@ class TransCapCosts:
         self._sc_point = sc_point
         self._capacity_class = capacity
 
-        row = sc_point['row']
-        row_slice = slice(row - radius, row + radius)
-        row = radius
+        with ExclusionLayers(excl_fpath) as f:
+            shape = f.shape
 
-        col = sc_point['col']
-        col_slice = slice(col - radius, col + radius)
-        col = radius
+        row_min = sc_point.row - radius
+        row_max = sc_point.row + radius
+        col_min = sc_point.col - radius
+        col_max = sc_point.col + radius
+
+        if row_min < 0:
+            row_min = 0
+        if col_min < 0:
+            col_min = 0
+        if row_max > shape[0]:
+            row_max = shape[0]
+        if col_max > shape[1]:
+            col_max = shape[1]
+
+        row_slice = slice(row_min, row_max)
+        col_slice = slice(col_min, col_max)
 
         with ExclusionLayers(excl_fpath) as f:
             self._cost = f[f'tie_line_cost_{capacity}mw', row_slice, col_slice]
@@ -58,7 +71,7 @@ class TransCapCosts:
         logger.debug('Initing mcp geo')
         # Including the ends is actually slightly slower
         self._mcp = MCP_Geometric(self._mcp_cost)
-        self._mcp.find_costs(starts=[(row, col)])
+        self._mcp.find_costs(starts=[(sc_point.row, sc_point.col)])
 
         self._preflight_check()
 
@@ -67,6 +80,9 @@ class TransCapCosts:
                                           self.sc_point_gid)
 
         return msg
+
+    def _preflight_check(self):
+        print('TODO')
 
     @property
     def sc_point(self):
@@ -192,11 +208,11 @@ class TransCapCosts:
 
         return length, cost
 
-    def compute_costs(xmission_features)
+    def compute_costs(xmission_features):
+        pass
 
     @classmethod
-    def run(cls, excl_fpath, sc_point, row_slice, col_slice, x_feats,
-            tie_voltage):
+    def run(cls, excl_fpath, sc_point, radius, x_feats, capacity, tie_voltage):
         """
         Compute least cost tie-line path to all features to be connected a
         single supply curve point.
@@ -208,10 +224,8 @@ class TransCapCosts:
         sc_point : gpd.series
             SC point to find paths from. Row and col are relative to clipped
             area.
-        row_slice : slice
-            Rows of clipped cost area
-        col_slice : slice
-            Coumns of clipped cost area
+        TODO
+
         x_feats : pd.DataFrame
             Real and synthetic transmission features in clipped area
         tie_voltage : int
@@ -222,7 +236,7 @@ class TransCapCosts:
         costs : pd.DataFrame
             Costs to build tie line to each feature from SC point
         """
-        tlc = cls(excl_fpath, sc_point, row_slice, col_slice)
+        tlc = cls(excl_fpath, sc_point, radius, capacity)
 
         x_feats['raw_line_cost'] = 0
         x_feats['dist_km'] = 0
