@@ -8,10 +8,13 @@ import numpy as np
 
 from skimage.graph import MCP_Geometric
 from .config import XmissionConfig, TRANS_LINE_CAT,\
-    LOW_VOLT_T_LINE_COST, LOW_VOLT_T_LINE_LENGTH
+    LOW_VOLT_T_LINE_COST, LOW_VOLT_T_LINE_LENGTH, MEDIUM_MULT, SHORT_MULT,\
+    MEDIUM_CUTOFF, SHORT_CUTOFF, SINK_CAT, SINK_CONNECTION_COST
+
 from reVX.utilities.exceptions import TransFeatureNotFoundError
 
 from reV.handlers.exclusions import ExclusionLayers
+from reVX.least_cost_xmission.utilities import int_capacity
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +42,10 @@ class TransCapCosts:
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
         """
+        self._xmc = XmissionConfig()
         self._sc_point = sc_point
-        self._capacity_class = capacity
+        self._capacity_class = '{}MW'.format(capacity)
+        line_cap = self._xmc['power_classes'][self._capacity_class]
 
         with ExclusionLayers(excl_fpath) as f:
             shape = f.shape
@@ -59,19 +64,26 @@ class TransCapCosts:
         if col_max > shape[1]:
             col_max = shape[1]
 
+        self._row_offset = row_min
+        self._col_offset = col_min
+
         row_slice = slice(row_min, row_max)
         col_slice = slice(col_min, col_max)
+        start = (sc_point.row - row_min, sc_point.col - col_min)
 
         with ExclusionLayers(excl_fpath) as f:
-            self._cost = f[f'tie_line_cost_{capacity}mw', row_slice, col_slice]
-            barrier = f['transmission_barrier', row_slice, col_slice]
+            self._cost = f['tie_line_costs_{}MW'.format(line_cap), row_slice,
+                           col_slice]
+            # TODO
+            # barrier = f['transmission_barrier', row_slice, col_slice]
+            barrier = np.ones(self._cost.shape)
 
         self._mcp_cost = self._cost * barrier * barrier_mult
 
         logger.debug('Initing mcp geo')
         # Including the ends is actually slightly slower
         self._mcp = MCP_Geometric(self._mcp_cost)
-        self._mcp.find_costs(starts=[(sc_point.row, sc_point.col)])
+        self._mcp.find_costs(starts=[start])
 
         self._preflight_check()
 
@@ -166,7 +178,7 @@ class TransCapCosts:
         if row < 0 or col < 0 or row >= shp[0] or col >= shp[1]:
             msg = 'Feature {} {} is outside of clipped raster'.format(
                 feat['category'], feat['gid'])
-            logger.execption(msg)
+            logger.exception(msg)
             raise ValueError(msg)
 
         try:
@@ -176,7 +188,7 @@ class TransCapCosts:
                    ''.format(self.sc_point_gid, feat['category'],
                              feat['trans_gid']))
             logger.exception(msg)
-            raise TransFeatureNotFoundError(msg) from ex
+            raise TransFeatureNotFoundError(msg)  # TODO from ex
 
         # Use Pythagorean theorem to calculate lengths between cells (km)
         lengths = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
@@ -212,7 +224,8 @@ class TransCapCosts:
         pass
 
     @classmethod
-    def run(cls, excl_fpath, sc_point, radius, x_feats, capacity, tie_voltage):
+    def run(cls, excl_fpath, sc_point, radius, x_feats, capacity, tie_voltage,
+            min_length=1.5):
         """
         Compute least cost tie-line path to all features to be connected a
         single supply curve point.
@@ -224,12 +237,17 @@ class TransCapCosts:
         sc_point : gpd.series
             SC point to find paths from. Row and col are relative to clipped
             area.
+        capacity : int
+            Capacity class as int, e.g. 100, 200, 400, 1000
         TODO
 
         x_feats : pd.DataFrame
             Real and synthetic transmission features in clipped area
         tie_voltage : int
             Voltage of tie line (kV)
+        min_length : float
+            Minimum length of trans lines (km). All lines shorter than this are
+            scaled up.
 
         Returns
         -------
@@ -237,6 +255,10 @@ class TransCapCosts:
             Costs to build tie line to each feature from SC point
         """
         tlc = cls(excl_fpath, sc_point, radius, capacity)
+
+        x_feats = x_feats.copy()
+        x_feats.row = x_feats.row - tlc._row_offset
+        x_feats.col = x_feats.col - tlc._col_offset
 
         x_feats['raw_line_cost'] = 0
         x_feats['dist_km'] = 0
@@ -252,15 +274,62 @@ class TransCapCosts:
                 x_feats.loc[index, 'dist_km'] = LOW_VOLT_T_LINE_LENGTH
                 continue
 
-            # TODO - set minimum length
             length, cost = tlc._path_length_cost(feat)
+            if length < min_length:
+                cost = cost * (min_length/length)
+                length = min_length
             x_feats.loc[index, 'raw_line_cost'] = cost
             x_feats.loc[index, 'dist_km'] = length
 
-        # TODO - move all this stuff to outer class
-        # TODO - drop geometry before passing x_feats in here
         x_feats['trans_gid'] = x_feats.gid
         x_feats['trans_line_gids'] = x_feats.trans_gids
-        costs = x_feats.drop(['geometry', 'dist', 'gid', 'trans_gids'], axis=1)
+        costs = x_feats.drop(['dist', 'gid', 'trans_gids'], axis=1)
+
+        costs = tlc._connection_costs(costs, tie_voltage)
 
         return costs
+
+    def _connection_costs(self, cdf, tie_voltage):
+        """
+        Calculate connection costs for tie lines
+
+        Parameters
+        ----------
+        cdf : pd.DataFrame
+            Costs data frame for tie lines
+        tie_voltage : int
+            Tie line voltage
+
+        Returns
+        -------
+        cdf : pd.DataFrame
+            Tie line line and connection costs
+        """
+        # Length multiplier
+        cdf['length_mult'] = 1.0
+        cdf.loc[cdf.dist_km <= MEDIUM_CUTOFF, 'length_mult'] = MEDIUM_MULT
+        cdf.loc[cdf.dist_km < SHORT_CUTOFF, 'length_mult'] = SHORT_MULT
+        cdf['tie_line_cost'] = cdf.raw_line_cost * cdf.length_mult
+
+        # Transformer costs
+        cdf['xformer_cost_p_mw'] = cdf.apply(self._xmc.xformer_cost, axis=1,
+                                             args=(tie_voltage,))
+        cdf['xformer_cost'] = cdf.xformer_cost_p_mw *\
+            int_capacity(self._capacity_class)
+
+        # Substation costs
+        cdf['sub_upgrade_cost'] = cdf.apply(self._xmc.sub_upgrade_cost, axis=1,
+                                            args=(tie_voltage,))
+        cdf['new_sub_cost'] = cdf.apply(self._xmc.new_sub_cost, axis=1,
+                                        args=(tie_voltage,))
+
+        # Sink costs
+        cdf.loc[cdf.category == SINK_CAT, 'new_sub_cost'] =\
+            SINK_CONNECTION_COST
+
+        # Total cost
+        cdf['connection_cost'] = cdf.xformer_cost + cdf.sub_upgrade_cost +\
+            cdf.new_sub_cost
+        cdf['trans_cap_cost'] = cdf.tie_line_cost + cdf.connection_cost
+
+        return cdf

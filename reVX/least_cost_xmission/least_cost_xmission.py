@@ -75,11 +75,12 @@ class LeastCostXmission:
             self.profile = gt.profile
 
         logger.debug('Loading transmission features')
-        self.t_lines, self.lcs, self.sinks, self.sub = \
+        self.t_lines, self.lcs, self.sinks, self.subs = \
             self._load_trans_feats(features_fpath)
 
         logger.debug('Creating supply curve points')
-        self.sc_points = self._create_sc_points(cost_fpath, resolution)
+        self.sc_points = self._create_sc_points(cost_fpath, self.subs.crs,
+                                                resolution)
         self._cost_fpath = cost_fpath
 
         logger.info('Done loading data')
@@ -146,7 +147,7 @@ class LeastCostXmission:
 
         return t_lines, lcs, sinks, subs
 
-    def _create_sc_points(self, cost_fpath, resolution):
+    def _create_sc_points(self, cost_fpath, crs, resolution):
         """
         Load SC points, covert row/col to array wide, and determine x/y for
         reV projection
@@ -173,7 +174,7 @@ class LeastCostXmission:
 
         logger.debug('Converting SC pts to gpd')
         geo = [Point(xy) for xy in zip(pts.x, pts.y)]
-        sc_points = gpd.GeoDataFrame(pts, crs=self.subs.crs, geometry=geo)
+        sc_points = gpd.GeoDataFrame(pts, crs=crs, geometry=geo)
 
         return sc_points
 
@@ -210,7 +211,7 @@ class LeastCostXmission:
                     ''.format(len(sc_pts), sc_pts.iloc[0].name,
                               sc_pts.iloc[-1].name))
 
-        capacity = int(capacity_class)
+        capacity = int_capacity(capacity_class)
         line_cap = self._xmc['power_classes'][capacity_class]
         tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
         logger.debug('Using capacity class {}, line capacity {}MW, and line '
@@ -311,7 +312,7 @@ class LeastCostXmission:
                     ''.format(len(sc_pts), sc_pts.iloc[0].name,
                               sc_pts.iloc[-1].name))
 
-        capacity = int(capacity_class)
+        capacity = int_capacity(capacity_class)
         line_cap = self._xmc['power_classes'][capacity_class]
         tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
         logger.debug('Using capacity class {}, line capacity {}MW, and line '
@@ -364,7 +365,7 @@ class LeastCostXmission:
 
         Parameters
         ----------
-        sc_point : gpd.GeoSeriesx
+        sc_point : gpd.GeoSeries
             SC point
         capacity_class : str
             Capacity class to use, e.g. '100MW'
@@ -381,7 +382,7 @@ class LeastCostXmission:
         pd.DataFrame
             Transmission costs to existing trans features for SC point
         """
-        capacity = int(capacity_class)
+        capacity = int_capacity(capacity_class)
         line_cap = self._xmc['power_classes'][capacity_class]
         tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
 
@@ -503,7 +504,7 @@ class LeastCostXmission:
         x_feats = x_feats.append(t_lines)
         x_feats['region'] = self._regions_arr[list(x_feats.row),
                                               list(x_feats.col)]
-        x_feats = x_feats.drop('geometry')
+        x_feats = x_feats.drop('geometry', axis=1)
 
         return radius, x_feats
 
