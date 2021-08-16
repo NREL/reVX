@@ -10,11 +10,17 @@ from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.exclusions_converter import ExclusionsConverter
-from reVX.least_cost_xmission.config import XmissionConfig, WATER_NLCD_CODE, \
-    WATER_MULT, METERS_IN_MILE, NLCD_LAND_USE_CLASSES, HILL_MULT, MTN_MULT, \
-    HILL_SLOPE, MTN_SLOPE, CELL_SIZE
+from reVX.least_cost_xmission.config import XmissionConfig
 
 logger = logging.getLogger(__name__)
+
+NLCD_LAND_USE_CLASSES = {
+    'cropland': [80, 81],
+    'forest': [41, 42, 43],
+    'wetland': [90, 95],
+    'suburban': [21, 22, 23],
+    'urban': [24],
+}
 
 
 class XmissionCostCreator(ExclusionsConverter):
@@ -25,7 +31,7 @@ class XmissionCostCreator(ExclusionsConverter):
     - multiplier_*mw
     - xmission_barrier
     """
-    PIXEL_SIZE = CELL_SIZE
+    PIXEL_SIZE = 90
 
     def __init__(self, h5_fpath, iso_regions_fpath, iso_lookup=None):
         """
@@ -86,10 +92,10 @@ class XmissionCostCreator(ExclusionsConverter):
         if config is None:
             config = {}
 
-        hill_mult = config.get('hill_mult', HILL_MULT)
-        mtn_mult = config.get('mtn_mult', MTN_MULT)
-        hill_slope = config.get('hill_slope', HILL_SLOPE)
-        mtn_slope = config.get('mtn_slope', MTN_SLOPE)
+        hill_mult = config.get('hill_mult', 1)
+        mtn_mult = config.get('mtn_mult', 1)
+        hill_slope = config.get('hill_slope', 2)
+        mtn_slope = config.get('mtn_slope', 8)
 
         hilly = (slope >= hill_slope) & (slope < mtn_slope)
         mountainous = slope >= mtn_slope
@@ -125,8 +131,8 @@ class XmissionCostCreator(ExclusionsConverter):
         indices = []  # [(index0, multiplier0, _class_value0), ...]
         for _class, multiplier in multipliers.items():
             if _class not in land_use_classes:
-                msg = f'Class {_class} not in land_use_classes: ' +\
-                      f'{land_use_classes}'
+                msg = (f'Class {_class} not in land_use_classes: '
+                       f'{land_use_classes}')
                 raise ValueError(msg)
 
             values = land_use_classes[_class]
@@ -239,7 +245,7 @@ class XmissionCostCreator(ExclusionsConverter):
 
         # Set water multiplier last so we don't get super high multipliers at
         # water body boundaries next to steep slopes
-        mults_arr[land_use == WATER_NLCD_CODE] = WATER_MULT
+        mults_arr[land_use == 11] = 10
 
         return mults_arr
 
@@ -265,7 +271,7 @@ class XmissionCostCreator(ExclusionsConverter):
             logger.info(f'Processing costs for {iso} for {capacity}MW')
             iso_code = self._iso_lookup[iso]
             cost_per_mile = base_line_costs[iso][str(capacity)]
-            cost_per_cell = cost_per_mile / METERS_IN_MILE * self.PIXEL_SIZE
+            cost_per_cell = cost_per_mile / 1609.344 * self.PIXEL_SIZE
             logger.debug(f'$/mile is {cost_per_mile}, $/cell is '
                          f'{cost_per_cell}')
             mask = self._iso_regions == iso_code

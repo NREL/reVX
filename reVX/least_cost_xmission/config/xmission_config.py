@@ -6,6 +6,7 @@ Mike Bannister
 """
 import logging
 import os
+import numpy as np
 
 from rex.utilities.utilities import safe_json_load
 
@@ -50,3 +51,132 @@ class XmissionConfig(dict):
                     v = safe_json_load(v)
 
                 self[k] = v
+
+    def __getitem__(self, k):
+        if k == 'reverse_iso':
+            out = {v: k for k, v in self['iso_lookup'].items()}
+        elif k == 'voltage_to_power':
+            out = {v: k for k, v in self['power_to_voltage'].items()}
+        elif k == 'line_power_to_classes':
+            out = {v: k for k, v in self['power_classes'].items()}
+        else:
+            out = super().__getitem__(k)
+
+        return out
+
+    def capacity_to_kv(self, capacity):
+        """
+        Convert capacity class to line voltage
+
+        Parameters
+        ----------
+        capacity : int
+            Capacity class in MW
+
+        Returns
+        -------
+        kv : int
+            Tie-line voltage in kv
+        """
+        line_capacity = self['power_classes'][str(capacity)]
+        kv = self['power_to_voltage'][str(line_capacity)]
+
+        return kv
+
+    def kv_to_capacity(self, kv):
+        """
+        Convert line voltage to capacity class
+
+        Parameters
+        ----------
+        kv : in
+            Tie-line voltage in kv
+
+        Returns
+        -------
+        capacity : int
+            Capacity class in MW
+        """
+        line_capacity = self['voltage_to_power'][kv]
+        capacity = int(self['line_power_to_classes'][line_capacity])
+
+        return capacity
+
+    def sub_upgrade_cost(self, region, tie_line_voltage):
+        """
+        Extract substation upgrade costs in $ for given region and tie-line
+        voltage rating
+
+        Parameters
+        ----------
+        region : int
+            Region code, used to extract ISO
+        tie_line_voltage : int | str
+            Tie-line voltage class in kV
+
+        Returns
+        -------
+        float
+            Substation upgrade cost
+        """
+        if not isinstance(tie_line_voltage, str):
+            tie_line_voltage = str(tie_line_voltage)
+
+        region = self['reverse_iso'][region]
+
+        return self['upgrade_sub_cost'][region][tie_line_voltage]
+
+    def new_sub_cost(self, region, tie_line_voltage):
+        """
+        Extract new substation costs in $ for given region and tie-line
+        voltage rating
+
+        Parameters
+        ----------
+        region : int
+            Region code, used to extract ISO
+        tie_line_voltage : int | str
+            Tie-line voltage class in kV
+
+        Returns
+        -------
+        float
+            New substation cost
+        """
+        if not isinstance(tie_line_voltage, str):
+            tie_line_voltage = str(tie_line_voltage)
+
+        region = self['reverse_iso'][region]
+
+        return self['new_sub_costs'][region][tie_line_voltage]
+
+    def xformer_cost(self, tie_line_voltage, feature_voltage):
+        """
+        Extract transformer costs in $ for given region and tie-line
+        voltage rating
+
+        Parameters
+        ----------
+        tie_line_voltage : int | str
+            Tie-line voltage class in kV
+        feature_voltage : int
+            Voltage of feature that tie-line is connecting to
+
+        Returns
+        -------
+        float
+            Transformer cost
+        """
+        if not isinstance(tie_line_voltage, str):
+            tie_line_voltage = str(tie_line_voltage)
+
+        costs = self['transformer_costs'][tie_line_voltage]
+
+        classes = np.array(sorted(map(int, costs)))
+        valid_idx = np.where(classes >= feature_voltage)[0]
+        if valid_idx.size:
+            v_class = classes[valid_idx[0]]
+        else:
+            v_class = classes[-1]
+
+        return costs[str(v_class)]
