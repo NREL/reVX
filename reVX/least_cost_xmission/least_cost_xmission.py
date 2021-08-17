@@ -30,8 +30,7 @@ from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
 from .utilities import RowColTransformer, int_capacity
 from .config import XmissionConfig,\
     CLIP_RASTER_BUFFER, TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, \
-    SUBSTATION_CAT,\
-    MEDIUM_MULT, SHORT_MULT, MEDIUM_CUTOFF, SHORT_CUTOFF, SINK_CONNECTION_COST
+    SUBSTATION_CAT
 
 logger = logging.getLogger(__name__)
 
@@ -129,8 +128,7 @@ class LeastCostXmission:
             subs = self._update_sub_volts(subs)
             subs.to_file(subs_f)
 
-        # TODO - drop subs with voltage below 69kV
-        # subs = subs[subs.min_volts >= 69]
+        subs = subs[subs.max_volts >= 69]
 
         # Convert trans_gids from str to list
         subs.trans_gids = subs.trans_gids.apply(ast.literal_eval)
@@ -156,6 +154,9 @@ class LeastCostXmission:
         ----------
         cost_fpath : str
             Full path to h5 file with cost rasters
+        csr : TODO
+            Coordinate reference system for projection used for transmission
+            features.
         resolution : int
             Aggregation resolution
 
@@ -194,7 +195,7 @@ class LeastCostXmission:
         dist_thresh : None | int
             Optional minimum clipping distance in pixels, if None base clipping
             distance on nearest NUM_SINKS sinks
-        report_steps : int TODO - are we using this?    j
+        report_steps : int
             Number of times to report progress
         cores : None | int
             Number of cores to use for multiprocessing. None means use all
@@ -218,65 +219,56 @@ class LeastCostXmission:
                      'voltage of {}kV'.format(capacity_class, line_cap,
                                               tie_voltage))
 
-        # Keep track of run times and report progress
-#        step = math.ceil(len(sc_pts)/reporting_steps)
-#        report_steps = range(step-1, len(sc_pts), step)
-#        run_times = []
-
         loggers = [__name__, 'reVX']
         all_costs = pd.DataFrame()
 
+        start_time = dt.now()
+        kick_off_times = []
         with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
             futures = {}
-            start_time = dt.now()
             for i, (_, sc_pt) in enumerate(sc_pts.iterrows()):
-                logger.debug('Processing SC point {}'.format(sc_pt.name))
-
                 radius, x_feats = self._clip_aoi(sc_pt, tie_voltage,
                                                  dist_thresh=dist_thresh)
 
                 future = exe.submit(TransCapCosts.run, self._cost_fpath, sc_pt,
-                                    radius, x_feats, capacity)
+                                    radius, x_feats, capacity, tie_voltage)
+                futures[future] = {'gid': sc_pt.name}
+                kick_off_times.append(dt.now() - start_time)
+                start_time = dt.now()
 
-            logger.info('Started all futures in {}'.format(dt.now() -
-                                                           start_time))
+            total = sum(kick_off_times, timedelta(0))
+            avg = total/len(kick_off_times)
+            logger.info('Started all futures in {}. Average of {} per SC pt'
+                        ''.format(total, avg))
 
-        for i, future in enumerate(as_completed(futures)):
-            all_costs.append(future.result())
-            logger.info('Future {} completed in {}.'.format(
-                futures[future]['id'], dt.now() - start_time))
-            logger.info('{} out of {} futures completed'.format(
-                i + 1, len(futures)))
+            # Keep track of run times and report progress
+            step = math.ceil(len(sc_pts)/reporting_steps)
+            report_steps = range(step-1, len(sc_pts), step)
+            new_start_time = dt.now()
+            run_times = []
 
-        # TODO - put in TLC
-#        all_costs['sc_point_gid'] = sc_pt.name
-#        costs['sc_point_row_id'] = sc_pt.row
-#        costs['sc_point_col_id'] = sc_pt.col
+            for i, future in enumerate(as_completed(futures)):
+                all_costs = all_costs.append(future.result())
+                run_times.append(dt.now() - new_start_time)
 
-#        if i in report_steps:
-#            progress = int((i+1)/len(sc_pts)*100)
-#            avg = sum(run_times, timedelta(0))/len(run_times)
-#            left = (len(sc_pts)-i-1)*avg
-#            msg = ('Finished SC pt {} ({} of {}). {}% '
-#                'complete. Average time of {} per SC pt. '
-#                'Approx {} left for this chunk.'
-#                ''.format(sc_pt.name, i+1, len(sc_pts),
-#                            progress, avg, left))
-#            logger.info(msg)
+                if i in report_steps:
+                    progress = int((i+1)/len(sc_pts)*100)
+                    avg = sum(run_times, timedelta(0))/len(run_times)
+                    left = (len(sc_pts)-i-1)*avg
+                    msg = ('Finished {} of {}. {}% '
+                           'complete. Average time of {} per SC pt. '
+                           'Approx {} left.'
+                           ''.format(i+1, len(sc_pts),
+                                     progress, avg, left))
+                    logger.info(msg)
+                new_start_time = dt.now()
+
+        avg = sum(run_times, timedelta(0))/len(run_times)
+        msg = ('Finished processing ({} of {} pts). Average time of {} per '
+               'SC pt.'.format(i+1, len(sc_pts), avg))
+        logger.info(msg)
 
         all_costs.reset_index(inplace=True, drop=True)
-
-#        avg = sum(run_times, timedelta(0))/len(run_times)
-#        msg = ('Finished processing ({} of {} pts). Average time of {} per '
-#               'SC pt.'.format(i+1, len(sc_pts), avg))
-#        logger.info(msg)
-#
-#        logger.debug('Calculating connection costs')
-        # TODO - max_cap should be set in TLC
-#        all_costs['max_cap'] = line_cap
-#        all_costs = self._connection_costs(all_costs, capacity_class,
-#                                           tie_voltage)
-#        logger.debug('Done with connection costs')
         return all_costs
 
     def process_sc_points(self, sc_pts=None, capacity_class='100MW',
@@ -294,7 +286,7 @@ class LeastCostXmission:
         dist_thresh : None | int
             Optional minimum clipping distance, if None base clipping distance
             on nearest NUM_SINKS sinks
-        report_steps : int TODO - are we using this?    j
+        report_steps : int
             Number of times to report progress
         plot : bool
             Plot minimum cost paths to features if True
@@ -330,9 +322,9 @@ class LeastCostXmission:
             start_time = dt.now()
             radius, x_feats = self._clip_aoi(sc_pt, tie_voltage,
                                              dist_thresh=dist_thresh)
-            costs = TransCapCosts.run(sc_pt, radius, x_feats, capacity,
-                                      tie_voltage)
-            all_costs.append(costs)
+            costs = TransCapCosts.run(self._cost_fpath, sc_pt, radius, x_feats,
+                                      capacity, tie_voltage)
+            all_costs = all_costs.append(costs)
             run_times.append(dt.now() - start_time)
 
             if i in report_steps:
@@ -352,9 +344,6 @@ class LeastCostXmission:
         msg = ('Finished processing ({} of {} pts). Average time of {} per '
                'SC pt.'.format(i+1, len(sc_pts), avg))
         logger.info(msg)
-
-        # TODO - do I need this?
-        all_costs['max_cap'] = line_cap
 
         return all_costs
 
@@ -418,6 +407,7 @@ class LeastCostXmission:
             Substatations, load centers, sinks, and nearest points on t-lines
             to SC point
         """
+        logger.debug('*********** Starting clip')
         # Find greatest major axis distance to NUM_SINKS sinks. Simply
         # grabbing the greatest difference for the furthest sink does not
         # work in all circumstances.
@@ -450,8 +440,8 @@ class LeastCostXmission:
         if col_max > self._regions_arr.shape[1]:
             col_max = self._regions_arr.shape[1]
 
-        logger.debug('Using clip area of r=[{}:{}], c=[{}:{}]'
-                     ''.format(row_min, row_max+1, col_min, col_max+1))
+        logger.debug('Using clip area of r=[{}:{}], c=[{}:{}]. Python style '
+                     'start/stop'.format(row_min, row_max, col_min, col_max))
 
         # Clip transmission features
         x_feats = self.subs[(self.subs.row >= row_min) &
@@ -490,6 +480,7 @@ class LeastCostXmission:
         connected = self.t_lines.gid.isin(trans_gids)
         t_lines = self.t_lines[connected].copy(deep=True)
 
+        # <slow part - move to worker maybe>
         logger.debug('-- Clipping t-lines to AOI')
         clip_rect = self._make_rect(row_min, col_min, row_max, col_max)
         t_lines = gpd.clip(t_lines, clip_rect)
@@ -500,12 +491,16 @@ class LeastCostXmission:
             row, col = self._rct.get_row_col(near_pt.x, near_pt.y)
             t_lines.loc[index, 'row'] = row
             t_lines.loc[index, 'col'] = col
+        # </slow part>
 
         x_feats = x_feats.append(t_lines)
+
+        logger.debug('Assigning regions')
         x_feats['region'] = self._regions_arr[list(x_feats.row),
                                               list(x_feats.col)]
         x_feats = x_feats.drop('geometry', axis=1)
 
+        logger.debug('Clip complete')
         return radius, x_feats
 
     def _parse_points(self, sc_pts):
@@ -535,157 +530,19 @@ class LeastCostXmission:
             raise AttributeError(msg)
         return sc_pts
 
-    def OLD_connection_costs(self, cdf, capacity_class, tie_voltage):
-        """ TODO
-
-
-        capacity_class : str
-            reV power capacity class, e.g. '100MW'
-
-        tie_voltage : int
-
-        """
-
-        # TODO - connection cost is based on region that sc point is in, not
-        # trans features
-        # Length multiplier
-        cdf['length_mult'] = 1.0
-        cdf.loc[cdf.dist_km <= MEDIUM_CUTOFF, 'length_mult'] = MEDIUM_MULT
-        cdf.loc[cdf.dist_km < SHORT_CUTOFF, 'length_mult'] = SHORT_MULT
-        cdf['tie_line_cost'] = cdf.raw_line_cost * cdf.length_mult
-
-        # Transformer costs
-        cdf['xformer_cost_p_mw'] = cdf.apply(self._xformer_cost, axis=1,
-                                             args=(tie_voltage,))
-        cdf['xformer_cost'] = cdf.xformer_cost_p_mw *\
-            int_capacity(capacity_class)
-
-        # Substation costs
-        cdf['sub_upgrade_cost'] = cdf.apply(self._sub_upgrade_cost, axis=1,
-                                            args=(tie_voltage,))
-        cdf['new_sub_cost'] = cdf.apply(self._new_sub_cost, axis=1,
-                                        args=(tie_voltage,))
-
-        # Sink costs
-        cdf.loc[cdf.category == SINK_CAT, 'new_sub_cost'] =\
-            SINK_CONNECTION_COST
-
-        # Total cost
-        cdf['connection_cost'] = cdf.xformer_cost + cdf.sub_upgrade_cost +\
-            cdf.new_sub_cost
-        cdf['trans_cap_cost'] = cdf.tie_line_cost + cdf.connection_cost
-
-        return cdf
-
-    def OLD_sub_upgrade_cost(self, row, tie_voltage):
-        """
-        Calculate upgraded substation cost for substations and load centers
-
-        Parameters
-        ----------
-        row : pandas.DataFrame row
-            Cost row for one tie-line
-        tie_voltage : int
-            Actual line voltage in kV
-
-        Returns
-        -------
-        cost : float
-            Cost to upgrade substation
-        """
-        assert row.region != 0, ('Invalid region {} for {} {}, sc point {}' +
-                                 '').format(row.region, row.category,
-                                            row.trans_gid, row.sc_point_gid)
-
-        if row.category == SUBSTATION_CAT or row.category == LOAD_CENTER_CAT:
-            volts = str(tie_voltage)
-            region = self._reverse_iso[row.region]
-            return self._xmc['upgrade_sub_costs'][region][volts]
-
-        return 0
-
-    def OLD_new_sub_cost(self, row, tie_voltage):
-        """
-        Calculate cost to build new substation
-
-        Parameters
-        ----------
-        row : pandas.DataFrame row
-            Cost row for one tie-line
-        tie_voltage : int
-            Actual line voltage in kV
-
-        Returns
-        -------
-        cost : float
-            Cost to build new substation
-        """
-        assert row.region != 0, ('Invalid region {} for {} {}, sc point {}' +
-                                 '').format(row.region, row.category,
-                                            row.trans_gid, row.sc_point_gid)
-
-        if row.category == TRANS_LINE_CAT:
-            volts = str(tie_voltage)
-            region = self._reverse_iso[row.region]
-            return self._xmc['new_sub_costs'][region][volts]
-
-        return 0
-
-    def OLD_xformer_cost(self, row, tie_voltage):
-        """
-        Calculate transformer cost
-
-        Parameters
-        ----------
-        row : pandas.DataFrame row
-            Cost row for one tie-line
-        tie_voltage : int
-            Actual tie-line voltage in kV
-
-        Returns
-        -------
-        cost : float
-            Cost of transformer to bring tie line up to existing trans volts
-        """
-        # No xformer cost need to t-lines that are too small, raw_line_cost
-        # is already set artificially high
-        if row.category == TRANS_LINE_CAT and tie_voltage > row.max_volts:
-            return -1
-
-        # A tie line should never have a higher voltage than the substation its
-        # connecting to
-        if row.category == SUBSTATION_CAT:
-            assert tie_voltage <= row.max_volts
-
-        # Tie line voltage is present at trans feature, no transformer
-        # needed.
-        if tie_voltage >= row.min_volts:
-            return 0
-
-        # Transformer costs are included in substations for TEPPC
-        if row.region == self._xmc['iso_lookup']['TEPPC']:
-            return 0
-
-        # Get cost to connect tie line (tie_voltage) to existing trans
-        # feature (row.min_volts). If row.min_volts is not in
-        # self._xformer_costs, use cost for next higher voltage class
-        v_class = None
-        for xformer_volts in sorted(self._xformer_costs(tie_voltage)):
-            v_class = xformer_volts
-            if xformer_volts >= row.min_volts:
-                break
-
-        if v_class is None:
-            logger.warning('Failed to find proper transformer voltage for\n'
-                           '{}, defaulting to 500kV'.format(row))
-            v_class = 500
-
-        cost_per_mw = self._xformer_costs(tie_voltage)[v_class]
-        return cost_per_mw
-
     def _update_sub_volts(self, subs):
         """
         Determine substation voltages from trans lines
+
+        Parameters
+        ----------
+        subs : gpd.GeoDataFrame
+            Substations to calculate voltages for
+
+        Returns
+        -------
+        subs : gpd.GeoDataFrame
+            Substations to with min/max voltages
         """
         logger.debug('Determining voltages for substations, this will take '
                      'a while')
@@ -723,21 +580,51 @@ class LeastCostXmission:
 
     def _x(self, gpd_row):
         """
-        TODO
+        Get x (easting) coordinate for a feature
+
+        Parameters
+        ----------
+        gpd_row : gpd.GeoSeries
+            Row from GeoDataFrame
+
+        Returns
+        -------
+        x : float
+            X coordinate of feature
         """
         x, y = self._rct.get_x_y(gpd_row.row, gpd_row.col)
         return x
 
     def _y(self, gpd_row):
         """
-        TODO
+        Get y (northing) coordinate for a feature
+
+        Parameters
+        ----------
+        gpd_row : gpd.GeoSeries
+            Row from GeoDataFrame
+
+        Returns
+        -------
+        y : float
+            Y coordinate of feature
         """
         x, y = self._rct.get_x_y(gpd_row.row, gpd_row.col)
         return y
 
     def _row(self, gpd_row):
         """
-        TODO
+        Get row for a feature on reV CONUS raster
+
+        Parameters
+        ----------
+        gpd_row : gpd.GeoSeries
+            Row from GeoDataFrame
+
+        Returns
+        -------
+        row : int
+            Row of feature
         """
         x, y = self._coords(gpd_row.geometry)
         row, col = self._rct.get_row_col(x, y)
@@ -745,7 +632,17 @@ class LeastCostXmission:
 
     def _col(self, gpd_row):
         """
-        TODO
+        Get column for a feature on reV CONUS raster
+
+        Parameters
+        ----------
+        gpd_row : gpd.GeoSeries
+            Row from GeoDataFrame
+
+        Returns
+        -------
+        col : int
+            Column of feature
         """
         x, y = self._coords(gpd_row.geometry)
         row, col = self._rct.get_row_col(x, y)

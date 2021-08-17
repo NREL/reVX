@@ -16,6 +16,7 @@ from reVX.utilities.exceptions import TransFeatureNotFoundError
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.least_cost_xmission.utilities import int_capacity
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,30 +68,37 @@ class TransCapCosts:
         self._row_offset = row_min
         self._col_offset = col_min
 
-        row_slice = slice(row_min, row_max)
-        col_slice = slice(col_min, col_max)
-        start = (sc_point.row - row_min, sc_point.col - col_min)
+        row_slice = slice(row_min, row_max + 1)
+        col_slice = slice(col_min, col_max + 1)
+        self.start = (sc_point.row - row_min, sc_point.col - col_min)
 
         with ExclusionLayers(excl_fpath) as f:
             self._cost = f['tie_line_costs_{}MW'.format(line_cap), row_slice,
                            col_slice]
-            # TODO
+            # TODO - use real barrier once in h5 file
             # barrier = f['transmission_barrier', row_slice, col_slice]
             barrier = np.ones(self._cost.shape)
 
+        # TODO - this needs to be fixed in the cost creator
+        self._cost[self._cost == np.inf] = 9999999
+        assert (self._cost < np.inf).all()
+
         self._mcp_cost = self._cost * barrier * barrier_mult
 
-        logger.debug('Initing mcp geo')
+        logger.debug('{} - cost shape: {}, mcp_cost shape: {}'
+                     ''.format(self._sc_point.name, self._cost.shape,
+                               self._mcp_cost.shape))
+
+        logger.debug(f'{self._sc_point.name} - Initing mcp geo')
         # Including the ends is actually slightly slower
         self._mcp = MCP_Geometric(self._mcp_cost)
-        self._mcp.find_costs(starts=[start])
+        self._mcp.find_costs(starts=[self.start])
 
         self._preflight_check()
 
     def __repr__(self):
         msg = "{} for SC point {}".format(self.__class__.__name__,
                                           self.sc_point_gid)
-
         return msg
 
     def _preflight_check(self):
@@ -162,7 +170,7 @@ class TransCapCosts:
 
         Parameters
         ----------
-        feat : gpd.Series
+        feat : gpd.GeoSeries
             Transmission feature to find path to
 
         Returns
@@ -176,19 +184,20 @@ class TransCapCosts:
         row, col = feat[['row', 'col']].values
 
         if row < 0 or col < 0 or row >= shp[0] or col >= shp[1]:
-            msg = 'Feature {} {} is outside of clipped raster'.format(
-                feat['category'], feat['gid'])
+            msg = ('{} Feature {} {} is outside of clipped raster. row/col:'
+                   ''.format(self._sc_point.name, feat['category'],
+                             feat['gid'], feat.row, feat.col))
             logger.exception(msg)
             raise ValueError(msg)
 
         try:
             indices = np.array(self.mcp.traceback((feat.row, feat.col)))
         except ValueError as ex:
-            msg = ('Unable to find path from sc point {} to {} {}'
-                   ''.format(self.sc_point_gid, feat['category'],
-                             feat['trans_gid']))
+            msg = ('Unable to find path from sc point {} to {} {}. row/col:'
+                   '{}/{}'.format(self.sc_point_gid, feat['category'],
+                                  feat['trans_gid'], feat.row, feat.col))
             logger.exception(msg)
-            raise TransFeatureNotFoundError(msg)  # TODO from ex
+            raise TransFeatureNotFoundError(msg) from ex
 
         # Use Pythagorean theorem to calculate lengths between cells (km)
         lengths = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
@@ -221,6 +230,7 @@ class TransCapCosts:
         return length, cost
 
     def compute_costs(xmission_features):
+        # TODO
         pass
 
     @classmethod
@@ -254,39 +264,55 @@ class TransCapCosts:
         costs : pd.DataFrame
             Costs to build tie line to each feature from SC point
         """
-        tlc = cls(excl_fpath, sc_point, radius, capacity)
+        tcc = cls(excl_fpath, sc_point, radius, capacity)
 
         x_feats = x_feats.copy()
-        x_feats.row = x_feats.row - tlc._row_offset
-        x_feats.col = x_feats.col - tlc._col_offset
+        x_feats.row = x_feats.row - tcc._row_offset
+        x_feats.col = x_feats.col - tcc._col_offset
 
         x_feats['raw_line_cost'] = 0
         x_feats['dist_km'] = 0
+        x_feats['trans_gid'] = x_feats.gid
+        x_feats['trans_line_gids'] = x_feats.trans_gids
+        x_feats = x_feats.drop(['dist', 'gid', 'trans_gids'], axis=1)
 
-        logger.debug('Determining path lengths and costs')
+        logger.debug(f'{sc_point.name} - Determining path lengths and '
+                     'costs')
         for index, feat in x_feats.iterrows():
             if feat.category == TRANS_LINE_CAT and\
                     feat.max_volts < tie_voltage:
-                msg = ('T-line {} voltage of {}kV is less than tie line of' +
-                       ' {}kV.').format(feat.gid, feat.max_volts, tie_voltage)
+                msg = ('{} - T-line {} voltage of {}kV is less than tie line '
+                       'of {}kV.').format(sc_point.name, feat.trans_gid,
+                                          feat.max_volts, tie_voltage)
                 logger.debug(msg)
                 x_feats.loc[index, 'raw_line_cost'] = LOW_VOLT_T_LINE_COST
                 x_feats.loc[index, 'dist_km'] = LOW_VOLT_T_LINE_LENGTH
-                continue
 
-            length, cost = tlc._path_length_cost(feat)
+            try:
+                length, cost = tcc._path_length_cost(feat)
+            except ValueError as e:
+                print('error', e)
+                continue
             if length < min_length:
                 cost = cost * (min_length/length)
                 length = min_length
             x_feats.loc[index, 'raw_line_cost'] = cost
             x_feats.loc[index, 'dist_km'] = length
 
-        x_feats['trans_gid'] = x_feats.gid
-        x_feats['trans_line_gids'] = x_feats.trans_gids
-        costs = x_feats.drop(['dist', 'gid', 'trans_gids'], axis=1)
+        costs = x_feats
 
-        costs = tlc._connection_costs(costs, tie_voltage)
+        costs['sc_point_gid'] = sc_point.name
+        costs['sc_point_row_id'] = sc_point.row
+        costs['sc_point_col_id'] = sc_point.col
+        # TODO - do we still need this?
+        # costs['max_cap'] = line_cap
 
+        if not True:
+            # TODO - delete this
+            from .plot import plot_paths
+            plot_paths(tcc, costs)
+
+        logger.debug(f'{sc_point.name} - Done')
         return costs
 
     def _connection_costs(self, cdf, tie_voltage):
