@@ -20,22 +20,20 @@ from reVX.least_cost_xmission.utilities import int_capacity
 logger = logging.getLogger(__name__)
 
 
-class TransCapCosts:
+class TieLineCosts:
     """
-    Compute Transmission capital cost
-    (least-cost tie-line cost + connection cost) for all features to be
-    connected a single supply curve point
+    Compute Least Cost Tie-line cost from start location to desired end
+    locations
     """
-    def __init__(self, excl_fpath, sc_point, radius, capacity,
+    def __init__(self, excl_fpath, start_idx, radius, capacity, config=None,
                  barrier_mult=100):
         """
         Parameters
         ----------
         excl_fpath : str
             Full path of .h5 file with cost arrays
-        sc_point : gpd.GeoSeries
-            SC point to find paths from. Row and col are relative to clipped
-            area.
+        start_idx : tuple
+            row_idx, col_idx to compute least costs to.
         radius : int
             Radius around sc_point to clip cost to
         capacity : int
@@ -43,92 +41,64 @@ class TransCapCosts:
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
         """
-        self._xmc = XmissionConfig()
-        self._sc_point = sc_point
-        self._capacity_class = '{}MW'.format(capacity)
-        line_cap = self._xmc['power_classes'][self._capacity_class]
+        self._config = self._parse_config(config=config)
+        self._start_idx = start_idx
+        self._capacity = capacity
 
-        with ExclusionLayers(excl_fpath) as f:
-            shape = f.shape
+        row, col = start_idx
+        row_slice, col_slice = self._get_clipping_slices(excl_fpath,
+                                                         row,
+                                                         col,
+                                                         radius)
+        cap_class = '{}MW'.format(self._capacity)
+        line_cap = self._config['power_classes'][cap_class]
+        cost_layer = 'tie_line_costs_{}MW'.format(line_cap)
+        self._cost, self._mcp_cost = self._clip_costs(
+            excl_fpath, cost_layer, row_slice, col_slice,
+            barrier_mult=barrier_mult)
 
-        row_min = sc_point.row - radius
-        row_max = sc_point.row + radius
-        col_min = sc_point.col - radius
-        col_max = sc_point.col + radius
-
-        if row_min < 0:
-            row_min = 0
-        if col_min < 0:
-            col_min = 0
-        if row_max > shape[0]:
-            row_max = shape[0]
-        if col_max > shape[1]:
-            col_max = shape[1]
-
-        self._row_offset = row_min
-        self._col_offset = col_min
-
-        row_slice = slice(row_min, row_max + 1)
-        col_slice = slice(col_min, col_max + 1)
-        self.start = (sc_point.row - row_min, sc_point.col - col_min)
-
-        with ExclusionLayers(excl_fpath) as f:
-            self._cost = f['tie_line_costs_{}MW'.format(line_cap), row_slice,
-                           col_slice]
-            # TODO - use real barrier once in h5 file
-            # barrier = f['transmission_barrier', row_slice, col_slice]
-            barrier = np.ones(self._cost.shape)
-
-        # TODO - this needs to be fixed in the cost creator
-        self._cost[self._cost == np.inf] = 9999999
-        assert (self._cost < np.inf).all()
-
-        self._mcp_cost = self._cost * barrier * barrier_mult
-
-        logger.debug('{} - cost shape: {}, mcp_cost shape: {}'
-                     ''.format(self._sc_point.name, self._cost.shape,
-                               self._mcp_cost.shape))
-
-        logger.debug(f'{self._sc_point.name} - Initing mcp geo')
-        # Including the ends is actually slightly slower
-        self._mcp = MCP_Geometric(self._mcp_cost)
-        self._mcp.find_costs(starts=[self.start])
-
-        self._preflight_check()
+        self._row_offset = row_slice.start
+        self._col_offset = col_slice.start
+        self._mcp = None
 
     def __repr__(self):
         msg = "{} for SC point {}".format(self.__class__.__name__,
-                                          self.sc_point_gid)
+                                          self.start_idx)
+
         return msg
 
-    def _preflight_check(self):
-        print('TODO')
-
     @property
-    def sc_point(self):
+    def start_idx(self):
         """
-        Supply curve point data:
-        - gid
-        - lat
-        - lon
-        - idx (row, col)
+        Start index in full exclusion domain
 
         Returns
         -------
-        pandas.Series
+        tuple
         """
-        return self._sc_point
+        return self._start_idx
 
     @property
-    def sc_point_gid(self):
+    def row(self):
         """
-        Suppy curve point gid
+        Row index inside clipped array
 
         Returns
         -------
         int
         """
-        return self.sc_point.name
+        return self.start_idx[0] - self._row_offset
+
+    @property
+    def col(self):
+        """
+        Column index inside clipped array
+
+        Returns
+        -------
+        int
+        """
+        return self.start_idx[1] - self._col_offset
 
     @property
     def cost(self):
@@ -162,16 +132,143 @@ class TransCapCosts:
         -------
         MCP_Geometric
         """
+        if self._mcp is None:
+            # Including the ends is actually slightly slower
+            self._mcp = MCP_Geometric(self.mcp_cost)
+            self._mcp.find_costs(starts=[(self.row, self.col)])
+
         return self._mcp
 
-    def _path_length_cost(self, feat):
+    @property
+    def capacity(self):
         """
-        Calculate length of minimum cost path to substation
+        SC point capacity max
+
+        Returns
+        -------
+        int
+        """
+        return self._capacity
+
+    @property
+    def capacity_class(self):
+        """
+        SC point capacity class
+
+        Returns
+        -------
+        str
+        """
+        return '{}MW'.format(self._capacity)
+
+    @property
+    def tie_line_voltage(self):
+        """
+        Tie line voltage in kV
+
+        Returns
+        -------
+        int
+        """
+        return self._config['power_classes'][self.capacity_class]
+
+    @staticmethod
+    def _parse_config(config=None):
+        """
+        Load Xmission config if needed
 
         Parameters
         ----------
-        feat : gpd.GeoSeries
-            Transmission feature to find path to
+        config : str | dict | XmissionConfig
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects
+
+        Returns
+        -------
+        XmissionConfig
+        """
+        if not isinstance(config, XmissionConfig):
+            config = XmissionConfig(config=config)
+
+        return config
+
+    @staticmethod
+    def _get_clipping_slices(excl_fpath, row, col, radius):
+        """
+        Get array slices for clipped area around SC point (row, col) index
+
+        Parameters
+        ----------
+        excl_fpath : str
+            Full path of .h5 file with cost arrays
+        row : int
+            SC point row index
+        col : int
+            SC point column index
+        radius : int
+            Radius around sc_point to clip cost to
+
+        Returns
+        -------
+        row_slice : slice
+            Row start, stop indices for clipped cost array
+        col_slice : slice
+            Column start, stop indices for clipped cost array
+        """
+        with ExclusionLayers(excl_fpath) as f:
+            shape = f.shape
+
+        row_min = max(row - radius, 0)
+        row_max = min(row + radius, shape[0])
+        col_min = max(col - radius, 0)
+        col_max = min(col + radius, shape[1])
+
+        return slice(row_min, row_max), slice(col_min, col_max)
+
+    @staticmethod
+    def _clip_costs(excl_fpath, cost_layer, row_slice, col_slice,
+                    barrier_mult=100):
+        """
+        Extract clipped cost arrays from exclusion .h5 files
+
+        Parameters
+        ----------
+        excl_fpath : str
+            Full path of .h5 file with cost arrays
+        cost_layer : str
+            Name of cost layer to extract
+        row_slice : slice
+            slice along axis 0 (rows) to clip costs too
+        col_slice : slice
+            slice along axis 1 (columns) to clip costs too
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs, by default 100
+
+        Returns
+        -------
+        cost : ndarray
+            2d clipped array of raw tie-line costs
+        mcp_cost : ndarray
+            2d clipped array of mcp cost = cost * barrier * barrier_mult
+        """
+        with ExclusionLayers(excl_fpath) as f:
+            cost = f[cost_layer, row_slice, col_slice]
+            # barrier = f['transmission_barrier', row_slice, col_slice]
+            barrier = np.ones(cost.shape)
+
+        mcp_cost = cost * barrier * barrier_mult
+
+        return cost, mcp_cost
+
+    def least_cost_path(self, end_idx):
+        """
+        Find least cost path, its length, and its total un-barriered cost
+
+        Parameters
+        ----------
+        end_idx : tuple
+            (row, col) index of end point to connect and compute least cost
+            path to
 
         Returns
         -------
@@ -180,22 +277,20 @@ class TransCapCosts:
         cost : float
             Cost of path including terrain and land use multipliers
         """
-        shp = self._mcp_cost.shape
-        row, col = feat[['row', 'col']].values
+        shp = self.mcp_cost.shape
+        row, col = end_idx
 
         if row < 0 or col < 0 or row >= shp[0] or col >= shp[1]:
-            msg = ('{} Feature {} {} is outside of clipped raster. row/col:'
-                   ''.format(self._sc_point.name, feat['category'],
-                             feat['gid'], feat.row, feat.col))
+            msg = ('End point ({}, {}) is out side of clipped cost raster '
+                   'with shape {}'.format(row, col, shp))
             logger.exception(msg)
             raise ValueError(msg)
 
         try:
-            indices = np.array(self.mcp.traceback((feat.row, feat.col)))
+            indices = np.array(self.mcp.traceback((row, col)))
         except ValueError as ex:
-            msg = ('Unable to find path from sc point {} to {} {}. row/col:'
-                   '{}/{}'.format(self.sc_point_gid, feat['category'],
-                                  feat['trans_gid'], feat.row, feat.col))
+            msg = ('Unable to find path from start {} to {}'
+                   ''.format(self.start_idx, end_idx))
             logger.exception(msg)
             raise TransFeatureNotFoundError(msg) from ex
 
@@ -204,9 +299,7 @@ class TransCapCosts:
         length = np.sum(lengths) * 90 / 1000
 
         # Extract costs of cells
-        rows = [i[0] for i in indices]
-        cols = [i[1] for i in indices]
-        cell_costs = self.cost[rows, cols]
+        cell_costs = self.cost[indices[:, 0], indices[:, 1]]
 
         # Use c**2 = a**2 + b**2 to determine length of individual paths
         lens = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
@@ -229,13 +322,9 @@ class TransCapCosts:
 
         return length, cost
 
-    def compute_costs(xmission_features):
-        # TODO
-        pass
-
     @classmethod
-    def run(cls, excl_fpath, sc_point, radius, x_feats, capacity, tie_voltage,
-            min_length=1.5):
+    def run(cls, excl_fpath, start_idx, end_idx, radius, capacity, config=None,
+            barrier_mult=100):
         """
         Compute least cost tie-line path to all features to be connected a
         single supply curve point.
@@ -243,77 +332,85 @@ class TransCapCosts:
         Parameters
         ----------
         excl_fpath : str
-            Full path of excl_fpath file with cost arrays
-        sc_point : gpd.series
-            SC point to find paths from. Row and col are relative to clipped
-            area.
+            Full path of .h5 file with cost arrays
+        start_idx : tuple
+            row_idx, col_idx to compute least costs to.
+        end_idx : tuple
+            (row, col) index of end point to connect and compute least cost
+            path to
+        radius : int
+            Radius around sc_point to clip cost to
         capacity : int
-            Capacity class as int, e.g. 100, 200, 400, 1000
-        TODO
-
-        x_feats : pd.DataFrame
-            Real and synthetic transmission features in clipped area
-        tie_voltage : int
-            Voltage of tie line (kV)
-        min_length : float
-            Minimum length of trans lines (km). All lines shorter than this are
-            scaled up.
+            Tranmission feature capacity class
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs, by default 100
 
         Returns
         -------
-        costs : pd.DataFrame
-            Costs to build tie line to each feature from SC point
+        length : float
+            Length of path (km)
+        cost : float
+            Cost of path including terrain and land use multipliers
         """
-        tcc = cls(excl_fpath, sc_point, radius, capacity)
+        tlc = cls(excl_fpath, start_idx, radius, capacity,
+                  barrier_mult=barrier_mult)
 
-        x_feats = x_feats.copy()
-        x_feats.row = x_feats.row - tcc._row_offset
-        x_feats.col = x_feats.col - tcc._col_offset
+        return tlc.least_cost_path(end_idx)
 
-        x_feats['raw_line_cost'] = 0
-        x_feats['dist_km'] = 0
-        x_feats['trans_gid'] = x_feats.gid
-        x_feats['trans_line_gids'] = x_feats.trans_gids
-        x_feats = x_feats.drop(['dist', 'gid', 'trans_gids'], axis=1)
 
-        logger.debug(f'{sc_point.name} - Determining path lengths and '
-                     'costs')
-        for index, feat in x_feats.iterrows():
-            if feat.category == TRANS_LINE_CAT and\
-                    feat.max_volts < tie_voltage:
-                msg = ('{} - T-line {} voltage of {}kV is less than tie line '
-                       'of {}kV.').format(sc_point.name, feat.trans_gid,
-                                          feat.max_volts, tie_voltage)
-                logger.debug(msg)
-                x_feats.loc[index, 'raw_line_cost'] = LOW_VOLT_T_LINE_COST
-                x_feats.loc[index, 'dist_km'] = LOW_VOLT_T_LINE_LENGTH
+class TransCapCost(TieLineCosts):
+    """
+    Compute total tranmission capital cost
+    (least-cost tie-line cost + connection cost) for all features to be
+    connected a single supply curve point
+    """
 
-            try:
-                length, cost = tcc._path_length_cost(feat)
-            except ValueError as e:
-                print('error', e)
-                continue
-            if length < min_length:
-                cost = cost * (min_length/length)
-                length = min_length
-            x_feats.loc[index, 'raw_line_cost'] = cost
-            x_feats.loc[index, 'dist_km'] = length
+    def __init__(self, excl_fpath, sc_point, features, radius, capacity,
+                 config=None, barrier_mult=100):
+        """
+        Parameters
+        ----------
+        excl_fpath : str
+            Full path of .h5 file with cost arrays
+        start_idx : tuple
+            row_idx, col_idx to compute least costs to.
+        radius : int
+            Radius around sc_point to clip cost to
+        capacity : int
+            Tranmission feature capacity class
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs, by default 100
+        """
+        self._sc_point = sc_point
+        super().__init__(excl_fpath, sc_point[['row', 'col']].values, radius,
+                         capacity, config=config, barrier_mult=barrier_mult)
+        self._x_features = self._shift_features(self, features)
 
-        costs = x_feats
+    @property
+    def sc_point(self):
+        """
+        Supply curve point data:
+        - gid
+        - lat
+        - lon
+        - idx (row, col)
 
-        costs['sc_point_gid'] = sc_point.name
-        costs['sc_point_row_id'] = sc_point.row
-        costs['sc_point_col_id'] = sc_point.col
-        # TODO - do we still need this?
-        # costs['max_cap'] = line_cap
+        Returns
+        -------
+        pandas.Series
+        """
+        return self._sc_point
 
-        if not True:
-            # TODO - delete this
-            from .plot import plot_paths
-            plot_paths(tcc, costs)
+    @property
+    def sc_point_gid(self):
+        """
+        Suppy curve point gid
 
-        logger.debug(f'{sc_point.name} - Done')
-        return costs
+        Returns
+        -------
+        int
+        """
+        return self.sc_point.name
 
     def _connection_costs(self, cdf, tie_voltage):
         """
@@ -359,3 +456,33 @@ class TransCapCosts:
         cdf['trans_cap_cost'] = cdf.tie_line_cost + cdf.connection_cost
 
         return cdf
+
+    def compute_costs(self, features, min_line_length=5.7):
+        tie_voltage = self.tie_line_voltage
+        features['raw_line_cost'] = 0
+        features['dist_km'] = 0
+
+        logger.debug('Determining path lengths and costs')
+        for index, feat in features.iterrows():
+            if feat['category'] == TRANS_LINE_CAT and\
+                    feat['max_volts'] < tie_voltage:
+                msg = ('T-line {} voltage of {}kV is less than tie line of'
+                       ' {}kV.'.format(feat.gid, feat.max_volts, tie_voltage))
+                logger.debug(msg)
+                features.loc[index, 'raw_line_cost'] = LOW_VOLT_T_LINE_COST
+                features.loc[index, 'dist_km'] = LOW_VOLT_T_LINE_LENGTH
+                continue
+
+            length, cost = self.least_cost_path(feat)
+            if length < min_line_length:
+                cost = cost * (min_line_length / length)
+                length = min_line_length
+
+            features.loc[index, 'raw_line_cost'] = cost
+            features.loc[index, 'dist_km'] = length
+
+        features['trans_gid'] = features.gid
+        features['trans_line_gids'] = features.trans_gids
+        costs = features.drop(['dist', 'gid', 'trans_gids'], axis=1)
+
+        costs = tlc._connection_costs(costs, tie_voltage)

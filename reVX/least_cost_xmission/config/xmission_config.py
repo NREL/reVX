@@ -116,7 +116,7 @@ class XmissionConfig(dict):
 
         Returns
         -------
-        float
+        int
             Substation upgrade cost
         """
         if not isinstance(tie_line_voltage, str):
@@ -140,7 +140,7 @@ class XmissionConfig(dict):
 
         Returns
         -------
-        float
+        int
             New substation cost
         """
         if not isinstance(tie_line_voltage, str):
@@ -164,8 +164,8 @@ class XmissionConfig(dict):
 
         Returns
         -------
-        float
-            Transformer cost
+        int
+            Transformer cost as $/MW
         """
         if not isinstance(tie_line_voltage, str):
             tie_line_voltage = str(tie_line_voltage)
