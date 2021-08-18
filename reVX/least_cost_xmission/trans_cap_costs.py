@@ -452,7 +452,7 @@ class TransCapCost(TieLineCosts):
         features['row'] -= self._row_offset
         features['col'] -= self._col_offset
 
-        return features
+        return features.reset_index(drop=True)
 
     def compute_tie_line_costs(self, min_line_length=5.7):
         """
@@ -519,9 +519,11 @@ class TransCapCost(TieLineCosts):
             logger.error(msg)
             raise RuntimeError(msg)
 
-        vcosts = np.vectorize(self._config.xformer_cost)
-        xformer_costs = vcosts(self.features['min_volts'].values,
-                               tie_line_voltage)
+        xformer_costs = np.zeros(len(self.features))
+        for volts, df in self.features.groupby('min_volts'):
+            idx = df.index.values
+            xformer_costs[idx] = self._config.xformer_cost(volts,
+                                                           tie_line_voltage)
 
         mask = self.features['category'] == TRANS_LINE_CAT
         mask &= self.features['max_volts'] < tie_line_voltage
@@ -556,9 +558,10 @@ class TransCapCost(TieLineCosts):
         mask = self.features['category'].isin([SUBSTATION_CAT,
                                                LOAD_CENTER_CAT])
         if np.any(mask):
-            vfunc = np.vectorize(self._config.sub_upgrade_cost)
-            sub_upgrade_cost[mask] = vfunc(self.features.loc[mask, 'region'],
-                                           self.tie_line_voltage)
+            for region, df in self.features.loc[mask].groupby('region'):
+                idx = df.index.values
+                sub_upgrade_cost[idx] = self._config.sub_upgrade_cost(
+                    region, self.tie_line_voltage)
 
         return sub_upgrade_cost
 
@@ -581,9 +584,10 @@ class TransCapCost(TieLineCosts):
 
         mask = self.features['category'] == TRANS_LINE_CAT
         if np.any(mask):
-            vfunc = np.vectorize(self._config.new_sub_cost)
-            new_sub_cost[mask] = vfunc(self.features.loc[mask, 'region'],
-                                       self.tie_line_voltage)
+            for region, df in self.features.loc[mask].groupby('region'):
+                idx = df.index.values
+                new_sub_cost[idx] = self._config.new_sub_cost(
+                    region, self.tie_line_voltage)
 
         return new_sub_cost
 
