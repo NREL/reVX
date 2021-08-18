@@ -361,7 +361,7 @@ class TieLineCosts:
         return tlc.least_cost_path(end_idx)
 
 
-class TransCapCost(TieLineCosts):
+class TransCapCosts(TieLineCosts):
     """
     Compute total tranmission capital cost
     (least-cost tie-line cost + connection cost) for all features to be

@@ -8,10 +8,9 @@ class RowColTransformer:
     Covert projection coordinates to row and col on template raster
     """
     def __init__(self, template):
-        ras = rio.open(template)
-        self._transform = ras.transform
-        self._height = ras.shape[0]
-        self._width = ras.shape[1]
+        with rio.open(template) as ras:
+            self._transform = ras.transform
+            self._height, self._width = ras.shape
 
     def get_row_col(self, x, y):
         """
@@ -35,6 +34,7 @@ class RowColTransformer:
         row, col = rio.transform.rowcol(self._transform, x, y)
         if row > 0 and col > 0 and row < self._height and col < self._width:
             return row, col
+
         return None, None
 
     def get_x_y(self, row, col):
@@ -56,6 +56,7 @@ class RowColTransformer:
             Projected northing coordinate
         """
         x, y = rio.transform.xy(self._transform, row, col)
+
         return x, y
 
 

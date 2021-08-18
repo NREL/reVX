@@ -3,8 +3,14 @@
 Module to compute least cost xmission paths, distances, and costs one or
 more SC points
 """
-
+import geopandas as gpd
+import json
+import logging
+import numpy as np
 import os
+import pandas as pd
+import rasterio
+
 import ast
 import math
 import logging
@@ -19,8 +25,9 @@ from shapely.geometry import Point, Polygon
 from shapely.geometry.linestring import LineString
 from shapely.geometry.multilinestring import MultiLineString
 
-from concurrent.futures import as_completed  # , ProcessPoolExecutor
+from concurrent.futures import as_completed
 
+from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.points import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 
@@ -34,8 +41,6 @@ from .config import XmissionConfig,\
 
 logger = logging.getLogger(__name__)
 
-SUBS_CACHE_FPATH = '_substations_cache.shp'
-
 # Number of sinks to use to determine the clipping "radius" for the costs and
 # paths raster. Tie line paths are only determined to the nearest sink.
 NUM_SINKS = 2
@@ -47,8 +52,8 @@ class LeastCostXmission:
     for all possible connections to all supply curve points
     -
     """
-    def __init__(self, cost_fpath, features_fpath, regions_fpath,
-                 resolution=128):
+    def __init__(self, cost_fpath, features_fpath, resolution=128,
+                 config=None):
         """
         Parameters
         ----------
@@ -56,35 +61,25 @@ class LeastCostXmission:
             Path to h5 file with cost rasters and transmission barriers
         features_fpath : str
             Path to geopackage with transmission features
-        regions_fpath : str
-            Paths to ISO regions GeoTiff
-        resolution : int
+        resolution : int, optional
             Aggragation resolution, by default 128
         """
         logger.info('Loading all data')
 
-        self._xmc = XmissionConfig()
-
-        rct = RowColTransformer(regions_fpath)
-        self._rct = rct
-
-        logger.debug('Loading regions raster')
-        with Geotiff(regions_fpath) as gt:
-            self._regions_arr = gt.values[0]
-            self.profile = gt.profile
+        self._config = XmissionConfig(config=config)
 
         logger.debug('Loading transmission features')
-        self.t_lines, self.lcs, self.sinks, self.subs = \
-            self._load_trans_feats(features_fpath)
+        self._features = self._load_trans_feats(features_fpath)
 
         logger.debug('Creating supply curve points')
-        self.sc_points = self._create_sc_points(cost_fpath, self.subs.crs,
-                                                resolution)
+        self._sc_points = self._create_sc_points(cost_fpath,
+                                                 resolution=resolution)
         self._cost_fpath = cost_fpath
 
         logger.info('Done loading data')
 
-    def _load_trans_feats(self, features_fpath):
+    @staticmethod
+    def _load_trans_feats(features_fpath):
         """
         Load existing transmission features from disk. Substations will be
         loaded from cache file if it exists
@@ -96,8 +91,8 @@ class LeastCostXmission:
 
         Returns
         -------
-        t_lines : gpd.GeoDataFrame
-            Data frame of transmission lines
+        features : gpd.GeoDataFrame
+            DataFrame of transmission features
         lcs : gpd.GeoDataFrame
             Data frame of load centers
         sinks : gpd.GeoDataFrame
@@ -105,47 +100,52 @@ class LeastCostXmission:
         subs : gpd.GeoDataFrame
             Data frame of substations
         """
-        conns = gpd.read_file(features_fpath)
-        conns = conns.drop(['bgid', 'egid', 'cap_left'], axis=1)
+        features = gpd.read_file(features_fpath)
+        features = features.drop(['bgid', 'egid', 'cap_left'], axis=1)
+        mapping = {'gid': 'trans_gid', 'trans_gids': 'trans_line_gids'}
+        features = features.rename(columns=mapping)
 
-        t_lines = conns[conns.category == TRANS_LINE_CAT].copy()
-        t_lines['min_volts'] = t_lines.voltage
-        t_lines['max_volts'] = t_lines.voltage
-        lcs = conns[conns.category == LOAD_CENTER_CAT].copy()
-        lcs['min_volts'] = 1
-        lcs['max_volts'] = 9999
-        sinks = conns[conns.category == SINK_CAT].copy()
-        sinks['min_volts'] = 1
-        sinks['max_volts'] = 9999
+        features['min_volts'] = 0
+        features['max_volts'] = 0
 
-        subs_f = os.path.join(os.path.dirname(features_fpath),
-                              SUBS_CACHE_FPATH)
-        if os.path.exists(subs_f):
-            logger.debug('Loading cached substations from {}'.format(subs_f))
-            subs = gpd.read_file(subs_f)
-        else:
-            subs = conns[conns.category == SUBSTATION_CAT]
-            subs = self._update_sub_volts(subs)
-            subs.to_file(subs_f)
+        # Transmission lines
+        mask = features['category'] == TRANS_LINE_CAT
+        voltage = features.loc[mask, 'voltage'].values
+        features.loc[mask, 'min_volts'] = voltage
+        features.loc[mask, 'max_volts'] = voltage
 
-        subs = subs[subs.max_volts >= 69]
+        # Load Center and Sinks
+        mask = features['category'].isin([LOAD_CENTER_CAT, SINK_CAT])
+        features.loc[mask, 'min_volts'] = 1
+        features.loc[mask, 'max_volts'] = 9999
 
-        # Convert trans_gids from str to list
-        subs.trans_gids = subs.trans_gids.apply(ast.literal_eval)
+        sub_lines_map = {}
+        mask = features['category'] == SUBSTATION_CAT
+        for idx, row in features.loc[mask].iterrows():
+            gid = row['trans_gid']
+            lines = row['trans_line_gids']
+            if isinstance(lines, str):
+                lines = json.loads(lines)
 
-        logger.debug('Transforming transmission features')
-        lcs['row'] = lcs.apply(self._row, axis=1)
-        lcs['col'] = lcs.apply(self._col, axis=1)
-        subs['row'] = subs.apply(self._row, axis=1)
-        subs['col'] = subs.apply(self._col, axis=1)
-        sinks['row'] = sinks.apply(self._row, axis=1)
-        sinks['col'] = sinks.apply(self._col, axis=1)
-        t_lines['row'] = 0
-        t_lines['col'] = 0
+            sub_lines_map[gid] = lines
+            mask = features['trans_gids'].isin(lines)
+            voltage = features.loc[mask, 'voltage'].values
+            features.at[idx, 'lines'] = lines
+            features.at[idx, 'min_volts'] = np.min(voltage)
+            features.at[idx, 'max_volts'] = np.max(voltage)
 
-        return t_lines, lcs, sinks, subs
+        mask &= features['min_volts'] < 69
+        if any(mask):
+            msg = ("The following sub-stations do not have the minimum"
+                   "required voltage of 69 kV and will be dropped:\n{}"
+                   .format(features.loc[mask, 'trans_gids']))
+            logger.warning(msg)
+            features = features.loc[~mask]
 
-    def _create_sc_points(self, cost_fpath, crs, resolution):
+        return features
+
+    @staticmethod
+    def _create_sc_points(cost_fpath, resolution=128):
         """
         Load SC points, covert row/col to array wide, and determine x/y for
         reV projection
@@ -154,25 +154,51 @@ class LeastCostXmission:
         ----------
         cost_fpath : str
             Full path to h5 file with cost rasters
-        csr : TODO
-            Coordinate reference system for projection used for transmission
-            features.
-        resolution : int
-            Aggregation resolution
+        resolution : int, optional
+            Aggragation resolution, by default 128
 
         Returns
         sc_points : gpd.GeoDataFrame
             SC points
         """
         sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
-        pts = sce.points
+        sc_points = sce.points
 
         logger.debug('Transforming SC points')
-        pts['row'] = (pts.row_ind * resolution + resolution / 2).astype(int)
-        pts['col'] = (pts.col_ind * resolution + resolution / 2).astype(int)
-        pts['x'] = pts.apply(self._x, axis=1)
-        pts['y'] = pts.apply(self._y, axis=1)
+        sc_points['row'] = round(sc_points['row_ind'] * resolution
+                                 + resolution / 2)
+        sc_points['col'] = round(sc_points['col_ind'] * resolution
+                                 + resolution / 2).astype(int)
 
+        return sc_points
+
+    @staticmethod
+    def _get_feature_coords(geo):
+        """
+        Return coordinate as (x, y) tuple. Uses first coordinate for lines
+
+        Parameters
+        ----------
+        TODO
+        """
+        if isinstance(geo, LineString):
+            x, y = geo.coords[0]
+
+        elif isinstance(geo, MultiLineString):
+            x, y = geo.geoms[0].coords[0]
+        else:
+            x, y = geo.x, geo.y
+
+        return x, y
+
+    @classmethod
+    def _map_sc_to_xmission(cls, cost_fpath, features_fpath, resolution=128):
+        with ExclusionLayers(excl_fpath) as f:
+            transform = f.profile['transform']
+            regions = f['ISO_regions']
+
+        features = cls._load_trans_feats(features_fpath)
+        features['row'] = rasterio.transform.rowcol(transform, )
         logger.debug('Converting SC pts to gpd')
         geo = [Point(xy) for xy in zip(pts.x, pts.y)]
         sc_points = gpd.GeoDataFrame(pts, crs=crs, geometry=geo)
@@ -213,8 +239,8 @@ class LeastCostXmission:
                               sc_pts.iloc[-1].name))
 
         capacity = int_capacity(capacity_class)
-        line_cap = self._xmc['power_classes'][capacity_class]
-        tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
+        line_cap = self._config['power_classes'][capacity_class]
+        tie_voltage = self._config['power_to_voltage'][str(line_cap)]
         logger.debug('Using capacity class {}, line capacity {}MW, and line '
                      'voltage of {}kV'.format(capacity_class, line_cap,
                                               tie_voltage))
@@ -237,13 +263,13 @@ class LeastCostXmission:
                 start_time = dt.now()
 
             total = sum(kick_off_times, timedelta(0))
-            avg = total/len(kick_off_times)
+            avg = total / len(kick_off_times)
             logger.info('Started all futures in {}. Average of {} per SC pt'
                         ''.format(total, avg))
 
             # Keep track of run times and report progress
-            step = math.ceil(len(sc_pts)/reporting_steps)
-            report_steps = range(step-1, len(sc_pts), step)
+            step = math.ceil(len(sc_pts) / reporting_steps)
+            report_steps = range(step - 1, len(sc_pts), step)
             new_start_time = dt.now()
             run_times = []
 
@@ -252,23 +278,24 @@ class LeastCostXmission:
                 run_times.append(dt.now() - new_start_time)
 
                 if i in report_steps:
-                    progress = int((i+1)/len(sc_pts)*100)
-                    avg = sum(run_times, timedelta(0))/len(run_times)
-                    left = (len(sc_pts)-i-1)*avg
+                    progress = int((i + 1) / len(sc_pts) * 100)
+                    avg = sum(run_times, timedelta(0)) / len(run_times)
+                    left = (len(sc_pts) - i - 1) * avg
                     msg = ('Finished {} of {}. {}% '
                            'complete. Average time of {} per SC pt. '
                            'Approx {} left.'
-                           ''.format(i+1, len(sc_pts),
+                           ''.format(i + 1, len(sc_pts),
                                      progress, avg, left))
                     logger.info(msg)
                 new_start_time = dt.now()
 
-        avg = sum(run_times, timedelta(0))/len(run_times)
+        avg = sum(run_times, timedelta(0)) / len(run_times)
         msg = ('Finished processing ({} of {} pts). Average time of {} per '
-               'SC pt.'.format(i+1, len(sc_pts), avg))
+               'SC pt.'.format(i + 1, len(sc_pts), avg))
         logger.info(msg)
 
         all_costs.reset_index(inplace=True, drop=True)
+
         return all_costs
 
     def process_sc_points(self, sc_pts=None, capacity_class='100MW',
@@ -305,8 +332,8 @@ class LeastCostXmission:
                               sc_pts.iloc[-1].name))
 
         capacity = int_capacity(capacity_class)
-        line_cap = self._xmc['power_classes'][capacity_class]
-        tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
+        line_cap = self._config['power_classes'][capacity_class]
+        tie_voltage = self._config['power_to_voltage'][str(line_cap)]
         logger.debug('Using capacity class {}, line capacity {}MW, and line '
                      'voltage of {}kV'.format(capacity_class, line_cap,
                                               tie_voltage))
@@ -372,8 +399,8 @@ class LeastCostXmission:
             Transmission costs to existing trans features for SC point
         """
         capacity = int_capacity(capacity_class)
-        line_cap = self._xmc['power_classes'][capacity_class]
-        tie_voltage = self._xmc['power_to_voltage'][str(line_cap)]
+        line_cap = self._config['power_classes'][capacity_class]
+        tie_voltage = self._config['power_to_voltage'][str(line_cap)]
 
         radius, x_feats = self._clip_aoi(sc_point, tie_voltage,
                                          dist_thresh=dist_thresh)
@@ -530,53 +557,6 @@ class LeastCostXmission:
             raise AttributeError(msg)
         return sc_pts
 
-    def _update_sub_volts(self, subs):
-        """
-        Determine substation voltages from trans lines
-
-        Parameters
-        ----------
-        subs : gpd.GeoDataFrame
-            Substations to calculate voltages for
-
-        Returns
-        -------
-        subs : gpd.GeoDataFrame
-            Substations to with min/max voltages
-        """
-        logger.debug('Determining voltages for substations, this will take '
-                     'a while')
-        subs['temp_volts'] = subs.apply(self._get_volts, axis=1)
-        volts = subs.temp_volts.str.split('/', expand=True)
-        subs[['min_volts', 'max_volts']] = volts
-        subs.min_volts = subs.min_volts.astype(np.int16)
-        subs.max_volts = subs.max_volts.astype(np.int16)
-        subs.drop(['voltage', 'temp_volts'], axis=1, inplace=True)
-        return subs
-
-    def _get_volts(self, row):
-        """
-        Determine min/max volts for substation from trans lines
-
-        Parameters
-        ----------
-        row : pandas.DataFrame row
-            Row being processed
-
-        Returns
-        -------
-        str
-            min/max connected volts, e.g. "69/250" (kV)
-        """
-        tl_ids = [int(x) for x in row.trans_gids[1:-1].split(',')]
-        lines = self.t_lines[self.t_lines.gid.isin(tl_ids)]
-        volts = lines.voltage.values
-        if len(volts) == 0:
-            msg = ('No transmission lines found connected to substation '
-                   '{}. Setting voltage to 0'.format(row.gid))
-            logger.warning(msg)
-            volts = [0]
-        return '{}/{}'.format(int(min(volts)), int(max(volts)))
 
     def _x(self, gpd_row):
         """
@@ -681,7 +661,7 @@ class LeastCostXmission:
     @property
     def OLD_reverse_iso(self):
         """ TODO """
-        return {v: k for k, v in self._xmc['iso_lookup'].items()}
+        return {v: k for k, v in self._config['iso_lookup'].items()}
 
     def OLD_xformer_costs(self, tie_voltage):
         """
@@ -691,5 +671,5 @@ class LeastCostXmission:
 
 
         Is there a better way to do this?"""
-        xfc = self._xmc['transformer_costs'][str(tie_voltage)]
+        xfc = self._config['transformer_costs'][str(tie_voltage)]
         return {int(k): v for k, v in xfc.items()}
