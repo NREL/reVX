@@ -5,17 +5,13 @@ area.
 """
 import logging
 import numpy as np
-
 from skimage.graph import MCP_Geometric
-from .config import XmissionConfig, TRANS_LINE_CAT,\
-    LOW_VOLT_T_LINE_COST, LOW_VOLT_T_LINE_LENGTH, MEDIUM_MULT, SHORT_MULT,\
-    MEDIUM_CUTOFF, SHORT_CUTOFF, SINK_CAT, SINK_CONNECTION_COST
-
-from reVX.utilities.exceptions import TransFeatureNotFoundError
-
 from reV.handlers.exclusions import ExclusionLayers
-from reVX.least_cost_xmission.utilities import int_capacity
 
+from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
+                                             SINK_CAT, SUBSTATION_CAT,
+                                             LOAD_CENTER_CAT)
+from reVX.utilities.exceptions import TransFeatureNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -458,19 +454,21 @@ class TransCapCost(TieLineCosts):
 
         return features
 
-    def tie_line_costs(self, min_line_length=5.7):
+    def compute_tie_line_costs(self, min_line_length=5.7):
         """
-        [summary]
+        Compute least cost path and distance between supply curve point and
+        every tranmission feature
 
         Parameters
         ----------
         min_line_length : float, optional
-            [description], by default 5.7
+            Minimum line length in km, by default 5.7
 
         Returns
         -------
         tie_line_costs : pandas.DataFrame
-            Updated table of transmission features with the tie-line cost added
+            Updated table of transmission features with the tie-line cost
+            and distance added
         """
         tie_voltage = self.tie_line_voltage
         features = self.features.copy()
@@ -478,6 +476,7 @@ class TransCapCost(TieLineCosts):
         features['dist_km'] = 0
 
         logger.debug('Determining path lengths and costs')
+
         for index, feat in features.iterrows():
             length, cost = self.least_cost_path(feat)
             if feat['category'] == TRANS_LINE_CAT and\
@@ -498,32 +497,109 @@ class TransCapCost(TieLineCosts):
 
         return features
 
-    def _xformer_cost(self):
-        xformer_cost = np.zeros(len(self.features))
+    def _calc_xformer_cost(self):
+        """
+        Compute transformer costs in $/MW for needed features, all others will
+        be 0
 
+        Returns
+        -------
+        xformer_costs : ndarray
+            vector of $/MW transformer costs
+        """
         tie_line_voltage = self.tie_line_voltage
+        mask = self.features['category'] == SUBSTATION_CAT
+
+        mask &= self.features['max_volts'] < tie_line_voltage
+        if np.any(mask):
+            msg = ('Voltages for substations {} do not exceed tie-line '
+                   'voltage of {}'
+                   .format(self.features.loc[mask, 'trans_gid'].values,
+                           tie_line_voltage))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        vcosts = np.vectorize(self._config.xformer_cost)
+        xformer_costs = vcosts(self.features['min_volts'].values,
+                               tie_line_voltage)
+
         mask = self.features['category'] == TRANS_LINE_CAT
         mask &= self.features['max_volts'] < tie_line_voltage
-        xformer_cost[mask] = -1
+        xformer_costs[mask] = 0
 
-    def _connection_costs(self, ):
+        mask = self.features['min_volts'] <= tie_line_voltage
+        xformer_costs[mask] = 0
+
+        mask = self.features['region'] == self._config['iso_lookup']['TEPPC']
+        xformer_costs[mask] = 0
+
+        return xformer_costs
+
+    def _calc_sub_upgrade_cost(self):
+        """
+        Compute substation upgrade costs for needed features, all others will
+        be 0
+
+        Returns
+        -------
+        sub_upgrade_costs : ndarray
+            Substation upgrade costs in $
+        """
+        sub_upgrade_cost = np.zeros(len(self.features))
+        if np.any(self.features['region'] == 0):
+            mask = self.features['region'] == 0
+            msg = ('Features {} have an invalid region! Region must != 0!'
+                   .format(self.features.loc[mask, 'trans_gid'].values))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        mask = self.features['category'].isin([SUBSTATION_CAT,
+                                               LOAD_CENTER_CAT])
+        if np.any(mask):
+            vfunc = np.vectorize(self._config.sub_upgrade_cost)
+            sub_upgrade_cost[mask] = vfunc(self.features.loc[mask, 'region'],
+                                           self.tie_line_voltage)
+
+        return sub_upgrade_cost
+
+    def _calc_new_sub_cost(self):
+        """
+        Compute new substation costs for needed features, all others will be 0
+
+        Returns
+        -------
+        new_sub_cost : ndarray
+            new substation costs in $
+        """
+        new_sub_cost = np.zeros(len(self.features))
+        if np.any(self.features['region'] == 0):
+            mask = self.features['region'] == 0
+            msg = ('Features {} have an invalid region! Region must != 0!'
+                   .format(self.features.loc[mask, 'trans_gid'].values))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        mask = self.features['category'] == TRANS_LINE_CAT
+        if np.any(mask):
+            vfunc = np.vectorize(self._config.new_sub_cost)
+            new_sub_cost[mask] = vfunc(self.features.loc[mask, 'region'],
+                                       self.tie_line_voltage)
+
+        return new_sub_cost
+
+    def compute_connection_costs(self, features=None):
         """
         Calculate connection costs for tie lines
-
-        Parameters
-        ----------
-        features : pd.DataFrame
-            Costs data frame for tie lines
-        tie_voltage : int
-            Tie line voltage
 
         Returns
         -------
         features : pd.DataFrame
-            Tie line line and connection costs
+            Updated table of transmission features with the connection costs
+            added
         """
-        # Modify https://github.com/NREL/reVX/blob/e49c8f406ce63a15c29a93e97c3570c4241ee298/reVX/least_cost_xmission/least_cost_xmission.py
-        features = self.features.copy()
+        if features is None:
+            features = self.features.copy()
+
         # Length multiplier
         features['length_mult'] = 1.0
         # Short cutoff
@@ -537,26 +613,87 @@ class TransCapCost(TieLineCosts):
                                      * features['length_mult'])
 
         # Transformer costs
-        features['xformer_cost_p_mw'] = features.apply(self._xmc.xformer_cost, axis=1,
-                                             args=(tie_voltage,))
-        features['xformer_cost'] = features.xformer_cost_p_mw *\
-            int_capacity(self._capacity_class)
+        features['xformer_cost_per_mw'] = self._calc_xformer_cost()
+        features['xformer_cost'] = (features['xformer_cost_per_mw']
+                                    * self.capacity_class)
 
         # Substation costs
-        features['sub_upgrade_cost'] = features.apply(self._xmc.sub_upgrade_cost, axis=1,
-                                            args=(tie_voltage,))
-        features['new_sub_cost'] = features.apply(self._xmc.new_sub_cost, axis=1,
-                                        args=(tie_voltage,))
+        features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost()
+        features['new_sub_cost'] = self._calc_new_sub_cost()
 
         # Sink costs
-        features.loc[features.category == SINK_CAT, 'new_sub_cost'] =\
-            SINK_CONNECTION_COST
+        mask = features['category'] == SINK_CAT
+        features.loc[mask, 'new_sub_cost'] = 1e11
 
         # Total cost
         features['connection_cost'] = (features['xformer_cost']
                                        + features['sub_upgrade_cost']
                                        + features['new_sub_cost'])
+
+        return features
+
+    def compute(self, min_line_length=5.7):
+        """
+        Compute Transmission capital cost of connecting SC point to
+        transmission features.
+        trans_cap_cost = tie_line_cost + connection_cost
+
+        Parameters
+        ----------
+        min_line_length : float, optional
+            Minimum line length in km, by default 5.7
+
+        Returns
+        -------
+        features : pd.DataFrame
+            Transmission table with tie-line costs and distances and connection
+            costs added
+        """
+        features = self.compute_tie_line_costs(min_line_length=min_line_length)
+        features = self.compute_connection_costs(features=features)
+
         features['trans_cap_cost'] = (features['tie_line_cost']
                                       + features['connection_cost'])
 
         return features
+
+    @classmethod
+    def run(cls, excl_fpath, sc_point, features, radius, capacity,
+            config=None, barrier_mult=100, min_line_lenght=5.7):
+        """
+        Compute Transmission capital cost of connecting SC point to
+        transmission features.
+        trans_cap_cost = tie_line_cost + connection_cost
+
+        Parameters
+        ----------
+        excl_fpath : str
+            Full path of .h5 file with cost arrays
+        start_idx : tuple
+            row_idx, col_idx to compute least costs to.
+        end_idx : tuple
+            (row, col) index of end point to connect and compute least cost
+            path to
+        radius : int
+            Radius around sc_point to clip cost to
+        capacity : int
+            Tranmission feature capacity class
+        config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects, by default None
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs, by default 100
+        min_line_length : float, optional
+            Minimum line length in km, by default 5.7
+
+
+        Returns
+        -------
+        features : pd.DataFrame
+            Transmission table with tie-line costs and distances and connection
+            costs added
+        """
+        tcc = cls(excl_fpath, sc_point, features, radius, capacity,
+                  config=config, barrier_mult=barrier_mult)
+
+        return tcc.compute(min_line_length=min_line_lenght)

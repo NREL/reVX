@@ -81,7 +81,7 @@ class XmissionConfig(dict):
         line_capacity = self['power_classes'][str(capacity)]
         kv = self['power_to_voltage'][str(line_capacity)]
 
-        return kv
+        return int(kv)
 
     def kv_to_capacity(self, kv):
         """
@@ -98,9 +98,9 @@ class XmissionConfig(dict):
             Capacity class in MW
         """
         line_capacity = self['voltage_to_power'][kv]
-        capacity = int(self['line_power_to_classes'][line_capacity])
+        capacity = self['line_power_to_classes'][line_capacity]
 
-        return capacity
+        return int(capacity)
 
     def sub_upgrade_cost(self, region, tie_line_voltage):
         """
@@ -150,17 +150,17 @@ class XmissionConfig(dict):
 
         return self['new_sub_costs'][region][tie_line_voltage]
 
-    def xformer_cost(self, tie_line_voltage, feature_voltage):
+    def xformer_cost(self, feature_voltage, tie_line_voltage):
         """
         Extract transformer costs in $ for given region and tie-line
         voltage rating
 
         Parameters
         ----------
-        tie_line_voltage : int | str
-            Tie-line voltage class in kV
         feature_voltage : int
             Voltage of feature that tie-line is connecting to
+        tie_line_voltage : int | str
+            Tie-line voltage class in kV
 
         Returns
         -------
