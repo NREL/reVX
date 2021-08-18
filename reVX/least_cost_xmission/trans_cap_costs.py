@@ -38,6 +38,9 @@ class TieLineCosts:
             Radius around sc_point to clip cost to
         capacity : int
             Tranmission feature capacity class
+        config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
         """
@@ -179,9 +182,9 @@ class TieLineCosts:
 
         Parameters
         ----------
-        config : str | dict | XmissionConfig
+        config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects
+            .jsons, or preloaded XmissionConfig objects, by default None
 
         Returns
         -------
@@ -299,6 +302,7 @@ class TieLineCosts:
         length = np.sum(lengths) * 90 / 1000
 
         # Extract costs of cells
+        # pylint: disable=unsubscriptable-object
         cell_costs = self.cost[indices[:, 0], indices[:, 1]]
 
         # Use c**2 = a**2 + b**2 to determine length of individual paths
@@ -342,6 +346,9 @@ class TieLineCosts:
             Radius around sc_point to clip cost to
         capacity : int
             Tranmission feature capacity class
+        config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
 
@@ -352,7 +359,7 @@ class TieLineCosts:
         cost : float
             Cost of path including terrain and land use multipliers
         """
-        tlc = cls(excl_fpath, start_idx, radius, capacity,
+        tlc = cls(excl_fpath, start_idx, radius, capacity, config=config,
                   barrier_mult=barrier_mult)
 
         return tlc.least_cost_path(end_idx)
@@ -372,19 +379,24 @@ class TransCapCost(TieLineCosts):
         ----------
         excl_fpath : str
             Full path of .h5 file with cost arrays
-        start_idx : tuple
-            row_idx, col_idx to compute least costs to.
+        sc_point : gpd.GeoSeries
+            Supply Curve Point meta data
+        features : pandas.DataFrame
+            Table of transmission features
         radius : int
             Radius around sc_point to clip cost to
         capacity : int
             Tranmission feature capacity class
+        config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
         """
         self._sc_point = sc_point
         super().__init__(excl_fpath, sc_point[['row', 'col']].values, radius,
                          capacity, config=config, barrier_mult=barrier_mult)
-        self._x_features = self._shift_features(self, features)
+        self._features = self._shift_features(self, features)
 
     @property
     def sc_point(self):
@@ -412,77 +424,139 @@ class TransCapCost(TieLineCosts):
         """
         return self.sc_point.name
 
-    def _connection_costs(self, cdf, tie_voltage):
+    @property
+    def features(self):
         """
-        Calculate connection costs for tie lines
-
-        Parameters
-        ----------
-        cdf : pd.DataFrame
-            Costs data frame for tie lines
-        tie_voltage : int
-            Tie line voltage
+        Table of transmission features
 
         Returns
         -------
-        cdf : pd.DataFrame
-            Tie line line and connection costs
+        pandas.DataFrame
         """
-        # Length multiplier
-        cdf['length_mult'] = 1.0
-        cdf.loc[cdf.dist_km <= MEDIUM_CUTOFF, 'length_mult'] = MEDIUM_MULT
-        cdf.loc[cdf.dist_km < SHORT_CUTOFF, 'length_mult'] = SHORT_MULT
-        cdf['tie_line_cost'] = cdf.raw_line_cost * cdf.length_mult
+        return self._features
 
-        # Transformer costs
-        cdf['xformer_cost_p_mw'] = cdf.apply(self._xmc.xformer_cost, axis=1,
-                                             args=(tie_voltage,))
-        cdf['xformer_cost'] = cdf.xformer_cost_p_mw *\
-            int_capacity(self._capacity_class)
+    def _shift_features(self, features):
+        """
+        Shift feature row and col indicies of tranmission features from the
+        global domain to the clipped raster
 
-        # Substation costs
-        cdf['sub_upgrade_cost'] = cdf.apply(self._xmc.sub_upgrade_cost, axis=1,
-                                            args=(tie_voltage,))
-        cdf['new_sub_cost'] = cdf.apply(self._xmc.new_sub_cost, axis=1,
-                                        args=(tie_voltage,))
+        Parameters
+        ----------
+        features : pandas.DataFrame
+            Table of transmission features
 
-        # Sink costs
-        cdf.loc[cdf.category == SINK_CAT, 'new_sub_cost'] =\
-            SINK_CONNECTION_COST
+        Returns
+        -------
+        features : pandas.DataFrame
+            Transmission features with row/col indicies shifted to clipped
+            raster
+        """
+        mapping = {'gid': 'trans_gid', 'trans_gids': 'trans_line_gids'}
+        features = features.rename(columns=mapping).drop(['dist'], axis=1)
+        features['row'] -= self._row_offset
+        features['col'] -= self._col_offset
 
-        # Total cost
-        cdf['connection_cost'] = cdf.xformer_cost + cdf.sub_upgrade_cost +\
-            cdf.new_sub_cost
-        cdf['trans_cap_cost'] = cdf.tie_line_cost + cdf.connection_cost
+        return features
 
-        return cdf
+    def tie_line_costs(self, min_line_length=5.7):
+        """
+        [summary]
 
-    def compute_costs(self, features, min_line_length=5.7):
+        Parameters
+        ----------
+        min_line_length : float, optional
+            [description], by default 5.7
+
+        Returns
+        -------
+        tie_line_costs : pandas.DataFrame
+            Updated table of transmission features with the tie-line cost added
+        """
         tie_voltage = self.tie_line_voltage
+        features = self.features.copy()
         features['raw_line_cost'] = 0
         features['dist_km'] = 0
 
         logger.debug('Determining path lengths and costs')
         for index, feat in features.iterrows():
+            length, cost = self.least_cost_path(feat)
             if feat['category'] == TRANS_LINE_CAT and\
                     feat['max_volts'] < tie_voltage:
                 msg = ('T-line {} voltage of {}kV is less than tie line of'
                        ' {}kV.'.format(feat.gid, feat.max_volts, tie_voltage))
                 logger.debug(msg)
-                features.loc[index, 'raw_line_cost'] = LOW_VOLT_T_LINE_COST
-                features.loc[index, 'dist_km'] = LOW_VOLT_T_LINE_LENGTH
-                continue
+                features.loc[index, 'raw_line_cost'] = 1e12
+            else:
+                features.loc[index, 'raw_line_cost'] = cost
 
             length, cost = self.least_cost_path(feat)
             if length < min_line_length:
                 cost = cost * (min_line_length / length)
                 length = min_line_length
 
-            features.loc[index, 'raw_line_cost'] = cost
             features.loc[index, 'dist_km'] = length
 
-        features['trans_gid'] = features.gid
-        features['trans_line_gids'] = features.trans_gids
-        costs = features.drop(['dist', 'gid', 'trans_gids'], axis=1)
+        return features
 
-        costs = tlc._connection_costs(costs, tie_voltage)
+    def _xformer_cost(self):
+        xformer_cost = np.zeros(len(self.features))
+
+        tie_line_voltage = self.tie_line_voltage
+        mask = self.features['category'] == TRANS_LINE_CAT
+        mask &= self.features['max_volts'] < tie_line_voltage
+        xformer_cost[mask] = -1
+
+    def _connection_costs(self, ):
+        """
+        Calculate connection costs for tie lines
+
+        Parameters
+        ----------
+        features : pd.DataFrame
+            Costs data frame for tie lines
+        tie_voltage : int
+            Tie line voltage
+
+        Returns
+        -------
+        features : pd.DataFrame
+            Tie line line and connection costs
+        """
+        # Modify https://github.com/NREL/reVX/blob/e49c8f406ce63a15c29a93e97c3570c4241ee298/reVX/least_cost_xmission/least_cost_xmission.py
+        features = self.features.copy()
+        # Length multiplier
+        features['length_mult'] = 1.0
+        # Short cutoff
+        mask = features['dist_km'] < 3 * 5280 / 3.28084 / 1000
+        features.loc[mask, 'length_mult'] = 1.5
+        # Medium cutoff
+        mask = features['dist_km'] <= 10 * 5280 / 3.28084 / 1000
+        features.loc[mask, 'length_mult'] = 1.2
+
+        features['tie_line_cost'] = (features['raw_line_cost']
+                                     * features['length_mult'])
+
+        # Transformer costs
+        features['xformer_cost_p_mw'] = features.apply(self._xmc.xformer_cost, axis=1,
+                                             args=(tie_voltage,))
+        features['xformer_cost'] = features.xformer_cost_p_mw *\
+            int_capacity(self._capacity_class)
+
+        # Substation costs
+        features['sub_upgrade_cost'] = features.apply(self._xmc.sub_upgrade_cost, axis=1,
+                                            args=(tie_voltage,))
+        features['new_sub_cost'] = features.apply(self._xmc.new_sub_cost, axis=1,
+                                        args=(tie_voltage,))
+
+        # Sink costs
+        features.loc[features.category == SINK_CAT, 'new_sub_cost'] =\
+            SINK_CONNECTION_COST
+
+        # Total cost
+        features['connection_cost'] = (features['xformer_cost']
+                                       + features['sub_upgrade_cost']
+                                       + features['new_sub_cost'])
+        features['trans_cap_cost'] = (features['tie_line_cost']
+                                      + features['connection_cost'])
+
+        return features
