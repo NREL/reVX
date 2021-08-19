@@ -1,12 +1,17 @@
+# -*- coding: utf-8 -*-
+"""
+Tie Line Costs tests
+"""
 import logging
-import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
 import matplotlib.colors as colors
+import numpy as np
+import os
+import pytest
 
-from .config import TRANS_LINE_CAT, LOAD_CENTER_CAT, \
-    SINK_CAT, \
-    SUBSTATION_CAT
+from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
+                                             SINK_CAT, SUBSTATION_CAT)
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +21,6 @@ def plot_paths(trans_cap_costs, x_feats, cmap='viridis', label=False,
     """
     Plot least cost paths for QAQC
     """
-    logger.debug('Plotting')
     plt.figure(figsize=(30, 15))
     if plot_paths_arr:
         trans_cap_costs._mcp_cost[trans_cap_costs._mcp_cost == np.inf] = 0.1
@@ -81,15 +85,34 @@ def plot_paths(trans_cap_costs, x_feats, cmap='viridis', label=False,
 
         if label:
             plt.text(feat.col + 20, feat.row + offset, name, color='black',
-                        path_effects=path_effects, fontdict={'size': 13})
+                     path_effects=path_effects, fontdict={'size': 13})
         plt.plot(feat.col, feat.row, marker=marker, color=color)
 
     # Plot sc_point
     plt.plot(trans_cap_costs.start[1], trans_cap_costs.start[0], marker='P',
-                color='black', markersize=18)
+             color='black', markersize=18)
     plt.plot(trans_cap_costs.start[1], trans_cap_costs.start[0], marker='P',
-                color='yellow', markersize=10)
+             color='yellow', markersize=10)
 
     plt.title(str(trans_cap_costs._sc_point.name))
     plt.show()
 
+
+def execute_pytest(capture='all', flags='-rapP'):
+    """Execute module as pytest with detailed summary report.
+
+    Parameters
+    ----------
+    capture : str
+        Log or stdout/stderr capture option. ex: log (only logger),
+        all (includes stdout/stderr)
+    flags : str
+        Which tests to show logs and results for.
+    """
+
+    fname = os.path.basename(__file__)
+    pytest.main(['-q', '--show-capture={}'.format(capture), fname, flags])
+
+
+if __name__ == '__main__':
+    execute_pytest()

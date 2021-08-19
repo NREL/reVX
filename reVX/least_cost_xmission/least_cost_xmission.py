@@ -3,6 +3,7 @@
 Module to compute least cost xmission paths, distances, and costs one or
 more SC points
 """
+from concurrent.futures import as_completed
 import geopandas as gpd
 import json
 import logging
@@ -10,22 +11,11 @@ import numpy as np
 import os
 import pandas as pd
 import rasterio
-
-import ast
-import math
-import logging
-import numpy as np
-import pandas as pd
-import geopandas as gpd
-from datetime import timedelta
-from datetime import datetime as dt
-
 from shapely.ops import nearest_points
 from shapely.geometry import Point, Polygon
 from shapely.geometry.linestring import LineString
 from shapely.geometry.multilinestring import MultiLineString
-
-from concurrent.futures import as_completed
+import time
 
 from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.points import SupplyCurveExtent
@@ -34,7 +24,6 @@ from rex.utilities.execution import SpawnProcessPool
 from reVX.handlers.geotiff import Geotiff
 
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
-from .utilities import RowColTransformer, int_capacity
 from .config import XmissionConfig,\
     CLIP_RASTER_BUFFER, TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, \
     SUBSTATION_CAT
@@ -64,16 +53,11 @@ class LeastCostXmission:
         resolution : int, optional
             Aggragation resolution, by default 128
         """
-        logger.info('Loading all data')
-
         self._config = XmissionConfig(config=config)
 
-        logger.debug('Loading transmission features')
-        self._features = self._load_trans_feats(features_fpath)
-
-        logger.debug('Creating supply curve points')
-        self._sc_points = self._create_sc_points(cost_fpath,
-                                                 resolution=resolution)
+        self._sc_points, self._features, self._sub_lines_mapping =\
+            self._map_sc_to_xmission(cost_fpath, features_fpath,
+                                     resolution=resolution)
         self._cost_fpath = cost_fpath
 
         logger.info('Done loading data')
@@ -100,6 +84,7 @@ class LeastCostXmission:
         subs : gpd.GeoDataFrame
             Data frame of substations
         """
+        logger.debug('Loading transmission features')
         features = gpd.read_file(features_fpath)
         features = features.drop(['bgid', 'egid', 'cap_left'], axis=1)
         mapping = {'gid': 'trans_gid', 'trans_gids': 'trans_line_gids'}
@@ -128,13 +113,12 @@ class LeastCostXmission:
                 lines = json.loads(lines)
 
             sub_lines_map[gid] = lines
-            mask = features['trans_gids'].isin(lines)
-            voltage = features.loc[mask, 'voltage'].values
-            features.at[idx, 'lines'] = lines
-            features.at[idx, 'min_volts'] = np.min(voltage)
-            features.at[idx, 'max_volts'] = np.max(voltage)
+            lines_mask = features['trans_gid'].isin(lines)
+            voltage = features.loc[lines_mask, 'voltage'].values
+            features.loc[idx, 'min_volts'] = np.min(voltage)
+            features.loc[idx, 'max_volts'] = np.max(voltage)
 
-        mask &= features['min_volts'] < 69
+        mask &= features['max_volts'] < 69
         if any(mask):
             msg = ("The following sub-stations do not have the minimum"
                    "required voltage of 69 kV and will be dropped:\n{}"
@@ -142,7 +126,7 @@ class LeastCostXmission:
             logger.warning(msg)
             features = features.loc[~mask]
 
-        return features
+        return features, sub_lines_map
 
     @staticmethod
     def _create_sc_points(cost_fpath, resolution=128):
@@ -161,10 +145,10 @@ class LeastCostXmission:
         sc_points : gpd.GeoDataFrame
             SC points
         """
+        logger.debug('Loading Supply Curve Points')
         sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
         sc_points = sce.points
 
-        logger.debug('Transforming SC points')
         sc_points['row'] = round(sc_points['row_ind'] * resolution
                                  + resolution / 2)
         sc_points['col'] = round(sc_points['col_ind'] * resolution
@@ -179,7 +163,13 @@ class LeastCostXmission:
 
         Parameters
         ----------
-        TODO
+        geo : gpd.Geometry
+            Geometry
+
+        Returns
+        -------
+        tuple
+            coordinates of geometry
         """
         if isinstance(geo, LineString):
             x, y = geo.coords[0]
@@ -193,17 +183,62 @@ class LeastCostXmission:
 
     @classmethod
     def _map_sc_to_xmission(cls, cost_fpath, features_fpath, resolution=128):
-        with ExclusionLayers(excl_fpath) as f:
-            transform = f.profile['transform']
+        """
+        Map supply curve points and transmission features to each other
+
+        Parameters
+        ----------
+        cost_fpath : str
+            Path to h5 file with cost rasters and transmission barriers
+        features_fpath : str
+            Path to geopackage with transmission features
+        resolution : int, optional
+            Aggragation resolution, by default 128
+
+        Returns
+        -------
+        sc_point : gpd.GeoDataFrame
+            Table of supply curve points to connect to tranmission
+        features : gpd.GeoDataFrame
+            Table of transmission features
+        sub_lines_map : dict
+            Dictionay of substations mapped to the transmission lines connected
+            to each substation
+        """
+        with ExclusionLayers(cost_fpath) as f:
+            transform = rasterio.Affine(*f.profile['transform'])
+            shape = f.shape
             regions = f['ISO_regions']
 
-        features = cls._load_trans_feats(features_fpath)
-        features['row'] = rasterio.transform.rowcol(transform, )
-        logger.debug('Converting SC pts to gpd')
-        geo = [Point(xy) for xy in zip(pts.x, pts.y)]
-        sc_points = gpd.GeoDataFrame(pts, crs=crs, geometry=geo)
+        features, sub_lines_map = cls._load_trans_feats(features_fpath)
+        logger.debug('Map transmission features to exclusion grid')
+        coords = features['geometry'].apply(cls._get_feature_coords).values
+        coords = np.concatinate(coords).reshape(len(features), 2)
+        row, col = rasterio.transform.rowcol(transform, coords[:, 0],
+                                             coords[:, 1])
+        features['row'] = row
+        features['col'] = col
+        features['region'] = regions[row, col]
 
-        return sc_points
+        mask = shape[0] >= row >= 0
+        mask &= shape[1] >= col >= 0
+
+        if any(~mask):
+            msg = ("The following features are outside of the cost exclusion "
+                   "domain and will be dropped:\n{}"
+                   .format(features.loc[~mask, 'trans_gids']))
+            logger.warning(msg)
+            features = features.loc[mask]
+
+        logger.debug('Converting SC points to GeoDataFrame')
+        sc_points = cls._create_sc_points(cost_fpath, resolution=resolution)
+        x, y = rasterio.transform.xy(transform, sc_points['row'].values,
+                                     sc_points['col'].values)
+        geo = [Point(xy) for xy in zip(x, y)]
+        sc_points = gpd.GeoDataFrame(sc_points, crs=features.crs,
+                                     geometry=geo)
+
+        return sc_points, features, sub_lines_map
 
     def parallel_process_sc_points(self, sc_pts=None, capacity_class='100MW',
                                    dist_thresh=None, reporting_steps=10,
@@ -268,7 +303,7 @@ class LeastCostXmission:
                         ''.format(total, avg))
 
             # Keep track of run times and report progress
-            step = math.ceil(len(sc_pts) / reporting_steps)
+            step = np.ceil(len(sc_pts) / reporting_steps)
             report_steps = range(step - 1, len(sc_pts), step)
             new_start_time = dt.now()
             run_times = []
