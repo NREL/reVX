@@ -19,19 +19,19 @@ from reVX.cli import main as cli
 from reVX.least_cost_xmission.cost_creator_cli import main
 from reVX.least_cost_xmission.cost_creator import XmissionCostCreator, \
     XmissionConfig
-from reVX.least_cost_xmission.config import NLCD_LAND_USE_CLASSES, \
-    TEST_DEFAULT_MULTS
+from reVX.least_cost_xmission.config import TEST_DEFAULT_MULTS
 
-RI_DATA_DIR = os.path.join(TESTDATADIR, 'ri_exclusions')
-EXCL_H5 = os.path.join(RI_DATA_DIR, 'ri_exclusions.h5')
-ISO_REGIONS_F = os.path.join(RI_DATA_DIR, 'ri_iso_regions.tif')
+BASELINE_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
+EXCL_H5 = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_exclusions.h5')
+ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_iso_regions.tif')
+XC = XmissionConfig()
 
 
 def build_test_costs():
     """
     Build test costs
     """
-    XmissionCostCreator.run(EXCL_H5, ISO_REGIONS_F,
+    XmissionCostCreator.run(BASELINE_H5, ISO_REGIONS_F, excl_h5=EXCL_H5,
                             slope_layer='ri_srtm_slope', nlcd_layer='ri_nlcd',
                             tiff_dir=None, default_mults=TEST_DEFAULT_MULTS)
 
@@ -48,8 +48,9 @@ def test_land_use_multiplier():
     """ Test land use multiplier creation """
     lu_mults = {'forest': 1.63, 'wetland': 1.5}
     arr = np.array([[[0, 95, 90], [42, 41, 15]]])
-    xcc = XmissionCostCreator(EXCL_H5, ISO_REGIONS_F)
-    out = xcc._compute_land_use_mult(arr, lu_mults, NLCD_LAND_USE_CLASSES)
+    xcc = XmissionCostCreator(BASELINE_H5, ISO_REGIONS_F)
+    out = xcc._compute_land_use_mult(arr, lu_mults,
+                                     land_use_classes=XC['land_use_classes'])
     expected = np.array([[[1.0, 1.5, 1.5], [1.63, 1.63, 1.0]]],
                         dtype=np.float32)
     assert np.array_equal(out, expected)
@@ -71,23 +72,20 @@ def test_full_costs_workflow():
     """
     Test full cost calculator workflow for RI against known costs
     """
-    xc = XmissionConfig()
+    xcc = XmissionCostCreator(BASELINE_H5, ISO_REGIONS_F,
+                              iso_lookup=XC['iso_lookup'])
 
-    xcc = XmissionCostCreator(EXCL_H5, ISO_REGIONS_F,
-                              iso_lookup=xc['iso_lookup'])
+    mults_arr = xcc.compute_multipliers(
+        XC['iso_multipliers'], excl_h5=EXCL_H5, slope_layer='ri_srtm_slope',
+        nlcd_layer='ri_nlcd', land_use_classes=XC['land_use_classes'],
+        default_mults=TEST_DEFAULT_MULTS)
 
-    mults_arr = xcc.compute_multipliers(xc['iso_multipliers'], excl_h5=None,
-                                        slope_layer='ri_srtm_slope',
-                                        nlcd_layer='ri_nlcd',
-                                        land_use_classes=NLCD_LAND_USE_CLASSES,
-                                        default_mults=TEST_DEFAULT_MULTS)
-
-    for _, capacity in xc['power_classes'].items():
-        with ExclusionLayers(EXCL_H5) as el:
+    for _, capacity in XC['power_classes'].items():
+        with ExclusionLayers(BASELINE_H5) as el:
             known_costs = el['tie_line_costs_{}MW'.format(capacity)]
 
         blc_arr = xcc.compute_base_line_costs(capacity,
-                                              xc['base_line_costs'])
+                                              XC['base_line_costs'])
         costs_arr = blc_arr * mults_arr
         assert np.isclose(known_costs, costs_arr).all()
 
@@ -144,9 +142,9 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        with ExclusionLayers(EXCL_H5) as f_truth:
+        with ExclusionLayers(BASELINE_H5) as f_truth:
             with ExclusionLayers(excl_h5) as f_test:
-                for layer in f_test.layers:
+                for layer in f_truth.layers:
                     test = f_test[layer]
                     truth = f_truth[layer]
 

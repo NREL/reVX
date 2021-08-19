@@ -57,7 +57,14 @@ class XmissionCostCreator(ExclusionsConverter):
 
         self._iso_lookup = iso_lookup if iso_lookup is not None else {}
 
-        self.geotiff_to_layer('ISO_regions', iso_regions_fpath)
+        if not os.path.exists(self._excl_h5):
+            self._init_h5(self._excl_h5, iso_regions_fpath)
+
+        if 'ISO_regions' not in self.layers:
+            self._geotiff_to_h5(self._excl_h5, 'ISO_regions',
+                                iso_regions_fpath)
+        else:
+            self._check_geotiff(self._excl_h5, iso_regions_fpath)
 
     @staticmethod
     def _compute_slope_mult(slope, config=None):
@@ -373,6 +380,8 @@ class XmissionCostCreator(ExclusionsConverter):
             nlcd_layer=nlcd_layer,
             land_use_classes=xc['land_use_classes'],
             default_mults=default_mults)
+
+        xcc.save_layer('tie_line_mutlipliers', mults_arr)
 
         if save_geotiff:
             tiff_path = os.path.join(tiff_dir, 'multipliers.tif')
