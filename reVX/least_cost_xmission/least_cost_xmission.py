@@ -11,28 +11,20 @@ import numpy as np
 import os
 import pandas as pd
 import rasterio
-from shapely.ops import nearest_points
-from shapely.geometry import Point, Polygon
+from scipy.spatial import cKDTree
+from shapely.geometry import Point
 from shapely.geometry.linestring import LineString
 from shapely.geometry.multilinestring import MultiLineString
-import time
 
 from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.points import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 
-from reVX.handlers.geotiff import Geotiff
-
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
-from .config import XmissionConfig,\
-    CLIP_RASTER_BUFFER, TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, \
-    SUBSTATION_CAT
+from .config import (XmissionConfig, TRANS_LINE_CAT, LOAD_CENTER_CAT,
+                     SINK_CAT, SUBSTATION_CAT)
 
 logger = logging.getLogger(__name__)
-
-# Number of sinks to use to determine the clipping "radius" for the costs and
-# paths raster. Tie line paths are only determined to the nearest sink.
-NUM_SINKS = 2
 
 
 class LeastCostXmission:
@@ -41,26 +33,117 @@ class LeastCostXmission:
     for all possible connections to all supply curve points
     -
     """
+    REQUIRED_LAYRES = ['transmission_barrier', 'ISO_regions']
+
     def __init__(self, cost_fpath, features_fpath, resolution=128,
                  config=None):
         """
         Parameters
         ----------
         cost_fpath : str
-            Path to h5 file with cost rasters and transmission barriers
+            Path to h5 file with cost rasters and other required layers
         features_fpath : str
             Path to geopackage with transmission features
         resolution : int, optional
             Aggragation resolution, by default 128
         """
+        self._check_layers(cost_fpath)
         self._config = XmissionConfig(config=config)
 
         self._sc_points, self._features, self._sub_lines_mapping =\
             self._map_sc_to_xmission(cost_fpath, features_fpath,
                                      resolution=resolution)
         self._cost_fpath = cost_fpath
+        self._tree = None
+        self._sink_coords = None
 
         logger.info('Done loading data')
+
+    @property
+    def sc_points(self):
+        """
+        Table of supply curve points
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+        """
+        return self._sc_points
+
+    @property
+    def features(self):
+        """
+        Table of transmission features
+
+        Returns
+        -------
+        gpd.GeoDataFrame
+        """
+        return self._features
+
+    @property
+    def sub_lines_mapping(self):
+        """
+        Series mapping substations  to the transmission lines connected
+        to each substation
+
+        Returns
+        -------
+        pandas.Series
+        """
+        return self._sub_lines_mapping
+
+    @property
+    def sink_coords(self):
+        """
+        Inf sink coordinates (row, col)
+
+        Returns
+        -------
+        ndarray
+        """
+        if self._sink_coords is None:
+            mask = self.features['category'] == SINK_CAT
+            self._sink_coords = self.features.loc[mask, ['row', 'col']].values
+
+        return self._sink_coords
+
+    @property
+    def sink_tree(self):
+        """
+        cKDTree for infinite sinks
+
+        Returns
+        -------
+        cKDTree
+        """
+        if self._tree is None:
+            self._tree = cKDTree(self.sink_coords)
+
+        return self._tree
+
+    @classmethod
+    def _check_layers(cls, cost_fpath):
+        """
+        Check to make sure the REQUIRED_LAYERS are in cost_fpath
+
+        Parameters
+        ----------
+        cost_fpath : str
+            Path to h5 file with cost rasters and other required layers
+        """
+        with ExclusionLayers(cost_fpath) as f:
+            missing = []
+            for lyr in cls.REQUIRED_LAYRES:
+                if lyr not in f:
+                    missing.append(lyr)
+
+            if missing:
+                msg = ("The following layers are required to compute Least "
+                       "Cost Transmission but are missing from {}:\n{}"
+                       .format(cost_fpath, missing))
+                logger.error(msg)
+                raise RuntimeError(msg)
 
     @staticmethod
     def _load_trans_feats(features_fpath):
@@ -137,7 +220,7 @@ class LeastCostXmission:
         Parameters
         ----------
         cost_fpath : str
-            Full path to h5 file with cost rasters
+            Path to h5 file with cost rasters and other required layers
         resolution : int, optional
             Aggragation resolution, by default 128
 
@@ -189,7 +272,7 @@ class LeastCostXmission:
         Parameters
         ----------
         cost_fpath : str
-            Path to h5 file with cost rasters and transmission barriers
+            Path to h5 file with cost rasters and other required layers
         features_fpath : str
             Path to geopackage with transmission features
         resolution : int, optional
@@ -201,8 +284,8 @@ class LeastCostXmission:
             Table of supply curve points to connect to tranmission
         features : gpd.GeoDataFrame
             Table of transmission features
-        sub_lines_map : dict
-            Dictionay of substations mapped to the transmission lines connected
+        sub_lines_map : pandas.Series
+            Series mapping substations  to the transmission lines connected
             to each substation
         """
         with ExclusionLayers(cost_fpath) as f:
@@ -238,215 +321,10 @@ class LeastCostXmission:
         sc_points = gpd.GeoDataFrame(sc_points, crs=features.crs,
                                      geometry=geo)
 
-        return sc_points, features, sub_lines_map
+        return sc_points, features, pd.Series(sub_lines_map)
 
-    def parallel_process_sc_points(self, sc_pts=None, capacity_class='100MW',
-                                   dist_thresh=None, reporting_steps=10,
-                                   cores=10):
-        """
-        Calculate tie-line and connection costs for multiple SC points using
-        multi-processing
-
-        Parmeters
-        ---------
-        sc_pts : None | int | slice | list
-            SC points to process
-        capacity_class : str
-            Capacity class to use, e.g. '100MW'
-        dist_thresh : None | int
-            Optional minimum clipping distance in pixels, if None base clipping
-            distance on nearest NUM_SINKS sinks
-        report_steps : int
-            Number of times to report progress
-        cores : None | int
-            Number of cores to use for multiprocessing. None means use all
-            available.
-
-        Returns
-        -------
-        pd.DataFrame
-            Transmission costs to existing trans features for SC points
-        """
-        sc_pts = self._parse_points(sc_pts)
-
-        logger.info('Processing {} SC points. First: {} Last: {}'
-                    ''.format(len(sc_pts), sc_pts.iloc[0].name,
-                              sc_pts.iloc[-1].name))
-
-        capacity = int_capacity(capacity_class)
-        line_cap = self._config['power_classes'][capacity_class]
-        tie_voltage = self._config['power_to_voltage'][str(line_cap)]
-        logger.debug('Using capacity class {}, line capacity {}MW, and line '
-                     'voltage of {}kV'.format(capacity_class, line_cap,
-                                              tie_voltage))
-
-        loggers = [__name__, 'reVX']
-        all_costs = pd.DataFrame()
-
-        start_time = dt.now()
-        kick_off_times = []
-        with SpawnProcessPool(max_workers=cores, loggers=loggers) as exe:
-            futures = {}
-            for i, (_, sc_pt) in enumerate(sc_pts.iterrows()):
-                radius, x_feats = self._clip_aoi(sc_pt, tie_voltage,
-                                                 dist_thresh=dist_thresh)
-
-                future = exe.submit(TransCapCosts.run, self._cost_fpath, sc_pt,
-                                    radius, x_feats, capacity, tie_voltage)
-                futures[future] = {'gid': sc_pt.name}
-                kick_off_times.append(dt.now() - start_time)
-                start_time = dt.now()
-
-            total = sum(kick_off_times, timedelta(0))
-            avg = total / len(kick_off_times)
-            logger.info('Started all futures in {}. Average of {} per SC pt'
-                        ''.format(total, avg))
-
-            # Keep track of run times and report progress
-            step = np.ceil(len(sc_pts) / reporting_steps)
-            report_steps = range(step - 1, len(sc_pts), step)
-            new_start_time = dt.now()
-            run_times = []
-
-            for i, future in enumerate(as_completed(futures)):
-                all_costs = all_costs.append(future.result())
-                run_times.append(dt.now() - new_start_time)
-
-                if i in report_steps:
-                    progress = int((i + 1) / len(sc_pts) * 100)
-                    avg = sum(run_times, timedelta(0)) / len(run_times)
-                    left = (len(sc_pts) - i - 1) * avg
-                    msg = ('Finished {} of {}. {}% '
-                           'complete. Average time of {} per SC pt. '
-                           'Approx {} left.'
-                           ''.format(i + 1, len(sc_pts),
-                                     progress, avg, left))
-                    logger.info(msg)
-                new_start_time = dt.now()
-
-        avg = sum(run_times, timedelta(0)) / len(run_times)
-        msg = ('Finished processing ({} of {} pts). Average time of {} per '
-               'SC pt.'.format(i + 1, len(sc_pts), avg))
-        logger.info(msg)
-
-        all_costs.reset_index(inplace=True, drop=True)
-
-        return all_costs
-
-    def process_sc_points(self, sc_pts=None, capacity_class='100MW',
-                          dist_thresh=None, reporting_steps=10,
-                          plot=False, plot_labels=False):
-        """
-        Calculate tie-line and connection costs for multiple SC points
-
-        Parameters
-        ----------
-        sc_pts : None | int | slice | list
-            SC points to process
-        capacity_class : str
-            Capacity class to use, e.g. '100MW'
-        dist_thresh : None | int
-            Optional minimum clipping distance, if None base clipping distance
-            on nearest NUM_SINKS sinks
-        report_steps : int
-            Number of times to report progress
-        plot : bool
-            Plot minimum cost paths to features if True
-        plot_labels : bool
-            Show feature gids on plot if True
-
-        Returns
-        -------
-        pd.DataFrame
-            Transmission costs to existing trans features for SC points
-        """
-        sc_pts = self._parse_points(sc_pts)
-
-        logger.info('Processing {} SC points. First: {} Last: {}'
-                    ''.format(len(sc_pts), sc_pts.iloc[0].name,
-                              sc_pts.iloc[-1].name))
-
-        capacity = int_capacity(capacity_class)
-        line_cap = self._config['power_classes'][capacity_class]
-        tie_voltage = self._config['power_to_voltage'][str(line_cap)]
-        logger.debug('Using capacity class {}, line capacity {}MW, and line '
-                     'voltage of {}kV'.format(capacity_class, line_cap,
-                                              tie_voltage))
-
-        # Keep track of run times and report progress
-        step = math.ceil(len(sc_pts)/reporting_steps)
-        report_steps = range(step-1, len(sc_pts), step)
-        run_times = []
-
-        all_costs = pd.DataFrame()
-
-        for i, (_, sc_pt) in enumerate(sc_pts.iterrows()):
-            start_time = dt.now()
-            radius, x_feats = self._clip_aoi(sc_pt, tie_voltage,
-                                             dist_thresh=dist_thresh)
-            costs = TransCapCosts.run(self._cost_fpath, sc_pt, radius, x_feats,
-                                      capacity, tie_voltage)
-            all_costs = all_costs.append(costs)
-            run_times.append(dt.now() - start_time)
-
-            if i in report_steps:
-                progress = int((i+1)/len(sc_pts)*100)
-                avg = sum(run_times, timedelta(0))/len(run_times)
-                left = (len(sc_pts)-i-1)*avg
-                msg = ('Finished SC pt {} ({} of {}). {}% '
-                       'complete. Average time of {} per SC pt. '
-                       'Approx {} left for this chunk.'
-                       ''.format(sc_pt.name, i+1, len(sc_pts), progress, avg,
-                                 left))
-                logger.info(msg)
-
-        all_costs.reset_index(inplace=True, drop=True)
-
-        avg = sum(run_times, timedelta(0))/len(run_times)
-        msg = ('Finished processing ({} of {} pts). Average time of {} per '
-               'SC pt.'.format(i+1, len(sc_pts), avg))
-        logger.info(msg)
-
-        return all_costs
-
-    def process_sc_point(self, sc_point, capacity_class='100MW',
-                         dist_thresh=None, plot=False, plot_labels=False):
-        """
-        Calculate tie-line and connection costs for SC point
-
-        Parameters
-        ----------
-        sc_point : gpd.GeoSeries
-            SC point
-        capacity_class : str
-            Capacity class to use, e.g. '100MW'
-        dist_thresh : None | int
-            Optional minimum clipping distance, if None base clipping distance
-            on nearest NUM_SINKS sinks
-        plot : bool
-            Plot minimum cost paths to features if True
-        plot_labels : bool
-            Show feature gids on plot if True
-
-        Returns
-        -------
-        pd.DataFrame
-            Transmission costs to existing trans features for SC point
-        """
-        capacity = int_capacity(capacity_class)
-        line_cap = self._config['power_classes'][capacity_class]
-        tie_voltage = self._config['power_to_voltage'][str(line_cap)]
-
-        radius, x_feats = self._clip_aoi(sc_point, tie_voltage,
-                                         dist_thresh=dist_thresh)
-
-        logger.debug('Calculating least cost paths')
-        costs = TransCapCosts.run(self._cost_fpath, sc_point, radius, x_feats,
-                                  capacity, tie_voltage)
-
-        return costs
-
-    def _clip_aoi(self, sc_point, tie_voltage, dist_thresh=None):
+    def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
+                          buffer=1.05):
         """
         Clip costs raster to AOI around SC point, and get substations,
         load centers, and sinks within the clipped region.
@@ -455,11 +333,8 @@ class LeastCostXmission:
         ----------
         sc_point : gpd.GeoSeries
             SC point to clip raster around
-        tie_voltage : int
-            Tie line voltage (kV)
-        dist_thresh : None | int
-            Minimum clipping distance to use (pixels). If None base clip on
-            distance to nearest NUM_SINKS sinks
+        nn_sinks : int, optional
+            Number of nearest neighbor sinks to clip to
 
         Returns
         -------
@@ -469,242 +344,125 @@ class LeastCostXmission:
             Substatations, load centers, sinks, and nearest points on t-lines
             to SC point
         """
-        logger.debug('*********** Starting clip')
+        logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
         # Find greatest major axis distance to NUM_SINKS sinks. Simply
         # grabbing the greatest difference for the furthest sink does not
         # work in all circumstances.
-        self.sinks['dist'] = self.sinks.distance(sc_point.geometry)
-        near_sinks = self.sinks.sort_values(by='dist').iloc[0:NUM_SINKS]
+        row, col = sc_point[['row', 'col']].values
+        _, pos = self.sink_tree.query([row, col], k=nn_sinks)
+        radius = np.abs(self.sink_coords[pos] - np.array([row, col])).max()
+        radius = int(np.ceil(radius * buffer))
 
-        dist = 0
-        for _, sink in near_sinks.iterrows():
-            temp = max(abs(sink.row - sc_point.row),
-                       abs(sink.col - sc_point.col))
-            if temp > dist:
-                dist = temp
-
-        radius = math.ceil(dist * CLIP_RASTER_BUFFER)
-        if dist_thresh is not None:
-            if dist_thresh > radius:
-                radius = dist_thresh
-
-        row_min = sc_point.row - radius
-        row_max = sc_point.row + radius
-        col_min = sc_point.col - radius
-        col_max = sc_point.col + radius
-
-        if row_min < 0:
-            row_min = 0
-        if col_min < 0:
-            col_min = 0
-        if row_max > self._regions_arr.shape[0]:
-            row_max = self._regions_arr.shape[0]
-        if col_max > self._regions_arr.shape[1]:
-            col_max = self._regions_arr.shape[1]
-
-        logger.debug('Using clip area of r=[{}:{}], c=[{}:{}]. Python style '
-                     'start/stop'.format(row_min, row_max, col_min, col_max))
+        logger.debug('Radius to {} nearest sink is: {}'
+                     .format(nn_sinks, radius))
+        row_min = max(row - radius, 0)
+        row_max = row + radius
+        col_min = max(col - radius, 0)
+        col_max = col + radius
+        logger.debug('Extracting all transmission features in the row slice '
+                     '{}:{} and column slice {}:{}'
+                     .format(row_min, row_max, col_min, col_max))
 
         # Clip transmission features
-        x_feats = self.subs[(self.subs.row >= row_min) &
-                            (self.subs.row <= row_max) &
-                            (self.subs.col >= col_min) &
-                            (self.subs.col <= col_max)]
-        logger.debug('{} substations found in clip area'
-                     ''.format(x_feats.shape[0]))
-
-        x_feats = x_feats[x_feats.max_volts >= tie_voltage]
-        logger.debug(('{} substations after limiting to minimum max voltage ' +
-                     'of {}kV').format(x_feats.shape[0], tie_voltage))
-
-        near_lcs = self.lcs[(self.lcs.row >= row_min) &
-                            (self.lcs.row <= row_max) &
-                            (self.lcs.col >= col_min) &
-                            (self.lcs.col <= col_max)]
-        logger.debug('{} load centers found in clip area'
-                     ''.format(near_lcs.shape[0]))
-
-        # TODO - this grabs a random load center, not the nearest
-        # TODO - Ensure at least one load center
-        if len(near_lcs) > 0:
-            x_feats = x_feats.append(near_lcs.iloc[0].to_frame().T)
-        else:
-            logger.warning('No load centers found for {}'
-                           ''.format(sc_point.name))
-
-        x_feats = x_feats.append(near_sinks.iloc[0].to_frame().T)
+        mask = row_min <= self.features['row'] <= row_max
+        mask &= col_min <= self.features['col'] <= col_max
+        mask &= self.features['max_volts'] >= tie_line_voltage
+        sc_features = self.features.loc[mask].copy(deep=True)
+        logger.debug('{} transmission features found in clipped area with '
+                     'minimum max voltage of {}'
+                     .format(len(sc_features), tie_line_voltage))
 
         # Find t-lines connected to substations within clip
-        logger.debug('Collecting connected t-lines')
-        trans_gids = x_feats[x_feats.category == SUBSTATION_CAT].trans_gids
-        trans_gids = pd.Series([gid for list_ in trans_gids for
-                                gid in list_]).value_counts().index
-        connected = self.t_lines.gid.isin(trans_gids)
-        t_lines = self.t_lines[connected].copy(deep=True)
+        logger.debug('Collecting transmission lines connected to substations')
+        mask = sc_features['category'] == SUBSTATION_CAT
+        trans_gids = np.concatenate(sc_features.loc[mask, 'trans_line_gids'])
+        trans_gids = np.unique(trans_gids)
+        mask = self.features['trans_gid'].isin(trans_gids)
+        trans_lines = self.features.loc[mask].copy(deep=True)
+        sc_features = sc_features.append(trans_lines)
 
-        # <slow part - move to worker maybe>
-        logger.debug('-- Clipping t-lines to AOI')
-        clip_rect = self._make_rect(row_min, col_min, row_max, col_max)
-        t_lines = gpd.clip(t_lines, clip_rect)
+        return sc_features, radius
 
-        logger.debug('-- Getting near pts on t-lines')
-        for index, tl in t_lines.iterrows():
-            near_pt, _ = nearest_points(tl.geometry, sc_point.geometry)
-            row, col = self._rct.get_row_col(near_pt.x, near_pt.y)
-            t_lines.loc[index, 'row'] = row
-            t_lines.loc[index, 'col'] = col
-        # </slow part>
-
-        x_feats = x_feats.append(t_lines)
-
-        logger.debug('Assigning regions')
-        x_feats['region'] = self._regions_arr[list(x_feats.row),
-                                              list(x_feats.col)]
-        x_feats = x_feats.drop('geometry', axis=1)
-
-        logger.debug('Clip complete')
-        return radius, x_feats
-
-    def _parse_points(self, sc_pts):
+    def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
+                          buffer=1.05, barrier_mult=100, min_line_length=5.7,
+                          max_workers=None):
         """
-        Get desired SC points
+        Compute Least Cost Tranmission for desired sc_points
 
-        Parameter
+        Parameters
         ----------
-        sc_pts : list | int | slice | None
-            Selection of SC points needed. All if None
+        capacity_class : [type]
+            [description]
+        sc_point_gids : [type], optional
+            [description], by default None
+        nn_sinks : int, optional
+            [description], by default 2
+        buffer : float, optional
+            [description], by default 1.05
+        barrier_mult : int, optional
+            [description], by default 100
+        max_workers : [type], optional
+            [description], by default None
 
         Returns
-        -------
-        sc_pts : gpd.GeoDataFrame
-            The SC points
+        least_costs : pandas.
         """
-        if isinstance(sc_pts, list) or isinstance(sc_pts, slice):
-            sc_pts = self.sc_points.loc[sc_pts]
-        elif isinstance(sc_pts, int):
-            sc_pts = self.sc_points.loc[[sc_pts]]
-        elif sc_pts is None:
-            sc_pts = self.sc_points
+        if max_workers is None:
+            max_workers = os.cpu_count()
+
+        if sc_point_gids is None:
+            sc_point_gids = self.sc_points['sc_point_gid'].values
+
+        tie_line_voltage = self._config.capacity_to_kv(capacity_class)
+        least_costs = pd.DataFrame()
+        if max_workers > 1:
+            logger.info('Computing Least Cost Transmission for SC points in '
+                        'parallel on {} workers'.format(max_workers))
+            loggers = [__name__, 'reV', 'reVX']
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
+                futures = []
+                for _, sc_point in self.sc_points.iterrows():
+                    gid = sc_point['sc_point_gid']
+                    if gid in sc_point_gids:
+                        radius, sc_features = self._clip_to_sc_point(
+                            sc_point, tie_line_voltage, nn_sinks=nn_sinks,
+                            buffer=buffer)
+
+                        future = exe.submit(TransCapCosts.run,
+                                            self._cost_fpath, sc_point,
+                                            sc_features, radius,
+                                            capacity_class,
+                                            config=self._config,
+                                            barrier_mult=barrier_mult,
+                                            min_line_length=min_line_length)
+                        futures.append(future)
+
+                for i, future in enumerate(as_completed(futures)):
+                    logger.debug('SC point {} of {} complete!'
+                                 .format(i + 1, len(futures)))
+                    least_costs = least_costs.append(future.result())
+
         else:
-            msg = 'sc_pts must be either list, slice, int, or None. ' +\
-                  'Got {}'.format(type(sc_pts))
-            logger.exception(msg)
-            raise AttributeError(msg)
-        return sc_pts
+            logger.info('Computing Least Cost Transmission for SC points in '
+                        'serial')
+            i = 1
+            for _, sc_point in self.sc_points.iterrows():
+                gid = sc_point['sc_point_gid']
+                if gid in sc_point_gids:
+                    radius, sc_features = self._clip_to_sc_point(
+                        sc_point, tie_line_voltage, nn_sinks=nn_sinks,
+                        buffer=buffer)
+                    least_cost = least_cost.append(TransCapCosts.run(
+                        self._cost_fpath, sc_point,
+                        sc_features, radius,
+                        capacity_class,
+                        config=self._config,
+                        barrier_mult=barrier_mult,
+                        min_line_length=min_line_length))
 
+                    logger.debug('SC point {} of {} complete!'
+                                 .format(i, len(sc_point_gids)))
+                    i += 1
 
-    def _x(self, gpd_row):
-        """
-        Get x (easting) coordinate for a feature
-
-        Parameters
-        ----------
-        gpd_row : gpd.GeoSeries
-            Row from GeoDataFrame
-
-        Returns
-        -------
-        x : float
-            X coordinate of feature
-        """
-        x, y = self._rct.get_x_y(gpd_row.row, gpd_row.col)
-        return x
-
-    def _y(self, gpd_row):
-        """
-        Get y (northing) coordinate for a feature
-
-        Parameters
-        ----------
-        gpd_row : gpd.GeoSeries
-            Row from GeoDataFrame
-
-        Returns
-        -------
-        y : float
-            Y coordinate of feature
-        """
-        x, y = self._rct.get_x_y(gpd_row.row, gpd_row.col)
-        return y
-
-    def _row(self, gpd_row):
-        """
-        Get row for a feature on reV CONUS raster
-
-        Parameters
-        ----------
-        gpd_row : gpd.GeoSeries
-            Row from GeoDataFrame
-
-        Returns
-        -------
-        row : int
-            Row of feature
-        """
-        x, y = self._coords(gpd_row.geometry)
-        row, col = self._rct.get_row_col(x, y)
-        return row
-
-    def _col(self, gpd_row):
-        """
-        Get column for a feature on reV CONUS raster
-
-        Parameters
-        ----------
-        gpd_row : gpd.GeoSeries
-            Row from GeoDataFrame
-
-        Returns
-        -------
-        col : int
-            Column of feature
-        """
-        x, y = self._coords(gpd_row.geometry)
-        row, col = self._rct.get_row_col(x, y)
-        return col
-
-    @staticmethod
-    def _coords(geo):
-        """
-        Return coordinate as (x, y) tuple. Uses first coordinate for lines
-
-        Parameters
-        ----------
-        TODO
-        """
-        if isinstance(geo, LineString):
-            x, y = geo.coords[0][0], geo.coords[0][1]
-            return (x, y)
-        elif isinstance(geo, MultiLineString):
-            x, y = geo.geoms[0].coords[0][0], geo.geoms[0].coords[0][1]
-        else:
-            x, y = geo.x, geo.y
-
-        return (x, y)
-
-    def _make_rect(self, r1, c1, r2, c2):
-        """"
-        Create rectangle matching clipping area
-
-        TODO
-        """
-        x1, y1 = self._rct.get_x_y(r1, c1)
-        x2, y2 = self._rct.get_x_y(r2, c2)
-        rect = Polygon([[x1, y1], [x2, y1], [x2, y2], [x1, y2], [x1, y1]])
-        return rect
-
-    @property
-    def OLD_reverse_iso(self):
-        """ TODO """
-        return {v: k for k, v in self._config['iso_lookup'].items()}
-
-    def OLD_xformer_costs(self, tie_voltage):
-        """
-        TODO -
-        Transformer costs are a 2D voltage-voltage matrix and keyed by
-        strings. Grab appropriate row and change key to int.
-
-
-        Is there a better way to do this?"""
-        xfc = self._config['transformer_costs'][str(tie_voltage)]
-        return {int(k): v for k, v in xfc.items()}
+        return least_costs.sort_values('sc_gid').reset_index(drop=True)

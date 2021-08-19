@@ -64,6 +64,31 @@ class XmissionConfig(dict):
 
         return out
 
+    @staticmethod
+    def _parse_cap_class(capacity):
+        """
+        Parse capacity class from input capacity which can be a number or a
+        string
+
+        Parameters
+        ----------
+        capacity : int | float | str
+            Capacity of interest
+
+        Returns
+        -------
+        cap_class : str
+            Capacity class in format "{capacity}MW"
+        """
+        if not isinstance(capacity, str):
+            cap_class = '{}MW'.format(int(capacity))
+        elif not capacity.endswith('MW'):
+            cap_class = capacity + 'MW'
+        else:
+            cap_class = capacity
+
+        return cap_class
+
     def capacity_to_kv(self, capacity):
         """
         Convert capacity class to line voltage
@@ -78,7 +103,8 @@ class XmissionConfig(dict):
         kv : int
             Tie-line voltage in kv
         """
-        line_capacity = self['power_classes'][str(capacity)]
+        cap_class = self._parse_cap_class(capacity)
+        line_capacity = self['power_classes'][cap_class]
         kv = self['power_to_voltage'][str(line_capacity)]
 
         return int(kv)
@@ -98,7 +124,7 @@ class XmissionConfig(dict):
             Capacity class in MW
         """
         line_capacity = self['voltage_to_power'][kv]
-        capacity = self['line_power_to_classes'][line_capacity]
+        capacity = self['line_power_to_classes'][line_capacity].strip("MW")
 
         return int(capacity)
 
