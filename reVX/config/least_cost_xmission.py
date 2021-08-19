@@ -88,3 +88,94 @@ class CostCreatorConfig(AnalysisConfig):
         Path to save costs and intermediary rasters as geotiffs
         """
         return self.get('extra_layers', None)
+
+
+class LeastCostXmissionConfig(AnalysisConfig):
+    """Config framework for Least Cost Xmission"""
+
+    NAME = 'CostCreator'
+    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'capacity_class')
+
+    def __init__(self, config):
+        """
+        Parameters
+        ----------
+        config : str | dict
+            Path to config .json or pre-extracted config input dictionary.
+        """
+        super().__init__(config)
+        self._default_resolution = 128
+        self._default_nn_sinks = 2
+        self._default_clipping_buffer = 1.05
+        self._default_barrier_mult = 100
+        self._default_min_line_length = 5.7
+
+    @property
+    def cost_fpath(self):
+        """
+        .h5 file with cost and required layers
+        """
+        return self['cost_fpath']
+
+    @property
+    def features_fpath(self):
+        """
+        Tranmission feature .gpkg
+        """
+        return self['features_fpath']
+
+    @property
+    def capacity_class(self):
+        """
+        Capacity class, either {capacity}MW or capacity value in MW
+        """
+        return self['capacity_class']
+
+    @property
+    def resolution(self):
+        """
+        SC point resolution
+        """
+        return self.get('resolution', self._default_resolution)
+
+    @property
+    def xmission_config(self):
+        """
+        Xmission config input
+        """
+        return self.get('xmission_config', None)
+
+    @property
+    def sc_point_gids(self):
+        """
+        List of sc_point_gids to compute Least Cost Xmission for
+        """
+        return self.get('sc_point_gids', None)
+
+    @property
+    def nn_sinks(self):
+        """
+        Number of nearest neighbor sinks to use for clipping radius
+        """
+        return self.get('nn_sinks', self._default_nn_sinks)
+
+    @property
+    def clipping_buffer(self):
+        """
+        Buffer to add to clipping radius
+        """
+        return self.get('clipping_buffer', self._default_clipping_buffer)
+
+    @property
+    def barrier_mult(self):
+        """
+        Transmission barrier multiplier to use for MCP costs
+        """
+        return self.get('barrier_mult', self._default_barrier_mult)
+
+    @property
+    def min_line_length(self):
+        """
+        Minimum tie-line line length in km
+        """
+        return self.get('min_line_length', self._default_min_line_length)

@@ -29,7 +29,7 @@ class TieLineCosts:
     locations
     """
     def __init__(self, excl_fpath, start_idx, radius, capacity_class,
-                 config=None, barrier_mult=100):
+                 xmission_config=None, barrier_mult=100):
         """
         Parameters
         ----------
@@ -41,14 +41,14 @@ class TieLineCosts:
             Radius around sc_point to clip cost to
         capacity_class : int | str
             Tranmission feature capacity_class class
-        config : str | dict | XmissionConfig, optional
+        xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
         """
         self._excl_fpath = excl_fpath
-        self._config = self._parse_config(config=config)
+        self._config = self._parse_config(config=xmission_config)
         self._start_idx = start_idx
         self._capacity_class_class = \
             self._config._parse_cap_class(capacity_class)
@@ -188,10 +188,10 @@ class TieLineCosts:
         -------
         int
         """
-        return self._config.capacity_class_to_kv(self.capacity_class_class)
+        return self._config.capacity_to_kv(self.capacity_class_class)
 
     @staticmethod
-    def _parse_config(config=None):
+    def _parse_config(xmission_config=None):
         """
         Load Xmission config if needed
 
@@ -205,10 +205,10 @@ class TieLineCosts:
         -------
         XmissionConfig
         """
-        if not isinstance(config, XmissionConfig):
-            config = XmissionConfig(config=config)
+        if not isinstance(xmission_config, XmissionConfig):
+            xmission_config = XmissionConfig(config=xmission_config)
 
-        return config
+        return xmission_config
 
     @staticmethod
     def _get_clipping_slices(excl_fpath, row, col, radius):
@@ -271,8 +271,7 @@ class TieLineCosts:
         """
         with ExclusionLayers(excl_fpath) as f:
             cost = f[cost_layer, row_slice, col_slice]
-            # barrier = f['transmission_barrier', row_slice, col_slice]
-            barrier = np.ones(cost.shape)
+            barrier = f['transmission_barrier', row_slice, col_slice]
 
         mcp_cost = cost * barrier * barrier_mult
 
@@ -343,7 +342,7 @@ class TieLineCosts:
 
     @classmethod
     def run(cls, excl_fpath, start_idx, end_idx, radius, capacity_class,
-            config=None, barrier_mult=100):
+            xmission_config=None, barrier_mult=100):
         """
         Compute least cost tie-line path to all features to be connected a
         single supply curve point.
@@ -361,7 +360,7 @@ class TieLineCosts:
             Radius around sc_point to clip cost to
         capacity_class : int | str
             Tranmission feature capacity_class class
-        config : str | dict | XmissionConfig, optional
+        xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
@@ -375,8 +374,8 @@ class TieLineCosts:
             Cost of path including terrain and land use multipliers
         """
         ts = time.time()
-        tlc = cls(excl_fpath, start_idx, radius, capacity_class, config=config,
-                  barrier_mult=barrier_mult)
+        tlc = cls(excl_fpath, start_idx, radius, capacity_class,
+                  xmission_config=xmission_config, barrier_mult=barrier_mult)
         logger.debug('Least Cost tie-line costs computed in {:.4f}s'
                      .format(time.time() - ts))
 
@@ -391,7 +390,7 @@ class TransCapCosts(TieLineCosts):
     """
 
     def __init__(self, excl_fpath, sc_point, features, radius, capacity_class,
-                 config=None, barrier_mult=100):
+                 xmission_config=None, barrier_mult=100):
         """
         Parameters
         ----------
@@ -405,7 +404,7 @@ class TransCapCosts(TieLineCosts):
             Radius around sc_point to clip cost to
         capacity_class : int | str
             Tranmission feature capacity_class class
-        config : str | dict | XmissionConfig, optional
+        xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
@@ -413,7 +412,7 @@ class TransCapCosts(TieLineCosts):
         """
         self._sc_point = sc_point
         super().__init__(excl_fpath, sc_point[['row', 'col']].values, radius,
-                         capacity_class, config=config,
+                         capacity_class, xmission_config=xmission_config,
                          barrier_mult=barrier_mult)
         self._features = self._prep_features(features)
 
@@ -699,7 +698,7 @@ class TransCapCosts(TieLineCosts):
 
     @classmethod
     def run(cls, excl_fpath, sc_point, features, radius, capacity_class,
-            config=None, barrier_mult=100, min_line_length=5.7):
+            xmission_config=None, barrier_mult=100, min_line_length=5.7):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -718,14 +717,13 @@ class TransCapCosts(TieLineCosts):
             Radius around sc_point to clip cost to
         capacity_class : int | str
             Tranmission feature capacity_class class
-        config : str | dict | XmissionConfig, optional
+        xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
         min_line_length : float, optional
             Minimum line length in km, by default 5.7
-
 
         Returns
         -------
@@ -735,7 +733,7 @@ class TransCapCosts(TieLineCosts):
         """
         ts = time.time()
         tcc = cls(excl_fpath, sc_point, features, radius, capacity_class,
-                  config=config, barrier_mult=barrier_mult)
+                  xmission_config=xmission_config, barrier_mult=barrier_mult)
 
         logger.debug('Least Cost transmission costs computed for sc_point_gid '
                      '{} in {:.4f}s'.format(sc_point['sc_point_gid'],

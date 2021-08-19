@@ -39,7 +39,7 @@ def main(ctx, name, verbose):
 @main.command()
 def valid_config_keys():
     """
-    Echo the valid AssemblyArea config keys
+    Echo the valid Least Cost Xmission Cost Creator config keys
     """
     click.echo(', '.join(get_class_properties(CostCreatorConfig)))
 
@@ -52,7 +52,7 @@ def run_local(ctx, config):
     ----------
     ctx : click.ctx
         click ctx object
-    config : reVX.config.dist_to_ports.CostCreatorConfig
+    config : reVX.config.least_cost_xmission.CostCreatorConfig
         Cost Creator config object.
     """
     ctx.obj['NAME'] = config.name
@@ -109,7 +109,7 @@ def from_config(ctx, config, verbose):
               help=("Path to exclusion .h5 file containing NLCD and "
                     "slope layers, if None use h5_fpath if None assume "
                     "NLCD and slope layers are in self._excl_h5"))
-@click.option('--cost_configs', '-cc', type=click.Path(exists=True),
+@click.option('--cost_configs', '-ccfg', type=click.Path(exists=True),
               show_default=True, default=None,
               help=("JSON file with cost configs"))
 @click.option('--slope_layer', '-slope', type=str, show_default=True,
@@ -182,7 +182,7 @@ def get_node_cmd(config):
             '-h5 {}'.format(SLURM.s(config.h5_fpath)),
             '-iso {}'.format(SLURM.s(config.iso_regions)),
             '-excl {}'.format(SLURM.s(config.excl_h5)),
-            '-cc {}'.format(SLURM.s(config.cost_configs)),
+            '-ccfg {}'.format(SLURM.s(config.cost_configs)),
             '-slope {}'.format(SLURM.s(config.slope_layer)),
             '-nlcd {}'.format(SLURM.s(config.nlcd_layer)),
             '-dm {}'.format(SLURM.s(config.default_mults)),

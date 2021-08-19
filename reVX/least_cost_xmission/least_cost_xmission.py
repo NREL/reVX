@@ -15,14 +15,17 @@ from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from shapely.geometry.linestring import LineString
 from shapely.geometry.multilinestring import MultiLineString
+import time
 
 from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.points import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 
+from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
+                                             LOAD_CENTER_CAT, SINK_CAT,
+                                             SUBSTATION_CAT)
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
-from .config import (XmissionConfig, TRANS_LINE_CAT, LOAD_CENTER_CAT,
-                     SINK_CAT, SUBSTATION_CAT)
+
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +39,7 @@ class LeastCostXmission:
     REQUIRED_LAYRES = ['transmission_barrier', 'ISO_regions']
 
     def __init__(self, cost_fpath, features_fpath, resolution=128,
-                 config=None):
+                 xmission_config=None):
         """
         Parameters
         ----------
@@ -45,10 +48,13 @@ class LeastCostXmission:
         features_fpath : str
             Path to geopackage with transmission features
         resolution : int, optional
-            Aggragation resolution, by default 128
+            SC point resolution, by default 128
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects, by default None
         """
         self._check_layers(cost_fpath)
-        self._config = XmissionConfig(config=config)
+        self._config = XmissionConfig(config=xmission_config)
 
         self._sc_points, self._features, self._sub_lines_mapping =\
             self._map_sc_to_xmission(cost_fpath, features_fpath,
@@ -222,7 +228,7 @@ class LeastCostXmission:
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers
         resolution : int, optional
-            Aggragation resolution, by default 128
+            SC point resolution, by default 128
 
         Returns
         sc_points : gpd.GeoDataFrame
@@ -276,7 +282,7 @@ class LeastCostXmission:
         features_fpath : str
             Path to geopackage with transmission features
         resolution : int, optional
-            Aggragation resolution, by default 128
+            SC point resolution, by default 128
 
         Returns
         -------
@@ -324,7 +330,7 @@ class LeastCostXmission:
         return sc_points, features, pd.Series(sub_lines_map)
 
     def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
-                          buffer=1.05):
+                          clipping_buffer=1.05):
         """
         Clip costs raster to AOI around SC point, and get substations,
         load centers, and sinks within the clipped region.
@@ -351,7 +357,7 @@ class LeastCostXmission:
         row, col = sc_point[['row', 'col']].values
         _, pos = self.sink_tree.query([row, col], k=nn_sinks)
         radius = np.abs(self.sink_coords[pos] - np.array([row, col])).max()
-        radius = int(np.ceil(radius * buffer))
+        radius = int(np.ceil(radius * clipping_buffer))
 
         logger.debug('Radius to {} nearest sink is: {}'
                      .format(nn_sinks, radius))
@@ -384,28 +390,38 @@ class LeastCostXmission:
         return sc_features, radius
 
     def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
-                          buffer=1.05, barrier_mult=100, min_line_length=5.7,
-                          max_workers=None):
+                          clipping_buffer=1.05, barrier_mult=100,
+                          min_line_length=5.7, max_workers=None):
         """
         Compute Least Cost Tranmission for desired sc_points
 
         Parameters
         ----------
-        capacity_class : [type]
-            [description]
-        sc_point_gids : [type], optional
-            [description], by default None
+        capacity_class : str | int
+            Capacity class of transmission features to connect supply curve
+            points to
+        sc_point_gids : list, optional
+            List of sc_point_gids to connect to, by default None
         nn_sinks : int, optional
-            [description], by default 2
-        buffer : float, optional
-            [description], by default 1.05
+            Number of nearest neighbor sinks to use for clipping radius
+            calculation, by default 2
+        clipping_buffer : float, optional
+            Buffer to expand clipping radius by, by default 1.05
         barrier_mult : int, optional
-            [description], by default 100
-        max_workers : [type], optional
-            [description], by default None
+            Tranmission barrier multiplier, used when computing the least
+            cost tie-line path, by default 100
+        min_line_length : float, optional
+            Minimum line length in km, by default 5.7
+        max_workers : int, optional
+            Number of workers to use for processing, if 1 run in serial,
+            if None use all available cores, by default None
 
         Returns
-        least_costs : pandas.
+        -------
+        least_costs : pandas.DataFrame
+            Least cost connections between all supply curve points and the
+            transmission features with the given capacity class that are within
+            "nn_sink" nearest infinite sinks
         """
         if max_workers is None:
             max_workers = os.cpu_count()
@@ -427,13 +443,13 @@ class LeastCostXmission:
                     if gid in sc_point_gids:
                         radius, sc_features = self._clip_to_sc_point(
                             sc_point, tie_line_voltage, nn_sinks=nn_sinks,
-                            buffer=buffer)
+                            clipping_buffer=clipping_buffer)
 
                         future = exe.submit(TransCapCosts.run,
                                             self._cost_fpath, sc_point,
                                             sc_features, radius,
                                             capacity_class,
-                                            config=self._config,
+                                            xmission_config=self._config,
                                             barrier_mult=barrier_mult,
                                             min_line_length=min_line_length)
                         futures.append(future)
@@ -452,12 +468,12 @@ class LeastCostXmission:
                 if gid in sc_point_gids:
                     radius, sc_features = self._clip_to_sc_point(
                         sc_point, tie_line_voltage, nn_sinks=nn_sinks,
-                        buffer=buffer)
+                        clipping_buffer=clipping_buffer)
                     least_cost = least_cost.append(TransCapCosts.run(
                         self._cost_fpath, sc_point,
                         sc_features, radius,
                         capacity_class,
-                        config=self._config,
+                        xmission_config=self._config,
                         barrier_mult=barrier_mult,
                         min_line_length=min_line_length))
 
@@ -466,3 +482,67 @@ class LeastCostXmission:
                     i += 1
 
         return least_costs.sort_values('sc_gid').reset_index(drop=True)
+
+    @classmethod
+    def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
+            xmission_config=None, sc_point_gids=None, nn_sinks=2,
+            clipping_buffer=1.05, barrier_mult=100, min_line_length=5.7,
+            max_workers=None):
+        """
+        Find Least Cost Tranmission connections between desired sc_points to
+        given tranmission features for desired capacity class
+
+        Parameters
+        ----------
+        cost_fpath : str
+            Path to h5 file with cost rasters and other required layers
+        features_fpath : str
+            Path to geopackage with transmission features
+        capacity_class : str | int
+            Capacity class of transmission features to connect supply curve
+            points to
+        resolution : int, optional
+            SC point resolution, by default 128
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects, by default None
+        sc_point_gids : list, optional
+            List of sc_point_gids to connect to, by default None
+        nn_sinks : int, optional
+            Number of nearest neighbor sinks to use for clipping radius
+            calculation, by default 2
+        clipping_buffer : float, optional
+            Buffer to expand clipping radius by, by default 1.05
+        barrier_mult : int, optional
+            Tranmission barrier multiplier, used when computing the least
+            cost tie-line path, by default 100
+        min_line_length : float, optional
+            Minimum line length in km, by default 5.7
+        max_workers : int, optional
+            Number of workers to use for processing, if 1 run in serial,
+            if None use all available cores, by default None
+
+        Returns
+        -------
+        least_costs : pandas.DataFrame
+            Least cost connections between all supply curve points and the
+            transmission features with the given capacity class that are within
+            "nn_sink" nearest infinite sinks
+        """
+        ts = time.time()
+        lcx = cls(cost_fpath, features_fpath, resolution=resolution,
+                  xmission_config=xmission_config)
+        least_costs = lcx.process_sc_points(capacity_class,
+                                            sc_point_gids=sc_point_gids,
+                                            nn_sinks=nn_sinks,
+                                            clipping_buffer=clipping_buffer,
+                                            barrier_mult=barrier_mult,
+                                            min_line_length=min_line_length,
+                                            max_workers=max_workers)
+
+        logger.info('{} connections were made {} SC points in {:.4f} minutes'
+                    .format(len(least_costs),
+                            len(least_costs['sc_point_gid'].unique()),
+                            time.time() - ts / 60))
+
+        return least_costs

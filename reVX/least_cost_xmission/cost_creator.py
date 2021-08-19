@@ -49,7 +49,7 @@ class XmissionCostCreator(ExclusionsConverter):
 
         logger.debug('Loading ISO regions')
         with Geotiff(iso_regions_fpath) as gt:
-            self._iso_regions = gt.values[0]
+            self._iso_regions = gt.values[0].astype('uint16')
             self._profile = gt.profile
 
         self._profile['dtype'] = 'float32'
@@ -57,10 +57,7 @@ class XmissionCostCreator(ExclusionsConverter):
 
         self._iso_lookup = iso_lookup if iso_lookup is not None else {}
 
-        if not os.path.exists(h5_fpath):
-            self._init_h5(h5_fpath, iso_regions_fpath)
-        else:
-            self._check_geotiff(h5_fpath, iso_regions_fpath)
+        self.geotiff_to_layer('ISO_regions', iso_regions_fpath)
 
     @staticmethod
     def _compute_slope_mult(slope, config=None):
@@ -75,14 +72,14 @@ class XmissionCostCreator(ExclusionsConverter):
         config : dict | None
             Multipliers and slope cut offs for hilly and mountain terrain.
             Use defaults if None.
-        config['hill_mult'] : float
-            Multiplier for hilly terrain
-        config['mtn_slope'] : float
-            Multiplier for mountainous terrain
-        config['hill_slope'] : float
-            Slope at and above which a cell is classified as hilly.
-        config['mtn_slope'] : float
-            Slope at and above which a cell is classified as mountainous
+            config['hill_mult'] : float
+                Multiplier for hilly terrain
+            config['mtn_slope'] : float
+                Multiplier for mountainous terrain
+            config['hill_slope'] : float
+                Slope at and above which a cell is classified as hilly.
+            config['mtn_slope'] : float
+                Slope at and above which a cell is classified as mountainous
 
         Returns
         -------
