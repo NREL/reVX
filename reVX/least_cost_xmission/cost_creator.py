@@ -412,7 +412,7 @@ class XmissionCostCreator(ExclusionsConverter):
             descriptions = extra_layers.get('descriptions', None)
             scale_factors = extra_layers.get('scale_factors', None)
             kwargs = extra_layers.get('kwargs', {})
-            cls.layers_to_h5(h5_fpath, layers,
-                             descriptions=descriptions,
-                             scale_factors=scale_factors,
-                             **kwargs)
+            ExclusionsConverter.layers_to_h5(h5_fpath, layers,
+                                             descriptions=descriptions,
+                                             scale_factors=scale_factors,
+                                             **kwargs)

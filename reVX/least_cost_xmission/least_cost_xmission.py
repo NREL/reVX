@@ -211,7 +211,7 @@ class LeastCostXmission:
         if any(mask):
             msg = ("The following sub-stations do not have the minimum"
                    "required voltage of 69 kV and will be dropped:\n{}"
-                   .format(features.loc[mask, 'trans_gids']))
+                   .format(features.loc[mask, 'trans_gid']))
             logger.warning(msg)
             features = features.loc[~mask]
 
@@ -237,6 +237,7 @@ class LeastCostXmission:
         logger.debug('Loading Supply Curve Points')
         sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
         sc_points = sce.points
+        sc_points['sc_point_gid'] = sc_points.index.values
 
         sc_points['row'] = round(sc_points['row_ind'] * resolution
                                  + resolution / 2)
@@ -302,22 +303,31 @@ class LeastCostXmission:
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
         logger.debug('Map transmission features to exclusion grid')
         coords = features['geometry'].apply(cls._get_feature_coords).values
-        coords = np.concatinate(coords).reshape(len(features), 2)
+        coords = np.concatenate(coords).reshape(len(features), 2)
         row, col = rasterio.transform.rowcol(transform, coords[:, 0],
                                              coords[:, 1])
-        features['row'] = row
-        features['col'] = col
-        features['region'] = regions[row, col]
+        row = np.array(row)
+        col = np.array(col)
 
-        mask = shape[0] >= row >= 0
-        mask &= shape[1] >= col >= 0
+        # Remove features outside of the cost domain
+        mask = row >= 0
+        mask &= row <= shape[0]
+        mask &= col >= 0
+        mask &= col <= shape[1]
 
         if any(~mask):
             msg = ("The following features are outside of the cost exclusion "
                    "domain and will be dropped:\n{}"
-                   .format(features.loc[~mask, 'trans_gids']))
+                   .format(features.loc[~mask, 'trans_gid']))
             logger.warning(msg)
+            row = row[mask]
+            col = col[mask]
             features = features.loc[mask]
+
+        features['row'] = row
+        features['col'] = col
+        print(regions.shape, len(row), len(col), regions[row, col].shape)
+        features['region'] = regions[row, col]
 
         logger.debug('Converting SC points to GeoDataFrame')
         sc_points = cls._create_sc_points(cost_fpath, resolution=resolution)

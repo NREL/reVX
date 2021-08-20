@@ -66,7 +66,7 @@ def run_local(ctx, config):
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
                barrier_mult=config.barrier_mult,
-               min_line_length=config.min_lin_length,
+               min_line_length=config.min_line_length,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
                log_dir=config.logdir,
@@ -120,7 +120,7 @@ def from_config(ctx, config, verbose):
 @click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
               default=None,
               help=("List of sc_point_gids to connect to"))
-@click.option('--nn_sink', '-nn', type=int,
+@click.option('--nn_sinks', '-nn', type=int,
               show_default=True, default=2,
               help=("Number of nearest neighbor sinks to use for clipping "
                     "radius calculation"))

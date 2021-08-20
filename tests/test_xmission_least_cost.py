@@ -2,33 +2,96 @@
 """
 Least cost transmission line path tests
 """
+from click.testing import CliRunner
+import json
 import os
+import pandas as pd
+from pandas.testing import assert_frame_equal
 import pytest
-import numpy as np
+import tempfile
+import traceback
 
-from reV.handlers.exclusions import ExclusionLayers
-
+from rex.utilities.loggers import LOGGERS
 from reVX import TESTDATADIR
-from reVX.least_cost_xmission.cost_creator import XmissionCostCreator, \
-    XmissionConfig
-from reVX.least_cost_xmission._path_finder import PathFinder
-from reVX.least_cost_xmission.config import NLCD_LAND_USE_CLASSES, CELL_SIZE, \
-    TEST_DEFAULT_MULTS
+from reVX.least_cost_xmission.least_cost_xmission_cli import main
+from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
 
-RI_DATA_DIR = os.path.join(TESTDATADIR, 'ri_exclusions')
-INPUT_H5F = os.path.join(RI_DATA_DIR, 'ri_exclusions.h5')
-ISO_REGIONS_F = os.path.join(RI_DATA_DIR, 'ri_iso_regions.tif')
+COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
+FEATURES = os.path.join(TESTDATADIR, 'xmission', 'conus_allconns.gpkg')
 
 
-def test_path_cost():
-    """ Test calulating path cost"""
-    costs = np.array([[1,1,1,1,1,1], [2,2,2,2,2,2], [3,3,3,3,3,3],
-                      [2,2,2,2,2,2], [1,1,1,1,1,1], [5,5,5,5,5,5], ])
-    i1 = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (1, 5), (2, 5),
-          (3, 5), (4, 5), (5, 5)]
-    i2 = [(0, 0), (0, 1), (1, 2), (2, 2), (2, 3), (3, 4), (4, 5), (5, 5)]
-    assert round(PathFinder._calc_path_cost(costs, i1), 5) == 16.0
-    assert round(PathFinder._calc_path_cost(costs, i2), 5) == 17.27817
+@pytest.fixture(scope="module")
+def runner():
+    """
+    cli runner
+    """
+    return CliRunner()
+
+
+@pytest.mark.parametrize('capacity', [100, 200, 400, 1000])
+def test_capacity_class(capacity):
+    """
+    Test least cost xmission and compare with baseline data
+    """
+    test = LeastCostXmission.run(COST_H5, FEATURES, capacity)
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_{capacity}MW.csv')
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    assert_frame_equal(truth, test, check_dtype=False)
+
+
+@pytest.mark.parametrize('max_workers', [1, None])
+def test_parallel(max_workers):
+    """
+    Test least cost xmission and compare with baseline data
+    """
+    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
+                                 max_workers=max_workers)
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         'least_cost_100MW.csv')
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    assert_frame_equal(truth, test, check_dtype=False)
+
+
+def test_cli(runner):
+    """
+    Test CostCreator CLI
+    """
+
+    with tempfile.TemporaryDirectory() as td:
+        config = {
+            "directories": {
+                "log_directory": td,
+                "output_directory": td
+            },
+            "execution_control": {
+                "option": "local",
+            },
+            "cost_fpath": COST_H5,
+            "features_fpath": FEATURES,
+            "capacity_class": '100MW',
+            "dirout": td
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        print(os.listdir(td))
+        raise RuntimeError
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

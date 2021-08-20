@@ -31,9 +31,14 @@ def build_test_costs():
     """
     Build test costs
     """
+    extra_layers = {'layers':
+                    {'transmission_barrier':
+                     os.path.join(TESTDATADIR, 'xmission',
+                                  'ri_transmission_barriers.tif')}}
     XmissionCostCreator.run(BASELINE_H5, ISO_REGIONS_F, excl_h5=EXCL_H5,
                             slope_layer='ri_srtm_slope', nlcd_layer='ri_nlcd',
-                            tiff_dir=None, default_mults=TEST_DEFAULT_MULTS)
+                            tiff_dir=None, default_mults=TEST_DEFAULT_MULTS,
+                            extra_layers=extra_layers)
 
 
 @pytest.fixture(scope="module")
@@ -118,6 +123,10 @@ def test_cli(runner):
         with open(mults_path, 'w') as f:
             json.dump(TEST_DEFAULT_MULTS, f)
 
+        extra_layers = {'layers':
+                        {'transmission_barrier':
+                         os.path.join(TESTDATADIR, 'xmission',
+                                      'ri_transmission_barriers.tif')}}
         config = {
             "directories": {
                 "log_directory": td,
@@ -130,7 +139,8 @@ def test_cli(runner):
             "iso_regions": ISO_REGIONS_F,
             "slope_layer": 'ri_srtm_slope',
             "nlcd_layer": 'ri_nlcd',
-            "default_mults": mults_path
+            "default_mults": mults_path,
+            "extra_layers": extra_layers
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:

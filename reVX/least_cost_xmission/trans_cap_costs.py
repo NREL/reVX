@@ -376,10 +376,12 @@ class TieLineCosts:
         ts = time.time()
         tlc = cls(excl_fpath, start_idx, radius, capacity_class,
                   xmission_config=xmission_config, barrier_mult=barrier_mult)
+
+        length, cost = tlc.least_cost_path(end_idx)
         logger.debug('Least Cost tie-line costs computed in {:.4f}s'
                      .format(time.time() - ts))
 
-        return tlc.least_cost_path(end_idx)
+        return length, cost
 
 
 class TransCapCosts(TieLineCosts):
@@ -735,8 +737,9 @@ class TransCapCosts(TieLineCosts):
         tcc = cls(excl_fpath, sc_point, features, radius, capacity_class,
                   xmission_config=xmission_config, barrier_mult=barrier_mult)
 
+        features = tcc.compute(min_line_length=min_line_length)
         logger.debug('Least Cost transmission costs computed for sc_point_gid '
                      '{} in {:.4f}s'.format(sc_point['sc_point_gid'],
                                             time.time() - ts))
 
-        return tcc.compute(min_line_length=min_line_length)
+        return features
