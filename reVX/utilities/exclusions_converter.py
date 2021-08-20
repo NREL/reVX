@@ -7,8 +7,6 @@ import json
 import logging
 import numpy as np
 import os
-import pandas as pd
-from pandas.testing import assert_frame_equal
 import rasterio
 from warnings import warn
 
@@ -182,25 +180,28 @@ class ExclusionsConverter:
                     raise ExclusionsCheckError(error)
 
                 profile = h5.profile
-                h5_crs = dict(i.split("=")
-                              for i in profile['crs'].split(' '))
-                h5_crs = pd.DataFrame(h5_crs, index=[0, ])
-                h5_crs = h5_crs.apply(pd.to_numeric, errors='ignore')
+                h5_crs = rasterio.crs.CRS.from_string(profile['crs']).data
+                tif_crs = rasterio.crs.CRS.from_string(tif.profile['crs']).data
+                bad_crs = False
+                for k, v in h5_crs.items():
+                    tiff_v = tif_crs.get(k, v)
+                    if tiff_v != v:
+                        bad_crs = True
 
-                tif_crs = dict(i.split("=")
-                               for i in tif.profile['crs'].split(' '))
-                tif_crs = pd.DataFrame(tif_crs, index=[0, ])
-                tif_crs = tif_crs.apply(pd.to_numeric, errors='ignore')
-
-                cols = list(set(h5_crs.columns) & set(tif_crs.columns))
-                assert_frame_equal(h5_crs[cols], tif_crs[cols],
-                                   check_dtype=False, check_exact=False)
+                if bad_crs:
+                    error = ('Geospatial "crs" in {} and {} do not match!'
+                             '\n {} !=\n {}'
+                             .format(geotiff, excl_h5, tif_crs, h5_crs))
+                    logger.error(error)
+                    raise ExclusionsCheckError(error)
 
                 if not np.allclose(profile['transform'],
                                    tif.profile['transform'],
                                    atol=transform_atol):
                     error = ('Geospatial "transform" in {} and {} do not '
-                             'match!'.format(geotiff, excl_h5))
+                             'match!\n {} !=\n {}'
+                             .format(geotiff, excl_h5, profile['transform'],
+                                     tif.profile['transform']))
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
