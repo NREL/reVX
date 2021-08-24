@@ -150,7 +150,7 @@ class XmissionConfig(dict):
 
         region = self['reverse_iso'][region]
 
-        return self['upgrade_sub_cost'][region][tie_line_voltage]
+        return self['upgrade_substation_costs'][region][tie_line_voltage]
 
     def new_sub_cost(self, region, tie_line_voltage):
         """
@@ -174,7 +174,7 @@ class XmissionConfig(dict):
 
         region = self['reverse_iso'][region]
 
-        return self['new_sub_costs'][region][tie_line_voltage]
+        return self['new_substation_costs'][region][tie_line_voltage]
 
     def xformer_cost(self, feature_voltage, tie_line_voltage):
         """

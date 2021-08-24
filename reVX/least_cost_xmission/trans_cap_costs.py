@@ -6,7 +6,6 @@ area.
 import geopandas as gpd
 import logging
 import numpy as np
-import pandas as pd
 import rasterio
 from shapely.ops import nearest_points
 from shapely.geometry import Polygon
@@ -28,7 +27,7 @@ class TieLineCosts:
     Compute Least Cost Tie-line cost from start location to desired end
     locations
     """
-    def __init__(self, excl_fpath, start_idx, radius, capacity_class,
+    def __init__(self, excl_fpath, start_idx, capacity_class, radius=None,
                  xmission_config=None, barrier_mult=100):
         """
         Parameters
@@ -37,10 +36,10 @@ class TieLineCosts:
             Full path of .h5 file with cost arrays
         start_idx : tuple
             row_idx, col_idx to compute least costs to.
-        radius : int
-            Radius around sc_point to clip cost to
         capacity_class : int | str
             Tranmission feature capacity_class class
+        radius : int, optional
+            Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
@@ -48,17 +47,16 @@ class TieLineCosts:
             Multiplier on transmission barrier costs, by default 100
         """
         self._excl_fpath = excl_fpath
-        self._config = self._parse_config(config=xmission_config)
+        self._config = self._parse_config(xmission_config=xmission_config)
         self._start_idx = start_idx
-        self._capacity_class_class = \
-            self._config._parse_cap_class(capacity_class)
+        self._capacity_class = self._config._parse_cap_class(capacity_class)
 
         row, col = start_idx
         row_slice, col_slice = self._get_clipping_slices(excl_fpath,
                                                          row,
                                                          col,
-                                                         radius)
-        line_cap = self._config['power_classes'][self.capacity_class_class]
+                                                         radius=radius)
+        line_cap = self._config['power_classes'][self.capacity_class]
         cost_layer = 'tie_line_costs_{}MW'.format(line_cap)
         self._cost, self._mcp_cost = self._clip_costs(
             excl_fpath, cost_layer, row_slice, col_slice,
@@ -94,7 +92,11 @@ class TieLineCosts:
         -------
         int
         """
-        return self._row_slice.start
+        offset = self._row_slice.start
+        if offset is None:
+            offset = 0
+
+        return offset
 
     @property
     def col_offset(self):
@@ -105,7 +107,11 @@ class TieLineCosts:
         -------
         int
         """
-        return self._col_slice.start
+        offset = self._col_slice.start
+        if offset is None:
+            offset = 0
+
+        return offset
 
     @property
     def row(self):
@@ -169,15 +175,15 @@ class TieLineCosts:
         return self._mcp
 
     @property
-    def capacity_class_class(self):
+    def capacity_class(self):
         """
-        SC point capacity_class class
+        SC point capacity class
 
         Returns
         -------
         str
         """
-        return self._capacity_class_class
+        return self._capacity_class
 
     @property
     def tie_line_voltage(self):
@@ -188,7 +194,7 @@ class TieLineCosts:
         -------
         int
         """
-        return self._config.capacity_to_kv(self.capacity_class_class)
+        return self._config.capacity_to_kv(self.capacity_class)
 
     @staticmethod
     def _parse_config(xmission_config=None):
@@ -211,7 +217,7 @@ class TieLineCosts:
         return xmission_config
 
     @staticmethod
-    def _get_clipping_slices(excl_fpath, row, col, radius):
+    def _get_clipping_slices(excl_fpath, row, col, radius=None):
         """
         Get array slices for clipped area around SC point (row, col) index
 
@@ -223,8 +229,8 @@ class TieLineCosts:
             SC point row index
         col : int
             SC point column index
-        radius : int
-            Radius around sc_point to clip cost to
+        radius : int, optional
+            Radius around sc_point to clip cost to, by default None
 
         Returns
         -------
@@ -233,13 +239,17 @@ class TieLineCosts:
         col_slice : slice
             Column start, stop indices for clipped cost array
         """
-        with ExclusionLayers(excl_fpath) as f:
-            shape = f.shape
+        if radius is not None:
+            with ExclusionLayers(excl_fpath) as f:
+                shape = f.shape
 
-        row_min = max(row - radius, 0)
-        row_max = min(row + radius, shape[0])
-        col_min = max(col - radius, 0)
-        col_max = min(col + radius, shape[1])
+            row_min = max(row - radius, 0)
+            row_max = min(row + radius, shape[0])
+            col_min = max(col - radius, 0)
+            col_max = min(col + radius, shape[1])
+        else:
+            row_min, row_max = None, None
+            col_min, col_max = None, None
 
         return slice(row_min, row_max), slice(col_min, col_max)
 
@@ -341,7 +351,7 @@ class TieLineCosts:
         return length, cost
 
     @classmethod
-    def run(cls, excl_fpath, start_idx, end_idx, radius, capacity_class,
+    def run(cls, excl_fpath, start_idx, end_idx, capacity_class, radius=None,
             xmission_config=None, barrier_mult=100):
         """
         Compute least cost tie-line path to all features to be connected a
@@ -356,10 +366,10 @@ class TieLineCosts:
         end_idx : tuple
             (row, col) index of end point to connect and compute least cost
             path to
-        radius : int
-            Radius around sc_point to clip cost to
         capacity_class : int | str
             Tranmission feature capacity_class class
+        radius : int, optional
+            Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
@@ -374,7 +384,7 @@ class TieLineCosts:
             Cost of path including terrain and land use multipliers
         """
         ts = time.time()
-        tlc = cls(excl_fpath, start_idx, radius, capacity_class,
+        tlc = cls(excl_fpath, start_idx, capacity_class, radius=radius,
                   xmission_config=xmission_config, barrier_mult=barrier_mult)
 
         length, cost = tlc.least_cost_path(end_idx)
@@ -391,8 +401,8 @@ class TransCapCosts(TieLineCosts):
     connected a single supply curve point
     """
 
-    def __init__(self, excl_fpath, sc_point, features, radius, capacity_class,
-                 xmission_config=None, barrier_mult=100):
+    def __init__(self, excl_fpath, sc_point, features, capacity_class,
+                 radius=None, xmission_config=None, barrier_mult=100):
         """
         Parameters
         ----------
@@ -402,10 +412,10 @@ class TransCapCosts(TieLineCosts):
             Supply Curve Point meta data
         features : pandas.DataFrame
             Table of transmission features
-        radius : int
-            Radius around sc_point to clip cost to
         capacity_class : int | str
             Tranmission feature capacity_class class
+        radius : int, optional
+            Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
@@ -413,10 +423,13 @@ class TransCapCosts(TieLineCosts):
             Multiplier on transmission barrier costs, by default 100
         """
         self._sc_point = sc_point
-        super().__init__(excl_fpath, sc_point[['row', 'col']].values, radius,
-                         capacity_class, xmission_config=xmission_config,
+        super().__init__(excl_fpath, sc_point[['row', 'col']].values,
+                         capacity_class, radius=radius,
+                         xmission_config=xmission_config,
                          barrier_mult=barrier_mult)
         self._features = self._prep_features(features)
+        self._clip_mask = None
+        self._transform = None
 
     @property
     def sc_point(self):
@@ -444,25 +457,49 @@ class TransCapCosts(TieLineCosts):
         """
         return self._features
 
-    def _clip_trans_lines(self, trans_lines):
-        with ExclusionLayers(self._excl_fpath) as f:
-            transform = rasterio.Affine(*f.profile['transform'])
+    @property
+    def clip_mask(self):
+        """
+        Polygon used to clip transmission lines to the clipped raster bounds
 
-        row_bounds = [self._row_slice.start, self._row_slice.stop]
-        col_bounds = [self._col_slice.start, self._col_slice.stop]
-        x, y = rasterio.transform.xy(transform, row_bounds, col_bounds)
-        rect = Polygon([[x[0], y[0]], [x[1], y[0]], [x[1], y[1]],
-                        [x[0], y[1]], [x[0], y[0]]])
+        Returns
+        -------
+        shapely.Polygon
+        """
+        if self._clip_mask is None:
+            with ExclusionLayers(self._excl_fpath) as f:
+                self._transform = rasterio.Affine(*f.profile['transform'])
+                shp = f.shape
 
-        trans_lines = gpd.clip(trans_lines, rect)
-        for idx, line in trans_lines.iterrows():
-            point, _ = nearest_points(line['geometry'],
-                                      self.sc_point['geometry'])
-            row, col = rasterio.transform.rowcol(transform, point.x, point.y)
-            trans_lines.at[idx, 'row'] = row
-            trans_lines.at[idx, 'col'] = col
+            # pylint: disable=using-constant-test
+            row_bounds = [self._row_slice.start
+                          if self._row_slice.start else 0,
+                          self._row_slice.stop
+                          if self._row_slice.stop else shp[0]]
+            col_bounds = [self._col_slice.start
+                          if self._col_slice.start else 0,
+                          self._col_slice.stop
+                          if self._col_slice.stop else shp[1]]
+            x, y = rasterio.transform.xy(self._transform, row_bounds,
+                                         col_bounds)
+            self._clip_mask = Polygon([[x[0], y[0]],
+                                       [x[1], y[0]],
+                                       [x[1], y[1]],
+                                       [x[0], y[1]],
+                                       [x[0], y[0]]])
 
-        return trans_lines
+        return self._clip_mask
+
+    @property
+    def transform(self):
+        """
+        [summary]
+        """
+        if self._transform is None:
+            with ExclusionLayers(self._excl_fpath) as f:
+                self._transform = rasterio.Affine(*f.profile['transform'])
+
+        return self._transform
 
     def _prep_features(self, features):
         """
@@ -474,6 +511,10 @@ class TransCapCosts(TieLineCosts):
         ----------
         features : pandas.DataFrame
             Table of transmission features
+        clip_lines : bool, optional
+            Flag to clip transmission lines to clipped raster bounds,
+            set to false when clipping radius is None,
+            by default True
 
         Returns
         -------
@@ -482,14 +523,45 @@ class TransCapCosts(TieLineCosts):
             raster
         """
         mapping = {'gid': 'trans_gid', 'trans_gids': 'trans_line_gids'}
-        features = features.rename(columns=mapping).drop(['dist'], axis=1)
-        features['row'] -= self.row_offset
-        features['col'] -= self.col_offset
+        features = features.rename(columns=mapping).drop(columns='dist',
+                                                         errors='ignore')
 
-        mask = features['category'] == TRANS_LINE_CAT
-        features.loc[mask] = self._clip_trans_lines(features.loc[mask])
+        if self.row_offset is not None:
+            features['row'] -= self.row_offset
 
-        return pd.DataFrame(features.reset_index(drop=True))
+        if self.col_offset is not None:
+            features['col'] -= self.col_offset
+
+        return features.reset_index(drop=True)
+
+    def _get_trans_line_idx(self, trans_line):
+        """
+        Map the neareset point on each transmission lines to the cost raster
+
+        Parameters
+        ----------
+        trans_lines : geopandas.GeoSeries
+            Transmission lines to be connected to each supply curve point,
+            the nearest point on each line needs to be mapped to the
+            cost raster grid in order to compute the least cost path
+
+        Returns
+        -------
+        tuple
+            Row, col index of the nearest point on the transmission line to
+            the supply curve point, used for least cost path
+        """
+        trans_line = gpd.clip(gpd.GeoSeries({'geometry':
+                                             trans_line['geometry']}),
+                              self.clip_mask)
+        point, _ = nearest_points(trans_line['geometry'],
+                                  self.sc_point['geometry'])
+        row, col = rasterio.transform.rowcol(self.transform, point.x, point.y)
+
+        row -= self.row_offset
+        col -= self.col_offset
+
+        return [row, col]
 
     def compute_tie_line_costs(self, min_line_length=5.7):
         """
@@ -515,18 +587,29 @@ class TransCapCosts(TieLineCosts):
         logger.debug('Determining path lengths and costs')
 
         for index, feat in features.iterrows():
-            length, cost = self.least_cost_path(feat)
-            if feat['category'] == TRANS_LINE_CAT and\
-                    feat['max_volts'] < tie_voltage:
-                msg = ('T-line {} voltage of {}kV is less than tie line of'
-                       ' {}kV.'.format(feat.gid, feat.max_volts, tie_voltage))
-                logger.debug(msg)
+            if feat['category'] == TRANS_LINE_CAT:
+                t_line = True
+                feat_idx = self._get_trans_line_idx(feat)
+            else:
+                t_line = False
+                feat_idx = feat[['row', 'col']].values
+
+            length, cost = self.least_cost_path(feat_idx)
+            if t_line and feat['max_volts'] < tie_voltage:
+                msg = ('T-line {} voltage of {}kV is less than tie line '
+                       'voltage of {}kV.'
+                       .format(feat['trans_gid'], feat['max_volts'],
+                               tie_voltage))
+                logger.warning(msg)
                 features.loc[index, 'raw_line_cost'] = 1e12
             else:
                 features.loc[index, 'raw_line_cost'] = cost
 
-            length, cost = self.least_cost_path(feat)
             if length < min_line_length:
+                msg = ('Tie-line length {} will be incraeased to the minimum '
+                       'allowed line length: {}.'
+                       .format(length, min_line_length))
+                logger.warning(msg)
                 cost = cost * (min_line_length / length)
                 length = min_line_length
 
@@ -655,8 +738,9 @@ class TransCapCosts(TieLineCosts):
 
         # Transformer costs
         features['xformer_cost_per_mw'] = self._calc_xformer_cost()
+        capacity = int(self.capacity_class.strip('MW'))
         features['xformer_cost'] = (features['xformer_cost_per_mw']
-                                    * self.capacity_class_class)
+                                    * capacity)
 
         # Substation costs
         features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost()
@@ -699,7 +783,7 @@ class TransCapCosts(TieLineCosts):
         return features
 
     @classmethod
-    def run(cls, excl_fpath, sc_point, features, radius, capacity_class,
+    def run(cls, excl_fpath, sc_point, features, capacity_class, radius=None,
             xmission_config=None, barrier_mult=100, min_line_length=5.7):
         """
         Compute Transmission capital cost of connecting SC point to
@@ -710,15 +794,14 @@ class TransCapCosts(TieLineCosts):
         ----------
         excl_fpath : str
             Full path of .h5 file with cost arrays
-        start_idx : tuple
-            row_idx, col_idx to compute least costs to.
-        end_idx : tuple
-            (row, col) index of end point to connect and compute least cost
-            path to
-        radius : int
-            Radius around sc_point to clip cost to
+        sc_point : gpd.GeoSeries
+            Supply Curve Point meta data
+        features : pandas.DataFrame
+            Table of transmission features
         capacity_class : int | str
             Tranmission feature capacity_class class
+        radius : int, optional
+            Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
@@ -734,8 +817,9 @@ class TransCapCosts(TieLineCosts):
             costs added
         """
         ts = time.time()
-        tcc = cls(excl_fpath, sc_point, features, radius, capacity_class,
-                  xmission_config=xmission_config, barrier_mult=barrier_mult)
+        tcc = cls(excl_fpath, sc_point, features, capacity_class,
+                  radius=radius, xmission_config=xmission_config,
+                  barrier_mult=barrier_mult)
 
         features = tcc.compute(min_line_length=min_line_length)
         logger.debug('Least Cost transmission costs computed for sc_point_gid '

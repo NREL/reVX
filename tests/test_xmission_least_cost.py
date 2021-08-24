@@ -43,6 +43,21 @@ def test_capacity_class(capacity):
     assert_frame_equal(truth, test, check_dtype=False)
 
 
+def test():
+    """
+    Test least cost xmission and compare with baseline data
+    """
+    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
+                                 max_workers=1)
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         'least_cost_100MW.csv')
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    assert_frame_equal(truth, test, check_dtype=False)
+
+
 @pytest.mark.parametrize('max_workers', [1, None])
 def test_parallel(max_workers):
     """
@@ -52,6 +67,26 @@ def test_parallel(max_workers):
                                  max_workers=max_workers)
     truth = os.path.join(TESTDATADIR, 'xmission',
                          'least_cost_100MW.csv')
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    assert_frame_equal(truth, test, check_dtype=False)
+
+
+@pytest.mark.parametrize('resolution', [64, 128])
+def test_resolution(resolution):
+    """
+    Test least cost xmission and compare with baseline data
+    """
+    test = LeastCostXmission.run(COST_H5, FEATURES, 100, resolution=resolution)
+    if resolution == 128:
+        truth = os.path.join(TESTDATADIR, 'xmission',
+                             'least_cost_100MW.csv')
+    else:
+        truth = os.path.join(TESTDATADIR, 'xmission',
+                             'least_cost_100MW-64x.csv')
+
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
 

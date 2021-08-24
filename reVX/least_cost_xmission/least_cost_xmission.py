@@ -209,13 +209,13 @@ class LeastCostXmission:
 
         mask &= features['max_volts'] < 69
         if any(mask):
-            msg = ("The following sub-stations do not have the minimum"
+            msg = ("The following sub-stations do not have the minimum "
                    "required voltage of 69 kV and will be dropped:\n{}"
                    .format(features.loc[mask, 'trans_gid']))
             logger.warning(msg)
             features = features.loc[~mask]
 
-        return features, sub_lines_map
+        return features, pd.Series(sub_lines_map)
 
     @staticmethod
     def _create_sc_points(cost_fpath, resolution=128):
@@ -239,10 +239,10 @@ class LeastCostXmission:
         sc_points = sce.points
         sc_points['sc_point_gid'] = sc_points.index.values
 
-        sc_points['row'] = round(sc_points['row_ind'] * resolution
-                                 + resolution / 2)
-        sc_points['col'] = round(sc_points['col_ind'] * resolution
-                                 + resolution / 2).astype(int)
+        sc_points['row'] = np.round(sc_points['row_ind'] * resolution
+                                    + resolution / 2).astype(int)
+        sc_points['col'] = np.round(sc_points['col_ind'] * resolution
+                                    + resolution / 2).astype(int)
 
         return sc_points
 
@@ -326,7 +326,6 @@ class LeastCostXmission:
 
         features['row'] = row
         features['col'] = col
-        print(regions.shape, len(row), len(col), regions[row, col].shape)
         features['region'] = regions[row, col]
 
         logger.debug('Converting SC points to GeoDataFrame')
@@ -361,29 +360,37 @@ class LeastCostXmission:
             to SC point
         """
         logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
-        # Find greatest major axis distance to NUM_SINKS sinks. Simply
-        # grabbing the greatest difference for the furthest sink does not
-        # work in all circumstances.
-        row, col = sc_point[['row', 'col']].values
-        _, pos = self.sink_tree.query([row, col], k=nn_sinks)
-        radius = np.abs(self.sink_coords[pos] - np.array([row, col])).max()
-        radius = int(np.ceil(radius * clipping_buffer))
+        if len(self.sink_coords) > 2:
+            row, col = sc_point[['row', 'col']].values
+            _, pos = self.sink_tree.query([row, col], k=nn_sinks)
+            radius = np.abs(self.sink_coords[pos] - np.array([row, col])).max()
+            radius = int(np.ceil(radius * clipping_buffer))
 
-        logger.debug('Radius to {} nearest sink is: {}'
-                     .format(nn_sinks, radius))
-        row_min = max(row - radius, 0)
-        row_max = row + radius
-        col_min = max(col - radius, 0)
-        col_max = col + radius
-        logger.debug('Extracting all transmission features in the row slice '
-                     '{}:{} and column slice {}:{}'
-                     .format(row_min, row_max, col_min, col_max))
+            logger.debug('Radius to {} nearest sink is: {}'
+                         .format(nn_sinks, radius))
+            row_min = max(row - radius, 0)
+            row_max = row + radius
+            col_min = max(col - radius, 0)
+            col_max = col + radius
+            logger.debug('Extracting all transmission features in the row '
+                         'slice {}:{} and column slice {}:{}'
+                         .format(row_min, row_max, col_min, col_max))
 
-        # Clip transmission features
-        mask = row_min <= self.features['row'] <= row_max
-        mask &= col_min <= self.features['col'] <= col_max
-        mask &= self.features['max_volts'] >= tie_line_voltage
-        sc_features = self.features.loc[mask].copy(deep=True)
+            # Clip transmission features
+            mask = self.features['row'] >= row_min
+            mask &= self.features['row'] < row_max
+            mask &= self.features['col'] >= col_min
+            mask &= self.features['col'] < col_max
+            sc_features = self.features.loc[mask].copy(deep=True)
+            logger.debug('{} transmission features found in clipped area with '
+                         'radius {}'
+                         .format(len(sc_features), radius))
+        else:
+            radius = None
+            sc_features = self.features.copy(deep=True)
+
+        mask = self.features['max_volts'] >= tie_line_voltage
+        sc_features = sc_features.loc[mask].copy(deep=True)
         logger.debug('{} transmission features found in clipped area with '
                      'minimum max voltage of {}'
                      .format(len(sc_features), tie_line_voltage))
@@ -391,7 +398,9 @@ class LeastCostXmission:
         # Find t-lines connected to substations within clip
         logger.debug('Collecting transmission lines connected to substations')
         mask = sc_features['category'] == SUBSTATION_CAT
-        trans_gids = np.concatenate(sc_features.loc[mask, 'trans_line_gids'])
+        trans_gids = sc_features.loc[mask, 'trans_gid'].values
+        trans_gids = \
+            np.concatenate(self._sub_lines_mapping.loc[trans_gids].values)
         trans_gids = np.unique(trans_gids)
         mask = self.features['trans_gid'].isin(trans_gids)
         trans_lines = self.features.loc[mask].copy(deep=True)
@@ -440,7 +449,7 @@ class LeastCostXmission:
             sc_point_gids = self.sc_points['sc_point_gid'].values
 
         tie_line_voltage = self._config.capacity_to_kv(capacity_class)
-        least_costs = pd.DataFrame()
+        least_costs = []
         if max_workers > 1:
             logger.info('Computing Least Cost Transmission for SC points in '
                         'parallel on {} workers'.format(max_workers))
@@ -451,14 +460,14 @@ class LeastCostXmission:
                 for _, sc_point in self.sc_points.iterrows():
                     gid = sc_point['sc_point_gid']
                     if gid in sc_point_gids:
-                        radius, sc_features = self._clip_to_sc_point(
+                        sc_features, radius = self._clip_to_sc_point(
                             sc_point, tie_line_voltage, nn_sinks=nn_sinks,
                             clipping_buffer=clipping_buffer)
 
                         future = exe.submit(TransCapCosts.run,
                                             self._cost_fpath, sc_point,
-                                            sc_features, radius,
-                                            capacity_class,
+                                            sc_features, capacity_class,
+                                            radius=radius,
                                             xmission_config=self._config,
                                             barrier_mult=barrier_mult,
                                             min_line_length=min_line_length)
@@ -467,7 +476,7 @@ class LeastCostXmission:
                 for i, future in enumerate(as_completed(futures)):
                     logger.debug('SC point {} of {} complete!'
                                  .format(i + 1, len(futures)))
-                    least_costs = least_costs.append(future.result())
+                    least_costs.append(future.result())
 
         else:
             logger.info('Computing Least Cost Transmission for SC points in '
@@ -476,13 +485,13 @@ class LeastCostXmission:
             for _, sc_point in self.sc_points.iterrows():
                 gid = sc_point['sc_point_gid']
                 if gid in sc_point_gids:
-                    radius, sc_features = self._clip_to_sc_point(
+                    sc_features, radius = self._clip_to_sc_point(
                         sc_point, tie_line_voltage, nn_sinks=nn_sinks,
                         clipping_buffer=clipping_buffer)
-                    least_cost = least_cost.append(TransCapCosts.run(
+                    least_costs.append(TransCapCosts.run(
                         self._cost_fpath, sc_point,
-                        sc_features, radius,
-                        capacity_class,
+                        sc_features, capacity_class,
+                        radius=radius,
                         xmission_config=self._config,
                         barrier_mult=barrier_mult,
                         min_line_length=min_line_length))
@@ -491,7 +500,9 @@ class LeastCostXmission:
                                  .format(i, len(sc_point_gids)))
                     i += 1
 
-        return least_costs.sort_values('sc_gid').reset_index(drop=True)
+        least_costs = pd.concat(least_costs).sort_values('sc_gid')
+
+        return least_costs.reset_index(drop=True)
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
