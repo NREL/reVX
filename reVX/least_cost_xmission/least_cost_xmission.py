@@ -307,7 +307,7 @@ class LeastCostXmission:
             to each substation
         """
         with ExclusionLayers(cost_fpath) as f:
-            crs = rasterio.crs.CRS.from_string(f.crs)
+            crs = rasterio.crs.CRS.from_string(f.crs).data
             transform = rasterio.Affine(*f.profile['transform'])
             shape = f.shape
             regions = f['ISO_regions']
