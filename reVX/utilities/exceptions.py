@@ -64,7 +64,7 @@ class SupplyCurvePointCapacityError(Exception):
     """
 
 
-class TransFeatureNotFoundError(Exception):
+class LeastCostPathNotFoundError(Exception):
     """
-    Error for missing Transmission Features
+    Error when MCP Geometric cannot find a path
     """

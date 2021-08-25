@@ -17,7 +17,7 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
                                              SINK_CAT, SUBSTATION_CAT,
                                              LOAD_CENTER_CAT)
-from reVX.utilities.exceptions import TransFeatureNotFoundError
+from reVX.utilities.exceptions import LeastCostPathNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +167,13 @@ class TieLineCosts:
         MCP_Geometric
         """
         if self._mcp is None:
-            # Including the ends is actually slightly slower
+            check = self.mcp_cost[self.row, self.col]
+            if check == -1:
+                msg = ("Start idx {} does not have a valid cost!"
+                       .format((self.row, self.col)))
+                logger.error(msg)
+                raise LeastCostPathNotFoundError(msg)
+
             self._mcp = MCP_Geometric(self.mcp_cost)
             self._mcp.find_costs(starts=[(self.row, self.col)])
 
@@ -287,6 +293,7 @@ class TieLineCosts:
             barrier = f['transmission_barrier', row_slice, col_slice]
 
         mcp_cost = cost * barrier * barrier_mult
+        mcp_cost = np.where(mcp_cost < 0, -1, mcp_cost)
 
         return cost, mcp_cost
 
@@ -315,13 +322,20 @@ class TieLineCosts:
             logger.exception(msg)
             raise ValueError(msg)
 
+        check = self.mcp_cost[row, col]
+        if check == -1:
+            msg = ("End idx {} does not have a valid cost!"
+                   .format(end_idx))
+            logger.error(msg)
+            raise LeastCostPathNotFoundError(msg)
+
         try:
             indices = np.array(self.mcp.traceback((row, col)))
         except ValueError as ex:
-            msg = ('Unable to find path from start {} to {}'
-                   ''.format(self.start_idx, end_idx))
-            logger.exception(msg)
-            raise TransFeatureNotFoundError(msg) from ex
+            msg = ('Unable to find path from start {} to {}: {}'
+                   .format((self.row, self.col), end_idx, ex))
+            logger.warning(msg)
+            raise LeastCostPathNotFoundError(msg) from ex
 
         # Use Pythagorean theorem to calculate lengths between cells (km)
         lengths = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
@@ -597,8 +611,8 @@ class TransCapCosts(TieLineCosts):
         """
         tie_voltage = self.tie_line_voltage
         features = self.features.copy()
-        features['raw_line_cost'] = 0
-        features['dist_km'] = 0
+        features['raw_line_cost'] = None
+        features['dist_km'] = None
 
         logger.debug('Determining path lengths and costs')
 
@@ -609,27 +623,39 @@ class TransCapCosts(TieLineCosts):
             else:
                 t_line = False
                 feat_idx = feat[['row', 'col']].values
+            try:
+                length, cost = self.least_cost_path(feat_idx)
 
-            length, cost = self.least_cost_path(feat_idx)
-            if t_line and feat['max_volts'] < tie_voltage:
-                msg = ('T-line {} voltage of {}kV is less than tie line '
-                       'voltage of {}kV.'
-                       .format(feat['trans_gid'], feat['max_volts'],
-                               tie_voltage))
+                if t_line and feat['max_volts'] < tie_voltage:
+                    msg = ('T-line {} voltage of {}kV is less than tie line '
+                           'voltage of {}kV.'
+                           .format(feat['trans_gid'], feat['max_volts'],
+                                   tie_voltage))
+                    logger.warning(msg)
+                    features.loc[index, 'raw_line_cost'] = 1e12
+                else:
+                    features.loc[index, 'raw_line_cost'] = cost
+
+                if length < min_line_length:
+                    msg = ('Tie-line length {} will be incraeased to the '
+                           'minimum allowed line length: {}.'
+                           .format(length, min_line_length))
+                    logger.warning(msg)
+                    cost = cost * (min_line_length / length)
+                    length = min_line_length
+
+                features.loc[index, 'dist_km'] = length
+            except LeastCostPathNotFoundError as ex:
+                msg = ("Could not connect SC point {} to transmission feature "
+                       "{}: {}"
+                       .format(self.sc_point['sc_point_gid'],
+                               feat['trans_gid'], ex))
                 logger.warning(msg)
-                features.loc[index, 'raw_line_cost'] = 1e12
-            else:
-                features.loc[index, 'raw_line_cost'] = cost
-
-            if length < min_line_length:
-                msg = ('Tie-line length {} will be incraeased to the minimum '
-                       'allowed line length: {}.'
-                       .format(length, min_line_length))
-                logger.warning(msg)
-                cost = cost * (min_line_length / length)
-                length = min_line_length
-
-            features.loc[index, 'dist_km'] = length
+            except Exception:
+                logger.exception('Could not connect SC point {} to '
+                                 'transmission features!'
+                                 .format(self.sc_point['sc_point_gid']))
+                raise
 
         return features
 
@@ -791,6 +817,7 @@ class TransCapCosts(TieLineCosts):
             costs added
         """
         features = self.compute_tie_line_costs(min_line_length=min_line_length)
+        features = features.dropna(subset=['dist_km', 'raw_line_cost'])
         features = self.compute_connection_costs(features=features)
 
         features['trans_cap_cost'] = (features['tie_line_cost']
@@ -843,8 +870,8 @@ class TransCapCosts(TieLineCosts):
                   barrier_mult=barrier_mult)
 
         features = tcc.compute(min_line_length=min_line_length)
-        logger.debug('Least Cost transmission costs computed for sc_point_gid '
-                     '{} in {:.4f}s'.format(sc_point['sc_point_gid'],
-                                            time.time() - ts))
+        logger.debug('Least Cost transmission costs computed for '
+                     'sc_point_gid {} in {:.4f}s'
+                     .format(sc_point['sc_point_gid'], time.time() - ts))
 
         return features

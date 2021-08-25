@@ -314,7 +314,7 @@ class LeastCostXmission:
 
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
         feat_crs = features.crs.to_dict()
-        bad_crs = ExclusionsConverter._check_crs(crs, features.crs)
+        bad_crs = ExclusionsConverter._check_crs(crs, feat_crs)
         if bad_crs:
             error = ('Geospatial "crs" of tranmission features in {} does not '
                      'match "crs" of cost rasters in {}'
