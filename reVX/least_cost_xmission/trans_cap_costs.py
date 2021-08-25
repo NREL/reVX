@@ -7,8 +7,8 @@ import geopandas as gpd
 import logging
 import numpy as np
 import rasterio
-from shapely.ops import nearest_points
 from shapely.geometry import Polygon
+from shapely.ops import nearest_points
 from skimage.graph import MCP_Geometric
 import time
 
@@ -244,9 +244,9 @@ class TieLineCosts:
                 shape = f.shape
 
             row_min = max(row - radius, 0)
-            row_max = min(row + radius, shape[0])
+            row_max = min(row + radius, shape[0] - 1)
             col_min = max(col - radius, 0)
-            col_max = min(col + radius, shape[1])
+            col_max = min(col + radius, shape[1] - 1)
         else:
             row_min, row_max = None, None
             col_min, col_max = None, None
@@ -475,11 +475,11 @@ class TransCapCosts(TieLineCosts):
             row_bounds = [self._row_slice.start
                           if self._row_slice.start else 0,
                           self._row_slice.stop
-                          if self._row_slice.stop else shp[0]]
+                          if self._row_slice.stop else shp[0] - 1]
             col_bounds = [self._col_slice.start
                           if self._col_slice.start else 0,
                           self._col_slice.stop
-                          if self._col_slice.stop else shp[1]]
+                          if self._col_slice.stop else shp[1] - 1]
             x, y = rasterio.transform.xy(self._transform, row_bounds,
                                          col_bounds)
             self._clip_mask = Polygon([[x[0], y[0]],
@@ -493,7 +493,11 @@ class TransCapCosts(TieLineCosts):
     @property
     def transform(self):
         """
-        [summary]
+        Exclusions transform, needed to go from lat, lon to row, col and back
+
+        Returns
+        -------
+        rasterio.Affine
         """
         if self._transform is None:
             with ExclusionLayers(self._excl_fpath) as f:
@@ -779,6 +783,11 @@ class TransCapCosts(TieLineCosts):
 
         features['trans_cap_cost'] = (features['tie_line_cost']
                                       + features['connection_cost'])
+
+        features = features.drop(['row', 'col', 'geometry'], errors='ignore')
+        features['row_ind'] = self.sc_point['row_ind']
+        features['col_ind'] = self.sc_point['col_ind']
+        features['sc_point_gid'] = self.sc_point['sc_point_gid']
 
         return features
 

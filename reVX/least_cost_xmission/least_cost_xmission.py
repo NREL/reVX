@@ -63,7 +63,15 @@ class LeastCostXmission:
         self._tree = None
         self._sink_coords = None
 
-        logger.info('Done loading data')
+        logger.debug('Done loading data')
+
+    def __repr__(self):
+        msg = ("{} to be computed for {} sc_points and {} features"
+               .format(self.__class__.__name__,
+                       len(self.sc_points),
+                       len(self.features)))
+
+        return msg
 
     @property
     def sc_points(self):
@@ -311,9 +319,9 @@ class LeastCostXmission:
 
         # Remove features outside of the cost domain
         mask = row >= 0
-        mask &= row <= shape[0]
+        mask &= row < shape[0]
         mask &= col >= 0
-        mask &= col <= shape[1]
+        mask &= col < shape[1]
 
         if any(~mask):
             msg = ("The following features are outside of the cost exclusion "
@@ -500,7 +508,8 @@ class LeastCostXmission:
                                  .format(i, len(sc_point_gids)))
                     i += 1
 
-        least_costs = pd.concat(least_costs).sort_values('sc_gid')
+        least_costs = pd.concat(least_costs).sort_values(['sc_point_gid',
+                                                          'trans_gid'])
 
         return least_costs.reset_index(drop=True)
 
