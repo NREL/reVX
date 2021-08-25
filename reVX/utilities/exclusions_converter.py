@@ -146,7 +146,32 @@ class ExclusionsConverter:
                 os.remove(excl_h5)
 
     @staticmethod
-    def _check_geotiff(excl_h5, geotiff, chunks=(128, 128),
+    def _check_crs(baseline_crs, test_crs):
+        """
+        Compare baseline and test crs values
+
+        Parameters
+        ----------
+        baseline_crs : dict
+            Baseline CRS to use a truth, must be a dict
+        test_crs : dict
+            Test CRS to compare with baseline, must be a dictionary
+
+        Returns
+        -------
+        bad_crs : bool
+            Flag if crs' do not match
+        """
+        bad_crs = False
+        for k, true_v in baseline_crs.items():
+            test_v = test_crs.get(k, true_v)
+            if true_v != test_v:
+                bad_crs = True
+
+        return bad_crs
+
+    @classmethod
+    def _check_geotiff(cls, excl_h5, geotiff, chunks=(128, 128),
                        transform_atol=0.01, coord_atol=0.001):
         """
         Compare geotiff with exclusion layer, raise any errors
@@ -182,12 +207,7 @@ class ExclusionsConverter:
                 profile = h5.profile
                 h5_crs = rasterio.crs.CRS.from_string(profile['crs']).data
                 tif_crs = rasterio.crs.CRS.from_string(tif.profile['crs']).data
-                bad_crs = False
-                for k, v in h5_crs.items():
-                    tiff_v = tif_crs.get(k, v)
-                    if tiff_v != v:
-                        bad_crs = True
-
+                bad_crs = cls._check_crs(h5_crs, tif_crs)
                 if bad_crs:
                     error = ('Geospatial "crs" in {} and {} do not match!'
                              '\n {} !=\n {}'

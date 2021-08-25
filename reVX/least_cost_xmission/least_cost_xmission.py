@@ -25,6 +25,8 @@ from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
                                              LOAD_CENTER_CAT, SINK_CAT,
                                              SUBSTATION_CAT)
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
+from reVX.utilities.exceptions import ExclusionsCheckError
+from reVX.utilities.exclusions_converter import ExclusionsConverter
 
 
 logger = logging.getLogger(__name__)
@@ -62,6 +64,7 @@ class LeastCostXmission:
         self._cost_fpath = cost_fpath
         self._tree = None
         self._sink_coords = None
+        self._min_line_len = (resolution * 0.09) / 2
 
         logger.debug('Done loading data')
 
@@ -304,11 +307,22 @@ class LeastCostXmission:
             to each substation
         """
         with ExclusionLayers(cost_fpath) as f:
+            crs = rasterio.crs.CRS.from_string(f.crs)
             transform = rasterio.Affine(*f.profile['transform'])
             shape = f.shape
             regions = f['ISO_regions']
 
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
+        feat_crs = features.crs.to_dict()
+        bad_crs = ExclusionsConverter._check_crs(crs, features.crs)
+        if bad_crs:
+            error = ('Geospatial "crs" of tranmission features in {} does not '
+                     'match "crs" of cost rasters in {}'
+                     '\n {} !=\n {}'
+                     .format(features_fpath, cost_fpath, feat_crs, crs))
+            logger.error(error)
+            raise ExclusionsCheckError(error)
+
         logger.debug('Map transmission features to exclusion grid')
         coords = features['geometry'].apply(cls._get_feature_coords).values
         coords = np.concatenate(coords).reshape(len(features), 2)
@@ -418,7 +432,7 @@ class LeastCostXmission:
 
     def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
                           clipping_buffer=1.05, barrier_mult=100,
-                          min_line_length=5.7, max_workers=None):
+                          max_workers=None):
         """
         Compute Least Cost Tranmission for desired sc_points
 
@@ -437,8 +451,6 @@ class LeastCostXmission:
         barrier_mult : int, optional
             Tranmission barrier multiplier, used when computing the least
             cost tie-line path, by default 100
-        min_line_length : float, optional
-            Minimum line length in km, by default 5.7
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -478,7 +490,7 @@ class LeastCostXmission:
                                             radius=radius,
                                             xmission_config=self._config,
                                             barrier_mult=barrier_mult,
-                                            min_line_length=min_line_length)
+                                            min_line_length=self._min_line_len)
                         futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
@@ -502,7 +514,7 @@ class LeastCostXmission:
                         radius=radius,
                         xmission_config=self._config,
                         barrier_mult=barrier_mult,
-                        min_line_length=min_line_length))
+                        min_line_length=self._min_line_len))
 
                     logger.debug('SC point {} of {} complete!'
                                  .format(i, len(sc_point_gids)))
@@ -516,8 +528,7 @@ class LeastCostXmission:
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
             xmission_config=None, sc_point_gids=None, nn_sinks=2,
-            clipping_buffer=1.05, barrier_mult=100, min_line_length=5.7,
-            max_workers=None):
+            clipping_buffer=1.05, barrier_mult=100, max_workers=None):
         """
         Find Least Cost Tranmission connections between desired sc_points to
         given tranmission features for desired capacity class
@@ -546,8 +557,6 @@ class LeastCostXmission:
         barrier_mult : int, optional
             Tranmission barrier multiplier, used when computing the least
             cost tie-line path, by default 100
-        min_line_length : float, optional
-            Minimum line length in km, by default 5.7
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -567,7 +576,6 @@ class LeastCostXmission:
                                             nn_sinks=nn_sinks,
                                             clipping_buffer=clipping_buffer,
                                             barrier_mult=barrier_mult,
-                                            min_line_length=min_line_length,
                                             max_workers=max_workers)
 
         logger.info('{} connections were made {} SC points in {:.4f} minutes'

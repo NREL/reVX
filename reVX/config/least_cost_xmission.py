@@ -172,10 +172,3 @@ class LeastCostXmissionConfig(AnalysisConfig):
         Transmission barrier multiplier to use for MCP costs
         """
         return self.get('barrier_mult', self._default_barrier_mult)
-
-    @property
-    def min_line_length(self):
-        """
-        Minimum tie-line line length in km
-        """
-        return self.get('min_line_length', self._default_min_line_length)

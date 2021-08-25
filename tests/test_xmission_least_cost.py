@@ -17,7 +17,7 @@ from reVX.least_cost_xmission.least_cost_xmission_cli import main
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
-FEATURES = os.path.join(TESTDATADIR, 'xmission', 'conus_allconns.gpkg')
+FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
 
 
 @pytest.fixture(scope="module")

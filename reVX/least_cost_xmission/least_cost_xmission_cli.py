@@ -66,7 +66,6 @@ def run_local(ctx, config):
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
                barrier_mult=config.barrier_mult,
-               min_line_length=config.min_line_length,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
                log_dir=config.logdir,
@@ -131,9 +130,6 @@ def from_config(ctx, config, verbose):
               show_default=True, default=100,
               help=("Tranmission barrier multiplier, used when computing the "
                     "least cost tie-line path"))
-@click.option('--min_line_length', '-mllen', type=float,
-              show_default=True, default=5.7,
-              help=("Minimum line length in km"))
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -149,8 +145,7 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
           xmission_config, sc_point_gids, nn_sinks, clipping_buffer,
-          barrier_mult, min_line_length, max_workers, out_dir, log_dir,
-          verbose):
+          barrier_mult, max_workers, out_dir, log_dir, verbose):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -172,7 +167,6 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
                                         nn_sinks=nn_sinks,
                                         clipping_buffer=clipping_buffer,
                                         barrier_mult=barrier_mult,
-                                        min_line_length=min_line_length,
                                         max_workers=max_workers)
     fn_out = '{}_{}_{}.csv'.format(name, capacity_class, resolution)
     fpath_out = os.path.join(out_dir, fn_out)
@@ -204,7 +198,6 @@ def get_node_cmd(config):
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
-            '-mllen {}'.format(SLURM.s(config.min_line_length)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.logdir)),
