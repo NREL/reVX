@@ -52,10 +52,9 @@ class TieLineCosts:
         self._capacity_class = self._config._parse_cap_class(capacity_class)
 
         row, col = start_idx
-        row_slice, col_slice = self._get_clipping_slices(excl_fpath,
-                                                         row,
-                                                         col,
-                                                         radius=radius)
+        row_slice, col_slice, self.shape = self._get_clipping_slices(
+            excl_fpath, row, col, radius=radius)
+
         line_cap = self._config['power_classes'][self.capacity_class]
         cost_layer = 'tie_line_costs_{}MW'.format(line_cap)
         self._cost, self._mcp_cost = self._clip_costs(
@@ -238,20 +237,24 @@ class TieLineCosts:
             Row start, stop indices for clipped cost array
         col_slice : slice
             Column start, stop indices for clipped cost array
+        shape : tuple
+            Shape of clipped cost raster
         """
-        if radius is not None:
-            with ExclusionLayers(excl_fpath) as f:
-                shape = f.shape
+        with ExclusionLayers(excl_fpath) as f:
+            shape = f.shape
 
+        if radius is not None:
             row_min = max(row - radius, 0)
-            row_max = min(row + radius, shape[0] - 1)
+            row_max = min(row + radius, shape[0])
             col_min = max(col - radius, 0)
-            col_max = min(col + radius, shape[1] - 1)
+            col_max = min(col + radius, shape[1])
+
+            shape = (row_max - row_min, col_max - col_min)
         else:
             row_min, row_max = None, None
             col_min, col_max = None, None
 
-        return slice(row_min, row_max), slice(col_min, col_max)
+        return slice(row_min, row_max), slice(col_min, col_max), shape
 
     @staticmethod
     def _clip_costs(excl_fpath, cost_layer, row_slice, col_slice,
@@ -304,12 +307,11 @@ class TieLineCosts:
         cost : float
             Cost of path including terrain and land use multipliers
         """
-        shp = self.mcp_cost.shape
         row, col = end_idx
 
-        if row < 0 or col < 0 or row >= shp[0] or col >= shp[1]:
+        if row < 0 or col < 0 or row >= self.shape[0] or col >= self.shape[1]:
             msg = ('End point ({}, {}) is out side of clipped cost raster '
-                   'with shape {}'.format(row, col, shp))
+                   'with shape {}'.format(row, col, self.shape))
             logger.exception(msg)
             raise ValueError(msg)
 
@@ -469,17 +471,16 @@ class TransCapCosts(TieLineCosts):
         if self._clip_mask is None:
             with ExclusionLayers(self._excl_fpath) as f:
                 self._transform = rasterio.Affine(*f.profile['transform'])
-                shp = f.shape
 
             # pylint: disable=using-constant-test
             row_bounds = [self._row_slice.start
                           if self._row_slice.start else 0,
-                          self._row_slice.stop
-                          if self._row_slice.stop else shp[0] - 1]
+                          self._row_slice.stop - 1
+                          if self._row_slice.stop else self.shape[0] - 1]
             col_bounds = [self._col_slice.start
                           if self._col_slice.start else 0,
-                          self._col_slice.stop
-                          if self._col_slice.stop else shp[1] - 1]
+                          self._col_slice.stop - 1
+                          if self._col_slice.stop else self.shape[1] - 1]
             x, y = rasterio.transform.xy(self._transform, row_bounds,
                                          col_bounds)
             self._clip_mask = Polygon([[x[0], y[0]],
@@ -538,7 +539,7 @@ class TransCapCosts(TieLineCosts):
 
         return features.reset_index(drop=True)
 
-    def _get_trans_line_idx(self, trans_line):
+    def _get_trans_line_idx(self, trans_line, clip=False):
         """
         Map the neareset point on each transmission lines to the cost raster
 
@@ -548,24 +549,35 @@ class TransCapCosts(TieLineCosts):
             Transmission lines to be connected to each supply curve point,
             the nearest point on each line needs to be mapped to the
             cost raster grid in order to compute the least cost path
+        clip : bool
+            Flag to clip the tranmission lines to the cost raster domain
 
         Returns
         -------
-        tuple
+        trans_line_idx: list
             Row, col index of the nearest point on the transmission line to
             the supply curve point, used for least cost path
         """
-        trans_line = gpd.clip(gpd.GeoSeries({'geometry':
-                                             trans_line['geometry']}),
-                              self.clip_mask)
+        if clip:
+            logger.debug("Clipping transmission line {} to raster domain"
+                         .format(trans_line['trans_gid']))
+            trans_line = gpd.clip(gpd.GeoSeries({'geometry':
+                                                trans_line['geometry']}),
+                                  self.clip_mask)
+
         point, _ = nearest_points(trans_line['geometry'],
                                   self.sc_point['geometry'])
         row, col = rasterio.transform.rowcol(self.transform, point.x, point.y)
 
         row -= self.row_offset
         col -= self.col_offset
+        trans_line_idx = [row, col]
+        clip = (row < 0 or row >= self.shape[0]
+                or col < 0 or col >= self.shape[1])
+        if clip:
+            trans_line_idx = self._get_trans_line_idx(trans_line, clip=clip)
 
-        return [row, col]
+        return trans_line_idx
 
     def compute_tie_line_costs(self, min_line_length=5.7):
         """
