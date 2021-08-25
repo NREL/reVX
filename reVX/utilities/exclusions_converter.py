@@ -146,7 +146,7 @@ class ExclusionsConverter:
                 os.remove(excl_h5)
 
     @staticmethod
-    def _check_crs(baseline_crs, test_crs):
+    def _check_crs(baseline_crs, test_crs, ignore_keys=('no_defs',)):
         """
         Compare baseline and test crs values
 
@@ -156,6 +156,8 @@ class ExclusionsConverter:
             Baseline CRS to use a truth, must be a dict
         test_crs : dict
             Test CRS to compare with baseline, must be a dictionary
+        ignore_keys : tuple
+            Keys to not check
 
         Returns
         -------
@@ -164,9 +166,10 @@ class ExclusionsConverter:
         """
         bad_crs = False
         for k, true_v in baseline_crs.items():
-            test_v = test_crs.get(k, true_v)
-            if true_v != test_v:
-                bad_crs = True
+            if k not in ignore_keys:
+                test_v = test_crs.get(k, true_v)
+                if true_v != test_v:
+                    bad_crs = True
 
         return bad_crs
 

@@ -307,14 +307,14 @@ class LeastCostXmission:
             to each substation
         """
         with ExclusionLayers(cost_fpath) as f:
-            crs = rasterio.crs.CRS.from_string(f.crs)
+            crs = rasterio.crs.CRS.from_string(f.crs).data
             transform = rasterio.Affine(*f.profile['transform'])
             shape = f.shape
             regions = f['ISO_regions']
 
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
         feat_crs = features.crs.to_dict()
-        bad_crs = ExclusionsConverter._check_crs(crs, features.crs)
+        bad_crs = ExclusionsConverter._check_crs(crs, feat_crs)
         if bad_crs:
             error = ('Geospatial "crs" of tranmission features in {} does not '
                      'match "crs" of cost rasters in {}'
