@@ -10,6 +10,7 @@ import logging
 import numpy as np
 import os
 import pandas as pd
+from pyproj.crs import CRS
 import rasterio
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
@@ -21,9 +22,8 @@ from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.points import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 
-from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
-                                             LOAD_CENTER_CAT, SINK_CAT,
-                                             SUBSTATION_CAT)
+from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
+                                             SINK_CAT, SUBSTATION_CAT)
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
 from reVX.utilities.exceptions import ExclusionsCheckError
 from reVX.utilities.exclusions_converter import ExclusionsConverter
@@ -56,7 +56,8 @@ class LeastCostXmission:
             .jsons, or preloaded XmissionConfig objects, by default None
         """
         self._check_layers(cost_fpath)
-        self._config = XmissionConfig(config=xmission_config)
+        self._config = TransCapCosts._parse_config(
+            xmission_config=xmission_config)
 
         self._sc_points, self._features, self._sub_lines_mapping =\
             self._map_sc_to_xmission(cost_fpath, features_fpath,
@@ -186,7 +187,8 @@ class LeastCostXmission:
         """
         logger.debug('Loading transmission features')
         features = gpd.read_file(features_fpath)
-        features = features.drop(['bgid', 'egid', 'cap_left'], axis=1)
+        features = features.drop(columns=['bgid', 'egid', 'cap_left'],
+                                 errors='ignore')
         mapping = {'gid': 'trans_gid', 'trans_gids': 'trans_line_gids'}
         features = features.rename(columns=mapping)
 
@@ -248,12 +250,16 @@ class LeastCostXmission:
         logger.debug('Loading Supply Curve Points')
         sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
         sc_points = sce.points
+        shape = sce.excl_shape
         sc_points['sc_point_gid'] = sc_points.index.values
 
-        sc_points['row'] = np.round(sc_points['row_ind'] * resolution
-                                    + resolution / 2).astype(int)
-        sc_points['col'] = np.round(sc_points['col_ind'] * resolution
-                                    + resolution / 2).astype(int)
+        row = np.round(sc_points['row_ind'] * resolution + resolution / 2)
+        row = np.where(row >= shape[0], shape[0] - 1, row)
+        sc_points['row'] = row.astype(int)
+
+        col = np.round(sc_points['col_ind'] * resolution + resolution / 2)
+        col = np.where(col >= shape[1], shape[1] - 1, col)
+        sc_points['col'] = col.astype(int)
 
         return sc_points
 
@@ -307,7 +313,7 @@ class LeastCostXmission:
             to each substation
         """
         with ExclusionLayers(cost_fpath) as f:
-            crs = rasterio.crs.CRS.from_string(f.crs).data
+            crs = CRS.from_string(f.crs).to_dict()
             transform = rasterio.Affine(*f.profile['transform'])
             shape = f.shape
             regions = f['ISO_regions']
@@ -462,8 +468,7 @@ class LeastCostXmission:
             transmission features with the given capacity class that are within
             "nn_sink" nearest infinite sinks
         """
-        if max_workers is None:
-            max_workers = os.cpu_count()
+        max_workers = os.cpu_count() if max_workers is None else max_workers
 
         if sc_point_gids is None:
             sc_point_gids = self.sc_points['sc_point_gid'].values
@@ -485,7 +490,8 @@ class LeastCostXmission:
                             clipping_buffer=clipping_buffer)
 
                         future = exe.submit(TransCapCosts.run,
-                                            self._cost_fpath, sc_point,
+                                            self._cost_fpath,
+                                            sc_point.copy(deep=True),
                                             sc_features, capacity_class,
                                             radius=radius,
                                             xmission_config=self._config,
@@ -496,7 +502,9 @@ class LeastCostXmission:
                 for i, future in enumerate(as_completed(futures)):
                     logger.debug('SC point {} of {} complete!'
                                  .format(i + 1, len(futures)))
-                    least_costs.append(future.result())
+                    sc_costs = future.result()
+                    if sc_costs is not None:
+                        least_costs.append(sc_costs)
 
         else:
             logger.info('Computing Least Cost Transmission for SC points in '
@@ -508,13 +516,16 @@ class LeastCostXmission:
                     sc_features, radius = self._clip_to_sc_point(
                         sc_point, tie_line_voltage, nn_sinks=nn_sinks,
                         clipping_buffer=clipping_buffer)
-                    least_costs.append(TransCapCosts.run(
-                        self._cost_fpath, sc_point,
+                    sc_costs = TransCapCosts.run(
+                        self._cost_fpath, sc_point.copy(deep=True),
                         sc_features, capacity_class,
                         radius=radius,
                         xmission_config=self._config,
                         barrier_mult=barrier_mult,
-                        min_line_length=self._min_line_len))
+                        min_line_length=self._min_line_len)
+
+                    if sc_costs is not None:
+                        least_costs.append(sc_costs)
 
                     logger.debug('SC point {} of {} complete!'
                                  .format(i, len(sc_point_gids)))
@@ -581,6 +592,6 @@ class LeastCostXmission:
         logger.info('{} connections were made {} SC points in {:.4f} minutes'
                     .format(len(least_costs),
                             len(least_costs['sc_point_gid'].unique()),
-                            time.time() - ts / 60))
+                            (time.time() - ts) / 60))
 
         return least_costs

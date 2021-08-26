@@ -23,7 +23,7 @@ from reVX.least_cost_xmission.config import TEST_DEFAULT_MULTS
 
 BASELINE_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 EXCL_H5 = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_exclusions.h5')
-ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_iso_regions.tif')
+ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 XC = XmissionConfig()
 
 
@@ -34,7 +34,7 @@ def build_test_costs():
     extra_layers = {'layers':
                     {'transmission_barrier':
                      os.path.join(TESTDATADIR, 'xmission',
-                                  'ri_transmission_barriers.tif')}}
+                                  'ri_trans_barriers.tif')}}
     XmissionCostCreator.run(BASELINE_H5, ISO_REGIONS_F, excl_h5=EXCL_H5,
                             slope_layer='ri_srtm_slope', nlcd_layer='ri_nlcd',
                             tiff_dir=None, default_mults=TEST_DEFAULT_MULTS,
@@ -126,7 +126,7 @@ def test_cli(runner):
         extra_layers = {'layers':
                         {'transmission_barrier':
                          os.path.join(TESTDATADIR, 'xmission',
-                                      'ri_transmission_barriers.tif')}}
+                                      'ri_trans_barriers.tif')}}
         config = {
             "directories": {
                 "log_directory": td,

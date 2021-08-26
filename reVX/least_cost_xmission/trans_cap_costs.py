@@ -11,13 +11,15 @@ from shapely.geometry import Polygon
 from shapely.ops import nearest_points
 from skimage.graph import MCP_Geometric
 import time
+from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
                                              SINK_CAT, SUBSTATION_CAT,
                                              LOAD_CENTER_CAT)
-from reVX.utilities.exceptions import LeastCostPathNotFoundError
+from reVX.utilities.exceptions import (InvalidMCPStartValueError,
+                                       LeastCostPathNotFoundError)
 
 logger = logging.getLogger(__name__)
 
@@ -168,11 +170,11 @@ class TieLineCosts:
         """
         if self._mcp is None:
             check = self.mcp_cost[self.row, self.col]
-            if check == -1:
+            if check < 0:
                 msg = ("Start idx {} does not have a valid cost!"
                        .format((self.row, self.col)))
                 logger.error(msg)
-                raise LeastCostPathNotFoundError(msg)
+                raise InvalidMCPStartValueError(msg)
 
             self._mcp = MCP_Geometric(self.mcp_cost)
             self._mcp.find_costs(starts=[(self.row, self.col)])
@@ -292,7 +294,7 @@ class TieLineCosts:
             cost = f[cost_layer, row_slice, col_slice]
             barrier = f['transmission_barrier', row_slice, col_slice]
 
-        mcp_cost = cost * barrier * barrier_mult
+        mcp_cost = cost + cost * barrier * barrier_mult
         mcp_cost = np.where(mcp_cost < 0, -1, mcp_cost)
 
         return cost, mcp_cost
@@ -323,7 +325,7 @@ class TieLineCosts:
             raise ValueError(msg)
 
         check = self.mcp_cost[row, col]
-        if check == -1:
+        if check < 0:
             msg = ("End idx {} does not have a valid cost!"
                    .format(end_idx))
             logger.error(msg)
@@ -334,7 +336,7 @@ class TieLineCosts:
         except ValueError as ex:
             msg = ('Unable to find path from start {} to {}: {}'
                    .format((self.row, self.col), end_idx, ex))
-            logger.warning(msg)
+            logger.error(msg)
             raise LeastCostPathNotFoundError(msg) from ex
 
         # Use Pythagorean theorem to calculate lengths between cells (km)
@@ -461,6 +463,17 @@ class TransCapCosts(TieLineCosts):
         pandas.Series
         """
         return self._sc_point
+
+    @property
+    def sc_point_gid(self):
+        """
+        Supply curve point gid
+
+        Returns
+        -------
+        int
+        """
+        return self.sc_point['sc_point_gid']
 
     @property
     def features(self):
@@ -631,7 +644,8 @@ class TransCapCosts(TieLineCosts):
                            'voltage of {}kV.'
                            .format(feat['trans_gid'], feat['max_volts'],
                                    tie_voltage))
-                    logger.warning(msg)
+                    logger.debug(msg)
+
                     features.loc[index, 'raw_line_cost'] = 1e12
                 else:
                     features.loc[index, 'raw_line_cost'] = cost
@@ -640,7 +654,8 @@ class TransCapCosts(TieLineCosts):
                     msg = ('Tie-line length {} will be incraeased to the '
                            'minimum allowed line length: {}.'
                            .format(length, min_line_length))
-                    logger.warning(msg)
+                    logger.debug(msg)
+
                     cost = cost * (min_line_length / length)
                     length = min_line_length
 
@@ -648,13 +663,14 @@ class TransCapCosts(TieLineCosts):
             except LeastCostPathNotFoundError as ex:
                 msg = ("Could not connect SC point {} to transmission feature "
                        "{}: {}"
-                       .format(self.sc_point['sc_point_gid'],
+                       .format(self.sc_point_gid,
                                feat['trans_gid'], ex))
                 logger.warning(msg)
+                warn(msg)
             except Exception:
                 logger.exception('Could not connect SC point {} to '
                                  'transmission features!'
-                                 .format(self.sc_point['sc_point_gid']))
+                                 .format(self.sc_point_gid))
                 raise
 
         return features
@@ -817,16 +833,26 @@ class TransCapCosts(TieLineCosts):
             costs added
         """
         features = self.compute_tie_line_costs(min_line_length=min_line_length)
-        features = features.dropna(subset=['dist_km', 'raw_line_cost'])
+
+        mask = features['dist_km'].isna()
+        if mask.any():
+            msg = ("The following features could not be connected to SC point "
+                   "{}:\n{}".format(self.sc_point_gid,
+                                    features.loc[mask, 'trans_gid']))
+            logger.warning(msg)
+            warn(msg)
+            features = features.loc[~mask]
+
         features = self.compute_connection_costs(features=features)
 
         features['trans_cap_cost'] = (features['tie_line_cost']
                                       + features['connection_cost'])
 
-        features = features.drop(['row', 'col', 'geometry'], errors='ignore')
+        features = features.drop(columns=['row', 'col', 'geometry'],
+                                 errors='ignore')
         features['row_ind'] = self.sc_point['row_ind']
         features['col_ind'] = self.sc_point['col_ind']
-        features['sc_point_gid'] = self.sc_point['sc_point_gid']
+        features['sc_point_gid'] = self.sc_point_gid
 
         return features
 
@@ -860,18 +886,30 @@ class TransCapCosts(TieLineCosts):
 
         Returns
         -------
-        features : pd.DataFrame
+        features : pd.DataFrame | None
             Transmission table with tie-line costs and distances and connection
             costs added
         """
         ts = time.time()
-        tcc = cls(excl_fpath, sc_point, features, capacity_class,
-                  radius=radius, xmission_config=xmission_config,
-                  barrier_mult=barrier_mult)
+        try:
+            tcc = cls(excl_fpath, sc_point, features, capacity_class,
+                      radius=radius, xmission_config=xmission_config,
+                      barrier_mult=barrier_mult)
 
-        features = tcc.compute(min_line_length=min_line_length)
-        logger.debug('Least Cost transmission costs computed for '
-                     'sc_point_gid {} in {:.4f}s'
-                     .format(sc_point['sc_point_gid'], time.time() - ts))
+            features = tcc.compute(min_line_length=min_line_length)
+            logger.debug('Least Cost transmission costs computed for '
+                         'SC point {} in {:.4f}s'
+                         .format(tcc.sc_point_gid, time.time() - ts))
+        except InvalidMCPStartValueError as ex:
+            features = None
+            msg = ('Could not connect SC point {} to tranmission features: {}'
+                   .format(sc_point['sc_point_gid'], ex))
+            logger.warning(msg)
+            warn(msg)
+        except Exception as ex:
+            msg = ('Failed to connect SC point {} to tranmission features: {}'
+                   .format(sc_point['sc_point_gid'], ex))
+            logger.exception(msg)
+            raise
 
         return features

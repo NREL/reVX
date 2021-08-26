@@ -7,6 +7,7 @@ import json
 import logging
 import numpy as np
 import os
+from pyproj.crs import CRS
 import rasterio
 from warnings import warn
 
@@ -208,8 +209,8 @@ class ExclusionsConverter:
                     raise ExclusionsCheckError(error)
 
                 profile = h5.profile
-                h5_crs = rasterio.crs.CRS.from_string(profile['crs']).data
-                tif_crs = rasterio.crs.CRS.from_string(tif.profile['crs']).data
+                h5_crs = CRS.from_string(profile['crs']).to_dict()
+                tif_crs = CRS.from_string(tif.profile['crs']).to_dict()
                 bad_crs = cls._check_crs(h5_crs, tif_crs)
                 if bad_crs:
                     error = ('Geospatial "crs" in {} and {} do not match!'
