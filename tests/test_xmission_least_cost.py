@@ -4,9 +4,9 @@ Least cost transmission line path tests
 """
 from click.testing import CliRunner
 import json
+import numpy as np
 import os
 import pandas as pd
-from pandas.testing import assert_frame_equal
 import pytest
 import tempfile
 import traceback
@@ -18,6 +18,21 @@ from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
+CHECK_COLS = ('raw_line_cost', 'dist_km', 'length_mult', 'tie_line_cost',
+              'xformer_cost_per_mw', 'xformer_cost', 'sub_upgrade_cost',
+              'new_sub_cost', 'connection_cost', 'trans_cap_cost')
+
+
+def check(truth, test, check_cols=CHECK_COLS):
+    """
+    Compare values in truth and test for given columns
+    """
+    if check_cols is None:
+        check_cols = truth.columns.values
+
+    for c in check_cols:
+        msg = f'values for {c} do not match!'
+        assert np.allclose(truth[c].values, test[c].values), msg
 
 
 @pytest.fixture(scope="module")
@@ -40,7 +55,7 @@ def test_capacity_class(capacity):
         test.to_csv(truth, index=False)
 
     truth = pd.read_csv(truth)
-    assert_frame_equal(truth, test, check_dtype=False)
+    check(truth, test)
 
 
 def test():
@@ -55,7 +70,7 @@ def test():
         test.to_csv(truth, index=False)
 
     truth = pd.read_csv(truth)
-    assert_frame_equal(truth, test, check_dtype=False)
+    check(truth, test)
 
 
 @pytest.mark.parametrize('max_workers', [1, None])
@@ -71,7 +86,7 @@ def test_parallel(max_workers):
         test.to_csv(truth, index=False)
 
     truth = pd.read_csv(truth)
-    assert_frame_equal(truth, test, check_dtype=False)
+    check(truth, test)
 
 
 @pytest.mark.parametrize('resolution', [64, 128])
@@ -91,7 +106,7 @@ def test_resolution(resolution):
         test.to_csv(truth, index=False)
 
     truth = pd.read_csv(truth)
-    assert_frame_equal(truth, test, check_dtype=False)
+    check(truth, test)
 
 
 def test_cli(runner):
