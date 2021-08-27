@@ -12,9 +12,14 @@ import pytest
 
 from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
                                              SINK_CAT, SUBSTATION_CAT)
-# from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
+# from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
+#                                                       TransCapCosts)
+# from reVX import TESTDATADIR
 
 logger = logging.getLogger(__name__)
+
+# COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
+# FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
 
 
 def plot_paths(trans_cap_costs, x_feats, cmap='viridis', label=False,

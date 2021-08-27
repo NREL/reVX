@@ -527,6 +527,7 @@ class LeastCostXmission:
                     sc_features, radius = self._clip_to_sc_point(
                         sc_point, tie_line_voltage, nn_sinks=nn_sinks,
                         clipping_buffer=clipping_buffer)
+
                     sc_costs = TransCapCosts.run(
                         self._cost_fpath, sc_point.copy(deep=True),
                         sc_features, capacity_class,
@@ -600,7 +601,8 @@ class LeastCostXmission:
                                             barrier_mult=barrier_mult,
                                             max_workers=max_workers)
 
-        logger.info('{} connections were made {} SC points in {:.4f} minutes'
+        logger.info('{} connections were made to {} SC points in {:.4f} '
+                    'minutes'
                     .format(len(least_costs),
                             len(least_costs['sc_point_gid'].unique()),
                             (time.time() - ts) / 60))

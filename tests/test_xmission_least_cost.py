@@ -8,6 +8,7 @@ import numpy as np
 import os
 import pandas as pd
 import pytest
+import random
 import tempfile
 import traceback
 
@@ -75,9 +76,8 @@ def test_capacity_class(capacity):
     """
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_{capacity}MW.csv')
-    if not os.path.exists(truth):
-        sc_point_gids = None
-    else:
+    sc_point_gids = None
+    if os.path.exists(truth):
         truth = pd.read_csv(truth)
         sc_point_gids = truth['sc_point_gid'].unique()
         sc_point_gids = np.random.choice(sc_point_gids,
@@ -95,41 +95,16 @@ def test_capacity_class(capacity):
     check(truth, test)
 
 
-def test():
-    """
-    Test least cost xmission and compare with baseline data
-    """
-    truth = os.path.join(TESTDATADIR, 'xmission', 'least_cost_100MW.csv')
-    if not os.path.exists(truth):
-        sc_point_gids = None
-    else:
-        truth = pd.read_csv(truth)
-        sc_point_gids = truth['sc_point_gid'].unique()
-        sc_point_gids = np.random.choice(sc_point_gids,
-                                         size=N_SC_POINTS, replace=False)
-        mask = truth['sc_point_gid'].isin(sc_point_gids)
-        truth = truth.loc[mask]
-
-    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
-                                 max_workers=1,
-                                 sc_point_gids=sc_point_gids)
-
-    if not isinstance(truth, pd.DataFrame):
-        test.to_csv(truth, index=False)
-        truth = pd.read_csv(truth)
-
-    check(truth, test)
-
-
 @pytest.mark.parametrize('max_workers', [1, None])
 def test_parallel(max_workers):
     """
     Test least cost xmission and compare with baseline data
     """
-    truth = os.path.join(TESTDATADIR, 'xmission', 'least_cost_100MW.csv')
-    if not os.path.exists(truth):
-        sc_point_gids = None
-    else:
+    capacity = random.choice([100, 200, 400, 1000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_{capacity}MW.csv')
+    sc_point_gids = None
+    if os.path.exists(truth):
         truth = pd.read_csv(truth)
         sc_point_gids = truth['sc_point_gid'].unique()
         sc_point_gids = np.random.choice(sc_point_gids,
@@ -137,7 +112,7 @@ def test_parallel(max_workers):
         mask = truth['sc_point_gid'].isin(sc_point_gids)
         truth = truth.loc[mask]
 
-    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
+    test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
                                  max_workers=max_workers,
                                  sc_point_gids=sc_point_gids)
 
@@ -160,9 +135,8 @@ def test_resolution(resolution):
         truth = os.path.join(TESTDATADIR, 'xmission',
                              'least_cost_100MW-64x.csv')
 
-    if not os.path.exists(truth):
-        sc_point_gids = None
-    else:
+    sc_point_gids = None
+    if os.path.exists(truth):
         truth = pd.read_csv(truth)
         sc_point_gids = truth['sc_point_gid'].unique()
         sc_point_gids = np.random.choice(sc_point_gids,
@@ -184,11 +158,15 @@ def test_cli(runner):
     """
     Test CostCreator CLI
     """
-    truth = os.path.join(TESTDATADIR, 'xmission', 'least_cost_100MW.csv')
+    capacity = random.choice([100, 200, 400, 1000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_{capacity}MW.csv')
     truth = pd.read_csv(truth)
     sc_point_gids = truth['sc_point_gid'].unique()
     sc_point_gids = np.random.choice(sc_point_gids, size=N_SC_POINTS,
                                      replace=False)
+    mask = truth['sc_point_gid'].isin(sc_point_gids)
+    truth = truth.loc[mask]
 
     with tempfile.TemporaryDirectory() as td:
         config = {
@@ -201,9 +179,9 @@ def test_cli(runner):
             },
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
-            "capacity_class": '100MW',
+            "capacity_class": f'{capacity}MW',
             "dirout": td,
-            "sc_point_gids": sc_point_gids
+            "sc_point_gids": sc_point_gids.tolist()
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -215,8 +193,11 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        print(os.listdir(td))
-        raise RuntimeError
+        test = '{}_CostCreator_{}MW_128.csv'.format(os.path.basename(td),
+                                                    capacity)
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+        check(truth, test)
 
     LOGGERS.clear()
 
