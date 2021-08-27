@@ -20,7 +20,9 @@ COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
 CHECK_COLS = ('raw_line_cost', 'dist_km', 'length_mult', 'tie_line_cost',
               'xformer_cost_per_mw', 'xformer_cost', 'sub_upgrade_cost',
-              'new_sub_cost', 'connection_cost', 'trans_cap_cost')
+              'new_sub_cost', 'connection_cost', 'trans_cap_cost', 'trans_gid',
+              'sc_point_gid')
+N_SC_POINTS = 10  # number of sc_points to run, chosen at random for each test
 
 
 def check(truth, test, check_cols=CHECK_COLS):
@@ -32,7 +34,8 @@ def check(truth, test, check_cols=CHECK_COLS):
 
     for c in check_cols:
         msg = f'values for {c} do not match!'
-        assert np.allclose(truth[c].values, test[c].values), msg
+        assert np.allclose(truth[c].values, test[c].values,
+                           equal_nan=True), msg
 
 
 @pytest.fixture(scope="module")
@@ -48,13 +51,23 @@ def test_capacity_class(capacity):
     """
     Test least cost xmission and compare with baseline data
     """
-    test = LeastCostXmission.run(COST_H5, FEATURES, capacity)
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_{capacity}MW.csv')
     if not os.path.exists(truth):
-        test.to_csv(truth, index=False)
+        sc_point_gids = None
+    else:
+        truth = pd.read_csv(truth)
+        sc_point_gids = truth['sc_point_gid'].unique()
+        sc_point_gids = np.random.choice(sc_point_gids,
+                                         size=N_SC_POINTS, replace=False)
 
-    truth = pd.read_csv(truth)
+    test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
+                                 sc_point_gids=sc_point_gids)
+
+    if not isinstance(truth, pd.DataFrame):
+        test.to_csv(truth, index=False)
+        truth = pd.read_csv(truth)
+
     check(truth, test)
 
 
@@ -62,14 +75,23 @@ def test():
     """
     Test least cost xmission and compare with baseline data
     """
-    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
-                                 max_workers=1)
-    truth = os.path.join(TESTDATADIR, 'xmission',
-                         'least_cost_100MW.csv')
+    truth = os.path.join(TESTDATADIR, 'xmission', 'least_cost_200MW.csv')
     if not os.path.exists(truth):
-        test.to_csv(truth, index=False)
+        sc_point_gids = None
+    else:
+        truth = pd.read_csv(truth)
+        sc_point_gids = truth['sc_point_gid'].unique()
+        sc_point_gids = np.random.choice(sc_point_gids,
+                                         size=N_SC_POINTS, replace=False)
 
-    truth = pd.read_csv(truth)
+    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
+                                 max_workers=1,
+                                 sc_point_gids=sc_point_gids)
+
+    if not isinstance(truth, pd.DataFrame):
+        test.to_csv(truth, index=False)
+        truth = pd.read_csv(truth)
+
     check(truth, test)
 
 
@@ -78,14 +100,23 @@ def test_parallel(max_workers):
     """
     Test least cost xmission and compare with baseline data
     """
-    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
-                                 max_workers=max_workers)
-    truth = os.path.join(TESTDATADIR, 'xmission',
-                         'least_cost_100MW.csv')
+    truth = os.path.join(TESTDATADIR, 'xmission', 'least_cost_100MW.csv')
     if not os.path.exists(truth):
-        test.to_csv(truth, index=False)
+        sc_point_gids = None
+    else:
+        truth = pd.read_csv(truth)
+        sc_point_gids = truth['sc_point_gid'].unique()
+        sc_point_gids = np.random.choice(sc_point_gids,
+                                         size=N_SC_POINTS, replace=False)
 
-    truth = pd.read_csv(truth)
+    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
+                                 max_workers=max_workers,
+                                 sc_point_gids=sc_point_gids)
+
+    if not isinstance(truth, pd.DataFrame):
+        test.to_csv(truth, index=False)
+        truth = pd.read_csv(truth)
+
     check(truth, test)
 
 
@@ -94,7 +125,6 @@ def test_resolution(resolution):
     """
     Test least cost xmission and compare with baseline data
     """
-    test = LeastCostXmission.run(COST_H5, FEATURES, 100, resolution=resolution)
     if resolution == 128:
         truth = os.path.join(TESTDATADIR, 'xmission',
                              'least_cost_100MW.csv')
@@ -103,9 +133,20 @@ def test_resolution(resolution):
                              'least_cost_100MW-64x.csv')
 
     if not os.path.exists(truth):
-        test.to_csv(truth, index=False)
+        sc_point_gids = None
+    else:
+        truth = pd.read_csv(truth)
+        sc_point_gids = truth['sc_point_gid'].unique()
+        sc_point_gids = np.random.choice(sc_point_gids,
+                                         size=N_SC_POINTS, replace=False)
 
-    truth = pd.read_csv(truth)
+    test = LeastCostXmission.run(COST_H5, FEATURES, 100, resolution=resolution,
+                                 sc_point_gids=sc_point_gids)
+
+    if not isinstance(truth, pd.DataFrame):
+        test.to_csv(truth, index=False)
+        truth = pd.read_csv(truth)
+
     check(truth, test)
 
 
@@ -113,6 +154,11 @@ def test_cli(runner):
     """
     Test CostCreator CLI
     """
+    truth = os.path.join(TESTDATADIR, 'xmission', 'least_cost_100MW.csv')
+    truth = pd.read_csv(truth)
+    sc_point_gids = truth['sc_point_gid'].unique()
+    sc_point_gids = np.random.choice(sc_point_gids, size=N_SC_POINTS,
+                                     replace=False)
 
     with tempfile.TemporaryDirectory() as td:
         config = {
@@ -126,7 +172,8 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": '100MW',
-            "dirout": td
+            "dirout": td,
+            "sc_point_gids": sc_point_gids
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
