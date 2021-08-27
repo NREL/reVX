@@ -208,25 +208,29 @@ class LeastCostXmission:
 
         sub_lines_map = {}
         mask = features['category'] == SUBSTATION_CAT
+        bad_subs = np.zeros(len(features), dtype=bool)
         for idx, row in features.loc[mask].iterrows():
             gid = row['trans_gid']
             lines = row['trans_line_gids']
             if isinstance(lines, str):
                 lines = json.loads(lines)
 
-            sub_lines_map[gid] = lines
             lines_mask = features['trans_gid'].isin(lines)
             voltage = features.loc[lines_mask, 'voltage'].values
-            features.loc[idx, 'min_volts'] = np.min(voltage)
-            features.loc[idx, 'max_volts'] = np.max(voltage)
 
-        mask &= features['max_volts'] < 69
-        if any(mask):
+            if np.max(voltage) >= 69:
+                sub_lines_map[gid] = lines
+                features.loc[idx, 'min_volts'] = np.min(voltage)
+                features.loc[idx, 'max_volts'] = np.max(voltage)
+            else:
+                bad_subs[idx] = True
+
+        if any(bad_subs):
             msg = ("The following sub-stations do not have the minimum "
                    "required voltage of 69 kV and will be dropped:\n{}"
-                   .format(features.loc[mask, 'trans_gid']))
+                   .format(features.loc[bad_subs, 'trans_gid']))
             logger.warning(msg)
-            features = features.loc[~mask]
+            features = features.loc[~bad_subs]
 
         return features, pd.Series(sub_lines_map)
 
@@ -319,6 +323,7 @@ class LeastCostXmission:
             regions = f['ISO_regions']
 
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
+        sub_lines_map = pd.Series(sub_lines_map)
         feat_crs = features.crs.to_dict()
         bad_crs = ExclusionsConverter._check_crs(crs, feat_crs)
         if bad_crs:
@@ -351,6 +356,8 @@ class LeastCostXmission:
             row = row[mask]
             col = col[mask]
             features = features.loc[mask]
+            mask = sub_lines_map.index.isin(features['trans_gid'].values)
+            sub_lines_map = sub_lines_map.loc[mask]
 
         features['row'] = row
         features['col'] = col
@@ -364,7 +371,7 @@ class LeastCostXmission:
         sc_points = gpd.GeoDataFrame(sc_points, crs=features.crs,
                                      geometry=geo)
 
-        return sc_points, features, pd.Series(sub_lines_map)
+        return sc_points, features, sub_lines_map
 
     def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
                           clipping_buffer=1.05):
@@ -418,6 +425,7 @@ class LeastCostXmission:
             sc_features = self.features.copy(deep=True)
 
         mask = self.features['max_volts'] >= tie_line_voltage
+        mask &= self.features['category'] != TRANS_LINE_CAT
         sc_features = sc_features.loc[mask].copy(deep=True)
         logger.debug('{} transmission features found in clipped area with '
                      'minimum max voltage of {}'
@@ -432,6 +440,9 @@ class LeastCostXmission:
         trans_gids = np.unique(trans_gids)
         mask = self.features['trans_gid'].isin(trans_gids)
         trans_lines = self.features.loc[mask].copy(deep=True)
+        logger.debug('Adding all {} transmission lines connected to '
+                     'substations with minimum max voltage of {}'
+                     .format(len(trans_lines), tie_line_voltage))
         sc_features = sc_features.append(trans_lines)
 
         return sc_features, radius

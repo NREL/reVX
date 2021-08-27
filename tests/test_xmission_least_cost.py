@@ -32,10 +32,32 @@ def check(truth, test, check_cols=CHECK_COLS):
     if check_cols is None:
         check_cols = truth.columns.values
 
+    msg = 'Unique sc_point gids do not match!'
+    assert np.allclose(truth['sc_point_gid'].unique(),
+                       test['sc_point_gid'].unique()), msg
+    truth_points = truth.groupby('sc_point_gid')
+    test_points = test.groupby('sc_point_gid')
+    for gid, p_true in truth_points:
+        print(gid)
+        print(p_true)
+        p_test = test_points.get_group(gid)
+        print(p_test)
+
+        msg = f'Unique trans_gids do not match for sc_point {gid}!'
+        assert np.allclose(p_true['trans_gid'].unique(),
+                           p_test['trans_gid'].unique()), msg
+
+        for c in check_cols:
+            msg = f'values for {c} do not match for sc_point {gid}!'
+            c_truth = p_true[c].values.astype('float32')
+            c_test = p_test[c].values.astype('float32')
+            assert np.allclose(c_truth, c_test, equal_nan=True), msg
+
     for c in check_cols:
         msg = f'values for {c} do not match!'
-        assert np.allclose(truth[c].values, test[c].values,
-                           equal_nan=True), msg
+        c_truth = truth[c].values.astype('float32')
+        c_test = test[c].values.astype('float32')
+        assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
 
 @pytest.fixture(scope="module")
@@ -60,6 +82,8 @@ def test_capacity_class(capacity):
         sc_point_gids = truth['sc_point_gid'].unique()
         sc_point_gids = np.random.choice(sc_point_gids,
                                          size=N_SC_POINTS, replace=False)
+        mask = truth['sc_point_gid'].isin(sc_point_gids)
+        truth = truth.loc[mask]
 
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
                                  sc_point_gids=sc_point_gids)
@@ -75,7 +99,7 @@ def test():
     """
     Test least cost xmission and compare with baseline data
     """
-    truth = os.path.join(TESTDATADIR, 'xmission', 'least_cost_200MW.csv')
+    truth = os.path.join(TESTDATADIR, 'xmission', 'least_cost_100MW.csv')
     if not os.path.exists(truth):
         sc_point_gids = None
     else:
@@ -83,6 +107,8 @@ def test():
         sc_point_gids = truth['sc_point_gid'].unique()
         sc_point_gids = np.random.choice(sc_point_gids,
                                          size=N_SC_POINTS, replace=False)
+        mask = truth['sc_point_gid'].isin(sc_point_gids)
+        truth = truth.loc[mask]
 
     test = LeastCostXmission.run(COST_H5, FEATURES, 100,
                                  max_workers=1,
@@ -108,6 +134,8 @@ def test_parallel(max_workers):
         sc_point_gids = truth['sc_point_gid'].unique()
         sc_point_gids = np.random.choice(sc_point_gids,
                                          size=N_SC_POINTS, replace=False)
+        mask = truth['sc_point_gid'].isin(sc_point_gids)
+        truth = truth.loc[mask]
 
     test = LeastCostXmission.run(COST_H5, FEATURES, 100,
                                  max_workers=max_workers,
@@ -139,6 +167,8 @@ def test_resolution(resolution):
         sc_point_gids = truth['sc_point_gid'].unique()
         sc_point_gids = np.random.choice(sc_point_gids,
                                          size=N_SC_POINTS, replace=False)
+        mask = truth['sc_point_gid'].isin(sc_point_gids)
+        truth = truth.loc[mask]
 
     test = LeastCostXmission.run(COST_H5, FEATURES, 100, resolution=resolution,
                                  sc_point_gids=sc_point_gids)
