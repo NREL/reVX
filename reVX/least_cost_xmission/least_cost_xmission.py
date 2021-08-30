@@ -14,8 +14,6 @@ from pyproj.crs import CRS
 import rasterio
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
-from shapely.geometry.linestring import LineString
-from shapely.geometry.multilinestring import MultiLineString
 import time
 
 from reV.handlers.exclusions import ExclusionLayers
@@ -27,7 +25,6 @@ from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
 from reVX.utilities.exceptions import ExclusionsCheckError
 from reVX.utilities.exclusions_converter import ExclusionsConverter
-
 
 logger = logging.getLogger(__name__)
 
@@ -60,14 +57,14 @@ class LeastCostXmission:
             xmission_config=xmission_config)
 
         self._sc_points, self._features, self._sub_lines_mapping =\
-            self._map_sc_to_xmission(cost_fpath, features_fpath,
-                                     resolution=resolution)
+            self._map_to_costs(cost_fpath, features_fpath,
+                               resolution=resolution)
         self._cost_fpath = cost_fpath
         self._tree = None
         self._sink_coords = None
         self._min_line_len = (resolution * 0.09) / 2
 
-        logger.debug('Done loading data')
+        logger.debug('Done loaded')
 
     def __repr__(self):
         msg = ("{} to be computed for {} sc_points and {} features"
@@ -230,7 +227,7 @@ class LeastCostXmission:
                    "required voltage of 69 kV and will be dropped:\n{}"
                    .format(features.loc[bad_subs, 'trans_gid']))
             logger.warning(msg)
-            features = features.loc[~bad_subs]
+            features = features.loc[~bad_subs].reset_index(drop=True)
 
         return features, pd.Series(sub_lines_map)
 
@@ -267,35 +264,11 @@ class LeastCostXmission:
 
         return sc_points
 
-    @staticmethod
-    def _get_feature_coords(geo):
-        """
-        Return coordinate as (x, y) tuple. Uses first coordinate for lines
-
-        Parameters
-        ----------
-        geo : gpd.Geometry
-            Geometry
-
-        Returns
-        -------
-        tuple
-            coordinates of geometry
-        """
-        if isinstance(geo, LineString):
-            x, y = geo.coords[0]
-
-        elif isinstance(geo, MultiLineString):
-            x, y = geo.geoms[0].coords[0]
-        else:
-            x, y = geo.x, geo.y
-
-        return x, y
-
     @classmethod
-    def _map_sc_to_xmission(cls, cost_fpath, features_fpath, resolution=128):
+    def _map_to_costs(cls, cost_fpath, features_fpath, resolution=128):
         """
-        Map supply curve points and transmission features to each other
+        Map supply curve points and transmission features to cost array pixel
+        indices
 
         Parameters
         ----------
@@ -334,11 +307,10 @@ class LeastCostXmission:
             logger.error(error)
             raise ExclusionsCheckError(error)
 
-        logger.debug('Map transmission features to exclusion grid')
-        coords = features['geometry'].apply(cls._get_feature_coords).values
-        coords = np.concatenate(coords).reshape(len(features), 2)
-        row, col = rasterio.transform.rowcol(transform, coords[:, 0],
-                                             coords[:, 1])
+        logger.debug('Map transmission features to cost raster')
+        coords = features['geometry'].centroid
+        row, col = rasterio.transform.rowcol(transform, coords.x.values,
+                                             coords.y.values)
         row = np.array(row)
         col = np.array(col)
 
@@ -355,7 +327,7 @@ class LeastCostXmission:
             logger.warning(msg)
             row = row[mask]
             col = col[mask]
-            features = features.loc[mask]
+            features = features.loc[mask].reset_index(drop=True)
             mask = sub_lines_map.index.isin(features['trans_gid'].values)
             sub_lines_map = sub_lines_map.loc[mask]
 
@@ -385,6 +357,8 @@ class LeastCostXmission:
             SC point to clip raster around
         nn_sinks : int, optional
             Number of nearest neighbor sinks to clip to
+        clipping_buffer : float, optional
+            Buffer to increase clipping radius by, by default 1.05
 
         Returns
         -------
