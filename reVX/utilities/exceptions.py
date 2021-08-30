@@ -62,3 +62,16 @@ class SupplyCurvePointCapacityError(Exception):
     """
     Error for supply curve point with zero capacity
     """
+
+
+class InvalidMCPStartValueError(Exception):
+    """
+    Error when start index for LeastCostPath is on a pixel with an invalid
+    value
+    """
+
+
+class LeastCostPathNotFoundError(Exception):
+    """
+    Error when MCP Geometric cannot find a path
+    """

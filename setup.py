@@ -77,7 +77,11 @@ setup(
                             ("turbine-flicker=reVX.turbine_flicker."
                              "turbine_flicker_cli:main"),
                             ("simple-plant-builder=reVX.plexos."
-                             "simple_plant_builder_cli:main")
+                             "simple_plant_builder_cli:main"),
+                            ("xmission-cost-creator=reVX.least_cost_xmission."
+                             "cost_creator_cli:main"),
+                            ("least-cost-xmission=reVX.least_cost_xmission."
+                             "least_cost_xmission_cli:main")
                             ],
     },
     include_package_data=True,
