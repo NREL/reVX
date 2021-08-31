@@ -64,10 +64,11 @@ class TieLineCosts:
             barrier_mult=barrier_mult)
 
         self._mcp = None
+        self._clip_shape = None
 
         with ExclusionLayers(self._cost_fpath) as f:
             self.transform = rasterio.Affine(*f.profile['transform'])
-            self.shape = f.shape
+            self._full_shape = f.shape
 
     def __repr__(self):
         msg = "{} starting at {}".format(self.__class__.__name__,
@@ -183,6 +184,38 @@ class TieLineCosts:
         """
         return self._capacity_class
 
+    @property
+    def clip_shape(self):
+        """
+        Shaped of clipped cost raster
+
+        Returns
+        -------
+        tuple
+        """
+        if self._clip_shape is None:
+            if self._row_slice == slice(None):
+                row_shape = self._full_shape[0]
+            else:
+                row_max = (self._row_slice.stop if self._row_slice.stop
+                           else self._full_shape[0])
+                row_min = (self._row_slice.start if self._row_slice.start
+                           else 0)
+                row_shape = row_max - row_min
+
+            if self._col_slice == slice(None):
+                col_shape = self._full_shape[1]
+            else:
+                col_max = (self._col_slice.stop if self._col_slice.stop
+                           else self._full_shape[1])
+                col_min = (self._col_slice.start if self._col_slice.start
+                           else 0)
+                col_shape = col_max - col_min
+
+            self._clip_shape = (row_shape, col_shape)
+
+        return self._clip_shape
+
     @staticmethod
     def _parse_config(xmission_config=None):
         """
@@ -261,9 +294,11 @@ class TieLineCosts:
         """
         row, col = end_idx
 
-        if row < 0 or col < 0 or row >= self.shape[0] or col >= self.shape[1]:
+        check = (row < 0 or col < 0 or row >= self.clip_shape[0]
+                 or col >= self.clip_shape[1])
+        if check:
             msg = ('End point ({}, {}) is out side of clipped cost raster '
-                   'with shape {}'.format(row, col, self.shape))
+                   'with shape {}'.format(row, col, self.clip_shape))
             logger.exception(msg)
             raise ValueError(msg)
 
@@ -364,7 +399,7 @@ class TieLineCosts:
 
     @classmethod
     def run(cls, cost_fpath, start_idx, end_indices, capacity_class,
-            radius=None, xmission_config=None, barrier_mult=100,
+            row_slice, col_slice, xmission_config=None, barrier_mult=100,
             save_paths=False):
         """
         Compute least cost tie-line path to all features to be connected a
@@ -388,6 +423,9 @@ class TieLineCosts:
             .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
+        save_paths : bool, optional
+            Flag to save least cost path as a multi-line geometry,
+            by default False
 
         Returns
         -------
@@ -396,7 +434,7 @@ class TieLineCosts:
             lenght, cost, and geometry for each path
         """
         ts = time.time()
-        tlc = cls(cost_fpath, start_idx, capacity_class, radius=radius,
+        tlc = cls(cost_fpath, start_idx, capacity_class, row_slice, col_slice,
                   xmission_config=xmission_config, barrier_mult=barrier_mult)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
@@ -436,10 +474,8 @@ class TransCapCosts(TieLineCosts):
             Multiplier on transmission barrier costs, by default 100
         """
         self._sc_point = sc_point
-        start_idx, row_slice, col_slice, self.shape = \
-            self._get_clipping_slices(cost_fpath,
-                                      sc_point[['row', 'col']].values,
-                                      radius=radius)
+        start_idx, row_slice, col_slice = self._get_clipping_slices(
+            cost_fpath, sc_point[['row', 'col']].values, radius=radius)
         super().__init__(cost_fpath, start_idx, capacity_class, row_slice,
                          col_slice, xmission_config=xmission_config,
                          barrier_mult=barrier_mult)
@@ -497,11 +533,11 @@ class TransCapCosts(TieLineCosts):
             row_bounds = [self._row_slice.start
                           if self._row_slice.start else 0,
                           self._row_slice.stop - 1
-                          if self._row_slice.stop else self.shape[0] - 1]
+                          if self._row_slice.stop else self.clip_shape[0] - 1]
             col_bounds = [self._col_slice.start
                           if self._col_slice.start else 0,
                           self._col_slice.stop - 1
-                          if self._col_slice.stop else self.shape[1] - 1]
+                          if self._col_slice.stop else self.clip_shape[1] - 1]
             x, y = rasterio.transform.xy(self.transform, row_bounds,
                                          col_bounds)
             self._clip_mask = Polygon([[x[0], y[0]],
@@ -547,8 +583,6 @@ class TransCapCosts(TieLineCosts):
             Row start, stop indices for clipped cost array
         col_slice : slice
             Column start, stop indices for clipped cost array
-        shape : tuple
-            Shape of clipped cost raster
         """
         with ExclusionLayers(cost_fpath) as f:
             shape = f.shape
@@ -560,7 +594,6 @@ class TransCapCosts(TieLineCosts):
             col_min = max(col - radius, 0)
             col_max = min(col + radius, shape[1])
 
-            shape = (row_max - row_min, col_max - col_min)
             start_idx = (row - row_min, col - col_min)
         else:
             start_idx = sc_point_idx
@@ -568,9 +601,9 @@ class TransCapCosts(TieLineCosts):
             col_min, col_max = None, None
 
         row_slice = slice(row_min, row_max)
-        col_slice = slice(col_min, col_max),
+        col_slice = slice(col_min, col_max)
 
-        return start_idx, row_slice, col_slice, shape
+        return start_idx, row_slice, col_slice
 
     def _prep_features(self, features):
         """
@@ -638,8 +671,8 @@ class TransCapCosts(TieLineCosts):
         row -= self.row_offset
         col -= self.col_offset
         trans_line_idx = [row, col]
-        clip = (row < 0 or row >= self.shape[0]
-                or col < 0 or col >= self.shape[1])
+        clip = (row < 0 or row >= self.clip_shape[0]
+                or col < 0 or col >= self.clip_shape[1])
         if clip:
             trans_line_idx = self._get_trans_line_idx(trans_line, clip=clip)
 
@@ -676,6 +709,7 @@ class TransCapCosts(TieLineCosts):
                 t_line = False
                 feat_idx = feat[['row', 'col']].values
             try:
+                # pylint: disable=unbalanced-tuple-unpacking
                 length, cost = self.least_cost_path(feat_idx)
 
                 if t_line and feat['max_volts'] < tie_voltage:

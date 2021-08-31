@@ -23,7 +23,6 @@ from rex.utilities.execution import SpawnProcessPool
 from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
                                              SINK_CAT, SUBSTATION_CAT)
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
-from reVX.utilities.exceptions import ExclusionsCheckError
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
@@ -88,11 +87,11 @@ class LeastCostXmission:
     @property
     def features(self):
         """
-        Table of transmission features
+        Table of features to compute paths for
 
         Returns
         -------
-        gpd.GeoDataFrame
+        pandas.DataFrame
         """
         return self._features
 
@@ -289,8 +288,10 @@ class LeastCostXmission:
             Series mapping substations  to the transmission lines connected
             to each substation
         """
+
         with ExclusionLayers(cost_fpath) as f:
-            crs = CRS.from_string(f.crs).to_dict()
+            crs = CRS.from_string(f.crs)
+            cost_crs = crs.to_dict()
             transform = rasterio.Affine(*f.profile['transform'])
             shape = f.shape
             regions = f['ISO_regions']
@@ -298,14 +299,12 @@ class LeastCostXmission:
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
         sub_lines_map = pd.Series(sub_lines_map)
         feat_crs = features.crs.to_dict()
-        bad_crs = ExclusionsConverter._check_crs(crs, feat_crs)
+        bad_crs = ExclusionsConverter._check_crs(cost_crs, feat_crs)
         if bad_crs:
-            error = ('Geospatial "crs" of tranmission features in {} does not '
-                     'match "crs" of cost rasters in {}'
-                     '\n {} !=\n {}'
-                     .format(features_fpath, cost_fpath, feat_crs, crs))
-            logger.error(error)
-            raise ExclusionsCheckError(error)
+            logger.warning('input crs ({}) does not match cost raster crs ({})'
+                           ' and will be transformed!'
+                           .format(feat_crs, cost_crs))
+            features = features.to_crs(crs)
 
         logger.debug('Map transmission features to cost raster')
         coords = features['geometry'].centroid

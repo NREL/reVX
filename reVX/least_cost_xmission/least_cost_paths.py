@@ -48,6 +48,7 @@ class LeastCostPaths:
 
         self._features, self._shape = self._map_to_costs(
             cost_fpath, gpd.read_file(features_fpath))
+        self._features = self._features.drop(columns='geometry')
         self._cost_fpath = cost_fpath
 
         logger.debug('Data loaded')
@@ -150,7 +151,7 @@ class LeastCostPaths:
         features['row'] = row
         features['col'] = col
 
-        return features.drop(columns='geometry'), shape
+        return features, shape
 
     def _get_clip_slice(self, feature_indices):
         """
@@ -169,10 +170,12 @@ class LeastCostPaths:
             Col slice to clip too
         """
         row_slice = slice(max(feature_indices[:, 0].min() - 1, 0),
-                          min(feature_indices[:, 0].max() + 1, self.shape[0]))
+                          min(feature_indices[:, 0].max() + 1,
+                              self._shape[0]))
 
         col_slice = slice(max(feature_indices[:, 1].min() - 1, 0),
-                          min(feature_indices[:, 1].max() + 1, self.shape[1]))
+                          min(feature_indices[:, 1].max() + 1,
+                              self._shape[1]))
 
         return row_slice, col_slice
 
@@ -203,41 +206,36 @@ class LeastCostPaths:
 
         return start_idx, end_indices
 
-    def process_least_cost_paths(self, capacity_class, clipping_buffer=1.05,
-                                 barrier_mult=100, save_paths=False,
-                                 max_workers=None):
+    def process_least_cost_paths(self, capacity_class, barrier_mult=100,
+                                 max_workers=None, save_paths=False,):
         """
-        Compute Least Cost paths between desired features
+        Find Least Cost Paths between all pairs of provided features for the
+        given tie-line capacity class
+
         Parameters
         ----------
         capacity_class : str | int
             Capacity class of transmission features to connect supply curve
             points to
-        sc_point_gids : list, optional
-            List of sc_point_gids to connect to, by default None
-        nn_sinks : int, optional
-            Number of nearest neighbor sinks to use for clipping radius
-            calculation, by default 2
-        clipping_buffer : float, optional
-            Buffer to expand clipping radius by, by default 1.05
         barrier_mult : int, optional
             Tranmission barrier multiplier, used when computing the least
             cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
+        save_paths : bool, optional
+            Flag to save least cost path as a multi-line geometry,
+            by default False
 
         Returns
         -------
-        least_costs : pandas.DataFrame
-            Least cost connections between all supply curve points and the
-            transmission features with the given capacity class that are within
-            "nn_sink" nearest infinite sinks
+        least_cost_paths : pandas.DataFrame | gpd.GeoDataFrame
+            DataFrame of lenghts and costs for each path or GeoDataFrame of
+            lenght, cost, and geometry for each path
         """
         max_workers = os.cpu_count() if max_workers is None else max_workers
         row_slice, col_slice = \
-            self._get_clip_slice(self.features[['row', 'col']].values,
-                                 clipping_buffer=clipping_buffer)
+            self._get_clip_slice(self.features[['row', 'col']].values)
 
         least_cost_paths = []
         if max_workers > 1:
@@ -256,52 +254,49 @@ class LeastCostPaths:
                                         start_idx, end_indices,
                                         capacity_class,
                                         row_slice, col_slice,
-                                        min_line_length=0.9)
+                                        barrier_mult=barrier_mult,
+                                        min_line_length=0.9,
+                                        save_paths=save_paths)
                     futures[future] = start
 
                 for i, future in enumerate(as_completed(futures)):
                     logger.debug('Least cost path {} of {} complete!'
                                  .format(i + 1, len(futures)))
-                    sc_costs = future.result()
-                    if sc_costs is not None:
-                        least_costs.append(sc_costs)
+                    lcp = future.result()
+                    lcp['start_feature'] = futures[future]
+                    least_cost_paths.append(lcp)
         else:
             logger.info('Computing Least Cost Paths in serial')
             i = 1
-            for _, sc_point in self.sc_points.iterrows():
-                gid = sc_point['sc_point_gid']
-                if gid in sc_point_gids:
-                    sc_features, radius = self._clip_to_sc_point(
-                        sc_point, tie_line_voltage, nn_sinks=nn_sinks,
-                        clipping_buffer=clipping_buffer)
+            for start in self.features.index:
+                start_idx, end_indices = \
+                    self._clip_to_feature(start_feature_id=start)
 
-                    sc_costs = TransCapCosts.run(
-                        self._cost_fpath, sc_point.copy(deep=True),
-                        sc_features, capacity_class,
-                        radius=radius,
-                        xmission_config=self._config,
-                        barrier_mult=barrier_mult,
-                        min_line_length=self._min_line_len)
+                lcp = TieLineCosts.run(self._cost_fpath,
+                                       start_idx, end_indices,
+                                       capacity_class,
+                                       row_slice, col_slice,
+                                       barrier_mult=barrier_mult,
+                                       min_line_length=0.9,
+                                       save_paths=save_paths)
+                lcp['start_feature'] = start
+                least_cost_paths.append(lcp)
 
-                    if sc_costs is not None:
-                        least_costs.append(sc_costs)
+                logger.debug('Least cost path {} of {} complete!'
+                             .format(i, len(self.features)))
+                i += 1
 
-                    logger.debug('SC point {} of {} complete!'
-                                 .format(i, len(sc_point_gids)))
-                    i += 1
+        least_cost_paths = pd.concat(least_cost_paths)
 
-        least_costs = pd.concat(least_costs).sort_values(['sc_point_gid',
-                                                          'trans_gid'])
-
-        return least_costs.reset_index(drop=True)
+        return least_cost_paths.reset_index(drop=True)
 
     @classmethod
-    def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
-            xmission_config=None, sc_point_gids=None, nn_sinks=2,
-            clipping_buffer=1.05, barrier_mult=100, max_workers=None):
+    def run(cls, cost_fpath, features_fpath, capacity_class,
+            xmission_config=None, barrier_mult=100, max_workers=None,
+            save_paths=False):
         """
-        Find Least Cost Tranmission connections between desired sc_points to
-        given tranmission features for desired capacity class
+        Find Least Cost Paths between all pairs of provided features for the
+        given tie-line capacity class
 
         Parameters
         ----------
@@ -312,46 +307,35 @@ class LeastCostPaths:
         capacity_class : str | int
             Capacity class of transmission features to connect supply curve
             points to
-        resolution : int, optional
-            SC point resolution, by default 128
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
-        sc_point_gids : list, optional
-            List of sc_point_gids to connect to, by default None
-        nn_sinks : int, optional
-            Number of nearest neighbor sinks to use for clipping radius
-            calculation, by default 2
-        clipping_buffer : float, optional
-            Buffer to expand clipping radius by, by default 1.05
         barrier_mult : int, optional
             Tranmission barrier multiplier, used when computing the least
             cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
+        save_paths : bool, optional
+            Flag to save least cost path as a multi-line geometry,
+            by default False
 
         Returns
         -------
-        least_costs : pandas.DataFrame
-            Least cost connections between all supply curve points and the
-            transmission features with the given capacity class that are within
-            "nn_sink" nearest infinite sinks
+        least_cost_paths : pandas.DataFrame | gpd.GeoDataFrame
+            DataFrame of lenghts and costs for each path or GeoDataFrame of
+            lenght, cost, and geometry for each path
         """
         ts = time.time()
-        lcx = cls(cost_fpath, features_fpath, resolution=resolution,
-                  xmission_config=xmission_config)
-        least_costs = lcx.process_sc_points(capacity_class,
-                                            sc_point_gids=sc_point_gids,
-                                            nn_sinks=nn_sinks,
-                                            clipping_buffer=clipping_buffer,
-                                            barrier_mult=barrier_mult,
-                                            max_workers=max_workers)
+        lcp = cls(cost_fpath, features_fpath, xmission_config=xmission_config)
+        least_cost_paths = lcp.process_least_cost_paths(
+            capacity_class,
+            barrier_mult=barrier_mult,
+            save_paths=save_paths,
+            max_workers=max_workers)
 
-        logger.info('{} connections were made to {} SC points in {:.4f} '
-                    'minutes'
-                    .format(len(least_costs),
-                            len(least_costs['sc_point_gid'].unique()),
+        logger.info('{} paths were computed in {:.4f} minutes'
+                    .format(len(least_cost_paths),
                             (time.time() - ts) / 60))
 
-        return least_costs
+        return least_cost_paths
