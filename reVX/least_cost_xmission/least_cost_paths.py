@@ -12,6 +12,7 @@ import pandas as pd
 from pyproj.crs import CRS
 import rasterio
 import time
+from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
 from rex.utilities.execution import SpawnProcessPool
@@ -51,7 +52,7 @@ class LeastCostPaths:
         self._features = self._features.drop(columns='geometry')
         self._cost_fpath = cost_fpath
 
-        logger.debug('Data loaded')
+        logger.debug('{} initialized'.format(self))
 
     def __repr__(self):
         msg = ("{} to be computed for "
@@ -93,6 +94,56 @@ class LeastCostPaths:
                 logger.error(msg)
                 raise RuntimeError(msg)
 
+    @staticmethod
+    def _get_feature_cost_indices(features, crs, transform, shape):
+        """
+        Map features to cost row, col indicies using rasterio transform
+
+        Parameters
+        ----------
+        features : gpd.GeoDataFrame
+            GeoDataFrame of features to map to cost raster
+        crs : pyproj.crs.CRS
+            CRS of cost raster
+        transform : raster.Affine
+            Transform of cost raster
+        shape : tuple
+            Cost raster shape
+
+        Returns
+        -------
+        row : ndarray
+            Vector of row indicies for each feature
+        col : ndarray
+            Vector of col indicies for each features
+        mask : ndarray
+            Boolean mask of features with indicies outside of cost raster
+        """
+        feat_crs = features.crs.to_dict()
+        cost_crs = crs.to_dict()
+        bad_crs = ExclusionsConverter._check_crs(cost_crs, feat_crs)
+        if bad_crs:
+            msg = ('input crs ({}) does not match cost raster crs ({})'
+                   ' and will be transformed!'.format(feat_crs, cost_crs))
+            logger.warning(msg)
+            warn(msg)
+            features = features.to_crs(crs)
+
+        logger.debug('Map features to cost raster')
+        coords = features['geometry'].centroid
+        row, col = rasterio.transform.rowcol(transform, coords.x.values,
+                                             coords.y.values)
+        row = np.array(row)
+        col = np.array(col)
+
+        # Remove features outside of the cost domain
+        mask = row >= 0
+        mask &= row < shape[0]
+        mask &= col >= 0
+        mask &= col < shape[1]
+
+        return row, col, mask
+
     @classmethod
     def _map_to_costs(cls, cost_fpath, features):
         """
@@ -114,31 +165,11 @@ class LeastCostPaths:
         """
         with ExclusionLayers(cost_fpath) as f:
             crs = CRS.from_string(f.crs)
-            cost_crs = crs.to_dict()
             transform = rasterio.Affine(*f.profile['transform'])
             shape = f.shape
 
-        feat_crs = features.crs.to_dict()
-        bad_crs = ExclusionsConverter._check_crs(cost_crs, feat_crs)
-        if bad_crs:
-            logger.warning('input crs ({}) does not match cost raster crs ({})'
-                           ' and will be transformed!'
-                           .format(feat_crs, cost_crs))
-            features = features.to_crs(crs)
-
-        logger.debug('Map features to cost raster')
-        coords = features['geometry'].centroid
-        row, col = rasterio.transform.rowcol(transform, coords.x.values,
-                                             coords.y.values)
-        row = np.array(row)
-        col = np.array(col)
-
-        # Remove features outside of the cost domain
-        mask = row >= 0
-        mask &= row < shape[0]
-        mask &= col >= 0
-        mask &= col < shape[1]
-
+        row, col, mask = cls._get_feature_cost_indices(features, crs,
+                                                       transform, shape)
         if any(~mask):
             msg = ("The following features are outside of the cost exclusion "
                    "domain and will be dropped:\n{}"

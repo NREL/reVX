@@ -22,13 +22,13 @@ from rex.utilities.execution import SpawnProcessPool
 
 from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
                                              SINK_CAT, SUBSTATION_CAT)
+from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
-from reVX.utilities.exclusions_converter import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
 
 
-class LeastCostXmission:
+class LeastCostXmission(LeastCostPaths):
     """
     Compute Least Cost tie-line paths and full transmission cap cost
     for all possible connections to all supply curve points
@@ -63,7 +63,7 @@ class LeastCostXmission:
         self._sink_coords = None
         self._min_line_len = (resolution * 0.09) / 2
 
-        logger.debug('Done loaded')
+        logger.debug('{} initialized'.format(self))
 
     def __repr__(self):
         msg = ("{} to be computed for {} sc_points and {} features"
@@ -135,29 +135,6 @@ class LeastCostXmission:
             self._tree = cKDTree(self.sink_coords)
 
         return self._tree
-
-    @classmethod
-    def _check_layers(cls, cost_fpath):
-        """
-        Check to make sure the REQUIRED_LAYERS are in cost_fpath
-
-        Parameters
-        ----------
-        cost_fpath : str
-            Path to h5 file with cost rasters and other required layers
-        """
-        with ExclusionLayers(cost_fpath) as f:
-            missing = []
-            for lyr in cls.REQUIRED_LAYRES:
-                if lyr not in f:
-                    missing.append(lyr)
-
-            if missing:
-                msg = ("The following layers are required to compute Least "
-                       "Cost Transmission but are missing from {}:\n{}"
-                       .format(cost_fpath, missing))
-                logger.error(msg)
-                raise RuntimeError(msg)
 
     @staticmethod
     def _load_trans_feats(features_fpath):
@@ -288,36 +265,16 @@ class LeastCostXmission:
             Series mapping substations  to the transmission lines connected
             to each substation
         """
-
         with ExclusionLayers(cost_fpath) as f:
             crs = CRS.from_string(f.crs)
-            cost_crs = crs.to_dict()
             transform = rasterio.Affine(*f.profile['transform'])
             shape = f.shape
             regions = f['ISO_regions']
 
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
         sub_lines_map = pd.Series(sub_lines_map)
-        feat_crs = features.crs.to_dict()
-        bad_crs = ExclusionsConverter._check_crs(cost_crs, feat_crs)
-        if bad_crs:
-            logger.warning('input crs ({}) does not match cost raster crs ({})'
-                           ' and will be transformed!'
-                           .format(feat_crs, cost_crs))
-            features = features.to_crs(crs)
-
-        logger.debug('Map transmission features to cost raster')
-        coords = features['geometry'].centroid
-        row, col = rasterio.transform.rowcol(transform, coords.x.values,
-                                             coords.y.values)
-        row = np.array(row)
-        col = np.array(col)
-
-        # Remove features outside of the cost domain
-        mask = row >= 0
-        mask &= row < shape[0]
-        mask &= col >= 0
-        mask &= col < shape[1]
+        row, col, mask = cls._get_feature_cost_indices(features, crs,
+                                                       transform, shape)
 
         if any(~mask):
             msg = ("The following features are outside of the cost exclusion "
