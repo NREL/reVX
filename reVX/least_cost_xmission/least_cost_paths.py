@@ -11,7 +11,6 @@ import os
 import pandas as pd
 from pyproj.crs import CRS
 import rasterio
-from scipy.spatial.distance import pdist
 import time
 
 from reV.handlers.exclusions import ExclusionLayers
@@ -153,15 +152,31 @@ class LeastCostPaths:
 
         return features.drop(columns='geometry'), shape
 
-    def _get_radius(self, feature_indices, clipping_buffer=1.05):
-        radius = round(pdist(feature_indices).max() * clipping_buffer)
+    def _get_clip_slice(self, feature_indices):
+        """
+        Clip cost raster to bounds of features
 
-        if radius > max(self._shape):
-            radius = None
+        Parameters
+        ----------
+        feature_indices : ndarray
+            (row, col) indices of features
 
-        return radius
+        Returns
+        -------
+        row_slice : slice
+            Row slice to clip too
+        col_slice : slice
+            Col slice to clip too
+        """
+        row_slice = slice(max(feature_indices[:, 0].min() - 1, 0),
+                          min(feature_indices[:, 0].max() + 1, self.shape[0]))
 
-    def _clip_to_feature(self, start_feature_id, radius=None):
+        col_slice = slice(max(feature_indices[:, 1].min() - 1, 0),
+                          min(feature_indices[:, 1].max() + 1, self.shape[1]))
+
+        return row_slice, col_slice
+
+    def _clip_to_feature(self, start_feature_id):
         """
         Clip costs raster to AOI around starting feature to given radius
 
@@ -169,8 +184,6 @@ class LeastCostPaths:
         ----------
         start_feature_id : int
             Index of start features
-        radius : int, optional
-            Clipping radius, by default None
 
         Returns
         -------
@@ -181,12 +194,12 @@ class LeastCostPaths:
             needed
         """
         start_idx = \
-            self._features.loc[start_feature_id, ['row', 'col']].values[0]
+            self._features.loc[start_feature_id, ['row', 'col']].values
+        if len(start_idx.shape) == 2:
+            start_idx = start_idx[0]
+
         end_indices = \
             self._features.drop(row=start_feature_id)[['row', 'col']].values
-        if radius is not None:
-            end_indices[:, 0] -= max(start_idx[0] - radius, 0)
-            end_indices[:, 1] -= max(start_idx[1] - radius, 0)
 
         return start_idx, end_indices
 
@@ -222,8 +235,9 @@ class LeastCostPaths:
             "nn_sink" nearest infinite sinks
         """
         max_workers = os.cpu_count() if max_workers is None else max_workers
-        radius = self._get_radius(self.features[['row', 'col']].values,
-                                  clipping_buffer=clipping_buffer)
+        row_slice, col_slice = \
+            self._get_clip_slice(self.features[['row', 'col']].values,
+                                 clipping_buffer=clipping_buffer)
 
         least_cost_paths = []
         if max_workers > 1:
@@ -241,7 +255,7 @@ class LeastCostPaths:
                                         self._cost_fpath,
                                         start_idx, end_indices,
                                         capacity_class,
-                                        radius=radius,
+                                        row_slice, col_slice,
                                         min_line_length=0.9)
                     futures[future] = start
 

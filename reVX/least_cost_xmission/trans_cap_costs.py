@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 import rasterio
 from shapely.geometry import Polygon
+from shapely.geometry.linestring import LineString
 from shapely.ops import nearest_points
 from skimage.graph import MCP_Geometric
 import time
@@ -30,8 +31,8 @@ class TieLineCosts:
     Compute Least Cost Tie-line cost from start location to desired end
     locations
     """
-    def __init__(self, cost_fpath, start_idx, capacity_class, radius=None,
-                 xmission_config=None, barrier_mult=100):
+    def __init__(self, cost_fpath, start_idx, capacity_class, row_slice,
+                 col_slice, xmission_config=None, barrier_mult=100):
         """
         Parameters
         ----------
@@ -52,11 +53,9 @@ class TieLineCosts:
         self._cost_fpath = cost_fpath
         self._config = self._parse_config(xmission_config=xmission_config)
         self._start_idx = start_idx
+        self._row_slice = row_slice
+        self._col_slice = col_slice
         self._capacity_class = self._config._parse_cap_class(capacity_class)
-
-        row, col = start_idx
-        row_slice, col_slice, self.shape = self._get_clipping_slices(
-            cost_fpath, row, col, radius=radius)
 
         line_cap = self._config['power_classes'][self.capacity_class]
         cost_layer = 'tie_line_costs_{}MW'.format(line_cap)
@@ -64,26 +63,17 @@ class TieLineCosts:
             cost_fpath, cost_layer, row_slice, col_slice,
             barrier_mult=barrier_mult)
 
-        self._row_slice = row_slice
-        self._col_slice = col_slice
         self._mcp = None
 
+        with ExclusionLayers(self._cost_fpath) as f:
+            self.transform = rasterio.Affine(*f.profile['transform'])
+            self.shape = f.shape
+
     def __repr__(self):
-        msg = "{} for SC point {}".format(self.__class__.__name__,
-                                          self.start_idx)
+        msg = "{} starting at {}".format(self.__class__.__name__,
+                                         self._start_idx)
 
         return msg
-
-    @property
-    def start_idx(self):
-        """
-        Start index in full exclusion domain
-
-        Returns
-        -------
-        tuple
-        """
-        return self._start_idx
 
     @property
     def row_offset(self):
@@ -124,7 +114,7 @@ class TieLineCosts:
         -------
         int
         """
-        return self.start_idx[0] - self.row_offset
+        return self._start_idx[0]
 
     @property
     def col(self):
@@ -135,7 +125,7 @@ class TieLineCosts:
         -------
         int
         """
-        return self.start_idx[1] - self.col_offset
+        return self._start_idx[1]
 
     @property
     def cost(self):
@@ -193,17 +183,6 @@ class TieLineCosts:
         """
         return self._capacity_class
 
-    @property
-    def tie_line_voltage(self):
-        """
-        Tie line voltage in kV
-
-        Returns
-        -------
-        int
-        """
-        return self._config.capacity_to_kv(self.capacity_class)
-
     @staticmethod
     def _parse_config(xmission_config=None):
         """
@@ -223,47 +202,6 @@ class TieLineCosts:
             xmission_config = XmissionConfig(config=xmission_config)
 
         return xmission_config
-
-    @staticmethod
-    def _get_clipping_slices(cost_fpath, row, col, radius=None):
-        """
-        Get array slices for clipped area around SC point (row, col) index
-
-        Parameters
-        ----------
-        cost_fpath : str
-            Full path of .h5 file with cost arrays
-        row : int
-            SC point row index
-        col : int
-            SC point column index
-        radius : int, optional
-            Radius around sc_point to clip cost to, by default None
-
-        Returns
-        -------
-        row_slice : slice
-            Row start, stop indices for clipped cost array
-        col_slice : slice
-            Column start, stop indices for clipped cost array
-        shape : tuple
-            Shape of clipped cost raster
-        """
-        with ExclusionLayers(cost_fpath) as f:
-            shape = f.shape
-
-        if radius is not None:
-            row_min = max(row - radius, 0)
-            row_max = min(row + radius, shape[0])
-            col_min = max(col - radius, 0)
-            col_max = min(col + radius, shape[1])
-
-            shape = (row_max - row_min, col_max - col_min)
-        else:
-            row_min, row_max = None, None
-            col_min, col_max = None, None
-
-        return slice(row_min, row_max), slice(col_min, col_max), shape
 
     @staticmethod
     def _clip_costs(cost_fpath, cost_layer, row_slice, col_slice,
@@ -318,6 +256,8 @@ class TieLineCosts:
             Length of path (km)
         cost : float
             Cost of path including terrain and land use multipliers
+        path : shapely.geometry.linestring, optional
+            Path as a LineString
         """
         row, col = end_idx
 
@@ -369,7 +309,17 @@ class TieLineCosts:
         # Multiple distance travel through cell by cost and sum it!
         cost = np.sum(cell_costs * lens)
 
-        return length, cost
+        if save_path:
+            row = indices[:, 0] + self.row_offset
+            col = indices[:, 1] + self.col_offset
+            x, y = rasterio.transform.xy(self.transform, row, col)
+            path = LineString(list(zip(x, y)))
+
+            out = length, cost, path
+        else:
+            out = length, cost
+
+        return out
 
     def compute(self, end_indices, save_paths=False):
         """
@@ -407,6 +357,7 @@ class TieLineCosts:
         if save_paths:
             with ExclusionLayers(self._cost_fpath) as f:
                 crs = f.crs
+
             tie_lines = gpd.GeoDataFrame(tie_lines, geometry=paths, crs=crs)
 
         return tie_lines
@@ -485,13 +436,15 @@ class TransCapCosts(TieLineCosts):
             Multiplier on transmission barrier costs, by default 100
         """
         self._sc_point = sc_point
-        super().__init__(cost_fpath, sc_point[['row', 'col']].values,
-                         capacity_class, radius=radius,
-                         xmission_config=xmission_config,
+        start_idx, row_slice, col_slice, self.shape = \
+            self._get_clipping_slices(cost_fpath,
+                                      sc_point[['row', 'col']].values,
+                                      radius=radius)
+        super().__init__(cost_fpath, start_idx, capacity_class, row_slice,
+                         col_slice, xmission_config=xmission_config,
                          barrier_mult=barrier_mult)
         self._features = self._prep_features(features)
         self._clip_mask = None
-        self._transform = None
 
     @property
     def sc_point(self):
@@ -540,9 +493,6 @@ class TransCapCosts(TieLineCosts):
         shapely.Polygon
         """
         if self._clip_mask is None:
-            with ExclusionLayers(self._cost_fpath) as f:
-                self._transform = rasterio.Affine(*f.profile['transform'])
-
             # pylint: disable=using-constant-test
             row_bounds = [self._row_slice.start
                           if self._row_slice.start else 0,
@@ -552,7 +502,7 @@ class TransCapCosts(TieLineCosts):
                           if self._col_slice.start else 0,
                           self._col_slice.stop - 1
                           if self._col_slice.stop else self.shape[1] - 1]
-            x, y = rasterio.transform.xy(self._transform, row_bounds,
+            x, y = rasterio.transform.xy(self.transform, row_bounds,
                                          col_bounds)
             self._clip_mask = Polygon([[x[0], y[0]],
                                        [x[1], y[0]],
@@ -563,19 +513,64 @@ class TransCapCosts(TieLineCosts):
         return self._clip_mask
 
     @property
-    def transform(self):
+    def tie_line_voltage(self):
         """
-        Exclusions transform, needed to go from lat, lon to row, col and back
+        Tie line voltage in kV
 
         Returns
         -------
-        rasterio.Affine
+        int
         """
-        if self._transform is None:
-            with ExclusionLayers(self._cost_fpath) as f:
-                self._transform = rasterio.Affine(*f.profile['transform'])
+        return self._config.capacity_to_kv(self.capacity_class)
 
-        return self._transform
+    @staticmethod
+    def _get_clipping_slices(cost_fpath, sc_point_idx, radius=None):
+        """
+        Get array slices for clipped area around SC point (row, col) index
+
+        Parameters
+        ----------
+        cost_fpath : str
+            Full path of .h5 file with cost arrays
+        row : int
+            SC point row index
+        col : int
+            SC point column index
+        radius : int, optional
+            Radius around sc_point to clip cost to, by default None
+
+        Returns
+        -------
+        start_idx : tuple
+            Start index in clipped raster space
+        row_slice : slice
+            Row start, stop indices for clipped cost array
+        col_slice : slice
+            Column start, stop indices for clipped cost array
+        shape : tuple
+            Shape of clipped cost raster
+        """
+        with ExclusionLayers(cost_fpath) as f:
+            shape = f.shape
+
+        if radius is not None:
+            row, col = sc_point_idx
+            row_min = max(row - radius, 0)
+            row_max = min(row + radius, shape[0])
+            col_min = max(col - radius, 0)
+            col_max = min(col + radius, shape[1])
+
+            shape = (row_max - row_min, col_max - col_min)
+            start_idx = (row - row_min, col - col_min)
+        else:
+            start_idx = sc_point_idx
+            row_min, row_max = None, None
+            col_min, col_max = None, None
+
+        row_slice = slice(row_min, row_max)
+        col_slice = slice(col_min, col_max),
+
+        return start_idx, row_slice, col_slice, shape
 
     def _prep_features(self, features):
         """
