@@ -109,7 +109,7 @@ def from_config(ctx, config, verbose):
               help=("Path to exclusion .h5 file containing NLCD and "
                     "slope layers, if None use h5_fpath if None assume "
                     "NLCD and slope layers are in self._excl_h5"))
-@click.option('--cost_configs', '-ccfg', type=click.Path(exists=True),
+@click.option('--cost_configs', '-ccfg', type=STR,
               show_default=True, default=None,
               help=("JSON file with cost configs"))
 @click.option('--slope_layer', '-slope', type=str, show_default=True,
@@ -118,14 +118,14 @@ def from_config(ctx, config, verbose):
 @click.option('--nlcd_layer', '-nlcd', type=str, show_default=True,
               default="usa_mrlc_nlcd2011",
               help=("Name of NLCD (land use) layer in excl_h5"))
-@click.option('--default_mults', '-dm', type=click.Path(exists=True),
+@click.option('--default_mults', '-dm', type=STR,
               show_default=True, default=None,
               help=("JSON of Multipliers for regions not specified in "
                     "iso_mults_fpath"))
-@click.option('--tiff_dir', '-tiff', type=click.Path(exists=True),
+@click.option('--tiff_dir', '-tiff', type=STR,
               show_default=True, default=None,
               help=("Path to save costs and intermediary rasters as geotiffs"))
-@click.option('--extra_layers', '-lyrs', type=click.Path(exists=True),
+@click.option('--extra_layers', '-lyrs', type=STR,
               show_default=True, default=None,
               help=("JSON with Extra layers to add to h5 file, for example "
                     "dist_to_coast"))
