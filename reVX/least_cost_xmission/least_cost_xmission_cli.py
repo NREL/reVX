@@ -113,7 +113,7 @@ def from_config(ctx, config, verbose):
 @click.option('--resolution', '-res', type=int,
               show_default=True, default=128,
               help=("SC point resolution"))
-@click.option('--xmission_config', '-xcfg', type=str, show_default=True,
+@click.option('--xmission_config', '-xcfg', type=STR, show_default=True,
               default=None,
               help=("Path to Xmission config .json"))
 @click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
