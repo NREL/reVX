@@ -475,6 +475,9 @@ class LeastCostXmission(LeastCostPaths):
 
         least_costs = pd.concat(least_costs).sort_values(['sc_point_gid',
                                                           'trans_gid'])
+        lcp_frac = len(least_costs) / len(sc_point_gids) * 100
+        logger.info('{:.4f}% of requested sc point gids were succesfully '
+                    'mapped to transmission features'.format(lcp_frac))
 
         return least_costs.reset_index(drop=True)
 

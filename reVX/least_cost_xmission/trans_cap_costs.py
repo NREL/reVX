@@ -165,7 +165,6 @@ class TieLineCosts:
             if check < 0:
                 msg = ("Start idx {} does not have a valid cost!"
                        .format((self.row, self.col)))
-                logger.error(msg)
                 raise InvalidMCPStartValueError(msg)
 
             self._mcp = MCP_Geometric(self.mcp_cost)
@@ -306,7 +305,6 @@ class TieLineCosts:
         if check < 0:
             msg = ("End idx {} does not have a valid cost!"
                    .format(end_idx))
-            logger.error(msg)
             raise LeastCostPathNotFoundError(msg)
 
         try:
@@ -314,7 +312,6 @@ class TieLineCosts:
         except ValueError as ex:
             msg = ('Unable to find path from start {} to {}: {}'
                    .format((self.row, self.col), end_idx, ex))
-            logger.error(msg)
             raise LeastCostPathNotFoundError(msg) from ex
 
         # Use Pythagorean theorem to calculate lengths between cells (km)
@@ -736,8 +733,7 @@ class TransCapCosts(TieLineCosts):
                        "{}: {}"
                        .format(self.sc_point_gid,
                                feat['trans_gid'], ex))
-                logger.warning(msg)
-                warn(msg)
+                logger.debug(msg)
             except Exception:
                 logger.exception('Could not connect SC point {} to '
                                  'transmission features!'
