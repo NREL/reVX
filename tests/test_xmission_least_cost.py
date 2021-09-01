@@ -180,7 +180,6 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
-            "dirout": td,
             "sc_point_gids": sc_point_gids.tolist()
         }
         config_path = os.path.join(td, 'config.json')

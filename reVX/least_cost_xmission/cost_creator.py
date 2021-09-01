@@ -381,7 +381,7 @@ class XmissionCostCreator(ExclusionsConverter):
             land_use_classes=xc['land_use_classes'],
             default_mults=default_mults)
 
-        xcc.save_layer('tie_line_mutlipliers', mults_arr)
+        xcc.save_layer('tie_line_multipliers', mults_arr)
 
         if save_geotiff:
             tiff_path = os.path.join(tiff_dir, 'multipliers.tif')
