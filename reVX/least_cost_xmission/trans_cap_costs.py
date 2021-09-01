@@ -971,8 +971,7 @@ class TransCapCosts(TieLineCosts):
             features = None
             msg = ('Could not connect SC point {} to tranmission features: {}'
                    .format(sc_point['sc_point_gid'], ex))
-            logger.warning(msg)
-            warn(msg)
+            logger.debug(msg)
         except Exception as ex:
             msg = ('Failed to connect SC point {} to tranmission features: {}'
                    .format(sc_point['sc_point_gid'], ex))
