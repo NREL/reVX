@@ -734,6 +734,11 @@ class TransCapCosts(TieLineCosts):
                        .format(self.sc_point_gid,
                                feat['trans_gid'], ex))
                 logger.debug(msg)
+            except InvalidMCPStartValueError as ex:
+                msg = ("Could not connect SC point {} to transmission features"
+                       " {}"
+                       .format(self.sc_point_gid, ex))
+                logger.debug(msg)
             except Exception:
                 logger.exception('Could not connect SC point {} to '
                                  'transmission features!'
