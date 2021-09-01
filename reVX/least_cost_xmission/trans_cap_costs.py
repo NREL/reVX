@@ -318,15 +318,13 @@ class TieLineCosts:
             raise LeastCostPathNotFoundError(msg) from ex
 
         # Use Pythagorean theorem to calculate lengths between cells (km)
-        lengths = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
-        length = np.sum(lengths) * 90 / 1000
+        # Use c**2 = a**2 + b**2 to determine length of individual paths
+        lens = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
+        length = np.sum(lens) * 90 / 1000
 
         # Extract costs of cells
         # pylint: disable=unsubscriptable-object
         cell_costs = self.cost[indices[:, 0], indices[:, 1]]
-
-        # Use c**2 = a**2 + b**2 to determine length of individual paths
-        lens = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
 
         # Need to determine distance coming into and out of any cell. Assume
         # paths start and end at the center of a cell. Therefore, distance

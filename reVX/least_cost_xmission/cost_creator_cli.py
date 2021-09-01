@@ -104,7 +104,7 @@ def from_config(ctx, config, verbose):
 @click.option('--iso_regions', '-iso', required=True,
               type=click.Path(exists=True),
               help="File with raster of ISO regions.")
-@click.option('--excl_h5', '-excl', type=click.Path(exists=True),
+@click.option('--excl_h5', '-excl', type=STR,
               show_default=True, default=None,
               help=("Path to exclusion .h5 file containing NLCD and "
                     "slope layers, if None use h5_fpath if None assume "
