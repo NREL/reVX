@@ -364,16 +364,17 @@ class LeastCostXmission(LeastCostPaths):
         # Find t-lines connected to substations within clip
         logger.debug('Collecting transmission lines connected to substations')
         mask = sc_features['category'] == SUBSTATION_CAT
-        trans_gids = sc_features.loc[mask, 'trans_gid'].values
-        trans_gids = \
-            np.concatenate(self._sub_lines_mapping.loc[trans_gids].values)
-        trans_gids = np.unique(trans_gids)
-        mask = self.features['trans_gid'].isin(trans_gids)
-        trans_lines = self.features.loc[mask].copy(deep=True)
-        logger.debug('Adding all {} transmission lines connected to '
-                     'substations with minimum max voltage of {}'
-                     .format(len(trans_lines), tie_line_voltage))
-        sc_features = sc_features.append(trans_lines)
+        if mask.any():
+            trans_gids = sc_features.loc[mask, 'trans_gid'].values
+            trans_gids = \
+                np.concatenate(self._sub_lines_mapping.loc[trans_gids].values)
+            trans_gids = np.unique(trans_gids)
+            mask = self.features['trans_gid'].isin(trans_gids)
+            trans_lines = self.features.loc[mask].copy(deep=True)
+            logger.debug('Adding all {} transmission lines connected to '
+                         'substations with minimum max voltage of {}'
+                         .format(len(trans_lines), tie_line_voltage))
+            sc_features = sc_features.append(trans_lines)
 
         return sc_features, radius
 
