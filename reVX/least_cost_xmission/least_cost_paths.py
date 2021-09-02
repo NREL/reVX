@@ -47,8 +47,8 @@ class LeastCostPaths:
         self._config = TieLineCosts._parse_config(
             xmission_config=xmission_config)
 
-        self._features, self._shape = self._map_to_costs(
-            cost_fpath, gpd.read_file(features_fpath))
+        self._features, self._row_slice, self._col_slice, self._shape = \
+            self._map_to_costs(cost_fpath, gpd.read_file(features_fpath))
         self._features = self._features.drop(columns='geometry')
         self._cost_fpath = cost_fpath
 
@@ -144,6 +144,32 @@ class LeastCostPaths:
 
         return row, col, mask
 
+    @staticmethod
+    def _get_clip_slice(row, col, shape):
+        """
+        Clip cost raster to bounds of features
+
+        Parameters
+        ----------
+        row : ndarray
+            Vector of row indicies
+        col : ndarray
+            Vector of col indicies
+        shape : tuple
+            Full cost array shape
+
+        Returns
+        -------
+        row_slice : slice
+            Row slice to clip too
+        col_slice : slice
+            Col slice to clip too
+        """
+        row_slice = slice(max(row.min() - 1, 0), min(row.max() + 1, shape[0]))
+        col_slice = slice(max(col.min() - 1, 0), min(col.max() + 1, shape[1]))
+
+        return row_slice, col_slice
+
     @classmethod
     def _map_to_costs(cls, cost_fpath, features):
         """
@@ -160,6 +186,10 @@ class LeastCostPaths:
         -------
         features : gpd.GeoDataFrame
             Table of features to compute LeastCostPaths for
+        row_slice : slice
+            Clipping slice along axis-0 (rows)
+        col_slice : slice
+            Clipping slice along axis-1 (cols)
         shape : tuple
             Full cost raster shape
         """
@@ -179,36 +209,12 @@ class LeastCostPaths:
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)
 
-        features['row'] = row
-        features['col'] = col
+        row_slice, col_slice = cls._get_clip_slice(row, col, shape)
 
-        return features, shape
+        features['row'] = row - row_slice.start
+        features['col'] = col - col_slice.start
 
-    def _get_clip_slice(self, feature_indices):
-        """
-        Clip cost raster to bounds of features
-
-        Parameters
-        ----------
-        feature_indices : ndarray
-            (row, col) indices of features
-
-        Returns
-        -------
-        row_slice : slice
-            Row slice to clip too
-        col_slice : slice
-            Col slice to clip too
-        """
-        row_slice = slice(max(feature_indices[:, 0].min() - 1, 0),
-                          min(feature_indices[:, 0].max() + 1,
-                              self._shape[0]))
-
-        col_slice = slice(max(feature_indices[:, 1].min() - 1, 0),
-                          min(feature_indices[:, 1].max() + 1,
-                              self._shape[1]))
-
-        return row_slice, col_slice
+        return features, row_slice, col_slice, shape
 
     def _clip_to_feature(self, start_feature_id):
         """
@@ -223,19 +229,17 @@ class LeastCostPaths:
         -------
         start_idx : ndarray
             (row, col) indicies of start feature
-        end_indices : ndarray
-            Array of (row, col) end indices, shifted to clipped cost array if
-            needed
+        end_features : pandas.DataFrame
+            DataFrame of all end features
         """
         start_idx = \
             self._features.loc[start_feature_id, ['row', 'col']].values
         if len(start_idx.shape) == 2:
             start_idx = start_idx[0]
 
-        end_indices = \
-            self._features.drop(row=start_feature_id)[['row', 'col']].values
+        end_features = self._features.drop(index=start_feature_id)
 
-        return start_idx, end_indices
+        return start_idx, end_features.reset_index(drop=False)
 
     def process_least_cost_paths(self, capacity_class, barrier_mult=100,
                                  max_workers=None, save_paths=False,):
@@ -265,8 +269,6 @@ class LeastCostPaths:
             lenght, cost, and geometry for each path
         """
         max_workers = os.cpu_count() if max_workers is None else max_workers
-        row_slice, col_slice = \
-            self._get_clip_slice(self.features[['row', 'col']].values)
 
         least_cost_paths = []
         if max_workers > 1:
@@ -277,49 +279,53 @@ class LeastCostPaths:
                                   loggers=loggers) as exe:
                 futures = {}
                 for start in self.features.index:
-                    start_idx, end_indices = \
+                    start_idx, end_features = \
                         self._clip_to_feature(start_feature_id=start)
+                    end_indices = end_features[['row', 'col']].values
+                    end_features['start_index'] = start
 
                     future = exe.submit(TieLineCosts.run,
                                         self._cost_fpath,
                                         start_idx, end_indices,
                                         capacity_class,
-                                        row_slice, col_slice,
+                                        self._row_slice, self._col_slice,
                                         barrier_mult=barrier_mult,
-                                        min_line_length=0.9,
                                         save_paths=save_paths)
-                    futures[future] = start
+                    futures[future] = end_features
 
                 for i, future in enumerate(as_completed(futures)):
                     logger.debug('Least cost path {} of {} complete!'
                                  .format(i + 1, len(futures)))
+                    end_features = futures[future]
                     lcp = future.result()
-                    lcp['start_feature'] = futures[future]
+                    lcp = pd.concat((end_features, lcp), axis=1)
                     least_cost_paths.append(lcp)
         else:
             logger.info('Computing Least Cost Paths in serial')
             i = 1
             for start in self.features.index:
-                start_idx, end_indices = \
+                start_idx, end_features = \
                     self._clip_to_feature(start_feature_id=start)
+                end_indices = end_features[['row', 'col']].values
+                end_features = end_features.drop(columns=['row', 'col'])
+                end_features['start_index'] = start
 
                 lcp = TieLineCosts.run(self._cost_fpath,
                                        start_idx, end_indices,
                                        capacity_class,
-                                       row_slice, col_slice,
+                                       self._row_slice, self._col_slice,
                                        barrier_mult=barrier_mult,
-                                       min_line_length=0.9,
                                        save_paths=save_paths)
-                lcp['start_feature'] = start
+                lcp = pd.concat((end_features, lcp), axis=1)
                 least_cost_paths.append(lcp)
 
                 logger.debug('Least cost path {} of {} complete!'
                              .format(i, len(self.features)))
                 i += 1
 
-        least_cost_paths = pd.concat(least_cost_paths)
+        least_cost_paths = pd.concat(least_cost_paths, ignore_index=True)
 
-        return least_cost_paths.reset_index(drop=True)
+        return least_cost_paths
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class,
