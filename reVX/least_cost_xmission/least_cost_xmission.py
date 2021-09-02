@@ -55,7 +55,8 @@ class LeastCostXmission(LeastCostPaths):
         self._config = TransCapCosts._parse_config(
             xmission_config=xmission_config)
 
-        self._sc_points, self._features, self._sub_lines_mapping =\
+        (self._sc_points, self._features,
+         self._sub_lines_mapping, self._shape) =\
             self._map_to_costs(cost_fpath, features_fpath,
                                resolution=resolution)
         self._cost_fpath = cost_fpath
@@ -299,7 +300,7 @@ class LeastCostXmission(LeastCostPaths):
         sc_points = gpd.GeoDataFrame(sc_points, crs=features.crs,
                                      geometry=geo)
 
-        return sc_points, features, sub_lines_map
+        return sc_points, features, sub_lines_map, shape
 
     def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
                           clipping_buffer=1.05):
@@ -334,9 +335,9 @@ class LeastCostXmission(LeastCostPaths):
             logger.debug('Radius to {} nearest sink is: {}'
                          .format(nn_sinks, radius))
             row_min = max(row - radius, 0)
-            row_max = row + radius
+            row_max = min(row + radius, self._shape[0])
             col_min = max(col - radius, 0)
-            col_max = col + radius
+            col_max = min(col + radius, self._shape[1])
             logger.debug('Extracting all transmission features in the row '
                          'slice {}:{} and column slice {}:{}'
                          .format(row_min, row_max, col_min, col_max))

@@ -648,7 +648,7 @@ class TransCapCosts(TieLineCosts):
 
         Returns
         -------
-        trans_line_idx: list
+        [row, col] : list
             Row, col index of the nearest point on the transmission line to
             the supply curve point, used for least cost path
         """
@@ -667,18 +667,16 @@ class TransCapCosts(TieLineCosts):
 
         row -= self.row_offset
         col -= self.col_offset
-        trans_line_idx = [row, col]
         if not clip:
             clip = (row < 0 or row >= self.clip_shape[0]
                     or col < 0 or col >= self.clip_shape[1])
             if clip:
-                trans_line_idx = self._get_trans_line_idx(trans_line,
-                                                          clip=clip)
+                row, col = self._get_trans_line_idx(trans_line, clip=clip)
         else:
             row = min(max(row, 0), self.clip_shape[0] - 1)
             col = min(max(col, 0), self.clip_shape[1] - 1)
 
-        return trans_line_idx
+        return [row, col]
 
     def compute_tie_line_costs(self, min_line_length=5.7):
         """
@@ -710,6 +708,7 @@ class TransCapCosts(TieLineCosts):
             else:
                 t_line = False
                 feat_idx = feat[['row', 'col']].values
+
             try:
                 # pylint: disable=unbalanced-tuple-unpacking
                 length, cost = self.least_cost_path(feat_idx)
