@@ -3,6 +3,7 @@ Command Line Interphases (CLIs)
 
 .. toctree::
 
+   least-cost-xmission
    mean-wind-dirs
    offshore-assembly-areas
    offshore-dist-to-ports
@@ -15,3 +16,4 @@ Command Line Interphases (CLIs)
    simple-plant-builder
    turbine-flicker
    wind-setbacks
+   xmission-cost-creator
