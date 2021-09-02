@@ -19,6 +19,7 @@ import time
 from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.points import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
+from rex.utilities.loggers import log_mem
 
 from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
                                              SINK_CAT, SUBSTATION_CAT)
@@ -445,6 +446,7 @@ class LeastCostXmission(LeastCostPaths):
                 for i, future in enumerate(as_completed(futures)):
                     logger.debug('SC point {} of {} complete!'
                                  .format(i + 1, len(futures)))
+                    log_mem(logger)
                     sc_costs = future.result()
                     if sc_costs is not None:
                         least_costs.append(sc_costs)
