@@ -655,9 +655,11 @@ class TransCapCosts(TieLineCosts):
         if clip:
             logger.debug("Clipping transmission line {} to raster domain"
                          .format(trans_line['trans_gid']))
-            trans_line = gpd.clip(gpd.GeoSeries({'geometry':
-                                                trans_line['geometry']}),
-                                  self.clip_mask)
+            clipped_trans_line = {'geometry': trans_line['geometry']}
+            clipped_trans_line = gpd.clip(gpd.GeoSeries(clipped_trans_line),
+                                          self.clip_mask)
+            if clipped_trans_line.size:
+                trans_line = clipped_trans_line
 
         point, _ = nearest_points(trans_line['geometry'],
                                   self.sc_point['geometry'])
@@ -666,10 +668,15 @@ class TransCapCosts(TieLineCosts):
         row -= self.row_offset
         col -= self.col_offset
         trans_line_idx = [row, col]
-        clip = (row < 0 or row >= self.clip_shape[0]
-                or col < 0 or col >= self.clip_shape[1])
-        if clip:
-            trans_line_idx = self._get_trans_line_idx(trans_line, clip=clip)
+        if not clip:
+            clip = (row < 0 or row >= self.clip_shape[0]
+                    or col < 0 or col >= self.clip_shape[1])
+            if clip:
+                trans_line_idx = self._get_trans_line_idx(trans_line,
+                                                          clip=clip)
+        else:
+            row = min(max(row, 0), self.clip_shape[0] - 1)
+            col = min(max(col, 0), self.clip_shape[1] - 1)
 
         return trans_line_idx
 

@@ -180,14 +180,14 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
-            "sc_point_gids": sc_point_gids.tolist()
+            "sc_point_gids": sc_point_gids.tolist(),
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
         result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+                                      '-c', config_path, '-v'])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
