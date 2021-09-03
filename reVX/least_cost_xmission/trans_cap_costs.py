@@ -456,8 +456,8 @@ class TieLineCosts:
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
 
-        logger.debug('Least Cost tie-line computed in {:.4f}s'
-                     .format(time.time() - ts))
+        logger.debug('Least Cost tie-line computed in {:.4f} min'
+                     .format((time.time() - ts) / 60))
 
         return tie_lines
 
