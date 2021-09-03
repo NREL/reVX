@@ -270,6 +270,44 @@ class TieLineCosts:
 
         return cost, mcp_cost
 
+    @staticmethod
+    def _compute_path_length(indices):
+        """
+        Compute the total length and cell by cell length of the lease cost path
+        defined by 'indices'
+
+        Parameters
+        ----------
+        indices : ndarray
+            n x 2 array of MCP traceback of least cost path
+
+        Returns
+        -------
+        length : float
+            Total length of path in km
+        lens : ndarray
+            Vector of the distance of the least cost path accross each cell
+        """
+        # Use Pythagorean theorem to calculate lengths between cells (km)
+        # Use c**2 = a**2 + b**2 to determine length of individual paths
+        lens = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
+        length = np.sum(lens) * 90 / 1000
+
+        # Need to determine distance coming into and out of any cell. Assume
+        # paths start and end at the center of a cell. Therefore, distance
+        # traveled in the cell is half the distance entering it and half the
+        # distance exiting it. Duplicate all lengths, pad 0s on ends for start
+        # and end cells, and divide all distance by half.
+        lens = np.repeat(lens, 2)
+        lens = np.insert(np.append(lens, 0), 0, 0)
+        lens = lens / 2
+
+        # Group entrance and exits distance together, and add them
+        lens = lens.reshape((int(lens.shape[0] / 2), 2))
+        lens = np.sum(lens, axis=1)
+
+        return length, lens
+
     def least_cost_path(self, end_idx, save_path=False):
         """
         Find least cost path, its length, and its total un-barriered cost
@@ -314,27 +352,11 @@ class TieLineCosts:
                    .format((self.row, self.col), end_idx, ex))
             raise LeastCostPathNotFoundError(msg) from ex
 
-        # Use Pythagorean theorem to calculate lengths between cells (km)
-        # Use c**2 = a**2 + b**2 to determine length of individual paths
-        lens = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
-        length = np.sum(lens) * 90 / 1000
-
         # Extract costs of cells
         # pylint: disable=unsubscriptable-object
         cell_costs = self.cost[indices[:, 0], indices[:, 1]]
 
-        # Need to determine distance coming into and out of any cell. Assume
-        # paths start and end at the center of a cell. Therefore, distance
-        # traveled in the cell is half the distance entering it and half the
-        # distance exiting it. Duplicate all lengths, pad 0s on ends for start
-        # and end cells, and divide all distance by half.
-        lens = np.repeat(lens, 2)
-        lens = np.insert(np.append(lens, 0), 0, 0)
-        lens = lens / 2
-
-        # Group entrance and exits distance together, and add them
-        lens = lens.reshape((int(lens.shape[0] / 2), 2))
-        lens = np.sum(lens, axis=1)
+        length, lens = self._compute_path_length(indices)
 
         # Multiple distance travel through cell by cost and sum it!
         cost = np.sum(cell_costs * lens)
@@ -624,7 +646,6 @@ class TransCapCosts(TieLineCosts):
             config = XmissionConfig(config=config)
 
         mask = features['category'] == SUBSTATION_CAT
-
         mask &= features['max_volts'] < tie_line_voltage
         if np.any(mask):
             msg = ('Voltages for substations {} do not exceed tie-line '
@@ -893,6 +914,8 @@ class TransCapCosts(TieLineCosts):
         if features is None:
             features = self.features.copy()
 
+        features = features.reset_index(drop=True)
+
         # Length multiplier
         features['length_mult'] = 1.0
         # Short cutoff
@@ -963,7 +986,7 @@ class TransCapCosts(TieLineCosts):
                                       + features['connection_cost'])
 
         features = features.drop(columns=['row', 'col', 'geometry'],
-                                 errors='ignore')
+                                 errors='ignore').reset_index(drop=True)
         features['row_ind'] = self.sc_point['row_ind']
         features['col_ind'] = self.sc_point['col_ind']
         features['sc_point_gid'] = self.sc_point_gid
