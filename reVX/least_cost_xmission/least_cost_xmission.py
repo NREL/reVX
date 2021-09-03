@@ -444,12 +444,13 @@ class LeastCostXmission(LeastCostPaths):
                         futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
-                    logger.debug('SC point {} of {} complete!'
-                                 .format(i + 1, len(futures)))
-                    log_mem(logger)
                     sc_costs = future.result()
                     if sc_costs is not None:
                         least_costs.append(sc_costs)
+
+                    logger.debug('SC point {} of {} complete!'
+                                 .format(i + 1, len(futures)))
+                    log_mem(logger)
 
         else:
             logger.info('Computing Least Cost Transmission for SC points in '
@@ -475,6 +476,7 @@ class LeastCostXmission(LeastCostPaths):
 
                     logger.debug('SC point {} of {} complete!'
                                  .format(i, len(sc_point_gids)))
+                    log_mem(logger)
                     i += 1
 
         least_costs = pd.concat(least_costs).sort_values(['sc_point_gid',

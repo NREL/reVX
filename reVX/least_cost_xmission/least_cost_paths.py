@@ -16,6 +16,7 @@ from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
 from rex.utilities.execution import SpawnProcessPool
+from rex.utilities.loggers import log_mem
 
 from reVX.least_cost_xmission.trans_cap_costs import TieLineCosts
 from reVX.utilities.exclusions_converter import ExclusionsConverter
@@ -294,12 +295,13 @@ class LeastCostPaths:
                     futures[future] = end_features
 
                 for i, future in enumerate(as_completed(futures)):
-                    logger.debug('Least cost path {} of {} complete!'
-                                 .format(i + 1, len(futures)))
                     end_features = futures[future]
                     lcp = future.result()
                     lcp = pd.concat((end_features, lcp), axis=1)
                     least_cost_paths.append(lcp)
+                    logger.debug('Least cost path {} of {} complete!'
+                                 .format(i + 1, len(futures)))
+                    log_mem(logger)
         else:
             logger.info('Computing Least Cost Paths in serial')
             i = 1
@@ -321,6 +323,7 @@ class LeastCostPaths:
 
                 logger.debug('Least cost path {} of {} complete!'
                              .format(i, len(self.features)))
+                log_mem(logger)
                 i += 1
 
         least_cost_paths = pd.concat(least_cost_paths, ignore_index=True)
