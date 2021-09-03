@@ -275,6 +275,7 @@ class LeastCostPaths:
         if max_workers > 1:
             logger.info('Computing Least Cost Paths in parallel on {} workers'
                         .format(max_workers))
+            log_mem(logger)
             loggers = [__name__, 'reV', 'reVX']
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
@@ -304,6 +305,7 @@ class LeastCostPaths:
                     log_mem(logger)
         else:
             logger.info('Computing Least Cost Paths in serial')
+            log_mem(logger)
             i = 1
             for start in self.features.index:
                 start_idx, end_features = \
