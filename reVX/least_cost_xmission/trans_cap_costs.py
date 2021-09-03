@@ -600,6 +600,136 @@ class TransCapCosts(TieLineCosts):
 
         return start_idx, row_slice, col_slice
 
+    @staticmethod
+    def _calc_xformer_cost(features, tie_line_voltage, config=None):
+        """
+        Compute transformer costs in $/MW for needed features, all others will
+        be 0
+
+        Parameters
+        ----------
+        features : pd.DataFrame
+            Table of transmission features to compute transformer costs for
+        tie_line_voltage : int
+            Tie-line voltage in kV
+        config : str | dict | XmissionConfig
+            Transmission configuration
+
+        Returns
+        -------
+        xformer_costs : ndarray
+            vector of $/MW transformer costs
+        """
+        if not isinstance(config, XmissionConfig):
+            config = XmissionConfig(config=config)
+
+        mask = features['category'] == SUBSTATION_CAT
+
+        mask &= features['max_volts'] < tie_line_voltage
+        if np.any(mask):
+            msg = ('Voltages for substations {} do not exceed tie-line '
+                   'voltage of {}'
+                   .format(features.loc[mask, 'trans_gid'].values,
+                           tie_line_voltage))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        xformer_costs = np.zeros(len(features))
+        for volts, df in features.groupby('min_volts'):
+            idx = df.index.values
+            xformer_costs[idx] = config.xformer_cost(volts, tie_line_voltage)
+
+        mask = features['category'] == TRANS_LINE_CAT
+        mask &= features['max_volts'] < tie_line_voltage
+        xformer_costs[mask] = 0
+
+        mask = features['min_volts'] <= tie_line_voltage
+        xformer_costs[mask] = 0
+
+        mask = features['region'] == config['iso_lookup']['TEPPC']
+        xformer_costs[mask] = 0
+
+        return xformer_costs
+
+    @staticmethod
+    def _calc_sub_upgrade_cost(features, tie_line_voltage, config=None):
+        """
+        Compute substation upgrade costs for needed features, all others will
+        be 0
+
+        Parameters
+        ----------
+        features : pd.DataFrame
+            Table of transmission features to compute transformer costs for
+        tie_line_voltage : int
+            Tie-line voltage in kV
+        config : str | dict | XmissionConfig
+            Transmission configuration
+
+        Returns
+        -------
+        sub_upgrade_costs : ndarray
+            Substation upgrade costs in $
+        """
+        if not isinstance(config, XmissionConfig):
+            config = XmissionConfig(config=config)
+
+        sub_upgrade_cost = np.zeros(len(features))
+        if np.any(features['region'] == 0):
+            mask = features['region'] == 0
+            msg = ('Features {} have an invalid region! Region must != 0!'
+                   .format(features.loc[mask, 'trans_gid'].values))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        mask = features['category'].isin([SUBSTATION_CAT, LOAD_CENTER_CAT])
+        if np.any(mask):
+            for region, df in features.loc[mask].groupby('region'):
+                idx = df.index.values
+                sub_upgrade_cost[idx] = config.sub_upgrade_cost(
+                    region, tie_line_voltage)
+
+        return sub_upgrade_cost
+
+    @staticmethod
+    def _calc_new_sub_cost(features, tie_line_voltage, config=None):
+        """
+        Compute new substation costs for needed features, all others will be 0
+
+        Parameters
+        ----------
+        features : pd.DataFrame
+            Table of transmission features to compute transformer costs for
+        tie_line_voltage : int
+            Tie-line voltage in kV
+        config : str | dict | XmissionConfig
+            Transmission configuration
+
+        Returns
+        -------
+        new_sub_cost : ndarray
+            new substation costs in $
+        """
+        if not isinstance(config, XmissionConfig):
+            config = XmissionConfig(config=config)
+
+        new_sub_cost = np.zeros(len(features))
+        if np.any(features['region'] == 0):
+            mask = features['region'] == 0
+            msg = ('Features {} have an invalid region! Region must != 0!'
+                   .format(features.loc[mask, 'trans_gid'].values))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        mask = features['category'] == TRANS_LINE_CAT
+        if np.any(mask):
+            for region, df in features.loc[mask].groupby('region'):
+                idx = df.index.values
+                new_sub_cost[idx] = config.new_sub_cost(
+                    region, tie_line_voltage)
+
+        return new_sub_cost
+
     def _prep_features(self, features):
         """
         Shift feature row and col indicies of tranmission features from the
@@ -750,100 +880,6 @@ class TransCapCosts(TieLineCosts):
 
         return features
 
-    def _calc_xformer_cost(self):
-        """
-        Compute transformer costs in $/MW for needed features, all others will
-        be 0
-
-        Returns
-        -------
-        xformer_costs : ndarray
-            vector of $/MW transformer costs
-        """
-        tie_line_voltage = self.tie_line_voltage
-        mask = self.features['category'] == SUBSTATION_CAT
-
-        mask &= self.features['max_volts'] < tie_line_voltage
-        if np.any(mask):
-            msg = ('Voltages for substations {} do not exceed tie-line '
-                   'voltage of {}'
-                   .format(self.features.loc[mask, 'trans_gid'].values,
-                           tie_line_voltage))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        xformer_costs = np.zeros(len(self.features))
-        for volts, df in self.features.groupby('min_volts'):
-            idx = df.index.values
-            xformer_costs[idx] = self._config.xformer_cost(volts,
-                                                           tie_line_voltage)
-
-        mask = self.features['category'] == TRANS_LINE_CAT
-        mask &= self.features['max_volts'] < tie_line_voltage
-        xformer_costs[mask] = 0
-
-        mask = self.features['min_volts'] <= tie_line_voltage
-        xformer_costs[mask] = 0
-
-        mask = self.features['region'] == self._config['iso_lookup']['TEPPC']
-        xformer_costs[mask] = 0
-
-        return xformer_costs
-
-    def _calc_sub_upgrade_cost(self):
-        """
-        Compute substation upgrade costs for needed features, all others will
-        be 0
-
-        Returns
-        -------
-        sub_upgrade_costs : ndarray
-            Substation upgrade costs in $
-        """
-        sub_upgrade_cost = np.zeros(len(self.features))
-        if np.any(self.features['region'] == 0):
-            mask = self.features['region'] == 0
-            msg = ('Features {} have an invalid region! Region must != 0!'
-                   .format(self.features.loc[mask, 'trans_gid'].values))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        mask = self.features['category'].isin([SUBSTATION_CAT,
-                                               LOAD_CENTER_CAT])
-        if np.any(mask):
-            for region, df in self.features.loc[mask].groupby('region'):
-                idx = df.index.values
-                sub_upgrade_cost[idx] = self._config.sub_upgrade_cost(
-                    region, self.tie_line_voltage)
-
-        return sub_upgrade_cost
-
-    def _calc_new_sub_cost(self):
-        """
-        Compute new substation costs for needed features, all others will be 0
-
-        Returns
-        -------
-        new_sub_cost : ndarray
-            new substation costs in $
-        """
-        new_sub_cost = np.zeros(len(self.features))
-        if np.any(self.features['region'] == 0):
-            mask = self.features['region'] == 0
-            msg = ('Features {} have an invalid region! Region must != 0!'
-                   .format(self.features.loc[mask, 'trans_gid'].values))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        mask = self.features['category'] == TRANS_LINE_CAT
-        if np.any(mask):
-            for region, df in self.features.loc[mask].groupby('region'):
-                idx = df.index.values
-                new_sub_cost[idx] = self._config.new_sub_cost(
-                    region, self.tie_line_voltage)
-
-        return new_sub_cost
-
     def compute_connection_costs(self, features=None):
         """
         Calculate connection costs for tie lines
@@ -870,14 +906,17 @@ class TransCapCosts(TieLineCosts):
                                      * features['length_mult'])
 
         # Transformer costs
-        features['xformer_cost_per_mw'] = self._calc_xformer_cost()
+        features['xformer_cost_per_mw'] = self._calc_xformer_cost(
+            features, self.tie_line_voltage, config=self._config)
         capacity = int(self.capacity_class.strip('MW'))
         features['xformer_cost'] = (features['xformer_cost_per_mw']
                                     * capacity)
 
         # Substation costs
-        features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost()
-        features['new_sub_cost'] = self._calc_new_sub_cost()
+        features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost(
+            features, self.tie_line_voltage, config=self._config)
+        features['new_sub_cost'] = self._calc_new_sub_cost(
+            features, self.tie_line_voltage, config=self._config)
 
         # Sink costs
         mask = features['category'] == SINK_CAT
