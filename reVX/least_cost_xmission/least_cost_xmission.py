@@ -481,6 +481,8 @@ class LeastCostXmission(LeastCostPaths):
 
         least_costs = pd.concat(least_costs).sort_values(['sc_point_gid',
                                                           'trans_gid'])
+        capacity_class = self._config._parse_cap_class(capacity_class)
+        least_costs['max_cap'] = self._config['power_classes'][capacity_class]
         lcp_frac = (len(least_costs['sc_point_gid'].unique())
                     / len(sc_point_gids) * 100)
         logger.info('{:.4f}% of requested sc point gids were succesfully '

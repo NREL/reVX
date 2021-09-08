@@ -376,8 +376,8 @@ class LeastCostPaths:
             save_paths=save_paths,
             max_workers=max_workers)
 
-        logger.info('{} paths were computed in {:.4f} minutes'
+        logger.info('{} paths were computed in {:.4f} hours'
                     .format(len(least_cost_paths),
-                            (time.time() - ts) / 60))
+                            (time.time() - ts) / 3600))
 
         return least_cost_paths
