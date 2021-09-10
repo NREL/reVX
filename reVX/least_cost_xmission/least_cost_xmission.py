@@ -14,25 +14,22 @@ from pyproj.crs import CRS
 import rasterio
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
-from shapely.geometry.linestring import LineString
-from shapely.geometry.multilinestring import MultiLineString
 import time
 
 from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.points import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
+from rex.utilities.loggers import log_mem
 
 from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
                                              SINK_CAT, SUBSTATION_CAT)
+from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
-from reVX.utilities.exceptions import ExclusionsCheckError
-from reVX.utilities.exclusions_converter import ExclusionsConverter
-
 
 logger = logging.getLogger(__name__)
 
 
-class LeastCostXmission:
+class LeastCostXmission(LeastCostPaths):
     """
     Compute Least Cost tie-line paths and full transmission cap cost
     for all possible connections to all supply curve points
@@ -59,15 +56,16 @@ class LeastCostXmission:
         self._config = TransCapCosts._parse_config(
             xmission_config=xmission_config)
 
-        self._sc_points, self._features, self._sub_lines_mapping =\
-            self._map_sc_to_xmission(cost_fpath, features_fpath,
-                                     resolution=resolution)
+        (self._sc_points, self._features,
+         self._sub_lines_mapping, self._shape) =\
+            self._map_to_costs(cost_fpath, features_fpath,
+                               resolution=resolution)
         self._cost_fpath = cost_fpath
         self._tree = None
         self._sink_coords = None
         self._min_line_len = (resolution * 0.09) / 2
 
-        logger.debug('Done loading data')
+        logger.debug('{} initialized'.format(self))
 
     def __repr__(self):
         msg = ("{} to be computed for {} sc_points and {} features"
@@ -91,11 +89,11 @@ class LeastCostXmission:
     @property
     def features(self):
         """
-        Table of transmission features
+        Table of features to compute paths for
 
         Returns
         -------
-        gpd.GeoDataFrame
+        pandas.DataFrame
         """
         return self._features
 
@@ -139,29 +137,6 @@ class LeastCostXmission:
             self._tree = cKDTree(self.sink_coords)
 
         return self._tree
-
-    @classmethod
-    def _check_layers(cls, cost_fpath):
-        """
-        Check to make sure the REQUIRED_LAYERS are in cost_fpath
-
-        Parameters
-        ----------
-        cost_fpath : str
-            Path to h5 file with cost rasters and other required layers
-        """
-        with ExclusionLayers(cost_fpath) as f:
-            missing = []
-            for lyr in cls.REQUIRED_LAYRES:
-                if lyr not in f:
-                    missing.append(lyr)
-
-            if missing:
-                msg = ("The following layers are required to compute Least "
-                       "Cost Transmission but are missing from {}:\n{}"
-                       .format(cost_fpath, missing))
-                logger.error(msg)
-                raise RuntimeError(msg)
 
     @staticmethod
     def _load_trans_feats(features_fpath):
@@ -230,7 +205,7 @@ class LeastCostXmission:
                    "required voltage of 69 kV and will be dropped:\n{}"
                    .format(features.loc[bad_subs, 'trans_gid']))
             logger.warning(msg)
-            features = features.loc[~bad_subs]
+            features = features.loc[~bad_subs].reset_index(drop=True)
 
         return features, pd.Series(sub_lines_map)
 
@@ -267,35 +242,11 @@ class LeastCostXmission:
 
         return sc_points
 
-    @staticmethod
-    def _get_feature_coords(geo):
-        """
-        Return coordinate as (x, y) tuple. Uses first coordinate for lines
-
-        Parameters
-        ----------
-        geo : gpd.Geometry
-            Geometry
-
-        Returns
-        -------
-        tuple
-            coordinates of geometry
-        """
-        if isinstance(geo, LineString):
-            x, y = geo.coords[0]
-
-        elif isinstance(geo, MultiLineString):
-            x, y = geo.geoms[0].coords[0]
-        else:
-            x, y = geo.x, geo.y
-
-        return x, y
-
     @classmethod
-    def _map_sc_to_xmission(cls, cost_fpath, features_fpath, resolution=128):
+    def _map_to_costs(cls, cost_fpath, features_fpath, resolution=128):
         """
-        Map supply curve points and transmission features to each other
+        Map supply curve points and transmission features to cost array pixel
+        indices
 
         Parameters
         ----------
@@ -317,36 +268,15 @@ class LeastCostXmission:
             to each substation
         """
         with ExclusionLayers(cost_fpath) as f:
-            crs = CRS.from_string(f.crs).to_dict()
+            crs = CRS.from_string(f.crs)
             transform = rasterio.Affine(*f.profile['transform'])
             shape = f.shape
             regions = f['ISO_regions']
 
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
         sub_lines_map = pd.Series(sub_lines_map)
-        feat_crs = features.crs.to_dict()
-        bad_crs = ExclusionsConverter._check_crs(crs, feat_crs)
-        if bad_crs:
-            error = ('Geospatial "crs" of tranmission features in {} does not '
-                     'match "crs" of cost rasters in {}'
-                     '\n {} !=\n {}'
-                     .format(features_fpath, cost_fpath, feat_crs, crs))
-            logger.error(error)
-            raise ExclusionsCheckError(error)
-
-        logger.debug('Map transmission features to exclusion grid')
-        coords = features['geometry'].apply(cls._get_feature_coords).values
-        coords = np.concatenate(coords).reshape(len(features), 2)
-        row, col = rasterio.transform.rowcol(transform, coords[:, 0],
-                                             coords[:, 1])
-        row = np.array(row)
-        col = np.array(col)
-
-        # Remove features outside of the cost domain
-        mask = row >= 0
-        mask &= row < shape[0]
-        mask &= col >= 0
-        mask &= col < shape[1]
+        row, col, mask = cls._get_feature_cost_indices(features, crs,
+                                                       transform, shape)
 
         if any(~mask):
             msg = ("The following features are outside of the cost exclusion "
@@ -355,7 +285,7 @@ class LeastCostXmission:
             logger.warning(msg)
             row = row[mask]
             col = col[mask]
-            features = features.loc[mask]
+            features = features.loc[mask].reset_index(drop=True)
             mask = sub_lines_map.index.isin(features['trans_gid'].values)
             sub_lines_map = sub_lines_map.loc[mask]
 
@@ -371,7 +301,7 @@ class LeastCostXmission:
         sc_points = gpd.GeoDataFrame(sc_points, crs=features.crs,
                                      geometry=geo)
 
-        return sc_points, features, sub_lines_map
+        return sc_points, features, sub_lines_map, shape
 
     def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
                           clipping_buffer=1.05):
@@ -385,6 +315,8 @@ class LeastCostXmission:
             SC point to clip raster around
         nn_sinks : int, optional
             Number of nearest neighbor sinks to clip to
+        clipping_buffer : float, optional
+            Buffer to increase clipping radius by, by default 1.05
 
         Returns
         -------
@@ -404,9 +336,9 @@ class LeastCostXmission:
             logger.debug('Radius to {} nearest sink is: {}'
                          .format(nn_sinks, radius))
             row_min = max(row - radius, 0)
-            row_max = row + radius
+            row_max = min(row + radius, self._shape[0])
             col_min = max(col - radius, 0)
-            col_max = col + radius
+            col_max = min(col + radius, self._shape[1])
             logger.debug('Extracting all transmission features in the row '
                          'slice {}:{} and column slice {}:{}'
                          .format(row_min, row_max, col_min, col_max))
@@ -434,16 +366,17 @@ class LeastCostXmission:
         # Find t-lines connected to substations within clip
         logger.debug('Collecting transmission lines connected to substations')
         mask = sc_features['category'] == SUBSTATION_CAT
-        trans_gids = sc_features.loc[mask, 'trans_gid'].values
-        trans_gids = \
-            np.concatenate(self._sub_lines_mapping.loc[trans_gids].values)
-        trans_gids = np.unique(trans_gids)
-        mask = self.features['trans_gid'].isin(trans_gids)
-        trans_lines = self.features.loc[mask].copy(deep=True)
-        logger.debug('Adding all {} transmission lines connected to '
-                     'substations with minimum max voltage of {}'
-                     .format(len(trans_lines), tie_line_voltage))
-        sc_features = sc_features.append(trans_lines)
+        if mask.any():
+            trans_gids = sc_features.loc[mask, 'trans_gid'].values
+            trans_gids = \
+                np.concatenate(self._sub_lines_mapping.loc[trans_gids].values)
+            trans_gids = np.unique(trans_gids)
+            mask = self.features['trans_gid'].isin(trans_gids)
+            trans_lines = self.features.loc[mask].copy(deep=True)
+            logger.debug('Adding all {} transmission lines connected to '
+                         'substations with minimum max voltage of {}'
+                         .format(len(trans_lines), tie_line_voltage))
+            sc_features = sc_features.append(trans_lines)
 
         return sc_features, radius
 
@@ -511,11 +444,13 @@ class LeastCostXmission:
                         futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
-                    logger.debug('SC point {} of {} complete!'
-                                 .format(i + 1, len(futures)))
                     sc_costs = future.result()
                     if sc_costs is not None:
                         least_costs.append(sc_costs)
+
+                    logger.debug('SC point {} of {} complete!'
+                                 .format(i + 1, len(futures)))
+                    log_mem(logger)
 
         else:
             logger.info('Computing Least Cost Transmission for SC points in '
@@ -541,10 +476,17 @@ class LeastCostXmission:
 
                     logger.debug('SC point {} of {} complete!'
                                  .format(i, len(sc_point_gids)))
+                    log_mem(logger)
                     i += 1
 
         least_costs = pd.concat(least_costs).sort_values(['sc_point_gid',
                                                           'trans_gid'])
+        capacity_class = self._config._parse_cap_class(capacity_class)
+        least_costs['max_cap'] = self._config['power_classes'][capacity_class]
+        lcp_frac = (len(least_costs['sc_point_gid'].unique())
+                    / len(sc_point_gids) * 100)
+        logger.info('{:.4f}% of requested sc point gids were succesfully '
+                    'mapped to transmission features'.format(lcp_frac))
 
         return least_costs.reset_index(drop=True)
 

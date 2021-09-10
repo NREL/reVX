@@ -113,7 +113,7 @@ def from_config(ctx, config, verbose):
 @click.option('--resolution', '-res', type=int,
               show_default=True, default=128,
               help=("SC point resolution"))
-@click.option('--xmission_config', '-xcfg', type=str, show_default=True,
+@click.option('--xmission_config', '-xcfg', type=STR, show_default=True,
               default=None,
               help=("Path to Xmission config .json"))
 @click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
@@ -190,9 +190,10 @@ def get_node_cmd(config):
 
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
-            '-h5 {}'.format(SLURM.s(config.cost_fpath)),
+            '-cost {}'.format(SLURM.s(config.cost_fpath)),
             '-feats {}'.format(SLURM.s(config.features_fpath)),
             '-cap {}'.format(SLURM.s(config.capacity_class)),
+            '-res {}'.format(SLURM.s(config.resolution)),
             '-xcfg {}'.format(SLURM.s(config.xmission_config)),
             '-gids {}'.format(SLURM.s(config.sc_point_gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
