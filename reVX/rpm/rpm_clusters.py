@@ -12,7 +12,6 @@ from shapely.geometry import Point
 
 from reVX.handlers.outputs import Outputs
 from reVX.utilities.cluster_methods import ClusteringMethods
-from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +59,6 @@ class RPMClusters:
         n_clusters : int
             Number of clusters to identify
         """
-        log_versions(logger)
         self._meta, self._coefficients = self._parse_data(cf_fpath,
                                                           gen_gids)
         self._n_clusters = n_clusters

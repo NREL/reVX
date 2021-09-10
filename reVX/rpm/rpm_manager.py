@@ -185,7 +185,7 @@ class RPMClusterManager:
                   "contiguous_kwargs": contiguous_kwargs}
         if self.max_workers > 1:
             future_to_region = {}
-            loggers = [__name__, 'reVX.rpm.rpm_clusters', 'reVX']
+            loggers = ['reVX']
             with SpawnProcessPool(max_workers=self.max_workers,
                                   loggers=loggers) as exe:
                 for region, region_map in self._rpm_regions.items():

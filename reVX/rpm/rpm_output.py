@@ -11,6 +11,7 @@ import psutil
 from scipy.spatial import cKDTree
 from warnings import warn
 
+from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.exclusions import ExclusionMask, ExclusionMaskFromDict
 from reVX.handlers.outputs import Outputs
 from reVX.rpm.rpm_clusters import RPMClusters
@@ -328,7 +329,7 @@ class RPMOutput:
     """Framework to format and process RPM clustering results."""
 
     def __init__(self, rpm_clusters, cf_fpath, excl_fpath, excl_dict,
-                 techmap_dset, excl_area=0.0081, include_threshold=0.001,
+                 techmap_dset, excl_area=None, include_threshold=0.001,
                  n_profiles=1, rerank=True, cluster_kwargs=None,
                  max_workers=None, trg=None):
         """
@@ -347,8 +348,9 @@ class RPMOutput:
         techmap_dset : str
             Dataset name in the exclusions file containing the
             exclusions-to-resource mapping data.
-        excl_area : float
-            Area in km2 of one exclusion pixel.
+        excl_area : float | None
+            Area in km2 of one exclusion pixel. None will calculate the
+            exclusion pixel area from the exclusion projection profile.
         include_threshold : float
             Inclusion threshold. Resource pixels included more than this
             threshold will be considered in the representative profiles.
@@ -382,6 +384,10 @@ class RPMOutput:
         self.include_threshold = include_threshold
         self.n_profiles = n_profiles
         self.rerank = rerank
+
+        if self.excl_area is None:
+            with ExclusionLayers(self._excl_fpath) as excl:
+                self.excl_area = excl.pixel_area
 
         if max_workers is None:
             max_workers = os.cpu_count()
@@ -1170,7 +1176,7 @@ class RPMOutput:
     def process_outputs(cls, rpm_clusters, cf_fpath, excl_fpath,
                         excl_dict, techmap_dset, out_dir, job_tag=None,
                         max_workers=None, cluster_kwargs=None,
-                        excl_area=0.0081, include_threshold=0.001,
+                        excl_area=None, include_threshold=0.001,
                         n_profiles=1, rerank=True, trg=None):
         """Perform output processing on clusters and write results to disk.
 
@@ -1197,8 +1203,9 @@ class RPMOutput:
         max_workers : int, optional
             Number of parallel workers. 1 will run serial, None will use all
             available., by default None
-        excl_area : float
-            Area in km2 of one exclusion pixel.
+        excl_area : float | None
+            Area in km2 of one exclusion pixel. None will calculate the
+            exclusion pixel area from the exclusion projection profile.
         include_threshold : float
             Inclusion threshold. Resource pixels included more than this
             threshold will be considered in the representative profiles.
