@@ -865,26 +865,27 @@ class TransCapCosts(TieLineCosts):
                 length, cost = self.least_cost_path(feat_idx)
 
                 if t_line and feat['max_volts'] < tie_voltage:
-                    msg = ('T-line {} voltage of {}kV is less than tie line '
+                    msg = ('Tie-line {} voltage of {}kV is less than tie line '
                            'voltage of {}kV.'
                            .format(feat['trans_gid'], feat['max_volts'],
                                    tie_voltage))
                     logger.debug(msg)
 
-                    features.loc[index, 'raw_line_cost'] = 1e12
-                else:
-                    features.loc[index, 'raw_line_cost'] = cost
+                    cost = 1e12
 
                 if length < min_line_length:
-                    msg = ('Tie-line length {} will be incraeased to the '
+                    msg = ('Tie-line length {} will be increased to the '
                            'minimum allowed line length: {}.'
                            .format(length, min_line_length))
                     logger.debug(msg)
 
-                    cost = cost * (min_line_length / length)
+                    min_mult = (1 if np.isclose(length, 0)
+                                else min_line_length / length)
+                    cost = cost * min_mult
                     length = min_line_length
 
                 features.loc[index, 'dist_km'] = length
+                features.loc[index, 'raw_line_cost'] = cost
             except LeastCostPathNotFoundError as ex:
                 msg = ("Could not connect SC point {} to transmission feature "
                        "{}: {}"
