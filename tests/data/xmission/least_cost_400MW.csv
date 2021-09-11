@@ -1,4 +1,4 @@
-ac_cap,category,trans_gid,voltage,trans_line_gids,min_volts,max_volts,region,raw_line_cost,dist_km,length_mult,tie_line_cost,xformer_cost_per_mw,xformer_cost,sub_upgrade_cost,new_sub_cost,connection_cost,trans_cap_cost,row_ind,col_ind,sc_point_gid,max_cap
+ac_cap,category,trans_gid,voltage,trans_line_gids,min_volts,max_volts,region,raw_line_cost,dist_km,length_mult,tie_line_cost,xformer_cost_per_mw,xformer_cost,sub_upgrade_cost,new_sub_cost,connection_cost,trans_cap_cost,sc_row_ind,sc_col_ind,sc_point_gid,max_cap
 390.0,TransLine,43287,230.0,null,230.0,230.0,3.0,139491675.35452658,97.37087655463512,1.0,139491675.35452658,0.0,0.0,0.0,9700000.0,9700000.0,149191675.35452658,0,0,0,400
 145.0,TransLine,43290,115.0,null,115.0,115.0,4.0,1000000000000.0,89.9796363033426,1.0,1000000000000.0,0.0,0.0,0.0,5732000.0,5732000.0,1000005732000.0,0,0,0,400
 390.0,TransLine,43295,230.0,null,230.0,230.0,4.0,140660689.68301758,97.81183109893017,1.0,140660689.68301758,0.0,0.0,0.0,5732000.0,5732000.0,146392689.68301758,0,0,0,400

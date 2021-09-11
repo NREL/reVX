@@ -988,8 +988,8 @@ class TransCapCosts(TieLineCosts):
 
         features = features.drop(columns=['row', 'col', 'geometry'],
                                  errors='ignore').reset_index(drop=True)
-        features['row_ind'] = self.sc_point['row_ind']
-        features['col_ind'] = self.sc_point['col_ind']
+        features['sc_row_ind'] = self.sc_point['sc_row_ind']
+        features['sc_col_ind'] = self.sc_point['sc_col_ind']
         features['sc_point_gid'] = self.sc_point_gid
 
         return features

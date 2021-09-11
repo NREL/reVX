@@ -228,15 +228,16 @@ class LeastCostXmission(LeastCostPaths):
         """
         logger.debug('Loading Supply Curve Points')
         sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
-        sc_points = sce.points
+        sc_points = sce.points.rename(columns={'row_ind': 'sc_row_ind',
+                                               'col_ind': 'sc_col_ind'})
         shape = sce.excl_shape
         sc_points['sc_point_gid'] = sc_points.index.values
 
-        row = np.round(sc_points['row_ind'] * resolution + resolution / 2)
+        row = np.round(sc_points['sc_row_ind'] * resolution + resolution / 2)
         row = np.where(row >= shape[0], shape[0] - 1, row)
         sc_points['row'] = row.astype(int)
 
-        col = np.round(sc_points['col_ind'] * resolution + resolution / 2)
+        col = np.round(sc_points['sc_col_ind'] * resolution + resolution / 2)
         col = np.where(col >= shape[1], shape[1] - 1, col)
         sc_points['col'] = col.astype(int)
 
