@@ -809,7 +809,7 @@ class TransCapCosts(TieLineCosts):
             clipped_trans_line = {'geometry': trans_line['geometry']}
             clipped_trans_line = gpd.clip(gpd.GeoSeries(clipped_trans_line),
                                           self.clip_mask)
-            if clipped_trans_line.size:
+            if len(clipped_trans_line) == len(trans_line):
                 trans_line = clipped_trans_line
 
         point, _ = nearest_points(trans_line['geometry'],
@@ -892,6 +892,8 @@ class TransCapCosts(TieLineCosts):
                        .format(self.sc_point_gid,
                                feat['trans_gid'], ex))
                 logger.debug(msg)
+                if t_line:
+                    features.loc[index, 'raw_line_cost'] = 1e12
             except InvalidMCPStartValueError:
                 raise
             except Exception:
@@ -972,7 +974,7 @@ class TransCapCosts(TieLineCosts):
         """
         features = self.compute_tie_line_costs(min_line_length=min_line_length)
 
-        mask = features['dist_km'].isna()
+        mask = features['raw_line_cost'].isna()
         if mask.any():
             msg = ("The following features could not be connected to SC point "
                    "{}:\n{}".format(self.sc_point_gid,
