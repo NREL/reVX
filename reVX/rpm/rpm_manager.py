@@ -128,16 +128,21 @@ class RPMClusterManager:
         for region, region_df in rpm_meta.groupby('region'):
             region_map = {}
             if 'res_gid' in region_df:
+                msg = 'Duplicated "res_gid" values in rpm_meta input'
+                assert not any(region_df['res_gid'].duplicated()), msg
                 pos = cf_meta['gid'].isin(region_df['res_gid'].values)
                 region_meta = cf_meta.loc[pos]
             elif 'gen_gid' in region_df:
+                msg = 'Duplicated "gen_gid" values in rpm_meta input'
+                assert not any(region_df['gen_gid'].duplicated()), msg
                 pos = cf_meta['gen_gid'].isin(region_df['gen_gid'].values)
                 region_meta = cf_meta.loc[pos]
             elif region_col in cf_meta:
                 pos = cf_meta[region_col] == region
                 region_meta = cf_meta.loc[pos]
             else:
-                raise RPMRuntimeError("Resource gids or a valid resource "
+                raise RPMRuntimeError("Resource gids (res_gid or gen_gid) "
+                                      "or a valid resource "
                                       "meta-data field must be supplied "
                                       "to map RPM regions")
 
@@ -302,6 +307,7 @@ class RPMClusterManager:
             os.makedirs(out_dir)
 
         rpm_clusters.to_csv(f_out, index=False)
+        logger.info('Saved clusters output: {}'.format(f_out))
 
         return rpm_clusters
 
