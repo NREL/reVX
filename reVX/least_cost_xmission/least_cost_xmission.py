@@ -153,12 +153,9 @@ class LeastCostXmission(LeastCostPaths):
         -------
         features : gpd.GeoDataFrame
             DataFrame of transmission features
-        lcs : gpd.GeoDataFrame
-            Data frame of load centers
-        sinks : gpd.GeoDataFrame
-            Data frame of PCALoadCen, or sinks
-        subs : gpd.GeoDataFrame
-            Data frame of substations
+        sub_line_map : pandas.Series
+            Mapping of sub-station trans_gid to connected tranmission line
+            trans_gids
         """
         logger.debug('Loading transmission features')
         features = gpd.read_file(features_fpath)
@@ -190,11 +187,11 @@ class LeastCostXmission(LeastCostPaths):
             if isinstance(lines, str):
                 lines = json.loads(lines)
 
+            sub_lines_map[gid] = lines
             lines_mask = features['trans_gid'].isin(lines)
             voltage = features.loc[lines_mask, 'voltage'].values
 
             if np.max(voltage) >= 69:
-                sub_lines_map[gid] = lines
                 features.loc[idx, 'min_volts'] = np.min(voltage)
                 features.loc[idx, 'max_volts'] = np.max(voltage)
             else:
@@ -243,6 +240,47 @@ class LeastCostXmission(LeastCostPaths):
 
         return sc_points
 
+    @staticmethod
+    def _get_feature_cost_indices(features, crs, transform, shape):
+        """
+        Map features to cost row, col indicies using rasterio transform
+
+        Parameters
+        ----------
+        features : gpd.GeoDataFrame
+            GeoDataFrame of features to map to cost raster
+        crs : pyproj.crs.CRS
+            CRS of cost raster
+        transform : raster.Affine
+            Transform of cost raster
+        shape : tuple
+            Cost raster shape
+
+        Returns
+        -------
+        row : ndarray
+            Vector of row indicies for each feature
+        col : ndarray
+            Vector of col indicies for each features
+        mask : ndarray
+            Boolean mask of features with indicies outside of cost raster
+        """
+        row, col, mask = super(LeastCostXmission,
+                               LeastCostXmission)._get_feature_cost_indices(
+            features, crs, transform, shape)
+
+        t_lines = features['category'] == TRANS_LINE_CAT
+        mask |= t_lines
+
+        row[t_lines] = np.where(row[t_lines] >= 0, row[t_lines], 0)
+        row[t_lines] = np.where(row[t_lines] < shape[0], row[t_lines],
+                                shape[0] - 1)
+        col[t_lines] = np.where(col[t_lines] >= 0, col[t_lines], 0)
+        col[t_lines] = np.where(col[t_lines] < shape[1], col[t_lines],
+                                shape[1] - 1)
+
+        return row, col, mask
+
     @classmethod
     def _map_to_costs(cls, cost_fpath, features_fpath, resolution=128):
         """
@@ -275,10 +313,8 @@ class LeastCostXmission(LeastCostPaths):
             regions = f['ISO_regions']
 
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
-        sub_lines_map = pd.Series(sub_lines_map)
         row, col, mask = cls._get_feature_cost_indices(features, crs,
                                                        transform, shape)
-
         if any(~mask):
             msg = ("The following features are outside of the cost exclusion "
                    "domain and will be dropped:\n{}"
@@ -287,8 +323,6 @@ class LeastCostXmission(LeastCostPaths):
             row = row[mask]
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)
-            mask = sub_lines_map.index.isin(features['trans_gid'].values)
-            sub_lines_map = sub_lines_map.loc[mask]
 
         features['row'] = row
         features['col'] = col
@@ -358,7 +392,6 @@ class LeastCostXmission(LeastCostPaths):
             sc_features = self.features.copy(deep=True)
 
         mask = self.features['max_volts'] >= tie_line_voltage
-        mask &= self.features['category'] != TRANS_LINE_CAT
         sc_features = sc_features.loc[mask].copy(deep=True)
         logger.debug('{} transmission features found in clipped area with '
                      'minimum max voltage of {}'
@@ -370,10 +403,12 @@ class LeastCostXmission(LeastCostPaths):
         if mask.any():
             trans_gids = sc_features.loc[mask, 'trans_gid'].values
             trans_gids = \
-                np.concatenate(self._sub_lines_mapping.loc[trans_gids].values)
+                np.concatenate(self.sub_lines_mapping.loc[trans_gids].values)
             trans_gids = np.unique(trans_gids)
-            mask = self.features['trans_gid'].isin(trans_gids)
-            trans_lines = self.features.loc[mask].copy(deep=True)
+            line_mask = self.features['trans_gid'].isin(trans_gids)
+            trans_lines = self.features.loc[line_mask].copy(deep=True)
+            line_mask = trans_lines['trans_gid'].isin(sc_features['trans_gid'])
+            trans_lines = trans_lines.loc[~line_mask]
             logger.debug('Adding all {} transmission lines connected to '
                          'substations with minimum max voltage of {}'
                          .format(len(trans_lines), tie_line_voltage))
