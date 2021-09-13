@@ -118,8 +118,11 @@ def check_profiles(baseline, test):
     np.allclose(baseline.values, test.values, rtol=0.001)
 
 
-@pytest.mark.parametrize('max_workers', [None, 1])
-def test_rpm(max_workers):
+@pytest.mark.parametrize(('max_workers', 'pre_extract_inclusions'),
+                         ([None, False],
+                          [1, False],
+                          [1, True]))
+def test_rpm(max_workers, pre_extract_inclusions):
     """Test the rpm clustering pipeline and run a baseline validation."""
     with tempfile.TemporaryDirectory() as td:
         RPMClusterManager.run_clusters_and_profiles(
@@ -129,7 +132,8 @@ def test_rpm(max_workers):
             max_workers=max_workers,
             output_kwargs=None,
             dist_rank_filter=True,
-            contiguous_filter=False)
+            contiguous_filter=False,
+            pre_extract_inclusions=pre_extract_inclusions)
 
         TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
                                          .format(JOB_TAG))

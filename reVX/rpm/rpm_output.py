@@ -389,7 +389,7 @@ class RPMOutput:
         self.n_profiles = n_profiles
         self.rerank = rerank
 
-        if self.excl_area is None:
+        if self.excl_area is None and self._excl_fpath is not None:
             with ExclusionLayers(self._excl_fpath) as excl:
                 self.excl_area = excl.pixel_area
 
@@ -417,6 +417,8 @@ class RPMOutput:
         self._inclusion_mask = None
         self._techmap_data = None
         if pre_extract_inclusions:
+            logger.info('Pre-extracting exclusions mask, '
+                        'this could take a while...')
             with ExclusionMaskFromDict(self._excl_fpath) as excl:
                 self._techmap_data = excl.excl_h5[self._techmap_dset]
 
