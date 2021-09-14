@@ -783,8 +783,7 @@ class RPMOutput:
 
         res_gids = clusters.loc[mask, 'gid'].values.astype(np.uint32)
         for i, res_gid in enumerate(res_gids):
-            techmap_locs = np.where(techmap_subset == int(res_gid))[0]
-            gid_incl_data = incl_mask_subset[techmap_locs]
+            gid_incl_data = incl_mask_subset[(techmap_subset == res_gid)]
 
             if gid_incl_data.size > 0:
                 inclusions[i] = np.sum(gid_incl_data) / len(gid_incl_data)
