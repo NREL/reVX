@@ -421,6 +421,7 @@ class RPMOutput:
                         'this could take a while...')
             with ExclusionMaskFromDict(self._excl_fpath) as excl:
                 self._techmap_data = excl.excl_h5[self._techmap_dset]
+                self._techmap_data = self._techmap_data.astype(np.int32)
 
             self._inclusion_mask = \
                 ExclusionMaskFromDict.extract_inclusion_mask(
@@ -444,6 +445,7 @@ class RPMOutput:
             latitude, longitude)
         """
 
+        clusters = None
         if isinstance(rpm_clusters, pd.DataFrame):
             clusters = rpm_clusters
 
@@ -453,7 +455,7 @@ class RPMOutput:
             elif rpm_clusters.endswith('.json'):
                 clusters = pd.read_json(rpm_clusters)
 
-        else:
+        if clusters is None:
             raise RPMTypeError('Expected a DataFrame or str but received {}'
                                .format(type(rpm_clusters)))
 
@@ -740,10 +742,12 @@ class RPMOutput:
             techmap 2D datasets.
         techmap_subset : None | np.ndarray
             Optional techmap data subset (just for this lat_slice, lon_slice)
-            in the case that inlcusions were pre-extracted
+            in the case that inlcusions were pre-extracted. This must be a
+            flattened 1D array (original will have been a 2D exclusion raster).
         incl_mask_subset : None | np.ndarray
             Optional inclusion mask subset (just for this lat_slice, lon_slice)
-            in the case that inclusions were pre-extracted
+            in the case that inclusions were pre-extracted. This must be a
+            flattened 1D array (original will have been a 2D exclusion raster).
 
         Returns
         -------
@@ -771,10 +775,15 @@ class RPMOutput:
                                                   lat_slice, lon_slice)
                 incl_mask_subset = cls._get_incl_mask(excl, lat_slice,
                                                       lon_slice)
+        else:
+            msg = ('Techmap subset must be 1D but received shape {}'
+                   .format(techmap_subset.shape))
+            assert len(techmap_subset.shape) == 1, msg
+            assert len(incl_mask_subset.shape) == 1, msg
 
-        for i, ind in enumerate(clusters.loc[mask, :].index.values):
-            techmap_locs = np.where(
-                techmap_subset == int(clusters.loc[ind, 'gid']))[0]
+        res_gids = clusters.loc[mask, 'gid'].values.astype(np.uint32)
+        for i, res_gid in enumerate(res_gids):
+            techmap_locs = np.where(techmap_subset == int(res_gid))[0]
             gid_incl_data = incl_mask_subset[techmap_locs]
 
             if gid_incl_data.size > 0:
@@ -814,8 +823,9 @@ class RPMOutput:
                 incl_mask_subset = None
                 if (self._techmap_data is not None
                         and self._inclusion_mask is not None):
-                    techmap_subset = self._techmap_data[lat_s, lon_s]
+                    techmap_subset = self._techmap_data[lat_s, lon_s].flatten()
                     incl_mask_subset = self._inclusion_mask[lat_s, lon_s]
+                    incl_mask_subset = incl_mask_subset.flatten()
 
                 future = exe.submit(self._single_excl, cid, static_clusters,
                                     self._excl_fpath, self._excl_dict,
@@ -865,8 +875,8 @@ class RPMOutput:
             incl_mask_subset = None
             if (self._techmap_data is not None
                     and self._inclusion_mask is not None):
-                techmap_subset = self._techmap_data[lat_s, lon_s]
-                incl_mask_subset = self._inclusion_mask[lat_s, lon_s]
+                techmap_subset = self._techmap_data[lat_s, lon_s].flatten()
+                incl_mask_subset = self._inclusion_mask[lat_s, lon_s].flatten()
 
             incl, n_incl, n_pix = self._single_excl(
                 cid, static_clusters, self._excl_fpath, self._excl_dict,
