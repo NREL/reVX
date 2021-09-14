@@ -66,6 +66,9 @@ class RPMClusters:
         self._meta, self._coefficients = self._parse_data(cf_fpath,
                                                           gen_gids)
         self._n_clusters = n_clusters
+        msg = ('Number of clusters for "{}" is zero! Needs to be >= 1'
+               .format(self._region))
+        assert self._n_clusters > 0, msg
 
     @property
     def coefficients(self):
