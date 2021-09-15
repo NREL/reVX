@@ -9,8 +9,10 @@ import os
 import pandas as pd
 import psutil
 from scipy.spatial import cKDTree
+from scipy.ndimage import sum_labels
 from warnings import warn
 
+from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.exclusions import ExclusionMask, ExclusionMaskFromDict
 from reVX.handlers.outputs import Outputs
 from reVX.rpm.rpm_clusters import RPMClusters
@@ -328,9 +330,9 @@ class RPMOutput:
     """Framework to format and process RPM clustering results."""
 
     def __init__(self, rpm_clusters, cf_fpath, excl_fpath, excl_dict,
-                 techmap_dset, excl_area=0.0081, include_threshold=0.001,
+                 techmap_dset, excl_area=None, include_threshold=0.001,
                  n_profiles=1, rerank=True, cluster_kwargs=None,
-                 max_workers=None, trg=None):
+                 max_workers=None, trg=None, pre_extract_inclusions=False):
         """
         Parameters
         ----------
@@ -347,8 +349,9 @@ class RPMOutput:
         techmap_dset : str
             Dataset name in the exclusions file containing the
             exclusions-to-resource mapping data.
-        excl_area : float
-            Area in km2 of one exclusion pixel.
+        excl_area : float | None
+            Area in km2 of one exclusion pixel. None will calculate the
+            exclusion pixel area from the exclusion projection profile.
         include_threshold : float
             Inclusion threshold. Resource pixels included more than this
             threshold will be considered in the representative profiles.
@@ -367,6 +370,10 @@ class RPMOutput:
         trg : pd.DataFrame | str | None
             TRG bins or string to filepath containing TRG bins.
             None will not analyze TRG bins.
+        pre_extract_inclusions : bool
+            Flag to pre-extract the inclusion mask using excl_fpath and
+            excl_dict. This is advantageous if the excl_dict is highly complex
+            and if you're processing a lot of points. Default is False.
         """
 
         logger.info('Initializing RPM output processing...')
@@ -382,6 +389,10 @@ class RPMOutput:
         self.include_threshold = include_threshold
         self.n_profiles = n_profiles
         self.rerank = rerank
+
+        if self.excl_area is None and self._excl_fpath is not None:
+            with ExclusionLayers(self._excl_fpath) as excl:
+                self.excl_area = excl.pixel_area
 
         if max_workers is None:
             max_workers = os.cpu_count()
@@ -404,6 +415,20 @@ class RPMOutput:
         self._full_lon_slice = None
         self._init_lat_lon()
 
+        self._inclusion_mask = None
+        self._techmap_data = None
+        if pre_extract_inclusions:
+            logger.info('Pre-extracting exclusions mask, '
+                        'this could take a while...')
+            with ExclusionMaskFromDict(self._excl_fpath) as excl:
+                self._techmap_data = excl.excl_h5[self._techmap_dset]
+                self._techmap_data = self._techmap_data.astype(np.int32)
+
+            self._inclusion_mask = \
+                ExclusionMaskFromDict.extract_inclusion_mask(
+                    self._excl_fpath, self._techmap_dset,
+                    excl_dict=self._excl_dict)
+
     @classmethod
     def _parse_cluster_arg(cls, rpm_clusters):
         """Parse dataframe from cluster input arg.
@@ -421,6 +446,7 @@ class RPMOutput:
             latitude, longitude)
         """
 
+        clusters = None
         if isinstance(rpm_clusters, pd.DataFrame):
             clusters = rpm_clusters
 
@@ -430,7 +456,7 @@ class RPMOutput:
             elif rpm_clusters.endswith('.json'):
                 clusters = pd.read_json(rpm_clusters)
 
-        else:
+        if clusters is None:
             raise RPMTypeError('Expected a DataFrame or str but received {}'
                                .format(type(rpm_clusters)))
 
@@ -516,7 +542,7 @@ class RPMOutput:
         return techmap
 
     @staticmethod
-    def _get_excl_data(excl, lat_slice, lon_slice):
+    def _get_incl_mask(excl, lat_slice, lon_slice):
         """Get the exclusions data from a geotiff file.
 
         Parameters
@@ -532,23 +558,24 @@ class RPMOutput:
 
         Returns
         -------
-        excl_data : np.ndarray
-            Exclusions data flattened and normalized from 0 to 1 (1 is incld).
+        incl_data : np.ndarray
+            Inclusions data mask flattened and normalized
+            from 0 to 1 (1 is incld).
         """
 
         if isinstance(excl, (ExclusionMask, ExclusionMaskFromDict)):
-            excl_data = excl[lat_slice, lon_slice]
+            incl_data = excl[lat_slice, lon_slice]
         else:
             e = 'Cannot recognize exclusion type: {}'.format(type(excl))
             logger.error(e)
             raise TypeError(e)
 
         # infer exclusions that are scaled percentages from 0 to 100
-        if excl_data.max() > 1:
-            excl_data = excl_data.astype(np.float32)
-            excl_data /= 100
+        if incl_data.max() > 1:
+            incl_data = incl_data.astype(np.float32)
+            incl_data /= 100
 
-        return excl_data.flatten()
+        return incl_data.flatten()
 
     def _get_lat_lon_slices(self, cluster_id=None, margin=0.1):
         """Get the slice args to locate exclusion/techmap data of interest.
@@ -606,7 +633,8 @@ class RPMOutput:
         Returns
         -------
         slices : dict
-            Dictionary of tuples - (lat, lon) slices keyed by cluster id.
+            Dictionary of tuples - (lat_slice, lon_slice) slices
+            keyed by cluster id.
         """
 
         slices = {}
@@ -689,7 +717,8 @@ class RPMOutput:
 
     @classmethod
     def _single_excl(cls, cluster_id, clusters, excl_fpath, excl_dict,
-                     techmap_dset, lat_slice, lon_slice):
+                     techmap_dset, lat_slice, lon_slice, techmap_subset=None,
+                     incl_mask_subset=None):
         """Calculate the exclusions for each resource GID in a cluster.
 
         Parameters
@@ -712,6 +741,14 @@ class RPMOutput:
         lon_slice : slice
             The longitude (col) slice to extract from the exclusions or
             techmap 2D datasets.
+        techmap_subset : None | np.ndarray
+            Optional techmap data subset (just for this lat_slice, lon_slice)
+            in the case that inlcusions were pre-extracted. This must be a
+            flattened 1D array (original will have been a 2D exclusion raster).
+        incl_mask_subset : None | np.ndarray
+            Optional inclusion mask subset (just for this lat_slice, lon_slice)
+            in the case that inclusions were pre-extracted. This must be a
+            flattened 1D array (original will have been a 2D exclusion raster).
 
         Returns
         -------
@@ -719,37 +756,43 @@ class RPMOutput:
             1D array of inclusions fraction corresponding to the indexed
             cluster provided by cluster_id.
         n_inclusions : np.ndarray
-            1D array of number of included pixels corresponding to each
-            gid in cluster_id.
+            1D array of number of (at least partially) included pixels
+            corresponding to each gid in cluster_id (sum of inclusion fractions
+            rounded up).
         n_points : np.ndarray
             1D array of the total number of techmap pixels corresponding to
             each gid in cluster_id.
         """
 
         mask = (clusters['cluster_id'] == cluster_id)
+        res_gids = clusters.loc[mask, 'gid'].values.astype(np.int32)
         locs = np.where(mask)[0]
         inclusions = np.zeros((len(locs), ), dtype=np.float32)
         n_inclusions = np.zeros((len(locs), ), dtype=np.float32)
         n_points = np.zeros((len(locs), ), dtype=np.uint16)
 
-        with ExclusionMaskFromDict(excl_fpath, layers_dict=excl_dict) as excl:
-            techmap = cls._get_tm_data(excl, techmap_dset, lat_slice,
-                                       lon_slice)
-            exclusions = cls._get_excl_data(excl, lat_slice, lon_slice)
+        if techmap_subset is None or incl_mask_subset is None:
+            with ExclusionMaskFromDict(
+                    excl_fpath, layers_dict=excl_dict) as excl:
+                techmap_subset = cls._get_tm_data(excl, techmap_dset,
+                                                  lat_slice, lon_slice)
+                incl_mask_subset = cls._get_incl_mask(excl, lat_slice,
+                                                      lon_slice)
+        else:
+            msg = ('Techmap subset must be 1D but received shape {}'
+                   .format(techmap_subset.shape))
+            assert len(techmap_subset.shape) == 1, msg
+            assert len(incl_mask_subset.shape) == 1, msg
 
-        for i, ind in enumerate(clusters.loc[mask, :].index.values):
-            techmap_locs = np.where(
-                techmap == int(clusters.loc[ind, 'gid']))[0]
-            gid_excl_data = exclusions[techmap_locs]
+        inclusions = sum_labels(input=incl_mask_subset, labels=techmap_subset,
+                                index=res_gids)
+        n_inclusions = sum_labels(input=np.ceil(incl_mask_subset),
+                                  labels=techmap_subset, index=res_gids)
+        n_points = sum_labels(input=np.ones_like(incl_mask_subset),
+                              labels=techmap_subset, index=res_gids)
 
-            if gid_excl_data.size > 0:
-                inclusions[i] = np.sum(gid_excl_data) / len(gid_excl_data)
-                n_inclusions[i] = np.sum(gid_excl_data)
-                n_points[i] = len(gid_excl_data)
-            else:
-                inclusions[i] = np.nan
-                n_inclusions[i] = np.nan
-                n_points[i] = 0
+        n_inclusions[(n_points == 0)] = np.nan
+        inclusions /= n_points
 
         return inclusions, n_inclusions, n_points
 
@@ -764,7 +807,8 @@ class RPMOutput:
         static_clusters : pd.DataFrame
             Static (non-changing deepcopy) version of self._clusters.
         slices : dict
-            Dictionary of tuples - (lat, lon) slices keyed by cluster id.
+            Dictionary of tuples - (lat_slice, lon_slice)
+            slices keyed by cluster id.
         """
 
         futures = {}
@@ -774,10 +818,20 @@ class RPMOutput:
             for i, cid in enumerate(unique_clusters):
 
                 lat_s, lon_s = slices[cid]
+                techmap_subset = None
+                incl_mask_subset = None
+                if (self._techmap_data is not None
+                        and self._inclusion_mask is not None):
+                    techmap_subset = self._techmap_data[lat_s, lon_s].flatten()
+                    incl_mask_subset = self._inclusion_mask[lat_s, lon_s]
+                    incl_mask_subset = incl_mask_subset.flatten()
+
                 future = exe.submit(self._single_excl, cid, static_clusters,
                                     self._excl_fpath, self._excl_dict,
                                     self._techmap_dset,
-                                    lat_s, lon_s)
+                                    lat_s, lon_s,
+                                    techmap_subset=techmap_subset,
+                                    incl_mask_subset=incl_mask_subset)
                 futures[future] = cid
                 logger.debug('Kicked off exclusions for cluster "{}", {} out '
                              'of {}.'.format(cid, i + 1, len(unique_clusters)))
@@ -809,17 +863,25 @@ class RPMOutput:
         static_clusters : pd.DataFrame
             Static (non-changing deepcopy) version of self._clusters.
         slices : dict
-            Dictionary of tuples - (lat, lon) slices keyed by cluster id.
+            Dictionary of tuples - (lat_slice, lon_slice)
+            slices keyed by cluster id.
         """
 
         for i, cid in enumerate(unique_clusters):
 
             lat_s, lon_s = slices[cid]
-            incl, n_incl, n_pix = self._single_excl(cid, static_clusters,
-                                                    self._excl_fpath,
-                                                    self._excl_dict,
-                                                    self._techmap_dset,
-                                                    lat_s, lon_s)
+            techmap_subset = None
+            incl_mask_subset = None
+            if (self._techmap_data is not None
+                    and self._inclusion_mask is not None):
+                techmap_subset = self._techmap_data[lat_s, lon_s].flatten()
+                incl_mask_subset = self._inclusion_mask[lat_s, lon_s].flatten()
+
+            incl, n_incl, n_pix = self._single_excl(
+                cid, static_clusters, self._excl_fpath, self._excl_dict,
+                self._techmap_dset, lat_s, lon_s,
+                techmap_subset=techmap_subset,
+                incl_mask_subset=incl_mask_subset)
 
             mem = psutil.virtual_memory()
             logger.info('Finished exclusions for cluster "{}", {} out '
@@ -1170,8 +1232,9 @@ class RPMOutput:
     def process_outputs(cls, rpm_clusters, cf_fpath, excl_fpath,
                         excl_dict, techmap_dset, out_dir, job_tag=None,
                         max_workers=None, cluster_kwargs=None,
-                        excl_area=0.0081, include_threshold=0.001,
-                        n_profiles=1, rerank=True, trg=None):
+                        excl_area=None, include_threshold=0.001,
+                        n_profiles=1, rerank=True, trg=None,
+                        pre_extract_inclusions=False):
         """Perform output processing on clusters and write results to disk.
 
         Parameters
@@ -1197,8 +1260,9 @@ class RPMOutput:
         max_workers : int, optional
             Number of parallel workers. 1 will run serial, None will use all
             available., by default None
-        excl_area : float
-            Area in km2 of one exclusion pixel.
+        excl_area : float | None
+            Area in km2 of one exclusion pixel. None will calculate the
+            exclusion pixel area from the exclusion projection profile.
         include_threshold : float
             Inclusion threshold. Resource pixels included more than this
             threshold will be considered in the representative profiles.
@@ -1212,11 +1276,16 @@ class RPMOutput:
         trg : pd.DataFrame | str | None
             TRG bins or string to filepath containing TRG bins.
             None will not analyze TRG bins.
+        pre_extract_inclusions : bool
+            Flag to pre-extract the inclusion mask using excl_fpath and
+            excl_dict. This is advantageous if the excl_dict is highly complex
+            and if you're processing a lot of points. Default is False.
         """
 
         rpmo = cls(rpm_clusters, cf_fpath, excl_fpath, excl_dict,
                    techmap_dset, cluster_kwargs=cluster_kwargs,
                    max_workers=max_workers, excl_area=excl_area,
                    include_threshold=include_threshold, n_profiles=n_profiles,
-                   rerank=rerank, trg=trg)
+                   rerank=rerank, trg=trg,
+                   pre_extract_inclusions=pre_extract_inclusions)
         rpmo.export_all(out_dir, job_tag=job_tag)

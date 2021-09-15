@@ -12,7 +12,6 @@ from shapely.geometry import Point
 
 from reVX.handlers.outputs import Outputs
 from reVX.utilities.cluster_methods import ClusteringMethods
-from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +48,7 @@ class RPMClusters:
 
     >>> RPMClusters._generate_shapefile(clusters.meta, fpath='./test.shp')
     """
-    def __init__(self, cf_fpath, gen_gids, n_clusters):
+    def __init__(self, cf_fpath, gen_gids, n_clusters, region=None):
         """
         Parameters
         ----------
@@ -59,11 +58,17 @@ class RPMClusters:
             List or vector of gen_gids to cluster on
         n_clusters : int
             Number of clusters to identify
+        region : str | None
+            Optional region identifier that you are clustering on for
+            better debugging.
         """
-        log_versions(logger)
+        self._region = region
         self._meta, self._coefficients = self._parse_data(cf_fpath,
                                                           gen_gids)
         self._n_clusters = n_clusters
+        msg = ('Number of clusters for "{}" is zero! Needs to be >= 1'
+               .format(self._region))
+        assert self._n_clusters > 0, msg
 
     @property
     def coefficients(self):
@@ -458,7 +463,7 @@ class RPMClusters:
     def cluster(cls, cf_h5_path, region_gen_gids, n_clusters, method='kmeans',
                 method_kwargs=None, dist_rank_filter=True,
                 dist_rmse_kwargs=None, contiguous_filter=True,
-                contiguous_kwargs=None):
+                contiguous_kwargs=None, region=None):
         """
         Entry point for RPMCluster to get clusters for a given region
         defined as a list | array of gen_gids
@@ -484,6 +489,9 @@ class RPMClusters:
             Re-classify clusters by making contigous cluster polygons
         contiguous_kwargs : dict
             Kwargs for _contiguous_filter
+        region : str | None
+            Optional region identifier that you are clustering on for
+            better debugging.
 
         Returns
         -------
@@ -512,7 +520,7 @@ class RPMClusters:
         98       98  41.610001 -71.660004       1  POINT (-71.66000 41.61000)
         99       99  41.410000 -71.660004       3  POINT (-71.66000 41.41000)
         """
-        clusters = cls(cf_h5_path, region_gen_gids, n_clusters)
+        clusters = cls(cf_h5_path, region_gen_gids, n_clusters, region=region)
         try:
             clusters._cluster(method=method, method_kwargs=method_kwargs,
                               dist_rank_filter=dist_rank_filter,
@@ -520,8 +528,9 @@ class RPMClusters:
                               contiguous_filter=contiguous_filter,
                               contiguous_kwargs=contiguous_kwargs)
         except Exception as e:
-            logger.exception('Clustering failed on gen_gids {} through {}: {}'
-                             .format(np.min(region_gen_gids),
+            logger.exception('Clustering failed on region "{}" with '
+                             'gen_gids {} through {}, error message: "{}"'
+                             .format(region, np.min(region_gen_gids),
                                      np.max(region_gen_gids), e))
         return clusters.meta
 

@@ -35,10 +35,11 @@ class RPMClusterManager:
             Path to reV .h5 file containing desired capacity factor profiles
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            (region, gid | gen_gid, clusters)
-            - Regions of interest
-            - # of clusters per region
-            - cf or resource GIDs if region is not in default meta data
+            - Categorical regions of interest with column label "region"
+            - # of clusters per region with column label "clusters"
+            - A column that maps the RPM regions to the cf_fpath meta data:
+              "res_gid" (priorized) or "gen_gid". This can be omitted if the
+              rpm_region_col kwarg input is found in the cf_fpath meta
         rpm_region_col : str | Nonetype
             If not None, the meta-data field to map RPM regions to
         max_workers : int, optional
@@ -68,10 +69,11 @@ class RPMClusterManager:
         ----------
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            (region, gid | gen_gid, clusters)
-            - Regions of interest
-            - # of clusters per region
-            - cf or resource GIDs if region is not in default meta data
+            - Categorical regions of interest with column label "region"
+            - # of clusters per region with column label "clusters"
+            - A column that maps the RPM regions to the cf_fpath meta data:
+              "res_gid" (priorized) or "gen_gid". This can be omitted if the
+              rpm_region_col kwarg input is found in the cf_fpath meta
 
         Returns
         -------
@@ -100,9 +102,11 @@ class RPMClusterManager:
         ----------
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            - Regions of interest
-            - # of clusters per region
-            - cf or resource GIDs if region is not in default meta data
+            - Categorical regions of interest with column label "region"
+            - # of clusters per region with column label "clusters"
+            - A column that maps the RPM regions to the cf_fpath meta data:
+              "res_gid" (priorized) or "gen_gid". This can be omitted if the
+              rpm_region_col kwarg input is found in the cf_fpath meta
         region_col : str | Nonetype
             If not None, the meta-data field to map RPM regions to
 
@@ -123,17 +127,22 @@ class RPMClusterManager:
         rpm_regions = {}
         for region, region_df in rpm_meta.groupby('region'):
             region_map = {}
-            if 'gid' in region_df:
-                pos = cf_meta['gid'].isin(region_df['gid'].values)
+            if 'res_gid' in region_df:
+                msg = 'Duplicated "res_gid" values in rpm_meta input'
+                assert not any(region_df['res_gid'].duplicated()), msg
+                pos = cf_meta['gid'].isin(region_df['res_gid'].values)
                 region_meta = cf_meta.loc[pos]
             elif 'gen_gid' in region_df:
+                msg = 'Duplicated "gen_gid" values in rpm_meta input'
+                assert not any(region_df['gen_gid'].duplicated()), msg
                 pos = cf_meta['gen_gid'].isin(region_df['gen_gid'].values)
                 region_meta = cf_meta.loc[pos]
             elif region_col in cf_meta:
                 pos = cf_meta[region_col] == region
                 region_meta = cf_meta.loc[pos]
             else:
-                raise RPMRuntimeError("Resource gids or a valid resource "
+                raise RPMRuntimeError("Resource gids (res_gid or gen_gid) "
+                                      "or a valid resource "
                                       "meta-data field must be supplied "
                                       "to map RPM regions")
 
@@ -185,7 +194,7 @@ class RPMClusterManager:
                   "contiguous_kwargs": contiguous_kwargs}
         if self.max_workers > 1:
             future_to_region = {}
-            loggers = [__name__, 'reVX.rpm.rpm_clusters', 'reVX']
+            loggers = ['reVX']
             with SpawnProcessPool(max_workers=self.max_workers,
                                   loggers=loggers) as exe:
                 for region, region_map in self._rpm_regions.items():
@@ -193,6 +202,7 @@ class RPMClusterManager:
                                 .format(region))
                     clusters = region_map['cluster_num']
                     gen_gids = region_map['gen_gids']
+                    kwargs['region'] = region
 
                     future = exe.submit(RPMClusters.cluster, self._cf_h5,
                                         gen_gids, clusters, **kwargs)
@@ -211,6 +221,7 @@ class RPMClusterManager:
         else:
             for region, region_map in self._rpm_regions.items():
                 logger.info('Kicking off clustering for "{}".'.format(region))
+                kwargs['region'] = region
                 clusters = region_map['cluster_num']
                 gen_gids = region_map['gen_gids']
                 result = RPMClusters.cluster(self._cf_h5, gen_gids, clusters,
@@ -263,9 +274,11 @@ class RPMClusterManager:
             Path to reV .h5 file containing desired capacity factor profiles
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            - Regions of interest
-            - # of clusters per region
-            - cf or resource GIDs if region is not in default meta data
+            - Categorical regions of interest with column label "region"
+            - # of clusters per region with column label "clusters"
+            - A column that maps the RPM regions to the cf_fpath meta data:
+              "res_gid" (priorized) or "gen_gid". This can be omitted if the
+              rpm_region_col kwarg input is found in the cf_fpath meta
         out_dir : str
             Directory to dump output files.
         job_tag : str | None
@@ -294,6 +307,7 @@ class RPMClusterManager:
             os.makedirs(out_dir)
 
         rpm_clusters.to_csv(f_out, index=False)
+        logger.info('Saved clusters output: {}'.format(f_out))
 
         return rpm_clusters
 
@@ -301,7 +315,9 @@ class RPMClusterManager:
     def run_clusters_and_profiles(cls, cf_fpath, rpm_meta, excl_fpath,
                                   excl_dict, techmap_dset, out_dir,
                                   job_tag=None, rpm_region_col=None,
-                                  max_workers=True, output_kwargs=None,
+                                  max_workers=True,
+                                  pre_extract_inclusions=False,
+                                  output_kwargs=None,
                                   **cluster_kwargs):
         """
         RPM Cluster Manager:
@@ -315,9 +331,11 @@ class RPMClusterManager:
             Path to reV .h5 file containing desired capacity factor profiles
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            - Regions of interest
-            - # of clusters per region
-            - cf or resource GIDs if region is not in default meta data
+            - Categorical regions of interest with column label "region"
+            - # of clusters per region with column label "clusters"
+            - A column that maps the RPM regions to the cf_fpath meta data:
+              "res_gid" (priorized) or "gen_gid". This can be omitted if the
+              rpm_region_col kwarg input is found in the cf_fpath meta
         excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
@@ -336,6 +354,10 @@ class RPMClusterManager:
         max_workers : int, optional
             Number of parallel workers. 1 will run serial, None will use all
             available., by default None
+        pre_extract_inclusions : bool
+            Flag to pre-extract the inclusion mask using excl_fpath and
+            excl_dict. This is advantageous if the excl_dict is highly complex
+            and if you're processing a lot of points. Default is False.
         output_kwargs : dict | None
             Kwargs for the RPM outputs manager.
         **cluster_kwargs : dict
@@ -367,11 +389,13 @@ class RPMClusterManager:
         if output_kwargs is None:
             output_kwargs = {}
 
-        RPMOutput.process_outputs(rpm_clusters, cf_fpath, excl_fpath,
-                                  excl_dict, techmap_dset, out_dir,
-                                  job_tag=job_tag, max_workers=max_workers,
-                                  cluster_kwargs=cluster_kwargs,
-                                  **output_kwargs)
+        RPMOutput.process_outputs(
+            rpm_clusters, cf_fpath, excl_fpath,
+            excl_dict, techmap_dset, out_dir,
+            job_tag=job_tag, max_workers=max_workers,
+            cluster_kwargs=cluster_kwargs,
+            pre_extract_inclusions=pre_extract_inclusions,
+            **output_kwargs)
         logger.info('reV-to-RPM processing is complete.')
 
         return rpm

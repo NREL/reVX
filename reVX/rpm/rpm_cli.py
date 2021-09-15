@@ -44,7 +44,7 @@ def valid_config_keys():
     """
     config_classes = [RPMConfig, ClusterConfigGroup, RepProfilesConfigGroup]
     for cls in config_classes:
-        cls_name = str(cls).split('.')[-1].strip("'>")
+        cls_name = str(cls).rsplit('.', maxsplit=1)[-1].strip("'>")
         click.echo("Valid keys for {}: {}"
                    .format(cls_name, ', '.join(get_class_properties(cls))))
 
@@ -154,7 +154,12 @@ def local(ctx, out_dir, cf_profiles, log_dir, max_workers, verbose):
 
 @local.command()
 @click.option('--rpm_meta', '-m', required=True, type=click.Path(exists=True),
-              help='.csv or .json containing the RPM meta data')
+              help='Path to .csv or .json containing the RPM meta data:'
+              '- Categorical regions of interest with column label "region"'
+              '- # of clusters per region with column label "clusters"'
+              '- A column that maps the RPM regions to the cf_fpath meta data:'
+              '  "res_gid" (priorized) or "gen_gid". This can be omitted if '
+              '  the rpm_region_col kwarg input is found in the cf_fpath meta')
 @click.option('--region_col', '-reg', type=str, default=None,
               show_default=True,
               help='The meta-data field to map RPM regions to')

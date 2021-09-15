@@ -47,7 +47,14 @@ class ClusterConfigGroup(BaseConfig):
 
     @property
     def rpm_meta(self):
-        """.csv or .json containing the RPM meta data (required)."""
+        """
+        Path to .csv or .json containing the RPM meta data:
+            - Categorical regions of interest with column label "region"
+            - # of clusters per region with column label "clusters"
+            - A column that maps the RPM regions to the cf_fpath meta data:
+              "res_gid" (priorized) or "gen_gid". This can be omitted if the
+              rpm_region_col kwarg input is found in the cf_fpath meta
+        """
         return self['rpm_meta']
 
     @property

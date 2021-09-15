@@ -73,10 +73,19 @@ def check_clusters(baseline, test):
     test : str
         Path to test clusters .csv
     """
-    baseline = compute_centers(pd.read_csv(baseline))
-    test = compute_centers(pd.read_csv(test))
+    baseline = pd.read_csv(baseline)
+    test = pd.read_csv(test)
+    center_baseline = compute_centers(baseline)
+    center_test = compute_centers(test)
 
-    assert np.allclose(baseline, test, rtol=0.001)
+    assert np.allclose(center_baseline, center_test, rtol=0.001)
+    cols = ['included_frac', 'included_area_km2', 'n_excl_pixels']
+    cols = [c for c in cols if c in test]
+    for col in cols:
+        msg = ('Bad baseline validation for RPM clusters output '
+               'column "{}", baseline: \n{}\n, test: \n{}\n'
+               .format(col, baseline[col].values, test[col].values))
+        assert np.allclose(baseline[col], test[col], rtol=0.001), msg
 
 
 def load_profiles(profiles):
@@ -118,8 +127,11 @@ def check_profiles(baseline, test):
     np.allclose(baseline.values, test.values, rtol=0.001)
 
 
-@pytest.mark.parametrize('max_workers', [None, 1])
-def test_rpm(max_workers):
+@pytest.mark.parametrize(('max_workers', 'pre_extract_inclusions'),
+                         ([None, False],
+                          [1, False],
+                          [1, True]))
+def test_rpm(max_workers, pre_extract_inclusions):
     """Test the rpm clustering pipeline and run a baseline validation."""
     with tempfile.TemporaryDirectory() as td:
         RPMClusterManager.run_clusters_and_profiles(
@@ -129,7 +141,8 @@ def test_rpm(max_workers):
             max_workers=max_workers,
             output_kwargs=None,
             dist_rank_filter=True,
-            contiguous_filter=False)
+            contiguous_filter=False,
+            pre_extract_inclusions=pre_extract_inclusions)
 
         TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
                                          .format(JOB_TAG))
