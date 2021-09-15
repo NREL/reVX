@@ -9,6 +9,7 @@ import os
 import pandas as pd
 import psutil
 from scipy.spatial import cKDTree
+from scipy.ndimage import sum_labels
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
@@ -755,14 +756,16 @@ class RPMOutput:
             1D array of inclusions fraction corresponding to the indexed
             cluster provided by cluster_id.
         n_inclusions : np.ndarray
-            1D array of number of included pixels corresponding to each
-            gid in cluster_id.
+            1D array of number of (at least partially) included pixels
+            corresponding to each gid in cluster_id (sum of inclusion fractions
+            rounded up).
         n_points : np.ndarray
             1D array of the total number of techmap pixels corresponding to
             each gid in cluster_id.
         """
 
         mask = (clusters['cluster_id'] == cluster_id)
+        res_gids = clusters.loc[mask, 'gid'].values.astype(np.int32)
         locs = np.where(mask)[0]
         inclusions = np.zeros((len(locs), ), dtype=np.float32)
         n_inclusions = np.zeros((len(locs), ), dtype=np.float32)
@@ -781,18 +784,15 @@ class RPMOutput:
             assert len(techmap_subset.shape) == 1, msg
             assert len(incl_mask_subset.shape) == 1, msg
 
-        res_gids = clusters.loc[mask, 'gid'].values.astype(np.uint32)
-        for i, res_gid in enumerate(res_gids):
-            gid_incl_data = incl_mask_subset[(techmap_subset == res_gid)]
+        inclusions = sum_labels(input=incl_mask_subset, labels=techmap_subset,
+                                index=res_gids)
+        n_inclusions = sum_labels(input=np.ceil(incl_mask_subset),
+                                  labels=techmap_subset, index=res_gids)
+        n_points = sum_labels(input=np.ones_like(incl_mask_subset),
+                              labels=techmap_subset, index=res_gids)
 
-            if gid_incl_data.size > 0:
-                inclusions[i] = np.sum(gid_incl_data) / len(gid_incl_data)
-                n_inclusions[i] = np.sum(gid_incl_data)
-                n_points[i] = len(gid_incl_data)
-            else:
-                inclusions[i] = np.nan
-                n_inclusions[i] = np.nan
-                n_points[i] = 0
+        n_inclusions[(n_points == 0)] = np.nan
+        inclusions /= n_points
 
         return inclusions, n_inclusions, n_points
 
