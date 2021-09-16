@@ -134,7 +134,7 @@ class RepProfilesConfigGroup(BaseConfig):
     @property
     def trg_bins(self):
         """
-        Filepath to a single-column CSV containing TRG bin edges.
+        Filepath to a single-column CSV containing ordered TRG bin edges.
         """
         return self.get('trg_bins', None)
 

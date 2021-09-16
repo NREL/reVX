@@ -210,8 +210,8 @@ def cluster(ctx, rpm_meta, region_col, dist_rank_filter, contiguous_filter):
               help=('Dataset name in the techmap file containing the '
                     'exclusions-to-resource mapping data.'))
 @click.option('--trg_bins', '-trg', default=None, type=STR, show_default=True,
-              help=('Filepath to a single-column CSV containing TRG bin '
-                    'edges.'))
+              help=('Filepath to a single-column CSV containing ordered '
+                    'TRG bin edges.'))
 @click.option('--trg_dset', '-trgd', default='lcoe_fcr', type=STR,
               show_default=True,
               help=('TRG dataset found in cf_fpath that is associated with '

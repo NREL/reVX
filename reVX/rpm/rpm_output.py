@@ -369,8 +369,9 @@ class RPMOutput:
             Number of parallel workers. 1 will run serial, None will use all
             available., by default None
         trg_bins : str | list | None
-            TRG bins as a list of bin edge values or string to a csv containing
-            a single column with bin edge values. None will ignore trgs.
+            TRG bins as an ordered list of bin edge values or string to a csv
+            containing a single column with bin edge values. None will ignore
+            trgs.
         trg_dset : str
             Dataset associated with TRG bins that can be found in the cf_fpath
             file.
@@ -414,7 +415,7 @@ class RPMOutput:
             msg = 'trg csv can only have one column'
             assert len(self.trg_bins.columns.values) == 1, msg
             col = self.trg_bins.columns.values[0]
-            self.trg_bins = sorted(self.trg_bins[col].values.tolist())
+            self.trg_bins = self.trg_bins[col].values.tolist()
         else:
             self.trg_bins = trg_bins
 
@@ -1283,8 +1284,9 @@ class RPMOutput:
             Flag to rerank representative generation profiles after removing
             excluded generation pixels.
         trg_bins : str | list | None
-            TRG bins as a list of bin edge values or string to a csv containing
-            a single column with bin edge values. None will ignore trgs.
+            TRG bins as an ordered list of bin edge values or string to a csv
+            containing a single column with bin edge values. None will ignore
+            trgs.
         trg_dset : str
             Dataset associated with TRG bins that can be found in the cf_fpath
             file.
