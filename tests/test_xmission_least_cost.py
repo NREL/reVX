@@ -13,10 +13,10 @@ import tempfile
 import traceback
 
 from rex.utilities.loggers import LOGGERS
+from reV.supply_curve.supply_curve import SupplyCurve
 from reVX import TESTDATADIR
 from reVX.least_cost_xmission.least_cost_xmission_cli import main
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
-from reVX.least_cost_xmission.config import SUBSTATION_CAT
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
@@ -62,31 +62,6 @@ def check_baseline(truth, test, check_cols=CHECK_COLS):
         assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
 
-def parse_trans_line_gids(trans_line_gids):
-    """
-    Parse json string of trans_line_gids if needed
-    """
-    if isinstance(trans_line_gids, str):
-        trans_line_gids = json.loads(trans_line_gids)
-
-    return trans_line_gids
-
-
-def check_subs(features):
-    """
-    Check to make sure all trans-lines are available for all sub-stations
-    """
-    mask = features['category'] == SUBSTATION_CAT
-    line_gids = \
-        features.loc[mask, 'trans_line_gids'].apply(parse_trans_line_gids)
-
-    line_gids = np.unique(np.concatenate(line_gids.values))
-
-    test = np.isin(line_gids, features['trans_gid'].values)
-    msg = "{} trans lines are missing!".format(line_gids[~test])
-    assert np.all(test), msg
-
-
 @pytest.fixture(scope="module")
 def runner():
     """
@@ -113,7 +88,7 @@ def test_capacity_class(capacity):
 
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
                                  sc_point_gids=sc_point_gids)
-    check_subs(test)
+    SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
@@ -142,7 +117,7 @@ def test_parallel(max_workers):
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
                                  max_workers=max_workers,
                                  sc_point_gids=sc_point_gids)
-    check_subs(test)
+    SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
@@ -174,7 +149,7 @@ def test_resolution(resolution):
 
     test = LeastCostXmission.run(COST_H5, FEATURES, 100, resolution=resolution,
                                  sc_point_gids=sc_point_gids)
-    check_subs(test)
+    SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
@@ -225,7 +200,7 @@ def test_cli(runner):
                                                     capacity)
         test = os.path.join(td, test)
         test = pd.read_csv(test)
-        check_subs(test)
+        SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
         check_baseline(truth, test)
 
     LOGGERS.clear()
