@@ -332,7 +332,8 @@ class RPMOutput:
     def __init__(self, rpm_clusters, cf_fpath, excl_fpath, excl_dict,
                  techmap_dset, excl_area=None, include_threshold=0.001,
                  n_profiles=1, rerank=True, cluster_kwargs=None,
-                 max_workers=None, trg=None, pre_extract_inclusions=False):
+                 max_workers=None, trg_bins=None, trg_dset='lcoe_fcr',
+                 pre_extract_inclusions=False):
         """
         Parameters
         ----------
@@ -367,9 +368,12 @@ class RPMOutput:
         max_workers : int, optional
             Number of parallel workers. 1 will run serial, None will use all
             available., by default None
-        trg : pd.DataFrame | str | None
-            TRG bins or string to filepath containing TRG bins.
-            None will not analyze TRG bins.
+        trg_bins : str | list | None
+            TRG bins as a list of bin edge values or string to a csv containing
+            a single column with bin edge values. None will ignore trgs.
+        trg_dset : str
+            Dataset associated with TRG bins that can be found in the cf_fpath
+            file.
         pre_extract_inclusions : bool
             Flag to pre-extract the inclusion mask using excl_fpath and
             excl_dict. This is advantageous if the excl_dict is highly complex
@@ -404,10 +408,15 @@ class RPMOutput:
         else:
             self.cluster_kwargs = cluster_kwargs
 
-        if isinstance(trg, str):
-            self.trg = pd.read_csv(trg)
+        self.trg_dset = trg_dset
+        if isinstance(trg_bins, str):
+            self.trg_bins = pd.read_csv(trg_bins)
+            msg = 'trg csv can only have one column'
+            assert len(self.trg_bins.columns.values) == 1, msg
+            col = self.trg_bins.columns.values[0]
+            self.trg_bins = sorted(self.trg_bins[col].values.tolist())
         else:
-            self.trg = trg
+            self.trg_bins = trg_bins
 
         self._excl_lat = None
         self._excl_lon = None
@@ -937,27 +946,26 @@ class RPMOutput:
         with Outputs(self._cf_fpath) as f:
             dsets = f.datasets
 
-        if self.trg is not None and 'lcoe_fcr' not in dsets:
-            wmsg = ('TRGs requested but "lcoe_fcr" not in cf file: {}'
-                    .format(self._cf_fpath))
+        if self.trg_bins is not None and self.trg_dset not in dsets:
+            wmsg = ('TRGs requested but "{}" not in cf file: {}'
+                    .format(self.trg_dset, self._cf_fpath))
             warn(wmsg)
             logger.warning(wmsg)
 
-        if self.trg is not None and 'lcoe_fcr' in dsets:
+        if self.trg_bins is not None and self.trg_dset in dsets:
             gen_gid = sorted(list(self._clusters['gen_gid'].values))
             with Outputs(self._cf_fpath) as f:
-                lcoe_fcr = f['lcoe_fcr', gen_gid]
+                trg_data = f[self.trg_dset, gen_gid]
 
-            lcoe_df = pd.DataFrame({'gen_gid': gen_gid,
-                                    'lcoe_fcr': lcoe_fcr})
-            bcol = [c for c in self.trg.columns if 'bin' in c.lower()][0]
-            bins = sorted(list(self.trg[bcol].values))
-            trg_labels = [i + 1 for i in range(len(self.trg) - 1)]
-            lcoe_df['trg_lcoe_bin'] = pd.cut(x=lcoe_df['lcoe_fcr'], bins=bins)
-            lcoe_df['trg'] = pd.cut(x=lcoe_df['lcoe_fcr'], bins=bins,
-                                    labels=trg_labels)
+            trg_df = pd.DataFrame({'gen_gid': gen_gid, self.trg_dset: trg_data})
+            trg_labels = [i + 1 for i in range(len(self.trg_bins) - 1)]
 
-            self._clusters = pd.merge(self._clusters, lcoe_df, on='gen_gid',
+            label = 'trg_{}_bin'.format(self.trg_dset)
+            trg_df[label] = pd.cut(x=trg_df[self.trg_dset], bins=self.trg_bins)
+            trg_df['trg'] = pd.cut(x=trg_df[self.trg_dset], bins=self.trg_bins,
+                                   labels=trg_labels)
+
+            self._clusters = pd.merge(self._clusters, trg_df, on='gen_gid',
                                       how='left', validate='1:1')
 
             self.run_rerank(groupby=['cluster_id', 'trg'],
@@ -1233,7 +1241,8 @@ class RPMOutput:
                         excl_dict, techmap_dset, out_dir, job_tag=None,
                         max_workers=None, cluster_kwargs=None,
                         excl_area=None, include_threshold=0.001,
-                        n_profiles=1, rerank=True, trg=None,
+                        n_profiles=1, rerank=True,
+                        trg_bins=None, trg_dset='lcoe_fcr',
                         pre_extract_inclusions=False):
         """Perform output processing on clusters and write results to disk.
 
@@ -1273,9 +1282,12 @@ class RPMOutput:
         rerank : bool
             Flag to rerank representative generation profiles after removing
             excluded generation pixels.
-        trg : pd.DataFrame | str | None
-            TRG bins or string to filepath containing TRG bins.
-            None will not analyze TRG bins.
+        trg_bins : str | list | None
+            TRG bins as a list of bin edge values or string to a csv containing
+            a single column with bin edge values. None will ignore trgs.
+        trg_dset : str
+            Dataset associated with TRG bins that can be found in the cf_fpath
+            file.
         pre_extract_inclusions : bool
             Flag to pre-extract the inclusion mask using excl_fpath and
             excl_dict. This is advantageous if the excl_dict is highly complex
@@ -1286,6 +1298,6 @@ class RPMOutput:
                    techmap_dset, cluster_kwargs=cluster_kwargs,
                    max_workers=max_workers, excl_area=excl_area,
                    include_threshold=include_threshold, n_profiles=n_profiles,
-                   rerank=rerank, trg=trg,
+                   rerank=rerank, trg_bins=trg_bins, trg_dset=trg_dset,
                    pre_extract_inclusions=pre_extract_inclusions)
         rpmo.export_all(out_dir, job_tag=job_tag)

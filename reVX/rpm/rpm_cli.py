@@ -80,7 +80,8 @@ def run_local(ctx, config):
                    exclusions=config.rep_profiles.exclusions,
                    excl_dict=config.rep_profiles.excl_dict,
                    techmap_dset=config.rep_profiles.techmap_dset,
-                   trg=config.rep_profiles.trg,
+                   trg_bins=config.rep_profiles.trg_bins,
+                   trg_dset=config.rep_profiles.trg_dset,
                    n_profiles=config.rep_profiles.n_profiles,
                    forecast_fpath=config.rep_profiles.forecast_fpath)
 
@@ -208,8 +209,13 @@ def cluster(ctx, rpm_meta, region_col, dist_rank_filter, contiguous_filter):
               show_default=True,
               help=('Dataset name in the techmap file containing the '
                     'exclusions-to-resource mapping data.'))
-@click.option('--trg', '-trg', default=None, type=STR, show_default=True,
-              help=('Filepath to TRG LCOE bins.'))
+@click.option('--trg_bins', '-trg', default=None, type=STR, show_default=True,
+              help=('Filepath to a single-column CSV containing TRG bin '
+                    'edges.'))
+@click.option('--trg_dset', '-trgd', default='lcoe_fcr', type=STR,
+              show_default=True,
+              help=('TRG dataset found in cf_fpath that is associated with '
+                    'the TRG bins'))
 @click.option('--n_profiles', '-np', type=INT, default=1, show_default=True,
               help=('Number of profiles per cluster to export.'))
 @click.option('--forecast_fpath', '-fcst', type=STR, default=None,
@@ -218,8 +224,8 @@ def cluster(ctx, rpm_meta, region_col, dist_rank_filter, contiguous_filter):
                     'input, profiles will be taken from forecast file instead '
                     'of the cf file, based on a NN mapping.'))
 @click.pass_context
-def rep_profiles(ctx, rpm_clusters, exclusions, excl_dict, techmap_dset, trg,
-                 n_profiles, forecast_fpath):
+def rep_profiles(ctx, rpm_clusters, exclusions, excl_dict, techmap_dset,
+                 trg_bins, trg_dset, n_profiles, forecast_fpath):
     """
     Extract representative profiles from RPM clusters
     """
@@ -241,15 +247,17 @@ def rep_profiles(ctx, rpm_clusters, exclusions, excl_dict, techmap_dset, trg,
     logger.info('Extracting representative profiles using exclusions: {}'
                 .format(exclusions))
 
-    if trg is not None:
-        logger.info('Applying TRGs: {}'.format(trg))
+    if trg_bins is not None:
+        logger.info('Applying TRGs from dset "{}" : {}'
+                    .format(trg_dset, trg_bins))
 
     if isinstance(excl_dict, str):
         excl_dict = dict_str_load(excl_dict)
 
     rpm_o.process_outputs(rpm_clusters, cf_profiles, exclusions, excl_dict,
                           techmap_dset, out_dir, job_tag=name,
-                          max_workers=max_workers, trg=trg)
+                          max_workers=max_workers, trg_bins=trg_bins,
+                          trg_dset=trg_dset)
 
     if forecast_fpath is not None or n_profiles > 1:
         logger.info('Extracting extra representative profiles from: {}'
@@ -310,7 +318,8 @@ def get_node_cmd(config):
                     '-excl {}'.format(SLURM.s(rep_profiles.exclusions)),
                     '-exd {}'.format(SLURM.s(rep_profiles.excl_dict)),
                     '-tmp {}'.format(SLURM.s(rep_profiles.techmap_dset)),
-                    '-trg {}'.format(SLURM.s(rep_profiles.trg)),
+                    '-trg {}'.format(SLURM.s(rep_profiles.trg_bins)),
+                    '-trgd {}'.format(SLURM.s(rep_profiles.trg_dset)),
                     '-np {}'.format(SLURM.s(rep_profiles.n_profiles)),
                     '-fcst {}'.format(SLURM.s(rep_profiles.forecast_fpath)),
                     ]

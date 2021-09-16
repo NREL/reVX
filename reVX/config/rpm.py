@@ -132,11 +132,18 @@ class RepProfilesConfigGroup(BaseConfig):
         return self.get('techmap_dset', None)
 
     @property
-    def trg(self):
+    def trg_bins(self):
         """
-        Filepath to TRG LCOE bins.
+        Filepath to a single-column CSV containing TRG bin edges.
         """
-        return self.get('trg', None)
+        return self.get('trg_bins', None)
+
+    @property
+    def trg_dset(self):
+        """
+        TRG dataset found in cf_fpath that is associated with the TRG bins
+        """
+        return self.get('trg_dset', 'lcoe_fcr')
 
     @property
     def forecast_fpath(self):
