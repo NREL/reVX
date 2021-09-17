@@ -409,23 +409,24 @@ class RPMOutput:
         else:
             self.cluster_kwargs = cluster_kwargs
 
+        self.trg_bins = trg_bins
         self.trg_dset = trg_dset
-        if isinstance(trg_bins, str):
-            self.trg_bins = pd.read_csv(trg_bins)
+        self.trg_labels = None
+        if isinstance(self.trg_bins, str):
+            self.trg_bins = pd.read_csv(self.trg_bins)
             msg = 'trg csv can only have one column'
             assert len(self.trg_bins.columns.values) == 1, msg
             col = self.trg_bins.columns.values[0]
             self.trg_bins = self.trg_bins[col].values.tolist()
-        else:
-            self.trg_bins = trg_bins
 
-        # bins must be in monotonic ascending order for pd.cut but labels
-        # should be ordered however the input is received
-        self.trg_labels = [i + 1 for i in range(len(self.trg_bins) - 1)]
-        incr = (np.diff(self.trg_bins) > 0).all()
-        if not incr:
-            self.trg_bins = self.trg_bins[::-1]
-            self.trg_labels.reverse()
+        if self.trg_bins is not None:
+            # bins must be in monotonic ascending order for pd.cut but labels
+            # should be ordered however the input is received
+            self.trg_labels = [i + 1 for i in range(len(self.trg_bins) - 1)]
+            incr = (np.diff(self.trg_bins) > 0).all()
+            if not incr:
+                self.trg_bins = self.trg_bins[::-1]
+                self.trg_labels.reverse()
 
         self._excl_lat = None
         self._excl_lon = None
