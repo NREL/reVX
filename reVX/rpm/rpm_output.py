@@ -419,6 +419,14 @@ class RPMOutput:
         else:
             self.trg_bins = trg_bins
 
+        # bins must be in monotonic ascending order for pd.cut but labels
+        # should be ordered however the input is received
+        self.trg_labels = [i + 1 for i in range(len(self.trg_bins) - 1)]
+        incr = (np.diff(self.trg_bins) > 0).all()
+        if not incr:
+            self.trg_bins = self.trg_bins[::-1]
+            self.trg_labels.reverse()
+
         self._excl_lat = None
         self._excl_lon = None
         self._full_lat_slice = None
@@ -958,13 +966,13 @@ class RPMOutput:
             with Outputs(self._cf_fpath) as f:
                 trg_data = f[self.trg_dset, gen_gid]
 
-            trg_df = pd.DataFrame({'gen_gid': gen_gid, self.trg_dset: trg_data})
-            trg_labels = [i + 1 for i in range(len(self.trg_bins) - 1)]
+            trg_df = pd.DataFrame({'gen_gid': gen_gid,
+                                   self.trg_dset: trg_data})
 
-            label = 'trg_{}_bin'.format(self.trg_dset)
+            label = 'trg_bin_{}'.format(self.trg_dset)
             trg_df[label] = pd.cut(x=trg_df[self.trg_dset], bins=self.trg_bins)
             trg_df['trg'] = pd.cut(x=trg_df[self.trg_dset], bins=self.trg_bins,
-                                   labels=trg_labels)
+                                   labels=self.trg_labels)
 
             self._clusters = pd.merge(self._clusters, trg_df, on='gen_gid',
                                       how='left', validate='1:1')
