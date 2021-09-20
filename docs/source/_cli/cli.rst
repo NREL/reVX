@@ -3,6 +3,7 @@ Command Line Interphases (CLIs)
 
 .. toctree::
 
+   least-cost-paths
    least-cost-xmission
    mean-wind-dirs
    offshore-assembly-areas
