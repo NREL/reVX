@@ -405,7 +405,7 @@ class TieLineCosts:
             if save_paths:
                 paths.append(out[2])
 
-        tie_lines = pd.DataFrame({'length': lengths, 'cost': costs})
+        tie_lines = pd.DataFrame({'length_km': lengths, 'cost': costs})
         if save_paths:
             with ExclusionLayers(self._cost_fpath) as f:
                 crs = f.crs

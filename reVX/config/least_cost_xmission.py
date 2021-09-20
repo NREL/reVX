@@ -93,7 +93,7 @@ class CostCreatorConfig(AnalysisConfig):
 class LeastCostXmissionConfig(AnalysisConfig):
     """Config framework for Least Cost Xmission"""
 
-    NAME = 'CostCreator'
+    NAME = 'LeastCostXmission'
     REQUIREMENTS = ('cost_fpath', 'features_fpath', 'capacity_class')
 
     def __init__(self, config):
@@ -172,3 +172,63 @@ class LeastCostXmissionConfig(AnalysisConfig):
         Transmission barrier multiplier to use for MCP costs
         """
         return self.get('barrier_mult', self._default_barrier_mult)
+
+
+class LeastCostPathsConfig(AnalysisConfig):
+    """Config framework for Least Cost Paths"""
+
+    NAME = 'LeastCostPaths'
+    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'capacity_class')
+
+    def __init__(self, config):
+        """
+        Parameters
+        ----------
+        config : str | dict
+            Path to config .json or pre-extracted config input dictionary.
+        """
+        super().__init__(config)
+        self._default_barrier_mult = 100
+
+    @property
+    def cost_fpath(self):
+        """
+        .h5 file with cost and required layers
+        """
+        return self['cost_fpath']
+
+    @property
+    def features_fpath(self):
+        """
+        Tranmission feature .gpkg
+        """
+        return self['features_fpath']
+
+    @property
+    def capacity_class(self):
+        """
+        Capacity class, either {capacity}MW or capacity value in MW
+        """
+        return self['capacity_class']
+
+    @property
+    def xmission_config(self):
+        """
+        Xmission config input
+        """
+        return self.get('xmission_config', None)
+
+    @property
+    def barrier_mult(self):
+        """
+        Transmission barrier multiplier to use for MCP costs
+        """
+        return self.get('barrier_mult', self._default_barrier_mult)
+
+    @property
+    def save_paths(self):
+        """
+        Boolean flag to save the least cost paths along with the costs and
+        lengths
+        """
+        return self.get('save_paths', False)

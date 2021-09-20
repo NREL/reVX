@@ -70,7 +70,7 @@ def runner():
     return CliRunner()
 
 
-@pytest.mark.parametrize('capacity', [100, 200, 400, 1000, 3000])
+@pytest.mark.parametrize('capacity', [100, 200, 400, 1000])
 def test_capacity_class(capacity):
     """
     Test least cost xmission and compare with baseline data
@@ -196,8 +196,8 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test = '{}_CostCreator_{}MW_128.csv'.format(os.path.basename(td),
-                                                    capacity)
+        test = '{}_LeastCostXmission_{}MW_128.csv'.format(os.path.basename(td),
+                                                          capacity)
         test = os.path.join(td, test)
         test = pd.read_csv(test)
         SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
