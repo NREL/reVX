@@ -70,7 +70,7 @@ def runner():
     return CliRunner()
 
 
-@pytest.mark.parametrize('capacity', [100, 200, 400, 1000])
+@pytest.mark.parametrize('capacity', [100, 200, 400, 1000, 3000])
 def test_capacity_class(capacity):
     """
     Test least cost xmission and compare with baseline data

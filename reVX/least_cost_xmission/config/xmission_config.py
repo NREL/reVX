@@ -10,8 +10,22 @@ import numpy as np
 
 from rex.utilities.utilities import safe_json_load
 
-CONFIG = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                      'config.json')
+CONFIG_DIR = os.path.dirname(os.path.realpath(__file__))
+CONFIG = {
+    "base_line_costs": os.path.join(CONFIG_DIR, 'base_line_costs.json'),
+    "iso_lookup": os.path.join(CONFIG_DIR, 'iso_lookup.json'),
+    "iso_multipliers": os.path.join(CONFIG_DIR, 'iso_multipliers.json'),
+    "land_use_classes": os.path.join(CONFIG_DIR, 'land_use_classes.json'),
+    "new_substation_costs": os.path.join(CONFIG_DIR,
+                                         'new_substation_costs.json'),
+
+    "power_classes": os.path.join(CONFIG_DIR, 'power_classes.json'),
+    "power_to_voltage": os.path.join(CONFIG_DIR, 'power_to_voltage.json'),
+    "transformer_costs": os.path.join(CONFIG_DIR,
+                                      'transformer_costs.json'),
+    "upgrade_substation_costs": os.path.join(CONFIG_DIR,
+                                             'upgrade_substation_costs.json')
+}
 logger = logging.getLogger(__name__)
 
 
@@ -33,24 +47,8 @@ class XmissionConfig(dict):
         """
         super().__init__()
 
-        self.update(safe_json_load(CONFIG))
-
-        if config is not None:
-            if isinstance(config, str):
-                config = safe_json_load(config)
-
-            if not isinstance(config, dict):
-                msg = ('Xmission costs config must be a path to a json file, '
-                       'a jsonified dictionary, or a dictionary, not: {}'
-                       .format(config))
-                logger.error(msg)
-                raise ValueError(msg)
-
-            for k, v in config:
-                if v.endswith('.json'):
-                    v = safe_json_load(v)
-
-                self[k] = v
+        self._load_config(CONFIG)
+        self._load_config(config)
 
     def __getitem__(self, k):
         if k == 'reverse_iso':
@@ -88,6 +86,35 @@ class XmissionConfig(dict):
             cap_class = capacity
 
         return cap_class
+
+    def _load_config(self, config):
+        """
+        Load config
+
+        Parameters
+        ----------
+        config : str | dict
+            Path to json file containing Xmission cost configuration values,
+            or jsonified dict of cost configuration values,
+            or dictionary of configuration values,
+            or dictionary of paths to config jsons
+        """
+        if config is not None:
+            if isinstance(config, str):
+                config = safe_json_load(config)
+
+            if not isinstance(config, dict):
+                msg = ('Xmission costs config must be a path to a json file, '
+                       'a jsonified dictionary, or a dictionary, not: {}'
+                       .format(config))
+                logger.error(msg)
+                raise ValueError(msg)
+
+            for k, v in config.items():
+                if v.endswith('.json'):
+                    v = safe_json_load(v)
+
+                self[k] = v
 
     def capacity_to_kv(self, capacity):
         """

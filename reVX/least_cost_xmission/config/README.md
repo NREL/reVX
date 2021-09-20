@@ -21,8 +21,9 @@ transformer_costs:
      symmetrical. From MISO table.
 
 base_line_costs:
-    Costs for lines in US$ / mile. Keys are max line capacity in MW. Note that
-    TEPPC does not include ROW in base line cost, but all other ISOs do.
+    Costs for lines in 2019 US$ / mile. Keys are max line capacity in MW.
+    Note that TEPPC does not include ROW in base line cost, but all other ISOs
+    do.
 
 power_classes:
     Keys are reV power classes. Values are appropriate line capacities for
