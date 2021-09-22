@@ -410,7 +410,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
         profiles = pb.make_profiles(plant_sc_builds)
 
         if out_fpath is not None:
-            Outputs.write_profiles(out_fpath, pb.plant_meta, pb.time_index,
-                                   'cf_profile', profiles, profiles.dtype)
+            if out_fpath.endswith('.h5'):
+                Outputs.write_profiles(out_fpath, pb.plant_meta, pb.time_index,
+                                       'plant_profiles', profiles,
+                                       profiles.dtype)
 
         return pb.plant_meta, pb.time_index, profiles
