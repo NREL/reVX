@@ -623,6 +623,17 @@ class RPMOutput:
                 & (self.excl_lon > np.min(box['longitude']) - margin)
                 & (self.excl_lon < np.max(box['longitude']) + margin))
 
+        if not mask.any():
+            msg = ('Lat Lon box retrieval failed for cluster "{}". The '
+                   'exclusion lat min/max is {:.2f}/{:.2f} and lon min/max '
+                   'is {:.2f}/{:.2f} while the cluster box is: {}'
+                   .format(cluster_id,
+                           self.excl_lat.min(), self.excl_lat.max(),
+                           self.excl_lon.min(), self.excl_lon.max(),
+                           box))
+            logger.error(msg)
+            raise RPMRuntimeError(msg)
+
         lat_locs, lon_locs = np.where(mask)
 
         if self._full_lat_slice is None and self._full_lon_slice is None:
