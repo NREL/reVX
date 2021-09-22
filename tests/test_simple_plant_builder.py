@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=all
 """reVX Simple Plant Builder unit test module
 """
 from click.testing import CliRunner
@@ -261,7 +262,7 @@ def test_cli(runner):
         with Resource(out_fpath) as f:
             meta = f.meta
             ti = f.time_index
-            profiles = f['cf_profile']
+            profiles = f['plant_profiles']
 
         for plant_id, plant_build in meta.iterrows():
             res_gids = json.loads(plant_build['res_gids'])
@@ -279,7 +280,6 @@ def test_cli(runner):
                 for cap, ggid in zip(gid_caps, gen_gids):
                     true_profile += cap * cf_profiles[:, ggid]
 
-                # pylint: disable=unsubscriptable-object
                 assert np.allclose(true_profile, profiles[:, plant_id],
                                    atol=0, rtol=0.001)
 
