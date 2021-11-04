@@ -10,7 +10,7 @@ import pandas as pd
 from reVX.handlers.outputs import Outputs
 from rex.resource import Resource
 from rex.utilities.execution import SpawnProcessPool
-from rex.utilities.utilities import slice_sites
+from rex.utilities.utilities import slice_sites, roll_timeseries
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,8 @@ class DatasetAgg():
     """
     Temporaly Aggregate Dataset
     """
-    def __init__(self, h5_fpath, dset, time_index=None, year=None):
+    def __init__(self, h5_fpath, dset, time_index=None, year=None,
+                 local_time=False):
         """
         Parameters
         ----------
@@ -69,6 +70,9 @@ class DatasetAgg():
         year : str | int, optional
             Year to extract time-index for if running on a multi-year file,
             by default None
+        local_time : bool
+            Flag to shift data to local time before aggregating temporal data.
+            Default is to stay in UTC.
         """
         self._h5_fpath = h5_fpath
         self._dset = dset
@@ -77,6 +81,7 @@ class DatasetAgg():
 
         self._time_index = time_index
         self._year = year
+        self._local_time = local_time
 
         with Resource(h5_fpath) as f:
             msg = '{} is not present in {}'.format(dset, h5_fpath)
@@ -91,7 +96,7 @@ class DatasetAgg():
     @staticmethod
     def _aggregate_sites(h5_fpath, dset, site_slice=None, freq='1d',
                          method='mean', time_index=None, year=None,
-                         **resample_kwargs):
+                         local_time=False, **resample_kwargs):
         """
         Aggregate given sites in dataset
 
@@ -113,6 +118,9 @@ class DatasetAgg():
         year : str | int, optional
             Year to extract time-index for if running on a multi-year file,
             by default None
+        local_time : bool
+            Flag to shift data to local time before aggregating temporal data.
+            Default is to stay in UTC.
         resample_kwargs : dict, optional
             Kwargs for pandas.DataFrame.resample
 
@@ -126,8 +134,13 @@ class DatasetAgg():
             time_index = get_time_index(h5_fpath, year=year)
 
         with Resource(h5_fpath) as f:
-            agg_data = pd.DataFrame(f[dset, :, site_slice], index=time_index)
+            arr = f[dset, :, site_slice]
 
+            if local_time:
+                timezones = f.get_meta_arr('timezone', rows=site_slice)
+                arr = roll_timeseries(arr, timezones)
+
+        agg_data = pd.DataFrame(arr, index=time_index)
         agg_data = agg_data.resample(freq, **resample_kwargs)
 
         if method.lower() == 'mean':
@@ -248,6 +261,7 @@ class DatasetAgg():
                                         method=method,
                                         time_index=self._time_index,
                                         year=self._year,
+                                        local_time=self._local_time,
                                         **resample_kwargs)
                     futures.append(future)
 
@@ -267,6 +281,7 @@ class DatasetAgg():
                     method=method,
                     time_index=self._time_index,
                     year=self._year,
+                    local_time=self._local_time,
                     **resample_kwargs)
                 logger.debug('Completed {} out of {} sets of sites'
                              .format((i + 1), len(slices)))
@@ -276,7 +291,7 @@ class DatasetAgg():
     @classmethod
     def run(cls, h5_fpath, dset, time_index=None, year=None, freq='1d',
             method='mean', max_workers=None, chunks_per_worker=5,
-            **resample_kwargs):
+            local_time=False, **resample_kwargs):
         """
         Temporally aggregate dataset to given frequency using given method
 
@@ -301,6 +316,9 @@ class DatasetAgg():
             available cores, by default None
         chunks_per_worker : int, optional
             Number of chunks to extract on each worker, by default 5
+        local_time : bool
+            Flag to shift data to local time before aggregating temporal data.
+            Default is to stay in UTC.
         resample_kwargs : dict, optional
             Kwargs for pandas.DataFrame.resample
 
@@ -311,7 +329,8 @@ class DatasetAgg():
         """
         logger.info('Aggregating {} in {} to {} using {}'
                     .format(dset, h5_fpath, freq, method))
-        agg = cls(h5_fpath, dset, time_index=time_index, year=year)
+        agg = cls(h5_fpath, dset, time_index=time_index, year=year,
+                  local_time=local_time)
         agg_dset = agg.aggregate(freq=freq, method=method,
                                  max_workers=max_workers,
                                  chunks_per_worker=chunks_per_worker,
@@ -325,7 +344,7 @@ class TemporalAgg():
     Class to temporally aggregate time-series data
     """
     def __init__(self, src_fpath, dst_fpath, freq='1d', dsets=None, year=None,
-                 **resample_kwargs):
+                 local_time=False, **resample_kwargs):
         """
         Parameters
         ----------
@@ -341,12 +360,16 @@ class TemporalAgg():
         year : str | int, optional
             Year to extract time-index and datasets for, needed  if running
             on a multi-year file, by default None
+        local_time : bool
+            Flag to shift data to local time before aggregating temporal data.
+            Default is to stay in UTC.
         resample_kwargs : dict, optional
             Kwargs for pandas.DataFrame.resample
         """
         self._src_fpath = src_fpath
         self._dst_fpath = dst_fpath
         self._freq = freq
+        self._local_time = local_time
         self._dsets, self._time_index = self._get_dsets(src_fpath, dsets=dsets,
                                                         year=year)
         self._resample_kwargs = resample_kwargs
@@ -479,6 +502,7 @@ class TemporalAgg():
                                     method=method,
                                     max_workers=max_workers,
                                     chunks_per_worker=chunks_per_worker,
+                                    local_time=self._local_time,
                                     **self._resample_kwargs)
             with Outputs(self._dst_fpath, mode='a') as f:
                 logger.info('Writing aggregated data for {} to disk'
@@ -488,7 +512,7 @@ class TemporalAgg():
     @classmethod
     def run(cls, src_fpath, dst_fpath, freq='1d', dsets=None, year=None,
             method='mean', max_workers=None, chunks_per_worker=5,
-            **resample_kwargs):
+            local_time=False, **resample_kwargs):
         """
         Temporally aggregate the desired datasets in the src .h5 file to the
         given frequency using the given method. Save the aggregated datasets
@@ -515,12 +539,15 @@ class TemporalAgg():
             available cores, by default None
         chunks_per_worker : int, optional
             Number of chunks to extract on each worker, by default 5
+        local_time : bool
+            Flag to shift data to local time before aggregating temporal data.
+            Default is to stay in UTC.
         resample_kwargs : dict, optional
             Kwargs for pandas.DataFrame.resample
         """
         logger.info('Aggregating datasets in {} to {} using {} and saving to '
                     '{}'.format(src_fpath, freq, method, dst_fpath))
         agg = cls(src_fpath, dst_fpath, freq=freq, dsets=dsets, year=year,
-                  **resample_kwargs)
+                  local_time=local_time, **resample_kwargs)
         agg.aggregate(method=method, max_workers=max_workers,
                       chunks_per_worker=chunks_per_worker)
