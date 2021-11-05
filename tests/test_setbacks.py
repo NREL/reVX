@@ -118,9 +118,11 @@ def test_setback_preflight_check():
 
 def test_cli(runner):
     """
-    Test CLI
+    Test CLI. Use the RI rails as test case, using all structures results
+    in suspected mem error on github actions.
     """
-    structure_dir = os.path.join(TESTDATADIR, 'setbacks')
+    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                             'RI_Railroads.shp')
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(REGS_FPATH)
         regs_fpath = os.path.join(td, regs_fpath)
@@ -134,8 +136,8 @@ def test_cli(runner):
                 "option": "local"
             },
             "excl_fpath": EXCL_H5,
-            "feature_type": "structure",
-            "features_path": structure_dir,
+            "feature_type": "rail",
+            "features_path": rail_path,
             "hub_height": HUB_HEIGHT,
             "log_level": "INFO",
             "regs_fpath": regs_fpath,
@@ -152,13 +154,13 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        baseline = os.path.join(TESTDATADIR, 'setbacks',
-                                'generic_structures.tif')
-        with Geotiff(baseline) as tif:
-            baseline = tif.values
+        baseline_fp = os.path.join(TESTDATADIR, 'setbacks',
+                                   'existing_rails.tif')
+        test_fp = os.path.join(td, 'RI_Railroads.tif')
 
-        test = os.path.join(td, 'RhodeIsland.tif')
-        with Geotiff(test) as tif:
+        with Geotiff(baseline_fp) as tif:
+            baseline = tif.values
+        with Geotiff(test_fp) as tif:
             test = tif.values
 
         np.allclose(baseline, test)
