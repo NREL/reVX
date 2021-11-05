@@ -16,18 +16,29 @@ WIND_H5 = os.path.join(TESTDATADIR, 'hybrid_stats', 'hybrid_wind_2012.h5')
 DATASET = 'cf_profile'
 
 
-@pytest.mark.parametrize(("max_workers", "h5_fpath"),
-                         [(1, SOLAR_H5),
-                          (1, WIND_H5),
-                          (None, SOLAR_H5),
-                          (None, WIND_H5)])
-def test_temporal_agg(max_workers, h5_fpath):
+@pytest.mark.parametrize(("max_workers", "h5_fpath", "local_time"),
+                         [(1, SOLAR_H5, False),
+                          (1, SOLAR_H5, True),
+                          (1, WIND_H5, True),
+                          (None, SOLAR_H5, False),
+                          (None, WIND_H5, True)])
+def test_temporal_agg(max_workers, h5_fpath, local_time):
     """
     Test Dataset Aggregation
     """
     with Resource(h5_fpath) as f:
         time_index = f.time_index
-        data = pd.DataFrame(f[DATASET], index=time_index)
+        meta = f.meta
+        timezones = meta['timezone'].values
+        arr = f[DATASET]
+
+    if local_time:
+        for tz in np.unique(timezones):
+            mask = timezones == tz
+            time_step = len(arr) // 8760
+            arr[:, mask] = np.roll(arr[:, mask], int(tz * time_step), axis=0)
+
+    data = pd.DataFrame(arr, index=time_index)
 
     truth = []
     for _, day in data.groupby(data.index.dayofyear):
@@ -36,7 +47,8 @@ def test_temporal_agg(max_workers, h5_fpath):
     truth = np.vstack(truth)
 
     test = DatasetAgg.run(h5_fpath, DATASET, time_index=time_index, freq='1d',
-                          method='mean', max_workers=max_workers)
+                          method='mean', max_workers=max_workers,
+                          local_time=local_time)
 
     assert np.allclose(truth, test), f"{DATASET} aggregated to 1day failed"
 
