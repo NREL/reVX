@@ -6,7 +6,7 @@ import logging
 import numpy as np
 
 from reV.supply_curve.aggregation import Aggregation, AggFileHandler
-from reV.supply_curve.points import SupplyCurveExtent
+from reV.supply_curve.extent import SupplyCurveExtent
 from reV.utilities.exceptions import EmptySupplyCurvePointError
 from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
 from reVX.utilities.utilities import log_versions

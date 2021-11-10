@@ -9,7 +9,7 @@ import os
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
-from reV.supply_curve.points import SupplyCurveExtent
+from reV.supply_curve.extent import SupplyCurveExtent
 from reV.supply_curve.tech_mapping import TechMapping
 from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
 from reVX.utilities.exclusions_converter import ExclusionsConverter

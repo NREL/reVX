@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from reV.supply_curve.aggregation import Aggregation
-from reV.supply_curve.points import SupplyCurveExtent
+from reV.supply_curve.extent import SupplyCurveExtent
 from reVX.utilities.utilities import log_versions
 from rex.utilities.utilities import row_col_indices
 
