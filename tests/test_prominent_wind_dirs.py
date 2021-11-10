@@ -13,7 +13,7 @@ import tempfile
 import traceback
 
 from rex.utilities.loggers import LOGGERS
-from reV.supply_curve.points import SupplyCurveExtent
+from reV.supply_curve.extent import SupplyCurveExtent
 
 from reVX import TESTDATADIR
 from reVX.wind_dirs.prominent_wind_dirs import (ProminentWindDirections,

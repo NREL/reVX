@@ -17,7 +17,7 @@ from shapely.geometry import Point
 import time
 
 from reV.handlers.exclusions import ExclusionLayers
-from reV.supply_curve.points import SupplyCurveExtent
+from reV.supply_curve.extent import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
