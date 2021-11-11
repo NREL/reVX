@@ -336,7 +336,7 @@ class TurbineFlicker:
             excl_fpath, building_layer, point.name,
             resolution=resolution, building_threshold=building_threshold)
 
-        with WindX(res_fpath) as f:
+        with WindX(res_fpath, log_vers=False) as f:
             dset = 'winddirection_{}m'.format(hub_height)
             wind_dir = f[dset, :, int(point['res_gid'])]
 
