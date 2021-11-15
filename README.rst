@@ -54,13 +54,13 @@ conda env:
 
 .. code-block:: bash
 
-    conda activate /shared-projects/rev/modulefiles/conda_env
+    conda activate /shared-projects/rev/modulefiles/conda/envs/rev/
 
 or
 
 .. code-block:: bash
 
-    source activate /shared-projects/rev/modulefiles/conda_env
+    source activate /shared-projects/rev/modulefiles/conda/envs/rev/
 
 .. or module:
 
@@ -69,7 +69,7 @@ or
 ..     module use /shared-projects/rev/modulefiles
 ..     module load reVX
 
-.. **NOTE: Loading the reVX module can take several minutes**
+.. **NOTE: Loading the reV module via "module use/load" can take several minutes**
 
 Installing reVX
 ===============
