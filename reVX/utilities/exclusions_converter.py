@@ -384,7 +384,8 @@ class ExclusionsConverter:
 
         if scale_factor is not None:
             attrs = {'scale_factor': scale_factor}
-            values = Outputs._check_data_dtype(values, dtype, attrs=attrs)
+            values = Outputs._check_data_dtype(layer, values, dtype,
+                                               attrs=attrs)
 
         cls._write_layer(excl_h5, layer, profile, values,
                          chunks=chunks, description=description,
