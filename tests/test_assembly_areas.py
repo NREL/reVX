@@ -60,9 +60,7 @@ def test_cli(runner):
         excl_fpath = os.path.join(td, excl_fpath)
         shutil.copy(EXCL_H5, excl_fpath)
         config = {
-            "directories": {
-                "log_directory": td,
-            },
+            "log_directory": td,
             "execution_control": {
                 "option": "local"
             },
