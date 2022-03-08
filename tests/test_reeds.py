@@ -432,10 +432,7 @@ def test_cli(runner, trg_classes):
         trg_classes.to_csv(res_classes, index=False)
 
         config = {
-            "directories": {
-                "log_directory": td,
-                "output_directory": td
-            },
+            "log_directory": td,
             "execution_control": {
                 "option": "local"
             },

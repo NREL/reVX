@@ -66,7 +66,7 @@ def run_local(ctx, config):
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
                out_dir=config.dirout,
-               log_dir=config.logdir)
+               log_dir=config.log_directory)
 
     if config.classify is not None:
         ctx.invoke(classify,
@@ -379,7 +379,7 @@ def get_node_cmd(config):
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-o {}'.format(SLURM.s(config.dirout)),
-            '-log {}'.format(SLURM.s(config.logdir)),
+            '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
     if config.log_level == logging.DEBUG:
@@ -447,7 +447,7 @@ def eagle(config):
 
     cmd = get_node_cmd(config)
     name = config.name
-    log_dir = config.logdir
+    log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
 
     logger.info('Running reVX-REEDS pipeline on Eagle with '

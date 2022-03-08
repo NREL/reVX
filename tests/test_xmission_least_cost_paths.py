@@ -96,10 +96,7 @@ def test_cli(runner):
 
     with tempfile.TemporaryDirectory() as td:
         config = {
-            "directories": {
-                "log_directory": td,
-                "output_directory": td
-            },
+            "log_directory": td,
             "execution_control": {
                 "option": "local",
             },

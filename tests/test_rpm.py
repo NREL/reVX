@@ -182,11 +182,7 @@ def test_cli(runner):
     """
     with tempfile.TemporaryDirectory() as td:
         config = {
-            "name": JOB_TAG,
-            "directories": {
-                "log_directory": td,
-                "output_directory": td
-            },
+            "log_directory": td,
             "execution_control": {
                 "option": "local"
             },
@@ -212,10 +208,11 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
-                                         .format(JOB_TAG))
-        TEST_PROFILES = os.path.join(td, 'rpm_rep_profiles_{}_rank0.csv'
-                                         .format(JOB_TAG))
+        job_tag = os.path.basename(td)
+        TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}_RPM.csv'
+                                         .format(job_tag))
+        TEST_PROFILES = os.path.join(td, 'rpm_rep_profiles_{}_RPM_rank0.csv'
+                                         .format(job_tag))
 
         check_clusters(BASELINE_CLUSTERS, TEST_CLUSTERS)
         check_profiles(BASELINE_PROFILES, TEST_PROFILES)

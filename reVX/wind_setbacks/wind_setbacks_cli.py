@@ -357,7 +357,7 @@ def get_node_cmd(name, config):
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
             '-mult {}'.format(SLURM.s(config.multiplier)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
-            '-log {}'.format(SLURM.s(config.logdir)),
+            '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
     if config.replace:
@@ -398,7 +398,7 @@ def launch_job(config):
     config : reVX.config.wind_setbacks.WindSetbacks
         Wind Setbacks config object.
     """
-    log_dir = config.logdir
+    log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
     name = os.path.basename(config.features_path).split('.')[0]
     name = "{}-{}".format(config.name, name)
