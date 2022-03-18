@@ -128,10 +128,7 @@ def test_cli(runner):
                          os.path.join(TESTDATADIR, 'xmission',
                                       'ri_trans_barriers.tif')}}
         config = {
-            "directories": {
-                "log_directory": td,
-                "output_directory": td
-            },
+            "log_directory": td,
             "execution_control": {
                 "option": "local",
             },

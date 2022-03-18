@@ -66,7 +66,7 @@ def run_local(ctx, config):
                default_mults=config.default_mults,
                tiff_dir=config.tiff_dir,
                extra_layers=config.extra_layers,
-               log_dir=config.logdir,
+               log_dir=config.log_directory,
                verbose=config.log_level)
 
 
@@ -188,7 +188,7 @@ def get_node_cmd(config):
             '-dm {}'.format(SLURM.s(config.default_mults)),
             '-tiff {}'.format(SLURM.s(config.tiff_dir)),
             '-lyrs {}'.format(SLURM.s(config.extra_layers)),
-            '-log {}'.format(SLURM.s(config.logdir)),
+            '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
     if config.log_level == logging.DEBUG:
@@ -213,7 +213,7 @@ def eagle(config):
 
     cmd = get_node_cmd(config)
     name = config.name
-    log_dir = config.logdir
+    log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
 
     slurm_manager = SLURM()

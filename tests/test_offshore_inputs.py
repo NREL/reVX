@@ -71,10 +71,7 @@ def test_cli(runner):
             json.dump({'input_layers': INPUT_LAYERS}, f)
 
         config = {
-            "directories": {
-                "log_directory": td,
-                "output_directory": td
-            },
+            "log_directory": td,
             "execution_control": {
                 "option": "local"
             },

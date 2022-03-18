@@ -132,9 +132,7 @@ def test_cli(runner, ports_layer):
     """
     with tempfile.TemporaryDirectory() as td:
         config = {
-            "directories": {
-                "log_directory": td,
-            },
+            "log_directory": td,
             "execution_control": {
                 "option": "local",
                 "max_workers": 1

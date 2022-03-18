@@ -68,7 +68,7 @@ def run_local(ctx, config):
                barrier_mult=config.barrier_mult,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
-               log_dir=config.logdir,
+               log_dir=config.log_directory,
                verbose=config.log_level)
 
 
@@ -201,7 +201,7 @@ def get_node_cmd(config):
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
-            '-log {}'.format(SLURM.s(config.logdir)),
+            '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
     if config.log_level == logging.DEBUG:
@@ -226,7 +226,7 @@ def eagle(config):
 
     cmd = get_node_cmd(config)
     name = config.name
-    log_dir = config.logdir
+    log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
 
     slurm_manager = SLURM()

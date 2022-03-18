@@ -64,7 +64,7 @@ def run_local(ctx, config):
     ctx.invoke(local,
                out_dir=config.dirout,
                cf_profiles=config.cf_profiles,
-               log_dir=config.logdir,
+               log_dir=config.log_directory,
                max_workers=config.execution_control.max_workers)
 
     if config.cluster is not None:
@@ -291,7 +291,7 @@ def get_node_cmd(config):
             '-o {}'.format(SLURM.s(config.dirout)),
             '-cf {}'.format(SLURM.s(config.cf_profiles)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
-            '-log {}'.format(SLURM.s(config.logdir)),
+            '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
     if config.log_level == logging.DEBUG:
@@ -344,7 +344,7 @@ def eagle(config):
 
     cmd = get_node_cmd(config)
     name = config.name
-    log_dir = config.logdir
+    log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
 
     logger.info('Running reVX-RPM pipeline on Eagle with '

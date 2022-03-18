@@ -70,10 +70,7 @@ def test_cli(runner, excl_dict, baseline_name):
 
     with tempfile.TemporaryDirectory() as td:
         config = {
-            "directories": {
-                "log_directory": td,
-                "output_directory": td
-            },
+            "log_directory": td,
             "excl_fpath": EXCL_H5,
             "excl_dict": excl_dict,
             "execution_control": {

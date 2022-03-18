@@ -60,7 +60,7 @@ def run_local(ctx, config):
                assembly_areas=config.assembly_areas,
                excl_fpath=config.excl_fpath,
                ports_dset=config.ports_dset,
-               log_dir=config.logdir,
+               log_dir=config.log_directory,
                verbose=config.log_level)
 
 
@@ -149,7 +149,7 @@ def get_node_cmd(config):
             '-areas {}'.format(SLURM.s(config.assembly_areas)),
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
             '-ports {}'.format(SLURM.s(config.ports_dset)),
-            '-log {}'.format(SLURM.s(config.logdir)),
+            '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
     if config.log_level == logging.DEBUG:
@@ -174,7 +174,7 @@ def eagle(config):
 
     cmd = get_node_cmd(config)
     name = config.name
-    log_dir = config.logdir
+    log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
 
     slurm_manager = SLURM()

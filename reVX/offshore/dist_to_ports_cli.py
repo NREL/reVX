@@ -62,7 +62,7 @@ def run_local(ctx, config):
                input_dist_layer=config.input_dist_layer,
                max_workers=config.execution_control.max_workers,
                replace=config.replace,
-               log_dir=config.logdir,
+               log_dir=config.log_directory,
                verbose=config.log_level)
 
 
@@ -163,7 +163,7 @@ def get_node_cmd(config):
             '-idl {}'.format(SLURM.s(config.input_dist_layer)),
             '-odl {}'.format(SLURM.s(config.output_dist_layer)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
-            '-log {}'.format(SLURM.s(config.logdir)),
+            '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
     if config.replace:
@@ -191,7 +191,7 @@ def eagle(config):
 
     cmd = get_node_cmd(config)
     name = config.name
-    log_dir = config.logdir
+    log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
 
     slurm_manager = SLURM()

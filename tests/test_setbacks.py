@@ -128,10 +128,7 @@ def test_cli(runner):
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(REGS_FPATH, regs_fpath)
         config = {
-            "directories": {
-                "log_directory": td,
-                "output_directory": td
-            },
+            "log_directory": td,
             "execution_control": {
                 "option": "local"
             },
