@@ -599,6 +599,31 @@ class BaseSetbacks(ABC):
 
         return setbacks
 
+    @staticmethod
+    def _get_feature_paths(features_path):
+        """Ensure features path exists and return as list.
+
+        Parameters
+        ----------
+        features_path : str
+            Path to features file.
+
+        Returns
+        -------
+        features_path : list
+            Features path as a list.
+
+        Notes
+        -----
+        This method is currently required for the setbacks cli.
+        """
+        if not os.path.exists(features_path):
+            msg = '{} is not a valid file path!'.format(features_path)
+            logger.error(msg)
+            raise FileNotFoundError(msg)
+
+        return [features_path]
+
 
 class BaseWindSetbacks(BaseSetbacks):
     """
@@ -1122,28 +1147,6 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         setbacks = [(geom, 1) for geom in tmp['geometry']]
 
         return setbacks
-
-    @staticmethod
-    def _get_feature_paths(features_path):
-        """
-        Ensure features path is valid
-
-        Parameters
-        ----------
-        features_path : str
-            Path to features file
-
-        Returns
-        -------
-        features_path : list
-            Features path as a list
-        """
-        if not os.path.exists(features_path):
-            msg = '{} is not a valid file path!'.format(features_path)
-            logger.error(msg)
-            raise FileNotFoundError(msg)
-
-        return [features_path]
 
     def _parse_regs(self, regs_fpath):
         """
