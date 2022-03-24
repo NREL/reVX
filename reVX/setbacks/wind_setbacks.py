@@ -11,7 +11,7 @@ from warnings import warn
 
 from rex.utilities import log_mem
 from reV.handlers.exclusions import ExclusionLayers
-from reVX.wind_setbacks.base import BaseSetbacks
+from reVX.setbacks.base import BaseSetbacks
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.utilities import log_versions
 

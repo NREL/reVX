@@ -5,7 +5,7 @@ Compute setbacks exclusions
 import logging
 import os
 
-from reVX.wind_setbacks.base import BaseSetbacks
+from reVX.setbacks.base import BaseSetbacks
 
 
 logger = logging.getLogger(__name__)

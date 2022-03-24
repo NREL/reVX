@@ -1,3 +1,3 @@
-.. click:: reVX.wind_setbacks.wind_setbacks_cli:main
-   :prog: wind-setbacks
+.. click:: reVX.setbacks.setbacks_cli:main
+   :prog: setbacks
    :show-nested:

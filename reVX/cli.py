@@ -15,7 +15,7 @@ from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.forecasts import FcstUtils
 from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region_classifier import RegionClassifier
-from reVX.wind_setbacks.setbacks_converter import SetbacksConverter
+from reVX.setbacks.setbacks_converter import SetbacksConverter
 
 from reVX import __version__
 

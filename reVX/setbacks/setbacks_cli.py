@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=all
 """
-Wind Setbacks CLI
+Setbacks CLI
 """
 import click
 from copy import deepcopy
@@ -14,10 +14,10 @@ from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
 from reVX.config.setbacks import SetbacksConfig
-from reVX.wind_setbacks.wind_setbacks import (StructureWindSetbacks,
-                                              RoadWindSetbacks,
-                                              RailWindSetbacks,
-                                              TransmissionWindSetbacks)
+from reVX.setbacks import (StructureWindSetbacks,
+                           RoadWindSetbacks,
+                           RailWindSetbacks,
+                           TransmissionWindSetbacks)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -33,13 +33,13 @@ STATE_SETBACKS = {'structure': StructureWindSetbacks,
 @click.version_option(version=__version__)
 @click.option('--name', '-n', default=SetbacksConfig.NAME,
               type=STR, show_default=True,
-              help='Job name. Default is "WindSetbacks".')
+              help='Job name. Default is {!r}.'.format(SetbacksConfig.NAME))
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def main(ctx, name, verbose):
     """
-    Wind Setbacks Command Line Interface
+    Setbacks Command Line Interface
     """
     ctx.ensure_object(dict)
     ctx.obj['NAME'] = name
@@ -49,7 +49,7 @@ def main(ctx, name, verbose):
 @main.command()
 def valid_config_keys():
     """
-    Echo the valid Wind Setbacks config keys
+    Echo the valid Setbacks config keys
     """
     click.echo(', '.join(get_class_properties(SetbacksConfig)))
 
@@ -57,11 +57,11 @@ def valid_config_keys():
 @main.command()
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
-              help='Filepath to Wind Setbacks config json file.')
+              help='Filepath to Setbacks config json file.')
 @click.pass_context
 def from_config(ctx, config):
     """
-    Run Wind Setbacks from a config.
+    Run Setbacks from a config.
     """
     config = SetbacksConfig(config)
 
@@ -97,12 +97,12 @@ def from_config(ctx, config):
                     'setback distance'))
 @click.option('--regs_fpath', '-regs', default=None, type=STR,
               show_default=True,
-              help=('Path to wind regulations .csv file, if None create '
+              help=('Path to regulations .csv file, if None create '
                     'generic setbacks using max - tip height * "multiplier", '
                     'by default None'))
 @click.option('--multiplier', '-mult', default=None, type=FLOAT,
               show_default=True,
-              help=('setback multiplier to use if wind regulations are not '
+              help=('setback multiplier to use if regulations are not '
                     'supplied, if str, must a key in '
                     '{"high": 3, "moderate": 1.1}, if supplied along with '
                     'regs_fpath, will be ignored, multiplied with max-tip '
@@ -129,7 +129,7 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
           regs_fpath, multiplier, max_workers, replace, hsds, log_dir,
           verbose):
     """
-    Compute Wind Setbacks locally
+    Compute Setbacks locally
     """
     ctx.obj['excl_fpath'] = excl_fpath
     ctx.obj['FEATURES_PATH'] = features_path
@@ -153,7 +153,7 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
 @click.pass_context
 def structure_setbacks(ctx):
     """
-    Compute wind setbacks from structures
+    Compute setbacks from structures
     """
     excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
@@ -189,7 +189,7 @@ def structure_setbacks(ctx):
 @click.pass_context
 def road_setbacks(ctx):
     """
-    Compute wind setbacks from roads
+    Compute setbacks from roads
     """
     excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
@@ -225,7 +225,7 @@ def road_setbacks(ctx):
 @click.pass_context
 def transmission_setbacks(ctx):
     """
-    Compute wind setbacks from transmission
+    Compute setbacks from transmission
     """
     excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
@@ -264,7 +264,7 @@ def transmission_setbacks(ctx):
 @click.pass_context
 def rail_setbacks(ctx):
     """
-    Compute wind setbacks from railroads
+    Compute setbacks from railroads
     """
     excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
@@ -298,14 +298,14 @@ def rail_setbacks(ctx):
 
 def run_local(ctx, config):
     """
-    Run Wind Setbacks locally from config
+    Run Setbacks locally from config
 
     Parameters
     ----------
     ctx : click.ctx
         click ctx object
-    config : reVX.config.wind_setbacks.WindSetbacks
-        Wind Setbacks config object.
+    config : `reVX.config.setbacks.SetbacksConfig`
+        Setbacks config object.
     """
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
@@ -336,12 +336,12 @@ def run_local(ctx, config):
 
 def get_node_cmd(name, config):
     """
-    Get the node CLI call for the Wind Setbacks computation
+    Get the node CLI call for the Setbacks computation
 
     Parameters
     ----------
-    config : reVX.config.wind_setbacks.WindSetbacks
-        Wind Setbacks config object.
+    config : `reVX.config.setbacks.SetbacksConfig`
+        Setbacks config object.
 
     Returns
     -------
@@ -384,7 +384,7 @@ def get_node_cmd(name, config):
         msg = 'Feature type must be one of {}'.format(options)
         raise RuntimeError(msg)
 
-    cmd = ('python -m reVX.wind_setbacks.wind_setbacks_cli {}'
+    cmd = ('python -m reVX.setbacks.setbacks_cli {}'
            .format(' '.join(args)))
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
 
@@ -397,8 +397,8 @@ def launch_job(config):
 
     Parameters
     ----------
-    config : reVX.config.wind_setbacks.WindSetbacks
-        Wind Setbacks config object.
+    config : `reVX.config.setbacks.SetbacksConfig`
+        Setbacks config object.
     """
     log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
@@ -406,7 +406,7 @@ def launch_job(config):
     name = "{}-{}".format(config.name, name)
     cmd = get_node_cmd(name, config)
 
-    logger.info('Computing Wind Setbacks on Eagle with '
+    logger.info('Computing Setbacks on Eagle with '
                 'node name "{}"'.format(name))
     slurm_manager = SLURM()
     out = slurm_manager.sbatch(cmd,
@@ -419,11 +419,11 @@ def launch_job(config):
                                conda_env=config.execution_control.conda_env,
                                module=config.execution_control.module)[0]
     if out:
-        msg = ('Kicked off Wind Setbacks job "{}" '
+        msg = ('Kicked off Setbacks job "{}" '
                '(SLURM jobid #{}) on Eagle.'
                .format(name, out))
     else:
-        msg = ('Was unable to kick off Wind Setbacks job "{}". '
+        msg = ('Was unable to kick off Setbacks job "{}". '
                'Please see the stdout error messages'
                .format(name))
 
@@ -433,12 +433,12 @@ def launch_job(config):
 
 def eagle(config):
     """
-    Run Wind Setbacks on Eagle HPC.
+    Run Setbacks on Eagle HPC.
 
     Parameters
     ----------
-    config : reVX.config.wind_setbacks.WindSetbacks
-        Wind Setbacks config object.
+    config : `reVX.config.setbacks.SetbacksConfig`
+        Setbacks config object.
     """
     features_path = config.features_path
     cls = STATE_SETBACKS[config.feature_type]
@@ -459,5 +459,5 @@ if __name__ == '__main__':
     try:
         main(obj={})
     except Exception:
-        logger.exception('Error running Wind Setbacks CLI')
+        logger.exception('Error running Setbacks CLI')
         raise

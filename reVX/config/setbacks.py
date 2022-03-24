@@ -78,7 +78,7 @@ class SetbacksConfig(AnalysisConfig):
 
     @property
     def regs_fpath(self):
-        """Get wind regulations .csv path"""
+        """Get regulations .csv path"""
         return self.get('regs_fpath', None)
 
     @property

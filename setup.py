@@ -62,12 +62,11 @@ setup(
                             "reV-rpm=reVX.rpm.rpm_cli:main",
                             "reV-plexos=reVX.plexos.rev_reeds_plexos_cli:main",
                             "plexos-plants=reVX.plexos.plexos_plants_cli:main",
+                            "setbacks=reVX.setbacks.setbacks_cli:main",
                             ("prominent-wind-dirs=reVX.wind_dirs."
                              "prominent_wind_dirs_cli:main"),
                             ("mean-wind-dirs=reVX.wind_dirs."
                              "mean_wind_dirs_cli:main"),
-                            ("wind-setbacks=reVX.wind_setbacks."
-                             "wind_setbacks_cli:main"),
                             ("offshore-dist-to-ports=reVX.offshore."
                              "dist_to_ports_cli:main"),
                             ("offshore-assembly-areas=reVX.offshore."

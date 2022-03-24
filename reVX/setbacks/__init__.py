@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 """
-Compute wind setbacks
+Compute setbacks
 """
 from .wind_setbacks import (StructureWindSetbacks, RoadWindSetbacks,
                             RailWindSetbacks, TransmissionWindSetbacks)
