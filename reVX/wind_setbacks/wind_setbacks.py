@@ -592,29 +592,29 @@ class BaseSetbacks(ABC):
         return setbacks
 
     @staticmethod
-    def _get_feature_paths(features_path):
+    def _get_feature_paths(features_fpath):
         """Ensure features path exists and return as list.
 
         Parameters
         ----------
-        features_path : str
+        features_fpath : str
             Path to features file.
 
         Returns
         -------
-        features_path : list
+        features_fpath : list
             Features path as a list.
 
         Notes
         -----
         This method is currently required for the setbacks cli.
         """
-        if not os.path.exists(features_path):
-            msg = '{} is not a valid file path!'.format(features_path)
+        if not os.path.exists(features_fpath):
+            msg = '{} is not a valid file path!'.format(features_fpath)
             logger.error(msg)
             raise FileNotFoundError(msg)
 
-        return [features_path]
+        return [features_fpath]
 
 
 class BaseWindSetbacks(BaseSetbacks):
@@ -785,13 +785,13 @@ class StructureWindSetbacks(BaseWindSetbacks):
         return state_name
 
     @staticmethod
-    def _get_feature_paths(structures_path):
+    def _get_feature_paths(features_fpath):
         """
         Find all structures .geojson files in structures dir
 
         Parameters
         ----------
-        structure_path : str
+        features_fpath : str
             Path to structures geojson for a single state, or directory
             containing geojsons for all states. Used to identify structures to
             build setbacks from. Files should be by state
@@ -802,13 +802,13 @@ class StructureWindSetbacks(BaseWindSetbacks):
             List of file paths to all structures .geojson files in
             structures_dir
         """
-        if structures_path.endswith('.geojson'):
-            file_paths = [structures_path]
+        if features_fpath.endswith('.geojson'):
+            file_paths = [features_fpath]
         else:
             file_paths = []
-            for file in sorted(os.listdir(structures_path)):
+            for file in sorted(os.listdir(features_fpath)):
                 if file.endswith('.geojson'):
-                    file_paths.append(os.path.join(structures_path, file))
+                    file_paths.append(os.path.join(features_fpath, file))
 
         return file_paths
 
@@ -958,13 +958,13 @@ class RoadWindSetbacks(BaseWindSetbacks):
         return roads.to_crs(crs=self.crs)
 
     @staticmethod
-    def _get_feature_paths(roads_path):
+    def _get_feature_paths(features_fpath):
         """
         Find all roads gdb files in roads_dir
 
         Parameters
         ----------
-        roads_path : str
+        features_fpath : str
             Path to state here streets gdb file or directory containing
             states gdb files. Used to identify roads to build setbacks from.
             Files should be by state
@@ -974,13 +974,13 @@ class RoadWindSetbacks(BaseWindSetbacks):
         file_paths : list
             List of file paths to all roads .gdp files in roads_dir
         """
-        if roads_path.endswith('.gdb'):
-            file_paths = [roads_path]
+        if features_fpath.endswith('.gdb'):
+            file_paths = [features_fpath]
         else:
             file_paths = []
-            for file in sorted(os.listdir(roads_path)):
+            for file in sorted(os.listdir(features_fpath)):
                 if file.endswith('.gdb') and file.startswith('Streets_USA'):
-                    file_paths.append(os.path.join(roads_path, file))
+                    file_paths.append(os.path.join(features_fpath, file))
 
         return file_paths
 
@@ -1290,7 +1290,7 @@ class ParcelSetbacks(BaseSetbacks):
             )
         ]
 
-        return  self._rasterize_setbacks(setbacks)
+        return self._rasterize_setbacks(setbacks)
 
     @classmethod
     def run(cls, excl_fpath, roads_path, out_dir, plant_height,
