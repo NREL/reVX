@@ -115,7 +115,7 @@ def from_config(ctx, config):
                     'by default None'))
 @click.option('--replace', '-r', is_flag=True,
               help=('Flag to replace local layer data with arr if layer '
-                    'already exists in the exlcusion .h5 file'))
+                    'already exists in the exclusion .h5 file'))
 @click.option('--hsds', '-hsds', is_flag=True,
               help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
                     'behind HSDS'))
@@ -182,7 +182,7 @@ def structure_setbacks(ctx):
                               rotor_diameter, regulations_fpath=regs_fpath,
                               multiplier=multiplier, max_workers=max_workers,
                               replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and writen {}'.format(out_dir))
+    logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
 @local.command()
@@ -218,7 +218,7 @@ def road_setbacks(ctx):
                          rotor_diameter, regulations_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
                          replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and writen {}'.format(out_dir))
+    logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
 @local.command()
@@ -257,7 +257,7 @@ def transmission_setbacks(ctx):
                                  max_workers=max_workers,
                                  replace=replace,
                                  hsds=hsds)
-    logger.info('Setbacks computed and writen {}'.format(out_dir))
+    logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
 @local.command()
@@ -293,7 +293,7 @@ def rail_setbacks(ctx):
                          rotor_diameter, regulations_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
                          replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and writen {}'.format(out_dir))
+    logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
 def run_local(ctx, config):
