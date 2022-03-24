@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Wind Setbacks tests
+Setbacks tests
 """
 from click.testing import CliRunner
 import json
@@ -16,12 +16,13 @@ from rex.utilities.loggers import LOGGERS
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.wind_setbacks import (StructureWindSetbacks,
-                                RailWindSetbacks)
+                                RailWindSetbacks, ParcelSetbacks)
 from reVX.wind_setbacks.wind_setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
 HUB_HEIGHT = 135
 ROTOR_DIAMETER = 200
+PLANT_HEIGHT = 1
 MULTIPLIER = 3
 REGS_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
 REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
@@ -105,6 +106,50 @@ def test_local_railroads(max_workers):
     test = setbacks.compute_setbacks(rail_path, max_workers=max_workers)
 
     assert np.allclose(baseline, test)
+
+
+def test_generic_parcels():
+    """Test generic parcel setbacks. """
+
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'RI_Parcels.gpkg')
+    setbacks_x1 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regs_fpath=None,
+                                 multiplier=1)
+    test_x1 = setbacks_x1.compute_setbacks(parcel_path)
+
+    setbacks_x100 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regs_fpath=None,
+                                   multiplier=100)
+    test_x100 = setbacks_x100.compute_setbacks(parcel_path)
+
+    # when the setbacks are so large that they span the entire parcels,
+    # a total of 43 regions should be excluded for this particular
+    # Rhode Island subset
+    assert test_x100.sum() == 43
+
+    # Exclusions of smaller multiplier should be subset of exclusions
+    # of larger multiplier
+    x1_coords = set(zip(*np.where(test_x1)))
+    x100_coords = set(zip(*np.where(test_x100)))
+    assert x1_coords <= x100_coords
+
+
+def test_generic_parcels_with_invalid_shape_input():
+    """Test generic parcel setbacks but with an inalid shape input. """
+
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'RI_Parcels_invalid.gpkg')
+    setbacks = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regs_fpath=None,
+                              multiplier=100)
+
+    # Ensure data we are using contains invalid shapes
+    parcels = setbacks._parse_features(parcel_path)
+    assert not parcels.geometry.is_valid.any()
+
+    # This code would throw an error if invalid shape not handled properly
+    test = setbacks.compute_setbacks(parcel_path)
+
+    # add a test for expected output
+    assert not test.any()
 
 
 def test_setback_preflight_check():

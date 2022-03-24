@@ -4,4 +4,5 @@
 Compute wind setbacks
 """
 from .wind_setbacks import (StructureWindSetbacks, RoadWindSetbacks,
-                            RailWindSetbacks, TransmissionWindSetbacks)
+                            RailWindSetbacks, TransmissionWindSetbacks,
+                            ParcelSetbacks)

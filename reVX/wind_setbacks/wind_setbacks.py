@@ -53,11 +53,11 @@ class BaseSetbacks(ABC):
             size in excl_fpath, by default (128, 128)
         """
         log_versions(logger)
+        self._plant_height = plant_height
         self._excl_fpath = excl_fpath
         self._hsds = hsds
-        self._plant_height = plant_height
-        self._shape, self._chunks, self._profile = \
-            self._parse_excl_properties(excl_fpath, chunks, hsds=hsds)
+        excl_props = self._parse_excl_properties(excl_fpath, chunks, hsds=hsds)
+        self._shape, self._chunks, self._profile = excl_props
 
         self._regs, self._multi = self._preflight_check(regs_fpath, multiplier)
 
@@ -250,25 +250,24 @@ class BaseSetbacks(ABC):
 
     @property
     def generic_setback(self):
-        """
-        Default setback of plant height * multiplier, used for global
-        setbacks
+        """Default setback of plant height * multiplier.
+
+        This value is used for global setbacks.
 
         Returns
         -------
         float
         """
-        if self._multi is None:
+        if self.multiplier is None:
             setback = None
         else:
-            setback = self.plant_height * self._multi
+            setback = self.plant_height * self.multiplier
 
         return setback
 
     @property
     def multiplier(self):
-        """
-        Generic setback multiplier
+        """Generic setback multiplier.
 
         Returns
         -------
@@ -278,8 +277,7 @@ class BaseSetbacks(ABC):
 
     @property
     def arr_shape(self):
-        """
-        Rasterize array shape
+        """Rasterize array shape.
 
         Returns
         -------
@@ -289,8 +287,7 @@ class BaseSetbacks(ABC):
 
     @property
     def profile(self):
-        """
-        Geotiff profile
+        """Geotiff profile.
 
         Returns
         -------
@@ -300,8 +297,7 @@ class BaseSetbacks(ABC):
 
     @property
     def crs(self):
-        """
-        Coordinate reference system
+        """Coordinate reference system.
 
         Returns
         -------
@@ -311,8 +307,7 @@ class BaseSetbacks(ABC):
 
     @property
     def regulations(self):
-        """
-        Regulations table.
+        """Regulations table.
 
         Returns
         -------
@@ -320,16 +315,13 @@ class BaseSetbacks(ABC):
         """
         return self._regs
 
-    @staticmethod
-    def _parse_features(features_fpath, crs):
+    def _parse_features(self, features_fpath):
         """Abstract method to parse features.
 
         Parameters
         ----------
         features_fpath : str
             Path to file containing features to setback from.
-        crs : str
-            Coordinate reference system to convert structures geometries into
 
         Returns
         -------
@@ -337,7 +329,7 @@ class BaseSetbacks(ABC):
             Geometries of features to setback from in exclusion coordinate
             system
         """
-        return gpd.read_file(features_fpath).to_crs(crs=crs)
+        return gpd.read_file(features_fpath).to_crs(crs=self.crs)
 
     def _check_regs(self, features_fpath):  # pylint: disable=unused-argument
         """Reduce regs to state corresponding to features_fpath if needed.
@@ -493,7 +485,7 @@ class BaseSetbacks(ABC):
         """
         regs = self._check_regs(features_fpath)
         setbacks = []
-        setback_features = self._parse_features(features_fpath, self.crs)
+        setback_features = self._parse_features(features_fpath)
         if max_workers is None:
             max_workers = os.cpu_count()
 
@@ -553,7 +545,7 @@ class BaseSetbacks(ABC):
             Raster array of setbacks
         """
         logger.info('Computing generic setbacks')
-        setback_features = self._parse_features(features_fpath, self.crs)
+        setback_features = self._parse_features(features_fpath)
         setback_features.loc[:, 'geometry'] = setback_features.buffer(
             self.generic_setback
         )
@@ -944,17 +936,15 @@ class RoadWindSetbacks(BaseWindSetbacks):
     """
     Road Wind setbacks
     """
-    @staticmethod
-    def _parse_features(roads_fpath, crs):
+
+    def _parse_features(self, roads_fpath):
         """
         Load roads from gdb file, convert to exclusions coordinate system
 
         Parameters
         ----------
         roads_fpath : str
-            Path to here streets gdb file for given state
-        crs : str
-            Coordinate reference system to convert structures geometries into
+            Path to here streets gdb file for given state.
 
         Returns
         -------
@@ -965,7 +955,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         lyr = fiona.listlayers(roads_fpath)[0]
         roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr)
 
-        return roads.to_crs(crs=crs)
+        return roads.to_crs(crs=self.crs)
 
     @staticmethod
     def _get_feature_paths(roads_path):
@@ -1261,3 +1251,107 @@ class RailWindSetbacks(TransmissionWindSetbacks):
         regs = regs.loc[mask]
 
         return regs
+
+
+class ParcelSetbacks(BaseSetbacks):
+    """
+    Parcel setbacks, using negative buffers.
+    """
+
+    @property
+    def multiplier(self):
+        """Generic setback multiplier.
+
+        Returns
+        -------
+        int | float
+        """
+        return -1 * self._multi
+
+    def compute_generic_setbacks(self, features_fpath):
+        """Compute generic setbacks.
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to shape file with features to compute setbacks from.
+
+        Returns
+        -------
+        setbacks : ndarray
+            Raster array of setbacks
+        """
+        logger.info('Computing generic setbacks')
+        setback_features = self._parse_features(features_fpath)
+
+        setbacks = [
+            (geom, 1) for geom in setback_features.buffer(0).difference(
+                setback_features.buffer(self.generic_setback)
+            )
+        ]
+
+        return  self._rasterize_setbacks(setbacks)
+
+    @classmethod
+    def run(cls, excl_fpath, roads_path, out_dir, plant_height,
+            regs_fpath=None, multiplier=None,
+            chunks=(128, 128), max_workers=None, replace=False, hsds=False):
+        """
+        Compute parcel setbacks and write them to a geotiff.
+        If a regulations file is given, compute local setbacks, otherwise
+        compute generic setbacks using the given multiplier and the plant
+        height.
+
+        Parameters
+        ----------
+        excl_fpath : str
+            Path to .h5 file containing exclusion layers, will also be the
+            location of any new setback layers
+        road_path : str
+            Path to state here streets gdb file or directory containing
+            states gdb files.
+        out_dir : str
+            Directory to save setbacks geotiff(s) into
+        plant_height : float | int
+            Plant height (m), used to determine setback distance using
+            multiplier.
+        regs_fpath : str | None, optional
+            Path to regulations .csv file, if None create generic
+            setbacks using max-tip height * "multiplier", by default None
+        multiplier : int | float | str | None, optional
+            setback multiplier to use if regulations are not supplied,
+            if str, must a key in {'high': 3, 'moderate': 1.1}, if supplied
+            along with regs_fpath, will be ignored, multiplied with
+            max-tip height, by default None
+        chunks : tuple, optional
+            Chunk size to use for setback layers, if None use default chunk
+            size in excl_fpath, by default (128, 128)
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run in
+            serial, if > 1 run in parallel with that many workers, if None
+            run in parallel on all available cores, by default None
+        replace : bool, optional
+            Flag to replace geotiff if it already exists, by default False
+        hsds : bool, optional
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
+            behind HSDS, by default False
+        """
+        setbacks = cls(excl_fpath, plant_height=plant_height,
+                       regs_fpath=regs_fpath, multiplier=multiplier,
+                       hsds=hsds, chunks=chunks)
+
+        roads_path = setbacks._get_feature_paths(roads_path)
+        for fpath in roads_path:
+            geotiff = os.path.basename(fpath).split('.')[0]
+            geotiff += '.tif'
+            geotiff = os.path.join(out_dir, geotiff)
+            if os.path.exists(geotiff) and not replace:
+                msg = ('{} already exists, setbacks will not be re-computed '
+                       'unless replace=True'.format(geotiff))
+                logger.error(msg)
+            else:
+                logger.info("Computing setbacks from roads in {} and saving "
+                            "to {}".format(fpath, geotiff))
+                setbacks.compute_setbacks(fpath, geotiff=geotiff,
+                                          max_workers=max_workers,
+                                          replace=replace)
