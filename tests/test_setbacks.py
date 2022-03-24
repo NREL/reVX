@@ -15,8 +15,8 @@ from rex.utilities.loggers import LOGGERS
 
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
-from reVX.setbacks import (StructureWindSetbacks,
-                                RailWindSetbacks, ParcelSetbacks)
+from reVX.setbacks import (StructureWindSetbacks, RailWindSetbacks,
+                           ParcelSetbacks)
 from reVX.setbacks.setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')

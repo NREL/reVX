@@ -2,18 +2,15 @@
 """
 Compute setbacks exclusions
 """
-import fiona
-import geopandas as gpd
-import logging
 import os
 import re
+import logging
 from warnings import warn
+import fiona
+import geopandas as gpd
 
 from rex.utilities import log_mem
-from reV.handlers.exclusions import ExclusionLayers
 from reVX.setbacks.base import BaseSetbacks
-from reVX.utilities.exclusions_converter import ExclusionsConverter
-from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 

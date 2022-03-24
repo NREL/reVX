@@ -9,6 +9,7 @@ from reV.utilities.exceptions import ConfigError
 
 logger = logging.getLogger(__name__)
 
+
 class SetbacksConfig(AnalysisConfig):
     """Config framework for setbacks"""
 
