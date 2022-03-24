@@ -179,7 +179,7 @@ def structure_setbacks(ctx):
                          max_workers, replace))
 
     StructureWindSetbacks.run(excl_fpath, features_path, out_dir, hub_height,
-                              rotor_diameter, regs_fpath=regs_fpath,
+                              rotor_diameter, regulations_fpath=regs_fpath,
                               multiplier=multiplier, max_workers=max_workers,
                               replace=replace, hsds=hsds)
     logger.info('Setbacks computed and writen {}'.format(out_dir))
@@ -215,7 +215,7 @@ def road_setbacks(ctx):
                          max_workers, replace))
 
     RoadWindSetbacks.run(excl_fpath, features_path, out_dir, hub_height,
-                         rotor_diameter, regs_fpath=regs_fpath,
+                         rotor_diameter, regulations_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
                          replace=replace, hsds=hsds)
     logger.info('Setbacks computed and writen {}'.format(out_dir))
@@ -252,7 +252,7 @@ def transmission_setbacks(ctx):
 
     TransmissionWindSetbacks.run(excl_fpath, features_path, out_dir,
                                  hub_height, rotor_diameter,
-                                 regs_fpath=regs_fpath,
+                                 regulations_fpath=regs_fpath,
                                  multiplier=multiplier,
                                  max_workers=max_workers,
                                  replace=replace,
@@ -290,7 +290,7 @@ def rail_setbacks(ctx):
                          max_workers, replace))
 
     RailWindSetbacks.run(excl_fpath, features_path, out_dir, hub_height,
-                         rotor_diameter, regs_fpath=regs_fpath,
+                         rotor_diameter, regulations_fpath=regs_fpath,
                          multiplier=multiplier, max_workers=max_workers,
                          replace=replace, hsds=hsds)
     logger.info('Setbacks computed and writen {}'.format(out_dir))

@@ -46,7 +46,8 @@ def test_generic_structure():
         baseline = tif.values
 
     setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
-                                     regs_fpath=None, multiplier=MULTIPLIER)
+                                     regulations_fpath=None,
+                                     multiplier=MULTIPLIER)
     structure_path = os.path.join(TESTDATADIR, 'setbacks',
                                   'RhodeIsland.geojson')
     test = setbacks.compute_setbacks(structure_path)
@@ -65,7 +66,8 @@ def test_local_structures(max_workers):
         baseline = tif.values
 
     setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
-                                     regs_fpath=REGS_GPKG, multiplier=None)
+                                     regulations_fpath=REGS_GPKG,
+                                     multiplier=None)
     structure_path = os.path.join(TESTDATADIR, 'setbacks',
                                   'RhodeIsland.geojson')
     test = setbacks.compute_setbacks(structure_path, max_workers=max_workers)
@@ -82,7 +84,7 @@ def test_generic_railroads():
         baseline = tif.values
 
     setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
-                                regs_fpath=None, multiplier=MULTIPLIER)
+                                regulations_fpath=None, multiplier=MULTIPLIER)
     rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
                              'RI_Railroads.shp')
     test = setbacks.compute_setbacks(rail_path)
@@ -100,7 +102,7 @@ def test_local_railroads(max_workers):
         baseline = tif.values
 
     setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
-                                regs_fpath=REGS_GPKG, multiplier=None)
+                                regulations_fpath=REGS_GPKG, multiplier=None)
     rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
                              'RI_Railroads.shp')
     test = setbacks.compute_setbacks(rail_path, max_workers=max_workers)
@@ -113,12 +115,12 @@ def test_generic_parcels():
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'RI_Parcels.gpkg')
-    setbacks_x1 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regs_fpath=None,
+    setbacks_x1 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regulations_fpath=None,
                                  multiplier=1)
     test_x1 = setbacks_x1.compute_setbacks(parcel_path)
 
-    setbacks_x100 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regs_fpath=None,
-                                   multiplier=100)
+    setbacks_x100 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT,
+                                   regulations_fpath=None, multiplier=100)
     test_x100 = setbacks_x100.compute_setbacks(parcel_path)
 
     # when the setbacks are so large that they span the entire parcels,
@@ -138,7 +140,7 @@ def test_generic_parcels_with_invalid_shape_input():
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'RI_Parcels_invalid.gpkg')
-    setbacks = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regs_fpath=None,
+    setbacks = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regulations_fpath=None,
                               multiplier=100)
 
     # Ensure data we are using contains invalid shapes
@@ -158,7 +160,7 @@ def test_setback_preflight_check():
     """
     with pytest.raises(RuntimeError):
         StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
-                              regs_fpath=None, multiplier=None)
+                              regulations_fpath=None, multiplier=None)
 
 
 def test_cli(runner):

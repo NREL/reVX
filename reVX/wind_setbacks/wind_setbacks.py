@@ -2,619 +2,20 @@
 """
 Compute setbacks exclusions
 """
-from abc import ABC
-from concurrent.futures import as_completed
 import fiona
 import geopandas as gpd
 import logging
-import numpy as np
 import os
-from rasterio import features
 import re
-from shapely.geometry import shape
 from warnings import warn
 
-from rex.utilities import parse_table, SpawnProcessPool, log_mem
+from rex.utilities import log_mem
 from reV.handlers.exclusions import ExclusionLayers
+from reVX.wind_setbacks.base import BaseSetbacks
 from reVX.utilities.exclusions_converter import ExclusionsConverter
 from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
-
-
-class BaseSetbacks(ABC):
-    """
-    Create exclusions layers for setbacks
-    """
-
-    def __init__(self, excl_fpath, plant_height, regs_fpath=None,
-                 multiplier=None, hsds=False, chunks=(128, 128)):
-        """
-        Parameters
-        ----------
-        excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be the
-            location of any new setback layers
-        plant_height : float | int
-            Plant height (m), used to determine setback distance.
-        regs_fpath : str | None, optional
-            Path to regulations .csv file, if None create generic
-            setbacks using max-tip height * "multiplier", by default None
-        multiplier : int | float | None, optional
-            A setback multiplier to use if regulations are not supplied.
-            This multiplier will be applied to the plant height. If supplied
-            along with `regs_fpath`, this input will be ignored, by default
-            None.
-        hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-            behind HSDS, by default False
-        chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default chunk
-            size in excl_fpath, by default (128, 128)
-        """
-        log_versions(logger)
-        self._plant_height = plant_height
-        self._excl_fpath = excl_fpath
-        self._hsds = hsds
-        excl_props = self._parse_excl_properties(excl_fpath, chunks, hsds=hsds)
-        self._shape, self._chunks, self._profile = excl_props
-
-        self._regs, self._multi = self._preflight_check(regs_fpath, multiplier)
-
-    def __repr__(self):
-        msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
-        return msg
-
-    @staticmethod
-    def _parse_excl_properties(excl_fpath, chunks, hsds=False):
-        """Parse shape, chunk size, and profile from exclusions file.
-
-        Parameters
-        ----------
-        excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be the
-            location of any new setback layers
-        chunks : tuple | None
-            Chunk size of exclusions datasets
-        hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-            behind HSDS, by default False
-
-        Returns
-        -------
-        shape : tuple
-            Shape of exclusions datasets
-        chunks : tuple | None
-            Chunk size of exclusions datasets
-        profile : str
-            GeoTiff profile for exclusions datasets
-        """
-        with ExclusionLayers(excl_fpath, hsds=hsds) as exc:
-            dset_shape = exc.shape
-            profile = exc.profile
-            if chunks is None:
-                chunks = exc.chunks
-
-        if len(chunks) < 3:
-            chunks = (1, ) + chunks
-
-        if len(dset_shape) < 3:
-            dset_shape = (1, ) + dset_shape
-
-        logger.debug('Exclusions properties:\n'
-                     'shape : {}\n'
-                     'chunks : {}\n'
-                     'profile : {}\n'
-                     .format(dset_shape, chunks, profile))
-
-        return dset_shape, chunks, profile
-
-    def _preflight_check(self, regs_fpath, multiplier):
-        """Apply preflight checks to the regulations path and multiplier.
-
-        Run preflight checks on setback inputs:
-        1) Ensure either a regulations .csv is provided, or
-           a setback multiplier
-        2) Ensure regulations has county FIPS, map regulations to county
-           geometries from exclusions .h5 file
-
-        Parameters
-        ----------
-        regs_fpath : str | None
-            Path to regulations .csv file, if None create global
-            setbacks
-        multiplier : int | float | str | None
-            setback multiplier to use if regulations are not supplied.
-
-        Returns
-        -------
-        regs: geopandas.GeoDataFrame | None
-            GeoDataFrame with county level setback regulations merged
-            with county geometries, use for intersecting with setback features
-        Multiplier : float | None
-            Generic setbacks multiplier
-        """
-        if regs_fpath:
-            if multiplier:
-                msg = ('A regulation .csv file was also provided and '
-                       'will be used to determine setback multipliers!')
-                logger.warning(msg)
-                warn(msg)
-
-            multiplier = None
-            regs = self._parse_regs(regs_fpath)
-            logger.debug('Computing setbacks using regulations provided in: {}'
-                         .format(regs_fpath))
-        elif multiplier:
-            regs = None
-            logger.debug('Computing setbacks using generic plant height '
-                         'multiplier of {}'.format(multiplier))
-        else:
-            msg = ('Computing setbacks requires either a regulations '
-                   '.csv file or a generic multiplier!')
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        return regs, multiplier
-
-    def _parse_regs(self, regs_fpath):
-        """Parse regulations file.
-
-        Parameters
-        ----------
-        regs_fpath : str
-            Path to regulations .csv file.
-
-        Returns
-        -------
-        regs: geopandas.GeoDataFrame
-            GeoDataFrame with county level setback regulations merged
-            with county geometries, use for intersecting with setback features.
-        """
-        try:
-            regs = parse_table(regs_fpath)
-            regs = self._parse_county_regs(regs)
-            log_mem(logger)
-
-            out_path = regs_fpath.split('.')[0] + '.gpkg'
-            logger.debug('Saving regulations with county geometries as: '
-                         '{}'.format(out_path))
-            regs.to_file(out_path, driver='GPKG')
-        except ValueError:
-            regs = gpd.read_file(regs_fpath)
-
-        fips_check = regs['geometry'].isnull()
-        if fips_check.any():
-            msg = ('The following county FIPS were requested in the '
-                   'regulations but were not available in the '
-                   'Exclusions "cnty_fips" layer:\n{}'
-                   .format(regs.loc[fips_check, 'FIPS']))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        return regs.to_crs(crs=self.crs)
-
-    def _parse_county_regs(self, regs):
-        """Parse the county regulations.
-
-        Parse regulations, combine with county geometries from
-        exclusions .h5 file. The county geometries are intersected with
-        features to compute county specific setbacks.
-
-        Parameters
-        ----------
-        regs : pandas.DataFrame
-            Regulations table
-
-        Returns
-        -------
-        regs: geopandas.GeoDataFrame
-            GeoDataFrame with county level setback regulations merged
-            with county geometries, use for intersecting with setback features
-        """
-        if 'FIPS' not in regs:
-            msg = ('Regulations does not have county FIPS! Please add a '
-                   '"FIPS" columns with the unique county FIPS values.')
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        if 'geometry' not in regs:
-            regs['geometry'] = None
-
-        regs = gpd.GeoDataFrame(regs, crs=self.crs, geometry='geometry')
-        regs = regs.set_index('FIPS')
-
-        logger.info('Merging county geometries w/ local regulations')
-        with ExclusionLayers(self._excl_fpath) as exc:
-            fips = exc['cnty_fips']
-            profile = exc.get_layer_profile('cnty_fips')
-
-        tr = profile['transform']
-
-        for p, v in features.shapes(fips, transform=tr):
-            v = int(v)
-            if v in regs.index:
-                regs.at[v, 'geometry'] = shape(p)
-
-        return regs.reset_index()
-
-    @property
-    def plant_height(self):
-        """The plant height, in meters.
-
-        Returns
-        -------
-        float
-        """
-        return self._plant_height
-
-    @property
-    def generic_setback(self):
-        """Default setback of plant height * multiplier.
-
-        This value is used for global setbacks.
-
-        Returns
-        -------
-        float
-        """
-        if self.multiplier is None:
-            setback = None
-        else:
-            setback = self.plant_height * self.multiplier
-
-        return setback
-
-    @property
-    def multiplier(self):
-        """Generic setback multiplier.
-
-        Returns
-        -------
-        int | float
-        """
-        return self._multi
-
-    @property
-    def arr_shape(self):
-        """Rasterize array shape.
-
-        Returns
-        -------
-        tuple
-        """
-        return self._shape
-
-    @property
-    def profile(self):
-        """Geotiff profile.
-
-        Returns
-        -------
-        dict
-        """
-        return self._profile
-
-    @property
-    def crs(self):
-        """Coordinate reference system.
-
-        Returns
-        -------
-        str
-        """
-        return self.profile['crs']
-
-    @property
-    def regulations(self):
-        """Regulations table.
-
-        Returns
-        -------
-        geopands.GeoDataFrame | None
-        """
-        return self._regs
-
-    def _parse_features(self, features_fpath):
-        """Abstract method to parse features.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to file containing features to setback from.
-
-        Returns
-        -------
-        geopandas.GeoDataFrame
-            Geometries of features to setback from in exclusion coordinate
-            system
-        """
-        return gpd.read_file(features_fpath).to_crs(crs=self.crs)
-
-    def _check_regs(self, features_fpath):  # pylint: disable=unused-argument
-        """Reduce regs to state corresponding to features_fpath if needed.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from.
-
-        Returns
-        -------
-        regs : geopands.GeoDataFrame | None
-            Regulations table.
-        """
-        logger.debug('Computing setbacks for regulations in {} counties'
-                     .format(len(self.regulations)))
-
-        return self.regulations
-
-    def _get_setback(self, cnty_regs):
-        """Compute the setback distance for the county.
-
-        Compute the setback distance (in meters) from the
-        county regulations or the plant height.
-
-        Parameters
-        ----------
-        cnty_regs : pandas.Series
-            Pandas Series with regulations for a single county
-            or feature type.
-
-        Returns
-        -------
-        setback : float | None
-            setback distance in meters, None if the setback "Value Type"
-            was not recognized
-        """
-
-        setback_type = cnty_regs['Value Type']
-        setback = cnty_regs['Value']
-        if setback_type == 'Plant Height Multiplier':
-            setback *= self.plant_height
-        elif setback_type != 'Meters':
-            msg = ('Cannot create setback for {}, expecting '
-                   '"Plant Height Multiplier", or '
-                   '"Meters", but got {}'
-                   .format(cnty_regs['County'], setback_type))
-            logger.warning(msg)
-            warn(msg)
-            setback = None
-
-        return setback
-
-    @staticmethod
-    def _compute_local_setbacks(features, cnty, setback):
-        """Compute local features setbacks.
-
-        Parameters
-        ----------
-        features : geopandas.GeoDataFrame
-            Features to setback from.
-        cnty : geopandas.GeoDataFrame
-            Regulations for a single county.
-        setback : int
-            Setback distance in meters.
-
-        Returns
-        -------
-        setbacks : list
-            List of setback geometries.
-        """
-        logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(cnty.iloc[0]['FIPS']))
-        log_mem(logger)
-        mask = features.centroid.within(cnty['geometry'].values[0])
-        tmp = features.loc[mask]
-        tmp.loc[:, 'geometry'] = tmp.buffer(setback)
-
-        setbacks = [(geom, 1) for geom in tmp['geometry']]
-
-        return setbacks
-
-    def _rasterize_setbacks(self, shapes):
-        """Convert setbacks geometries into exclusions array.
-
-        Parameters
-        ----------
-        setbacks : list
-            List of (geometry, 1) pairs to rasterize. Each geometry is a
-            feature buffered by the desired setback distance in meters.
-
-        Returns
-        -------
-        arr : ndarray
-            Rasterized array of setbacks
-        """
-        logger.debug('Generating setbacks exclusion array of shape {}'
-                     .format(self.arr_shape))
-        log_mem(logger)
-        arr = np.zeros(self.arr_shape[1:], dtype='uint8')
-        features.rasterize(shapes=shapes,
-                           out=arr,
-                           out_shape=self.arr_shape[1:],
-                           fill=0,
-                           transform=self.profile['transform'])
-
-        return arr
-
-    def _write_setbacks(self, geotiff, setbacks, replace=False):
-        """
-        Write setbacks to geotiff, replace if requested
-
-        Parameters
-        ----------
-        geotiff : str
-            Path to geotiff file to save setbacks too
-        setbacks : ndarray
-            Rasterized array of setbacks
-        replace : bool, optional
-            Flag to replace local layer data with arr if layer already
-            exists in the exlcusion .h5 file, by default False
-        """
-        if os.path.exists(geotiff):
-            if not replace:
-                msg = ('{} already exists. To replace it set "replace=True"'
-                       .format(geotiff))
-                logger.error(msg)
-                raise IOError(msg)
-            else:
-                msg = ('{} already exists and will be replaced!'
-                       .format(geotiff))
-                logger.warning(msg)
-                warn(msg)
-
-        ExclusionsConverter._write_geotiff(geotiff, self.profile, setbacks)
-
-    def compute_local_setbacks(self, features_fpath, max_workers=None):
-        """Compute local setbacks for all counties either.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from
-        max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run in
-            serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
-
-        Returns
-        -------
-        setbacks : ndarray
-            Raster array of setbacks.
-        """
-        regs = self._check_regs(features_fpath)
-        setbacks = []
-        setback_features = self._parse_features(features_fpath)
-        if max_workers is None:
-            max_workers = os.cpu_count()
-
-        log_mem(logger)
-        if max_workers > 1:
-            logger.info('Computing local setbacks in parallel using {} '
-                        'workers'.format(max_workers))
-            loggers = [__name__, 'reVX']
-            with SpawnProcessPool(max_workers=max_workers,
-                                  loggers=loggers) as exe:
-                futures = []
-                for i in range(len(regs)):
-                    cnty = regs.iloc[[i]].copy()
-                    setback = self._get_setback(cnty.iloc[0])
-                    if setback is not None:
-                        idx = setback_features.sindex.intersection(
-                            cnty.total_bounds
-                        )
-                        cnty_feats = setback_features.iloc[list(idx)].copy()
-                        future = exe.submit(self._compute_local_setbacks,
-                                            cnty_feats, cnty, setback)
-                        futures.append(future)
-
-                for i, future in enumerate(as_completed(futures)):
-                    setbacks.extend(future.result())
-                    logger.debug('Computed setbacks for {} of {} counties'
-                                 .format((i + 1), len(regs)))
-        else:
-            logger.info('Computing local setbacks in serial')
-            for i in range(len(regs)):
-                cnty = regs.iloc[[i]]
-                setback = self._get_setback(cnty.iloc[0])
-                if setback is not None:
-                    idx = setback_features.sindex.intersection(
-                        cnty.total_bounds
-                    )
-                    cnty_feats = setback_features.iloc[list(idx)]
-                    setbacks.extend(self._compute_local_setbacks(cnty_feats,
-                                                                 cnty,
-                                                                 setback))
-                    logger.debug('Computed setbacks for {} of {} counties'
-                                 .format((i + 1), len(regs)))
-
-        return self._rasterize_setbacks(setbacks)
-
-    def compute_generic_setbacks(self, features_fpath):
-        """Compute generic setbacks.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from.
-
-        Returns
-        -------
-        setbacks : ndarray
-            Raster array of setbacks
-        """
-        logger.info('Computing generic setbacks')
-        setback_features = self._parse_features(features_fpath)
-        setback_features.loc[:, 'geometry'] = setback_features.buffer(
-            self.generic_setback
-        )
-        setbacks = [(geom, 1) for geom in setback_features['geometry']]
-
-        return self._rasterize_setbacks(setbacks)
-
-    def compute_setbacks(self, features_fpath, max_workers=None,
-                         geotiff=None, replace=False):
-        """
-        Compute setbacks for all states either in serial or parallel.
-        Existing setbacks are computed if a regulations file was supplied
-        during class initialization, otherwise generic setbacks are computed
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from
-        max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run in
-            serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
-        geotiff : str, optional
-            Path to save geotiff containing rasterized setbacks,
-            by default None
-        replace : bool, optional
-            Flag to replace geotiff if it already exists, by default False
-
-        Returns
-        -------
-        setbacks : ndarray
-            Raster array of setbacks
-        """
-        if self._regs is not None:
-            setbacks = self.compute_local_setbacks(features_fpath,
-                                                   max_workers=max_workers)
-        else:
-            setbacks = self.compute_generic_setbacks(features_fpath)
-
-        if geotiff is not None:
-            logger.debug('Writing setbacks to {}'.format(geotiff))
-            self._write_setbacks(geotiff, setbacks, replace=replace)
-
-        return setbacks
-
-    @staticmethod
-    def _get_feature_paths(features_fpath):
-        """Ensure features path exists and return as list.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to features file.
-
-        Returns
-        -------
-        features_fpath : list
-            Features path as a list.
-
-        Notes
-        -----
-        This method is currently required for the setbacks cli.
-        """
-        if not os.path.exists(features_fpath):
-            msg = '{} is not a valid file path!'.format(features_fpath)
-            logger.error(msg)
-            raise FileNotFoundError(msg)
-
-        return [features_fpath]
 
 
 class BaseWindSetbacks(BaseSetbacks):
@@ -623,8 +24,9 @@ class BaseWindSetbacks(BaseSetbacks):
     """
     MULTIPLIERS = {'high': 3, 'moderate': 1.1}
 
-    def __init__(self, excl_fpath, hub_height, rotor_diameter, regs_fpath=None,
-                 multiplier=None, hsds=False, chunks=(128, 128)):
+    def __init__(self, excl_fpath, hub_height, rotor_diameter,
+                 regulations_fpath=None, multiplier=None, hsds=False,
+                 chunks=(128, 128)):
         """
         Parameters
         ----------
@@ -637,14 +39,15 @@ class BaseWindSetbacks(BaseSetbacks):
         rotor_diameter : float | int
             Turbine rotor diameter (m), used along with hub height to compute
             blade tip height which is used to determine setback distance
-        regs_fpath : str | None, optional
+        regulations_fpath : str | None, optional
             Path to wind regulations .csv file, if None create generic
             setbacks using max-tip height * "multiplier", by default None
         multiplier : int | float | str | None, optional
-            setback multiplier to use if wind regulations are not supplied,
-            if str, must a key in {'high': 3, 'moderate': 1.1}, if supplied
-            along with regs_fpath, will be ignored, multiplied with
-            max-tip height, by default None
+            Setback multiplier to use if wind regulations are not supplied.
+            It is multiplied with max-tip height to calculate the setback
+            distance. If str, must be a key in {'high': 3, 'moderate': 1.1}.
+            If supplied along with `regulations_fpath`, this input will be
+            ignored, by default None.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS, by default False
@@ -657,8 +60,8 @@ class BaseWindSetbacks(BaseSetbacks):
         super().__init__(
             excl_fpath=excl_fpath,
             plant_height=self._hub_height + self._rotor_diameter / 2,
-            regs_fpath=regs_fpath, multiplier=multiplier, hsds=hsds,
-            chunks=chunks
+            regulations_fpath=regulations_fpath, multiplier=multiplier,
+            hsds=hsds, chunks=chunks
         )
 
     @property
@@ -683,14 +86,14 @@ class BaseWindSetbacks(BaseSetbacks):
         """
         return self._rotor_diameter
 
-    def _get_setback(self, cnty_regs):
+    def _get_setback(self, county_regulations):
         """
         Compute the setback distance in meters from the county regulations,
         turbine tip height or rotor diameter.
 
         Parameters
         ----------
-        cnty_regs : pandas.Series
+        county_regulations : pandas.Series
             Pandas Series with wind regulations for a single county / feature
             type
 
@@ -701,8 +104,8 @@ class BaseWindSetbacks(BaseSetbacks):
             was not recognized
         """
 
-        setback_type = cnty_regs['Value Type']
-        setback = cnty_regs['Value']
+        setback_type = county_regulations['Value Type']
+        setback = county_regulations['Value']
         if setback_type == 'Max-tip Height Multiplier':
             setback *= self.plant_height
         elif setback_type == 'Rotor-Diameter Multiplier':
@@ -715,14 +118,14 @@ class BaseWindSetbacks(BaseSetbacks):
                    '"Rotor-Diameter Multiplier", '
                    '"Hub-height Multiplier", or '
                    '"Meters", but got {}'
-                   .format(cnty_regs['County'], setback_type))
+                   .format(county_regulations['County'], setback_type))
             logger.warning(msg)
             warn(msg)
             setback = None
 
         return setback
 
-    def _preflight_check(self, regs_fpath, multiplier):
+    def _preflight_check(self, regulations_fpath, multiplier):
         """
         Run preflight checks on WindSetBack inputs:
         1) Ensure either a wind regulations .csv is provided, or
@@ -734,7 +137,7 @@ class BaseWindSetbacks(BaseSetbacks):
 
         Parameters
         ----------
-        regs_fpath : str | None
+        regulations_fpath : str | None
             Path to wind regulations .csv file, if None create global
             setbacks
         multiplier : int | float | str | None
@@ -743,18 +146,20 @@ class BaseWindSetbacks(BaseSetbacks):
 
         Returns
         -------
-        regs: geopandas.GeoDataFrame | None
+        regulations: geopandas.GeoDataFrame | None
             GeoDataFrame with county level wind setback regulations merged
             with county geometries, use for intersecting with setback features
         Multiplier : float | None
             Generic setbacks multiplier
         """
-        regs, multiplier = super()._preflight_check(regs_fpath, multiplier)
+        regulations, multiplier = super()._preflight_check(
+            regulations_fpath, multiplier
+        )
         if isinstance(multiplier, str):
             multiplier = self.MULTIPLIERS[multiplier]
             logger.debug('Computing setbacks using generic Max-tip Height '
                          'Multiplier of {}'.format(multiplier))
-        return regs, multiplier
+        return regulations, multiplier
 
 
 class StructureWindSetbacks(BaseWindSetbacks):
@@ -812,29 +217,29 @@ class StructureWindSetbacks(BaseWindSetbacks):
 
         return file_paths
 
-    def _parse_regs(self, regs_fpath):
+    def _parse_regulations(self, regulations_fpath):
         """
         Parse wind regulations, reduce table to just structures
 
         Parameters
         ----------
-        regs_fpath : str
+        regulations_fpath : str
             Path to wind regulations .csv file
 
         Returns
         -------
-        regs : pandas.DataFrame
+        regulations : pandas.DataFrame
             Wind regulations table
         """
-        regs = super()._parse_regs(regs_fpath)
+        regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = ((regs['Feature Type'] == 'Structures')
-                & (regs['Comment'] != 'Occupied Community Buildings'))
-        regs = regs.loc[mask]
+        mask = ((regulations['Feature Type'] == 'Structures')
+                & (regulations['Comment'] != 'Occupied Community Buildings'))
+        regulations = regulations.loc[mask]
 
-        return regs
+        return regulations
 
-    def _check_regs(self, features_fpath):
+    def _check_regulations(self, features_fpath):
         """
         Reduce regs to state corresponding to features_fpath if needed
 
@@ -866,7 +271,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
 
     @classmethod
     def run(cls, excl_fpath, structures_path, out_dir, hub_height,
-            rotor_diameter, regs_fpath=None, multiplier=None,
+            rotor_diameter, regulations_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
         Compute state's structural setbacks and write them to a geotiff.
@@ -890,14 +295,15 @@ class StructureWindSetbacks(BaseWindSetbacks):
         rotor_diameter : float | int
             Turbine rotor diameter (m), used along with hub height to compute
             blade tip height which is used to determine setback distance
-        regs_fpath : str | None, optional
+        regulations_fpath : str | None, optional
             Path to wind regulations .csv file, if None create generic
             setbacks using max-tip height * "multiplier", by default None
         multiplier : int | float | str | None, optional
-            setback multiplier to use if wind regulations are not supplied,
-            if str, must a key in {'high': 3, 'moderate': 1.1}, if supplied
-            along with regs_fpath, will be ignored, multiplied with
-            max-tip height, by default None
+            Setback multiplier to use if wind regulations are not supplied.
+            It is multiplied with max-tip height to calculate the setback
+            distance. If str, must be a key in {'high': 3, 'moderate': 1.1}.
+            If supplied along with `regulations_fpath`, this input will be
+            ignored, by default None.
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default chunk
             size in excl_fpath, by default (128, 128)
@@ -912,7 +318,8 @@ class StructureWindSetbacks(BaseWindSetbacks):
             behind HSDS, by default False
         """
         setbacks = cls(excl_fpath, hub_height, rotor_diameter,
-                       regs_fpath=regs_fpath, multiplier=multiplier,
+                       regulations_fpath=regulations_fpath,
+                       multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
 
         structures_path = setbacks._get_feature_paths(structures_path)
@@ -984,28 +391,29 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
         return file_paths
 
-    def _parse_regs(self, regs_fpath):
+    def _parse_regulations(self, regulations_fpath):
         """
         Parse wind regulations, reduce table to just roads
 
         Parameters
         ----------
-        regs_fpath : str
+        regulations_fpath : str
             Path to wind regulations .csv file
 
         Returns
         -------
-        regs : pandas.DataFrame
+        regulations : pandas.DataFrame
             Wind regulations table
         """
-        regs = super()._parse_regs(regs_fpath)
+        regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = regs['Feature Type'].isin(['Roads', 'Highways', 'Highways 111'])
-        regs = regs.loc[mask]
+        feature_types = {'Roads', 'Highways', 'Highways 111'}
+        mask = regulations['Feature Type'].isin(feature_types)
+        regulations = regulations.loc[mask]
 
-        return regs
+        return regulations
 
-    def _check_regs(self, features_fpath):
+    def _check_regulations(self, features_fpath):
         """
         Reduce regs to state corresponding to features_fpath if needed
 
@@ -1036,7 +444,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
     @classmethod
     def run(cls, excl_fpath, roads_path, out_dir, hub_height,
-            rotor_diameter, regs_fpath=None, multiplier=None,
+            rotor_diameter, regulations_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
         Compute state's road setbacks and write them to a geotiff.
@@ -1060,14 +468,15 @@ class RoadWindSetbacks(BaseWindSetbacks):
         rotor_diameter : float | int
             Turbine rotor diameter (m), used along with hub height to compute
             blade tip height which is used to determine setback distance
-        regs_fpath : str | None, optional
+        regulations_fpath : str | None, optional
             Path to wind regulations .csv file, if None create generic
             setbacks using max-tip height * "multiplier", by default None
         multiplier : int | float | str | None, optional
-            setback multiplier to use if wind regulations are not supplied,
-            if str, must a key in {'high': 3, 'moderate': 1.1}, if supplied
-            along with regs_fpath, will be ignored, multiplied with
-            max-tip height, by default None
+            Setback multiplier to use if wind regulations are not supplied.
+            It is multiplied with max-tip height to calculate the setback
+            distance. If str, must be a key in {'high': 3, 'moderate': 1.1}.
+            If supplied along with `regulations_fpath`, this input will be
+            ignored, by default None.
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default chunk
             size in excl_fpath, by default (128, 128)
@@ -1082,7 +491,8 @@ class RoadWindSetbacks(BaseWindSetbacks):
             behind HSDS, by default False
         """
         setbacks = cls(excl_fpath, hub_height, rotor_diameter,
-                       regs_fpath=regs_fpath, multiplier=multiplier,
+                       regulations_fpath=regulations_fpath,
+                       multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
 
         roads_path = setbacks._get_feature_paths(roads_path)
@@ -1138,30 +548,30 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
 
         return setbacks
 
-    def _parse_regs(self, regs_fpath):
+    def _parse_regulations(self, regulations_fpath):
         """
         Parse wind regulations, reduce table to just transmission
 
         Parameters
         ----------
-        regs_fpath : str
+        regulations_fpath : str
             Path to wind regulations .csv file
 
         Returns
         -------
-        regs : pandas.DataFrame
+        regulations : pandas.DataFrame
             Wind regulations table
         """
-        regs = super()._parse_regs(regs_fpath)
+        regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = regs['Feature Type'] == 'Transmission'
-        regs = regs.loc[mask]
+        mask = regulations['Feature Type'] == 'Transmission'
+        regulations = regulations.loc[mask]
 
-        return regs
+        return regulations
 
     @classmethod
     def run(cls, excl_fpath, features_fpath, out_dir, hub_height,
-            rotor_diameter, regs_fpath=None, multiplier=None,
+            rotor_diameter, regulations_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
         Compute setbacks from given features and write them to a geotiff.
@@ -1184,14 +594,15 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         rotor_diameter : float | int
             Turbine rotor diameter (m), used along with hub height to compute
             blade tip height which is used to determine setback distance
-        regs_fpath : str | None, optional
+        regulations_fpath : str | None, optional
             Path to wind regulations .csv file, if None create generic
             setbacks using max-tip height * "multiplier", by default None
         multiplier : int | float | str | None, optional
-            setback multiplier to use if wind regulations are not supplied,
-            if str, must a key in {'high': 3, 'moderate': 1.1}, if supplied
-            along with regs_fpath, will be ignored, multiplied with
-            max-tip height, by default None
+            Setback multiplier to use if wind regulations are not supplied.
+            It is multiplied with max-tip height to calculate the setback
+            distance. If str, must be a key in {'high': 3, 'moderate': 1.1}.
+            If supplied along with `regulations_fpath`, this input will be
+            ignored, by default None.
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default chunk
             size in excl_fpath, by default (128, 128)
@@ -1214,7 +625,8 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             logger.error(msg)
         else:
             setbacks = cls(excl_fpath, hub_height, rotor_diameter,
-                           regs_fpath=regs_fpath, multiplier=multiplier,
+                           regulations_fpath=regulations_fpath,
+                           multiplier=multiplier,
                            hsds=hsds, chunks=chunks)
 
             logger.info("Computing setbacks from {} and saving "
@@ -1230,27 +642,28 @@ class RailWindSetbacks(TransmissionWindSetbacks):
     instead of state level features, uses the same approach as
     TransmissionWindSetbacks
     """
-    def _parse_regs(self, regs_fpath):
+    def _parse_regulations(self, regulations_fpath):
         """
         Parse wind regulations, reduce table to just rail
 
         Parameters
         ----------
-        regs_fpath : str
+        regulations_fpath : str
             Path to wind regulations .csv file
 
         Returns
         -------
-        regs : pandas.DataFrame
+        regulations : pandas.DataFrame
             Wind regulations table
         """
         # pylint: disable=bad-super-call
-        regs = super(TransmissionWindSetbacks, self)._parse_regs(regs_fpath)
+        sup = super(TransmissionWindSetbacks, self)
+        regulations = sup._parse_regulations(regulations_fpath)
 
-        mask = regs['Feature Type'] == 'Railroads'
-        regs = regs.loc[mask]
+        mask = regulations['Feature Type'] == 'Railroads'
+        regulations = regulations.loc[mask]
 
-        return regs
+        return regulations
 
 
 class ParcelSetbacks(BaseSetbacks):
@@ -1294,7 +707,7 @@ class ParcelSetbacks(BaseSetbacks):
 
     @classmethod
     def run(cls, excl_fpath, roads_path, out_dir, plant_height,
-            regs_fpath=None, multiplier=None,
+            regulations_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
         Compute parcel setbacks and write them to a geotiff.
@@ -1315,14 +728,14 @@ class ParcelSetbacks(BaseSetbacks):
         plant_height : float | int
             Plant height (m), used to determine setback distance using
             multiplier.
-        regs_fpath : str | None, optional
+        regulations_fpath : str | None, optional
             Path to regulations .csv file, if None create generic
-            setbacks using max-tip height * "multiplier", by default None
+            setbacks using plant height * "multiplier", by default None
         multiplier : int | float | str | None, optional
-            setback multiplier to use if regulations are not supplied,
-            if str, must a key in {'high': 3, 'moderate': 1.1}, if supplied
-            along with regs_fpath, will be ignored, multiplied with
-            max-tip height, by default None
+            Setback multiplier to use if regulations are not supplied.
+            It is multiplied with plant height to calculate the setback
+            distance. If supplied along with `regulations_fpath`, this input
+            will be ignored, by default None.
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default chunk
             size in excl_fpath, by default (128, 128)
@@ -1337,7 +750,8 @@ class ParcelSetbacks(BaseSetbacks):
             behind HSDS, by default False
         """
         setbacks = cls(excl_fpath, plant_height=plant_height,
-                       regs_fpath=regs_fpath, multiplier=multiplier,
+                       regulations_fpath=regulations_fpath,
+                       multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
 
         roads_path = setbacks._get_feature_paths(roads_path)
