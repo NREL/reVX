@@ -937,13 +937,13 @@ class RoadWindSetbacks(BaseWindSetbacks):
     Road Wind setbacks
     """
 
-    def _parse_features(self, roads_fpath):
+    def _parse_features(self, features_fpath):
         """
         Load roads from gdb file, convert to exclusions coordinate system
 
         Parameters
         ----------
-        roads_fpath : str
+        features_fpath : str
             Path to here streets gdb file for given state.
 
         Returns
@@ -952,8 +952,8 @@ class RoadWindSetbacks(BaseWindSetbacks):
             Geometries for roads in gdb file, in exclusion coordinate
             system
         """
-        lyr = fiona.listlayers(roads_fpath)[0]
-        roads = gpd.read_file(roads_fpath, driver='FileGDB', layer=lyr)
+        lyr = fiona.listlayers(features_fpath)[0]
+        roads = gpd.read_file(features_fpath, driver='FileGDB', layer=lyr)
 
         return roads.to_crs(crs=self.crs)
 
