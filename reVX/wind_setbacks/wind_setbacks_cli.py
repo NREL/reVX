@@ -13,7 +13,7 @@ from rex.utilities.cli_dtypes import STR, FLOAT, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reVX.config.wind_setbacks import WindSetbacksConfig
+from reVX.config.setbacks import SetbacksConfig
 from reVX.wind_setbacks.wind_setbacks import (StructureWindSetbacks,
                                               RoadWindSetbacks,
                                               RailWindSetbacks,
@@ -31,8 +31,8 @@ STATE_SETBACKS = {'structure': StructureWindSetbacks,
 
 @click.group()
 @click.version_option(version=__version__)
-@click.option('--name', '-n', default='WindSetbacks', type=STR,
-              show_default=True,
+@click.option('--name', '-n', default=SetbacksConfig.NAME,
+              type=STR, show_default=True,
               help='Job name. Default is "WindSetbacks".')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
@@ -51,7 +51,7 @@ def valid_config_keys():
     """
     Echo the valid Wind Setbacks config keys
     """
-    click.echo(', '.join(get_class_properties(WindSetbacksConfig)))
+    click.echo(', '.join(get_class_properties(SetbacksConfig)))
 
 
 @main.command()
@@ -63,7 +63,7 @@ def from_config(ctx, config):
     """
     Run Wind Setbacks from a config.
     """
-    config = WindSetbacksConfig(config)
+    config = SetbacksConfig(config)
 
     if config.execution_control.option == 'local':
         run_local(ctx, config)
@@ -329,7 +329,8 @@ def run_local(ctx, config):
     elif feature_type == 'rail':
         ctx.invoke(rail_setbacks)
     else:
-        msg = 'Feature type must be one of {}'.format(config.FEATURE_TYPES)
+        options = set(config.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
+        msg = 'Feature type must be one of {}'.format(options)
         raise RuntimeError(msg)
 
 
@@ -379,7 +380,8 @@ def get_node_cmd(name, config):
     elif feature_type == 'rail':
         args.append('rail-setbacks')
     else:
-        msg = 'Feature type must be one of {}'.format(config.FEATURE_TYPES)
+        options = set(config.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
+        msg = 'Feature type must be one of {}'.format(options)
         raise RuntimeError(msg)
 
     cmd = ('python -m reVX.wind_setbacks.wind_setbacks_cli {}'
