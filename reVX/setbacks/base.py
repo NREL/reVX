@@ -369,7 +369,7 @@ class BaseSetbacks(ABC):
             was not recognized
         """
 
-        setback_type = county_regulations['Value Type']
+        setback_type = county_regulations['Value Type'].strip()
         setback = county_regulations['Value']
         if setback_type == 'Maximum Structure Height':
             setback *= self.plant_height
