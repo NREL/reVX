@@ -371,11 +371,11 @@ class BaseSetbacks(ABC):
 
         setback_type = county_regulations['Value Type']
         setback = county_regulations['Value']
-        if setback_type == 'Plant Height Multiplier':
+        if setback_type == 'Maximum Structure Height':
             setback *= self.plant_height
         elif setback_type != 'Meters':
             msg = ('Cannot create setback for {}, expecting '
-                   '"Plant Height Multiplier", or '
+                   '"Maximum Structure Height", or '
                    '"Meters", but got {}'
                    .format(county_regulations['County'], setback_type))
             logger.warning(msg)
