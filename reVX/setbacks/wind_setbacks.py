@@ -247,7 +247,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
 
         Returns
         -------
-        wind_regs : geopands.GeoDataFrame | None
+        wind_regs : geopandas.GeoDataFrame | None
             Wind Regulations
         """
         state_name = os.path.basename(features_fpath).split('.')[0]
@@ -421,7 +421,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
         Returns
         -------
-        wind_regs : geopands.GeoDataFrame | None
+        wind_regs : geopandas.GeoDataFrame | None
             Wind Regulations
         """
         state = features_fpath.split('.')[0].split('_')[-1]

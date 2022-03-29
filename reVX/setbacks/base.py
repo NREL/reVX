@@ -312,7 +312,7 @@ class BaseSetbacks(ABC):
 
         Returns
         -------
-        geopands.GeoDataFrame | None
+        geopandas.GeoDataFrame | None
         """
         return self._regulations
 
@@ -343,7 +343,7 @@ class BaseSetbacks(ABC):
 
         Returns
         -------
-        regulations : geopands.GeoDataFrame | None
+        regulations : geopandas.GeoDataFrame | None
             Regulations table.
         """
         logger.debug('Computing setbacks for regulations in {} counties'
