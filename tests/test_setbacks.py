@@ -124,9 +124,9 @@ def test_generic_parcels():
     test_x100 = setbacks_x100.compute_setbacks(parcel_path)
 
     # when the setbacks are so large that they span the entire parcels,
-    # a total of 43 regions should be excluded for this particular
+    # a total of 438 regions should be excluded for this particular
     # Rhode Island subset
-    assert test_x100.sum() == 43
+    assert test_x100.sum() == 438
 
     # Exclusions of smaller multiplier should be subset of exclusions
     # of larger multiplier
