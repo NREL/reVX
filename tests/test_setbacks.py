@@ -188,7 +188,7 @@ def test_local_parcels(max_workers, regulations_fpath):
                                    'RI_Parcels.gpkg')
         test = setbacks.compute_setbacks(parcel_path, max_workers=max_workers)
 
-    assert test.sum() == 8
+    assert test.sum() == 3
 
     # Make sure only counties in the regulations csv
     # have exclusions applied
@@ -304,7 +304,7 @@ def test_cli_parcels(runner):
         with Geotiff(test_fp) as tif:
             test = tif.values
 
-        assert test.sum() == 8
+        assert test.sum() == 3
 
     LOGGERS.clear()
 

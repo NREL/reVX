@@ -5,6 +5,8 @@ Compute setbacks exclusions
 import logging
 import os
 
+from rex.utilities import log_mem
+
 from reVX.setbacks.base import BaseSetbacks
 
 
@@ -15,16 +17,6 @@ class ParcelSetbacks(BaseSetbacks):
     """
     Parcel setbacks, using negative buffers.
     """
-
-    @property
-    def multiplier(self):
-        """Generic setback multiplier.
-
-        Returns
-        -------
-        int | float
-        """
-        return -1 * self._multi
 
     def compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
@@ -44,11 +36,43 @@ class ParcelSetbacks(BaseSetbacks):
 
         setbacks = [
             (geom, 1) for geom in setback_features.buffer(0).difference(
-                setback_features.buffer(self.generic_setback)
+                setback_features.buffer(-1 * self.generic_setback)
             )
         ]
 
         return self._rasterize_setbacks(setbacks)
+
+    @staticmethod
+    def _compute_local_setbacks(features, cnty, setback):
+        """Compute local features setbacks.
+
+        Parameters
+        ----------
+        features : geopandas.GeoDataFrame
+            Features to setback from.
+        cnty : geopandas.GeoDataFrame
+            Regulations for a single county.
+        setback : int
+            Setback distance in meters.
+
+        Returns
+        -------
+        setbacks : list
+            List of setback geometries.
+        """
+        logger.debug('- Computing setbacks for county FIPS {}'
+                     .format(cnty.iloc[0]['FIPS']))
+        log_mem(logger)
+        mask = features.centroid.within(cnty['geometry'].values[0])
+        tmp = features.loc[mask]
+
+        setbacks = [
+            (geom, 1) for geom in tmp.buffer(0).difference(
+                tmp.buffer(-1 * setback)
+            )
+        ]
+
+        return setbacks
 
     def _parse_regulations(self, regulations_fpath):
         """
