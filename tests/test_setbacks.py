@@ -164,7 +164,8 @@ def test_generic_parcels_with_invalid_shape_input():
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
-@pytest.mark.parametrize('regulations_fpath',
+@pytest.mark.parametrize(
+    'regulations_fpath',
     [PARCEL_REGS_FPATH_VALUE,
      PARCEL_REGS_FPATH_MULTIPLIER]
 )
