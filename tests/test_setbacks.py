@@ -5,11 +5,14 @@ Setbacks tests
 from click.testing import CliRunner
 import json
 import numpy as np
+import pandas as pd
 import os
 import pytest
 import shutil
 import tempfile
 import traceback
+
+from reV.handlers.exclusions import ExclusionLayers
 
 from rex.utilities.loggers import LOGGERS
 
@@ -26,6 +29,12 @@ PLANT_HEIGHT = 1
 MULTIPLIER = 3
 REGS_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
 REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
+PARCEL_REGS_FPATH_VALUE = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_solar_regs_value.csv'
+)
+PARCEL_REGS_FPATH_MULTIPLIER = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_solar_regs_multiplier.csv'
+)
 
 
 @pytest.fixture(scope="module")
@@ -154,6 +163,48 @@ def test_generic_parcels_with_invalid_shape_input():
     assert not test.any()
 
 
+@pytest.mark.parametrize('max_workers', [None, 1])
+@pytest.mark.parametrize('regulations_fpath', [
+    PARCEL_REGS_FPATH_VALUE, PARCEL_REGS_FPATH_MULTIPLIER
+    ]
+)
+def test_local_parcels(max_workers, regulations_fpath):
+    """
+    Test local parcel setbacks
+    """
+
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(regulations_fpath, regs_fpath)
+
+        setbacks = ParcelSetbacks(
+            EXCL_H5, PLANT_HEIGHT,
+            regulations_fpath=regs_fpath,
+            multiplier=None
+        )
+
+        parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                                   'RI_Parcels.gpkg')
+        test = setbacks.compute_setbacks(parcel_path, max_workers=max_workers)
+
+    assert test.sum() == 8
+
+    # Make sure only counties in the regulations csv
+    # have exclusions applied
+    with ExclusionLayers(EXCL_H5) as exc:
+        counties_with_exclusions = set(exc['cnty_fips'][np.where(test)])
+
+    regulations = pd.read_csv(regulations_fpath)
+    property_lines = (
+        regulations['Feature Type'].apply(str.strip) == 'Property Line'
+    )
+    counties_should_have_exclusions = set(
+        regulations[property_lines].FIPS.unique()
+    )
+    assert not (counties_with_exclusions - counties_should_have_exclusions)
+
+
 def test_setback_preflight_check():
     """
     Test BaseWindSetbacks preflight_checks
@@ -163,7 +214,7 @@ def test_setback_preflight_check():
                               regulations_fpath=None, multiplier=None)
 
 
-def test_cli(runner):
+def test_cli_railroads(runner):
     """
     Test CLI. Use the RI rails as test case, using all structures results
     in suspected mem error on github actions.
@@ -208,6 +259,105 @@ def test_cli(runner):
             test = tif.values
 
         np.allclose(baseline, test)
+
+    LOGGERS.clear()
+
+
+def test_cli_parcels(runner):
+    """
+    Test CLI with Parcels.
+    """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'RI_Parcels.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": EXCL_H5,
+            "feature_type": "parcel",
+            "features_path": parcel_path,
+            "plant_height": PLANT_HEIGHT,
+            "log_level": "INFO",
+            "regs_fpath": regs_fpath,
+            "replace": True,
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test_fp = os.path.join(td, 'RI_Parcels.tif')
+
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert test.sum() == 8
+
+    LOGGERS.clear()
+
+
+def test_cli_invalid_config(runner):
+    """
+    Test CLI with invalid config (missing plant height info).
+    """
+    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                             'RI_Railroads.shp')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(REGS_FPATH, regs_fpath)
+        for ft in ["rail", "parcel"]:
+            config = {
+                "log_directory": td,
+                "execution_control": {
+                    "option": "local"
+                },
+                "excl_fpath": EXCL_H5,
+                "feature_type": ft,
+                "features_path": rail_path,
+                "log_level": "INFO",
+                "regs_fpath": regs_fpath,
+                "replace": True
+            }
+            config_path = os.path.join(td, 'config.json')
+            with open(config_path, 'w') as f:
+                json.dump(config, f)
+
+            result = runner.invoke(main, ['from-config',
+                                        '-c', config_path])
+
+            assert result.exit_code == 1
+
+    LOGGERS.clear()
+
+
+def test_cli_invalid_inputs(runner):
+    """
+    Test CLI with invalid inputs to main function.
+    """
+    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                             'RI_Railroads.shp')
+    result = runner.invoke(
+        main,
+        ['local',
+         '-excl', EXCL_H5,
+         '-feats', rail_path,
+         '-o', TESTDATADIR,
+         'rail-setbacks']
+    )
+
+    assert result.exit_code == 1
+    assert isinstance(result.exception, RuntimeError)
 
     LOGGERS.clear()
 
