@@ -164,9 +164,9 @@ def test_generic_parcels_with_invalid_shape_input():
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
-@pytest.mark.parametrize('regulations_fpath', [
-    PARCEL_REGS_FPATH_VALUE, PARCEL_REGS_FPATH_MULTIPLIER
-    ]
+@pytest.mark.parametrize('regulations_fpath',
+    [PARCEL_REGS_FPATH_VALUE,
+     PARCEL_REGS_FPATH_MULTIPLIER]
 )
 def test_local_parcels(max_workers, regulations_fpath):
     """
@@ -337,7 +337,7 @@ def test_cli_invalid_config(runner):
                 json.dump(config, f)
 
             result = runner.invoke(main, ['from-config',
-                                        '-c', config_path])
+                                          '-c', config_path])
 
             assert result.exit_code == 1
 
