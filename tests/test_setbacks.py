@@ -202,7 +202,10 @@ def test_local_parcels(max_workers, regulations_fpath):
     counties_should_have_exclusions = set(
         regulations[property_lines].FIPS.unique()
     )
-    assert not (counties_with_exclusions - counties_should_have_exclusions)
+    counties_with_exclusions_but_not_in_regulations_csv = (
+        counties_with_exclusions - counties_should_have_exclusions
+    )
+    assert not counties_with_exclusions_but_not_in_regulations_csv
 
 
 def test_setback_preflight_check():
