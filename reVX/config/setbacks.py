@@ -20,6 +20,7 @@ class SetbacksConfig(AnalysisConfig):
         'road': ['hub_height', 'rotor_diameter'],
         'rail': ['hub_height', 'rotor_diameter'],
         'transmission': ['hub_height', 'rotor_diameter'],
+        'parcel': ['plant_height'],
     }
 
     def _preflight(self):
@@ -47,7 +48,9 @@ class SetbacksConfig(AnalysisConfig):
         """
         feature_type = self['feature_type']
         options = set(self.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
-        msg = ("feature_type must be one of: {}".format(options))
+        msg = ("feature_type must be one of: {}; got {}".format(
+            options, feature_type)
+        )
         assert feature_type in options, msg
 
         return feature_type
