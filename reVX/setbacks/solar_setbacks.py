@@ -50,6 +50,27 @@ class ParcelSetbacks(BaseSetbacks):
 
         return self._rasterize_setbacks(setbacks)
 
+    def _parse_regulations(self, regulations_fpath):
+        """
+        Parse parcel regulations, reduce table to just property lines
+
+        Parameters
+        ----------
+        regulations_fpath : str
+            Path to parcel regulations .csv file
+
+        Returns
+        -------
+        regulations : pandas.DataFrame
+            Parcel regulations table
+        """
+        regulations = super()._parse_regulations(regulations_fpath)
+
+        mask = regulations['Feature Type'].apply(str.strip) == 'Property Line'
+        regulations = regulations.loc[mask]
+
+        return regulations
+
     @classmethod
     def run(cls, excl_fpath, roads_path, out_dir, plant_height,
             regulations_fpath=None, multiplier=None,
