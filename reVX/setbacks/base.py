@@ -221,9 +221,6 @@ class BaseSetbacks(ABC):
         if 'geometry' not in regulations:
             regulations['geometry'] = None
 
-        regulations = gpd.GeoDataFrame(
-            regulations, crs=self.crs, geometry='geometry'
-        )
         regulations = regulations.set_index('FIPS')
 
         logger.info('Merging county geometries w/ local regulations')
@@ -235,6 +232,10 @@ class BaseSetbacks(ABC):
             v = int(v)
             if v in regulations.index:
                 regulations.at[v, 'geometry'] = shape(p)
+
+        regulations = gpd.GeoDataFrame(
+            regulations, crs=self.crs, geometry='geometry'
+        )
 
         return regulations.reset_index()
 
