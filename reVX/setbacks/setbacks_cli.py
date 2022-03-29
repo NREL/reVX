@@ -17,7 +17,8 @@ from reVX.config.setbacks import SetbacksConfig
 from reVX.setbacks import (StructureWindSetbacks,
                            RoadWindSetbacks,
                            RailWindSetbacks,
-                           TransmissionWindSetbacks)
+                           TransmissionWindSetbacks,
+                           ParcelSetbacks)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 STATE_SETBACKS = {'structure': StructureWindSetbacks,
                   'road': RoadWindSetbacks,
                   'rail': RailWindSetbacks,
-                  'transmission': TransmissionWindSetbacks}
+                  'transmission': TransmissionWindSetbacks,
+                  'parcel': ParcelSetbacks}
 
 
 @click.group()
@@ -84,17 +86,24 @@ def from_config(ctx, config):
                     'geotiff files./n'
                     '- State level roads .gdb or directory containing .gdb '
                     'files./n'
-                    '-transmission or railroad CONUS wide .shp file.'))
+                    '-transmission or railroad CONUS wide .shp file./n'
+                    '- State level parcel .gpkg file.'))
 @click.option('--out_dir', '-o', required=True, type=str,
               help=('Directory to save setbacks geotiff(s) into'))
-@click.option('--hub_height', '-height', required=True, type=float,
+@click.option('--hub_height', '-hh', default=None, type=float,
               help=('Turbine hub height(m), used along with rotor diameter to '
                     'compute blade tip height which is used to determine '
-                    'setback distance'))
-@click.option('--rotor_diameter', '-diameter', required=True, type=float,
+                    'setback distance. Must be provided if plant_height is not'
+                    'given'))
+@click.option('--rotor_diameter', '-rd', default=None, type=float,
               help=('Turbine rotor diameter(m), used along with hub height to '
                     'compute blade tip height which is used to determine '
-                    'setback distance'))
+                    'setback distance. Must be provided if plant_height is not'
+                    'given'))
+@click.option('--plant_height', '-ph', default=None, type=float,
+              help=('Plant height, used to determine setback distance. Must '
+                    'be provided if hub_height and rotor_diameter are not '
+                    'given'))
 @click.option('--regs_fpath', '-regs', default=None, type=STR,
               show_default=True,
               help=('Path to regulations .csv file, if None create '
@@ -126,8 +135,8 @@ def from_config(ctx, config):
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
-          regs_fpath, multiplier, max_workers, replace, hsds, log_dir,
-          verbose):
+          plant_height, regs_fpath, multiplier, max_workers, replace, hsds,
+          log_dir, verbose):
     """
     Compute Setbacks locally
     """
@@ -136,6 +145,7 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['HUB_HEIGHT'] = hub_height
     ctx.obj['ROTOR_DIAMETER'] = rotor_diameter
+    ctx.obj['PLANT_HEIGHT'] = plant_height
     ctx.obj['REGS_FPATH'] = regs_fpath
     ctx.obj['MULTIPLIER'] = multiplier
     ctx.obj['MAX_WORKERS'] = max_workers
@@ -147,6 +157,12 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
 
     log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(ctx.obj['NAME'], log_dir, modules=log_modules, verbose=verbose)
+
+    if plant_height is None and (rotor_diameter is None or hub_height is None):
+        raise RuntimeError(
+            "Must provide either `plant_height` or both `rotor_diameter` "
+            "and `hub_height`."
+        )
 
 
 @local.command()
@@ -296,6 +312,39 @@ def rail_setbacks(ctx):
     logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
+@local.command()
+@click.pass_context
+def parcel_setbacks(ctx):
+    """
+    Compute setbacks from parcels
+    """
+    excl_fpath = ctx.obj['excl_fpath']
+    features_path = ctx.obj['FEATURES_PATH']
+    out_dir = ctx.obj['OUT_DIR']
+    plant_height = ctx.obj['PLANT_HEIGHT']
+    regs_fpath = ctx.obj['REGS_FPATH']
+    multiplier = ctx.obj['MULTIPLIER']
+    max_workers = ctx.obj['MAX_WORKERS']
+    replace = ctx.obj['REPLACE']
+    hsds = ctx.obj['HSDS']
+
+    logger.info('Computing setbacks from parcels in {}'
+                .format(features_path))
+    logger.debug('Setbacks to be computed with:\n'
+                 '- plant_height = {}\n'
+                 '- regs_fpath = {}\n'
+                 '- multiplier = {}\n'
+                 '- using max_workers = {}\n'
+                 '- replace layer if needed = {}\n'
+                 .format(plant_height, regs_fpath, multiplier,
+                         max_workers, replace))
+
+    ParcelSetbacks.run(excl_fpath, features_path, out_dir, plant_height,
+                       regulations_fpath=regs_fpath, multiplier=multiplier,
+                       max_workers=max_workers, replace=replace, hsds=hsds)
+    logger.info('Setbacks computed and written to {}'.format(out_dir))
+
+
 def run_local(ctx, config):
     """
     Run Setbacks locally from config
@@ -314,6 +363,7 @@ def run_local(ctx, config):
                out_dir=config.dirout,
                hub_height=config.hub_height,
                rotor_diameter=config.rotor_diameter,
+               plant_height=config.plant_height,
                regs_fpath=config.regs_fpath,
                multiplier=config.multiplier,
                max_workers=config.execution_control.max_workers,
@@ -328,9 +378,13 @@ def run_local(ctx, config):
         ctx.invoke(transmission_setbacks)
     elif feature_type == 'rail':
         ctx.invoke(rail_setbacks)
+    elif feature_type == 'parcel':
+        ctx.invoke(parcel_setbacks)
     else:
         options = set(config.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
-        msg = 'Feature type must be one of {}'.format(options)
+        msg = 'Feature type must be one of {}; got {}'.format(
+            options, feature_type
+        )
         raise RuntimeError(msg)
 
 
@@ -353,8 +407,9 @@ def get_node_cmd(name, config):
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
             '-feats {}'.format(SLURM.s(config.features_path)),
             '-o {}'.format(SLURM.s(config.dirout)),
-            '-height {}'.format(SLURM.s(config.hub_height)),
-            '-diameter {}'.format(SLURM.s(config.rotor_diameter)),
+            '-hh {}'.format(SLURM.s(config.hub_height)),
+            '-rd {}'.format(SLURM.s(config.rotor_diameter)),
+            '-ph {}'.format(SLURM.s(config.plant_height)),
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
             '-mult {}'.format(SLURM.s(config.multiplier)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
@@ -379,9 +434,13 @@ def get_node_cmd(name, config):
         args.append('transmission-setbacks')
     elif feature_type == 'rail':
         args.append('rail-setbacks')
+    elif feature_type == 'parcel':
+        args.append('parcel-setbacks')
     else:
         options = set(config.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
-        msg = 'Feature type must be one of {}'.format(options)
+        msg = 'Feature type must be one of {}; got {}'.format(
+            options, feature_type
+        )
         raise RuntimeError(msg)
 
     cmd = ('python -m reVX.setbacks.setbacks_cli {}'
