@@ -7,6 +7,7 @@ from concurrent.futures import as_completed
 from warnings import warn
 import os
 import logging
+import pathlib
 import numpy as np
 import geopandas as gpd
 from rasterio import features
@@ -600,20 +601,36 @@ class BaseSetbacks(ABC):
         Parameters
         ----------
         features_fpath : str
-            Path to features file.
+            Path to features file. This path can contain
+            any pattern that can be used in the glob function.
+            For example, `/path/to/features/[A]*` would match
+            with all the features in the direcotry
+            `/path/to/features/` that start with "A". This input
+            can also be a directory, but that directory must ONLY
+            contain feature files. If your feature files are mixed
+            with other files or directories, use something like
+            `/path/to/features/*.geojson`.
 
         Returns
         -------
         features_fpath : list
-            Features path as a list.
+            Features path as a list of strings.
 
         Notes
         -----
-        This method is currently required for the setbacks cli.
+        This method is required for `run` classmethods for
+        feature setbacks that are spread out over multiple
+        files.
         """
-        if not os.path.exists(features_fpath):
-            msg = '{} is not a valid file path!'.format(features_fpath)
+        glob_path = pathlib.Path(features_fpath)
+        if glob_path.is_dir():
+            glob_path = glob_path / '*'
+
+        paths = [str(f) for f in glob_path.parent.glob(glob_path.name)]
+        if not paths:
+            msg = 'No files found matching the input {!r}!'
+            msg = msg.format(features_fpath)
             logger.error(msg)
             raise FileNotFoundError(msg)
 
-        return [features_fpath]
+        return paths
