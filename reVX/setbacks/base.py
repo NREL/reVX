@@ -432,7 +432,6 @@ class BaseSetbacks(ABC):
         """
         return np.zeros(self.arr_shape[1:], dtype='uint8')
 
-
     def _rasterize_setbacks(self, shapes):
         """Convert setbacks geometries into exclusions array.
 
@@ -454,10 +453,10 @@ class BaseSetbacks(ABC):
         arr = self._no_exclusions_array()
         if shapes:
             features.rasterize(shapes=shapes,
-                            out=arr,
-                            out_shape=self.arr_shape[1:],
-                            fill=0,
-                            transform=self.profile['transform'])
+                               out=arr,
+                               out_shape=self.arr_shape[1:],
+                               fill=0,
+                               transform=self.profile['transform'])
 
         return arr
 
