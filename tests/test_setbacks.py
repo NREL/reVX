@@ -123,7 +123,7 @@ def test_generic_parcels():
     """Test generic parcel setbacks. """
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-                               'RI_Parcels.gpkg')
+                               'Rhode_Island.gpkg')
     setbacks_x1 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regulations_fpath=None,
                                  multiplier=1)
     test_x1 = setbacks_x1.compute_setbacks(parcel_path)
@@ -148,7 +148,7 @@ def test_generic_parcels_with_invalid_shape_input():
     """Test generic parcel setbacks but with an inalid shape input. """
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-                               'RI_Parcels_invalid.gpkg')
+                               'invalid', 'Rhode_Island.gpkg')
     setbacks = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regulations_fpath=None,
                               multiplier=100)
 
@@ -186,7 +186,7 @@ def test_local_parcels(max_workers, regulations_fpath):
         )
 
         parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-                                   'RI_Parcels.gpkg')
+                                   'Rhode_Island.gpkg')
         test = setbacks.compute_setbacks(parcel_path, max_workers=max_workers)
 
     assert test.sum() == 3
@@ -272,7 +272,7 @@ def test_cli_parcels(runner):
     Test CLI with Parcels.
     """
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-                               'RI_Parcels.gpkg')
+                               'Rhode_Island.gpkg')
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
         regs_fpath = os.path.join(td, regs_fpath)
@@ -300,7 +300,7 @@ def test_cli_parcels(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test_fp = os.path.join(td, 'RI_Parcels.tif')
+        test_fp = os.path.join(td, 'Rhode_Island.tif')
 
         with Geotiff(test_fp) as tif:
             test = tif.values
