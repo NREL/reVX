@@ -229,7 +229,11 @@ class BaseSetbacks(ABC):
             fips = exc['cnty_fips']
             profile = exc.get_layer_profile('cnty_fips')
 
-        for p, v in features.shapes(fips, transform=profile['transform']):
+        s = features.shapes(
+            fips.astype(np.int32),
+            transform=profile['transform']
+        )
+        for p, v in s:
             v = int(v)
             if v in regulations.index:
                 regulations.at[v, 'geometry'] = shape(p)
