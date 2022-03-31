@@ -407,14 +407,17 @@ def get_node_cmd(name, config):
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
             '-feats {}'.format(SLURM.s(config.features_path)),
             '-o {}'.format(SLURM.s(config.dirout)),
-            '-hh {}'.format(SLURM.s(config.hub_height)),
-            '-rd {}'.format(SLURM.s(config.rotor_diameter)),
-            '-ph {}'.format(SLURM.s(config.plant_height)),
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
             '-mult {}'.format(SLURM.s(config.multiplier)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
+
+    if config.plant_height is None:
+        args.append('-hh {}'.format(SLURM.s(config.hub_height)))
+        args.append('-rd {}'.format(SLURM.s(config.rotor_diameter)))
+    else:
+        args.append('-ph {}'.format(SLURM.s(config.plant_height)))
 
     if config.replace:
         args.append('-r')
