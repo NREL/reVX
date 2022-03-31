@@ -4,6 +4,7 @@ Compute setbacks exclusions
 """
 import logging
 import os
+import geopandas as gpd
 
 from rex.utilities import log_mem
 
@@ -125,6 +126,25 @@ class ParcelSetbacks(BaseSetbacks):
         )
 
         return regulations
+
+    def _parse_features(self, features_fpath):
+        """Abstract method to parse features.
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to file containing features to setback from.
+
+        Returns
+        -------
+        geopandas.GeoDataFrame
+            Geometries of features to setback from in exclusion coordinate
+            system
+        """
+        features = gpd.read_file(features_fpath)
+        if features.crs is None:
+            features = features.set_crs("EPSG:4326")
+        return features.to_crs(crs=self.crs)
 
     @classmethod
     def run(cls, excl_fpath, parcels_path, out_dir, plant_height,
