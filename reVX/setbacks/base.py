@@ -415,29 +415,45 @@ class BaseSetbacks(ABC):
 
         return setbacks
 
+    def _no_exclusions_array(self):
+        """Get an array of the correct shape reprenting no exclusions.
+
+        The array contains all zeros, and a new one is created
+        for every function call.
+
+        Returns
+        -------
+        np.array
+            Array of zeros representing no exclusions.
+        """
+        return np.zeros(self.arr_shape[1:], dtype='uint8')
+
+
     def _rasterize_setbacks(self, shapes):
         """Convert setbacks geometries into exclusions array.
 
         Parameters
         ----------
-        setbacks : list
+        shapes : list, optional
             List of (geometry, 1) pairs to rasterize. Each geometry is a
             feature buffered by the desired setback distance in meters.
+            If `None` or empty list, returns array of zeros.
 
         Returns
         -------
         arr : ndarray
-            Rasterized array of setbacks
+            Rasterized array of setbacks.
         """
         logger.debug('Generating setbacks exclusion array of shape {}'
                      .format(self.arr_shape))
         log_mem(logger)
-        arr = np.zeros(self.arr_shape[1:], dtype='uint8')
-        features.rasterize(shapes=shapes,
-                           out=arr,
-                           out_shape=self.arr_shape[1:],
-                           fill=0,
-                           transform=self.profile['transform'])
+        arr = self._no_exclusions_array()
+        if shapes:
+            features.rasterize(shapes=shapes,
+                            out=arr,
+                            out_shape=self.arr_shape[1:],
+                            fill=0,
+                            transform=self.profile['transform'])
 
         return arr
 
@@ -487,6 +503,9 @@ class BaseSetbacks(ABC):
             Raster array of setbacks.
         """
         regulations = self._check_regulations(features_fpath)
+        if regulations.empty:
+            return self._no_exclusions_array()
+
         setbacks = []
         setback_features = self._parse_features(features_fpath)
         if max_workers is None:
