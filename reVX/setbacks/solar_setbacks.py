@@ -95,8 +95,39 @@ class ParcelSetbacks(BaseSetbacks):
 
         return regulations
 
+    def _check_regulations(self, features_fpath):
+        """
+        Reduce regs to state corresponding to features_fpath if needed.
+
+        Parameters
+        ----------
+        features_fpath : str
+            Path to shape file with features to compute setbacks from.
+
+        Returns
+        -------
+        regulations : geopandas.GeoDataFrame
+            Parcel regulations
+        """
+        state = os.path.basename(features_fpath).split('.')[0]
+        state = ''.join(filter(str.isalpha, state.lower()))
+
+        regulation_states = self.regulations.State.apply(
+            lambda s: ''.join(filter(str.isalpha, s.lower()))
+        )
+
+        mask = regulation_states == state
+        regulations = self.regulations[mask].reset_index(drop=True)
+
+        logger.debug(
+            'Computing setbacks for parcel regulations in {} counties'
+            .format(len(regulations))
+        )
+
+        return regulations
+
     @classmethod
-    def run(cls, excl_fpath, roads_path, out_dir, plant_height,
+    def run(cls, excl_fpath, parcels_path, out_dir, plant_height,
             regulations_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
@@ -110,9 +141,16 @@ class ParcelSetbacks(BaseSetbacks):
         excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be the
             location of any new setback layers
-        road_path : str
-            Path to state here streets gdb file or directory containing
-            states gdb files.
+        parcels_path : str
+            Path to parcels file or directory containing parcel files.
+            This path can contain any pattern that can be used in the glob
+            function. For example, `/path/to/features/[A]*` would match
+            with all the features in the direcotry
+            `/path/to/features/` that start with "A". This input
+            can also be a directory, but that directory must ONLY
+            contain feature files. If your feature files are mixed
+            with other files or directories, use something like
+            `/path/to/features/*.geojson`.
         out_dir : str
             Directory to save setbacks geotiff(s) into
         plant_height : float | int
@@ -144,8 +182,8 @@ class ParcelSetbacks(BaseSetbacks):
                        multiplier=multiplier,
                        hsds=hsds, chunks=chunks)
 
-        roads_path = setbacks._get_feature_paths(roads_path)
-        for fpath in roads_path:
+        parcels_path = setbacks._get_feature_paths(parcels_path)
+        for fpath in parcels_path:
             geotiff = os.path.basename(fpath).split('.')[0]
             geotiff += '.tif'
             geotiff = os.path.join(out_dir, geotiff)
@@ -154,7 +192,7 @@ class ParcelSetbacks(BaseSetbacks):
                        'unless replace=True'.format(geotiff))
                 logger.error(msg)
             else:
-                logger.info("Computing setbacks from roads in {} and saving "
+                logger.info("Computing setbacks from parcels in {} and saving "
                             "to {}".format(fpath, geotiff))
                 setbacks.compute_setbacks(fpath, geotiff=geotiff,
                                           max_workers=max_workers,
