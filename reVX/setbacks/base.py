@@ -376,7 +376,7 @@ class BaseSetbacks(ABC):
         """
 
         setback_type = county_regulations['Value Type'].strip()
-        setback = county_regulations['Value']
+        setback = float(county_regulations['Value'])
         if setback_type == 'Maximum Structure Height':
             setback *= self.plant_height
         elif setback_type != 'Meters':
