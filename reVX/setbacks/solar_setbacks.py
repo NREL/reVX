@@ -4,6 +4,7 @@ Compute setbacks exclusions
 """
 import logging
 import os
+from warnings import warn
 import geopandas as gpd
 
 from rex.utilities import log_mem
@@ -19,6 +20,43 @@ class ParcelSetbacks(BaseSetbacks):
     Parcel setbacks, using negative buffers.
     """
 
+    def _get_setback(self, county_regulations):
+        """Compute the setback distance for the county.
+
+        Compute the setback distance (in meters) from the
+        county regulations or the plant height.
+
+        Parameters
+        ----------
+        county_regulations : pandas.Series
+            Pandas Series with regulations for a single county
+            or feature type.
+
+        Returns
+        -------
+        setback : float | None
+            Setback distance in meters, or `None` if the setback
+            `Value Type` was not recognized.
+        """
+
+        setback_type = county_regulations["Value Type"].strip()
+        setback = float(county_regulations["Value"])
+        if setback_type.lower() == "maximum structure height":
+            setback *= self.plant_height
+        elif setback_type.lower() != "meters":
+            msg = (
+                "Cannot create setback for {}, expecting "
+                '"Maximum Structure Height", or '
+                '"Meters", but got {}'.format(
+                    county_regulations["County"], setback_type
+                )
+            )
+            logger.warning(msg)
+            warn(msg)
+            setback = None
+
+        return setback
+
     def compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
 
@@ -32,11 +70,12 @@ class ParcelSetbacks(BaseSetbacks):
         setbacks : ndarray
             Raster array of setbacks
         """
-        logger.info('Computing generic setbacks')
+        logger.info("Computing generic setbacks")
         setback_features = self._parse_features(features_fpath)
 
         setbacks = [
-            (geom, 1) for geom in setback_features.buffer(0).difference(
+            (geom, 1)
+            for geom in setback_features.buffer(0).difference(
                 setback_features.buffer(-1 * self.generic_setback)
             )
         ]
@@ -61,16 +100,18 @@ class ParcelSetbacks(BaseSetbacks):
         setbacks : list
             List of setback geometries.
         """
-        logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(cnty.iloc[0]['FIPS']))
+        logger.debug(
+            "- Computing setbacks for county FIPS {}".format(
+                cnty.iloc[0]["FIPS"]
+            )
+        )
         log_mem(logger)
-        mask = features.centroid.within(cnty['geometry'].values[0])
+        mask = features.centroid.within(cnty["geometry"].values[0])
         tmp = features.loc[mask]
 
         setbacks = [
-            (geom, 1) for geom in tmp.buffer(0).difference(
-                tmp.buffer(-1 * setback)
-            )
+            (geom, 1)
+            for geom in tmp.buffer(0).difference(tmp.buffer(-1 * setback))
         ]
 
         return setbacks
@@ -91,7 +132,7 @@ class ParcelSetbacks(BaseSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = regulations['Feature Type'].apply(str.strip) == 'Property Line'
+        mask = regulations["Feature Type"].apply(str.strip) == "Property Line"
         regulations = regulations.loc[mask]
 
         return regulations
@@ -110,19 +151,20 @@ class ParcelSetbacks(BaseSetbacks):
         regulations : geopandas.GeoDataFrame
             Parcel regulations
         """
-        state = os.path.basename(features_fpath).split('.')[0]
-        state = ''.join(filter(str.isalpha, state.lower()))
+        state = os.path.basename(features_fpath).split(".")[0]
+        state = "".join(filter(str.isalpha, state.lower()))
 
         regulation_states = self.regulations.State.apply(
-            lambda s: ''.join(filter(str.isalpha, s.lower()))
+            lambda s: "".join(filter(str.isalpha, s.lower()))
         )
 
         mask = regulation_states == state
         regulations = self.regulations[mask].reset_index(drop=True)
 
         logger.debug(
-            'Computing setbacks for parcel regulations in {} counties'
-            .format(len(regulations))
+            "Computing setbacks for parcel regulations in {} counties".format(
+                len(regulations)
+            )
         )
 
         return regulations
@@ -147,9 +189,19 @@ class ParcelSetbacks(BaseSetbacks):
         return features.to_crs(crs=self.crs)
 
     @classmethod
-    def run(cls, excl_fpath, parcels_path, out_dir, plant_height,
-            regulations_fpath=None, multiplier=None,
-            chunks=(128, 128), max_workers=None, replace=False, hsds=False):
+    def run(
+        cls,
+        excl_fpath,
+        parcels_path,
+        out_dir,
+        plant_height,
+        regulations_fpath=None,
+        multiplier=None,
+        chunks=(128, 128),
+        max_workers=None,
+        replace=False,
+        hsds=False,
+    ):
         """
         Compute parcel setbacks and write them to a geotiff.
         If a regulations file is given, compute local setbacks, otherwise
@@ -197,23 +249,34 @@ class ParcelSetbacks(BaseSetbacks):
             Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
             behind HSDS, by default False
         """
-        setbacks = cls(excl_fpath, plant_height=plant_height,
-                       regulations_fpath=regulations_fpath,
-                       multiplier=multiplier,
-                       hsds=hsds, chunks=chunks)
+        setbacks = cls(
+            excl_fpath,
+            plant_height=plant_height,
+            regulations_fpath=regulations_fpath,
+            multiplier=multiplier,
+            hsds=hsds,
+            chunks=chunks,
+        )
 
         parcels_path = setbacks._get_feature_paths(parcels_path)
         for fpath in parcels_path:
-            geotiff = os.path.basename(fpath).split('.')[0]
-            geotiff += '.tif'
+            geotiff = os.path.basename(fpath).split(".")[0]
+            geotiff += ".tif"
             geotiff = os.path.join(out_dir, geotiff)
             if os.path.exists(geotiff) and not replace:
-                msg = ('{} already exists, setbacks will not be re-computed '
-                       'unless replace=True'.format(geotiff))
+                msg = (
+                    "{} already exists, setbacks will not be re-computed "
+                    "unless replace=True".format(geotiff)
+                )
                 logger.error(msg)
             else:
-                logger.info("Computing setbacks from parcels in {} and saving "
-                            "to {}".format(fpath, geotiff))
-                setbacks.compute_setbacks(fpath, geotiff=geotiff,
-                                          max_workers=max_workers,
-                                          replace=replace)
+                logger.info(
+                    "Computing setbacks from parcels in {} and saving "
+                    "to {}".format(fpath, geotiff)
+                )
+                setbacks.compute_setbacks(
+                    fpath,
+                    geotiff=geotiff,
+                    max_workers=max_workers,
+                    replace=replace,
+                )

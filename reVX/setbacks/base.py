@@ -409,18 +409,18 @@ class BaseSetbacks(ABC):
         Returns
         -------
         setback : float | None
-            setback distance in meters, None if the setback "Value Type"
-            was not recognized
+            Setback distance in meters, or `None` if the setback
+            `Value Type` was not recognized.
         """
 
         setback_type = county_regulations["Value Type"].strip()
         setback = float(county_regulations["Value"])
-        if setback_type == "Maximum Structure Height":
+        if "multiplier" in setback_type.lower():
             setback *= self.plant_height
-        elif setback_type != "Meters":
+        elif setback_type.lower() != "meters":
             msg = (
                 "Cannot create setback for {}, expecting "
-                '"Maximum Structure Height", or '
+                '"... Multiplier", or '
                 '"Meters", but got {}'.format(
                     county_regulations["County"], setback_type
                 )

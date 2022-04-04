@@ -103,13 +103,13 @@ class BaseWindSetbacks(BaseSetbacks):
 
         setback_type = county_regulations['Value Type']
         setback = county_regulations['Value']
-        if setback_type == 'Max-tip Height Multiplier':
+        if setback_type.lower() == 'max-tip height multiplier':
             setback *= self.plant_height
-        elif setback_type == 'Rotor-Diameter Multiplier':
+        elif setback_type.lower()== 'rotor-diameter multiplier':
             setback *= self.rotor_diameter
-        elif setback_type == 'Hub-height Multiplier':
+        elif setback_type.lower() == 'hub-height multiplier':
             setback *= self.hub_height
-        elif setback_type != 'Meters':
+        elif setback_type.lower() != 'meters':
             msg = ('Cannot create setback for {}, expecting '
                    '"Max-tip Height Multiplier", '
                    '"Rotor-Diameter Multiplier", '
