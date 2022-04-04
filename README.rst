@@ -41,7 +41,7 @@ reVX command line tools
 - `plexos-plants <https://nrel.github.io/reVX/_cli/plexos-plants.html#plexos-plants>`_
 - `mean-wind-dirs <https://nrel.github.io/reVX/_cli/mean-wind-dirs.html#mean-wind-dirs>`_
 - `prominent-wind-dirs <https://nrel.github.io/reVX/_cli/prominent-wind-dirs.html#prominent-wind-dirs>`_
-- `wind-setbacks <https://nrel.github.io/reVX/_cli/wind-setbacks.html#wind-setbacks>`_
+- `setbacks <https://nrel.github.io/reVX/_cli/setbacks.html#setbacks>`_
 - `offshore-assembly-areas <https://nrel.github.io/reVX/_cli/offshore-assembly-areas.html#offshore-assembly-areas>`_
 - `offshore-dist-to-ports <https://nrel.github.io/reVX/_cli/offshore-dist-to-ports.html#offshore-dist-to-ports>`_
 - `offshore-inputs <https://nrel.github.io/reVX/_cli/offshore-inputs.html#offshore-inputs>`_
@@ -99,7 +99,7 @@ Option 1: Install from PIP or Conda (recommended for analysts):
               | manually: ``pip install HOPP``
 
         - | NOTE: If you install using pip and want to run
-          | `Wind Setbacks <https://nrel.github.io/reVX/_cli/reVX.wind_setbacks.wind_setbacks.html>`_
+          | `Setbacks <https://nrel.github.io/reVX/_cli/reVX.setbacks.setbacks.html>`_
           | you will need to install rtree manually:
             * ``conda install rtree``
             * `pip installation instructions <https://pypi.org/project/Rtree/#:~:text=Rtree%20is%20a%20ctypes%20Python,Multi%2Ddimensional%20indexes>`_
