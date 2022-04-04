@@ -26,7 +26,7 @@ class BaseSetbacks(ABC):
     Create exclusions layers for setbacks
     """
 
-    def __init__(self, excl_fpath, plant_height, regulations_fpath=None,
+    def __init__(self, excl_fpath, base_setback_dist, regulations_fpath=None,
                  multiplier=None, hsds=False, chunks=(128, 128)):
         """
         Parameters
@@ -34,13 +34,12 @@ class BaseSetbacks(ABC):
         excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be
             the location of any new setback layers
-        plant_height : float | int
-            Plant height (m), used to determine setback distance.
-            This value will be used to calculate the setback distance
-            when a multiplier is provided either via the
-            `regulations_fpath`csv or the `multiplier` input. In this
-            case, the setbacks will be calculated using `plant_height *
-            multiplier`.
+        base_setback_dist : float | int
+            Base setback distance (m). This value will be used to
+            calculate the setback distance when a multiplier is provided
+            either via the `regulations_fpath`csv or the `multiplier`
+            input. In this case, the setbacks will be calculated using
+            `base_setback_dist * multiplier`.
         regulations_fpath : str | None, optional
             Path to regulations .csv file. At a minimum, this csv must
             contain the following columns: `Value Type`, which
@@ -51,7 +50,7 @@ class BaseSetbacks(ABC):
             zeros required). Typically, this csv will also have a
             `Feature Type` column that labels the type of setback
             that each row represents. If this input is `None`, a generic
-            setback of `plant_height * multiplier` is used.
+            setback of `base_setback_dist * multiplier` is used.
             By default `None`.
         multiplier : int | float | None, optional
             A setback multiplier to use if regulations are not supplied.
@@ -66,7 +65,7 @@ class BaseSetbacks(ABC):
             chunk size in excl_fpath. By default `(128, 128)`.
         """
         log_versions(logger)
-        self._plant_height = plant_height
+        self._base_setback_dist = base_setback_dist
         self._excl_fpath = excl_fpath
         self._hsds = hsds
         excl_props = self._parse_excl_properties(excl_fpath, chunks, hsds=hsds)
@@ -262,14 +261,14 @@ class BaseSetbacks(ABC):
         return regulations.reset_index()
 
     @property
-    def plant_height(self):
-        """The plant height, in meters.
+    def base_setback_dist(self):
+        """The base setback distance, in meters.
 
         Returns
         -------
         float
         """
-        return self._plant_height
+        return self._base_setback_dist
 
     @property
     def generic_setback(self):
@@ -284,7 +283,7 @@ class BaseSetbacks(ABC):
         if self.multiplier is None:
             setback = None
         else:
-            setback = self.plant_height * self.multiplier
+            setback = self.base_setback_dist * self.multiplier
 
         return setback
 
@@ -569,7 +568,7 @@ class BaseSetbacks(ABC):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
-        of `plant_height * multiplier`.
+        of `base_setback_dist * multiplier`.
 
         Parameters
         ----------

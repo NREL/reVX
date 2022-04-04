@@ -42,7 +42,7 @@ class ParcelSetbacks(BaseSetbacks):
         setback_type = county_regulations["Value Type"].strip()
         setback = float(county_regulations["Value"])
         if setback_type.lower() == "maximum structure height":
-            setback *= self.plant_height
+            setback *= self.base_setback_dist
         elif setback_type.lower() != "meters":
             msg = ("Cannot create setback for {}, expecting "
                    '"Maximum Structure Height", or '
@@ -58,7 +58,7 @@ class ParcelSetbacks(BaseSetbacks):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
-        of `plant_height * multiplier`.
+        of `base_setback_dist * multiplier`.
 
         Parameters
         ----------
@@ -191,7 +191,7 @@ class ParcelSetbacks(BaseSetbacks):
         return features.to_crs(crs=self.crs)
 
     @classmethod
-    def run(cls, excl_fpath, parcels_path, out_dir, plant_height,
+    def run(cls, excl_fpath, parcels_path, out_dir, base_setback_dist,
             regulations_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
@@ -217,13 +217,12 @@ class ParcelSetbacks(BaseSetbacks):
             `/path/to/features/*.geojson`.
         out_dir : str
             Directory to save setbacks geotiff(s) into
-        plant_height : float | int
-            Plant height (m), used to determine setback distance using
-            multiplier. This value will be used to calculate the setback
-            distance when a multiplier is provided either via the
-            `regulations_fpath`csv or the `multiplier` input. In this
-            case, the setbacks will be calculated using `plant_height *
-            multiplier`.
+        base_setback_dist : float | int
+            Base setback distance (m). This value will be used to
+            calculate the setback distance when a multiplier is provided
+            either via the `regulations_fpath`csv or the `multiplier`
+            input. In this case, the setbacks will be calculated using
+            `base_setback_dist * multiplier`.
         regulations_fpath : str | None, optional
             Path to regulations .csv file. At a minimum, this csv must
             contain the following columns: `Value Type`, which
@@ -234,7 +233,7 @@ class ParcelSetbacks(BaseSetbacks):
             zeros required). Typically, this csv will also have a
             `Feature Type` column that labels the type of setback
             that each row represents. If this input is `None`, a generic
-            setback of `plant_height * multiplier` is used.
+            setback of `base_setback_dist * multiplier` is used.
             By default `None`.
         multiplier : int | float | str | None, optional
             Setback multiplier to use if regulations are not supplied.
@@ -256,7 +255,7 @@ class ParcelSetbacks(BaseSetbacks):
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
         """
-        setbacks = cls(excl_fpath, plant_height=plant_height,
+        setbacks = cls(excl_fpath, base_setback_dist=base_setback_dist,
                        regulations_fpath=regulations_fpath,
                        multiplier=multiplier,
                        hsds=hsds, chunks=chunks)

@@ -93,14 +93,14 @@ def from_config(ctx, config):
 @click.option('--hub_height', '-hh', default=None, type=float,
               help=('Turbine hub height(m), used along with rotor diameter to '
                     'compute blade tip height which is used to determine '
-                    'setback distance. Must be provided if plant_height is not'
-                    'given'))
+                    'setback distance. Must be provided if '
+                    '`base_setback_dist` is not given'))
 @click.option('--rotor_diameter', '-rd', default=None, type=float,
               help=('Turbine rotor diameter(m), used along with hub height to '
                     'compute blade tip height which is used to determine '
-                    'setback distance. Must be provided if plant_height is not'
-                    'given'))
-@click.option('--plant_height', '-ph', default=None, type=float,
+                    'setback distance. Must be provided if '
+                    '`base_setback_dist` is not given'))
+@click.option('--base_setback_dist', '-ph', default=None, type=float,
               help=('Plant height, used to determine setback distance. Must '
                     'be provided if hub_height and rotor_diameter are not '
                     'given'))
@@ -135,8 +135,8 @@ def from_config(ctx, config):
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
-          plant_height, regs_fpath, multiplier, max_workers, replace, hsds,
-          log_dir, verbose):
+          base_setback_dist, regs_fpath, multiplier, max_workers, replace,
+          hsds, log_dir, verbose):
     """
     Compute Setbacks locally
     """
@@ -145,7 +145,7 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['HUB_HEIGHT'] = hub_height
     ctx.obj['ROTOR_DIAMETER'] = rotor_diameter
-    ctx.obj['PLANT_HEIGHT'] = plant_height
+    ctx.obj['BASE_SETBACK_DIST'] = base_setback_dist
     ctx.obj['REGS_FPATH'] = regs_fpath
     ctx.obj['MULTIPLIER'] = multiplier
     ctx.obj['MAX_WORKERS'] = max_workers
@@ -158,9 +158,11 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
     log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(ctx.obj['NAME'], log_dir, modules=log_modules, verbose=verbose)
 
-    if plant_height is None and (rotor_diameter is None or hub_height is None):
+    no_base_setback = base_setback_dist is None
+    invalid_turbine_specs = rotor_diameter is None or hub_height is None
+    if no_base_setback and invalid_turbine_specs:
         raise RuntimeError(
-            "Must provide either `plant_height` or both `rotor_diameter` "
+            "Must provide either `base_setback_dist` or both `rotor_diameter` "
             "and `hub_height`."
         )
 
@@ -321,7 +323,7 @@ def parcel_setbacks(ctx):
     excl_fpath = ctx.obj['excl_fpath']
     features_path = ctx.obj['FEATURES_PATH']
     out_dir = ctx.obj['OUT_DIR']
-    plant_height = ctx.obj['PLANT_HEIGHT']
+    base_setback_dist = ctx.obj['BASE_SETBACK_DIST']
     regs_fpath = ctx.obj['REGS_FPATH']
     multiplier = ctx.obj['MULTIPLIER']
     max_workers = ctx.obj['MAX_WORKERS']
@@ -331,15 +333,15 @@ def parcel_setbacks(ctx):
     logger.info('Computing setbacks from parcels in {}'
                 .format(features_path))
     logger.debug('Setbacks to be computed with:\n'
-                 '- plant_height = {}\n'
+                 '- base_setback_dist = {}\n'
                  '- regs_fpath = {}\n'
                  '- multiplier = {}\n'
                  '- using max_workers = {}\n'
                  '- replace layer if needed = {}\n'
-                 .format(plant_height, regs_fpath, multiplier,
+                 .format(base_setback_dist, regs_fpath, multiplier,
                          max_workers, replace))
 
-    ParcelSetbacks.run(excl_fpath, features_path, out_dir, plant_height,
+    ParcelSetbacks.run(excl_fpath, features_path, out_dir, base_setback_dist,
                        regulations_fpath=regs_fpath, multiplier=multiplier,
                        max_workers=max_workers, replace=replace, hsds=hsds)
     logger.info('Setbacks computed and written to {}'.format(out_dir))
@@ -363,7 +365,7 @@ def run_local(ctx, config):
                out_dir=config.dirout,
                hub_height=config.hub_height,
                rotor_diameter=config.rotor_diameter,
-               plant_height=config.plant_height,
+               base_setback_dist=config.base_setback_dist,
                regs_fpath=config.regs_fpath,
                multiplier=config.multiplier,
                max_workers=config.execution_control.max_workers,
@@ -413,11 +415,11 @@ def get_node_cmd(name, config):
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
-    if config.plant_height is None:
+    if config.base_setback_dist is None:
         args.append('-hh {}'.format(SLURM.s(config.hub_height)))
         args.append('-rd {}'.format(SLURM.s(config.rotor_diameter)))
     else:
-        args.append('-ph {}'.format(SLURM.s(config.plant_height)))
+        args.append('-ph {}'.format(SLURM.s(config.base_setback_dist)))
 
     if config.replace:
         args.append('-r')

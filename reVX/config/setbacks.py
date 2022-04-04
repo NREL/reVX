@@ -20,7 +20,7 @@ class SetbacksConfig(AnalysisConfig):
         'road': ['hub_height', 'rotor_diameter'],
         'rail': ['hub_height', 'rotor_diameter'],
         'transmission': ['hub_height', 'rotor_diameter'],
-        'parcel': ['plant_height'],
+        'parcel': ['base_setback_dist'],
     }
 
     def _preflight(self):
@@ -66,9 +66,9 @@ class SetbacksConfig(AnalysisConfig):
         return self['features_path']
 
     @property
-    def plant_height(self):
+    def base_setback_dist(self):
         """Get plant height."""
-        return self.get('plant_height', None)
+        return self.get('base_setback_dist', None)
 
     @property
     def hub_height(self):

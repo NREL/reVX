@@ -25,7 +25,7 @@ from reVX.setbacks.setbacks_cli import main
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
 HUB_HEIGHT = 135
 ROTOR_DIAMETER = 200
-PLANT_HEIGHT = 1
+BASE_SETBACK_DIST = 1
 MULTIPLIER = 3
 REGS_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
 REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
@@ -124,11 +124,11 @@ def test_generic_parcels():
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
-    setbacks_x1 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regulations_fpath=None,
-                                 multiplier=1)
+    setbacks_x1 = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                 regulations_fpath=None, multiplier=1)
     test_x1 = setbacks_x1.compute_setbacks(parcel_path)
 
-    setbacks_x100 = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT,
+    setbacks_x100 = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
                                    regulations_fpath=None, multiplier=100)
     test_x100 = setbacks_x100.compute_setbacks(parcel_path)
 
@@ -149,8 +149,8 @@ def test_generic_parcels_with_invalid_shape_input():
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'invalid', 'Rhode_Island.gpkg')
-    setbacks = ParcelSetbacks(EXCL_H5, PLANT_HEIGHT, regulations_fpath=None,
-                              multiplier=100)
+    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                              regulations_fpath=None, multiplier=100)
 
     # Ensure data we are using contains invalid shapes
     parcels = setbacks._parse_features(parcel_path)
@@ -180,7 +180,7 @@ def test_local_parcels(max_workers, regulations_fpath):
         shutil.copy(regulations_fpath, regs_fpath)
 
         setbacks = ParcelSetbacks(
-            EXCL_H5, PLANT_HEIGHT,
+            EXCL_H5, BASE_SETBACK_DIST,
             regulations_fpath=regs_fpath,
             multiplier=None
         )
@@ -285,7 +285,7 @@ def test_cli_parcels(runner):
             "excl_fpath": EXCL_H5,
             "feature_type": "parcel",
             "features_path": parcel_path,
-            "plant_height": PLANT_HEIGHT,
+            "base_setback_dist": BASE_SETBACK_DIST,
             "log_level": "INFO",
             "regs_fpath": regs_fpath,
             "replace": True,

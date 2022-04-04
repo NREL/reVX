@@ -69,7 +69,9 @@ class BaseWindSetbacks(BaseSetbacks):
         self._rotor_diameter = rotor_diameter
         super().__init__(
             excl_fpath=excl_fpath,
-            plant_height=self._hub_height + self._rotor_diameter / 2,
+            base_setback_dist=(
+                self._hub_height + self._rotor_diameter / 2
+            ),
             regulations_fpath=regulations_fpath, multiplier=multiplier,
             hsds=hsds, chunks=chunks
         )
@@ -117,7 +119,7 @@ class BaseWindSetbacks(BaseSetbacks):
         setback_type = county_regulations["Value Type"]
         setback = county_regulations["Value"]
         if setback_type.lower() == "max-tip height multiplier":
-            setback *= self.plant_height
+            setback *= self.base_setback_dist
         elif setback_type.lower() == "rotor-diameter multiplier":
             setback *= self.rotor_diameter
         elif setback_type.lower() == "hub-height multiplier":
