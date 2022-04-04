@@ -153,10 +153,11 @@ class ParcelSetbacks(BaseSetbacks):
         ----------
         features_fpath : str
             Path to shape file with features to compute setbacks from.
+            This file needs to have the state in the filename.
 
         Returns
         -------
-        regulations : geopandas.GeoDataFrame
+        regulations : `geopandas.GeoDataFrame`
             Parcel regulations
         """
         state = os.path.basename(features_fpath).split(".")[0]
@@ -187,7 +188,7 @@ class ParcelSetbacks(BaseSetbacks):
 
         Returns
         -------
-        geopandas.GeoDataFrame
+        `geopandas.GeoDataFrame`
             Geometries of features to setback from in exclusion coordinate
             system
         """
