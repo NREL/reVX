@@ -41,7 +41,7 @@ class ParcelSetbacks(BaseSetbacks):
 
         setback_type = county_regulations["Value Type"].strip()
         setback = float(county_regulations["Value"])
-        if setback_type.lower() == "maximum structure height":
+        if setback_type.lower() == "structure height multiplier":
             setback *= self.base_setback_dist
         elif setback_type.lower() != "meters":
             msg = ("Cannot create setback for {}, expecting "
