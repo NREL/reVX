@@ -19,6 +19,7 @@ class BaseWindSetbacks(BaseSetbacks):
     """
     Create exclusions layers for wind setbacks
     """
+
     MULTIPLIERS = {'high': 3, 'moderate': 1.1}
 
     def __init__(self, excl_fpath, hub_height, rotor_diameter,
@@ -28,29 +29,41 @@ class BaseWindSetbacks(BaseSetbacks):
         Parameters
         ----------
         excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be the
-            location of any new setback layers
+            Path to .h5 file containing exclusion layers, will also be
+            the location of any new setback layers.
         hub_height : float | int
-            Turbine hub height (m), used along with rotor diameter to compute
-            blade tip height which is used to determine setback distance
+            Turbine hub height (m), used along with rotor diameter to
+            compute blade tip height which is used to determine setback
+            distance.
         rotor_diameter : float | int
-            Turbine rotor diameter (m), used along with hub height to compute
-            blade tip height which is used to determine setback distance
+            Turbine rotor diameter (m), used along with hub height to
+            compute blade tip height which is used to determine setback
+            distanc.
         regulations_fpath : str | None, optional
-            Path to wind regulations .csv file, if None create generic
-            setbacks using max-tip height * "multiplier", by default None
+            Path to regulations .csv file. At a minimum, this csv must
+            contain the following columns: `Value Type`, which
+            specifies wether the value is a multiplier or static height,
+            `Value`, which specifies the numeric value of the setback or
+            multiplier, and `FIPS`, which specifies a unique 5-digit
+            code for each county (this can be an integer - no leading
+            zeros required). Typically, this csv will also have a
+            `Feature Type` column that labels the type of setback
+            that each row represents. If this input is `None`, a generic
+            setback of `max_tip_height * multiplier` is used.
+            By default `None`.
         multiplier : int | float | str | None, optional
-            Setback multiplier to use if wind regulations are not supplied.
-            It is multiplied with max-tip height to calculate the setback
-            distance. If str, must be a key in {'high': 3, 'moderate': 1.1}.
-            If supplied along with `regulations_fpath`, this input will be
-            ignored, by default None.
+            Setback multiplier to use if wind regulations are not
+            supplied. It is multiplied with max-tip height to calculate
+            the setback distance. If str, must be a one of
+            {'high', 'moderate'}. If supplied along with
+            `regulations_fpath`, this input will be
+            ignored. By default `None`.
         hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-            behind HSDS, by default False
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
         chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default chunk
-            size in excl_fpath, by default (128, 128)
+            Chunk size to use for setback layers, if None use default
+            chunk size in excl_fpath. By default `(128, 128)`.
         """
         self._hub_height = hub_height
         self._rotor_diameter = rotor_diameter
@@ -85,14 +98,14 @@ class BaseWindSetbacks(BaseSetbacks):
 
     def _get_setback(self, county_regulations):
         """
-        Compute the setback distance in meters from the county regulations,
-        turbine tip height or rotor diameter.
+        Compute the setback distance in meters from the county
+        regulations, turbine tip height or rotor diameter.
 
         Parameters
         ----------
         county_regulations : pandas.Series
-            Pandas Series with wind regulations for a single county / feature
-            type
+            Pandas Series with wind regulations for a
+            single county / feature type.
 
         Returns
         -------
@@ -101,21 +114,24 @@ class BaseWindSetbacks(BaseSetbacks):
             was not recognized
         """
 
-        setback_type = county_regulations['Value Type']
-        setback = county_regulations['Value']
-        if setback_type.lower() == 'max-tip height multiplier':
+        setback_type = county_regulations["Value Type"]
+        setback = county_regulations["Value"]
+        if setback_type.lower() == "max-tip height multiplier":
             setback *= self.plant_height
-        elif setback_type.lower()== 'rotor-diameter multiplier':
+        elif setback_type.lower() == "rotor-diameter multiplier":
             setback *= self.rotor_diameter
-        elif setback_type.lower() == 'hub-height multiplier':
+        elif setback_type.lower() == "hub-height multiplier":
             setback *= self.hub_height
-        elif setback_type.lower() != 'meters':
-            msg = ('Cannot create setback for {}, expecting '
-                   '"Max-tip Height Multiplier", '
-                   '"Rotor-Diameter Multiplier", '
-                   '"Hub-height Multiplier", or '
-                   '"Meters", but got {}'
-                   .format(county_regulations['County'], setback_type))
+        elif setback_type.lower() != "meters":
+            msg = (
+                "Cannot create setback for {}, expecting "
+                '"Max-tip Height Multiplier", '
+                '"Rotor-Diameter Multiplier", '
+                '"Hub-height Multiplier", or '
+                '"Meters", but got {}'.format(
+                    county_regulations["County"], setback_type
+                )
+            )
             logger.warning(msg)
             warn(msg)
             setback = None
@@ -126,28 +142,29 @@ class BaseWindSetbacks(BaseSetbacks):
         """
         Run preflight checks on WindSetBack inputs:
         1) Ensure either a wind regulations .csv is provided, or
-           a setback multiplier
-        2) Ensure wind regulations has county FIPS, map regulations to county
-           geometries from exclusions .h5 file
+           a setback multiplier.
+        2) Ensure wind regulations has county FIPS, map regulations to
+           county geometries from exclusions .h5 file.
         3) Ensure multiplier is a valid entry, either a float or one of
-           {'high': 3, 'moderate': 1.1}
+           {'high', 'moderate'}
 
         Parameters
         ----------
         regulations_fpath : str | None
             Path to wind regulations .csv file, if None create global
-            setbacks
+            setbacks.
         multiplier : int | float | str | None
-            setback multiplier to use if wind regulations are not supplied,
-            if str, must one of {'high': 3, 'moderate': 1.1}
+            setback multiplier to use if wind regulations are not
+            supplied, if str, must one of {'high', 'moderate'}.
 
         Returns
         -------
-        regulations: geopandas.GeoDataFrame | None
-            GeoDataFrame with county level wind setback regulations merged
-            with county geometries, use for intersecting with setback features
+        regulations: `geopandas.GeoDataFrame` | None
+            GeoDataFrame with county level wind setback regulations
+            merged with county geometries, use for intersecting with
+            setback features.
         Multiplier : float | None
-            Generic setbacks multiplier
+            Generic setbacks multiplier.
         """
         regulations, multiplier = super()._preflight_check(
             regulations_fpath, multiplier
@@ -163,11 +180,12 @@ class StructureWindSetbacks(BaseWindSetbacks):
     """
     Structure Wind setbacks
     """
+
     @staticmethod
     def _split_state_name(state_name):
         """
-        Split state name at capitals to map .geojson files to regulations
-        state names
+        Split state name at capitals to map .geojson files to
+        regulations state names.
 
         Parameters
         ----------
@@ -177,8 +195,8 @@ class StructureWindSetbacks(BaseWindSetbacks):
         Returns
         -------
         str
-            State names with spaces added between Capitals (names) to match
-            wind regulations state names
+            State names with spaces added between Capitals (names) to
+            match wind regulations state names.
         """
         state_name = ' '.join(a for a
                               in re.split(r'([A-Z][a-z]*)', state_name)
@@ -195,8 +213,8 @@ class StructureWindSetbacks(BaseWindSetbacks):
         ----------
         features_fpath : str
             Path to structures geojson for a single state, or directory
-            containing geojsons for all states. Used to identify structures to
-            build setbacks from. Files should be by state
+            containing geojsons for all states. Used to identify
+            structures to build setbacks from. Files should be by state.
 
         Returns
         -------
@@ -272,52 +290,68 @@ class StructureWindSetbacks(BaseWindSetbacks):
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
         Compute state's structural setbacks and write them to a geotiff.
-        If a wind regulations file is given compute local setbacks, otherwise
-        compute generic setbacks using the given multiplier and the turbine
-        tip-height.
+        If a wind regulations file is given compute local setbacks,
+        otherwise compute generic setbacks using the given multiplier
+        and the turbine tip-height.
 
         Parameters
         ----------
         excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be the
-            location of any new setback layers
+            Path to .h5 file containing exclusion layers, will also be
+            the location of any new setback layers
         structure_path : str
             Path to structures geojson for a single state, or directory
             containing geojsons for all states.
         out_dir : str
             Directory to save setbacks geotiff(s) into
         hub_height : float | int
-            Turbine hub height (m), used along with rotor diameter to compute
-            blade tip height which is used to determine setback distance
+            Turbine hub height (m), used along with rotor diameter to
+            compute blade tip height which is used to determine setback
+            distance.
         rotor_diameter : float | int
-            Turbine rotor diameter (m), used along with hub height to compute
-            blade tip height which is used to determine setback distance
+            Turbine rotor diameter (m), used along with hub height to
+            compute blade tip height which is used to determine setback
+            distance.
         regulations_fpath : str | None, optional
-            Path to wind regulations .csv file, if None create generic
-            setbacks using max-tip height * "multiplier", by default None
+            Path to regulations .csv file. At a minimum, this csv must
+            contain the following columns: `Value Type`, which
+            specifies wether the value is a multiplier or static height,
+            `Value`, which specifies the numeric value of the setback or
+            multiplier, and `FIPS`, which specifies a unique 5-digit
+            code for each county (this can be an integer - no leading
+            zeros required). Typically, this csv will also have a
+            `Feature Type` column that labels the type of setback
+            that each row represents. If this input is `None`, a generic
+            setback of `max_tip_height * multiplier` is used.
+            By default `None`.
         multiplier : int | float | str | None, optional
-            Setback multiplier to use if wind regulations are not supplied.
-            It is multiplied with max-tip height to calculate the setback
-            distance. If str, must be a key in {'high': 3, 'moderate': 1.1}.
-            If supplied along with `regulations_fpath`, this input will be
-            ignored, by default None.
+            Setback multiplier to use if wind regulations are not
+            supplied.It is multiplied with max-tip height to calculate
+            the setback distance. If str, must be one of
+            {'high', 'moderate'}. If supplied along with
+            `regulations_fpath`, this input will be ignored.
+            By default `None`.
         chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default chunk
-            size in excl_fpath, by default (128, 128)
+            Chunk size to use for setback layers, if None use default
+            chunk size in excl_fpath. By default `(128, 128)`.
         max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run in
-            serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
+            Number of workers to use for setback computation, if 1 run
+            in serial, if > 1 run in parallel with that many workers,
+            if `None`, run in parallel on all available cores.
+            By default `None`.
         replace : bool, optional
-            Flag to replace geotiff if it already exists, by default False
+            Flag to replace geotiff if it already exists.
+            By default `False`.
         hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-            behind HSDS, by default False
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
         """
         setbacks = cls(excl_fpath, hub_height, rotor_diameter,
                        regulations_fpath=regulations_fpath,
                        multiplier=multiplier,
-                       hsds=hsds, chunks=chunks)
+            hsds=hsds,
+            chunks=chunks,
+        )
 
         structures_path = setbacks._get_feature_paths(structures_path)
 
@@ -343,7 +377,8 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
     def _parse_features(self, features_fpath):
         """
-        Load roads from gdb file, convert to exclusions coordinate system
+        Load roads from gdb file, convert to exclusions coordinate
+        system.
 
         Parameters
         ----------
@@ -352,7 +387,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
         Returns
         -------
-        roads : geopandas.GeoDataFrame.sindex
+        roads : `geopandas.GeoDataFrame.sindex`
             Geometries for roads in gdb file, in exclusion coordinate
             system
         """
@@ -370,8 +405,8 @@ class RoadWindSetbacks(BaseWindSetbacks):
         ----------
         features_fpath : str
             Path to state here streets gdb file or directory containing
-            states gdb files. Used to identify roads to build setbacks from.
-            Files should be by state
+            states gdb files. Used to identify roads to build setbacks
+            from. Files should be by state.
 
         Returns
         -------
@@ -445,47 +480,61 @@ class RoadWindSetbacks(BaseWindSetbacks):
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
         Compute state's road setbacks and write them to a geotiff.
-        If a wind regulations file is given compute local setbacks, otherwise
-        compute generic setbacks using the given multiplier and the turbine
-        tip-height.
+        If a wind regulations file is given compute local setbacks,
+        otherwise compute generic setbacks using the given multiplier
+        and the turbine tip-height.
 
         Parameters
         ----------
         excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be the
-            location of any new setback layers
+            Path to .h5 file containing exclusion layers, will also be
+            the location of any new setback layers.
         road_path : str
             Path to state here streets gdb file or directory containing
             states gdb files.
         out_dir : str
             Directory to save setbacks geotiff(s) into
         hub_height : float | int
-            Turbine hub height (m), used along with rotor diameter to compute
-            blade tip height which is used to determine setback distance
+            Turbine hub height (m), used along with rotor diameter to
+            compute blade tip height which is used to determine setback
+            distance.
         rotor_diameter : float | int
-            Turbine rotor diameter (m), used along with hub height to compute
-            blade tip height which is used to determine setback distance
+            Turbine rotor diameter (m), used along with hub height to
+            compute blade tip height which is used to determine setback
+            distance.
         regulations_fpath : str | None, optional
-            Path to wind regulations .csv file, if None create generic
-            setbacks using max-tip height * "multiplier", by default None
+            Path to regulations .csv file. At a minimum, this csv must
+            contain the following columns: `Value Type`, which
+            specifies wether the value is a multiplier or static height,
+            `Value`, which specifies the numeric value of the setback or
+            multiplier, and `FIPS`, which specifies a unique 5-digit
+            code for each county (this can be an integer - no leading
+            zeros required). Typically, this csv will also have a
+            `Feature Type` column that labels the type of setback
+            that each row represents. If this input is `None`, a generic
+            setback of `max_tip_height * multiplier` is used.
+            By default `None`.
         multiplier : int | float | str | None, optional
-            Setback multiplier to use if wind regulations are not supplied.
-            It is multiplied with max-tip height to calculate the setback
-            distance. If str, must be a key in {'high': 3, 'moderate': 1.1}.
-            If supplied along with `regulations_fpath`, this input will be
-            ignored, by default None.
+            Setback multiplier to use if wind regulations are not
+            supplied. It is multiplied with max-tip height to calculate
+            the setback distance. If str, must be one of
+            {'high', 'moderate'}. If supplied along with
+            `regulations_fpath`, this input will be ignored.
+            By default `None`.
         chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default chunk
-            size in excl_fpath, by default (128, 128)
+            Chunk size to use for setback layers, if None use default
+            chunk size in excl_fpath. By default `(128, 128)`.
         max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run in
-            serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
+            Number of workers to use for setback computation, if 1 run
+            in serial, if > 1 run in parallel with that many workers,
+            if `None`, run in parallel on all available cores.
+            By default `None`.
         replace : bool, optional
-            Flag to replace geotiff if it already exists, by default False
+            Flag to replace geotiff if it already exists.
+            By default `False`.
         hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-            behind HSDS, by default False
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
         """
         setbacks = cls(excl_fpath, hub_height, rotor_diameter,
                        regulations_fpath=regulations_fpath,
@@ -510,13 +559,18 @@ class RoadWindSetbacks(BaseWindSetbacks):
 
 class TransmissionWindSetbacks(BaseWindSetbacks):
     """
-    Transmission Wind setbacks, computed against a single set of transmission
-    features instead of against state level features
+    Transmission Wind setbacks, computed against a single set of
+    transmission features instead of against state level features.
     """
+
     @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
-        """
-        Compute local county setbacks
+        """Compute local county setbacks.
+
+        This method will compute the setbacks using a county-specific
+        regulations file that specifies either a static setback or a
+        multiplier value that will be used along with plant height
+        specifications to compute the setback.
 
         Parameters
         ----------
@@ -571,47 +625,63 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             rotor_diameter, regulations_fpath=None, multiplier=None,
             chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
-        Compute setbacks from given features and write them to a geotiff.
-        If a wind regulations file is given compute local setbacks, otherwise
-        compute generic setbacks using the given multiplier and the turbine
-        tip-height.
+        Compute setbacks from given features and write them to a
+        geotiff. If a wind regulations file is given compute local
+        setbacks, otherwise compute generic setbacks using the given
+        multiplier and the turbine tip-height.
+
         Parameters
         ----------
         excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be the
-            location of any new setback layers
+            Path to .h5 file containing exclusion layers, will also be
+            the location of any new setback layers.
         features_fpath : str
-            Path to shape file with transmission or rail features to compute
-            setbacks from
+            Path to shape file with transmission or rail features to
+            compute setbacks from.
         out_dir : str
-            Directory to save geotiff containing rasterized setbacks into
+            Directory to save geotiff containing rasterized setbacks
+            into.
         hub_height : float | int
-            Turbine hub height (m), used along with rotor diameter to compute
-            blade tip height which is used to determine setback distance
+            Turbine hub height (m), used along with rotor diameter to
+            compute blade tip height which is used to determine setback
+            distance.
         rotor_diameter : float | int
-            Turbine rotor diameter (m), used along with hub height to compute
-            blade tip height which is used to determine setback distance
+            Turbine rotor diameter (m), used along with hub height to
+            compute blade tip height which is used to determine setback
+            distance.
         regulations_fpath : str | None, optional
-            Path to wind regulations .csv file, if None create generic
-            setbacks using max-tip height * "multiplier", by default None
+            Path to regulations .csv file. At a minimum, this csv must
+            contain the following columns: `Value Type`, which
+            specifies wether the value is a multiplier or static height,
+            `Value`, which specifies the numeric value of the setback or
+            multiplier, and `FIPS`, which specifies a unique 5-digit
+            code for each county (this can be an integer - no leading
+            zeros required). Typically, this csv will also have a
+            `Feature Type` column that labels the type of setback
+            that each row represents. If this input is `None`, a generic
+            setback of `max_tip_height * multiplier` is used.
+            By default `None`.
         multiplier : int | float | str | None, optional
-            Setback multiplier to use if wind regulations are not supplied.
-            It is multiplied with max-tip height to calculate the setback
-            distance. If str, must be a key in {'high': 3, 'moderate': 1.1}.
-            If supplied along with `regulations_fpath`, this input will be
-            ignored, by default None.
+            Setback multiplier to use if wind regulations are not
+            supplied. It is multiplied with max-tip height to calculate
+            the setback distance. If str, must be one of
+            {'high', 'moderate'}. If supplied along with
+            `regulations_fpath`, this input will be ignored.
+            By default `None`.
         chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default chunk
-            size in excl_fpath, by default (128, 128)
+            Chunk size to use for setback layers, if None use default
+            chunk size in excl_fpath. By default `(128, 128)`.
         max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run in
-            serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
+            Number of workers to use for setback computation, if 1 run
+            in serial, if > 1 run in parallel with that many workers,
+            if `None`, run in parallel on all available cores.
+            By default `None`.
         replace : bool, optional
-            Flag to replace geotiff if it already exists, by default False
+            Flag to replace geotiff if it already exists.
+            By default `False`.
         hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-            behind HSDS, by default False
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
         """
         geotiff = os.path.basename(features_fpath).split('.')[0]
         geotiff += '.tif'
@@ -634,11 +704,13 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
 
 
 class RailWindSetbacks(TransmissionWindSetbacks):
+    """Rail Wind setbacks.
+
+    These setbacks are computed against a single set of railroad
+    features instead of state level features. This class uses the same
+    computational approach as `TransmissionWindSetbacks`.
     """
-    Rail Wind setbacks, computed against a single set of railroad features,
-    instead of state level features, uses the same approach as
-    TransmissionWindSetbacks
-    """
+
     def _parse_regulations(self, regulations_fpath):
         """
         Parse wind regulations, reduce table to just rail
@@ -646,12 +718,12 @@ class RailWindSetbacks(TransmissionWindSetbacks):
         Parameters
         ----------
         regulations_fpath : str
-            Path to wind regulations .csv file
+            Path to wind regulations .csv file.
 
         Returns
         -------
-        regulations : pandas.DataFrame
-            Wind regulations table
+        regulations : `pandas.DataFrame`
+            Wind regulations table.
         """
         # pylint: disable=bad-super-call
         sup = super(TransmissionWindSetbacks, self)

@@ -60,6 +60,9 @@ class ParcelSetbacks(BaseSetbacks):
     def compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
 
+        This method will compute the setbacks using a generic setback
+        of `plant_height * multiplier`.
+
         Parameters
         ----------
         features_fpath : str
@@ -85,6 +88,11 @@ class ParcelSetbacks(BaseSetbacks):
     @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
         """Compute local features setbacks.
+
+        This method will compute the setbacks using a county-specific
+        regulations file that specifies either a static setback or a
+        multiplier value that will be used along with the plant height
+        to compute the setback.
 
         Parameters
         ----------

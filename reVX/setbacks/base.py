@@ -435,6 +435,11 @@ class BaseSetbacks(ABC):
     def _compute_local_setbacks(features, cnty, setback):
         """Compute local features setbacks.
 
+        This method will compute the setbacks using a county-specific
+        regulations file that specifies either a static setback or a
+        multiplier value that will be used along with plant height
+        specifications to compute the setback.
+
         Parameters
         ----------
         features : geopandas.GeoDataFrame
@@ -621,6 +626,9 @@ class BaseSetbacks(ABC):
 
     def compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
+
+        This method will compute the setbacks using a generic setback
+        of `plant_height * multiplier`.
 
         Parameters
         ----------
