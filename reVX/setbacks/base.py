@@ -2,7 +2,7 @@
 """
 Compute setbacks exclusions
 """
-from abc import ABC
+from abc import ABC, abstractmethod
 from concurrent.futures import as_completed
 from warnings import warn
 import os
@@ -373,6 +373,7 @@ class BaseSetbacks(ABC):
 
         return self.regulations
 
+    @abstractmethod
     def _get_setback(self, county_regulations):
         """Compute the setback distance for the county.
 
@@ -391,21 +392,6 @@ class BaseSetbacks(ABC):
             Setback distance in meters, or `None` if the setback
             `Value Type` was not recognized.
         """
-
-        setback_type = county_regulations["Value Type"].strip()
-        setback = float(county_regulations["Value"])
-        if "multiplier" in setback_type.lower():
-            setback *= self.plant_height
-        elif setback_type.lower() != "meters":
-            msg = ("Cannot create setback for {}, expecting "
-                   '"... Multiplier", or '
-                   '"Meters", but got {}'
-                   .format(county_regulations["County"], setback_type))
-            logger.warning(msg)
-            warn(msg)
-            setback = None
-
-        return setback
 
     @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
