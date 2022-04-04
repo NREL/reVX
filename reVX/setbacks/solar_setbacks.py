@@ -219,7 +219,11 @@ class ParcelSetbacks(BaseSetbacks):
             Directory to save setbacks geotiff(s) into
         plant_height : float | int
             Plant height (m), used to determine setback distance using
-            multiplier.
+            multiplier. This value will be used to calculate the setback
+            distance when a multiplier is provided either via the
+            `regulations_fpath`csv or the `multiplier` input. In this
+            case, the setbacks will be calculated using `plant_height *
+            multiplier`.
         regulations_fpath : str | None, optional
             Path to regulations .csv file. At a minimum, this csv must
             contain the following columns: `Value Type`, which

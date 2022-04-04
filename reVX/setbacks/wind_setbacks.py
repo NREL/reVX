@@ -38,7 +38,7 @@ class BaseWindSetbacks(BaseSetbacks):
         rotor_diameter : float | int
             Turbine rotor diameter (m), used along with hub height to
             compute blade tip height which is used to determine setback
-            distanc.
+            distance.
         regulations_fpath : str | None, optional
             Path to regulations .csv file. At a minimum, this csv must
             contain the following columns: `Value Type`, which
