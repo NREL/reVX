@@ -48,9 +48,14 @@ class BaseWindSetbacks(BaseSetbacks):
             code for each county (this can be an integer - no leading
             zeros required). Typically, this csv will also have a
             `Feature Type` column that labels the type of setback
-            that each row represents. If this input is `None`, a generic
-            setback of `max_tip_height * multiplier` is used.
-            By default `None`.
+            that each row represents. Valid options for the `Value Type`
+            are:
+                - "Max-tip Height Multiplier"
+                - "Rotor-Diameter Multiplier"
+                - "Hub-height Multiplier"
+                - "Meters"
+            If this input is `None`, a generic setback of
+            `max_tip_height * multiplier` is used. By default `None`.
         multiplier : int | float | str | None, optional
             Setback multiplier to use if wind regulations are not
             supplied. It is multiplied with max-tip height to calculate
@@ -98,7 +103,7 @@ class BaseWindSetbacks(BaseSetbacks):
         """
         return self._rotor_diameter
 
-    def _get_setback(self, county_regulations):
+    def get_regulation_setback(self, county_regulations):
         """
         Compute the setback distance in meters from the county
         regulations, turbine tip height or rotor diameter.
@@ -106,8 +111,16 @@ class BaseWindSetbacks(BaseSetbacks):
         Parameters
         ----------
         county_regulations : pandas.Series
-            Pandas Series with wind regulations for a
-            single county / feature type.
+            Pandas Series with wind regulations for a single county or
+            feature type. At a minimum, this Series must
+            contain the following columns: `Value Type`, which
+            specifies wether the value is a multiplier or static height,
+            `Value`, which specifies the numeric value of the setback or
+            multiplier. Valid options for the `Value Type` are:
+                - "Max-tip Height Multiplier"
+                - "Rotor-Diameter Multiplier"
+                - "Hub-height Multiplier"
+                - "Meters"
 
         Returns
         -------
@@ -125,15 +138,12 @@ class BaseWindSetbacks(BaseSetbacks):
         elif setback_type.lower() == "hub-height multiplier":
             setback *= self.hub_height
         elif setback_type.lower() != "meters":
-            msg = (
-                "Cannot create setback for {}, expecting "
-                '"Max-tip Height Multiplier", '
-                '"Rotor-Diameter Multiplier", '
-                '"Hub-height Multiplier", or '
-                '"Meters", but got {}'.format(
-                    county_regulations["County"], setback_type
-                )
-            )
+            msg = ("Cannot create setback for {}, expecting "
+                   '"Max-tip Height Multiplier", '
+                   '"Rotor-Diameter Multiplier", '
+                   '"Hub-height Multiplier", or '
+                   '"Meters", but got {}'
+                   .format(county_regulations["County"], setback_type))
             logger.warning(msg)
             warn(msg)
             setback = None
@@ -323,9 +333,14 @@ class StructureWindSetbacks(BaseWindSetbacks):
             code for each county (this can be an integer - no leading
             zeros required). Typically, this csv will also have a
             `Feature Type` column that labels the type of setback
-            that each row represents. If this input is `None`, a generic
-            setback of `max_tip_height * multiplier` is used.
-            By default `None`.
+            that each row represents. Valid options for the `Value Type`
+            are:
+                - "Max-tip Height Multiplier"
+                - "Rotor-Diameter Multiplier"
+                - "Hub-height Multiplier"
+                - "Meters"
+            If this input is `None`, a generic setback of
+            `max_tip_height * multiplier` is used. By default `None`.
         multiplier : int | float | str | None, optional
             Setback multiplier to use if wind regulations are not
             supplied.It is multiplied with max-tip height to calculate
@@ -512,9 +527,14 @@ class RoadWindSetbacks(BaseWindSetbacks):
             code for each county (this can be an integer - no leading
             zeros required). Typically, this csv will also have a
             `Feature Type` column that labels the type of setback
-            that each row represents. If this input is `None`, a generic
-            setback of `max_tip_height * multiplier` is used.
-            By default `None`.
+            that each row represents. Valid options for the `Value Type`
+            are:
+                - "Max-tip Height Multiplier"
+                - "Rotor-Diameter Multiplier"
+                - "Hub-height Multiplier"
+                - "Meters"
+            If this input is `None`, a generic setback of
+            `max_tip_height * multiplier` is used. By default `None`.
         multiplier : int | float | str | None, optional
             Setback multiplier to use if wind regulations are not
             supplied. It is multiplied with max-tip height to calculate
@@ -659,9 +679,14 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
             code for each county (this can be an integer - no leading
             zeros required). Typically, this csv will also have a
             `Feature Type` column that labels the type of setback
-            that each row represents. If this input is `None`, a generic
-            setback of `max_tip_height * multiplier` is used.
-            By default `None`.
+            that each row represents. Valid options for the `Value Type`
+            are:
+                - "Max-tip Height Multiplier"
+                - "Rotor-Diameter Multiplier"
+                - "Hub-height Multiplier"
+                - "Meters"
+            If this input is `None`, a generic setback of
+            `max_tip_height * multiplier` is used. By default `None`.
         multiplier : int | float | str | None, optional
             Setback multiplier to use if wind regulations are not
             supplied. It is multiplied with max-tip height to calculate

@@ -49,9 +49,15 @@ class BaseSetbacks(ABC):
             code for each county (this can be an integer - no leading
             zeros required). Typically, this csv will also have a
             `Feature Type` column that labels the type of setback
-            that each row represents. If this input is `None`, a generic
-            setback of `base_setback_dist * multiplier` is used.
-            By default `None`.
+            that each row represents. Valid options for the `Value Type`
+            are:
+                - "Max-tip Height Multiplier"
+                - "Rotor-Diameter Multiplier"
+                - "Hub-height Multiplier"
+                - "Structure Height multiplier"
+                - "Meters"
+            If this input is `None`, a generic setback of
+            `base_setback_dist * multiplier` is used. By default `None`.
         multiplier : int | float | None, optional
             A setback multiplier to use if regulations are not supplied.
             This multiplier will be applied to the plant height. If
@@ -135,10 +141,10 @@ class BaseSetbacks(ABC):
         Parameters
         ----------
         regulations_fpath : str | None
-            Path to regulations .csv file, if None create global
-            setbacks
+            Path to regulations .csv file, if `None`, create global
+            setbacks.
         multiplier : int | float | str | None
-            setback multiplier to use if regulations are not supplied.
+            Setback multiplier to use if regulations are not supplied.
 
         Returns
         -------
@@ -373,7 +379,7 @@ class BaseSetbacks(ABC):
         return self.regulations
 
     @abstractmethod
-    def _get_setback(self, county_regulations):
+    def get_regulation_setback(self, county_regulations):
         """Compute the setback distance for the county.
 
         Compute the setback distance (in meters) from the
@@ -383,7 +389,16 @@ class BaseSetbacks(ABC):
         ----------
         county_regulations : pandas.Series
             Pandas Series with regulations for a single county
-            or feature type.
+            or feature type. At a minimum, this Series must
+            contain the following columns: `Value Type`, which
+            specifies wether the value is a multiplier or static height,
+            `Value`, which specifies the numeric value of the setback or
+            multiplier. Valid options for the `Value Type` are:
+                - "Max-tip Height Multiplier"
+                - "Rotor-Diameter Multiplier"
+                - "Hub-height Multiplier"
+                - "Structure Height multiplier"
+                - "Meters"
 
         Returns
         -------
@@ -532,7 +547,7 @@ class BaseSetbacks(ABC):
                 futures = []
                 for i in range(len(regulations)):
                     cnty = regulations.iloc[[i]].copy()
-                    setback = self._get_setback(cnty.iloc[0])
+                    setback = self.get_regulation_setback(cnty.iloc[0])
                     if setback is not None:
                         idx = setback_features.sindex.intersection(
                             cnty.total_bounds
@@ -550,7 +565,7 @@ class BaseSetbacks(ABC):
             logger.info('Computing local setbacks in serial')
             for i in range(len(regulations)):
                 cnty = regulations.iloc[[i]]
-                setback = self._get_setback(cnty.iloc[0])
+                setback = self.get_regulation_setback(cnty.iloc[0])
                 if setback is not None:
                     idx = setback_features.sindex.intersection(
                         cnty.total_bounds
