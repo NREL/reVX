@@ -44,13 +44,10 @@ class ParcelSetbacks(BaseSetbacks):
         if setback_type.lower() == "maximum structure height":
             setback *= self.plant_height
         elif setback_type.lower() != "meters":
-            msg = (
-                "Cannot create setback for {}, expecting "
-                '"Maximum Structure Height", or '
-                '"Meters", but got {}'.format(
-                    county_regulations["County"], setback_type
-                )
-            )
+            msg = ("Cannot create setback for {}, expecting "
+                   '"Maximum Structure Height", or '
+                    '"Meters", but got {}'
+                    .format(county_regulations["County"], setback_type))
             logger.warning(msg)
             warn(msg)
             setback = None
@@ -77,8 +74,7 @@ class ParcelSetbacks(BaseSetbacks):
         setback_features = self._parse_features(features_fpath)
 
         setbacks = [
-            (geom, 1)
-            for geom in setback_features.buffer(0).difference(
+            (geom, 1) for geom in setback_features.buffer(0).difference(
                 setback_features.buffer(-1 * self.generic_setback)
             )
         ]
@@ -108,18 +104,16 @@ class ParcelSetbacks(BaseSetbacks):
         setbacks : list
             List of setback geometries.
         """
-        logger.debug(
-            "- Computing setbacks for county FIPS {}".format(
-                cnty.iloc[0]["FIPS"]
-            )
-        )
+        logger.debug('- Computing setbacks for county FIPS {}'
+                     .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
-        mask = features.centroid.within(cnty["geometry"].values[0])
+        mask = features.centroid.within(cnty['geometry'].values[0])
         tmp = features.loc[mask]
 
         setbacks = [
-            (geom, 1)
-            for geom in tmp.buffer(0).difference(tmp.buffer(-1 * setback))
+            (geom, 1) for geom in tmp.buffer(0).difference(
+                tmp.buffer(-1 * setback)
+            )
         ]
 
         return setbacks
@@ -140,7 +134,7 @@ class ParcelSetbacks(BaseSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = regulations["Feature Type"].apply(str.strip) == "Property Line"
+        mask = regulations['Feature Type'].apply(str.strip) == 'Property Line'
         regulations = regulations.loc[mask]
 
         return regulations
@@ -157,23 +151,22 @@ class ParcelSetbacks(BaseSetbacks):
 
         Returns
         -------
-        regulations : `geopandas.GeoDataFrame`
+        regulations : geopandas.GeoDataFrame
             Parcel regulations
         """
-        state = os.path.basename(features_fpath).split(".")[0]
-        state = "".join(filter(str.isalpha, state.lower()))
+        state = os.path.basename(features_fpath).split('.')[0]
+        state = ''.join(filter(str.isalpha, state.lower()))
 
         regulation_states = self.regulations.State.apply(
-            lambda s: "".join(filter(str.isalpha, s.lower()))
+            lambda s: ''.join(filter(str.isalpha, s.lower()))
         )
 
         mask = regulation_states == state
         regulations = self.regulations[mask].reset_index(drop=True)
 
         logger.debug(
-            "Computing setbacks for parcel regulations in {} counties".format(
-                len(regulations)
-            )
+            'Computing setbacks for parcel regulations in {} counties'
+            .format(len(regulations))
         )
 
         return regulations
@@ -189,8 +182,8 @@ class ParcelSetbacks(BaseSetbacks):
         Returns
         -------
         `geopandas.GeoDataFrame`
-            Geometries of features to setback from in exclusion coordinate
-            system
+            Geometries of features to setback from in exclusion
+            coordinate system.
         """
         features = gpd.read_file(features_fpath)
         if features.crs is None:
@@ -198,35 +191,25 @@ class ParcelSetbacks(BaseSetbacks):
         return features.to_crs(crs=self.crs)
 
     @classmethod
-    def run(
-        cls,
-        excl_fpath,
-        parcels_path,
-        out_dir,
-        plant_height,
-        regulations_fpath=None,
-        multiplier=None,
-        chunks=(128, 128),
-        max_workers=None,
-        replace=False,
-        hsds=False,
-    ):
+    def run(cls, excl_fpath, parcels_path, out_dir, plant_height,
+            regulations_fpath=None, multiplier=None,
+            chunks=(128, 128), max_workers=None, replace=False, hsds=False):
         """
         Compute parcel setbacks and write them to a geotiff.
-        If a regulations file is given, compute local setbacks, otherwise
-        compute generic setbacks using the given multiplier and the plant
-        height.
+        If a regulations file is given, compute local setbacks,
+        otherwise compute generic setbacks using the given multiplier
+        and the plant height.
 
         Parameters
         ----------
         excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be the
-            location of any new setback layers
+            Path to .h5 file containing exclusion layers, will also be
+            the location of any new setback layers.
         parcels_path : str
             Path to parcels file or directory containing parcel files.
-            This path can contain any pattern that can be used in the glob
-            function. For example, `/path/to/features/[A]*` would match
-            with all the features in the direcotry
+            This path can contain any pattern that can be used in the
+            glob function. For example, `/path/to/features/[A]*` would
+            match with all the features in the direcotry
             `/path/to/features/` that start with "A". This input
             can also be a directory, but that directory must ONLY
             contain feature files. If your feature files are mixed
@@ -238,54 +221,54 @@ class ParcelSetbacks(BaseSetbacks):
             Plant height (m), used to determine setback distance using
             multiplier.
         regulations_fpath : str | None, optional
-            Path to regulations .csv file, if None create generic
-            setbacks using plant height * "multiplier", by default None
+            Path to regulations .csv file. At a minimum, this csv must
+            contain the following columns: `Value Type`, which
+            specifies wether the value is a multiplier or static height,
+            `Value`, which specifies the numeric value of the setback or
+            multiplier, and `FIPS`, which specifies a unique 5-digit
+            code for each county (this can be an integer - no leading
+            zeros required). Typically, this csv will also have a
+            `Feature Type` column that labels the type of setback
+            that each row represents. If this input is `None`, a generic
+            setback of `plant_height * multiplier` is used.
+            By default `None`.
         multiplier : int | float | str | None, optional
             Setback multiplier to use if regulations are not supplied.
             It is multiplied with plant height to calculate the setback
-            distance. If supplied along with `regulations_fpath`, this input
-            will be ignored, by default None.
+            distance. If supplied along with `regulations_fpath`, this
+            input will be ignored. By default `None`.
         chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default chunk
-            size in excl_fpath, by default (128, 128)
+            Chunk size to use for setback layers, if None use default
+            chunk size in excl_fpath, By default `(128, 128)`.
         max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run in
-            serial, if > 1 run in parallel with that many workers, if None
-            run in parallel on all available cores, by default None
+            Number of workers to use for setback computation, if 1 run
+            in serial, if > 1 run in parallel with that many workers,
+            if `None`, run in parallel on all available cores.
+            By default `None`.
         replace : bool, optional
-            Flag to replace geotiff if it already exists, by default False
+            Flag to replace geotiff if it already exists.
+            By default `False`.
         hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-            behind HSDS, by default False
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
         """
-        setbacks = cls(
-            excl_fpath,
-            plant_height=plant_height,
-            regulations_fpath=regulations_fpath,
-            multiplier=multiplier,
-            hsds=hsds,
-            chunks=chunks,
-        )
+        setbacks = cls(excl_fpath, plant_height=plant_height,
+                       regulations_fpath=regulations_fpath,
+                       multiplier=multiplier,
+                       hsds=hsds, chunks=chunks)
 
         parcels_path = setbacks._get_feature_paths(parcels_path)
         for fpath in parcels_path:
-            geotiff = os.path.basename(fpath).split(".")[0]
-            geotiff += ".tif"
+            geotiff = os.path.basename(fpath).split('.')[0]
+            geotiff += '.tif'
             geotiff = os.path.join(out_dir, geotiff)
             if os.path.exists(geotiff) and not replace:
-                msg = (
-                    "{} already exists, setbacks will not be re-computed "
-                    "unless replace=True".format(geotiff)
-                )
+                msg = ('{} already exists, setbacks will not be re-computed '
+                       'unless replace=True'.format(geotiff))
                 logger.error(msg)
             else:
-                logger.info(
-                    "Computing setbacks from parcels in {} and saving "
-                    "to {}".format(fpath, geotiff)
-                )
-                setbacks.compute_setbacks(
-                    fpath,
-                    geotiff=geotiff,
-                    max_workers=max_workers,
-                    replace=replace,
-                )
+                logger.info("Computing setbacks from parcels in {} and saving "
+                            "to {}".format(fpath, geotiff))
+                setbacks.compute_setbacks(fpath, geotiff=geotiff,
+                                          max_workers=max_workers,
+                                          replace=replace)
