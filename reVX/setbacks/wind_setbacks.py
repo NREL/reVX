@@ -349,9 +349,8 @@ class StructureWindSetbacks(BaseWindSetbacks):
         setbacks = cls(excl_fpath, hub_height, rotor_diameter,
                        regulations_fpath=regulations_fpath,
                        multiplier=multiplier,
-            hsds=hsds,
-            chunks=chunks,
-        )
+                       hsds=hsds,
+                       chunks=chunks)
 
         structures_path = setbacks._get_feature_paths(structures_path)
 
