@@ -684,4 +684,4 @@ class BaseSetbacks(ABC):
             logger.error(msg)
             raise FileNotFoundError(msg)
 
-        return
+        return paths
