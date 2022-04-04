@@ -46,8 +46,8 @@ class ParcelSetbacks(BaseSetbacks):
         elif setback_type.lower() != "meters":
             msg = ("Cannot create setback for {}, expecting "
                    '"Maximum Structure Height", or '
-                    '"Meters", but got {}'
-                    .format(county_regulations["County"], setback_type))
+                   '"Meters", but got {}'
+                   .format(county_regulations["County"], setback_type))
             logger.warning(msg)
             warn(msg)
             setback = None
