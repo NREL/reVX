@@ -62,15 +62,6 @@ or
 
     source activate /shared-projects/rev/modulefiles/conda/envs/rev/
 
-.. or module:
-
-.. .. code-block:: bash
-
-..     module use /shared-projects/rev/modulefiles
-..     module load reVX
-
-.. **NOTE: Loading the reV module via "module use/load" can take several minutes**
-
 Installing reVX
 ===============
 
@@ -92,15 +83,10 @@ Option 1: Install from PIP or Conda (recommended for analysts):
     2) ``conda install nrel-revx --channel=nrel``
 
         - NOTE: If you install using conda and you want to use:
-            * | `HSDS <https://github.com/NREL/hsds-examples>`_ you will also
-              | need to install h5pyd manually: ``pip install h5pyd``
-            * | `Turbine Flicker <https://nrel.github.io/reVX/_cli/reVX.turbine_flicker.turbine_flicker.html>`_
-              | you will need to install `HOPP <https://github.com/nrel/HOPP>`_
-              | manually: ``pip install HOPP``
+            * `HSDS <https://github.com/NREL/hsds-examples>`_ you will also need to install h5pyd manually: ``pip install h5pyd``
+            * `Turbine Flicker <https://nrel.github.io/reVX/_cli/reVX.turbine_flicker.turbine_flicker.html>`_ you will need to install `HOPP <https://github.com/nrel/HOPP>`_ manually: ``pip install HOPP``
 
-        - | NOTE: If you install using pip and want to run
-          | `Setbacks <https://nrel.github.io/reVX/_cli/reVX.setbacks.setbacks.html>`_
-          | you will need to install rtree manually:
+        - NOTE: If you install using pip and want to run `exclusion setbacks <https://nrel.github.io/reVX/_cli/reVX.setbacks.setbacks.html>`_ you will need to install rtree manually:
             * ``conda install rtree``
             * `pip installation instructions <https://pypi.org/project/Rtree/#:~:text=Rtree%20is%20a%20ctypes%20Python,Multi%2Ddimensional%20indexes>`_
 
