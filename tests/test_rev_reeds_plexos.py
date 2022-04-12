@@ -76,6 +76,31 @@ def test_plexos_agg():
     assert np.allclose(baseline_profiles.values, profiles)
 
 
+def test_explicit_assignment():
+    """Test the explicit assignment of built supply curve points to plexos
+    nodes."""
+    build_year = 2050
+    plx_nodes = pd.read_csv(PLEXOS_NODES)
+    rev_sc = pd.read_csv(REV_SC)
+    reeds_build = pd.read_csv(REEDS_1)
+
+    reeds_build['plexos_node_gid'] = 31808
+    plexos_meta, _, profiles = PlexosAggregation.run(
+        plx_nodes, rev_sc, reeds_build, CF_FPATH.format(2007),
+        build_year=build_year, max_workers=1)
+
+    assert len(plexos_meta) == 1
+    assert len(profiles) == 8760
+    assert profiles.shape[1] == 1
+    assert all(plexos_meta['plexos_gid'] == 31808)
+
+    requested_cap = reeds_build[(reeds_build.year == build_year)]
+    requested_cap = requested_cap['capacity_reV'].sum()
+
+    built_cap = plexos_meta['built_capacity'].values[0]
+    assert np.allclose(requested_cap, built_cap)
+
+
 def test_bad_build_capacity():
     """Test that the PlexosAggregation code raises an error if it can't
     build the full requested capacity."""

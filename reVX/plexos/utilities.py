@@ -103,7 +103,8 @@ class DataCleaner:
                     'resource_ids': 'res_gids',
                     'resource_ids_cnts': 'gid_counts'}
 
-    PLEXOS_META_COLS = ('sc_gid', 'plexos_id', 'latitude', 'longitude',
+    PLEXOS_META_COLS = ('sc_gid', 'plexos_id', 'plexos_gid',
+                        'latitude', 'longitude',
                         'voltage', 'interconnect', 'built_capacity',
                         'geometry')
 
@@ -202,6 +203,7 @@ class DataCleaner:
 
         if 'gid' in plexos_meta:
             plexos_meta = plexos_meta.sort_values(by='gid')
+            plexos_meta['plexos_gid'] = plexos_meta['gid']
 
         return plexos_meta
 
