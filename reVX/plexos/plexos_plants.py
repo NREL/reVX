@@ -1120,7 +1120,8 @@ class PlantProfileAggregation:
             f_out.h5.create_group('plant_meta')
             gen_profiles = []
             logger.info('Extracting profiles and writing meta for plants')
-            for i, (bus_id, bus_meta) in enumerate(self.plexos_table.iterrows()):
+            for i, irow in enumerate(self.plexos_table.iterrows()):
+                bus_id, bus_meta = irow
                 logger.debug('Building plant for bus {}'.format(bus_id))
                 plant_meta = self._make_plant_meta(bus_meta)
                 gen_profiles.append(self._make_profile(self.cf_fpath,
