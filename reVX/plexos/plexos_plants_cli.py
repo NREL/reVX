@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 @click.option('--plexos_table', '-pt', required=True,
               type=click.Path(exists=True),
               help=('Path to PLEXOS table of bus locations and capacity .csv'))
-@click.option('--sc_table', '-st', required=True,
+@click.option('--sc_table', '-sc', required=True,
               type=click.Path(exists=True),
               help=('Path to Supply Curve table .csv'))
 @click.option('--cf_fpath', '-cf', required=True,
