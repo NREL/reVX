@@ -383,7 +383,16 @@ class PlexosPlants(Plants):
             km, used as plant search distance threshold
         """
         substations = sc_table['trans_type'] == "Substation"
-        dist = sc_table.loc[substations, 'dist_mi'].values * 1.6
+
+        if 'dist_km' in sc_table:
+            dist = sc_table.loc[substations, 'dist_km'].values
+        elif 'dist_mi' in sc_table:
+            dist = sc_table.loc[substations, 'dist_mi'].values * 1.6
+        else:
+            msg = ('Could not find "dist_mi" or "dist_km" in sc table '
+                   'columns: {}'.format(sc_table.columns.values))
+            logger.error(msg)
+            raise KeyError(msg)
 
         return np.percentile(dist, percentile)
 
@@ -1111,14 +1120,15 @@ class PlantProfileAggregation:
             f_out.h5.create_group('plant_meta')
             gen_profiles = []
             logger.info('Extracting profiles and writing meta for plants')
-            for bus_id, bus_meta in self.plexos_table.iterrows():
+            for i, (bus_id, bus_meta) in enumerate(self.plexos_table.iterrows()):
                 logger.debug('Building plant for bus {}'.format(bus_id))
                 plant_meta = self._make_plant_meta(bus_meta)
                 gen_profiles.append(self._make_profile(self.cf_fpath,
                                                        plant_meta.copy()))
 
                 plant_meta = to_records_array(plant_meta)
-                logger.debug('Writing plant_meta/{}'.format(bus_id))
+                logger.debug('Writing plant_meta/{} ({} out of {})'
+                             .format(bus_id, i + 1, len(self.plexos_table)))
                 f_out._create_dset('plant_meta/{}'.format(bus_id),
                                    plant_meta.shape,
                                    plant_meta.dtype,
