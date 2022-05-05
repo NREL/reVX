@@ -25,6 +25,7 @@ class Plants:
     """
     Base class to handle plants
     """
+
     def __init__(self, plants):
         self._plants = {}
 
@@ -187,7 +188,8 @@ class PlexosPlants(Plants):
     Class to identify and fill Plants
     """
 
-    def __init__(self, plexos_table, sc_table, cf_fpath, dist_percentile=90,
+    def __init__(self, plexos_table, sc_table, cf_fpath,
+                 dist_percentile=90, dist_thresh_km=None,
                  lcoe_col='total_lcoe', lcoe_thresh=1.3, offshore=False,
                  max_workers=None, plants_per_worker=40,
                  points_per_worker=400):
@@ -205,6 +207,9 @@ class PlexosPlants(Plants):
         dist_percentile : int, optional
             Percentile to use to compute distance threshold using sc_gid to
             SubStation distance , by default 90
+        dist_thresh_km : float | None
+            Optional absolute distance threshold in km that will override the
+            dist_percentile input.
         lcoe_col : str, optional
             LCOE column to sort by, by default 'total_lcoe'
         lcoe_thresh : float, optional
@@ -239,6 +244,7 @@ class PlexosPlants(Plants):
         plants = self._identify_plants(self.plant_table,
                                        self._sc_points.sc_table,
                                        dist_percentile=dist_percentile,
+                                       dist_thresh_km=dist_thresh_km,
                                        lcoe_col=lcoe_col,
                                        lcoe_thresh=lcoe_thresh,
                                        max_workers=max_workers,
@@ -295,7 +301,7 @@ class PlexosPlants(Plants):
         Returns
         -------
         plant_table : pandas.DataFrame
-        Table of unique plants from plexos table
+            Table of unique plants from plexos table
         """
         plexos_table = parse_table(plexos_table)
         if 'plant_id' not in plexos_table:
@@ -397,7 +403,8 @@ class PlexosPlants(Plants):
         return np.percentile(dist, percentile)
 
     @classmethod
-    def _get_plant_sc_dists(cls, bus_coords, sc_table, dist_percentile=90,
+    def _get_plant_sc_dists(cls, bus_coords, sc_table,
+                            dist_percentile=90, dist_thresh_km=None,
                             lcoe_col='total_lcoe', lcoe_thresh=1.3):
         """
         Extract Supply curve gids and distances for plant originating at
@@ -412,6 +419,9 @@ class PlexosPlants(Plants):
         dist_percentile : int, optional
             Percentile to use to compute distance threshold using sc_gid to
             SubStation distance , by default 90
+        dist_thresh_km : float | None
+            Optional absolute distance threshold in km that will override the
+            dist_percentile input.
         lcoe_col : str, optional
             LCOE column to sort by, by default 'total_lcoe'
         lcoe_thresh : float, optional
@@ -428,18 +438,22 @@ class PlexosPlants(Plants):
         sc_coords = np.radians(sc_table[['latitude', 'longitude']].values)
 
         # Filter SC table to points within 'dist_tresh' of coords
-        dist = cls._haversine_dist(bus_coords, sc_coords)
-        dist_thresh = cls._substation_distance(sc_table,
-                                               percentile=dist_percentile)
-        logger.debug("- Using distance threshold of {} km".format(dist_thresh))
+        dist_km = cls._haversine_dist(bus_coords, sc_coords)
+
+        if dist_thresh_km is None:
+            dist_thresh_km = cls._substation_distance(
+                sc_table, percentile=dist_percentile)
+
+        logger.debug("- Using distance threshold of {} km"
+                     .format(dist_thresh_km))
         while True:
-            mask = dist <= dist_thresh
+            mask = dist_km <= dist_thresh_km
             plant_sc = sc_table[['latitude', 'longitude', lcoe_col]].copy()
             plant_sc = plant_sc.loc[mask]
             if len(plant_sc) > 1:
                 break
             else:
-                dist_thresh *= 1.2
+                dist_thresh_km *= 1.2
 
         # Find lowest lcoe site
         pos = np.argmin(plant_sc[lcoe_col])
@@ -453,7 +467,7 @@ class PlexosPlants(Plants):
         # Filter SC table to lcoe values within 'lcoe_thresh' of min LCOE value
         sc_cols = ['sc_gid', lcoe_col]
         plant_sc = sc_table[sc_cols].copy()
-        plant_sc["bus_dist"] = dist
+        plant_sc["bus_dist"] = dist_km
         mask = plant_sc[lcoe_col] <= lcoe_thresh
         plant_sc = plant_sc.loc[mask]
         sc_coords = sc_coords[mask]
@@ -465,7 +479,8 @@ class PlexosPlants(Plants):
         return plant_sc.reset_index(drop=True)
 
     @classmethod
-    def _identify_plants(cls, plant_table, sc_table, dist_percentile=90,
+    def _identify_plants(cls, plant_table, sc_table,
+                         dist_percentile=90, dist_thresh_km=None,
                          lcoe_col='total_lcoe', lcoe_thresh=1.3,
                          max_workers=None, plants_per_worker=40):
         """
@@ -473,9 +488,16 @@ class PlexosPlants(Plants):
 
         Parameters
         ----------
+        plant_table : pandas.DataFrame
+            Table of unique plants from plexos table
+        sc_table : str | pandas.DataFrame
+            Supply Curve table .csv or pre-loaded pandas DataFrame
         dist_percentile : int, optional
             Percentile to use to compute distance threshold using sc_gid to
             SubStation distance , by default 90
+        dist_thresh_km : float | None
+            Optional absolute distance threshold in km that will override the
+            dist_percentile input.
         lcoe_col : str, optional
             LCOE column to sort by, by default 'total_lcoe'
         lcoe_thresh : float, optional
@@ -511,6 +533,7 @@ class PlexosPlants(Plants):
                                         plant_table.iloc[table_slice].copy(),
                                         sc_table,
                                         dist_percentile=dist_percentile,
+                                        dist_thresh_km=dist_thresh_km,
                                         lcoe_col=lcoe_col,
                                         lcoe_thresh=lcoe_thresh,
                                         max_workers=1)
@@ -529,6 +552,7 @@ class PlexosPlants(Plants):
                 plant = cls._get_plant_sc_dists(
                     coords, sc_table,
                     dist_percentile=dist_percentile,
+                    dist_thresh_km=dist_thresh_km,
                     lcoe_col=lcoe_col,
                     lcoe_thresh=lcoe_thresh)
                 plants.append(plant)
@@ -737,9 +761,11 @@ class PlantProfileAggregation:
     """
     Aggregate renewable generation profiles to Plexos "plants"
     """
+
     def __init__(self, plexos_table, sc_table, cf_fpath, plants=None,
-                 dist_percentile=90, lcoe_col='total_lcoe',
-                 lcoe_thresh=1.3, offshore=False, max_workers=None,
+                 dist_percentile=90, dist_thresh_km=None,
+                 lcoe_col='total_lcoe', lcoe_thresh=1.3,
+                 offshore=False, max_workers=None,
                  plants_per_worker=40, points_per_worker=400):
         """
         Parameters
@@ -785,6 +811,7 @@ class PlantProfileAggregation:
             self._plants = PlexosPlants(self._plexos_table, self._sc_table,
                                         cf_fpath,
                                         dist_percentile=dist_percentile,
+                                        dist_thresh_km=dist_thresh_km,
                                         lcoe_col=lcoe_col,
                                         lcoe_thresh=lcoe_thresh,
                                         offshore=offshore,
@@ -1198,7 +1225,8 @@ class PlantProfileAggregation:
 
     @classmethod
     def run(cls, plexos_table, sc_table, cf_fpath, out_fpath,
-            dist_percentile=90, lcoe_col='total_lcoe', lcoe_thresh=1.3,
+            dist_percentile=90, dist_thresh_km=None,
+            lcoe_col='total_lcoe', lcoe_thresh=1.3,
             max_workers=None, points_per_worker=400, plants_per_worker=40,
             offshore=False):
         """
@@ -1220,6 +1248,9 @@ class PlantProfileAggregation:
         dist_percentile : int, optional
             Percentile to use to compute distance threshold using sc_gid to
             SubStation distance , by default 90
+        dist_thresh_km : float | None
+            Optional absolute distance threshold in km that will override the
+            dist_percentile input.
         lcoe_col : str, optional
             LCOE column to sort by, by default 'total_lcoe'
         lcoe_thresh : float, optional
@@ -1237,8 +1268,11 @@ class PlantProfileAggregation:
             Include offshore points, by default False
         """
         pp = cls(plexos_table, sc_table, cf_fpath, offshore=offshore,
-                 dist_percentile=dist_percentile, lcoe_col=lcoe_col,
-                 lcoe_thresh=lcoe_thresh, max_workers=max_workers,
+                 dist_percentile=dist_percentile,
+                 dist_thresh_km=dist_thresh_km,
+                 lcoe_col=lcoe_col,
+                 lcoe_thresh=lcoe_thresh,
+                 max_workers=max_workers,
                  points_per_worker=points_per_worker,
                  plants_per_worker=plants_per_worker)
 
