@@ -1145,6 +1145,8 @@ class PlantProfileAggregation:
                                chunks=(None, 100),
                                data=gen_profiles)
 
+        logger.info('Finished aggregating profiles to: {}'.format(out_fpath))
+
     @classmethod
     def aggregate(cls, plexos_table, sc_table, cf_fpath, plants_fpath,
                   out_fpath, offshore=False):
