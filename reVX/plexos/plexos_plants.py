@@ -827,12 +827,11 @@ class PlantProfileAggregation:
 
     @property
     def cf_gid_map(self):
-        """
-        Mapping of {res_gid: gen_gid}
+        """Mapping of res_gid (index) to gen_gid (values)
 
         Returns
         -------
-        dictionary
+        pd.Series
         """
         return self._cf_gid_map
 
@@ -887,6 +886,26 @@ class PlantProfileAggregation:
                 PlexosPlants._haversine_dist(plant_coords, sc_coords).T
 
         return self._sc_bus_dist
+
+    def get_gen_gid(self, res_gid):
+        """Get a generation gid from a resource gid using cf_gid_map. Accounts
+        for a many-to-one resource-to-gen_gid mapping.
+
+        Parameters
+        ----------
+        res_gid : int
+
+        Returns
+        -------
+        gen_gid
+        """
+
+        res_gid = self.cf_gid_map.loc[res_gid]
+
+        if isinstance(res_gid, pd.Series):
+            res_gid = res_gid.values[0]
+
+        return res_gid
 
     @staticmethod
     def _parse_plexos_table(plexos_table):
@@ -959,8 +978,8 @@ class PlantProfileAggregation:
 
         Returns
         -------
-        cf_gid_map : dictionary
-            Mapping of {res_gid: gen_gid}
+        cf_gid_map : pd.Series
+            Mapping of res_gid (index) to gen_gid (values)
         """
         logger.info('Mapping reV resource GIDs to generation GIDs.')
         with Resource(cf_fpath) as f:
@@ -969,7 +988,9 @@ class PlantProfileAggregation:
         if not isinstance(res_gids, np.ndarray):
             res_gids = np.array(list(res_gids))
 
-        cf_gid_map = {gid: i for i, gid in enumerate(res_gids)}
+        cf_gid_map = pd.Series(np.arange(len(res_gids)), index=res_gids,
+                               name='gen_gid')
+        cf_gid_map.index.name = 'res_gid'
 
         return cf_gid_map
 
@@ -1010,7 +1031,7 @@ class PlantProfileAggregation:
                 'sc_gids': plant['sc_gid'].values.tolist(),
                 'res_gids': plant['res_gids'].values.tolist(),
                 'gid_counts': plant['gid_counts'].values.tolist(),
-                'gen_gids': [[self.cf_gid_map[gid] for gid in gids]
+                'gen_gids': [[self.get_gen_gid(gid) for gid in gids]
                              for gids in plant['res_gids'].values],
                 'res_cf_means': plant['cf_means'].values.tolist(),
                 'build_capacity': plant['build_capacity'].values.tolist()}
@@ -1046,7 +1067,7 @@ class PlantProfileAggregation:
         """
         plant_meta = self.plant_builds[bus_meta['plant_id']]
         plant_meta['gen_gids'] = \
-            plant_meta['res_gids'].apply(lambda gids: [self.cf_gid_map[gid]
+            plant_meta['res_gids'].apply(lambda gids: [self.get_gen_gid(gid)
                                                        for gid in gids])
 
         sc_cols = ['res_gids', 'gen_gids', 'gid_counts', 'capacity']
