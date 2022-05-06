@@ -35,6 +35,10 @@ logger = logging.getLogger(__name__)
               show_default=True,
               help=('Percentile to use to compute distance threshold using '
                     'sc_gid to SubStation distance, by default 90'))
+@click.option('--dist_thresh_km', '-dt', type=float, default=None,
+              show_default=True,
+              help=('Optional absolute distance threshold in km that will '
+                    'override the dist_percentile input.'))
 @click.option('--lcoe_col', '-lc', type=str, default='total_lcoe',
               show_default=True,
               help="LCOE column to sort by, by default 'total_lcoe'")
@@ -59,8 +63,10 @@ logger = logging.getLogger(__name__)
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir, dist_percentile,
-         lcoe_col, lcoe_thresh, max_workers, points_per_worker,
+def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir,
+         dist_percentile, dist_thresh_km,
+         lcoe_col, lcoe_thresh,
+         max_workers, points_per_worker,
          plants_per_worker, offshore, verbose):
     """PLEXOS plant Command Line Interface"""
 
@@ -71,6 +77,7 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir, dist_percentile,
     ctx.obj['CF_FPATH'] = cf_fpath
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['DIST_PERCENTILE'] = dist_percentile
+    ctx.obj['DIST_THRESH_KM'] = dist_thresh_km
     ctx.obj['LCOE_COL'] = lcoe_col
     ctx.obj['LCOE_THRESH'] = lcoe_thresh
     ctx.obj['MAX_WORKERS'] = max_workers
@@ -91,8 +98,11 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir, dist_percentile,
         logger.info('Saving Aggregated Plant Profiles to {}'
                     .format(out_fpath))
         PlantProfileAggregation.run(plexos_table, sc_table, cf_fpath,
-                                    out_fpath, dist_percentile=dist_percentile,
-                                    lcoe_col=lcoe_col, lcoe_thresh=lcoe_thresh,
+                                    out_fpath,
+                                    dist_percentile=dist_percentile,
+                                    dist_thresh_km=dist_thresh_km,
+                                    lcoe_col=lcoe_col,
+                                    lcoe_thresh=lcoe_thresh,
                                     max_workers=max_workers,
                                     points_per_worker=points_per_worker,
                                     plants_per_worker=plants_per_worker,
@@ -100,7 +110,8 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir, dist_percentile,
 
 
 def get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,
-                 dist_percentile, lcoe_col, lcoe_thresh, max_workers,
+                 dist_percentile, dist_thresh_km,
+                 lcoe_col, lcoe_thresh, max_workers,
                  points_per_worker, plants_per_worker, offshore, verbose):
     """Build PLEXOS Plant CLI command."""
 
@@ -110,6 +121,7 @@ def get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,
             '-cf {}'.format(SLURM.s(cf_fpath)),
             '-out {}'.format(SLURM.s(out_dir)),
             '-dp {}'.format(SLURM.s(dist_percentile)),
+            '-dt {}'.format(SLURM.s(dist_thresh_km)),
             '-lc {}'.format(SLURM.s(lcoe_col)),
             '-lt {}'.format(SLURM.s(lcoe_thresh)),
             '-mw {}'.format(SLURM.s(max_workers)),
@@ -152,6 +164,7 @@ def eagle(ctx, alloc, walltime, feature, stdout_path):
     cf_fpath = ctx.obj['CF_FPATH']
     out_dir = ctx.obj['OUT_DIR']
     dist_percentile = ctx.obj['DIST_PERCENTILE']
+    dist_thresh_km = ctx.obj['DIST_THRESH_KM']
     lcoe_col = ctx.obj['LCOE_COL']
     lcoe_thresh = ctx.obj['LCOE_THRESH']
     max_workers = ctx.obj['MAX_WORKERS']
@@ -169,7 +182,8 @@ def eagle(ctx, alloc, walltime, feature, stdout_path):
         ctx.obj['SLURM_MANAGER'] = slurm_manager
 
     cmd = get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,
-                       dist_percentile, lcoe_col, lcoe_thresh, max_workers,
+                       dist_percentile, dist_thresh_km,
+                       lcoe_col, lcoe_thresh, max_workers,
                        points_per_worker, plants_per_worker, offshore, verbose)
 
     logger.info('Running reVX plexos plant aggregation on Eagle with '
