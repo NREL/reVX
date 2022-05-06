@@ -6,7 +6,7 @@ import click
 import logging
 import os
 
-from rex.utilities.cli_dtypes import STR, INT
+from rex.utilities.cli_dtypes import STR, INT, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.loggers import init_mult
 
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
               show_default=True,
               help=('Percentile to use to compute distance threshold using '
                     'sc_gid to SubStation distance, by default 90'))
-@click.option('--dist_thresh_km', '-dt', type=float, default=None,
+@click.option('--dist_thresh_km', '-dt', type=FLOAT, default=None,
               show_default=True,
               help=('Optional absolute distance threshold in km that will '
                     'override the dist_percentile input.'))
