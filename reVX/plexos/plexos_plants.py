@@ -1185,13 +1185,13 @@ class PlantProfileAggregation:
                                    data=plant_meta)
 
             logger.info('Writing Generation Profiles')
-            gen_profiles = \
-                np.round(np.dstack(gen_profiles)[0]).astype('uint16')
+            gen_profiles = np.dstack(gen_profiles)[0].astype('float32')
             f_out._create_dset('gen_profiles',
                                gen_profiles.shape,
                                gen_profiles.dtype,
                                chunks=(None, 100),
-                               data=gen_profiles)
+                               data=gen_profiles,
+                               attrs={'units': 'MW'})
 
         logger.info('Finished aggregating profiles to: {}'.format(out_fpath))
 
