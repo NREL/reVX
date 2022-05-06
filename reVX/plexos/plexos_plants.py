@@ -188,7 +188,7 @@ class PlexosPlants(Plants):
     Class to identify and fill Plants
     """
 
-    def __init__(self, plexos_table, sc_table, cf_fpath,
+    def __init__(self, plexos_table, sc_table, mymean_fpath,
                  dist_percentile=90, dist_thresh_km=None,
                  lcoe_col='total_lcoe', lcoe_thresh=1.3, offshore=False,
                  max_workers=None, plants_per_worker=40,
@@ -200,8 +200,10 @@ class PlexosPlants(Plants):
             Parsed and clean PLEXOS table
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
-        cf_fpath : str
-            Path to reV generation output .h5 file
+        mymean_fpath : str
+            Path to reV multi-year-mean .h5 file (preferred) or annual reV
+            generation output .h5 file. If annual, the plant buildouts might
+            change from year to year (bad!).
         offshore : bool, optional
             Include offshore points, by default False
         dist_percentile : int, optional
@@ -236,7 +238,7 @@ class PlexosPlants(Plants):
             max_workers = os.cpu_count()
 
         self._sc_points = \
-            SupplyCurvePoints(sc_table, cf_fpath,
+            SupplyCurvePoints(sc_table, mymean_fpath,
                               max_workers=max_workers,
                               points_per_worker=points_per_worker,
                               offshore=offshore)
@@ -710,7 +712,7 @@ class PlexosPlants(Plants):
         return plants_meta
 
     @classmethod
-    def save(cls, plexos_table, sc_table, cf_fpath, out_fpath,
+    def save(cls, plexos_table, sc_table, mymean_fpath, out_fpath,
              dist_percentile=90, lcoe_col='total_lcoe', lcoe_thresh=1.3,
              offshore=False, max_workers=None, plants_per_worker=40,
              points_per_worker=400):
@@ -723,8 +725,10 @@ class PlexosPlants(Plants):
             Parsed and clean PLEXOS table
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
-        cf_fpath : str
-            Path to reV generation output .h5 file
+        mymean_fpath : str
+            Path to reV multi-year-mean .h5 file (preferred) or annual reV
+            generation output .h5 file. If annual, the plant buildouts might
+            change from year to year (bad!).
         out_fpath : str
             .csv path to save plant meta data too
         offshore : bool, optional
@@ -748,7 +752,7 @@ class PlexosPlants(Plants):
         points_per_worker : int, optional
             Number of points to create on each worker, by default 400
         """
-        pp = cls(plexos_table, sc_table, cf_fpath,
+        pp = cls(plexos_table, sc_table, mymean_fpath,
                  dist_percentile=dist_percentile, lcoe_col=lcoe_col,
                  lcoe_thresh=lcoe_thresh, offshore=offshore,
                  max_workers=max_workers, plants_per_worker=plants_per_worker,
@@ -762,8 +766,8 @@ class PlantProfileAggregation:
     Aggregate renewable generation profiles to Plexos "plants"
     """
 
-    def __init__(self, plexos_table, sc_table, cf_fpath, plants=None,
-                 dist_percentile=90, dist_thresh_km=None,
+    def __init__(self, plexos_table, sc_table, mymean_fpath, cf_fpath,
+                 plants=None, dist_percentile=90, dist_thresh_km=None,
                  lcoe_col='total_lcoe', lcoe_thresh=1.3,
                  offshore=False, max_workers=None,
                  plants_per_worker=40, points_per_worker=400):
@@ -776,8 +780,13 @@ class PlantProfileAggregation:
             capacity
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
+        mymean_fpath : str
+            Path to reV multi-year-mean output .h5 file to pull cf_mean-means
+            from - this will be used to determine where plants are built so it
+            does not differ from year to year. The meta must match cf_fpath.
         cf_fpath : str
-            Path to reV Generation output .h5 file to pull CF profiles from
+            Path to reV annual Generation output .h5 file to pull CF profiles
+            from. Meta must match mymean_fpath.
         plants : PlexosPlants | None
             Optional PlexosPlants input. If None, PlexosPlants object will
             be Initialized from the plexos table input.
@@ -803,13 +812,14 @@ class PlantProfileAggregation:
         log_versions(logger)
         logger.info('Initializing PlantProfileAggregation')
         self._plexos_table = self._parse_plexos_table(plexos_table)
+        self._mymean_fpath = mymean_fpath
         self._cf_fpath = cf_fpath
         self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
         self._sc_table = SupplyCurvePoints._parse_sc_table(sc_table,
                                                            offshore=offshore)
         if plants is None:
             self._plants = PlexosPlants(self._plexos_table, self._sc_table,
-                                        cf_fpath,
+                                        mymean_fpath,
                                         dist_percentile=dist_percentile,
                                         dist_thresh_km=dist_thresh_km,
                                         lcoe_col=lcoe_col,
@@ -840,6 +850,17 @@ class PlantProfileAggregation:
         pandas.DataFrame
         """
         return self._plexos_table
+
+    @property
+    def mymean_fpath(self):
+        """
+        reV multi year mean output file path
+
+        Returns
+        -------
+        str
+        """
+        return self._mymean_fpath
 
     @property
     def cf_fpath(self):
@@ -1196,8 +1217,8 @@ class PlantProfileAggregation:
         logger.info('Finished aggregating profiles to: {}'.format(out_fpath))
 
     @classmethod
-    def aggregate(cls, plexos_table, sc_table, cf_fpath, plants_fpath,
-                  out_fpath, offshore=False):
+    def aggregate(cls, plexos_table, sc_table, mymean_fpath, cf_fpath,
+                  plants_fpath, out_fpath, offshore=False):
         """
         Aggregate pre-filled plants
 
@@ -1208,8 +1229,13 @@ class PlantProfileAggregation:
             .json, or pandas DataFrame
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
+        mymean_fpath : str
+            Path to reV multi-year-mean output .h5 file to pull cf_mean-means
+            from - this will be used to determine where plants are built so it
+            does not differ from year to year. The meta must match cf_fpath.
         cf_fpath : str
-            Path to reV Generation output .h5 file to pull CF profiles from
+            Path to reV annual Generation output .h5 file to pull CF profiles
+            from. Meta must match mymean_fpath.
         plants_fpath : str
             Path to .csv containing pre-filled plants
         out_fpath : str
@@ -1217,14 +1243,14 @@ class PlantProfileAggregation:
         offshore : bool, optional
             Include offshore points, by default False
         """
-        pp = cls(plexos_table, sc_table, cf_fpath, plants=plants_fpath,
-                 offshore=offshore)
+        pp = cls(plexos_table, sc_table, mymean_fpath, cf_fpath,
+                 plants=plants_fpath, offshore=offshore)
         # Add plants to PlexosPlant instance
 
         pp.aggregate_profiles(out_fpath)
 
     @classmethod
-    def run(cls, plexos_table, sc_table, cf_fpath, out_fpath,
+    def run(cls, plexos_table, sc_table, mymean_fpath, cf_fpath, out_fpath,
             dist_percentile=90, dist_thresh_km=None,
             lcoe_col='total_lcoe', lcoe_thresh=1.3,
             max_workers=None, points_per_worker=400, plants_per_worker=40,
@@ -1241,8 +1267,13 @@ class PlantProfileAggregation:
             capacity
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
+        mymean_fpath : str
+            Path to reV multi-year-mean output .h5 file to pull cf_mean-means
+            from - this will be used to determine where plants are built so it
+            does not differ from year to year. The meta must match cf_fpath.
         cf_fpath : str
-            Path to reV Generation output .h5 file to pull CF profiles from
+            Path to reV annual Generation output .h5 file to pull CF profiles
+            from. Meta must match mymean_fpath.
         out_fpath : str
             .h5 path to save aggregated plant profiles to
         dist_percentile : int, optional
@@ -1267,7 +1298,8 @@ class PlantProfileAggregation:
         offshore : bool, optional
             Include offshore points, by default False
         """
-        pp = cls(plexos_table, sc_table, cf_fpath, offshore=offshore,
+        pp = cls(plexos_table, sc_table, mymean_fpath, cf_fpath,
+                 offshore=offshore,
                  dist_percentile=dist_percentile,
                  dist_thresh_km=dist_thresh_km,
                  lcoe_col=lcoe_col,

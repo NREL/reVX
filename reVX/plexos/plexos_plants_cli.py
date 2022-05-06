@@ -27,9 +27,12 @@ logger = logging.getLogger(__name__)
 @click.option('--sc_table', '-sc', required=True,
               type=click.Path(exists=True),
               help=('Path to Supply Curve table .csv'))
+@click.option('--mymean_fpath', '-mym', required=True,
+              type=click.Path(exists=True),
+              help=('Path to reV multi-year-mean output .h5 file'))
 @click.option('--cf_fpath', '-cf', required=True,
               type=click.Path(exists=True),
-              help=('Path to reV Generation output .h5 file'))
+              help=('Path to reV annual Generation output .h5 file'))
 @click.option('--out_dir', '-out', required=True, type=click.Path(),
               help='Directory to dump output files')
 @click.option('--dist_percentile', '-dp', type=int, default=90,
@@ -64,7 +67,7 @@ logger = logging.getLogger(__name__)
 @click.option('-v', '--verbose', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir,
+def main(ctx, name, plexos_table, sc_table, mymean_fpath, cf_fpath, out_dir,
          dist_percentile, dist_thresh_km,
          lcoe_col, lcoe_thresh,
          max_workers, points_per_worker,
@@ -75,6 +78,7 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir,
     ctx.obj['NAME'] = name
     ctx.obj['PLEXOS_TABLE'] = plexos_table
     ctx.obj['SC_TABLE'] = sc_table
+    ctx.obj['MYMEAN_FPATH'] = mymean_fpath
     ctx.obj['CF_FPATH'] = cf_fpath
     ctx.obj['OUT_DIR'] = out_dir
     ctx.obj['DIST_PERCENTILE'] = dist_percentile
@@ -98,8 +102,8 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir,
         out_fpath = os.path.join(out_dir, out_fpath)
         logger.info('Saving Aggregated Plant Profiles to {}'
                     .format(out_fpath))
-        PlantProfileAggregation.run(plexos_table, sc_table, cf_fpath,
-                                    out_fpath,
+        PlantProfileAggregation.run(plexos_table, sc_table, mymean_fpath,
+                                    cf_fpath, out_fpath,
                                     dist_percentile=dist_percentile,
                                     dist_thresh_km=dist_thresh_km,
                                     lcoe_col=lcoe_col,
@@ -110,7 +114,7 @@ def main(ctx, name, plexos_table, sc_table, cf_fpath, out_dir,
                                     offshore=offshore)
 
 
-def get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,
+def get_node_cmd(name, plexos_table, sc_table, mymean_fpath, cf_fpath, out_dir,
                  dist_percentile, dist_thresh_km,
                  lcoe_col, lcoe_thresh, max_workers,
                  points_per_worker, plants_per_worker, offshore, verbose):
@@ -119,6 +123,7 @@ def get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,
     args = ['-n {}'.format(SLURM.s(name)),
             '-pt {}'.format(SLURM.s(plexos_table)),
             '-sc {}'.format(SLURM.s(sc_table)),
+            '-mym {}'.format(SLURM.s(mymean_fpath)),
             '-cf {}'.format(SLURM.s(cf_fpath)),
             '-out {}'.format(SLURM.s(out_dir)),
             '-dp {}'.format(SLURM.s(dist_percentile)),
@@ -162,6 +167,7 @@ def eagle(ctx, alloc, walltime, feature, stdout_path):
     name = ctx.obj['NAME']
     plexos_table = ctx.obj['PLEXOS_TABLE']
     sc_table = ctx.obj['SC_TABLE']
+    mymean_fpath = ctx.obj['MYMEAN_FPATH']
     cf_fpath = ctx.obj['CF_FPATH']
     out_dir = ctx.obj['OUT_DIR']
     dist_percentile = ctx.obj['DIST_PERCENTILE']
@@ -182,8 +188,8 @@ def eagle(ctx, alloc, walltime, feature, stdout_path):
         slurm_manager = SLURM()
         ctx.obj['SLURM_MANAGER'] = slurm_manager
 
-    cmd = get_node_cmd(name, plexos_table, sc_table, cf_fpath, out_dir,
-                       dist_percentile, dist_thresh_km,
+    cmd = get_node_cmd(name, plexos_table, sc_table, mymean_fpath, cf_fpath,
+                       out_dir, dist_percentile, dist_thresh_km,
                        lcoe_col, lcoe_thresh, max_workers,
                        points_per_worker, plants_per_worker, offshore, verbose)
 

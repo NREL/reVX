@@ -305,8 +305,8 @@ class SupplyCurvePoints:
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
         gen_fpath : str | pandas.DataFrame
-            Path to reV generation .h5, or pre-extracted .csv or
-            pandas DataFrame with "cf_mean" column.
+            Path to reV multi-year-mean .h5 (preferred), generation .h5,
+            or pre-extracted .csv or pandas DataFrame with "cf_mean" column.
         max_workers : int, optional
             Number of workers to use for point creation, 1 == serial,
             > 1 == parallel, None == parallel using all available cpus,
@@ -409,8 +409,8 @@ class SupplyCurvePoints:
         Parameters
         ----------
         gen_fpath : str | pandas.DataFrame
-            Path to reV generation .h5, or pre-extracted .csv or
-            pandas DataFrame with "cf_mean" column.
+            Path to reV multi-year-mean .h5 (preferred), generation .h5,
+            or pre-extracted .csv or pandas DataFrame with "cf_mean" column.
         offshore : bool, optional
             Include offshore points, by default False
 
@@ -423,7 +423,17 @@ class SupplyCurvePoints:
         if isinstance(gen_fpath, str) and gen_fpath.endswith('.h5'):
             with Resource(gen_fpath) as f:
                 gen_meta = f.meta
-                gen_meta['cf_mean'] = f['cf_mean']
+
+                if 'cf_mean-means' in f:
+                    gen_meta['cf_mean'] = f['cf_mean-means']
+
+                elif 'cf_mean' in f:
+                    gen_meta['cf_mean'] = f['cf_mean']
+
+                else:
+                    msg = 'Could not find cf_mean or cf_mean-means'
+                    logger.error(msg)
+                    raise KeyError(msg)
 
             # set index to the generation gid (row index)
             gen_meta = gen_meta.reset_index(drop=True)
@@ -592,8 +602,8 @@ class SupplyCurvePoints:
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
         gen_fpath : str | pandas.DataFrame
-            Path to reV generation .h5, or pre-extracted .csv or
-            pandas DataFrame with "cf_mean" column.
+            Path to reV multi-year-mean .h5 (preferred), generation .h5,
+            or pre-extracted .csv or pandas DataFrame with "cf_mean" column.
         max_workers : int, optional
             Number of workers to use for point creation, 1 == serial,
             > 1 == parallel, None == parallel using all available cpus,
