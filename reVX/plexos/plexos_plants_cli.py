@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
               help='Job name. Default is "plexos-plants".')
 @click.option('--plexos_table', '-pt', required=True,
               type=click.Path(exists=True),
-              help=('Path to PLEXOS table of bus locations and capacity .csv'))
+              help='Path to .csv PLEXOS table of bus locations '
+              '(latitude, longitude) and capacity (MW).')
 @click.option('--sc_table', '-sc', required=True,
               type=click.Path(exists=True),
               help=('Path to Supply Curve table .csv'))

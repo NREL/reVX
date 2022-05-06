@@ -269,7 +269,7 @@ class PlexosPlants(Plants):
     @property
     def plant_capacity(self):
         """
-        Plant capacities
+        Plant capacities in MW
 
         Returns
         -------
@@ -597,7 +597,7 @@ class PlexosPlants(Plants):
 
     def _allocate_sc_gids(self, sc_gids, dists, bus_dists):
         """
-        Allocate capacity from supply curve points to plants
+        Allocate capacity (MW) from supply curve points to plants
 
         Parameters
         ----------
@@ -645,7 +645,7 @@ class PlexosPlants(Plants):
 
     def _fill_plants(self, identified_plants):
         """
-        Fill plants with capacity from supply curve points
+        Fill plants with capacity (MW) from supply curve points
 
         Parameters
         ----------
@@ -675,7 +675,7 @@ class PlexosPlants(Plants):
         """
         Create plants meta data from filled plants DataFrames:
             - Location (lat, lon)
-            - final capacity
+            - final capacity (MW)
             - sc_gids
             - res_gids
             - res gid_counts
@@ -688,7 +688,7 @@ class PlexosPlants(Plants):
         Returns
         -------
         plants_meta : pandas.DataFrame
-            Location (lat, lon), final capacity, and associated sc_gids,
+            Location (lat, lon), final capacity (MW), and associated sc_gids,
             res_gids, and res gid_counts for all plants
         """
         plants_meta = []
@@ -771,7 +771,7 @@ class PlantProfileAggregation:
         Parameters
         ----------
         plexos_table : str | pandas.DataFrame
-            PLEXOS table of bus locations and capacity provided as a .csv,
+            PLEXOS table of bus locations and capacity (MW) provided as a .csv,
             .json, or pandas DataFrame. Needs columns: latitude, longitude,
             capacity
         sc_table : str | pandas.DataFrame
@@ -943,7 +943,7 @@ class PlantProfileAggregation:
         Parameters
         ----------
         plexos_table : str | pandas.DataFrame
-            PLEXOS table of bus locations and capacity provided as a .csv,
+            PLEXOS table of bus locations and capacity (MW) provided as a .csv,
             .json, or pandas DataFrame
 
         Returns
@@ -1036,7 +1036,7 @@ class PlantProfileAggregation:
         """
         Create plants meta data from filled plants DataFrames:
             - Location (lat, lon)
-            - final capacity
+            - final capacity (MW)
             - sc_gids
             - res_gids
             - res gid_counts
@@ -1090,7 +1090,7 @@ class PlantProfileAggregation:
             Meta data for plant associated with given bus, constructed from:
             - Plant table
             - Supply Curve table
-            - Bus capacity
+            - Bus capacity (MW)
         """
         plant_meta = self.plant_builds[bus_meta['plant_id']]
         plant_meta['gen_gids'] = \
@@ -1121,7 +1121,7 @@ class PlantProfileAggregation:
             Path to reV Generation output .h5 file to pull CF profiles from
         plant_build : pandas.DataFrame
             DataFrame describing plant buildout:
-                - Supply curve gids and the capacity to build at each
+                - Supply curve gids and the capacity (MW) to build at each
                     - res_gids, gen_gids, gid_counts by sc_gid
 
         Returns
@@ -1204,7 +1204,7 @@ class PlantProfileAggregation:
         Parameters
         ----------
         plexos_table : str | pandas.DataFrame
-            PLEXOS table of bus locations and capacity provided as a .csv,
+            PLEXOS table of bus locations and capacity (MW) provided as a .csv,
             .json, or pandas DataFrame
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
@@ -1236,7 +1236,7 @@ class PlantProfileAggregation:
         Parameters
         ----------
         plexos_table : str | pandas.DataFrame
-            PLEXOS table of bus locations and capacity provided as a .csv,
+            PLEXOS table of bus locations and capacity (MW) provided as a .csv,
             .json, or pandas DataFrame. Needs columns: latitude, longitude,
             capacity
         sc_table : str | pandas.DataFrame
