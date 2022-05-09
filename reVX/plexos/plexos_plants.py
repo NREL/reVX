@@ -2,6 +2,8 @@
 """
 Module to create wind and solar plants for PLEXOS buses
 """
+import datetime
+import pytz
 import json
 import logging
 import numpy as np
@@ -771,7 +773,8 @@ class PlantProfileAggregation:
                  lcoe_col='total_lcoe', lcoe_thresh=1.3,
                  offshore=False, max_workers=None,
                  plants_per_worker=40, points_per_worker=400,
-                 plant_name_col=None, tech_tag=None):
+                 plant_name_col=None, tech_tag=None,
+                 timezone='UTC'):
         """
         Parameters
         ----------
@@ -815,6 +818,11 @@ class PlantProfileAggregation:
         tech_tag : str | None
             Optional technology tag to include as a suffix in the plexos output
             csv column headers.
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
         """
         log_versions(logger)
         logger.info('Initializing PlantProfileAggregation')
@@ -824,6 +832,7 @@ class PlantProfileAggregation:
 
         self._plant_name_col = plant_name_col.lower()
         self._tech_tag = tech_tag
+        self._timezone = timezone
         self._mymean_fpath = mymean_fpath
         self._cf_fpath = cf_fpath
         self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
@@ -974,6 +983,69 @@ class PlantProfileAggregation:
                             counter += 1
 
         return names
+
+    @property
+    def tz_alias(self):
+        """Get a short 3-char tz alias if the timezone is common in the US
+        (pst, mst, cst, est)
+
+        Returns
+        -------
+        str
+        """
+        aliases = {'UTC': 'utc',
+                   'Universal': 'utc',
+                   'US/Pacific': 'pst',
+                   'US/Mountain': 'mst',
+                   'US/Central': 'cst',
+                   'US/Eastern': 'est',
+                   }
+        return aliases.get(self._timezone, self._timezone)
+
+    def tz_convert_profiles(self, profiles):
+        """Convert profiles to local time and forward/back fill missing data.
+
+        Parameters
+        ----------
+        profiles : np.ndarray
+            Profiles of shape (time, n_plants) in UTC
+
+        Returns
+        -------
+        profiles : np.ndarray
+            Profiles of shape (time, n_plants) in self._timezone
+        """
+
+        if len(profiles) < 8760:
+            msg = ('Cannot use profiles that are not at least hourly! '
+                   'Received shape {}'.format(profiles.shape))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        steps_per_hour = len(profiles) // 8760
+
+        # use jan 1 to avoid daylight savings
+        date = datetime.datetime(2011, 1, 1)
+        date = pytz.timezone(self._timezone).localize(date)
+        tz_offset = int(date.strftime('%z')[:3])
+        roll_int = steps_per_hour * tz_offset
+
+        profiles = np.roll(profiles, roll_int, axis=0)
+
+        if roll_int < 0:
+            for i in range(roll_int, 0):
+                # don't fill nighttime for solar
+                if not (profiles[i, :] == 0).all():
+                    profiles[i, :] = np.nan
+            profiles = pd.DataFrame(profiles).ffill().values
+        elif roll_int > 0:
+            for i in range(1, roll_int + 1):
+                # don't fill nighttime for solar
+                if not (profiles[i, :] == 0).all():
+                    profiles[i, :] = np.nan
+            profiles = pd.DataFrame(profiles).bfill().values
+
+        return profiles
 
     def get_gen_gid(self, res_gid):
         """Get a generation gid from a resource gid using cf_gid_map. Accounts
@@ -1221,11 +1293,14 @@ class PlantProfileAggregation:
             .h5 path to save aggregated plant profiles to
             A companion .csv with be saved at the same location for plexos.
         """
+
         msg = 'Must be an h5 output: {}'.format(out_fpath)
         assert out_fpath.endswith('.h5'), msg
 
         if not os.path.exists(os.path.dirname(out_fpath)):
             os.makedirs(os.path.dirname(out_fpath))
+
+        out_fpath = out_fpath.replace('.h5', f'_{self.tz_alias}.h5')
 
         with Outputs(out_fpath, mode='w') as f_out:
             f_out.set_version_attr()
@@ -1257,6 +1332,7 @@ class PlantProfileAggregation:
 
             logger.info('Writing Generation Profiles')
             gen_profiles = np.dstack(gen_profiles)[0].astype('float32')
+            gen_profiles = self.tz_convert_profiles(gen_profiles)
             f_out._create_dset('gen_profiles',
                                gen_profiles.shape,
                                gen_profiles.dtype,
@@ -1269,10 +1345,10 @@ class PlantProfileAggregation:
         df_plx = pd.DataFrame(gen_profiles, columns=self.unique_plant_names,
                               index=f_in.time_index.tz_convert(None))
         df_plx.index.name = 'DATETIME'
-        csv_fp = out_fpath.replace('.h5', '_utc.csv')
+        csv_fp = out_fpath.replace('.h5', '.csv')
         df_plx.to_csv(csv_fp)
 
-        logger.info('Wrote plexos formatted profiles to: {}'.format(df_plx))
+        logger.info('Wrote plexos formatted profiles to: {}'.format(csv_fp))
 
     @classmethod
     def aggregate(cls, plexos_table, sc_table, mymean_fpath, cf_fpath,
@@ -1312,7 +1388,8 @@ class PlantProfileAggregation:
             dist_percentile=90, dist_thresh_km=None,
             lcoe_col='total_lcoe', lcoe_thresh=1.3,
             max_workers=None, points_per_worker=400, plants_per_worker=40,
-            offshore=False, plant_name_col=None, tech_tag=None):
+            offshore=False, plant_name_col=None, tech_tag=None,
+            timezone='UTC'):
         """
         Find, fill, and save profiles for Plants associated with given PLEXOS
         buses
@@ -1362,6 +1439,11 @@ class PlantProfileAggregation:
         tech_tag : str | None
             Optional technology tag to include as a suffix in the plexos output
             csv column headers.
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
         """
         pp = cls(plexos_table, sc_table, mymean_fpath, cf_fpath,
                  offshore=offshore,
@@ -1373,6 +1455,7 @@ class PlantProfileAggregation:
                  points_per_worker=points_per_worker,
                  plants_per_worker=plants_per_worker,
                  plant_name_col=plant_name_col,
-                 tech_tag=tech_tag)
+                 tech_tag=tech_tag,
+                 timezone=timezone)
 
         pp.aggregate_profiles(out_fpath)

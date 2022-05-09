@@ -50,6 +50,20 @@ logger = logging.getLogger(__name__)
               show_default=True,
               help=('LCOE threshold multiplier, exclude sc_gids above '
                     'threshold, by default 1.3'))
+@click.option('--plant_name_col', '-pn', type=STR, default=None,
+              show_default=True,
+              help='Column in plexos_table that has the plant name that '
+              'should be used in the plexos output csv column headers.')
+@click.option('--tech_tag', '-tt', type=STR, default=None,
+              show_default=True,
+              help='Optional technology tag to include as a suffix in the '
+              'plexos output csv column headers.')
+@click.option('--timezone', '-tz', type=str, default='UTC',
+              show_default=True,
+              help='Timezone for output generation profiles. This is a string '
+              'that will be passed to pytz.timezone() e.g. US/Pacific, '
+              'US/Mountain, US/Central, US/Eastern, or UTC. For a list of all '
+              'available timezones, see pytz.all_timezones')
 @click.option('--max_workers', '-mw', type=INT, default=None,
               show_default=True,
               help=('Number of workers to use for point and plant creation, '
@@ -69,7 +83,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def main(ctx, name, plexos_table, sc_table, mymean_fpath, cf_fpath, out_dir,
          dist_percentile, dist_thresh_km,
-         lcoe_col, lcoe_thresh,
+         lcoe_col, lcoe_thresh, plant_name_col, tech_tag, timezone,
          max_workers, points_per_worker,
          plants_per_worker, offshore, verbose):
     """PLEXOS plant Command Line Interface"""
@@ -85,6 +99,9 @@ def main(ctx, name, plexos_table, sc_table, mymean_fpath, cf_fpath, out_dir,
     ctx.obj['DIST_THRESH_KM'] = dist_thresh_km
     ctx.obj['LCOE_COL'] = lcoe_col
     ctx.obj['LCOE_THRESH'] = lcoe_thresh
+    ctx.obj['PLANT_NAME_COL'] = plant_name_col
+    ctx.obj['TECH_TAG'] = tech_tag
+    ctx.obj['TIMEZONE'] = timezone
     ctx.obj['MAX_WORKERS'] = max_workers
     ctx.obj['POINTS_PER_WORKER'] = points_per_worker
     ctx.obj['PLANTS_PER_WORKER'] = plants_per_worker
@@ -108,6 +125,9 @@ def main(ctx, name, plexos_table, sc_table, mymean_fpath, cf_fpath, out_dir,
                                     dist_thresh_km=dist_thresh_km,
                                     lcoe_col=lcoe_col,
                                     lcoe_thresh=lcoe_thresh,
+                                    plant_name_col=plant_name_col,
+                                    tech_tag=tech_tag,
+                                    timezone=timezone,
                                     max_workers=max_workers,
                                     points_per_worker=points_per_worker,
                                     plants_per_worker=plants_per_worker,
@@ -115,8 +135,9 @@ def main(ctx, name, plexos_table, sc_table, mymean_fpath, cf_fpath, out_dir,
 
 
 def get_node_cmd(name, plexos_table, sc_table, mymean_fpath, cf_fpath, out_dir,
-                 dist_percentile, dist_thresh_km,
-                 lcoe_col, lcoe_thresh, max_workers,
+                 dist_percentile, dist_thresh_km, lcoe_col, lcoe_thresh,
+                 plant_name_col, tech_tag, timezone,
+                 max_workers,
                  points_per_worker, plants_per_worker, offshore, verbose):
     """Build PLEXOS Plant CLI command."""
 
@@ -130,6 +151,9 @@ def get_node_cmd(name, plexos_table, sc_table, mymean_fpath, cf_fpath, out_dir,
             '-dt {}'.format(SLURM.s(dist_thresh_km)),
             '-lc {}'.format(SLURM.s(lcoe_col)),
             '-lt {}'.format(SLURM.s(lcoe_thresh)),
+            '-pn {}'.format(SLURM.s(plant_name_col)),
+            '-tt {}'.format(SLURM.s(tech_tag)),
+            '-tz {}'.format(SLURM.s(timezone)),
             '-mw {}'.format(SLURM.s(max_workers)),
             '--points_per_worker={}'.format(SLURM.s(points_per_worker)),
             '--plants_per_worker={}'.format(SLURM.s(plants_per_worker)),
@@ -174,6 +198,9 @@ def eagle(ctx, alloc, walltime, feature, stdout_path):
     dist_thresh_km = ctx.obj['DIST_THRESH_KM']
     lcoe_col = ctx.obj['LCOE_COL']
     lcoe_thresh = ctx.obj['LCOE_THRESH']
+    plant_name_col = ctx.obj['PLANT_NAME_COL']
+    tech_tag = ctx.obj['TECH_TAG']
+    timezone = ctx.obj['TIMEZONE']
     max_workers = ctx.obj['MAX_WORKERS']
     points_per_worker = ctx.obj['POINTS_PER_WORKER']
     plants_per_worker = ctx.obj['PLANTS_PER_WORKER']
@@ -190,7 +217,8 @@ def eagle(ctx, alloc, walltime, feature, stdout_path):
 
     cmd = get_node_cmd(name, plexos_table, sc_table, mymean_fpath, cf_fpath,
                        out_dir, dist_percentile, dist_thresh_km,
-                       lcoe_col, lcoe_thresh, max_workers,
+                       lcoe_col, lcoe_thresh, plant_name_col,
+                       tech_tag, timezone, max_workers,
                        points_per_worker, plants_per_worker, offshore, verbose)
 
     logger.info('Running reVX plexos plant aggregation on Eagle with '
