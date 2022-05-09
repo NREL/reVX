@@ -1175,7 +1175,8 @@ class PlantProfileAggregation:
         Parameters
         ----------
         out_fpath : str
-            Output .h5 path to save profiles to
+            .h5 path to save aggregated plant profiles to
+            A companion .csv with be saved at the same location for plexos.
         """
         with Outputs(out_fpath, mode='w') as f_out:
             f_out.set_version_attr()
@@ -1213,6 +1214,9 @@ class PlantProfileAggregation:
                                chunks=(None, 100),
                                data=gen_profiles,
                                attrs={'units': 'MW'})
+
+        df_plx = pd.DataFrame(gen_profiles, columns=columns,
+                              index=f_in.time_index.tz_convert(None))
 
         logger.info('Finished aggregating profiles to: {}'.format(out_fpath))
 
@@ -1276,6 +1280,7 @@ class PlantProfileAggregation:
             from. Meta must match mymean_fpath.
         out_fpath : str
             .h5 path to save aggregated plant profiles to
+            A companion .csv with be saved at the same location for plexos.
         dist_percentile : int, optional
             Percentile to use to compute distance threshold using sc_gid to
             SubStation distance , by default 90
