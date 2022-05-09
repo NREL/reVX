@@ -770,7 +770,8 @@ class PlantProfileAggregation:
                  plants=None, dist_percentile=90, dist_thresh_km=None,
                  lcoe_col='total_lcoe', lcoe_thresh=1.3,
                  offshore=False, max_workers=None,
-                 plants_per_worker=40, points_per_worker=400):
+                 plants_per_worker=40, points_per_worker=400,
+                 plant_name_col=None, tech_tag=None):
         """
         Parameters
         ----------
@@ -808,10 +809,21 @@ class PlantProfileAggregation:
             Number of plants to identify on each worker, by default 40
         offshore : bool, optional
             Include offshore points, by default False
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
         """
         log_versions(logger)
         logger.info('Initializing PlantProfileAggregation')
-        self._plexos_table = self._parse_plexos_table(plexos_table)
+
+        self._plexos_table = self._parse_plexos_table(
+            plexos_table, plant_name_col=plant_name_col)
+
+        self._plant_name_col = plant_name_col.lower()
+        self._tech_tag = tech_tag
         self._mymean_fpath = mymean_fpath
         self._cf_fpath = cf_fpath
         self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
@@ -935,6 +947,34 @@ class PlantProfileAggregation:
 
         return self._sc_bus_dist
 
+    @property
+    def unique_plant_names(self):
+        """Get a list of ordered unique plant names if plant_name_col
+        was provided.
+
+        Returns
+        -------
+        list | None
+        """
+        names = None
+        if self._plant_name_col is not None:
+            names = self.plexos_table[self._plant_name_col].values.tolist()
+
+            if self._tech_tag is not None:
+                names = [name + f' {self._tech_tag}' for name in names]
+
+            seen = set()
+            dups = [x for x in names if x in seen or seen.add(x)]
+            if any(dups):
+                for dup in dups:
+                    counter = 1
+                    for i, name in enumerate(names):
+                        if name == dup:
+                            names[i] = name + ' {}'.format(counter)
+                            counter += 1
+
+        return names
+
     def get_gen_gid(self, res_gid):
         """Get a generation gid from a resource gid using cf_gid_map. Accounts
         for a many-to-one resource-to-gen_gid mapping.
@@ -956,7 +996,7 @@ class PlantProfileAggregation:
         return res_gid
 
     @staticmethod
-    def _parse_plexos_table(plexos_table):
+    def _parse_plexos_table(plexos_table, plant_name_col=None):
         """
         Parse PLEXOS table from file and reduce to PLEXOS_COLS
         Combine buses at the same coordinates and add unique plant_ids
@@ -966,6 +1006,9 @@ class PlantProfileAggregation:
         plexos_table : str | pandas.DataFrame
             PLEXOS table of bus locations and capacity (MW) provided as a .csv,
             .json, or pandas DataFrame
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
 
         Returns
         -------
@@ -976,18 +1019,18 @@ class PlantProfileAggregation:
         plexos_table = parse_table(plexos_table)
         cols = ['generator', 'busid', 'busname', 'capacity', 'latitude',
                 'longitude', 'system']
-        cols = [c for c in plexos_table if c.lower() in cols]
-        plexos_table = plexos_table[cols]
-        rename = {}
-        for c in plexos_table:
-            if c.lower() == 'capacity':
-                rename[c] = 'capacity'
-            elif c.lower() == 'latitude':
-                rename[c] = 'latitude'
-            elif c.lower() == 'longitude':
-                rename[c] = 'longitude'
 
+        rename = {c: c.lower() for c in plexos_table}
         plexos_table = plexos_table.rename(columns=rename)
+
+        if plant_name_col is not None:
+            msg = ('plant_name_col "{}" not in plexos table!'
+                   .format(plant_name_col))
+            assert plant_name_col.lower() in plexos_table, msg
+            cols.append(plant_name_col.lower())
+
+        cols = [c.lower() for c in plexos_table if c.lower() in cols]
+        plexos_table = plexos_table[cols]
 
         mask = plexos_table['latitude'] > 90
         mask |= plexos_table['latitude'] < -90
@@ -1178,6 +1221,12 @@ class PlantProfileAggregation:
             .h5 path to save aggregated plant profiles to
             A companion .csv with be saved at the same location for plexos.
         """
+        msg = 'Must be an h5 output: {}'.format(out_fpath)
+        assert out_fpath.endswith('.h5'), msg
+
+        if not os.path.exists(os.path.dirname(out_fpath)):
+            os.makedirs(os.path.dirname(out_fpath))
+
         with Outputs(out_fpath, mode='w') as f_out:
             f_out.set_version_attr()
             with Resource(self.cf_fpath) as f_in:
@@ -1215,10 +1264,15 @@ class PlantProfileAggregation:
                                data=gen_profiles,
                                attrs={'units': 'MW'})
 
-        df_plx = pd.DataFrame(gen_profiles, columns=columns,
-                              index=f_in.time_index.tz_convert(None))
-
         logger.info('Finished aggregating profiles to: {}'.format(out_fpath))
+
+        df_plx = pd.DataFrame(gen_profiles, columns=self.unique_plant_names,
+                              index=f_in.time_index.tz_convert(None))
+        df_plx.index.name = 'DATETIME'
+        csv_fp = out_fpath.replace('.h5', '_utc.csv')
+        df_plx.to_csv(csv_fp)
+
+        logger.info('Wrote plexos formatted profiles to: {}'.format(df_plx))
 
     @classmethod
     def aggregate(cls, plexos_table, sc_table, mymean_fpath, cf_fpath,
@@ -1258,7 +1312,7 @@ class PlantProfileAggregation:
             dist_percentile=90, dist_thresh_km=None,
             lcoe_col='total_lcoe', lcoe_thresh=1.3,
             max_workers=None, points_per_worker=400, plants_per_worker=40,
-            offshore=False):
+            offshore=False, plant_name_col=None, tech_tag=None):
         """
         Find, fill, and save profiles for Plants associated with given PLEXOS
         buses
@@ -1302,6 +1356,12 @@ class PlantProfileAggregation:
             Number of plants to identify on each worker, by default 40
         offshore : bool, optional
             Include offshore points, by default False
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
         """
         pp = cls(plexos_table, sc_table, mymean_fpath, cf_fpath,
                  offshore=offshore,
@@ -1311,6 +1371,8 @@ class PlantProfileAggregation:
                  lcoe_thresh=lcoe_thresh,
                  max_workers=max_workers,
                  points_per_worker=points_per_worker,
-                 plants_per_worker=plants_per_worker)
+                 plants_per_worker=plants_per_worker,
+                 plant_name_col=plant_name_col,
+                 tech_tag=tech_tag)
 
         pp.aggregate_profiles(out_fpath)
