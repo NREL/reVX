@@ -23,7 +23,8 @@ logger = logging.getLogger(__name__)
 @click.option('--plexos_table', '-pt', required=True,
               type=click.Path(exists=True),
               help='Path to .csv PLEXOS table of bus locations '
-              '(latitude, longitude) and capacity (MW).')
+              '(latitude, longitude) and capacity (MW). Note that capacity '
+              'needs to be AC for wind and DC for solar.')
 @click.option('--sc_table', '-sc', required=True,
               type=click.Path(exists=True),
               help=('Path to Supply Curve table .csv'))

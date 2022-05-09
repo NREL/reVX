@@ -781,7 +781,8 @@ class PlantProfileAggregation:
         plexos_table : str | pandas.DataFrame
             PLEXOS table of bus locations and capacity (MW) provided as a .csv,
             .json, or pandas DataFrame. Needs columns: latitude, longitude,
-            capacity
+            capacity. Note that capacity needs to be AC for wind and DC for
+            solar.
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
         mymean_fpath : str
@@ -1399,7 +1400,8 @@ class PlantProfileAggregation:
         plexos_table : str | pandas.DataFrame
             PLEXOS table of bus locations and capacity (MW) provided as a .csv,
             .json, or pandas DataFrame. Needs columns: latitude, longitude,
-            capacity
+            capacity. Note that capacity needs to be AC for wind and DC for
+            solar.
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
         mymean_fpath : str
