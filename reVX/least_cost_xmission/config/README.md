@@ -8,7 +8,7 @@ The following ISOs are used in the multipliers and base line cost files.
 - MISO
 - Southeast
 
-power_to_voltage:
+power\_to\_voltage:
     Line capacity to voltage conversion table. Keys are capacity in MW, values
     are voltages in kV. Note that there are two capacities for 230kV lines and
     should be two sets of costs in the cost tables.
@@ -20,7 +20,7 @@ transformer_costs:
      existing t-line voltage, but that doesn't matter much as the data is
      symmetrical. From MISO table.
 
-base_line_costs:
+base\_line_costs:
     Costs for lines in 2019 US$ / mile. Keys are max line capacity in MW.
     Note that TEPPC does not include ROW in base line cost, but all other ISOs
     do.
@@ -29,5 +29,5 @@ power_classes:
     Keys are reV power classes. Values are appropriate line capacities for
     that class.
 
-power_to_voltage:
+power\_to_voltage:
     Keys are line capacities in MW. Values are line voltages in kV.
