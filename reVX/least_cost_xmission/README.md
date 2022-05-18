@@ -37,3 +37,15 @@ TODO
 
 ## Workflow
 TODO
+
+## Examples
+TODO: add cost calculator examples
+Find least cost paths, costs, and connection costs on eagle login node for 1000MW capacity, saving results in current directory. Don't do this, it will overload the login node:
+
+```
+python least_cost_xmission_cli.py local \
+--cost_fpath /shared-projects/rev/exclusions/xmission_costs.h5 \
+--features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
+--capacity_class 1000
+```
+
