@@ -220,8 +220,8 @@ class Point:
         capacity = np.sum(res_caps)
         if capacity > build_capacity:
             gid_counts = sc_point['gid_counts']
-            new_counts = np.round((res_caps[-1] - (capacity - build_capacity))
-                                  * np.sum(gid_counts) / capacity)
+            new_counts = np.ceil((res_caps[-1] - (capacity - build_capacity))
+                                 * np.sum(gid_counts) / capacity)
             gid_counts[-1] = int(new_counts)
             sc_point['gid_counts'] = gid_counts
 

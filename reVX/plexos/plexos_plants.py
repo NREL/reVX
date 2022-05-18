@@ -612,6 +612,7 @@ class PlexosPlants(Plants):
         bus_dists : list
             List of distances from bus associated with plants to sc_gids
         """
+
         unique_gids, plant_gids = np.unique(sc_gids, return_inverse=True)
         for i, sc_gid in enumerate(unique_gids):
             sc_gid = int(sc_gid)
