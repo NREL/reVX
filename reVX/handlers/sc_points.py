@@ -2,6 +2,7 @@
 """
 Class to handle Supply Curve points
 """
+import copy
 from concurrent.futures import as_completed
 import json
 import logging
@@ -242,10 +243,14 @@ class Point:
 
         Returns
         -------
-        out : tuple
-            (sc_point, capacity, availability)
+        sc_point : pd.Series
+            Resource gids being allocated
+        capacity : float
+            Capacity being allocated
+        availability : bool
+            Whether Supply Curve point still has available capacity
         """
-        build_capacity = capacity.copy()
+        build_capacity = copy.deepcopy(capacity)
         if self.capacity > 0:
             if capacity < self.capacity:
                 drop = 0
@@ -258,12 +263,13 @@ class Point:
                 drop = None
 
             out = self._drop_build_capacity(build_capacity, drop=drop)
+            sc_point, capacity, availability = out
         else:
             msg = "{} has no remaining capacity".format(self)
             logger.error(msg)
             raise SupplyCurvePointCapacityError(msg)
 
-        return out
+        return sc_point, capacity, availability
 
     @classmethod
     def create(cls, sc_point, gen_cf_means):
@@ -665,8 +671,16 @@ class SupplyCurvePoints:
 
         Returns
         -------
-        out : tuple
-            sc_point, capacity
+        sc_point : pd.Series | None
+            A summary of the resource gids being allocated along with the
+            gid_counts built at each resource gid. None if sc_gid doesnt have
+            the available capacity. e.g. if 202 MW of built capacity is
+            requested:
+                sc_gid                           1
+                res_gids          [258265, 258267]
+                gid_counts              [773.0, 7]
+                cf_means            [0.126, 0.124]
+                build_capacity                 202
         """
         sc_point = self.sc_points[sc_gid]
         try:
@@ -677,6 +691,7 @@ class SupplyCurvePoints:
         except SupplyCurvePointCapacityError as ex:
             logger.warning('WARNING: {}'.format(ex))
             warn(ex)
+            sc_point = None
             capacity = 0.0
 
-        return sc_point, capacity
+        return sc_point

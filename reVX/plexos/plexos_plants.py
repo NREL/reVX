@@ -234,7 +234,8 @@ class PlexosPlants(Plants):
         logger.info('Initializing PlexosPlants from plexos table with '
                     '{} rows'.format(len(plexos_table)))
         self._plant_table = self._parse_plant_table(plexos_table)
-        self._capacity = self.plant_table['plant_capacity'].values
+        self._capacity = self.plant_table['plant_capacity'].values.copy()
+        self._cap_to_alloc = self.plant_table['plant_capacity'].values.copy()
 
         if max_workers is None:
             max_workers = os.cpu_count()
@@ -315,7 +316,9 @@ class PlexosPlants(Plants):
         plant_table = \
             plexos_table.drop_duplicates('plant_id').sort_values('plant_id')
 
-        cols = ['latitude', 'longitude', 'plant_id', 'plant_capacity']
+        cols = ['plant_id', 'plant_capacity', 'generator', 'busid', 'busname',
+                'capacity', 'latitude', 'longitude', 'system']
+        cols = [c for c in cols if c in plant_table]
         plant_table = plant_table[cols].set_index('plant_id')
 
         return plant_table
@@ -628,18 +631,19 @@ class PlexosPlants(Plants):
                     plant_ids = plant_ids[idxs]
 
                 for plant_id in plant_ids:
-                    capacity = self.plant_capacity[plant_id]
+                    capacity = self._cap_to_alloc[plant_id]
                     if (capacity > 0) and self.sc_points.check_sc_gid(sc_gid):
-                        sc_point, sc_capacity = \
-                            self.sc_points.get_capacity(sc_gid, capacity)
-                        if sc_capacity:
+                        built_point = self.sc_points.get_capacity(sc_gid,
+                                                                  capacity)
+                        if built_point is not None:
+                            built_cap = built_point['build_capacity']
                             plant = self[plant_id]
-                            plant.append(sc_point)
+                            plant.append(built_point)
 
                             self[plant_id] = plant
-                            self._capacity[plant_id] -= sc_capacity
+                            self._cap_to_alloc[plant_id] -= built_cap
                             logger.debug('Allocating {:.1f}MW to plant {} from'
-                                         ' sc_gid {}'.format(sc_capacity,
+                                         ' sc_gid {}'.format(built_cap,
                                                              plant_id,
                                                              sc_gid))
                         else:
@@ -661,20 +665,21 @@ class PlexosPlants(Plants):
         """
         i = 0
         total_cap = np.sum(self.plant_capacity)
-        while np.any(self.plant_capacity > 0):
-            i_cap = np.sum(self.plant_capacity[self.plant_capacity > 0])
+        while np.any(self._cap_to_alloc > 0):
+            cap_remaining_0 = sum(self._cap_to_alloc)
             logger.info('Allocating sc_gids to plants round {}'
                         .format(i))
             sc_gids, dists, bus_dists = self._get_sc_gids(identified_plants, i)
             self._allocate_sc_gids(sc_gids, dists, bus_dists)
-            cap = np.sum(self.plant_capacity[self.plant_capacity > 0])
+            cap_remaining_1 = sum(self._cap_to_alloc)
+            i_cap_allocated = cap_remaining_0 - cap_remaining_1
             logger.info('{:.1f} MW allocated in round {}'
-                        .format(i_cap - cap, i))
+                        .format(i_cap_allocated, i))
             i += 1
             logger.info('{:.1f} MW allocated out of {:.1f} MW'
-                        .format(total_cap - cap, total_cap))
+                        .format(total_cap - cap_remaining_1, total_cap))
             logger.info('{} of {} plants have been filled'
-                        .format(np.sum(self.plant_capacity <= 0), len(self)))
+                        .format(np.sum(self._cap_to_alloc <= 0), len(self)))
 
     def dump(self, out_fpath=None):
         """
