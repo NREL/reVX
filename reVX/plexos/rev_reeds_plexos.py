@@ -54,14 +54,14 @@ class PlexosAggregation(BaseProfileAggregation):
             longitude, res_gids, gid_counts. Or file path to reV supply
             curve table.
         reeds_build : str | pd.DataFrame
-            RdEDS buildout with rows for built capacity at each reV SC point.
-            This should have columns: reeds_year, built_capacity, and sc_gid
-            (corresponding to the reV supply curve point gid). Some cleaning of
-            the column names will be performed for legacy tables but these are
-            the column headers that are desired. This input can also include
-            "plexos_node_gid" which will explicitly assign a supply curve point
-            buildout to a single plexos node. If included, all points must be
-            assigned to plexos nodes.
+            ReEDS buildout with rows for built capacity (MW) at each reV SC
+            point. This should have columns: reeds_year, built_capacity, and
+            sc_gid (corresponding to the reV supply curve point gid). Some
+            cleaning of the column names will be performed for legacy tables
+            but these are the column headers that are desired. This input can
+            also include "plexos_node_gid" which will explicitly assign a
+            supply curve point buildout to a single plexos node. If included,
+            all points must be assigned to plexos nodes.
         cf_fpath : str
             File path to capacity factor file (reV gen output) to
             get profiles from.
@@ -244,14 +244,14 @@ class PlexosAggregation(BaseProfileAggregation):
             reV supply curve results table including SC gid, lat/lon,
             res_gids, gid_counts.
         reeds_build : pd.DataFrame
-            RdEDS buildout with rows for built capacity at each reV SC point.
-            This should have columns: reeds_year, built_capacity, and sc_gid
-            (corresponding to the reV supply curve point gid). Some cleaning of
-            the column names will be performed for legacy tables but these are
-            the column headers that are desired. This input can also include
-            "plexos_node_gid" which will explicitly assign a supply curve point
-            buildout to a single plexos node. If included, all points must be
-            assigned to plexos nodes.
+            ReEDS buildout with rows for built capacity (MW) at each reV SC
+            point. This should have columns: reeds_year, built_capacity, and
+            sc_gid (corresponding to the reV supply curve point gid). Some
+            cleaning of the column names will be performed for legacy tables
+            but these are the column headers that are desired. This input can
+            also include "plexos_node_gid" which will explicitly assign a
+            supply curve point buildout to a single plexos node. If included,
+            all points must be assigned to plexos nodes.
         atol : float
             Maximum difference in coord matching.
 
@@ -301,14 +301,14 @@ class PlexosAggregation(BaseProfileAggregation):
             reV supply curve results table including SC gid, lat/lon,
             res_gids, gid_counts. Or  path to reV supply curve table.
         reeds_build : str | pd.DataFrame
-            RdEDS buildout with rows for built capacity at each reV SC point.
-            This should have columns: reeds_year, built_capacity, and sc_gid
-            (corresponding to the reV supply curve point gid). Some cleaning of
-            the column names will be performed for legacy tables but these are
-            the column headers that are desired. This input can also include
-            "plexos_node_gid" which will explicitly assign a supply curve point
-            buildout to a single plexos node. If included, all points must be
-            assigned to plexos nodes.
+            ReEDS buildout with rows for built capacity (MW) at each reV SC
+            point. This should have columns: reeds_year, built_capacity, and
+            sc_gid (corresponding to the reV supply curve point gid). Some
+            cleaning of the column names will be performed for legacy tables
+            but these are the column headers that are desired. This input can
+            also include "plexos_node_gid" which will explicitly assign a
+            supply curve point buildout to a single plexos node. If included,
+            all points must be assigned to plexos nodes.
         build_year : int, optional
             REEDS year of interest, by default 2050
 
@@ -643,14 +643,14 @@ class PlexosAggregation(BaseProfileAggregation):
             longitude, res_gids, gid_counts. Or file path to reV supply
             curve table.
         reeds_build : pd.DataFrame
-            RdEDS buildout with rows for built capacity at each reV SC point.
-            This should have columns: reeds_year, built_capacity, and sc_gid
-            (corresponding to the reV supply curve point gid). Some cleaning of
-            the column names will be performed for legacy tables but these are
-            the column headers that are desired. This input can also include
-            "plexos_node_gid" which will explicitly assign a supply curve point
-            buildout to a single plexos node. If included, all points must be
-            assigned to plexos nodes.
+            ReEDS buildout with rows for built capacity (MW) at each reV SC
+            point. This should have columns: reeds_year, built_capacity, and
+            sc_gid (corresponding to the reV supply curve point gid). Some
+            cleaning of the column names will be performed for legacy tables
+            but these are the column headers that are desired. This input can
+            also include "plexos_node_gid" which will explicitly assign a
+            supply curve point buildout to a single plexos node. If included,
+            all points must be assigned to plexos nodes.
         cf_fpath : str
             File path to capacity factor file (reV gen output) to
             get profiles from.
@@ -712,14 +712,14 @@ class RevReedsPlexosManager:
             reV supply curve results (CSV file path or database.schema.name)
         reeds_build : str | pd.DataFrame
             REEDS buildout results (CSV file path or database.schema.name)
-            RdEDS buildout with rows for built capacity at each reV SC point.
-            This should have columns: reeds_year, built_capacity, and sc_gid
-            (corresponding to the reV supply curve point gid). Some cleaning of
-            the column names will be performed for legacy tables but these are
-            the column headers that are desired. This input can also include
-            "plexos_node_gid" which will explicitly assign a supply curve point
-            buildout to a single plexos node. If included, all points must be
-            assigned to plexos nodes.
+            ReEDS buildout with rows for built capacity (MW) at each reV SC
+            point. This should have columns: reeds_year, built_capacity, and
+            sc_gid (corresponding to the reV supply curve point gid). Some
+            cleaning of the column names will be performed for legacy tables
+            but these are the column headers that are desired. This input can
+            also include "plexos_node_gid" which will explicitly assign a
+            supply curve point buildout to a single plexos node. If included,
+            all points must be assigned to plexos nodes.
         cf_fpath : str
             File path to capacity factor file (reV gen output) to
             get profiles from.
@@ -788,14 +788,14 @@ class RevReedsPlexosManager:
             reV supply curve results (CSV file path or database.schema.name)
         reeds_build : str | pd.DataFrame
             REEDS buildout results (CSV file path or database.schema.name)
-            RdEDS buildout with rows for built capacity at each reV SC point.
-            This should have columns: reeds_year, built_capacity, and sc_gid
-            (corresponding to the reV supply curve point gid). Some cleaning of
-            the column names will be performed for legacy tables but these are
-            the column headers that are desired. This input can also include
-            "plexos_node_gid" which will explicitly assign a supply curve point
-            buildout to a single plexos node. If included, all points must be
-            assigned to plexos nodes.
+            ReEDS buildout with rows for built capacity (MW) at each reV SC
+            point. This should have columns: reeds_year, built_capacity, and
+            sc_gid (corresponding to the reV supply curve point gid). Some
+            cleaning of the column names will be performed for legacy tables
+            but these are the column headers that are desired. This input can
+            also include "plexos_node_gid" which will explicitly assign a
+            supply curve point buildout to a single plexos node. If included,
+            all points must be assigned to plexos nodes.
         cf_fpath : str
             File path to capacity factor file (reV gen output) to
             get profiles from.
