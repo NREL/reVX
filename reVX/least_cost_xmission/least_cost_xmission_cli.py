@@ -2,12 +2,15 @@
 # pylint: disable=all
 """
 Least Cost Xmission Command Line Interface
+
+TODO - add cmd line doc
+
 """
 import click
 import logging
 import os
 
-from rex.utilities.loggers import init_mult, create_dirs
+from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, safe_json_load
@@ -223,6 +226,7 @@ def eagle(config):
     config : reVX.config.least_cost_xmission.LeastCostXmissionConfig
         Least Cost Xmission config object.
     """
+    init_logger('rex', log_level='DEBUG')
 
     cmd = get_node_cmd(config)
     name = config.name

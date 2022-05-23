@@ -28,7 +28,7 @@ class LeastCostPaths:
     """
     Compute least cost paths between desired locations
     """
-    REQUIRED_LAYRES = ['transmission_barrier']
+    REQUIRED_LAYERS = ['transmission_barrier']
 
     def __init__(self, cost_fpath, features_fpath, xmission_config=None):
         """
@@ -84,7 +84,7 @@ class LeastCostPaths:
         """
         with ExclusionLayers(cost_fpath) as f:
             missing = []
-            for lyr in cls.REQUIRED_LAYRES:
+            for lyr in cls.REQUIRED_LAYERS:
                 if lyr not in f:
                     missing.append(lyr)
 
