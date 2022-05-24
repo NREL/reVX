@@ -407,7 +407,7 @@ class SupplyCurvePoints:
         return self._mask
 
     @staticmethod
-    def _get_gen_cf(gen_fpath, offshore=False):
+    def _get_gen_cf(gen_fpath):
         """
         Extract resource capactiy factor data from .h5 file or pre-extracted
         .csv or pandas DataFrame
@@ -417,8 +417,6 @@ class SupplyCurvePoints:
         gen_fpath : str | pandas.DataFrame
             Path to reV multi-year-mean .h5 (preferred), generation .h5,
             or pre-extracted .csv or pandas DataFrame with "cf_mean" column.
-        offshore : bool, optional
-            Include offshore points, by default False
 
         Returns
         -------
@@ -458,10 +456,6 @@ class SupplyCurvePoints:
             else:
                 gen_meta = gen_meta.reset_index(drop=True)
                 gen_meta.index.name = 'gen_gid'
-
-        if 'offshore' in gen_meta:
-            if not offshore:
-                gen_meta = gen_meta.loc[gen_meta['offshore'] == 0]
 
         return gen_meta['cf_mean']
 
@@ -628,7 +622,7 @@ class SupplyCurvePoints:
         if 'sc_gid' in sc_table:
             sc_table = sc_table.set_index('sc_gid')
 
-        gen_cf_means = cls._get_gen_cf(gen_fpath, offshore=offshore)
+        gen_cf_means = cls._get_gen_cf(gen_fpath)
         sc_points = cls._create_points(
             sc_table, gen_cf_means,
             offshore=offshore,
