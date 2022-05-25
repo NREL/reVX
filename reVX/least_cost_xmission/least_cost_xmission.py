@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module to compute least cost xmission paths, distances, and costs one or
+Module to compute least cost xmission paths, distances, AND costs for one or
 more SC points
 """
 from concurrent.futures import as_completed
@@ -223,7 +223,7 @@ class LeastCostXmission(LeastCostPaths):
         sc_points : gpd.GeoDataFrame
             SC points
         """
-        logger.debug('Loading Supply Curve Points')
+        logger.debug(f'Loading Supply Curve Points for res: {resolution}')
         sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
         sc_points = sce.points.rename(columns={'row_ind': 'sc_row_ind',
                                                'col_ind': 'sc_col_ind'})
@@ -339,7 +339,7 @@ class LeastCostXmission(LeastCostPaths):
         return sc_points, features, sub_lines_map, shape
 
     def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
-                          clipping_buffer=1.05):
+                          clipping_buffer=1.05, radius=None):
         """
         Clip costs raster to AOI around SC point, and get substations,
         load centers, and sinks within the clipped region.
@@ -352,6 +352,8 @@ class LeastCostXmission(LeastCostPaths):
             Number of nearest neighbor sinks to clip to
         clipping_buffer : float, optional
             Buffer to increase clipping radius by, by default 1.05
+        radius : None | int, optional
+            Force clipping radius if set to an int
 
         Returns
         -------
@@ -361,15 +363,23 @@ class LeastCostXmission(LeastCostPaths):
             Substatations, load centers, sinks, and nearest points on t-lines
             to SC point
         """
+        assert(isinstance(radius, int))
         logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
-        if len(self.sink_coords) > 2:
-            row, col = sc_point[['row', 'col']].values
-            _, pos = self.sink_tree.query([row, col], k=nn_sinks)
-            radius = np.abs(self.sink_coords[pos] - np.array([row, col])).max()
-            radius = int(np.ceil(radius * clipping_buffer))
 
-            logger.debug('Radius to {} nearest sink is: {}'
-                         .format(nn_sinks, radius))
+        if len(self.sink_coords) > 2 or radius:
+            row, col = sc_point[['row', 'col']].values
+
+            if radius is None:
+                _, pos = self.sink_tree.query([row, col], k=nn_sinks)
+                radius = np.abs(self.sink_coords[pos] - np.array([row, col])
+                                ).max()
+                radius = int(np.ceil(radius * clipping_buffer))
+
+            if radius:
+                logger.debug(f'Using forced radius of {radius}')
+            else:
+                logger.debug('Radius to {} nearest sink is: {}'
+                             .format(nn_sinks, radius))
             row_min = max(row - radius, 0)
             row_max = min(row + radius, self._shape[0])
             col_min = max(col - radius, 0)
@@ -388,7 +398,6 @@ class LeastCostXmission(LeastCostPaths):
                          'radius {}'
                          .format(len(sc_features), radius))
         else:
-            radius = None
             sc_features = self.features.copy(deep=True)
 
         mask = self.features['max_volts'] >= tie_line_voltage
@@ -418,7 +427,7 @@ class LeastCostXmission(LeastCostPaths):
 
     def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
                           clipping_buffer=1.05, barrier_mult=100,
-                          max_workers=None):
+                          max_workers=None, save_paths=False, radius=None):
         """
         Compute Least Cost Tranmission for desired sc_points
 
@@ -440,10 +449,15 @@ class LeastCostXmission(LeastCostPaths):
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
+        save_paths : bool, optional
+            Flag to return least cost paths as a multi-line geometry,
+            by default False
+        radius : None | int, optional
+            Force clipping radius if set to an int
 
         Returns
         -------
-        least_costs : pandas.DataFrame
+        least_costs : pandas.DataFrame | gpd.GeoDataFrame
             Least cost connections between all supply curve points and the
             transmission features with the given capacity class that are within
             "nn_sink" nearest infinite sinks
@@ -467,7 +481,7 @@ class LeastCostXmission(LeastCostPaths):
                     if gid in sc_point_gids:
                         sc_features, radius = self._clip_to_sc_point(
                             sc_point, tie_line_voltage, nn_sinks=nn_sinks,
-                            clipping_buffer=clipping_buffer)
+                            clipping_buffer=clipping_buffer, radius=radius)
 
                         future = exe.submit(TransCapCosts.run,
                                             self._cost_fpath,
@@ -476,7 +490,8 @@ class LeastCostXmission(LeastCostPaths):
                                             radius=radius,
                                             xmission_config=self._config,
                                             barrier_mult=barrier_mult,
-                                            min_line_length=self._min_line_len)
+                                            min_line_length=self._min_line_len,
+                                            save_paths=save_paths)
                         futures.append(future)
 
                 for i, future in enumerate(as_completed(futures)):
@@ -497,7 +512,7 @@ class LeastCostXmission(LeastCostPaths):
                 if gid in sc_point_gids:
                     sc_features, radius = self._clip_to_sc_point(
                         sc_point, tie_line_voltage, nn_sinks=nn_sinks,
-                        clipping_buffer=clipping_buffer)
+                        clipping_buffer=clipping_buffer, radius=radius)
 
                     sc_costs = TransCapCosts.run(
                         self._cost_fpath, sc_point.copy(deep=True),
@@ -505,7 +520,8 @@ class LeastCostXmission(LeastCostPaths):
                         radius=radius,
                         xmission_config=self._config,
                         barrier_mult=barrier_mult,
-                        min_line_length=self._min_line_len)
+                        min_line_length=self._min_line_len,
+                        save_paths=save_paths)
 
                     if sc_costs is not None:
                         least_costs.append(sc_costs)
@@ -524,12 +540,16 @@ class LeastCostXmission(LeastCostPaths):
         logger.info('{:.4f}% of requested sc point gids were succesfully '
                     'mapped to transmission features'.format(lcp_frac))
 
+        # HACK TODO
+        least_costs = least_costs[least_costs.category != 'TransLine']
+
         return least_costs.reset_index(drop=True)
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
             xmission_config=None, sc_point_gids=None, nn_sinks=2,
-            clipping_buffer=1.05, barrier_mult=100, max_workers=None):
+            clipping_buffer=1.05, barrier_mult=100, max_workers=None,
+            save_paths=False, radius=None):
         """
         Find Least Cost Tranmission connections between desired sc_points to
         given tranmission features for desired capacity class
@@ -561,10 +581,15 @@ class LeastCostXmission(LeastCostPaths):
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
+        save_paths : bool, optional
+            Flag to return least costs path as a multi-line geometry,
+            by default False
+        radius : None | int, optional
+            Force clipping radius if set to an int
 
         Returns
         -------
-        least_costs : pandas.DataFrame
+        least_costs : pandas.DataFrame | gpd.DataFrame
             Least cost connections between all supply curve points and the
             transmission features with the given capacity class that are within
             "nn_sink" nearest infinite sinks
@@ -577,7 +602,9 @@ class LeastCostXmission(LeastCostPaths):
                                             nn_sinks=nn_sinks,
                                             clipping_buffer=clipping_buffer,
                                             barrier_mult=barrier_mult,
-                                            max_workers=max_workers)
+                                            max_workers=max_workers,
+                                            save_paths=save_paths,
+                                            radius=radius)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'

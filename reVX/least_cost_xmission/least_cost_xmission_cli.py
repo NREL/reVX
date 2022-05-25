@@ -9,11 +9,12 @@ TODO - add cmd line doc
 import click
 import logging
 import os
+import sys
 
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT
 from rex.utilities.hpc import SLURM
-from rex.utilities.utilities import get_class_properties, safe_json_load
+from rex.utilities.utilities import get_class_properties  # , safe_json_load
 
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
@@ -125,7 +126,7 @@ def from_config(ctx, config, verbose):
 @click.option('--nn_sinks', '-nn', type=int,
               show_default=True, default=2,
               help=("Number of nearest neighbor sinks to use for clipping "
-                    "radius calculation"))
+                    "radius calculation. This is overridden by --radius"))
 @click.option('--clipping_buffer', '-buffer', type=float,
               show_default=True, default=1.05,
               help=("Buffer to expand clipping radius by"))
@@ -145,10 +146,17 @@ def from_config(ctx, config, verbose):
               help='Directory to dump log files.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
+@click.option('--save_paths', is_flag=True,
+              help='Save least cost paths and data to geopackage.')
+@click.option('--radius', '-rad', type=INT,
+              show_default=True, default=None,
+              help=("Radius to clip costs raster to in pixels This overrides"
+                    "--nn_sinks if set."))
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
           xmission_config, sc_point_gids, nn_sinks, clipping_buffer,
-          barrier_mult, max_workers, out_dir, log_dir, verbose):
+          barrier_mult, max_workers, out_dir, log_dir, verbose, save_paths,
+          radius):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -170,10 +178,23 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
                                         nn_sinks=nn_sinks,
                                         clipping_buffer=clipping_buffer,
                                         barrier_mult=barrier_mult,
-                                        max_workers=max_workers)
-    fn_out = '{}_{}_{}.csv'.format(name, capacity_class, resolution)
+                                        max_workers=max_workers,
+                                        save_paths=save_paths,
+                                        radius=radius)
+    if len(least_costs) == 0:
+        logger.error('No paths found.')
+        sys.exit()
+
+    ext = 'gpkg' if save_paths else 'csv'
+    fn_out = '{}_{}_{}.{}'.format(name, capacity_class, resolution, ext)
     fpath_out = os.path.join(out_dir, fn_out)
-    least_costs.to_csv(fpath_out, index=False)
+
+    logger.info(f'Writing output to {fpath_out}')
+    if save_paths:
+        least_costs.to_file(fpath_out, driver='GPKG')
+    else:
+        least_costs.to_csv(fpath_out, index=False)
+    logger.info('Writing output complete')
 
 
 def get_node_cmd(config):
@@ -206,6 +227,11 @@ def get_node_cmd(config):
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
+
+    if config.save_paths:
+            args.append('--save_paths')
+    if config.radius:
+        args.append(f'-rad {config.radius}')
 
     if config.log_level == logging.DEBUG:
         args.append('-v')

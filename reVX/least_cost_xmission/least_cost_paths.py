@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module to compute least cost xmission paths, distances, and costs one or
-more SC points
+Module to compute least cost xmission paths and distances
 """
 from concurrent.futures import as_completed
 import geopandas as gpd
