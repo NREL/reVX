@@ -92,6 +92,7 @@ class CombineRasters:
     OS_BARRIERS_FNAME = 'os_barriers.tif'
     COMBO_LAYER_FNAME = 'combo_{}.tif'
     LAND_MASK_FNAME = 'land_mask.tif'
+    SLOPE_CUTOFF = 15  # slopes >= this value are barriers
 
     def __init__(self, template_f, layer_dir=''):
         """
@@ -127,7 +128,7 @@ class CombineRasters:
         """
         ldf = gpd.read_file(mask_shp_f)
         print(f'Rasterizing {mask_shp_f}')
-        l_geom = [s for s in ldf.geometry]
+        l_geom = list(ldf.geometry)
         l_rast = features.rasterize(l_geom, out_shape=self._os_shape, fill=0,
                                     out=None,
                                     transform=self.profile()['transform'],
@@ -196,7 +197,7 @@ class CombineRasters:
 
         if slope_file is not None:
             print('--- calculating slope friction')
-            EXCLUDE_MULT = 1000
+            HIGH_FRICTION = 10
             MEDIUM_FRICTION = 5
             LOW_FRICTION = 1
 
@@ -208,8 +209,9 @@ class CombineRasters:
             d = rio.open(slope_file).read(1)
             d[d < 0] = 0
             assert d.shape == self._os_shape and d.min() == 0
-            d2 = np.where(d >= 15, EXCLUDE_MULT, d)
-            d2 = np.where(d < 15, MEDIUM_FRICTION, d2)
+            # Slope >= SLOPE_CUTOFF is also included in barriers
+            d2 = np.where(d >= self.SLOPE_CUTOFF, HIGH_FRICTION, d)
+            d2 = np.where(d < self.SLOPE_CUTOFF, MEDIUM_FRICTION, d2)
             d2 = np.where(d < 10, LOW_FRICTION, d2)
 
             fr_layers[slope_file] = d2.astype('uint16')
@@ -224,7 +226,7 @@ class CombineRasters:
         print('Done processing friction layers')
 
     def build_off_shore_barriers(self, barrier_files, fi_files,
-                                 save_tiff=False):
+                                 slope_file=None, save_tiff=False):
         """
         Combine off-shore barrier layers
 
@@ -242,6 +244,8 @@ class CombineRasters:
             Force include layers. These will override the barrier layers.
             Tuple format is the same as for barrier_files, however the specifed
             raster values are force included.
+        slope_file : str, optional
+            Path to slope tiff
         save_tiff : bool, options
             Save composite layer to geotiff if true
         """
@@ -252,6 +256,20 @@ class CombineRasters:
             d = self._load_layer(f, val)
             assert d.shape == self._os_shape and d.min() == 0 and d.max() == 1
             barrier_layers[f] = d
+
+        if slope_file is not None:
+            print('--- calculating slope barrier')
+            if not os.path.exists(slope_file):
+                slope_file = os.path.join(self.layer_dir, slope_file)
+            if not os.path.exists(slope_file):
+                raise FileNotFoundError(f'Unable to find {slope_file}')
+
+            d = rio.open(slope_file).read(1)
+            assert d.shape == self._os_shape
+            d2 = np.where(d < self.SLOPE_CUTOFF, 0, d)
+            d2 = np.where(d >= self.SLOPE_CUTOFF, 1, d2)
+
+            barrier_layers[slope_file] = d2.astype('uint8')
 
         # Add all the exclusion layers together and normalize
         print('Building composite off-shore barrier layers')
@@ -285,10 +303,6 @@ class CombineRasters:
 
         self._os_barriers = comp_bar
         print('Done building barrier layers')
-
-    def initiliaze_h5(self, foo, bar):
-        """ Set up profile in global attrs"""
-        pass
 
     def merge_os_and_land_friction(self, land_h5, land_cost_layer,
                                    aoswt_h5, os_friction_layer=None,
