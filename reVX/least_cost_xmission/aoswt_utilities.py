@@ -485,9 +485,9 @@ class CombineRasters:
             else:
                 f.create_dataset(os_layer, data=combo_data)
 
-    def create_aoswt_h5(self, aoswt_ex_h5, aoswt_h5):
+    def create_aoswt_h5(self, aoswt_ex_h5, aoswt_h5, overwrite=False):
         """
-        Create a new h5 file to save AOSWT data in
+        Create a new h5 file to save AOSWT data in.
 
         Parameters
         ----------
@@ -495,18 +495,28 @@ class CombineRasters:
             Path to existing h5 file w/ off-shore shape
         aoswt_h5 : str
             Path for new h5 file to create
+        overwrite : bool, optional
+            Overwrite existing h5 file if True
+
         """
+        if os.path.exists(aoswt_h5) and not overwrite:
+            raise AttributeError(f'File {aoswt_h5} exits')
+
         with rex.Resource(aoswt_ex_h5) as res:
             lats = res['latitude']
             lngs = res['longitude']
             global_attrs = res.global_attrs
 
         assert lats.shape == self._os_shape
+        regions = np.ones(self._os_shape, dtype='uint8')
 
         with h5py.File(aoswt_h5, 'w') as f:
             f.create_dataset('longitude', data=lngs)
             f.create_dataset('latitude', data=lats)
-            h5py.attrs = global_attrs
+            f.create_dataset('ISO_regions', data=regions[np.newaxis, ...],
+                             dtype='uint8')
+            for k, v in global_attrs.items():
+                f.attrs[k] = v
 
     @property
     def land_mask(self):
