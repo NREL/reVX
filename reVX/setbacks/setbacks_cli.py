@@ -100,10 +100,9 @@ def from_config(ctx, config):
                     'compute blade tip height which is used to determine '
                     'setback distance. Must be provided if '
                     '`base_setback_dist` is not given'))
-@click.option('--base_setback_dist', '-ph', default=None, type=float,
-              help=('Plant height, used to determine setback distance. Must '
-                    'be provided if hub_height and rotor_diameter are not '
-                    'given'))
+@click.option('--base_setback_dist', '-bsd', default=None, type=float,
+              help=('Base setback distance value. Must be provided if '
+                    'hub_height and rotor_diameter are not given'))
 @click.option('--regs_fpath', '-regs', default=None, type=STR,
               show_default=True,
               help=('Path to regulations .csv file, if None create '
@@ -419,7 +418,7 @@ def get_node_cmd(name, config):
         args.append('-hh {}'.format(SLURM.s(config.hub_height)))
         args.append('-rd {}'.format(SLURM.s(config.rotor_diameter)))
     else:
-        args.append('-ph {}'.format(SLURM.s(config.base_setback_dist)))
+        args.append('-bsd {}'.format(SLURM.s(config.base_setback_dist)))
 
     if config.replace:
         args.append('-r')
