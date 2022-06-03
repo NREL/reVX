@@ -30,10 +30,10 @@ MULTIPLIER = 3
 REGS_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
 REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
 PARCEL_REGS_FPATH_VALUE = os.path.join(
-    TESTDATADIR, 'setbacks', 'ri_solar_regs_value.csv'
+    TESTDATADIR, 'setbacks', 'ri_parcel_regs_value.csv'
 )
 PARCEL_REGS_FPATH_MULTIPLIER = os.path.join(
-    TESTDATADIR, 'setbacks', 'ri_solar_regs_multiplier.csv'
+    TESTDATADIR, 'setbacks', 'ri_parcel_regs_multiplier.csv'
 )
 
 
