@@ -145,7 +145,7 @@ def test_generic_parcels():
 
 
 def test_generic_parcels_with_invalid_shape_input():
-    """Test generic parcel setbacks but with an inalid shape input. """
+    """Test generic parcel setbacks but with an invalid shape input. """
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'invalid', 'Rhode_Island.gpkg')
@@ -267,7 +267,11 @@ def test_cli_railroads(runner):
     LOGGERS.clear()
 
 
-def test_cli_parcels(runner):
+@pytest.mark.parametrize("config_input",
+                         ({"base_setback_dist": BASE_SETBACK_DIST},
+                          {"hub_height": BASE_SETBACK_DIST,
+                           "rotor_diameter": 0}))
+def test_cli_parcels(runner, config_input):
     """
     Test CLI with Parcels.
     """
@@ -285,11 +289,11 @@ def test_cli_parcels(runner):
             "excl_fpath": EXCL_H5,
             "feature_type": "parcel",
             "features_path": parcel_path,
-            "base_setback_dist": BASE_SETBACK_DIST,
             "log_level": "INFO",
             "regs_fpath": regs_fpath,
             "replace": True,
         }
+        config.update(config_input)
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)

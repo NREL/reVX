@@ -329,6 +329,13 @@ def parcel_setbacks(ctx):
     replace = ctx.obj['REPLACE']
     hsds = ctx.obj['HSDS']
 
+    if base_setback_dist is None:
+        # hub-height and rotor diameter guaranteed to exist if
+        # `base_setback_dist = None`` due to check performed in `local`
+        hub_height = ctx.obj['HUB_HEIGHT']
+        rotor_diameter = ctx.obj['ROTOR_DIAMETER']
+        base_setback_dist = hub_height + rotor_diameter / 2
+
     logger.info('Computing setbacks from parcels in {}'
                 .format(features_path))
     logger.debug('Setbacks to be computed with:\n'
