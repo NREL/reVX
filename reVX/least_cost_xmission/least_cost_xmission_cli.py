@@ -89,6 +89,7 @@ def from_config(ctx, config, verbose):
     """
 
     config = LeastCostXmissionConfig(config)
+    option = config.execution_control.option
 
     if 'VERBOSE' in ctx.obj:
         if any((ctx.obj['VERBOSE'], verbose)):
@@ -96,10 +97,23 @@ def from_config(ctx, config, verbose):
     elif verbose:
         config._log_level = logging.DEBUG
 
-    if config.execution_control.option == 'local':
+    if option == 'local':
         run_local(ctx, config)
 
-    if config.execution_control.option == 'eagle':
+    if option != 'eagle':
+        raise AttributeError(f'Option {option} is not supported')
+
+    if config.split_gids is None:
+        eagle(config)
+
+    # Split gids over mulitple SLURM jobs
+    gids = config.sc_point_gids
+    name = config.name
+    logger.info(f'Splitting {len(gids)} SC points over {config.split_gids} '
+                'SLURM jobs')
+    for i in range(config.split_gids):
+        config.name = f'{name}_{i}'
+        config.sc_point_gids = gids[i::config.split_gids]
         eagle(config)
 
 

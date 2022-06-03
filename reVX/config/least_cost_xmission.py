@@ -2,6 +2,7 @@
 """
 reVX Least Cost Xmission Configurations
 """
+import os
 
 from reV.config.base_analysis_config import AnalysisConfig
 
@@ -109,6 +110,44 @@ class LeastCostXmissionConfig(AnalysisConfig):
         self._default_clipping_buffer = 1.05
         self._default_barrier_mult = 100
         self._default_min_line_length = 5.7
+        self._sc_point_gids = None
+
+    @property
+    def name(self):
+        """Get the job name, defaults to the output directory name.
+
+        Returns
+        -------
+        _name : str
+            Job name.
+        """
+        if self._name is None:
+            if self.get('name') is not None:
+                self._name = self.get('name')
+            else:
+                # name defaults to base directory name
+                self._name = os.path.basename(os.path.normpath(self.dirout))
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+
+    @property
+    def split_gids(self):
+        """
+        Optionally split gids and kick off into multiple SLURM jobs. This
+        value should be an int.
+        """
+        split_gids = self.get('split_gids', None)
+
+        if not (isinstance(split_gids, int) or split_gids is None):
+            raise ValueError('split_gids must be an int, got a '
+                             f'{type(split_gids)} ({split_gids})')
+        if split_gids is not None and self.sc_point_gids is None:
+            raise ValueError(f'sc_point_gids must currently be set in the '
+                             'config file to use split_gids')
+        return split_gids
 
     @property
     def radius(self):
@@ -164,7 +203,18 @@ class LeastCostXmissionConfig(AnalysisConfig):
         """
         List of sc_point_gids to compute Least Cost Xmission for
         """
-        return self.get('sc_point_gids', None)
+        if self._sc_point_gids is None:
+            sc_point_gids = self.get('sc_point_gids', None)
+            if not (isinstance(sc_point_gids, list) or sc_point_gids is None):
+                raise ValueError('sc_point_gids must be a list, got a '
+                                 f'{type(sc_point_gids)} ({sc_point_gids})')
+            self._sc_point_gids = sc_point_gids
+
+        return self._sc_point_gids
+
+    @sc_point_gids.setter
+    def sc_point_gids(self, gids):
+        self._sc_point_gids = gids
 
     @property
     def nn_sinks(self):
