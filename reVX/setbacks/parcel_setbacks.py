@@ -4,7 +4,6 @@ Compute setbacks exclusions
 """
 import logging
 import os
-from warnings import warn
 import geopandas as gpd
 
 from rex.utilities import log_mem
@@ -19,46 +18,6 @@ class ParcelSetbacks(BaseSetbacks):
     """
     Parcel setbacks, using negative buffers.
     """
-
-    def get_regulation_setback(self, county_regulations):
-        """Compute the setback distance for the county.
-
-        Compute the setback distance (in meters) from the
-        county regulations or the base setback distance.
-
-        Parameters
-        ----------
-        county_regulations : pandas.Series
-            Pandas Series with regulations for a single county
-            or feature type. At a minimum, this Series must
-            contain the following columns: `Value Type`, which
-            specifies wether the value is a multiplier or static height,
-            `Value`, which specifies the numeric value of the setback or
-            multiplier. Valid options for the `Value Type` are:
-                - "Structure Height multiplier"
-                - "Meters"
-
-        Returns
-        -------
-        setback : float | None
-            Setback distance in meters, or `None` if the setback
-            `Value Type` was not recognized.
-        """
-
-        setback_type = county_regulations["Value Type"].strip()
-        setback = float(county_regulations["Value"])
-        if setback_type.lower() == "structure height multiplier":
-            setback *= self.base_setback_dist
-        elif setback_type.lower() != "meters":
-            msg = ("Cannot create setback for {}, expecting "
-                   '"Structure Height Multiplier", or '
-                   '"Meters", but got {}'
-                   .format(county_regulations["County"], setback_type))
-            logger.warning(msg)
-            warn(msg)
-            setback = None
-
-        return setback
 
     def compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.

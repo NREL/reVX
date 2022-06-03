@@ -2,7 +2,7 @@
 """
 Compute setbacks exclusions
 """
-from abc import ABC, abstractmethod
+from abc import ABC
 from concurrent.futures import as_completed
 from warnings import warn
 import os
@@ -379,7 +379,6 @@ class BaseSetbacks(ABC):
 
         return self.regulations
 
-    @abstractmethod
     def get_regulation_setback(self, county_regulations):
         """Compute the setback distance for the county.
 
@@ -395,9 +394,6 @@ class BaseSetbacks(ABC):
             specifies wether the value is a multiplier or static height,
             `Value`, which specifies the numeric value of the setback or
             multiplier. Valid options for the `Value Type` are:
-                - "Max-tip Height Multiplier"
-                - "Rotor-Diameter Multiplier"
-                - "Hub-height Multiplier"
                 - "Structure Height multiplier"
                 - "Meters"
 
@@ -407,6 +403,21 @@ class BaseSetbacks(ABC):
             Setback distance in meters, or `None` if the setback
             `Value Type` was not recognized.
         """
+
+        setback_type = county_regulations["Value Type"].strip()
+        setback = float(county_regulations["Value"])
+        if setback_type.lower() == "structure height multiplier":
+            setback *= self.base_setback_dist
+        elif setback_type.lower() != "meters":
+            msg = ("Cannot create setback for {}, expecting "
+                   '"Structure Height Multiplier", or '
+                   '"Meters", but got {}'
+                   .format(county_regulations["County"], setback_type))
+            logger.warning(msg)
+            warn(msg)
+            setback = None
+
+        return setback
 
     @staticmethod
     def _compute_local_setbacks(features, cnty, setback):
@@ -625,11 +636,11 @@ class BaseSetbacks(ABC):
         geotiff : str, optional
             Path to save geotiff containing rasterized setbacks.
             By default `None`.
-        replace : bool, optional
+        replace :2 bool, optional
             Flag to replace geotiff if it already exists.
             By default `False`.
 
-        Returns
+        Returns2
         -------
         setbacks : ndarray
             Raster array of setbacks
