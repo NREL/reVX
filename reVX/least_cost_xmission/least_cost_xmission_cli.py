@@ -6,10 +6,13 @@ Least Cost Xmission Command Line Interface
 TODO - add cmd line doc
 
 """
-import click
-import logging
 import os
 import sys
+import click
+import logging
+import warnings
+import pandas as pd
+import geopandas as gpd
 
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT
@@ -46,34 +49,6 @@ def valid_config_keys():
     Echo the valid Least Cost Xmission config keys
     """
     click.echo(', '.join(get_class_properties(LeastCostXmissionConfig)))
-
-
-def run_local(ctx, config):
-    """
-    Run Least Cost Xmission locally using config
-
-    Parameters
-    ----------
-    ctx : click.ctx
-        click ctx object
-    config : reVX.config.least_cost_xmission.LeastCostXmissionConfig
-        Least Cost Xmission config object.
-    """
-    ctx.obj['NAME'] = config.name
-    ctx.invoke(local,
-               cost_fpath=config.cost_fpath,
-               features_fpath=config.features_fpath,
-               capacity_class=config.capacity_class,
-               resolution=config.resolution,
-               xmission_config=config.xmission_config,
-               sc_point_gids=config.sc_point_gids,
-               nn_sinks=config.nn_sinks,
-               clipping_buffer=config.clipping_buffer,
-               barrier_mult=config.barrier_mult,
-               max_workers=config.execution_control.max_workers,
-               out_dir=config.dirout,
-               log_dir=config.log_directory,
-               verbose=config.log_level)
 
 
 @main.command()
@@ -211,6 +186,41 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
     logger.info('Writing output complete')
 
 
+@main.command()
+@click.option('--split-to-geojson', '-s', is_flag=True,
+              help='After merging Geopackages, split into GeoJSON by POI name')
+@click.option('--out-file', '-of', default=None, type=STR,
+              help='Name for output geopackage file')
+@click.option('--out-path', '-op', type=click.Path(exists=True),
+              default='.', show_default=True,
+              help='Output path for output files. Must exist')
+@click.argument('gpkg_files', type=click.Path(exists=True), nargs=-1)
+@click.pass_context
+def merge_output(ctx, split_to_geojson, out_file, out_path, gpkg_files):
+    """
+    Merge output Geopackage files and optional convert to GeoJSON
+    """
+    click.echo(f'Loading: {", ".join(gpkg_files)}')
+    warnings.filterwarnings('ignore', category=RuntimeWarning)
+    gdf = pd.concat([gpd.read_file(f) for f in gpkg_files])
+    gdf = gdf.reset_index()
+    gdf = gdf[['POI Name', 'State', 'dist_km', 'sc_point_gid', 'geometry']]
+
+    if not split_to_geojson:
+        out_file = f'combo_{gpkg_files[0]}' if out_file is None else out_file
+        out_file = os.path.join(out_path, out_file)
+        click.echo(f'Saving to {out_file}')
+        gdf.to_file(out_file, driver="GPKG")
+        sys.exit()
+
+    # Split out put in to GeoJSON by POI name
+    for poi in set(gdf['POI Name']):
+        outf = os.path.join(out_path, f"{poi.replace(' ', '_')}_paths.geojson")
+        paths = gdf[gdf['POI Name'] == poi].to_crs(epsg=4326)
+        click.echo(f'Writing {len(paths)} paths for {poi} to {outf}')
+        paths.to_file(outf, driver="GeoJSON")
+
+
 def get_node_cmd(config):
     """
     Get the node CLI call for Least Cost Xmission
@@ -255,6 +265,34 @@ def get_node_cmd(config):
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
 
     return cmd
+
+
+def run_local(ctx, config):
+    """
+    Run Least Cost Xmission locally using config
+
+    Parameters
+    ----------
+    ctx : click.ctx
+        click ctx object
+    config : reVX.config.least_cost_xmission.LeastCostXmissionConfig
+        Least Cost Xmission config object.
+    """
+    ctx.obj['NAME'] = config.name
+    ctx.invoke(local,
+               cost_fpath=config.cost_fpath,
+               features_fpath=config.features_fpath,
+               capacity_class=config.capacity_class,
+               resolution=config.resolution,
+               xmission_config=config.xmission_config,
+               sc_point_gids=config.sc_point_gids,
+               nn_sinks=config.nn_sinks,
+               clipping_buffer=config.clipping_buffer,
+               barrier_mult=config.barrier_mult,
+               max_workers=config.execution_control.max_workers,
+               out_dir=config.dirout,
+               log_dir=config.log_directory,
+               verbose=config.log_level)
 
 
 def eagle(config):

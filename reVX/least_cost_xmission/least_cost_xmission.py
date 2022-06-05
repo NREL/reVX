@@ -427,7 +427,7 @@ class LeastCostXmission(LeastCostPaths):
     def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
                           clipping_buffer=1.05, barrier_mult=100,
                           max_workers=None, save_paths=False, radius=None,
-                          mp_delay=5):
+                          mp_delay=3):
         """
         Compute Least Cost Tranmission for desired sc_points
 

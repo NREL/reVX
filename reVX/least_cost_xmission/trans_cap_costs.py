@@ -974,7 +974,8 @@ class TransCapCosts(TieLineCosts):
 
         return features
 
-    def compute(self, min_line_length=5.7, save_paths=False, simplify_geo=100):
+    # def compute(self, min_line_length=5.7, save_paths=False, simplify_geo=100):
+    def compute(self, min_line_length=5.7, save_paths=False, simplify_geo=None):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
