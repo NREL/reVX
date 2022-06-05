@@ -1,17 +1,18 @@
 {
   "execution_control": {
     "allocation": "rev",
-    "feature": "--qos=high",
+    "feature": "--qos=high -p debug",
     "memory": 178,
     "nodes": 20,
     "option": "eagle",
     "sites_per_worker": 100,
-    "walltime": 4
+    "walltime": 1
   },
   "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
   "barrier_mult": "100",
   "log_directory": "/scratch/mbannist/lcp/log",
-  "log_level": "DEBUG"
+  "log_level": "DEBUG",
+  "sc_point_gids": [50000,60000,70000]
 }

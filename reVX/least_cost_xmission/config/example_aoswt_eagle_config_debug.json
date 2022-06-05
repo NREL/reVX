@@ -1,0 +1,20 @@
+{
+  "execution_control": {
+    "allocation": "setosa",
+    "feature": "--qos=high -p debug",
+    "memory": 178,
+    "nodes": 20,
+    "option": "eagle",
+    "sites_per_worker": 100,
+    "walltime": 1
+  },
+  "cost_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5",
+  "features_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg",
+  "capacity_class": "100",
+  "barrier_mult": "100",
+  "log_directory": "/scratch/mbannist/lcp/log",
+  "log_level": "DEBUG",
+  "sc_point_gids": [40139, 97919 ],
+  "resolution": 118
+
+}

@@ -111,6 +111,20 @@ class LeastCostXmissionConfig(AnalysisConfig):
         self._default_min_line_length = 5.7
 
     @property
+    def radius(self):
+        """
+        Optional radius to use for clipping
+        """
+        return self.get('radius', None)
+
+    @property
+    def save_paths(self):
+        """
+        Save paths as GPKG if true
+        """
+        return self.get('save_paths', False)
+
+    @property
     def cost_fpath(self):
         """
         .h5 file with cost and required layers
