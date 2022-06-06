@@ -19,7 +19,7 @@ from rex.utilities.loggers import LOGGERS
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.setbacks import (StructureWindSetbacks, RailWindSetbacks,
-                           ParcelSetbacks)
+                           ParcelSetbacks, WaterSetbacks)
 from reVX.setbacks.setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
@@ -30,10 +30,10 @@ MULTIPLIER = 3
 REGS_FPATH = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.csv')
 REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
 PARCEL_REGS_FPATH_VALUE = os.path.join(
-    TESTDATADIR, 'setbacks', 'ri_parcel_regs_value.csv'
+    TESTDATADIR, 'setbacks', 'ri_solar_regs_value.csv'
 )
 PARCEL_REGS_FPATH_MULTIPLIER = os.path.join(
-    TESTDATADIR, 'setbacks', 'ri_parcel_regs_multiplier.csv'
+    TESTDATADIR, 'setbacks', 'ri_solar_regs_multiplier.csv'
 )
 
 
@@ -207,6 +207,31 @@ def test_local_parcels(max_workers, regulations_fpath):
         counties_with_exclusions - counties_should_have_exclusions
     )
     assert not counties_with_exclusions_but_not_in_regulations_csv
+
+
+def test_generic_water_setbacks():
+    """Test generic water setbacks. """
+
+    water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                              'Rhode_Island.shp')
+
+    setbacks_x1 = WaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                regulations_fpath=None, multiplier=1)
+    test_x1 = setbacks_x1.compute_setbacks(water_path)
+
+    setbacks_x100 = WaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                  regulations_fpath=None, multiplier=100)
+    test_x100 = setbacks_x100.compute_setbacks(water_path)
+
+    # A total of 88,994 regions should be excluded for this particular
+    # Rhode Island subset
+    assert test_x100.sum() == 88_994
+
+    # Exclusions of smaller multiplier should be subset of exclusions
+    # of larger multiplier
+    x1_coords = set(zip(*np.where(test_x1)))
+    x100_coords = set(zip(*np.where(test_x100)))
+    assert x1_coords <= x100_coords
 
 
 def test_setback_preflight_check():
