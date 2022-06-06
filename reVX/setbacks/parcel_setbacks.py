@@ -4,7 +4,6 @@ Compute setbacks exclusions
 """
 import logging
 import os
-from warnings import warn
 import geopandas as gpd
 
 from rex.utilities import log_mem
@@ -19,46 +18,6 @@ class ParcelSetbacks(BaseSetbacks):
     """
     Parcel setbacks, using negative buffers.
     """
-
-    def get_regulation_setback(self, county_regulations):
-        """Compute the setback distance for the county.
-
-        Compute the setback distance (in meters) from the
-        county regulations or the base setback distance.
-
-        Parameters
-        ----------
-        county_regulations : pandas.Series
-            Pandas Series with regulations for a single county
-            or feature type. At a minimum, this Series must
-            contain the following columns: `Value Type`, which
-            specifies wether the value is a multiplier or static height,
-            `Value`, which specifies the numeric value of the setback or
-            multiplier. Valid options for the `Value Type` are:
-                - "Structure Height multiplier"
-                - "Meters"
-
-        Returns
-        -------
-        setback : float | None
-            Setback distance in meters, or `None` if the setback
-            `Value Type` was not recognized.
-        """
-
-        setback_type = county_regulations["Value Type"].strip()
-        setback = float(county_regulations["Value"])
-        if setback_type.lower() == "structure height multiplier":
-            setback *= self.base_setback_dist
-        elif setback_type.lower() != "meters":
-            msg = ("Cannot create setback for {}, expecting "
-                   '"Structure Height Multiplier", or '
-                   '"Meters", but got {}'
-                   .format(county_regulations["County"], setback_type))
-            logger.warning(msg)
-            warn(msg)
-            setback = None
-
-        return setback
 
     def compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
@@ -195,93 +154,3 @@ class ParcelSetbacks(BaseSetbacks):
         if features.crs is None:
             features = features.set_crs("EPSG:4326")
         return features.to_crs(crs=self.crs)
-
-    @classmethod
-    def run(cls, excl_fpath, parcels_path, out_dir, base_setback_dist,
-            regulations_fpath=None, multiplier=None,
-            chunks=(128, 128), max_workers=None, replace=False, hsds=False):
-        """
-        Compute parcel setbacks and write them to a geotiff.
-        If a regulations file is given, compute local setbacks,
-        otherwise compute generic setbacks using the given multiplier
-        and the base setback distance.
-
-        Parameters
-        ----------
-        excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be
-            the location of any new setback layers.
-        parcels_path : str
-            Path to parcels file or directory containing parcel files.
-            This path can contain any pattern that can be used in the
-            glob function. For example, `/path/to/features/[A]*` would
-            match with all the features in the direcotry
-            `/path/to/features/` that start with "A". This input
-            can also be a directory, but that directory must ONLY
-            contain feature files. If your feature files are mixed
-            with other files or directories, use something like
-            `/path/to/features/*.geojson`.
-        out_dir : str
-            Directory to save setbacks geotiff(s) into
-        base_setback_dist : float | int
-            Base setback distance (m). This value will be used to
-            calculate the setback distance when a multiplier is provided
-            either via the `regulations_fpath`csv or the `multiplier`
-            input. In this case, the setbacks will be calculated using
-            `base_setback_dist * multiplier`.
-        regulations_fpath : str | None, optional
-            Path to regulations .csv file. At a minimum, this csv must
-            contain the following columns: `Value Type`, which
-            specifies wether the value is a multiplier or static height,
-            `Value`, which specifies the numeric value of the setback or
-            multiplier, and `FIPS`, which specifies a unique 5-digit
-            code for each county (this can be an integer - no leading
-            zeros required). Typically, this csv will also have a
-            `Feature Type` column that labels the type of setback
-            that each row represents. Valid options for the `Value Type`
-            are:
-                - "Structure Height multiplier"
-                - "Meters"
-            If this input is `None`, a generic setback of
-            `base_setback_dist * multiplier` is used. By default `None`.
-        multiplier : int | float | str | None, optional
-            A setback multiplier to use if regulations are not supplied.
-            This multiplier will be applied to the ``base_setback_dist``
-            to calculate the setback. If supplied along with
-            ``regulations_fpath``, this input will be ignored. By
-            default `None`.
-        chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default
-            chunk size in excl_fpath, By default `(128, 128)`.
-        max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run
-            in serial, if > 1 run in parallel with that many workers,
-            if `None`, run in parallel on all available cores.
-            By default `None`.
-        replace : bool, optional
-            Flag to replace geotiff if it already exists.
-            By default `False`.
-        hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on
-            AWS behind HSDS. By default `False`.
-        """
-        setbacks = cls(excl_fpath, base_setback_dist=base_setback_dist,
-                       regulations_fpath=regulations_fpath,
-                       multiplier=multiplier,
-                       hsds=hsds, chunks=chunks)
-
-        parcels_path = setbacks._get_feature_paths(parcels_path)
-        for fpath in parcels_path:
-            geotiff = os.path.basename(fpath).split('.')[0]
-            geotiff += '.tif'
-            geotiff = os.path.join(out_dir, geotiff)
-            if os.path.exists(geotiff) and not replace:
-                msg = ('{} already exists, setbacks will not be re-computed '
-                       'unless replace=True'.format(geotiff))
-                logger.error(msg)
-            else:
-                logger.info("Computing setbacks from parcels in {} and saving "
-                            "to {}".format(fpath, geotiff))
-                setbacks.compute_setbacks(fpath, geotiff=geotiff,
-                                          max_workers=max_workers,
-                                          replace=replace)
