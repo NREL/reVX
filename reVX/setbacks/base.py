@@ -60,9 +60,10 @@ class BaseSetbacks(ABC):
             `base_setback_dist * multiplier` is used. By default `None`.
         multiplier : int | float | None, optional
             A setback multiplier to use if regulations are not supplied.
-            This multiplier will be applied to the plant height. If
-            supplied along with `regulations_fpath`, this input will be
-            ignored. By default `None`.
+            This multiplier will be applied to the ``base_setback_dist``
+            to calculate the setback. If supplied along with
+            ``regulations_fpath``, this input will be ignored. By
+            default `None`.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
@@ -168,7 +169,7 @@ class BaseSetbacks(ABC):
                          .format(regulations_fpath))
         elif multiplier:
             regulations = None
-            logger.debug('Computing setbacks using generic plant height '
+            logger.debug('Computing setbacks using base setback distance '
                          'multiplier of {}'.format(multiplier))
         else:
             msg = ('Computing setbacks requires either a regulations '
@@ -278,7 +279,7 @@ class BaseSetbacks(ABC):
 
     @property
     def generic_setback(self):
-        """Default setback of plant height * multiplier.
+        """Default setback of base setback distance * multiplier.
 
         This value is used for global setbacks.
 
@@ -383,7 +384,7 @@ class BaseSetbacks(ABC):
         """Compute the setback distance for the county.
 
         Compute the setback distance (in meters) from the
-        county regulations or the plant height.
+        county regulations or the base setback distance.
 
         Parameters
         ----------
@@ -413,8 +414,8 @@ class BaseSetbacks(ABC):
 
         This method will compute the setbacks using a county-specific
         regulations file that specifies either a static setback or a
-        multiplier value that will be used along with plant height
-        specifications to compute the setback.
+        multiplier value that will be used along with the base setback
+        distance to compute the setback.
 
         Parameters
         ----------

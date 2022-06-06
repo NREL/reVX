@@ -590,8 +590,8 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
 
         This method will compute the setbacks using a county-specific
         regulations file that specifies either a static setback or a
-        multiplier value that will be used along with plant height
-        specifications to compute the setback.
+        multiplier value that will be used along with base setback
+        distance specifications to compute the setback.
 
         Parameters
         ----------
