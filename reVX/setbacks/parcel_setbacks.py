@@ -24,7 +24,7 @@ class ParcelSetbacks(BaseSetbacks):
         """Compute the setback distance for the county.
 
         Compute the setback distance (in meters) from the
-        county regulations or the plant height.
+        county regulations or the base setback distance.
 
         Parameters
         ----------
@@ -51,7 +51,7 @@ class ParcelSetbacks(BaseSetbacks):
             setback *= self.base_setback_dist
         elif setback_type.lower() != "meters":
             msg = ("Cannot create setback for {}, expecting "
-                   '"Maximum Structure Height", or '
+                   '"Structure Height Multiplier", or '
                    '"Meters", but got {}'
                    .format(county_regulations["County"], setback_type))
             logger.warning(msg)
@@ -93,8 +93,8 @@ class ParcelSetbacks(BaseSetbacks):
 
         This method will compute the setbacks using a county-specific
         regulations file that specifies either a static setback or a
-        multiplier value that will be used along with the plant height
-        to compute the setback.
+        multiplier value that will be used along with the base setback
+        distance to compute the setback.
 
         Parameters
         ----------
@@ -204,7 +204,7 @@ class ParcelSetbacks(BaseSetbacks):
         Compute parcel setbacks and write them to a geotiff.
         If a regulations file is given, compute local setbacks,
         otherwise compute generic setbacks using the given multiplier
-        and the plant height.
+        and the base setback distance.
 
         Parameters
         ----------
@@ -245,10 +245,11 @@ class ParcelSetbacks(BaseSetbacks):
             If this input is `None`, a generic setback of
             `base_setback_dist * multiplier` is used. By default `None`.
         multiplier : int | float | str | None, optional
-            Setback multiplier to use if regulations are not supplied.
-            It is multiplied with plant height to calculate the setback
-            distance. If supplied along with `regulations_fpath`, this
-            input will be ignored. By default `None`.
+            A setback multiplier to use if regulations are not supplied.
+            This multiplier will be applied to the ``base_setback_dist``
+            to calculate the setback. If supplied along with
+            ``regulations_fpath``, this input will be ignored. By
+            default `None`.
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default
             chunk size in excl_fpath, By default `(128, 128)`.

@@ -2,6 +2,7 @@
 """
 Class to handle Supply Curve points
 """
+import copy
 from concurrent.futures import as_completed
 import json
 import logging
@@ -22,7 +23,8 @@ class Point:
     """
     Class to handle single Supply Curve point
     """
-    def __init__(self, sc_gid, capacity, res_gids, gid_counts, res_cf):
+
+    def __init__(self, sc_gid, capacity, res_gids, gid_counts, gen_cf):
         """
         Parameters
         ----------
@@ -34,12 +36,12 @@ class Point:
             Resource gids associated with Supply curve point
         gid_counts : list | str
             Resource gid exclusion pixel counts
-        res_cf : ndarray
-            Resource gid capacity factor means
+        gen_cf : ndarray
+            Generation capacity factor means
         """
         self._sc_gid = int(sc_gid)
-        res_order = np.argsort(res_cf)[::-1]
-        self._cf_means = res_cf[res_order]
+        res_order = np.argsort(gen_cf)[::-1]
+        self._cf_means = gen_cf[res_order]
         self._res_gids = self._parse_list(res_gids, dtype=int)[res_order]
         self._gid_counts = self._parse_list(gid_counts, dtype=float)[res_order]
         self._res_capacity = \
@@ -219,8 +221,8 @@ class Point:
         capacity = np.sum(res_caps)
         if capacity > build_capacity:
             gid_counts = sc_point['gid_counts']
-            new_counts = np.round((res_caps[-1] - (capacity - build_capacity))
-                                  * np.sum(gid_counts) / capacity)
+            new_counts = np.ceil((res_caps[-1] - (capacity - build_capacity))
+                                 * np.sum(gid_counts) / capacity)
             gid_counts[-1] = int(new_counts)
             sc_point['gid_counts'] = gid_counts
 
@@ -241,10 +243,14 @@ class Point:
 
         Returns
         -------
-        out : tuple
-            (sc_point, capacity, availability)
+        sc_point : pd.Series
+            Resource gids being allocated
+        capacity : float
+            Capacity being allocated
+        availability : bool
+            Whether Supply Curve point still has available capacity
         """
-        build_capacity = capacity.copy()
+        build_capacity = copy.deepcopy(capacity)
         if self.capacity > 0:
             if capacity < self.capacity:
                 drop = 0
@@ -257,15 +263,16 @@ class Point:
                 drop = None
 
             out = self._drop_build_capacity(build_capacity, drop=drop)
+            sc_point, capacity, availability = out
         else:
             msg = "{} has no remaining capacity".format(self)
             logger.error(msg)
             raise SupplyCurvePointCapacityError(msg)
 
-        return out
+        return sc_point, capacity, availability
 
     @classmethod
-    def create(cls, sc_point, res_cf_means):
+    def create(cls, sc_point, gen_cf_means):
         """
         Create Point from supply curve point meta and resource meta
 
@@ -273,8 +280,8 @@ class Point:
         ----------
         sc_point : pandas.Series
             Supply curve point meta data
-        res_cf_means : pandas.Series
-            Resource cf_means by gid
+        gen_cf_means : pandas.Series
+            Generation cf_means indexed by "gen_gid"
 
         Returns
         -------
@@ -284,10 +291,11 @@ class Point:
         sc_gid = sc_point.name
         capacity = sc_point['capacity']
         res_gids = sc_point['res_gids']
+        gen_gids = sc_point['gen_gids']
         gid_counts = sc_point['gid_counts']
-        res_cf = res_cf_means.loc[res_gids].values
+        point_cf_values = gen_cf_means.loc[gen_gids].values
 
-        return cls(sc_gid, capacity, res_gids, gid_counts, res_cf)
+        return cls(sc_gid, capacity, res_gids, gid_counts, point_cf_values)
 
 
 class SupplyCurvePoints:
@@ -295,16 +303,16 @@ class SupplyCurvePoints:
     Class to handle Supply Curve points and their meta
     """
 
-    def __init__(self, sc_table, res_meta, max_workers=None,
+    def __init__(self, sc_table, gen_fpath, max_workers=None,
                  points_per_worker=400, offshore=False):
         """
         Parameters
         ----------
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
-        res_meta : str | pandas.DataFrame
-            Path to resource .h5, generation .h5, or pre-extracted .csv or
-            pandas DataFrame
+        gen_fpath : str | pandas.DataFrame
+            Path to reV multi-year-mean .h5 (preferred), generation .h5,
+            or pre-extracted .csv or pandas DataFrame with "cf_mean" column.
         max_workers : int, optional
             Number of workers to use for point creation, 1 == serial,
             > 1 == parallel, None == parallel using all available cpus,
@@ -315,7 +323,7 @@ class SupplyCurvePoints:
         self._sc_table = self._parse_sc_table(sc_table, offshore=offshore)
 
         self._sc_points, self._capacity, self._mask = \
-            self._parse_sc_points(self._sc_table, res_meta,
+            self._parse_sc_points(self._sc_table, gen_fpath,
                                   max_workers=max_workers,
                                   points_per_worker=points_per_worker,
                                   offshore=offshore)
@@ -399,41 +407,57 @@ class SupplyCurvePoints:
         return self._mask
 
     @staticmethod
-    def _get_res_cf(res_meta, offshore=False):
+    def _get_gen_cf(gen_fpath):
         """
         Extract resource capactiy factor data from .h5 file or pre-extracted
         .csv or pandas DataFrame
 
         Parameters
         ----------
-        res_meta : str | pandas.DataFrame
-            Path to resource .h5, generation .h5, or pre-extracted .csv or
-            pandas DataFrame
-        offshore : bool, optional
-            Include offshore points, by default False
+        gen_fpath : str | pandas.DataFrame
+            Path to reV multi-year-mean .h5 (preferred), generation .h5,
+            or pre-extracted .csv or pandas DataFrame with "cf_mean" column.
 
         Returns
         -------
-        res_cf : pandas.Series
-            Resource cf_mean values indexed by resource gid
+        gen_cf : pandas.Series
+            Generation cf_mean values indexed by "gen_gid" (row index from
+            gen_fpath)
         """
-        if isinstance(res_meta, str) and res_meta.endswith('.h5'):
-            with Resource(res_meta) as f:
-                res_meta = f.meta
-                res_meta['cf_mean'] = f['cf_mean']
+        if isinstance(gen_fpath, str) and gen_fpath.endswith('.h5'):
+            with Resource(gen_fpath) as f:
+                gen_meta = f.meta
+
+                if 'cf_mean-means' in f:
+                    gen_meta['cf_mean'] = f['cf_mean-means']
+
+                elif 'cf_mean' in f:
+                    gen_meta['cf_mean'] = f['cf_mean']
+
+                else:
+                    msg = 'Could not find cf_mean or cf_mean-means'
+                    logger.error(msg)
+                    raise KeyError(msg)
+
+            # set index to the generation gid (row index)
+            gen_meta = gen_meta.reset_index(drop=True)
+            gen_meta.index.name = 'gen_gid'
+
         else:
-            res_meta = parse_table(res_meta)
-            if 'cf_mean' not in res_meta:
+            gen_meta = parse_table(gen_fpath)
+            if 'cf_mean' not in gen_meta:
                 msg = ("'cf_mean' must be appended to resource meta for "
                        "PLEXOS plant aggregation!")
                 logger.error(msg)
                 raise RuntimeError(msg)
 
-        if 'offshore' in res_meta:
-            if not offshore:
-                res_meta = res_meta.loc[res_meta['offshore'] == 0]
+            if 'gen_gid' in gen_meta:
+                gen_meta.index = gen_meta['gen_gid']
+            else:
+                gen_meta = gen_meta.reset_index(drop=True)
+                gen_meta.index.name = 'gen_gid'
 
-        return res_meta.set_index('gid')['cf_mean']
+        return gen_meta['cf_mean']
 
     @staticmethod
     def _parse_sc_table(sc_table, offshore=False):
@@ -459,13 +483,10 @@ class SupplyCurvePoints:
             if not offshore:
                 sc_table = sc_table.loc[sc_table['offshore'] == 0]
 
-        if isinstance(sc_table.iloc[0]['res_gids'], str):
-            sc_table.loc[:, 'res_gids'] = \
-                sc_table['res_gids'].apply(json.loads).values
-
-        if isinstance(sc_table.iloc[0]['gid_counts'], str):
-            sc_table.loc[:, 'gid_counts'] = \
-                sc_table['gid_counts'].apply(json.loads).values
+        for col in ('res_gids', 'gen_gids', 'gid_counts'):
+            if isinstance(sc_table.iloc[0][col], str):
+                sc_table.loc[:, col] = \
+                    sc_table[col].apply(json.loads).values
 
         return sc_table
 
@@ -498,7 +519,7 @@ class SupplyCurvePoints:
         return slices
 
     @classmethod
-    def _create_points(cls, sc_table, res_cf_means, offshore=False,
+    def _create_points(cls, sc_table, gen_cf_means, offshore=False,
                        max_workers=None, points_per_worker=400):
         """
         Create Points from all supply curve points in table
@@ -507,8 +528,8 @@ class SupplyCurvePoints:
         ----------
         sc_table : pandas.DataFrame
             Supply curve table
-        res_cf_means : pandas.Series
-            Resource cf_means by gid
+        gen_cf_means : pandas.Series
+            Generation cf_means by generation gid (index should be "gen_gid")
         offshore : bool, optional
             Include offshore points, by default False
         max_workers : int, optional
@@ -531,7 +552,7 @@ class SupplyCurvePoints:
         if 'sc_gid' in sc_table:
             sc_table = sc_table.set_index('sc_gid')
 
-        cols = ['capacity', 'res_gids', 'gid_counts']
+        cols = ['capacity', 'res_gids', 'gen_gids', 'gid_counts']
         sc_table = sc_table[cols]
 
         sc_points = {}
@@ -545,11 +566,11 @@ class SupplyCurvePoints:
                     sc_table, points_per_worker=points_per_worker)
                 for sc_slice in slices:
                     table_slice = sc_table.iloc[sc_slice].copy()
-                    gids = np.unique(np.hstack(table_slice['res_gids'].values))
-                    res_slice = res_cf_means.loc[gids].copy()
+                    gids = np.unique(np.hstack(table_slice['gen_gids'].values))
+                    gen_slice = gen_cf_means.loc[gids].copy()
                     future = exe.submit(cls._create_points,
                                         table_slice,
-                                        res_slice,
+                                        gen_slice,
                                         max_workers=1)
                     futures.append(future)
 
@@ -563,14 +584,14 @@ class SupplyCurvePoints:
             logger.debug('Creating supply curve points in serial')
             for i, (sc_gid, sc_point) in enumerate(sc_table.iterrows()):
                 sc_gid = int(sc_gid)
-                sc_points[sc_gid] = Point.create(sc_point, res_cf_means)
+                sc_points[sc_gid] = Point.create(sc_point, gen_cf_means)
                 logger.debug('Created {} out of {} Points'
                              .format(i + 1, len(sc_table)))
 
         return sc_points
 
     @classmethod
-    def _parse_sc_points(cls, sc_table, res_meta, max_workers=None,
+    def _parse_sc_points(cls, sc_table, gen_fpath, max_workers=None,
                          points_per_worker=400, offshore=False):
         """
         Create a Point instance for all Supply curve points in sc_table.
@@ -580,9 +601,9 @@ class SupplyCurvePoints:
         ----------
         sc_table : str | pandas.DataFrame
             Supply Curve table .csv or pre-loaded pandas DataFrame
-        res_meta : str | pandas.DataFrame
-            Path to resource .h5, generation .h5, or pre-extracted .csv or
-            pandas DataFrame
+        gen_fpath : str | pandas.DataFrame
+            Path to reV multi-year-mean .h5 (preferred), generation .h5,
+            or pre-extracted .csv or pandas DataFrame with "cf_mean" column.
         max_workers : int, optional
             Number of workers to use for point creation, 1 == serial,
             > 1 == parallel, None == parallel using all available cpus,
@@ -601,9 +622,9 @@ class SupplyCurvePoints:
         if 'sc_gid' in sc_table:
             sc_table = sc_table.set_index('sc_gid')
 
-        res_cf_means = cls._get_res_cf(res_meta, offshore=offshore)
+        gen_cf_means = cls._get_gen_cf(gen_fpath)
         sc_points = cls._create_points(
-            sc_table, res_cf_means,
+            sc_table, gen_cf_means,
             offshore=offshore,
             max_workers=max_workers,
             points_per_worker=points_per_worker)
@@ -644,8 +665,16 @@ class SupplyCurvePoints:
 
         Returns
         -------
-        out : tuple
-            sc_point, capacity
+        sc_point : pd.Series | None
+            A summary of the resource gids being allocated along with the
+            gid_counts built at each resource gid. None if sc_gid doesnt have
+            the available capacity. e.g. if 202 MW of built capacity is
+            requested:
+                sc_gid                           1
+                res_gids          [258265, 258267]
+                gid_counts              [773.0, 7]
+                cf_means            [0.126, 0.124]
+                build_capacity                 202
         """
         sc_point = self.sc_points[sc_gid]
         try:
@@ -656,6 +685,7 @@ class SupplyCurvePoints:
         except SupplyCurvePointCapacityError as ex:
             logger.warning('WARNING: {}'.format(ex))
             warn(ex)
+            sc_point = None
             capacity = 0.0
 
-        return sc_point, capacity
+        return sc_point

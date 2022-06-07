@@ -188,9 +188,15 @@ def test_cli(runner):
                     truth[col] = truth[col].apply(json.loads)
                     test[col] = test[col].apply(json.loads)
 
-                cols = [c for c in test.columns if c in truth.columns]
+                ignore = ('res_built', )
+                cols = [c for c in test.columns if c in truth.columns
+                        and c not in ignore]
 
                 assert_frame_equal(truth[cols], test[cols])
+
+                res_built_true = truth['res_built'].apply(sum)
+                res_built_test = test['res_built'].apply(sum)
+                assert np.allclose(res_built_test, res_built_true)
 
                 truth = f_true['time_index'].values
                 test = f_test['time_index'].values
