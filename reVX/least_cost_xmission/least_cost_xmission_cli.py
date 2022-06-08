@@ -15,7 +15,7 @@ import pandas as pd
 import geopandas as gpd
 
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
-from rex.utilities.cli_dtypes import STR, INTLIST, INT
+from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties  # , safe_json_load
 
@@ -74,6 +74,7 @@ def from_config(ctx, config, verbose):
 
     if option == 'local':
         run_local(ctx, config)
+        return
 
     if option != 'eagle':
         raise AttributeError(f'Option {option} is not supported')
@@ -139,13 +140,17 @@ def from_config(ctx, config, verbose):
               help='Save least cost paths and data to geopackage.')
 @click.option('--radius', '-rad', type=INT,
               show_default=True, default=None,
-              help=("Radius to clip costs raster to in pixels This overrides"
+              help=("Radius to clip costs raster to in pixels This overrides "
                     "--nn_sinks if set."))
+@click.option('--simplify_geo', type=FLOAT,
+              show_default=True, default=None,
+              help=("Simplify path geometries by a value before writing to "
+                    "geopackage."))
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
           xmission_config, sc_point_gids, nn_sinks, clipping_buffer,
           barrier_mult, max_workers, out_dir, log_dir, verbose, save_paths,
-          radius):
+          radius, simplify_geo):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -169,10 +174,11 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
                                         barrier_mult=barrier_mult,
                                         max_workers=max_workers,
                                         save_paths=save_paths,
-                                        radius=radius)
+                                        radius=radius,
+                                        simplify_geo=simplify_geo)
     if len(least_costs) == 0:
         logger.error('No paths found.')
-        sys.exit()
+        return
 
     ext = 'gpkg' if save_paths else 'csv'
     fn_out = '{}_{}_{}.{}'.format(name, capacity_class, resolution, ext)
@@ -200,6 +206,10 @@ def merge_output(ctx, split_to_geojson, out_file, out_path, gpkg_files):
     """
     Merge output Geopackage files and optional convert to GeoJSON
     """
+    if len(gpkg_files) == 0:
+        click.echo('No files passsed to be merged')
+        return
+
     click.echo(f'Loading: {", ".join(gpkg_files)}')
     warnings.filterwarnings('ignore', category=RuntimeWarning)
     gdf = pd.concat([gpd.read_file(f) for f in gpkg_files])
@@ -211,7 +221,7 @@ def merge_output(ctx, split_to_geojson, out_file, out_path, gpkg_files):
         out_file = os.path.join(out_path, out_file)
         click.echo(f'Saving to {out_file}')
         gdf.to_file(out_file, driver="GPKG")
-        sys.exit()
+        return
 
     # Split out put in to GeoJSON by POI name
     for poi in set(gdf['POI Name']):
@@ -256,6 +266,8 @@ def get_node_cmd(config):
             args.append('--save_paths')
     if config.radius:
         args.append(f'-rad {config.radius}')
+    if config.simplify_geo:
+        args.append(f'--simplify_geo {config.simplify_geo}')
 
     if config.log_level == logging.DEBUG:
         args.append('-v')
@@ -292,7 +304,11 @@ def run_local(ctx, config):
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
                log_dir=config.log_directory,
-               verbose=config.log_level)
+               verbose=config.log_level,
+               radius=config.radius,
+               save_paths=config.save_paths,
+               simplify_geo=config.simplify_geo,
+               )
 
 
 def eagle(config):

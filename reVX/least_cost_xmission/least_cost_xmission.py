@@ -427,7 +427,7 @@ class LeastCostXmission(LeastCostPaths):
     def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
                           clipping_buffer=1.05, barrier_mult=100,
                           max_workers=None, save_paths=False, radius=None,
-                          mp_delay=3):
+                          mp_delay=3, simplify_geo=None):
         """
         Compute Least Cost Tranmission for desired sc_points
 
@@ -457,6 +457,8 @@ class LeastCostXmission(LeastCostPaths):
         mp_delay : float, optional
             Delay in seconds between starting multiprocess workers. Useful for
             reducing memory spike at working startup.
+        simplify_geo : float | None, optional
+            If float, simplify geometries using this value
 
         Returns
         -------
@@ -495,7 +497,8 @@ class LeastCostXmission(LeastCostPaths):
                                             xmission_config=self._config,
                                             barrier_mult=barrier_mult,
                                             min_line_length=self._min_line_len,
-                                            save_paths=save_paths)
+                                            save_paths=save_paths,
+                                            simplify_geo=simplify_geo)
                         futures.append(future)
 
                         num_jobs += 1
@@ -532,7 +535,8 @@ class LeastCostXmission(LeastCostPaths):
                         xmission_config=self._config,
                         barrier_mult=barrier_mult,
                         min_line_length=self._min_line_len,
-                        save_paths=save_paths)
+                        save_paths=save_paths,
+                        simplify_geo=simplify_geo)
 
                     if sc_costs is not None:
                         least_costs.append(sc_costs)
@@ -560,7 +564,7 @@ class LeastCostXmission(LeastCostPaths):
     def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
             xmission_config=None, sc_point_gids=None, nn_sinks=2,
             clipping_buffer=1.05, barrier_mult=100, max_workers=None,
-            save_paths=False, radius=None):
+            save_paths=False, radius=None, simplify_geo=None):
         """
         Find Least Cost Tranmission connections between desired sc_points to
         given tranmission features for desired capacity class
@@ -597,6 +601,8 @@ class LeastCostXmission(LeastCostPaths):
             by default False
         radius : None | int, optional
             Force clipping radius if set to an int
+        simplify_geo : float | None, optional
+            If float, simplify geometries using this value
 
         Returns
         -------
@@ -615,7 +621,8 @@ class LeastCostXmission(LeastCostPaths):
                                             barrier_mult=barrier_mult,
                                             max_workers=max_workers,
                                             save_paths=save_paths,
-                                            radius=radius)
+                                            radius=radius,
+                                            simplify_geo=simplify_geo)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'

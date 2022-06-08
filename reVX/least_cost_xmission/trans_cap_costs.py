@@ -974,8 +974,8 @@ class TransCapCosts(TieLineCosts):
 
         return features
 
-    # def compute(self, min_line_length=5.7, save_paths=False, simplify_geo=100):
-    def compute(self, min_line_length=5.7, save_paths=False, simplify_geo=None):
+    def compute(self, min_line_length=5.7, save_paths=False,
+                simplify_geo=None):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1028,11 +1028,10 @@ class TransCapCosts(TieLineCosts):
 
         return features
 
-    # TODO - pass simplify_geo in from CLI or config
     @classmethod
     def run(cls, cost_fpath, sc_point, features, capacity_class, radius=None,
             xmission_config=None, barrier_mult=100, min_line_length=5.7,
-            save_paths=False, simplify_geo=100):
+            save_paths=False, simplify_geo=None):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.

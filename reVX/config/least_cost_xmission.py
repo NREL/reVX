@@ -157,6 +157,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('radius', None)
 
     @property
+    def simplify_geo(self):
+        """
+        Optional float to use to simplify path geometries before saving to
+        geopackage
+        """
+        return self.get('simplify_geo', None)
+
+    @property
     def save_paths(self):
         """
         Save paths as GPKG if true
