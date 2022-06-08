@@ -20,7 +20,7 @@ class SetbacksConfig(AnalysisConfig):
         'road': ['hub_height', 'rotor_diameter'],
         'rail': ['hub_height', 'rotor_diameter'],
         'transmission': ['hub_height', 'rotor_diameter'],
-        'parcel': ['base_setback_dist'],
+        'parcel': [],
     }
 
     def _preflight(self):
