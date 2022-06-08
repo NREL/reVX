@@ -71,7 +71,7 @@ def runner():
 
 
 @pytest.mark.parametrize('capacity', [100, 200, 400, 1000])
-def test_capacity_class(capacity):
+def _test_capacity_class(capacity):
     """
     Test least cost xmission and compare with baseline data
     """
@@ -98,7 +98,7 @@ def test_capacity_class(capacity):
 
 
 @pytest.mark.parametrize('max_workers', [1, None])
-def test_parallel(max_workers):
+def _test_parallel(max_workers):
     """
     Test least cost xmission and compare with baseline data
     """
@@ -127,7 +127,7 @@ def test_parallel(max_workers):
 
 
 @pytest.mark.parametrize('resolution', [64, 128])
-def test_resolution(resolution):
+def _test_resolution(resolution):
     """
     Test least cost xmission and compare with baseline data
     """
@@ -193,7 +193,7 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test = '{}_LeastCostXmission_{}MW_128.csv'.format(os.path.basename(td),
+        test = '{}_{}MW_128.csv'.format(os.path.basename(td),
                                                           capacity)
         test = os.path.join(td, test)
         test = pd.read_csv(test)
