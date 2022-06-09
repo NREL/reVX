@@ -262,8 +262,8 @@ def test_local_water(max_workers, regulations_fpath, expected_sum):
             multiplier=None
         )
 
-        water_path =  os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
-                                   'Rhode_Island.shp')
+        water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                                  'Rhode_Island.shp')
         test = setbacks.compute_setbacks(water_path, max_workers=max_workers)
 
     assert test.sum() == expected_sum
@@ -397,8 +397,8 @@ def test_cli_water(runner, config_input):
     """
     Test CLI with water setbacks.
     """
-    water_path =  os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
-                               'Rhode_Island.shp')
+    water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                              'Rhode_Island.shp')
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(WATER_REGS_FPATH_VALUE)
         regs_fpath = os.path.join(td, regs_fpath)

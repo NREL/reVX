@@ -481,20 +481,10 @@ def get_node_cmd(name, config):
         args.append('-v')
 
     feature_type = config.feature_type
-    if feature_type == 'structure':
-        args.append('structure-setbacks')
-    elif feature_type == 'road':
-        args.append('road-setbacks')
-    elif feature_type == 'transmission':
-        args.append('transmission-setbacks')
-    elif feature_type == 'rail':
-        args.append('rail-setbacks')
-    elif feature_type == 'parcel':
-        args.append('parcel-setbacks')
-    elif feature_type == 'water':
-        args.append('water-setbacks')
+    if feature_type in STATE_SETBACKS:
+        args.append('{}-setbacks'.format(feature_type))
     else:
-        options = set(config.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
+        options = set(STATE_SETBACKS.keys())
         msg = 'Feature type must be one of {}; got {}'.format(
             options, feature_type
         )
