@@ -46,8 +46,7 @@ class ParcelSetbacks(BaseSetbacks):
 
         return self._rasterize_setbacks(setbacks)
 
-    @staticmethod
-    def _compute_local_setbacks(features, cnty, setback):
+    def _compute_local_setbacks(self, features, cnty, setback):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -72,12 +71,11 @@ class ParcelSetbacks(BaseSetbacks):
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
-        mask = features.centroid.within(cnty['geometry'].values[0])
-        tmp = features.loc[mask]
+        features = self._feature_filter(features, cnty)
 
         setbacks = [
-            (geom, 1) for geom in tmp.buffer(0).difference(
-                tmp.buffer(-1 * setback)
+            (geom, 1) for geom in features.buffer(0).difference(
+                features.buffer(-1 * setback)
             )
         ]
 

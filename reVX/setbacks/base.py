@@ -21,6 +21,45 @@ from reVX.utilities.utilities import log_versions
 logger = logging.getLogger(__name__)
 
 
+def features_with_centroid_in_county(features, cnty):
+    """Find features with centroids within the given county.
+
+    Parameters
+    ----------
+    features : geopandas.GeoDataFrame
+        Features to setback from.
+    cnty : geopandas.GeoDataFrame
+        Regulations for a single county.
+
+    Returns
+    -------
+    features : geopandas.GeoDataFrame
+        Features that have centroid in county.
+    """
+
+    mask = features.centroid.within(cnty['geometry'].values[0])
+    return features.loc[mask]
+
+
+def features_clipped_to_county(features, cnty):
+    """Clip features to the given county geometry.
+
+    Parameters
+    ----------
+    features : geopandas.GeoDataFrame
+        Features to setback from.
+    cnty : geopandas.GeoDataFrame
+        Regulations for a single county.
+
+    Returns
+    -------
+    features : geopandas.GeoDataFrame
+        Features clipped to county geometry.
+    """
+    tmp = gpd.clip(features, cnty)
+    return tmp[~tmp.is_empty]
+
+
 class BaseSetbacks(ABC):
     """
     Create exclusions layers for setbacks
@@ -420,8 +459,7 @@ class BaseSetbacks(ABC):
 
         return setback
 
-    @staticmethod
-    def _compute_local_setbacks(features, cnty, setback):
+    def _compute_local_setbacks(self, features, cnty, setback):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -446,16 +484,20 @@ class BaseSetbacks(ABC):
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
-        mask = features.centroid.within(cnty['geometry'].values[0])
-        tmp = features.loc[mask]
-        tmp.loc[:, 'geometry'] = tmp.buffer(setback)
+        features = self._feature_filter(features, cnty)
+        features.loc[:, 'geometry'] = features.buffer(setback)
 
-        setbacks = [(geom, 1) for geom in tmp['geometry']]
+        setbacks = [(geom, 1) for geom in features['geometry']]
 
         return setbacks
 
+    @staticmethod
+    def _feature_filter(features, cnty):
+        """Filter the features given a county."""
+        return features_with_centroid_in_county(features, cnty)
+
     def _no_exclusions_array(self):
-        """Get an array of the correct shape reprenting no exclusions.
+        """Get an array of the correct shape representing no exclusions.
 
         The array contains all zeros, and a new one is created
         for every function call.

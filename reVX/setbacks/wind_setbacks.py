@@ -9,8 +9,7 @@ from warnings import warn
 import fiona
 import geopandas as gpd
 
-from rex.utilities import log_mem
-from reVX.setbacks.base import BaseSetbacks
+from reVX.setbacks.base import BaseSetbacks, features_clipped_to_county
 
 logger = logging.getLogger(__name__)
 
@@ -512,40 +511,9 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
     """
 
     @staticmethod
-    def _compute_local_setbacks(features, cnty, setback):
-        """Compute local county setbacks.
-
-        This method will compute the setbacks using a county-specific
-        regulations file that specifies either a static setback or a
-        multiplier value that will be used along with base setback
-        distance specifications to compute the setback.
-
-        Parameters
-        ----------
-        features : geopandas.GeoDataFrame
-            Features to setback from
-        cnty : geopandas.GeoDataFrame
-            Wind regulations for a single county
-        setback : int
-            Setback distance in meters
-
-        Returns
-        -------
-        setbacks : list
-            List of setback geometries
-        """
-        logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(cnty.iloc[0]['FIPS']))
-        log_mem(logger)
-        tmp = gpd.clip(features, cnty)
-        tmp = tmp[~tmp.is_empty]
-
-        # Buffer setback
-        tmp.loc[:, 'geometry'] = tmp.buffer(setback)
-
-        setbacks = [(geom, 1) for geom in tmp['geometry']]
-
-        return setbacks
+    def _feature_filter(features, cnty):
+        """Filter the features given a county."""
+        return features_clipped_to_county(features, cnty)
 
     def _parse_regulations(self, regulations_fpath):
         """
