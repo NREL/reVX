@@ -2,13 +2,18 @@
 """
 Compute setbacks exclusions
 """
-from reVX.setbacks.base import BaseSetbacks
+from reVX.setbacks.base import BaseSetbacks, features_clipped_to_county
 
 
 class WaterSetbacks(BaseSetbacks):
     """Water setbacks. """
 
     _FEATURE_FILE_EXTENSION = '.gpkg'
+
+    @staticmethod
+    def _feature_filter(features, cnty):
+        """Filter the features given a county."""
+        return features_clipped_to_county(features, cnty)
 
     def _parse_regulations(self, regulations_fpath):
         """
@@ -26,7 +31,7 @@ class WaterSetbacks(BaseSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = regulations['Feature Type'].apply(str.strip).lower() == 'water'
-        regulations = regulations.loc[mask]
+        feats = regulations['Feature Type'].apply(str.strip).apply(str.lower)
+        regulations = regulations.loc[feats == 'water']
 
         return regulations

@@ -35,6 +35,12 @@ PARCEL_REGS_FPATH_VALUE = os.path.join(
 PARCEL_REGS_FPATH_MULTIPLIER = os.path.join(
     TESTDATADIR, 'setbacks', 'ri_parcel_regs_multiplier.csv'
 )
+WATER_REGS_FPATH_VALUE = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_water_regs_value.csv'
+)
+WATER_REGS_FPATH_MULTIPLIER = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_water_regs_multiplier.csv'
+)
 
 
 @pytest.fixture(scope="module")
@@ -232,6 +238,50 @@ def test_generic_water_setbacks():
     x1_coords = set(zip(*np.where(test_x1)))
     x100_coords = set(zip(*np.where(test_x100)))
     assert x1_coords <= x100_coords
+
+
+@pytest.mark.parametrize('max_workers', [None, 1])
+@pytest.mark.parametrize(
+    ('regulations_fpath', 'expected_sum'),
+    [(WATER_REGS_FPATH_VALUE, 83),
+     (WATER_REGS_FPATH_MULTIPLIER, 73)]
+)
+def test_local_water(max_workers, regulations_fpath, expected_sum):
+    """
+    Test local water setbacks
+    """
+
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(regulations_fpath, regs_fpath)
+
+        setbacks = WaterSetbacks(
+            EXCL_H5, BASE_SETBACK_DIST,
+            regulations_fpath=regs_fpath,
+            multiplier=None
+        )
+
+        water_path =  os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                                   'Rhode_Island.shp')
+        test = setbacks.compute_setbacks(water_path, max_workers=max_workers)
+
+    assert test.sum() == expected_sum
+
+    # Make sure only counties in the regulations csv
+    # have exclusions applied
+    with ExclusionLayers(EXCL_H5) as exc:
+        counties_with_exclusions = set(exc['cnty_fips'][np.where(test)])
+
+    regulations = pd.read_csv(regulations_fpath)
+    feats = regulations['Feature Type'].apply(str.strip).apply(str.lower)
+    counties_should_have_exclusions = set(
+        regulations[feats == 'water'].FIPS.unique()
+    )
+    counties_with_exclusions_but_not_in_regulations_csv = (
+        counties_with_exclusions - counties_should_have_exclusions
+    )
+    assert not counties_with_exclusions_but_not_in_regulations_csv
 
 
 def test_setback_preflight_check():
