@@ -555,9 +555,6 @@ class LeastCostXmission(LeastCostPaths):
         logger.info('{:.4f}% of requested sc point gids were succesfully '
                     'mapped to transmission features'.format(lcp_frac))
 
-        # HACK TODO
-        least_costs = least_costs[least_costs.category != 'TransLine']
-
         return least_costs.reset_index(drop=True)
 
     @classmethod

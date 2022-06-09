@@ -7,7 +7,6 @@ TODO - add cmd line doc
 
 """
 import os
-import sys
 import click
 import logging
 import warnings
@@ -19,9 +18,13 @@ from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties  # , safe_json_load
 
+from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
-from reVX import __version__
+from reVX.least_cost_xmission.config import TRANS_LINE_CAT, LOAD_CENTER_CAT, \
+    SINK_CAT, SUBSTATION_CAT
+
+TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +103,7 @@ def from_config(ctx, config, verbose):
                     "layers"))
 @click.option('--features_fpath', '-feats', required=True,
               type=click.Path(exists=True),
-              help="Path to geopackage with transmission features")
+              help="Path to GeoPackage with transmission features")
 @click.option('--capacity_class', '-cap', type=str, required=True,
               help=("Capacity class of transmission features to connect "
                     "supply curve points to"))
@@ -137,7 +140,7 @@ def from_config(ctx, config, verbose):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.option('--save_paths', is_flag=True,
-              help='Save least cost paths and data to geopackage.')
+              help='Save least cost paths and data to GeoPackage.')
 @click.option('--radius', '-rad', type=INT,
               show_default=True, default=None,
               help=("Radius to clip costs raster to in pixels This overrides "
@@ -145,7 +148,7 @@ def from_config(ctx, config, verbose):
 @click.option('--simplify_geo', type=FLOAT,
               show_default=True, default=None,
               help=("Simplify path geometries by a value before writing to "
-                    "geopackage."))
+                    "GeoPackage."))
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
           xmission_config, sc_point_gids, nn_sinks, clipping_buffer,
@@ -194,27 +197,50 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
 
 @main.command()
 @click.option('--split-to-geojson', '-s', is_flag=True,
-              help='After merging Geopackages, split into GeoJSON by POI name')
+              help='After merging GeoPackages, split into GeoJSON by POI name'
+              '.')
 @click.option('--out-file', '-of', default=None, type=STR,
-              help='Name for output geopackage file')
+              help='Name for output GeoPackage file.')
+@click.option('--drop', '-d', default=None, type=STR, multiple=True,
+              help='Transmission feature category types to drop from results'
+              f'. Options: {", ".join(TRANS_CAT_TYPES)}')
 @click.option('--out-path', '-op', type=click.Path(exists=True),
               default='.', show_default=True,
-              help='Output path for output files. Must exist')
+              help='Output path for output files. Path must exist.')
 @click.argument('gpkg_files', type=click.Path(exists=True), nargs=-1)
 @click.pass_context
-def merge_output(ctx, split_to_geojson, out_file, out_path, gpkg_files):
+def merge_output(ctx, split_to_geojson, out_file, out_path, drop, gpkg_files):
     """
-    Merge output Geopackage files and optional convert to GeoJSON
+    Merge output GeoPackage files and optionally convert to GeoJSON
     """
     if len(gpkg_files) == 0:
         click.echo('No files passsed to be merged')
         return
 
+    if drop:
+        for cat in drop:
+            if cat not in TRANS_CAT_TYPES:
+                click.echo('--drop options must on or more of '
+                           f'{TRANS_CAT_TYPES}, received {drop}')
+                return
+
     click.echo(f'Loading: {", ".join(gpkg_files)}')
     warnings.filterwarnings('ignore', category=RuntimeWarning)
     gdf = pd.concat([gpd.read_file(f) for f in gpkg_files])
+    warnings.filterwarnings('default', category=RuntimeWarning)
+
+    if drop:
+        mask = gdf['category'].isin(drop)
+        click.echo(f'Dropping {mask.sum()} of {len(gdf)} total features '
+                   f'with category(ies): {", ".join(drop)}')
+        gdf = gdf[~mask]
+
     gdf = gdf.reset_index()
     gdf = gdf[['POI Name', 'State', 'dist_km', 'sc_point_gid', 'geometry']]
+
+    if len(gdf) == 0:
+        click.echo('No transmission features to save.')
+        return
 
     if not split_to_geojson:
         out_file = f'combo_{gpkg_files[0]}' if out_file is None else out_file
