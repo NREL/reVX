@@ -21,6 +21,7 @@ class SetbacksConfig(AnalysisConfig):
         'rail': ['hub_height', 'rotor_diameter'],
         'transmission': ['hub_height', 'rotor_diameter'],
         'parcel': [],
+        'water': [],
     }
 
     def _preflight(self):

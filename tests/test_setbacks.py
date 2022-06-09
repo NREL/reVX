@@ -389,6 +389,53 @@ def test_cli_parcels(runner, config_input):
     LOGGERS.clear()
 
 
+@pytest.mark.parametrize("config_input",
+                         ({"base_setback_dist": BASE_SETBACK_DIST},
+                          {"hub_height": BASE_SETBACK_DIST,
+                           "rotor_diameter": 0}))
+def test_cli_water(runner, config_input):
+    """
+    Test CLI with water setbacks.
+    """
+    water_path =  os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                               'Rhode_Island.shp')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(WATER_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(WATER_REGS_FPATH_VALUE, regs_fpath)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": EXCL_H5,
+            "feature_type": "water",
+            "features_path": water_path,
+            "log_level": "INFO",
+            "regs_fpath": regs_fpath,
+            "replace": True,
+        }
+        config.update(config_input)
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test_fp = os.path.join(td, 'Rhode_Island.tif')
+
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert test.sum() == 83
+
+    LOGGERS.clear()
+
+
 def test_cli_invalid_config(runner):
     """
     Test CLI with invalid config (missing plant height info).

@@ -8,8 +8,6 @@ from reVX.setbacks.base import BaseSetbacks, features_clipped_to_county
 class WaterSetbacks(BaseSetbacks):
     """Water setbacks. """
 
-    _FEATURE_FILE_EXTENSION = '.gpkg'
-
     @staticmethod
     def _feature_filter(features, cnty):
         """Filter the features given a county."""
