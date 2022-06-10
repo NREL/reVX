@@ -134,22 +134,6 @@ class LeastCostXmissionConfig(AnalysisConfig):
         self._name = name
 
     @property
-    def split_gids(self):
-        """
-        Optionally split gids and kick off into multiple SLURM jobs. This
-        value should be an int.
-        """
-        split_gids = self.get('split_gids', None)
-
-        if not (isinstance(split_gids, int) or split_gids is None):
-            raise ValueError('split_gids must be an int, got a '
-                             f'{type(split_gids)} ({split_gids})')
-        if split_gids is not None and self.sc_point_gids is None:
-            raise ValueError(f'sc_point_gids must currently be set in the '
-                             'config file to use split_gids')
-        return split_gids
-
-    @property
     def radius(self):
         """
         Optional radius to use for clipping

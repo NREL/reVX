@@ -80,19 +80,21 @@ def from_config(ctx, config, verbose):
         return
 
     if option != 'eagle':
-        raise AttributeError(f'Option {option} is not supported')
+        click.echo(f'Option "{option}" is not supported')
+        return
 
-    if config.split_gids is None:
+    if config.execution_control.nodes == 1:
         eagle(config)
+        return
 
     # Split gids over mulitple SLURM jobs
     gids = config.sc_point_gids
     name = config.name
-    logger.info(f'Splitting {len(gids)} SC points over {config.split_gids} '
-                'SLURM jobs')
-    for i in range(config.split_gids):
+    logger.info(f'Splitting {len(gids)} SC points over '
+                f'{config.execution_control.nodes} SLURM jobs')
+    for i in range(config.execution_control.nodes):
         config.name = f'{name}_{i}'
-        config.sc_point_gids = gids[i::config.split_gids]
+        config.sc_point_gids = gids[i::config.execution_control.nodes]
         eagle(config)
 
 
