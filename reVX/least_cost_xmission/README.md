@@ -1,5 +1,5 @@
 # Least cost transmission paths
-Determine least cost transmission paths from possible wind and solar farms (supply curve (SC) points) to the electrical grid. Available components of the electical grid are substations, transmission lines, load centers and infinite sinks. The code only attempts to connect to a point on the transmission line closest to the SC point. It was initially used for land-based analyses, but has been modified for off-shore transmission as well.
+Determine least cost transmission paths from possible wind and solar farms (supply curve (SC) points) to the electrical grid. Available components of the electical grid are substations, transmission lines, load centers and infinite sinks. The code only attempts to connect to a point on the transmission line closest to the SC point. This was initially used for land-based analyses, but has been modified for off-shore transmission as well.
 
 TODO - ISOs
 
@@ -49,7 +49,7 @@ python least_cost_xmission_cli.py local \
 ```
 
 ### Run on-shore analysis from a config file
-The below file can be used to start a full CONUS analysis for the 1000MW power class. 
+The below file can be used to start a full CONUS analysis for the 1000MW power class. The setting `nodes` in `execution_control` will split the processing across five eagle nodes. 
 
 ```
 {
@@ -57,9 +57,9 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
     "allocation": "YOUR_SLURM_ALLOCATION",
     "feature": "--qos=high",
     "memory": 178,
-    "nodes": 20,
+    "nodes": 5,
     "option": "eagle",
-    "walltime": 1
+    "walltime": 4
   },
   "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
@@ -78,6 +78,9 @@ python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
 ```
 
 ## Atlantic Off-Show Wind Transmission (AOSWT) Examples
+### Build friction and barriers layer
+An example Jupyter notebook for building the friction and barrier layers can be found in the `examples/least_cost_paths` directory of this repo.
+
 ### Locally run a AOSWT analysis for a single SC point, plot the results, and save to a geopackage
 This example uses `contextily` to add a base map to the plot, but is not required. AOSWT needs an aggregation "resolution" of 118. 
 
@@ -127,15 +130,9 @@ python least_cost_xmission_cli.py local -v \
 --max_workers 1 \
 --sc_point_gids [36092,36093]
 ```
-### Process AOSWT on Eagle with SLURM
-```
-python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
---config ~/reVX/reVX/least_cost_xmission/config/example_aoswt_eagle_config_debug.json \
---sc_point_gids [40139, 97919, 50000, 60000]
-```
 
 ### Run AOSWT from a config file
-Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. Note that SLURM high quality of service can be requested with `"feature": "--qos=high"`. The file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
+Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. Note that SLURM high quality of service on a standard node can be requested with `"feature": "--qos=high"`. This file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
 
 ```
 {
@@ -143,11 +140,12 @@ Using a config file is the prefered method of running an analysis. The below fil
     "allocation": "YOUR_SLURM_ALLOCATION",
     "feature": "-p debug",
     "memory": 178,
-    "nodes": 20,
+    "nodes": 2,
     "option": "eagle",
     "walltime": 1,
     "max_workers": 36
   },
+  "name": "test", 
   "cost_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5",
   "features_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg",
   "capacity_class": "100",
@@ -169,16 +167,28 @@ python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
 ```
 
 ### Post processing
-Running an analysis on multiple nodes will result in multiple output files. These can be collected view several means. The below command will combine all output files into a single geopackage, assuming `save_paths` was enabled. 
+Running an analysis on multiple nodes will result in multiple output files. These can be collected via several means. The below command will combine all output files into a single geopackage, assuming `save_paths` was enabled. If paths are not saved, the output will consist of multiple CSV files that must be merged manually. 
 
-``` 
-python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-outputs \
---out-file ./merged.gpkg
+```
+python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
+--out-file combined.gpkg \
+output_files_*.gpkg
 ```
 
-Alternatively, the combined results can be split into GeoJSON files by POI for loading into Kepler, etc. 
+Transmission feature categories that are not desired in the final output can be dropped with:
 
-``` 
-python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-outputs \
---out-path ./out --split-to-geojson
+```
+python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
+--out-file combined.gpkg \
+--drop TransLine --drop LoadCen \
+output_files_*.gpkg
+```
+
+Additionally, the results may be split into GeoJSONs by transmission feature connected with the following. This will not create a combined GeoPackage file. 
+
+```
+python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
+--drop TransLine --drop LoadCen \
+--split-to-geojson --out-path ./out \
+output_files_*.gpkg
 ```
