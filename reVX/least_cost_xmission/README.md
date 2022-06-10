@@ -21,7 +21,7 @@ TODO
 * `least_cost_xmission_cli.py` - Calculate least cost paths, transmission paths, and connection costs. 
 
 ### Other notable Python files
-* `trans_cap_costs.py` 
+* `trans_cap_costs.py` - Determine paths and costs for a single SC point
 	* `TieLineCosts` - Determine least cost paths and transmission costs from SC point to multiple transmission grid elements using `skimage.graph.MCP_Geogetric` 
 	* `TransCapCosts` - Determine total transmission cost including line cost and any substation construction or improvements.
 * `least_cost_xmission.py` - Calculate costs from SC points to transmission features. By default, all SC points are used or a subset may be specified by GID.
@@ -47,6 +47,36 @@ python least_cost_xmission_cli.py local \
 --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
 --capacity_class 1000
 ```
+
+### Run on-shore analysis from a config file
+The below file can be used to start a full CONUS analysis for the 1000MW power class. 
+
+```
+{
+  "execution_control": {
+    "allocation": "YOUR_SLURM_ALLOCATION",
+    "feature": "--qos=high",
+    "memory": 178,
+    "nodes": 20,
+    "option": "eagle",
+    "walltime": 1
+  },
+  "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
+  "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
+  "capacity_class": "1000",
+  "barrier_mult": "100",
+  "log_directory": "/scratch/USER_NAME/log",
+  "log_level": "INFO"
+}
+```
+
+Assuming the above config file is saved as `config_conus.json` in the current directory, it can be kicked off with:
+
+```
+python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
+--config ./config_conus.json
+```
+
 ## Atlantic Off-Show Wind Transmission (AOSWT) Examples
 ### Locally run a AOSWT analysis for a single SC point, plot the results, and save to a geopackage
 This example uses `contextily` to add a base map to the plot, but is not required. AOSWT needs an aggregation "resolution" of 118. 
@@ -105,7 +135,7 @@ python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
 ```
 
 ### Run AOSWT from a config file
-Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. It also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The value for `allocation` should be set to the desired SLURM allocation.
+Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. Note that SLURM high quality of service can be requested with `"feature": "--qos=high"`. The file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
 
 ```
 {
@@ -115,15 +145,14 @@ Using a config file is the prefered method of running an analysis. The below fil
     "memory": 178,
     "nodes": 20,
     "option": "eagle",
-    "sites_per_worker": 100,
     "walltime": 1,
-    "max_workers": 30
+    "max_workers": 36
   },
   "cost_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5",
   "features_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg",
   "capacity_class": "100",
   "barrier_mult": "100",
-  "log_directory": "/scratch/mbannist/lcp/test",
+  "log_directory": "/scratch/USER_NAME/log",
   "log_level": "DEBUG",
   "sc_point_gids": [40139],
   "resolution": 118,
@@ -132,11 +161,11 @@ Using a config file is the prefered method of running an analysis. The below fil
 }
 ```
 
-Assuming the above config file is saved as `config_debug.json` in the current directory, it can be kicked off with:
+Assuming the above config file is saved as `config_aoswt.json` in the current directory, it can be kicked off with:
 
 ```
 python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
---config ./config_debug.json
+--config ./config_aoswt.json
 ```
 
 ### Post processing
