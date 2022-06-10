@@ -62,7 +62,8 @@ def convert_pois_to_lines(poi_csv_f, template_f, out_f):
     lines['trans_gids'] = '[9999]'
 
     # add a fake trans line for the subs to connect to to make LCP code happy
-    trans_line = pd.DataFrame({
+    trans_line = pd.DataFrame(
+        {
             'POI Name': 'fake',
             'ac_cap': 9999999,
             'category': 'TransLine',

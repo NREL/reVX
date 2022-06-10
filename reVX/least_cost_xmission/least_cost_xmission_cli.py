@@ -291,7 +291,7 @@ def get_node_cmd(config):
             ]
 
     if config.save_paths:
-            args.append('--save_paths')
+        args.append('--save_paths')
     if config.radius:
         args.append(f'-rad {config.radius}')
     if config.simplify_geo:

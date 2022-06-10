@@ -831,7 +831,8 @@ class TransCapCosts(TieLineCosts):
 
         return [row, col]
 
-    def compute_tie_line_costs(self, min_line_length=5.7, save_paths=False):
+    def compute_tie_line_costs(  # noqa: C901
+        self, min_line_length=5.7, save_paths=False):
         """
         Compute least cost path and distance between supply curve point and
         every tranmission feature

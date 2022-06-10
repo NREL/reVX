@@ -3,17 +3,17 @@
 Module to compute least cost xmission paths, distances, AND costs for one or
 more SC points
 """
-from concurrent.futures import as_completed
 import geopandas as gpd
 import json
 import logging
 import numpy as np
 import os
 import pandas as pd
-from pyproj.crs import CRS
 import rasterio
+from pyproj.crs import CRS
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
+from concurrent.futures import as_completed
 import time
 
 from reV.handlers.exclusions import ExclusionLayers
@@ -473,78 +473,33 @@ class LeastCostXmission(LeastCostPaths):
             sc_point_gids = self.sc_points['sc_point_gid'].values
 
         tie_line_voltage = self._config.capacity_to_kv(capacity_class)
-        least_costs = []
-        num_jobs = 0
+
         if max_workers > 1:
             logger.info('Computing Least Cost Transmission for SC points in '
                         'parallel on {} workers'.format(max_workers))
-            loggers = [__name__, 'reV', 'reVX']
-            with SpawnProcessPool(max_workers=max_workers,
-                                  loggers=loggers) as exe:
-                futures = []
-                for _, sc_point in self.sc_points.iterrows():
-                    gid = sc_point['sc_point_gid']
-                    if gid in sc_point_gids:
-                        sc_features, radius = self._clip_to_sc_point(
-                            sc_point, tie_line_voltage, nn_sinks=nn_sinks,
-                            clipping_buffer=clipping_buffer, radius=radius)
-
-                        future = exe.submit(TransCapCosts.run,
-                                            self._cost_fpath,
-                                            sc_point.copy(deep=True),
-                                            sc_features, capacity_class,
-                                            radius=radius,
-                                            xmission_config=self._config,
-                                            barrier_mult=barrier_mult,
-                                            min_line_length=self._min_line_len,
-                                            save_paths=save_paths,
-                                            simplify_geo=simplify_geo)
-                        futures.append(future)
-
-                        num_jobs += 1
-                        if num_jobs <= max_workers:
-                            time.sleep(mp_delay)
-
-                logger.debug(f'Completed kicking off {num_jobs} jobs for '
-                             f'{max_workers} workers.')
-                for i, future in enumerate(as_completed(futures)):
-                    sc_costs = future.result()
-                    if sc_costs is not None:
-                        least_costs.append(sc_costs)
-
-                    logger.debug('SC point {} of {} complete!'
-                                 .format(i + 1, len(futures)))
-                    log_mem(logger)
-
+            least_costs = self._process_multi_core(
+                capacity_class,
+                tie_line_voltage,
+                sc_point_gids=sc_point_gids,
+                nn_sinks=nn_sinks,
+                clipping_buffer=clipping_buffer,
+                barrier_mult=barrier_mult,
+                save_paths=save_paths,
+                radius=radius,
+                simplify_geo=simplify_geo)
         else:
             logger.info('Computing Least Cost Transmission for SC points in '
                         'serial')
-            i = 1
-            for _, sc_point in self.sc_points.iterrows():
-                gid = sc_point['sc_point_gid']
-                if gid in sc_point_gids:
-                    sc_features, radius = self._clip_to_sc_point(
-                        sc_point, tie_line_voltage, nn_sinks=nn_sinks,
-                        clipping_buffer=clipping_buffer, radius=radius)
-
-                    sc_costs = TransCapCosts.run(
-                        self._cost_fpath,
-                        sc_point.copy(deep=True),
-                        sc_features, capacity_class,
-                        radius=radius,
-                        xmission_config=self._config,
-                        barrier_mult=barrier_mult,
-                        min_line_length=self._min_line_len,
-                        save_paths=save_paths,
-                        simplify_geo=simplify_geo)
-
-                    if sc_costs is not None:
-                        least_costs.append(sc_costs)
-
-                    logger.debug('SC point {} of {} complete!'
-                                 .format(i, len(sc_point_gids)))
-                    log_mem(logger)
-                    i += 1
+            least_costs = self._process_single_core(
+                capacity_class,
+                tie_line_voltage,
+                sc_point_gids=sc_point_gids,
+                nn_sinks=nn_sinks,
+                clipping_buffer=clipping_buffer,
+                barrier_mult=barrier_mult,
+                save_paths=save_paths,
+                radius=radius,
+                simplify_geo=simplify_geo)
 
         least_costs = pd.concat(least_costs).sort_values(['sc_point_gid',
                                                           'trans_gid'])
@@ -556,6 +511,162 @@ class LeastCostXmission(LeastCostPaths):
                     'mapped to transmission features'.format(lcp_frac))
 
         return least_costs.reset_index(drop=True)
+
+    def _process_multi_core(self, capacity_class, tie_line_voltage,
+                            sc_point_gids=None, nn_sinks=2,
+                            clipping_buffer=1.05, barrier_mult=100,
+                            max_workers=None, save_paths=False, radius=None,
+                            mp_delay=3, simplify_geo=None):
+        """
+        Compute Least Cost Tranmission for desired sc_points using multiple
+        cores.
+
+        Parameters
+        ----------
+        capacity_class : str | int
+            Capacity class of transmission features to connect supply curve
+            points to
+        tie_line_voltage : int
+            Tie-line volatage (kV)
+        sc_point_gids : list, optional
+            List of sc_point_gids to connect to, by default connect to all
+        nn_sinks : int, optional
+            Number of nearest neighbor sinks to use for clipping radius
+            calculation, by default 2
+        clipping_buffer : float, optional
+            Buffer to expand clipping radius by, by default 1.05
+        barrier_mult : int, optional
+            Tranmission barrier multiplier, used when computing the least
+            cost tie-line path, by default 100
+        max_workers : int, optional
+            Number of workers to use for processing, if None use all available
+            cores, by default None
+        save_paths : bool, optional
+            Flag to return least cost paths as a multi-line geometry,
+            by default False
+        radius : None | int, optional
+            Force clipping radius if set to an int
+        mp_delay : float, optional
+            Delay in seconds between starting multiprocess workers. Useful for
+            reducing memory spike at working startup.
+        simplify_geo : float | None, optional
+            If float, simplify geometries using this value
+
+        Returns
+        -------
+        least_costs : pandas.DataFrame | gpd.GeoDataFrame
+            Least cost connections between all supply curve points and the
+            transmission features with the given capacity class that are within
+            "nn_sink" nearest infinite sinks
+        """
+        least_costs = []
+        num_jobs = 0
+        loggers = [__name__, 'reV', 'reVX']
+        with SpawnProcessPool(max_workers=max_workers, loggers=loggers) as exe:
+            futures = []
+            for _, sc_point in self.sc_points.iterrows():
+                gid = sc_point['sc_point_gid']
+                if gid in sc_point_gids:
+                    sc_features, radius = self._clip_to_sc_point(
+                        sc_point, tie_line_voltage, nn_sinks=nn_sinks,
+                        clipping_buffer=clipping_buffer, radius=radius)
+
+                    future = exe.submit(TransCapCosts.run,
+                                        self._cost_fpath,
+                                        sc_point.copy(deep=True),
+                                        sc_features, capacity_class,
+                                        radius=radius,
+                                        xmission_config=self._config,
+                                        barrier_mult=barrier_mult,
+                                        min_line_length=self._min_line_len,
+                                        save_paths=save_paths,
+                                        simplify_geo=simplify_geo)
+                    futures.append(future)
+
+                    num_jobs += 1
+                    if num_jobs <= max_workers:
+                        time.sleep(mp_delay)
+
+            logger.debug(f'Completed kicking off {num_jobs} jobs for '
+                         f'{max_workers} workers.')
+            for i, future in enumerate(as_completed(futures)):
+                sc_costs = future.result()
+                if sc_costs is not None:
+                    least_costs.append(sc_costs)
+
+                logger.debug(f'SC point {i + 1} of {len(futures)} complete!')
+                log_mem(logger)
+
+        return least_costs
+
+    def _process_single_core(self, capacity_class, tie_line_voltage,
+                             sc_point_gids=None, nn_sinks=2,
+                             clipping_buffer=1.05, barrier_mult=100,
+                             save_paths=False, radius=None,
+                             simplify_geo=None):
+        """
+        Compute Least Cost Tranmission for desired sc_points with a single
+        core.
+
+        Parameters
+        ----------
+        capacity_class : str | int
+            Capacity class of transmission features to connect supply curve
+            points to
+        tie_line_voltage : int
+            Tie-line volatage (kV)
+        sc_point_gids : list, optional
+            List of sc_point_gids to connect to, by default connect to all
+        nn_sinks : int, optional
+            Number of nearest neighbor sinks to use for clipping radius
+            calculation, by default 2
+        clipping_buffer : float, optional
+            Buffer to expand clipping radius by, by default 1.05
+        barrier_mult : int, optional
+            Tranmission barrier multiplier, used when computing the least
+            cost tie-line path, by default 100
+        save_paths : bool, optional
+            Flag to return least cost paths as a multi-line geometry,
+            by default False
+        radius : None | int, optional
+            Force clipping radius if set to an int
+        simplify_geo : float | None, optional
+            If float, simplify geometries using this value
+
+        Returns
+        -------
+        least_costs : pandas.DataFrame | gpd.GeoDataFrame
+            Least cost connections between all supply curve points and the
+            transmission features with the given capacity class that are within
+            "nn_sink" nearest infinite sinks
+        """
+        least_costs = []
+        i = 1
+        for _, sc_point in self.sc_points.iterrows():
+            gid = sc_point['sc_point_gid']
+            if gid in sc_point_gids:
+                sc_features, radius = self._clip_to_sc_point(
+                    sc_point, tie_line_voltage, nn_sinks=nn_sinks,
+                    clipping_buffer=clipping_buffer, radius=radius)
+
+                sc_costs = TransCapCosts.run(
+                    self._cost_fpath,
+                    sc_point.copy(deep=True),
+                    sc_features, capacity_class,
+                    radius=radius,
+                    xmission_config=self._config,
+                    barrier_mult=barrier_mult,
+                    min_line_length=self._min_line_len,
+                    save_paths=save_paths,
+                    simplify_geo=simplify_geo)
+
+                if sc_costs is not None:
+                    least_costs.append(sc_costs)
+
+                logger.debug(f'SC point {i} of {len(sc_point_gids)} complete!')
+                log_mem(logger)
+                i += 1
+        return least_costs
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
