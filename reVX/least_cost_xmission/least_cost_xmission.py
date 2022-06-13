@@ -486,7 +486,8 @@ class LeastCostXmission(LeastCostPaths):
                 barrier_mult=barrier_mult,
                 save_paths=save_paths,
                 radius=radius,
-                simplify_geo=simplify_geo)
+                simplify_geo=simplify_geo,
+                max_workers=max_workers)
         else:
             logger.info('Computing Least Cost Transmission for SC points in '
                         'serial')
@@ -515,7 +516,7 @@ class LeastCostXmission(LeastCostPaths):
     def _process_multi_core(self, capacity_class, tie_line_voltage,
                             sc_point_gids=None, nn_sinks=2,
                             clipping_buffer=1.05, barrier_mult=100,
-                            max_workers=None, save_paths=False, radius=None,
+                            max_workers=2, save_paths=False, radius=None,
                             mp_delay=3, simplify_geo=None):
         """
         Compute Least Cost Tranmission for desired sc_points using multiple
@@ -539,8 +540,7 @@ class LeastCostXmission(LeastCostPaths):
             Tranmission barrier multiplier, used when computing the least
             cost tie-line path, by default 100
         max_workers : int, optional
-            Number of workers to use for processing, if None use all available
-            cores, by default None
+            Number of workers to use for processing
         save_paths : bool, optional
             Flag to return least cost paths as a multi-line geometry,
             by default False
