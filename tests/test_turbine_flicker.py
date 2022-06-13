@@ -18,6 +18,8 @@ from reVX import TESTDATADIR
 from reVX.turbine_flicker.turbine_flicker import TurbineFlicker
 from reVX.turbine_flicker.turbine_flicker_cli import main
 
+pytest.importorskip('hybrid.flicker')
+
 EXCL_H5 = os.path.join(TESTDATADIR, 'turbine_flicker', 'blue_creek_blds.h5')
 RES_H5 = os.path.join(TESTDATADIR, 'turbine_flicker', 'blue_creek_wind.h5')
 HUB_HEIGHT = 135
