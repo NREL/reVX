@@ -485,8 +485,8 @@ class TurbineFlicker:
                 for i, future in enumerate(as_completed(futures)):
                     row_idx, col_idx = future.result()
                     flicker_arr[row_idx, col_idx] = 0
-                    logger.debug('Completed {} out of {} gids'
-                                 .format((i + 1), len(futures)))
+                    logger.info('Completed {} out of {} gids'
+                                .format((i + 1), len(futures)))
                     log_mem(logger)
         else:
             msg = ('Computing exclusions from {} based on {}m turbines in '
@@ -502,9 +502,10 @@ class TurbineFlicker:
                 log_mem(logger)
 
         if out_layer:
-            logger.info('Saving flicker exclusions to {} as {}'
+            logger.info('Saving flicker inclusion layer to {} as {}'
                         .format(self._excl_h5, out_layer))
-            description = ("Pixels with value 1 will cause greater than {} "
+            description = ("Pixels with value 0 are excluded as they "
+                           "will cause greater than {} "
                            "hours of flicker on buildings in {}. Shadow "
                            "flicker is computed using a {}m turbine."
                            .format(flicker_threshold, self._bld_layer,
