@@ -16,7 +16,7 @@ import geopandas as gpd
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
-from rex.utilities.utilities import get_class_properties  # , safe_json_load
+from rex.utilities.utilities import get_class_properties
 
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
