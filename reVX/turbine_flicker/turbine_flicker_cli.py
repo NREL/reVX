@@ -159,8 +159,8 @@ def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
     log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
-    logger.info('Computing Turbine Flicker Exclusions \n'
-                'Outputs to be save as a a new exclusions layer : {}'
+    logger.info('Computing Turbine Flicker Exclusions, '
+                'outputs to be save as a a new exclusions layer : {}'
                 .format(out_layer))
 
     TurbineFlicker.run(excl_fpath, res_fpath, building_layer, hub_height,

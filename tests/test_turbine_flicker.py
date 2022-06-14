@@ -77,9 +77,11 @@ def test_shadow_flicker(flicker_threshold):
     row_shifts, col_shifts = TurbineFlicker._get_flicker_excl_shifts(
         shadow_flicker, flicker_threshold=flicker_threshold)
 
-    test = np.ones((65, 65), dtype=np.int8)
-    test[32, 32] = 0
-    test[row_shifts + 32, col_shifts + 32] = 0
+    L = TurbineFlicker.FLICKER_ARRAY_LEN
+    L2 = int((L - 1) / 2)
+    test = np.ones((L, L), dtype=np.int8)
+    test[L2, L2] = 0
+    test[row_shifts + L2, col_shifts + L2] = 0
 
     assert np.allclose(baseline, test)
 

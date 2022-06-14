@@ -27,7 +27,7 @@ class TurbineFlicker:
     """
     STEPS_PER_HOUR = 1
     GRIDCELL_SIZE = 90
-    FLICKER_ARRAY_LEN = 65
+    FLICKER_ARRAY_LEN = 101
 
     def __init__(self, excl_fpath, res_fpath, building_layer,
                  resolution=640, tm_dset='techmap_wtk'):
@@ -183,7 +183,7 @@ class TurbineFlicker:
         check = (np.any(np.isin(row_shifts, [0, shape[0] - 1]))
                  or np.any(np.isin(col_shifts, [0, shape[1] - 1])))
         if check:
-            msg = ("Turbine flicker exceeding {} appears to extend beyond the "
+            msg = ("Turbine flicker appears to extend beyond the "
                    "FlickerModel domain! Please increase the "
                    "FLICKER_ARRAY_LEN and try again!")
             logger.error(msg)
