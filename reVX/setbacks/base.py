@@ -2,7 +2,7 @@
 """
 Compute setbacks exclusions
 """
-from abc import ABC, abstractmethod
+from abc import ABC
 from concurrent.futures import as_completed
 from warnings import warn
 import os
@@ -21,10 +21,50 @@ from reVX.utilities.utilities import log_versions
 logger = logging.getLogger(__name__)
 
 
+def features_with_centroid_in_county(features, cnty):
+    """Find features with centroids within the given county.
+
+    Parameters
+    ----------
+    features : geopandas.GeoDataFrame
+        Features to setback from.
+    cnty : geopandas.GeoDataFrame
+        Regulations for a single county.
+
+    Returns
+    -------
+    features : geopandas.GeoDataFrame
+        Features that have centroid in county.
+    """
+
+    mask = features.centroid.within(cnty['geometry'].values[0])
+    return features.loc[mask]
+
+
+def features_clipped_to_county(features, cnty):
+    """Clip features to the given county geometry.
+
+    Parameters
+    ----------
+    features : geopandas.GeoDataFrame
+        Features to setback from.
+    cnty : geopandas.GeoDataFrame
+        Regulations for a single county.
+
+    Returns
+    -------
+    features : geopandas.GeoDataFrame
+        Features clipped to county geometry.
+    """
+    tmp = gpd.clip(features, cnty)
+    return tmp[~tmp.is_empty]
+
+
 class BaseSetbacks(ABC):
     """
     Create exclusions layers for setbacks
     """
+    _FEATURE_FILE_EXTENSION = None  # Unknown - can be any
 
     def __init__(self, excl_fpath, base_setback_dist, regulations_fpath=None,
                  multiplier=None, hsds=False, chunks=(128, 128)):
@@ -379,7 +419,6 @@ class BaseSetbacks(ABC):
 
         return self.regulations
 
-    @abstractmethod
     def get_regulation_setback(self, county_regulations):
         """Compute the setback distance for the county.
 
@@ -395,9 +434,6 @@ class BaseSetbacks(ABC):
             specifies wether the value is a multiplier or static height,
             `Value`, which specifies the numeric value of the setback or
             multiplier. Valid options for the `Value Type` are:
-                - "Max-tip Height Multiplier"
-                - "Rotor-Diameter Multiplier"
-                - "Hub-height Multiplier"
                 - "Structure Height multiplier"
                 - "Meters"
 
@@ -408,8 +444,22 @@ class BaseSetbacks(ABC):
             `Value Type` was not recognized.
         """
 
-    @staticmethod
-    def _compute_local_setbacks(features, cnty, setback):
+        setback_type = county_regulations["Value Type"].strip()
+        setback = float(county_regulations["Value"])
+        if setback_type.lower() == "structure height multiplier":
+            setback *= self.base_setback_dist
+        elif setback_type.lower() != "meters":
+            msg = ("Cannot create setback for {}, expecting "
+                   '"Structure Height Multiplier", or '
+                   '"Meters", but got {}'
+                   .format(county_regulations["County"], setback_type))
+            logger.warning(msg)
+            warn(msg)
+            setback = None
+
+        return setback
+
+    def _compute_local_setbacks(self, features, cnty, setback):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -434,16 +484,20 @@ class BaseSetbacks(ABC):
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
-        mask = features.centroid.within(cnty['geometry'].values[0])
-        tmp = features.loc[mask]
-        tmp.loc[:, 'geometry'] = tmp.buffer(setback)
+        features = self._feature_filter(features, cnty)
+        features.loc[:, 'geometry'] = features.buffer(setback)
 
-        setbacks = [(geom, 1) for geom in tmp['geometry']]
+        setbacks = [(geom, 1) for geom in features['geometry']]
 
         return setbacks
 
+    @staticmethod
+    def _feature_filter(features, cnty):
+        """Filter the features given a county."""
+        return features_with_centroid_in_county(features, cnty)
+
     def _no_exclusions_array(self):
-        """Get an array of the correct shape reprenting no exclusions.
+        """Get an array of the correct shape representing no exclusions.
 
         The array contains all zeros, and a new one is created
         for every function call.
@@ -686,3 +740,98 @@ class BaseSetbacks(ABC):
             raise FileNotFoundError(msg)
 
         return paths
+
+    @classmethod
+    def run(cls, excl_fpath, features_path, out_dir, base_setback_dist,
+            regulations_fpath=None, multiplier=None,
+            chunks=(128, 128), max_workers=None, replace=False, hsds=False):
+        """
+        Compute setbacks and write them to a geotiff. If a regulations
+        file is given, compute local setbacks, otherwise compute generic
+        setbacks using the given multiplier and the base setback
+        distance.
+
+        Parameters
+        ----------
+        excl_fpath : str
+            Path to .h5 file containing exclusion layers, will also be
+            the location of any new setback layers.
+        features_path : str
+            Path to file or directory feature shape files.
+            This path can contain any pattern that can be used in the
+            glob function. For example, `/path/to/features/[A]*` would
+            match with all the features in the directory
+            `/path/to/features/` that start with "A". This input
+            can also be a directory, but that directory must ONLY
+            contain feature files. If your feature files are mixed
+            with other files or directories, use something like
+            `/path/to/features/*.geojson`.
+        out_dir : str
+            Directory to save setbacks geotiff(s) into
+        base_setback_dist : float | int
+            Base setback distance (m). This value will be used to
+            calculate the setback distance when a multiplier is provided
+            either via the `regulations_fpath`csv or the `multiplier`
+            input. In this case, the setbacks will be calculated using
+            `base_setback_dist * multiplier`.
+        regulations_fpath : str | None, optional
+            Path to regulations .csv file. At a minimum, this csv must
+            contain the following columns: `Value Type`, which
+            specifies wether the value is a multiplier or static height,
+            `Value`, which specifies the numeric value of the setback or
+            multiplier, and `FIPS`, which specifies a unique 5-digit
+            code for each county (this can be an integer - no leading
+            zeros required). Typically, this csv will also have a
+            `Feature Type` column that labels the type of setback
+            that each row represents. Valid options for the `Value Type`
+            are:
+                - "Structure Height multiplier"
+                - "Meters"
+            If this input is `None`, a generic setback of
+            `base_setback_dist * multiplier` is used. By default `None`.
+        multiplier : int | float | str | None, optional
+            A setback multiplier to use if regulations are not supplied.
+            This multiplier will be applied to the ``base_setback_dist``
+            to calculate the setback. If supplied along with
+            ``regulations_fpath``, this input will be ignored. By
+            default `None`.
+        chunks : tuple, optional
+            Chunk size to use for setback layers, if None use default
+            chunk size in excl_fpath, By default `(128, 128)`.
+        max_workers : int, optional
+            Number of workers to use for setback computation, if 1 run
+            in serial, if > 1 run in parallel with that many workers,
+            if `None`, run in parallel on all available cores.
+            By default `None`.
+        replace : bool, optional
+            Flag to replace geotiff if it already exists.
+            By default `False`.
+        hsds : bool, optional
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
+        """
+        setbacks = cls(excl_fpath, base_setback_dist=base_setback_dist,
+                       regulations_fpath=regulations_fpath,
+                       multiplier=multiplier,
+                       hsds=hsds, chunks=chunks)
+
+        features_path = setbacks._get_feature_paths(features_path)
+        for fpath in features_path:
+            geotiff = os.path.basename(fpath)
+
+            if cls._FEATURE_FILE_EXTENSION:
+                geotiff = geotiff.replace(cls._FEATURE_FILE_EXTENSION, '.tif')
+            else:
+                geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
+
+            geotiff = os.path.join(out_dir, geotiff)
+            if os.path.exists(geotiff) and not replace:
+                msg = ('{} already exists, setbacks will not be re-computed '
+                       'unless replace=True'.format(geotiff))
+                logger.error(msg)
+            else:
+                logger.info("Computing setbacks from {} and saving "
+                            "to {}".format(fpath, geotiff))
+                setbacks.compute_setbacks(fpath, geotiff=geotiff,
+                                          max_workers=max_workers,
+                                          replace=replace)

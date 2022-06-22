@@ -19,7 +19,7 @@ from rex.utilities.loggers import LOGGERS
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.setbacks import (StructureWindSetbacks, RailWindSetbacks,
-                           ParcelSetbacks)
+                           ParcelSetbacks, WaterSetbacks)
 from reVX.setbacks.setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
@@ -34,6 +34,12 @@ PARCEL_REGS_FPATH_VALUE = os.path.join(
 )
 PARCEL_REGS_FPATH_MULTIPLIER = os.path.join(
     TESTDATADIR, 'setbacks', 'ri_parcel_regs_multiplier.csv'
+)
+WATER_REGS_FPATH_VALUE = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_water_regs_value.csv'
+)
+WATER_REGS_FPATH_MULTIPLIER = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_water_regs_multiplier.csv'
 )
 
 
@@ -209,6 +215,75 @@ def test_local_parcels(max_workers, regulations_fpath):
     assert not counties_with_exclusions_but_not_in_regulations_csv
 
 
+def test_generic_water_setbacks():
+    """Test generic water setbacks. """
+
+    water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                              'Rhode_Island.shp')
+
+    setbacks_x1 = WaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                regulations_fpath=None, multiplier=1)
+    test_x1 = setbacks_x1.compute_setbacks(water_path)
+
+    setbacks_x100 = WaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                  regulations_fpath=None, multiplier=100)
+    test_x100 = setbacks_x100.compute_setbacks(water_path)
+
+    # A total of 88,994 regions should be excluded for this particular
+    # Rhode Island subset
+    assert test_x100.sum() == 88_994
+
+    # Exclusions of smaller multiplier should be subset of exclusions
+    # of larger multiplier
+    x1_coords = set(zip(*np.where(test_x1)))
+    x100_coords = set(zip(*np.where(test_x100)))
+    assert x1_coords <= x100_coords
+
+
+@pytest.mark.parametrize('max_workers', [None, 1])
+@pytest.mark.parametrize(
+    ('regulations_fpath', 'expected_sum'),
+    [(WATER_REGS_FPATH_VALUE, 83),
+     (WATER_REGS_FPATH_MULTIPLIER, 73)]
+)
+def test_local_water(max_workers, regulations_fpath, expected_sum):
+    """
+    Test local water setbacks
+    """
+
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(regulations_fpath, regs_fpath)
+
+        setbacks = WaterSetbacks(
+            EXCL_H5, BASE_SETBACK_DIST,
+            regulations_fpath=regs_fpath,
+            multiplier=None
+        )
+
+        water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                                  'Rhode_Island.shp')
+        test = setbacks.compute_setbacks(water_path, max_workers=max_workers)
+
+    assert test.sum() == expected_sum
+
+    # Make sure only counties in the regulations csv
+    # have exclusions applied
+    with ExclusionLayers(EXCL_H5) as exc:
+        counties_with_exclusions = set(exc['cnty_fips'][np.where(test)])
+
+    regulations = pd.read_csv(regulations_fpath)
+    feats = regulations['Feature Type'].apply(str.strip).apply(str.lower)
+    counties_should_have_exclusions = set(
+        regulations[feats == 'water'].FIPS.unique()
+    )
+    counties_with_exclusions_but_not_in_regulations_csv = (
+        counties_with_exclusions - counties_should_have_exclusions
+    )
+    assert not counties_with_exclusions_but_not_in_regulations_csv
+
+
 def test_setback_preflight_check():
     """
     Test BaseWindSetbacks preflight_checks
@@ -310,6 +385,53 @@ def test_cli_parcels(runner, config_input):
             test = tif.values
 
         assert test.sum() == 3
+
+    LOGGERS.clear()
+
+
+@pytest.mark.parametrize("config_input",
+                         ({"base_setback_dist": BASE_SETBACK_DIST},
+                          {"hub_height": BASE_SETBACK_DIST,
+                           "rotor_diameter": 0}))
+def test_cli_water(runner, config_input):
+    """
+    Test CLI with water setbacks.
+    """
+    water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                              'Rhode_Island.shp')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(WATER_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(WATER_REGS_FPATH_VALUE, regs_fpath)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": EXCL_H5,
+            "feature_type": "water",
+            "features_path": water_path,
+            "log_level": "INFO",
+            "regs_fpath": regs_fpath,
+            "replace": True,
+        }
+        config.update(config_input)
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test_fp = os.path.join(td, 'Rhode_Island.tif')
+
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert test.sum() == 83
 
     LOGGERS.clear()
 

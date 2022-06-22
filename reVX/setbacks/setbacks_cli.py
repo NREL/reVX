@@ -18,7 +18,8 @@ from reVX.setbacks import (StructureWindSetbacks,
                            RoadWindSetbacks,
                            RailWindSetbacks,
                            TransmissionWindSetbacks,
-                           ParcelSetbacks)
+                           ParcelSetbacks,
+                           WaterSetbacks)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -28,7 +29,8 @@ STATE_SETBACKS = {'structure': StructureWindSetbacks,
                   'road': RoadWindSetbacks,
                   'rail': RailWindSetbacks,
                   'transmission': TransmissionWindSetbacks,
-                  'parcel': ParcelSetbacks}
+                  'parcel': ParcelSetbacks,
+                  'water': WaterSetbacks}
 
 
 @click.group()
@@ -353,6 +355,46 @@ def parcel_setbacks(ctx):
     logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
+@local.command()
+@click.pass_context
+def water_setbacks(ctx):
+    """
+    Compute setbacks from water
+    """
+    excl_fpath = ctx.obj['excl_fpath']
+    features_path = ctx.obj['FEATURES_PATH']
+    out_dir = ctx.obj['OUT_DIR']
+    base_setback_dist = ctx.obj['BASE_SETBACK_DIST']
+    regs_fpath = ctx.obj['REGS_FPATH']
+    multiplier = ctx.obj['MULTIPLIER']
+    max_workers = ctx.obj['MAX_WORKERS']
+    replace = ctx.obj['REPLACE']
+    hsds = ctx.obj['HSDS']
+
+    if base_setback_dist is None:
+        # hub-height and rotor diameter guaranteed to exist if
+        # `base_setback_dist = None`` due to check performed in `local`
+        hub_height = ctx.obj['HUB_HEIGHT']
+        rotor_diameter = ctx.obj['ROTOR_DIAMETER']
+        base_setback_dist = hub_height + rotor_diameter / 2
+
+    logger.info('Computing setbacks from water in {}'
+                .format(features_path))
+    logger.debug('Setbacks to be computed with:\n'
+                 '- base_setback_dist = {}\n'
+                 '- regs_fpath = {}\n'
+                 '- multiplier = {}\n'
+                 '- using max_workers = {}\n'
+                 '- replace layer if needed = {}\n'
+                 .format(base_setback_dist, regs_fpath, multiplier,
+                         max_workers, replace))
+
+    WaterSetbacks.run(excl_fpath, features_path, out_dir, base_setback_dist,
+                      regulations_fpath=regs_fpath, multiplier=multiplier,
+                      max_workers=max_workers, replace=replace, hsds=hsds)
+    logger.info('Setbacks computed and written to {}'.format(out_dir))
+
+
 def run_local(ctx, config):
     """
     Run Setbacks locally from config
@@ -388,6 +430,8 @@ def run_local(ctx, config):
         ctx.invoke(rail_setbacks)
     elif feature_type == 'parcel':
         ctx.invoke(parcel_setbacks)
+    elif feature_type == 'water':
+        ctx.invoke(water_setbacks)
     else:
         options = set(config.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
         msg = 'Feature type must be one of {}; got {}'.format(
@@ -437,18 +481,10 @@ def get_node_cmd(name, config):
         args.append('-v')
 
     feature_type = config.feature_type
-    if feature_type == 'structure':
-        args.append('structure-setbacks')
-    elif feature_type == 'road':
-        args.append('road-setbacks')
-    elif feature_type == 'transmission':
-        args.append('transmission-setbacks')
-    elif feature_type == 'rail':
-        args.append('rail-setbacks')
-    elif feature_type == 'parcel':
-        args.append('parcel-setbacks')
+    if feature_type in STATE_SETBACKS:
+        args.append('{}-setbacks'.format(feature_type))
     else:
-        options = set(config.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
+        options = set(STATE_SETBACKS.keys())
         msg = 'Feature type must be one of {}; got {}'.format(
             options, feature_type
         )
