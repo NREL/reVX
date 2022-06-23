@@ -515,6 +515,53 @@ def test_cli_water(runner, config_input):
     LOGGERS.clear()
 
 
+def test_cli_partial_setbacks(runner):
+    """
+    Test CLI with partial setbacks.
+    """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": EXCL_H5,
+            "feature_type": "parcel",
+            "features_path": parcel_path,
+            "log_level": "INFO",
+            "regs_fpath": regs_fpath,
+            "replace": True,
+            "base_setback_dist": BASE_SETBACK_DIST,
+            "weights_calculation_upscale_factor": 10
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test_fp = os.path.join(td, 'Rhode_Island.tif')
+
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert 0 < (1 - test).sum() < 4
+        assert (0 <= test).all()
+        assert (test <= 1).all()
+        assert (test < 1).any()
+
+    LOGGERS.clear()
+
+
 def test_cli_invalid_config(runner):
     """
     Test CLI with invalid config (missing plant height info).
