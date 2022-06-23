@@ -5,6 +5,7 @@ Compute setbacks exclusions
 from abc import ABC
 from concurrent.futures import as_completed
 from warnings import warn
+from itertools import product
 import os
 import logging
 import pathlib
@@ -67,7 +68,8 @@ class BaseSetbacks(ABC):
     _FEATURE_FILE_EXTENSION = None  # Unknown - can be any
 
     def __init__(self, excl_fpath, base_setback_dist, regulations_fpath=None,
-                 multiplier=None, hsds=False, chunks=(128, 128)):
+                 multiplier=None, hsds=False, chunks=(128, 128),
+                 weights_calculation_upscale_factor=None):
         """
         Parameters
         ----------
@@ -110,6 +112,37 @@ class BaseSetbacks(ABC):
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default
             chunk size in excl_fpath. By default `(128, 128)`.
+        weights_calculation_upscale_factor : int, optional
+            If this value is an int > 1, the output will be a layer with
+            **inclusion** weight values instead of exclusion booleans.
+            For example, an cell that was previously excluded with a
+            a boolean mask (value of 1) may instead be converted to an
+            inclusion weight value of 0.75, meaning that 75% of the area
+            corresponding to that point should be included (i.e. the
+            exclusion feature only intersected a small portion - 25% -
+            of the cell). This percentage inclusion value is calculated
+            by upscaling the output array using this input value,
+            rasterizing the exclusion features onto it, and counting the
+            number of resulting sub-cells excluded by the feature. For
+            example, setting the value to `3` would split each output
+            cell into nine sub-cells - 3 divisions in each dimension.
+            After the feature is rasterized on this high-resolution
+            sub-grid, the area of the non-excluded sub-cells is totaled
+            and divided by the area of the original cell to obtain the
+            final inclusion percentage. Therefore, a larger upscale
+            factor results in more accurate percentage values. However,
+            this process is memory intensive and scales quadratically
+            with the upscale factor. A good way to estimate your minimum
+            memory requirement is to use the following formula:
+
+            .. math:: memory (GB) = s_0 * s_1 * ((sf^2) * 2 + 4) / 1073741824,
+
+            where :math:`s_0` and :math:`s_1` are the dimensions (shape)
+            of your exclusion layer and :math:`sf` is the scale factor
+            (be sure to add several GB for any other overhead required
+            by the rest of the process). If `None` (or a value <= 1),
+            this process is skipped and the output is a boolean
+            exclusion mask. By default `None`.
         """
         log_versions(logger)
         self._base_setback_dist = base_setback_dist
@@ -117,6 +150,8 @@ class BaseSetbacks(ABC):
         self._hsds = hsds
         excl_props = self._parse_excl_properties(excl_fpath, chunks, hsds=hsds)
         self._shape, self._chunks, self._profile = excl_props
+        self._scale_factor = weights_calculation_upscale_factor or 1
+        self._scale_factor = int(self._scale_factor // 1)
 
         self._regulations, self._multi = self._preflight_check(
             regulations_fpath, multiplier
@@ -496,18 +531,26 @@ class BaseSetbacks(ABC):
         """Filter the features given a county."""
         return features_with_centroid_in_county(features, cnty)
 
-    def _no_exclusions_array(self):
+    def _no_exclusions_array(self, multiplier=1):
         """Get an array of the correct shape representing no exclusions.
 
         The array contains all zeros, and a new one is created
         for every function call.
+
+        Parameters
+        ----------
+        multiplier : int, optional
+            Integer multiplier value used to scale up the dimensions of
+            the array exclusions array (e.g. multiplier of 3 turns an
+            array of shape (10, 20) into an array of shape (30, 60)).
 
         Returns
         -------
         np.array
             Array of zeros representing no exclusions.
         """
-        return np.zeros(self.arr_shape[1:], dtype='uint8')
+        high_res_shape = tuple(x * multiplier for x in self.arr_shape[1:])
+        return np.zeros(high_res_shape, dtype='uint8')
 
     def _rasterize_setbacks(self, shapes):
         """Convert setbacks geometries into exclusions array.
@@ -527,14 +570,52 @@ class BaseSetbacks(ABC):
         logger.debug('Generating setbacks exclusion array of shape {}'
                      .format(self.arr_shape))
         log_mem(logger)
+
+        if self._scale_factor > 1:
+            return self._rasterize_to_weights(shapes)
+
+        return self._rasterize_to_mask(shapes)
+
+    def _rasterize_to_mask(self, shapes):
+        """Rasterize features with to an exclusion mask."""
+
         arr = self._no_exclusions_array()
         if shapes:
             features.rasterize(shapes=shapes,
                                out=arr,
-                               out_shape=self.arr_shape[1:],
+                               out_shape=arr.shape[1:],
                                fill=0,
                                transform=self.profile['transform'])
 
+        return arr
+
+    def _rasterize_to_weights(self, shapes):
+        """Rasterize features to weights using a high-resolution array."""
+
+        if not shapes:
+            return 1 - self._no_exclusions_array()
+
+        hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
+        new_transform = list(self.profile['transform'])[:6]
+        new_transform[0]  = new_transform[0] / self._scale_factor
+        new_transform[4]  = new_transform[4] / self._scale_factor
+
+        features.rasterize(shapes=shapes,
+                            out=hr_arr,
+                            out_shape=hr_arr.shape[1:],
+                            fill=0,
+                            transform=new_transform)
+
+        arr = self._aggregate_high_res(hr_arr)
+        return 1 - (arr / self._scale_factor ** 2)
+
+    def _aggregate_high_res(self, hr_arr):
+        """Aggregate the high resolution exclusions array to output shape. """
+
+        arr = self._no_exclusions_array().astype(np.float32)
+        for i, j in product(range(self._scale_factor),
+                            range(self._scale_factor)):
+            arr += hr_arr[i::self._scale_factor, j::self._scale_factor]
         return arr
 
     def _write_setbacks(self, geotiff, setbacks, replace=False):
@@ -744,7 +825,8 @@ class BaseSetbacks(ABC):
     @classmethod
     def run(cls, excl_fpath, features_path, out_dir, base_setback_dist,
             regulations_fpath=None, multiplier=None,
-            chunks=(128, 128), max_workers=None, replace=False, hsds=False):
+            chunks=(128, 128), weights_calculation_upscale_factor=None,
+            max_workers=None, replace=False, hsds=False):
         """
         Compute setbacks and write them to a geotiff. If a regulations
         file is given, compute local setbacks, otherwise compute generic
@@ -798,6 +880,37 @@ class BaseSetbacks(ABC):
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default
             chunk size in excl_fpath, By default `(128, 128)`.
+        weights_calculation_upscale_factor : int, optional
+            If this value is an int > 1, the output will be a layer with
+            **inclusion** weight values instead of exclusion booleans.
+            For example, an cell that was previously excluded with a
+            a boolean mask (value of 1) may instead be converted to an
+            inclusion weight value of 0.75, meaning that 75% of the area
+            corresponding to that point should be included (i.e. the
+            exclusion feature only intersected a small portion - 25% -
+            of the cell). This percentage inclusion value is calculated
+            by upscaling the output array using this input value,
+            rasterizing the exclusion features onto it, and counting the
+            number of resulting sub-cells excluded by the feature. For
+            example, setting the value to `3` would split each output
+            cell into nine sub-cells - 3 divisions in each dimension.
+            After the feature is rasterized on this high-resolution
+            sub-grid, the area of the non-excluded sub-cells is totaled
+            and divided by the area of the original cell to obtain the
+            final inclusion percentage. Therefore, a larger upscale
+            factor results in more accurate percentage values. However,
+            this process is memory intensive and scales quadratically
+            with the upscale factor. A good way to estimate your minimum
+            memory requirement is to use the following formula:
+
+            .. math:: memory (GB) = s_0 * s_1 * ((sf^2) * 2 + 4) / 1073741824,
+
+            where :math:`s_0` and :math:`s_1` are the dimensions (shape)
+            of your exclusion layer and :math:`sf` is the scale factor
+            (be sure to add several GB for any other overhead required
+            by the rest of the process). If `None` (or a value <= 1),
+            this process is skipped and the output is a boolean
+            exclusion mask. By default `None`.
         max_workers : int, optional
             Number of workers to use for setback computation, if 1 run
             in serial, if > 1 run in parallel with that many workers,
@@ -810,10 +923,12 @@ class BaseSetbacks(ABC):
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
         """
+        scale_factor = weights_calculation_upscale_factor
         setbacks = cls(excl_fpath, base_setback_dist=base_setback_dist,
                        regulations_fpath=regulations_fpath,
                        multiplier=multiplier,
-                       hsds=hsds, chunks=chunks)
+                       hsds=hsds, chunks=chunks,
+                       weights_calculation_upscale_factor=scale_factor)
 
         features_path = setbacks._get_feature_paths(features_path)
         for fpath in features_path:
