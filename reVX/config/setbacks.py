@@ -100,3 +100,8 @@ class SetbacksConfig(AnalysisConfig):
     def hsds(self):
         """Get hsds flag"""
         return self.get('hsds', False)
+
+    @property
+    def weights_calculation_upscale_factor(self):
+        """Get upscale factor for weights calculation. """
+        return self.get("weights_calculation_upscale_factor", None)
