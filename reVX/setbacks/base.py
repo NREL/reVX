@@ -115,7 +115,7 @@ class BaseSetbacks(ABC):
         weights_calculation_upscale_factor : int, optional
             If this value is an int > 1, the output will be a layer with
             **inclusion** weight values instead of exclusion booleans.
-            For example, an cell that was previously excluded with a
+            For example, a cell that was previously excluded with a
             a boolean mask (value of 1) may instead be converted to an
             inclusion weight value of 0.75, meaning that 75% of the area
             corresponding to that point should be included (i.e. the
@@ -883,7 +883,7 @@ class BaseSetbacks(ABC):
         weights_calculation_upscale_factor : int, optional
             If this value is an int > 1, the output will be a layer with
             **inclusion** weight values instead of exclusion booleans.
-            For example, an cell that was previously excluded with a
+            For example, a cell that was previously excluded with a
             a boolean mask (value of 1) may instead be converted to an
             inclusion weight value of 0.75, meaning that 75% of the area
             corresponding to that point should be included (i.e. the
