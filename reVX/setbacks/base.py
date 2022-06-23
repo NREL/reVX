@@ -597,8 +597,8 @@ class BaseSetbacks(ABC):
 
         hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
         new_transform = list(self.profile['transform'])[:6]
-        new_transform[0]  = new_transform[0] / self._scale_factor
-        new_transform[4]  = new_transform[4] / self._scale_factor
+        new_transform[0] = new_transform[0] / self._scale_factor
+        new_transform[4] = new_transform[4] / self._scale_factor
 
         features.rasterize(shapes=shapes,
                            out=hr_arr,
