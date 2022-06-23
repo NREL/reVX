@@ -343,7 +343,7 @@ def test_partial_exclusions():
                                  regulations_fpath=None, multiplier=10,
                                  weights_calculation_upscale_factor=mult)
 
-    exclusion_mask =  setbacks.compute_setbacks(parcel_path)
+    exclusion_mask = setbacks.compute_setbacks(parcel_path)
     inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
 
     assert exclusion_mask.shape == inclusion_weights.shape
@@ -366,7 +366,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
                                  regulations_fpath=None, multiplier=10,
                                  weights_calculation_upscale_factor=mult)
 
-    exclusion_mask =  setbacks.compute_setbacks(parcel_path)
+    exclusion_mask = setbacks.compute_setbacks(parcel_path)
     inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
 
     assert np.isclose(exclusion_mask, inclusion_weights).all()

@@ -601,10 +601,10 @@ class BaseSetbacks(ABC):
         new_transform[4]  = new_transform[4] / self._scale_factor
 
         features.rasterize(shapes=shapes,
-                            out=hr_arr,
-                            out_shape=hr_arr.shape[1:],
-                            fill=0,
-                            transform=new_transform)
+                           out=hr_arr,
+                           out_shape=hr_arr.shape[1:],
+                           fill=0,
+                           transform=new_transform)
 
         arr = self._aggregate_high_res(hr_arr)
         return 1 - (arr / self._scale_factor ** 2)
