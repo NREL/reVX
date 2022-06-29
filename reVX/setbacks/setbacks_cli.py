@@ -435,6 +435,7 @@ def run_local(ctx, config):
         Setbacks config object.
     """
     ctx.obj['NAME'] = config.name
+    wcuf = config.weights_calculation_upscale_factor
     ctx.invoke(local,
                excl_fpath=config.excl_fpath,
                features_path=config.features_path,
@@ -444,7 +445,7 @@ def run_local(ctx, config):
                base_setback_dist=config.base_setback_dist,
                regs_fpath=config.regs_fpath,
                multiplier=config.multiplier,
-               scale_factor=config.weights_calculation_upscale_factor,
+               weights_calculation_upscale_factor=wcuf,
                max_workers=config.execution_control.max_workers,
                replace=config.replace)
 
