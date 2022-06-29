@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=protected-access
 """
 Setbacks tests
 """
@@ -11,6 +12,7 @@ import pytest
 import shutil
 import tempfile
 import traceback
+from itertools import product
 
 from reV.handlers.exclusions import ExclusionLayers
 
@@ -293,6 +295,83 @@ def test_setback_preflight_check():
                               regulations_fpath=None, multiplier=None)
 
 
+def test_high_res_excl_array():
+    """Test the multiplier of the exclusion array is applied correctly. """
+
+    mult = 5
+    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                              regulations_fpath=None, multiplier=1,
+                              weights_calculation_upscale_factor=mult)
+
+    hr_array = setbacks._no_exclusions_array(multiplier=mult)
+
+    for ind, shape in enumerate(setbacks.arr_shape[1:]):
+        assert shape != hr_array.shape[ind]
+        assert shape * mult == hr_array.shape[ind]
+
+
+def test_aggregate_high_res():
+    """Test the aggregation of a high_resolution array. """
+
+    mult = 5
+    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                              regulations_fpath=None, multiplier=1,
+                              weights_calculation_upscale_factor=mult)
+
+    hr_array = setbacks._no_exclusions_array(multiplier=mult)
+    hr_array = hr_array.astype(np.float32)
+    arr_to_rep = np.arange(setbacks.arr_shape[1] * setbacks.arr_shape[2],
+                           dtype=np.float32)
+    arr_to_rep = arr_to_rep.reshape(setbacks.arr_shape[1:])
+
+    for i, j in product(range(mult), range(mult)):
+        hr_array[i::mult, j::mult] += arr_to_rep
+
+    assert np.isclose(setbacks._aggregate_high_res(hr_array),
+                      arr_to_rep * mult ** 2).all()
+
+
+def test_partial_exclusions():
+    """Test the aggregation of a high_resolution array. """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+
+    mult = 5
+    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                              regulations_fpath=None, multiplier=10)
+    setbacks_hr = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                 regulations_fpath=None, multiplier=10,
+                                 weights_calculation_upscale_factor=mult)
+
+    exclusion_mask = setbacks.compute_setbacks(parcel_path)
+    inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
+
+    assert exclusion_mask.shape == inclusion_weights.shape
+    assert (inclusion_weights < 1).any()
+    assert ((0 <= inclusion_weights) & (inclusion_weights <= 1)).all()
+    assert exclusion_mask.sum() > (1 - inclusion_weights).sum()
+    assert exclusion_mask.sum() * 0.5 < (1 - inclusion_weights).sum()
+
+
+@pytest.mark.parametrize('mult', [None, 0.5, 1])
+def test_partial_exclusions_upscale_factor_less_than_1(mult):
+    """Test that the exclusion mask is still computed for sf <= 1. """
+
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+
+    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                              regulations_fpath=None, multiplier=10)
+    setbacks_hr = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                 regulations_fpath=None, multiplier=10,
+                                 weights_calculation_upscale_factor=mult)
+
+    exclusion_mask = setbacks.compute_setbacks(parcel_path)
+    inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
+
+    assert np.isclose(exclusion_mask, inclusion_weights).all()
+
+
 def test_cli_railroads(runner):
     """
     Test CLI. Use the RI rails as test case, using all structures results
@@ -432,6 +511,53 @@ def test_cli_water(runner, config_input):
             test = tif.values
 
         assert test.sum() == 83
+
+    LOGGERS.clear()
+
+
+def test_cli_partial_setbacks(runner):
+    """
+    Test CLI with partial setbacks.
+    """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": EXCL_H5,
+            "feature_type": "parcel",
+            "features_path": parcel_path,
+            "log_level": "INFO",
+            "regs_fpath": regs_fpath,
+            "replace": True,
+            "base_setback_dist": BASE_SETBACK_DIST,
+            "weights_calculation_upscale_factor": 10
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test_fp = os.path.join(td, 'Rhode_Island.tif')
+
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert 0 < (1 - test).sum() < 4
+        assert (0 <= test).all()
+        assert (test <= 1).all()
+        assert (test < 1).any()
 
     LOGGERS.clear()
 
