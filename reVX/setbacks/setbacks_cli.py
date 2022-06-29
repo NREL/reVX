@@ -483,6 +483,7 @@ def get_node_cmd(name, config):
     cmd : str
         CLI call to submit to SLURM execution.
     """
+    wcuf = config.weights_calculation_upscale_factor
     args = ['-n {}'.format(SLURM.s(name)),
             'local',
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
@@ -490,8 +491,7 @@ def get_node_cmd(name, config):
             '-o {}'.format(SLURM.s(config.dirout)),
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
             '-mult {}'.format(SLURM.s(config.multiplier)),
-            '-wcuf {}'.format(SLURM.s(
-                            config.weights_calculation_upscale_factor)),
+            '-wcuf {}'.format(SLURM.s(wcuf)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
