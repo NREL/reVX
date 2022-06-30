@@ -183,7 +183,7 @@ class BaseWindSetbacks(BaseSetbacks):
 
         return setback
 
-    def _preflight_check(self, regulations_fpath, multiplier):
+    def _preflight_check(self, regulations_fpath):
         """
         Run preflight checks on WindSetBack inputs:
         1) Ensure either a wind regulations .csv is provided, or
@@ -198,27 +198,13 @@ class BaseWindSetbacks(BaseSetbacks):
         regulations_fpath : str | None
             Path to wind regulations .csv file, if None create global
             setbacks.
-        multiplier : int | float | str | None
-            setback multiplier to use if wind regulations are not
-            supplied, if str, must one of {'high', 'moderate'}.
-
-        Returns
-        -------
-        regulations: `geopandas.GeoDataFrame` | None
-            GeoDataFrame with county level wind setback regulations
-            merged with county geometries, use for intersecting with
-            setback features.
-        Multiplier : float | None
-            Generic setbacks multiplier.
         """
-        regulations, multiplier = super()._preflight_check(
-            regulations_fpath, multiplier
-        )
-        if isinstance(multiplier, str):
-            multiplier = self.MULTIPLIERS[multiplier]
+        super()._preflight_check(regulations_fpath)
+        if isinstance(self._multi, str):
+            self._multi = self.MULTIPLIERS[self._multi]
             logger.debug('Computing setbacks using generic Max-tip Height '
-                         'Multiplier of {}'.format(multiplier))
-        return regulations, multiplier
+                         'Multiplier of {}'.format(self._multi))
+
 
     # pylint: disable=arguments-renamed
     @classmethod

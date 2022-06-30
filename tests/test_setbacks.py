@@ -110,8 +110,7 @@ def test_local_structures(max_workers):
                          [os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
                                        'RI_Railroads.shp'),
                           os.path.join(TESTDATADIR, 'setbacks',
-                                       'Rhode_Island_Railroads.gpkg'),
-                         ])
+                                       'Rhode_Island_Railroads.gpkg')])
 def test_generic_railroads(rail_path):
     """
     Test generic rail setbacks
@@ -239,8 +238,7 @@ def test_local_parcels(max_workers, regulations_fpath):
                          [os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
                                        'Rhode_Island.shp'),
                           os.path.join(TESTDATADIR, 'setbacks',
-                                       'Rhode_Island_Water.gpkg'),
-                         ])
+                                       'Rhode_Island_Water.gpkg')])
 def test_generic_water_setbacks(water_path):
     """Test generic water setbacks. """
 
@@ -314,6 +312,18 @@ def test_setback_preflight_check():
     with pytest.raises(RuntimeError):
         StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                               regulations_fpath=None, multiplier=None)
+
+
+def test_setbacks_regulations_and_multiplier_input():
+    """
+    Test Setbacks with both regulations and multiplier inputs
+    """
+
+    setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
+                                     regulations_fpath=REGS_FPATH,
+                                     multiplier=MULTIPLIER)
+    assert setbacks.multiplier == MULTIPLIER
+    assert setbacks.regulations.shape[0] > 0
 
 
 def test_high_res_excl_array():

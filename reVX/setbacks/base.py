@@ -135,7 +135,7 @@ class BaseSetbacks(ABC):
             with the upscale factor. A good way to estimate your minimum
             memory requirement is to use the following formula:
 
-            .. math:: memory (GB) = s_0 * s_1 * ((sf^2) * 2 + 4) / 1073741824,
+            .. math:: memory (GB) = s_0 * s_1 * (sf^2 * 2 + 4) / 1073741824,
 
             where :math:`s_0` and :math:`s_1` are the dimensions (shape)
             of your exclusion layer and :math:`sf` is the scale factor
@@ -152,10 +152,10 @@ class BaseSetbacks(ABC):
         self._shape, self._chunks, self._profile = excl_props
         self._scale_factor = weights_calculation_upscale_factor or 1
         self._scale_factor = int(self._scale_factor // 1)
+        self._regulations = None
+        self._multi = multiplier
 
-        self._regulations, self._multi = self._preflight_check(
-            regulations_fpath, multiplier
-        )
+        self._preflight_check(regulations_fpath)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
@@ -205,12 +205,12 @@ class BaseSetbacks(ABC):
 
         return dset_shape, chunks, profile
 
-    def _preflight_check(self, regulations_fpath, multiplier):
+    def _preflight_check(self, regulations_fpath):
         """Apply preflight checks to the regulations path and multiplier.
 
         Run preflight checks on setback inputs:
-        1) Ensure either a regulations .csv is provided, or
-           a setback multiplier
+        1) Ensure either a regulations .csv or
+           a setback multiplier (or both) is provided
         2) Ensure regulations has county FIPS, map regulations to county
            geometries from exclusions .h5 file
 
@@ -219,40 +219,21 @@ class BaseSetbacks(ABC):
         regulations_fpath : str | None
             Path to regulations .csv file, if `None`, create global
             setbacks.
-        multiplier : int | float | str | None
-            Setback multiplier to use if regulations are not supplied.
-
-        Returns
-        -------
-        regulations: `geopandas.GeoDataFrame` | None
-            GeoDataFrame with county level setback regulations merged
-            with county geometries, use for intersecting with setback
-            features.
-        Multiplier : float | None
-            Generic setbacks multiplier
         """
         if regulations_fpath:
-            if multiplier:
-                msg = ('A regulation .csv file was also provided and '
-                       'will be used to determine setback multipliers!')
-                logger.warning(msg)
-                warn(msg)
-
-            multiplier = None
-            regulations = self._parse_regulations(regulations_fpath)
+            self._regulations = self._parse_regulations(regulations_fpath)
             logger.debug('Computing setbacks using regulations provided in: {}'
                          .format(regulations_fpath))
-        elif multiplier:
-            regulations = None
+
+        if self._multi:
             logger.debug('Computing setbacks using base setback distance '
-                         'multiplier of {}'.format(multiplier))
-        else:
+                         'multiplier of {}'.format(self._multi))
+
+        if not regulations_fpath and not self._multi:
             msg = ('Computing setbacks requires either a regulations '
                    '.csv file or a generic multiplier!')
             logger.error(msg)
             raise RuntimeError(msg)
-
-        return regulations, multiplier
 
     def _parse_regulations(self, regulations_fpath):
         """Parse regulations file.
