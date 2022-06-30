@@ -57,12 +57,12 @@ class BaseWindSetbacks(BaseSetbacks):
             If this input is `None`, a generic setback of
             `max_tip_height * multiplier` is used. By default `None`.
         multiplier : int | float | str | None, optional
-            Setback multiplier to use if wind regulations are not
-            supplied. It is multiplied with max-tip height to calculate
-            the setback distance. If str, must be a one of
-            {'high', 'moderate'}. If supplied along with
-            `regulations_fpath`, this input will be
-            ignored. By default `None`.
+            A setback multiplier to use if regulations are not supplied.
+            This multiplier will be applied to the ``base_setback_dist``
+            to calculate the setback. If supplied along with
+            ``regulations_fpath``, this input will be used to apply a
+            setback to all counties not listed in the regulations file.
+            By default `None`.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
@@ -215,7 +215,8 @@ class BaseWindSetbacks(BaseSetbacks):
         Compute setbacks and write them to a geotiff. If a regulations
         file is given, compute local setbacks, otherwise compute generic
         setbacks using the given multiplier and the base setback
-        distance.
+        distance. If both are provided, generic and local setbacks are
+        merged such that the local setbacks override the generic ones.
 
         Parameters
         ----------
@@ -263,8 +264,9 @@ class BaseWindSetbacks(BaseSetbacks):
             A setback multiplier to use if regulations are not supplied.
             This multiplier will be applied to the ``base_setback_dist``
             to calculate the setback. If supplied along with
-            ``regulations_fpath``, this input will be ignored. By
-            default `None`.
+            ``regulations_fpath``, this input will be used to apply a
+            setback to all counties not listed in the regulations file.
+            By default `None`.
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default
             chunk size in excl_fpath, By default `(128, 128)`.
