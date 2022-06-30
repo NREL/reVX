@@ -65,7 +65,6 @@ class BaseSetbacks(ABC):
     """
     Create exclusions layers for setbacks
     """
-    _FEATURE_FILE_EXTENSION = None  # Unknown - can be any
 
     def __init__(self, excl_fpath, base_setback_dist, regulations_fpath=None,
                  multiplier=None, hsds=False, chunks=(128, 128),
@@ -943,13 +942,9 @@ class BaseSetbacks(ABC):
         features_path = setbacks._get_feature_paths(features_path)
         for fpath in features_path:
             geotiff = os.path.basename(fpath)
-
-            if cls._FEATURE_FILE_EXTENSION:
-                geotiff = geotiff.replace(cls._FEATURE_FILE_EXTENSION, '.tif')
-            else:
-                geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
-
+            geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
             geotiff = os.path.join(out_dir, geotiff)
+
             if os.path.exists(geotiff) and not replace:
                 msg = ('{} already exists, setbacks will not be re-computed '
                        'unless replace=True'.format(geotiff))

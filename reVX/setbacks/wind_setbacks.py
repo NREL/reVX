@@ -321,13 +321,9 @@ class BaseWindSetbacks(BaseSetbacks):
         features_path = setbacks._get_feature_paths(features_path)
         for fpath in features_path:
             geotiff = os.path.basename(fpath)
-
-            if cls._FEATURE_FILE_EXTENSION:
-                geotiff = geotiff.replace(cls._FEATURE_FILE_EXTENSION, '.tif')
-            else:
-                geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
-
+            geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
             geotiff = os.path.join(out_dir, geotiff)
+
             if os.path.exists(geotiff) and not replace:
                 msg = ('{} already exists, setbacks will not be re-computed '
                        'unless replace=True'.format(geotiff))
@@ -344,7 +340,6 @@ class StructureWindSetbacks(BaseWindSetbacks):
     """
     Structure Wind setbacks
     """
-    _FEATURE_FILE_EXTENSION = '.geojson'
 
     @staticmethod
     def _split_state_name(state_name):
@@ -387,12 +382,15 @@ class StructureWindSetbacks(BaseWindSetbacks):
             List of file paths to all structures .geojson files in
             structures_dir
         """
-        if features_fpath.endswith('.geojson'):
+        is_file = (features_fpath.endswith('.geojson')
+                   or features_fpath.endswith('.gpkg'))
+        if is_file:
             file_paths = [features_fpath]
         else:
             file_paths = []
             for file in sorted(os.listdir(features_fpath)):
-                if file.endswith('.geojson'):
+                is_file = file.endswith('.geojson') or file.endswith('.gpkg')
+                if is_file:
                     file_paths.append(os.path.join(features_fpath, file))
 
         return file_paths
@@ -455,8 +453,6 @@ class RoadWindSetbacks(BaseWindSetbacks):
     Road Wind setbacks
     """
 
-    _FEATURE_FILE_EXTENSION = '.gdb'
-
     def _parse_features(self, features_fpath):
         """
         Load roads from gdb file, convert to exclusions coordinate
@@ -495,12 +491,15 @@ class RoadWindSetbacks(BaseWindSetbacks):
         file_paths : list
             List of file paths to all roads .gdp files in roads_dir
         """
-        if features_fpath.endswith('.gdb'):
+        is_file = (features_fpath.endswith('.gdb')
+                   or features_fpath.endswith('.gpkg'))
+        if is_file:
             file_paths = [features_fpath]
         else:
             file_paths = []
             for file in sorted(os.listdir(features_fpath)):
-                if file.endswith('.gdb') and file.startswith('Streets_USA'):
+                is_file = file.endswith('.gdb') or file.endswith('.gpkg')
+                if is_file and file.startswith('Streets_USA'):
                     file_paths.append(os.path.join(features_fpath, file))
 
         return file_paths
