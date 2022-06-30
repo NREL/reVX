@@ -205,7 +205,6 @@ class BaseWindSetbacks(BaseSetbacks):
             logger.debug('Computing setbacks using generic Max-tip Height '
                          'Multiplier of {}'.format(self._multi))
 
-
     # pylint: disable=arguments-renamed
     @classmethod
     def run(cls, excl_fpath, features_path, out_dir, hub_height,
