@@ -535,8 +535,6 @@ def test_cli_railroads(runner, rail_path):
     Test CLI. Use the RI rails as test case, using all structures results
     in suspected mem error on github actions.
     """
-    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
-                             'RI_Railroads.shp')
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(REGS_FPATH)
         regs_fpath = os.path.join(td, regs_fpath)
@@ -567,7 +565,10 @@ def test_cli_railroads(runner, rail_path):
 
         baseline_fp = os.path.join(TESTDATADIR, 'setbacks',
                                    'existing_rails.tif')
-        test_fp = os.path.join(td, 'RI_Railroads.tif')
+
+        test_fp = os.path.basename(rail_path)
+        test_fp = ".".join(test_fp.split('.')[:-1] + ['tif'])
+        test_fp = os.path.join(td, test_fp)
 
         with Geotiff(baseline_fp) as tif:
             baseline = tif.values
@@ -630,12 +631,15 @@ def test_cli_parcels(runner, config_input):
                          ({"base_setback_dist": BASE_SETBACK_DIST},
                           {"hub_height": BASE_SETBACK_DIST,
                            "rotor_diameter": 0}))
-def test_cli_water(runner, config_input):
+@pytest.mark.parametrize("water_path",
+                         (os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                                       'Rhode_Island.shp'),
+                          os.path.join(TESTDATADIR, 'setbacks',
+                                       'Rhode_Island_Water.gpkg')))
+def test_cli_water(runner, config_input, water_path):
     """
     Test CLI with water setbacks.
     """
-    water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
-                              'Rhode_Island.shp')
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(WATER_REGS_FPATH_VALUE)
         regs_fpath = os.path.join(td, regs_fpath)
@@ -663,7 +667,9 @@ def test_cli_water(runner, config_input):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test_fp = os.path.join(td, 'Rhode_Island.tif')
+        test_fp = os.path.basename(water_path)
+        test_fp = ".".join(test_fp.split('.')[:-1] + ['tif'])
+        test_fp = os.path.join(td, test_fp)
 
         with Geotiff(test_fp) as tif:
             test = tif.values
@@ -735,8 +741,8 @@ def test_cli_partial_setbacks(runner):
      ("water", "Rhode_Island_Water.tif",
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
       WATER_REGS_FPATH_VALUE, {"base_setback_dist": BASE_SETBACK_DIST})])
-def test_cli_merged_layers(setbacks_type, out_fn, features_path,
-                           regulations_fpath, config_input, runner):
+def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
+                           regulations_fpath, config_input):
     """
     Test CLI for merging layers.
     """
@@ -774,10 +780,9 @@ def test_cli_merged_layers(setbacks_type, out_fn, features_path,
             with open(config_path, 'w') as f:
                 json.dump(config, f)
 
-            result = runner.invoke(main, ['from-config',
-                                        '-c', config_path])
+            result = runner.invoke(main, ['from-config', '-c', config_path])
             msg = ('Failed with error {}'
-                .format(traceback.print_exception(*result.exc_info)))
+                   .format(traceback.print_exception(*result.exc_info)))
             assert result.exit_code == 0, msg
 
             test_fp = os.path.join(td, out_fn)
