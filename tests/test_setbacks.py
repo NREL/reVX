@@ -420,6 +420,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
 @pytest.mark.parametrize('sf', [None, 10])
 def test_merged_setbacks(setbacks_class, features_path, regulations_fpath,
                          generic_sum, local_sum, setback_distance, sf):
+    """ Test merged setback layers. """
 
     generic_setbacks = setbacks_class(EXCL_H5, *setback_distance,
                                       regulations_fpath=None, multiplier=100,
@@ -481,7 +482,55 @@ def test_merged_setbacks(setbacks_class, features_path, regulations_fpath,
                       merged_layer[~local_setbacks_mask]).all()
 
 
-def test_cli_railroads(runner):
+def test_cli_structures(runner):
+    """
+    Test CLI for structures.
+    """
+    structures_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(REGS_FPATH, regs_fpath)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": EXCL_H5,
+            "feature_type": "structure",
+            "features_path": structures_path,
+            "hub_height": HUB_HEIGHT,
+            "log_level": "INFO",
+            "multiplier": MULTIPLIER,
+            "replace": True,
+            "rotor_diameter": ROTOR_DIAMETER
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test_fp = os.path.join(td, 'RhodeIsland.tif')
+
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert test.sum() == 6830
+
+    LOGGERS.clear()
+
+
+@pytest.mark.parametrize("rail_path",
+                         (os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                                       'RI_Railroads.shp'),
+                          os.path.join(TESTDATADIR, 'setbacks',
+                                       'Rhode_Island_Railroads.gpkg')))
+def test_cli_railroads(runner, rail_path):
     """
     Test CLI. Use the RI rails as test case, using all structures results
     in suspected mem error on github actions.
@@ -669,6 +718,79 @@ def test_cli_partial_setbacks(runner):
         assert (test < 1).any()
 
     LOGGERS.clear()
+
+
+@pytest.mark.parametrize(
+    ('setbacks_type', "out_fn", 'features_path', 'regulations_fpath',
+     'config_input'),
+    [("structure", "RhodeIsland.tif",
+      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+      REGS_GPKG, {"hub_height": BASE_SETBACK_DIST, "rotor_diameter": 0}),
+     ("rail", "Rhode_Island_Railroads.tif",
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
+      REGS_GPKG, {"hub_height": BASE_SETBACK_DIST, "rotor_diameter": 0}),
+     ("parcel", "Rhode_Island.tif",
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
+      PARCEL_REGS_FPATH_VALUE, {"base_setback_dist": BASE_SETBACK_DIST}),
+     ("water", "Rhode_Island_Water.tif",
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
+      WATER_REGS_FPATH_VALUE, {"base_setback_dist": BASE_SETBACK_DIST})])
+def test_cli_merged_layers(setbacks_type, out_fn, features_path,
+                           regulations_fpath, config_input, runner):
+    """
+    Test CLI for merging layers.
+    """
+    out = {}
+    config_run_inputs = {
+        "generic": {"multiplier": 100},
+        "local": {"regs_fpath": None},
+        "merged": {"multiplier": 100, "regs_fpath": None}
+    }
+
+    for run_type, c_in in config_run_inputs.items():
+        with tempfile.TemporaryDirectory() as td:
+            regs_fpath = os.path.basename(regulations_fpath)
+            regs_fpath = os.path.join(td, regs_fpath)
+            shutil.copy(regulations_fpath, regs_fpath)
+
+            if "regs_fpath" in c_in:
+                c_in["regs_fpath"] = regs_fpath
+
+            config = {
+                "log_directory": td,
+                "execution_control": {
+                    "option": "local"
+                },
+                "excl_fpath": EXCL_H5,
+                "feature_type": setbacks_type,
+                "features_path": features_path,
+                "log_level": "INFO",
+                "replace": True,
+            }
+
+            config.update(c_in)
+            config.update(config_input)
+            config_path = os.path.join(td, 'config.json')
+            with open(config_path, 'w') as f:
+                json.dump(config, f)
+
+            result = runner.invoke(main, ['from-config',
+                                        '-c', config_path])
+            msg = ('Failed with error {}'
+                .format(traceback.print_exception(*result.exc_info)))
+            assert result.exit_code == 0, msg
+
+            test_fp = os.path.join(td, out_fn)
+
+            with Geotiff(test_fp) as tif:
+                out[run_type] = tif.values
+
+    LOGGERS.clear()
+
+    assert not np.isclose(out["generic"], out["local"]).all()
+    assert not np.isclose(out["generic"], out["merged"]).all()
+    assert not np.isclose(out["local"], out["merged"]).all()
+    assert out["generic"].sum() > out["merged"].sum() > out["local"].sum()
 
 
 def test_cli_invalid_config(runner):
