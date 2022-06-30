@@ -79,8 +79,7 @@ def test_generic_structure_gpkg():
     setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                      regulations_fpath=None,
                                      multiplier=MULTIPLIER)
-    structure_path = os.path.join(TESTDATADIR, 'setbacks',
-                                  'Rhode_Island_Structures.gpkg')
+    structure_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
     test = setbacks.compute_setbacks(structure_path)
 
     assert test.sum() == 6830
@@ -401,6 +400,85 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
     inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
 
     assert np.isclose(exclusion_mask, inclusion_weights).all()
+
+
+@pytest.mark.parametrize(
+    ('setbacks_class', 'features_path', 'regulations_fpath',
+     'generic_sum', 'local_sum', 'setback_distance'),
+    [(StructureWindSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+      REGS_GPKG, 332_887, 142, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (RailWindSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
+      REGS_GPKG, 754_082, 9_402, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (ParcelSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
+      PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
+     (WaterSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
+      WATER_REGS_FPATH_VALUE, 88_994, 83, [BASE_SETBACK_DIST])])
+@pytest.mark.parametrize('sf', [None, 10])
+def test_merged_setbacks(setbacks_class, features_path, regulations_fpath,
+                         generic_sum, local_sum, setback_distance, sf):
+
+    generic_setbacks = setbacks_class(EXCL_H5, *setback_distance,
+                                      regulations_fpath=None, multiplier=100,
+                                      weights_calculation_upscale_factor=sf)
+    generic_layer = generic_setbacks.compute_setbacks(features_path,
+                                                      max_workers=1)
+
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(regulations_fpath, regs_fpath)
+
+        local_setbacks = setbacks_class(EXCL_H5, *setback_distance,
+                                        regulations_fpath=regs_fpath,
+                                        weights_calculation_upscale_factor=sf,
+                                        multiplier=None)
+
+        local_layer = local_setbacks.compute_setbacks(features_path,
+                                                      max_workers=1)
+
+        merged_setbacks = setbacks_class(EXCL_H5, *setback_distance,
+                                         regulations_fpath=regs_fpath,
+                                         weights_calculation_upscale_factor=sf,
+                                         multiplier=100)
+        merged_layer = merged_setbacks.compute_setbacks(features_path,
+                                                        max_workers=1)
+
+        feats = local_setbacks._check_regulations(features_path)
+
+    # make sure the comparison layers match what we expect
+    if sf is None:
+        assert generic_layer.sum() == generic_sum
+        assert local_layer.sum() == local_sum
+        assert generic_layer.sum() > merged_layer.sum() > local_layer.sum()
+    else:
+        for layer in (generic_layer, local_layer, merged_layer):
+            assert (layer[layer > 0] < 1).any()
+
+    assert not np.isclose(generic_layer, local_layer).all()
+    assert not np.isclose(generic_layer, merged_layer).all()
+    assert not np.isclose(local_layer, merged_layer).all()
+
+    # Make sure counties in the regulations csv
+    # have correct exclusions applied
+    with ExclusionLayers(EXCL_H5) as exc:
+        fips = exc['cnty_fips']
+
+    counties_should_have_exclusions = feats.FIPS.unique()
+    local_setbacks_mask = np.isin(fips, counties_should_have_exclusions)
+
+    assert not np.isclose(generic_layer[local_setbacks_mask],
+                          merged_layer[local_setbacks_mask]).all()
+    assert np.isclose(local_layer[local_setbacks_mask],
+                      merged_layer[local_setbacks_mask]).all()
+
+    assert not np.isclose(local_layer[~local_setbacks_mask],
+                          merged_layer[~local_setbacks_mask]).all()
+    assert np.isclose(generic_layer[~local_setbacks_mask],
+                      merged_layer[~local_setbacks_mask]).all()
 
 
 def test_cli_railroads(runner):

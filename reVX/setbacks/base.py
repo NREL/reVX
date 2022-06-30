@@ -647,7 +647,7 @@ class BaseSetbacks(ABC):
         """
         regulations = self._check_regulations(features_fpath)
         if regulations.empty:
-            return self._no_exclusions_array()
+            return self._rasterize_setbacks(shapes=None)
 
         setbacks = []
         setback_features = self._parse_features(features_fpath)
@@ -750,17 +750,46 @@ class BaseSetbacks(ABC):
         setbacks : ndarray
             Raster array of setbacks
         """
-        if self._regulations is not None:
-            setbacks = self.compute_local_setbacks(features_fpath,
-                                                   max_workers=max_workers)
-        else:
-            setbacks = self.compute_generic_setbacks(features_fpath)
+        setbacks = self._compute_merged_setbacks(features_fpath,
+                                                 max_workers=max_workers)
 
         if geotiff is not None:
             logger.debug('Writing setbacks to {}'.format(geotiff))
             self._write_setbacks(geotiff, setbacks, replace=replace)
 
         return setbacks
+
+    def _compute_merged_setbacks(self, features_fpath, max_workers=None):
+        """Compute and merge local and generic setbacks, if necessary. """
+
+        if self.generic_setback is not None and self.regulations is None:
+            return self.compute_generic_setbacks(features_fpath)
+
+        if self.regulations is not None and self.generic_setback is None:
+            return self.compute_local_setbacks(features_fpath,
+                                               max_workers=max_workers)
+
+        generic_setbacks = self.compute_generic_setbacks(features_fpath)
+        local_setbacks = self.compute_local_setbacks(features_fpath,
+                                                     max_workers=max_workers)
+        return self._merge_setbacks(generic_setbacks, local_setbacks,
+                                    features_fpath)
+
+    def _merge_setbacks(self, generic_setbacks, local_setbacks,
+                        features_fpath):
+        """Merge local setbacks onto the generic setbacks."""
+        logger.info('Merging local setbacks onto the generic setbacks')
+
+        regulations = self._check_regulations(features_fpath)
+        with ExclusionLayers(self._excl_fpath) as exc:
+            fips = exc['cnty_fips']
+
+        local_setbacks_mask = np.isin(fips, regulations["FIPS"].unique())
+
+        generic_setbacks[local_setbacks_mask] = (
+            local_setbacks[local_setbacks_mask]
+        )
+        return generic_setbacks
 
     @staticmethod
     def _get_feature_paths(features_fpath):
