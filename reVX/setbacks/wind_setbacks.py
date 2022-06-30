@@ -413,7 +413,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = ((regulations['Feature Type'] == 'Structures')
+        mask = ((regulations['Feature Type'] == 'structures')
                 & (regulations['Comment'] != 'Occupied Community Buildings'))
         regulations = regulations.loc[mask]
 
@@ -522,7 +522,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        feature_types = {'Roads', 'Highways', 'Highways 111'}
+        feature_types = {'roads', 'highways', 'highways 111'}
         mask = regulations['Feature Type'].isin(feature_types)
         regulations = regulations.loc[mask]
 
@@ -585,7 +585,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = regulations['Feature Type'] == 'Transmission'
+        mask = regulations['Feature Type'] == 'transmission'
         regulations = regulations.loc[mask]
 
         return regulations
@@ -617,7 +617,7 @@ class RailWindSetbacks(TransmissionWindSetbacks):
         sup = super(TransmissionWindSetbacks, self)
         regulations = sup._parse_regulations(regulations_fpath)
 
-        mask = regulations['Feature Type'] == 'Railroads'
+        mask = regulations['Feature Type'] == 'railroads'
         regulations = regulations.loc[mask]
 
         return regulations

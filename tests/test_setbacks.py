@@ -222,7 +222,7 @@ def test_local_parcels(max_workers, regulations_fpath):
 
     regulations = pd.read_csv(regulations_fpath)
     property_lines = (
-        regulations['Feature Type'].apply(str.strip) == 'Property Line'
+        regulations['Feature Type'].str.strip() == 'Property Line'
     )
     counties_should_have_exclusions = set(
         regulations[property_lines].FIPS.unique()
@@ -294,7 +294,7 @@ def test_local_water(max_workers, regulations_fpath, expected_sum):
         counties_with_exclusions = set(exc['cnty_fips'][np.where(test)])
 
     regulations = pd.read_csv(regulations_fpath)
-    feats = regulations['Feature Type'].apply(str.strip).apply(str.lower)
+    feats = regulations['Feature Type'].str.strip().str.lower()
     counties_should_have_exclusions = set(
         regulations[feats == 'water'].FIPS.unique()
     )

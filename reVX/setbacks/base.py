@@ -271,6 +271,9 @@ class BaseSetbacks(ABC):
             logger.error(msg)
             raise RuntimeError(msg)
 
+        feature_types = regulations['Feature Type'].str.strip().str.lower()
+        regulations['Feature Type'] = feature_types
+
         return regulations.to_crs(crs=self.crs)
 
     def _parse_county_regulations(self, regulations):
