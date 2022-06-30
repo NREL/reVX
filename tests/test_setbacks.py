@@ -72,6 +72,20 @@ def test_generic_structure():
     assert np.allclose(baseline, test)
 
 
+def test_generic_structure_gpkg():
+    """
+    Test generic structures setbacks with gpkg input
+    """
+    setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
+                                     regulations_fpath=None,
+                                     multiplier=MULTIPLIER)
+    structure_path = os.path.join(TESTDATADIR, 'setbacks',
+                                  'Rhode_Island_Structures.gpkg')
+    test = setbacks.compute_setbacks(structure_path)
+
+    assert test.sum() == 6830
+
+
 @pytest.mark.parametrize('max_workers', [None, 1])
 def test_local_structures(max_workers):
     """
@@ -92,7 +106,13 @@ def test_local_structures(max_workers):
     assert np.allclose(baseline, test)
 
 
-def test_generic_railroads():
+@pytest.mark.parametrize('rail_path',
+                         [os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                                       'RI_Railroads.shp'),
+                          os.path.join(TESTDATADIR, 'setbacks',
+                                       'Rhode_Island_Railroads.gpkg'),
+                         ])
+def test_generic_railroads(rail_path):
     """
     Test generic rail setbacks
     """
@@ -102,8 +122,6 @@ def test_generic_railroads():
 
     setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                 regulations_fpath=None, multiplier=MULTIPLIER)
-    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
-                             'RI_Railroads.shp')
     test = setbacks.compute_setbacks(rail_path)
 
     assert np.allclose(baseline, test)
@@ -217,11 +235,14 @@ def test_local_parcels(max_workers, regulations_fpath):
     assert not counties_with_exclusions_but_not_in_regulations_csv
 
 
-def test_generic_water_setbacks():
+@pytest.mark.parametrize('water_path',
+                         [os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                                       'Rhode_Island.shp'),
+                          os.path.join(TESTDATADIR, 'setbacks',
+                                       'Rhode_Island_Water.gpkg'),
+                         ])
+def test_generic_water_setbacks(water_path):
     """Test generic water setbacks. """
-
-    water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
-                              'Rhode_Island.shp')
 
     setbacks_x1 = WaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
                                 regulations_fpath=None, multiplier=1)
