@@ -184,11 +184,12 @@ python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
 output_files_*.gpkg
 ```
 
-Additionally, the results may be split into GeoJSONs by transmission feature connected with the following. This will not create a combined GeoPackage file. 
+Additionally, the results may be split into GeoJSONs by transmission feature connected with the following. This will not create a combined GeoPackage file. The optional `--simplify-geo` flag is also used. By default, the paths contain a vertex every 90m which results in large output files. Simplifying the geometries reduces the file size and creates more realistic paths. `simplify_geo` can also be set in the processing config file if desired. 
 
 ```
 python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
 --drop TransLine --drop LoadCen \
 --split-to-geojson --out-path ./out \
+--simplify-geo 100 \
 output_files_*.gpkg
 ```
