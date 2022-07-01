@@ -58,7 +58,7 @@ def convert_pois_to_lines(poi_csv_f, template_f, out_f):
     # Append some fake values to make the LCP code happy
     lines['ac_cap'] = 9999999
     lines['category'] = 'Substation'
-    lines['voltage'] = 69
+    lines['voltage'] = 500  # kV
     lines['trans_gids'] = '[9999]'
 
     # add a fake trans line for the subs to connect to to make LCP code happy
@@ -67,7 +67,7 @@ def convert_pois_to_lines(poi_csv_f, template_f, out_f):
             'POI Name': 'fake',
             'ac_cap': 9999999,
             'category': 'TransLine',
-            'voltage': 69,
+            'voltage': 500,  # kV
             'trans_gids': None
         },
         index=[9999]

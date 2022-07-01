@@ -147,7 +147,7 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Radius to clip costs raster to in pixels This overrides "
                     "--nn_sinks if set."))
-@click.option('--simplify_geo', type=FLOAT,
+@click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help=("Simplify path geometries by a value before writing to "
                     "GeoPackage."))
@@ -209,9 +209,13 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
 @click.option('--out-path', '-op', type=click.Path(exists=True),
               default='.', show_default=True,
               help='Output path for output files. Path must exist.')
+@click.option('--simplify-geo', type=FLOAT,
+              show_default=True, default=None,
+              help='Simplify path geometries by a value before exporting.')
 @click.argument('gpkg_files', type=click.Path(exists=True), nargs=-1)
 @click.pass_context
-def merge_output(ctx, split_to_geojson, out_file, out_path, drop, gpkg_files):
+def merge_output(ctx, split_to_geojson, out_file, out_path, drop, simplify_geo,
+                 gpkg_files):
     """
     Merge output GeoPackage files and optionally convert to GeoJSON
     """
@@ -243,6 +247,10 @@ def merge_output(ctx, split_to_geojson, out_file, out_path, drop, gpkg_files):
     if len(gdf) == 0:
         click.echo('No transmission features to save.')
         return
+
+    if simplify_geo:
+        click.echo(f'Simplifying geometries by {simplify_geo}')
+        gdf.geometry = gdf.geometry.simplify(simplify_geo)
 
     if not split_to_geojson:
         out_file = f'combo_{gpkg_files[0]}' if out_file is None else out_file
@@ -295,7 +303,7 @@ def get_node_cmd(config):
     if config.radius:
         args.append(f'-rad {config.radius}')
     if config.simplify_geo:
-        args.append(f'--simplify_geo {config.simplify_geo}')
+        args.append(f'--simplify-geo {config.simplify_geo}')
 
     if config.log_level == logging.DEBUG:
         args.append('-v')
