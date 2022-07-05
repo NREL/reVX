@@ -22,7 +22,7 @@ from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.setbacks import (StructureWindSetbacks, RailWindSetbacks,
                            SolarParcelSetbacks, WindParcelSetbacks,
-                           SolarWaterSetbacks)
+                           SolarWaterSetbacks, WindWaterSetbacks)
 from reVX.setbacks.setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
@@ -44,8 +44,11 @@ PARCEL_REGS_FPATH_MULTIPLIER_WIND = os.path.join(
 WATER_REGS_FPATH_VALUE = os.path.join(
     TESTDATADIR, 'setbacks', 'ri_water_regs_value.csv'
 )
-WATER_REGS_FPATH_MULTIPLIER = os.path.join(
-    TESTDATADIR, 'setbacks', 'ri_water_regs_multiplier.csv'
+WATER_REGS_FPATH_MULTIPLIER_SOLAR = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_water_regs_multiplier_solar.csv'
+)
+WATER_REGS_FPATH_MULTIPLIER_WIND = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_water_regs_multiplier_wind.csv'
 )
 
 
@@ -311,14 +314,12 @@ def test_generic_water_setbacks(water_path):
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
-@pytest.mark.parametrize(
-    ('regulations_fpath', 'expected_sum'),
-    [(WATER_REGS_FPATH_VALUE, 83),
-     (WATER_REGS_FPATH_MULTIPLIER, 73)]
-)
-def test_local_water(max_workers, regulations_fpath, expected_sum):
+@pytest.mark.parametrize('regulations_fpath',
+                         [WATER_REGS_FPATH_VALUE,
+                          WATER_REGS_FPATH_MULTIPLIER_SOLAR])
+def test_local_water_solar(max_workers, regulations_fpath):
     """
-    Test local water setbacks
+    Test local water setbacks for solar
     """
 
     with tempfile.TemporaryDirectory() as td:
@@ -336,7 +337,49 @@ def test_local_water(max_workers, regulations_fpath, expected_sum):
                                   'Rhode_Island.shp')
         test = setbacks.compute_setbacks(water_path, max_workers=max_workers)
 
-    assert test.sum() == expected_sum
+    assert test.sum() == 83
+
+    # Make sure only counties in the regulations csv
+    # have exclusions applied
+    with ExclusionLayers(EXCL_H5) as exc:
+        counties_with_exclusions = set(exc['cnty_fips'][np.where(test)])
+
+    regulations = pd.read_csv(regulations_fpath)
+    feats = regulations['Feature Type'].str.strip().str.lower()
+    counties_should_have_exclusions = set(
+        regulations[feats == 'water'].FIPS.unique()
+    )
+    counties_with_exclusions_but_not_in_regulations_csv = (
+        counties_with_exclusions - counties_should_have_exclusions
+    )
+    assert not counties_with_exclusions_but_not_in_regulations_csv
+
+
+@pytest.mark.parametrize('max_workers', [None, 1])
+@pytest.mark.parametrize('regulations_fpath',
+                         [WATER_REGS_FPATH_VALUE,
+                          WATER_REGS_FPATH_MULTIPLIER_WIND])
+def test_local_water_wind(max_workers, regulations_fpath):
+    """
+    Test local water setbacks for wind
+    """
+
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(regulations_fpath, regs_fpath)
+
+        setbacks = WindWaterSetbacks(
+            EXCL_H5, hub_height=4, rotor_diameter=2,
+            regulations_fpath=regs_fpath,
+            multiplier=None
+        )
+
+        water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                                  'Rhode_Island.shp')
+        test = setbacks.compute_setbacks(water_path, max_workers=max_workers)
+
+    assert test.sum() == 83
 
     # Make sure only counties in the regulations csv
     # have exclusions applied
@@ -683,23 +726,30 @@ def test_cli_parcels(runner, config_input, regs):
     LOGGERS.clear()
 
 
-@pytest.mark.parametrize("config_input",
-                         ({"base_setback_dist": BASE_SETBACK_DIST},
-                          {"hub_height": BASE_SETBACK_DIST,
-                           "rotor_diameter": 0}))
-@pytest.mark.parametrize("water_path",
-                         (os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
-                                       'Rhode_Island.shp'),
-                          os.path.join(TESTDATADIR, 'setbacks',
-                                       'Rhode_Island_Water.gpkg')))
-def test_cli_water(runner, config_input, water_path):
+@pytest.mark.parametrize(
+    ("config_input", "regs"),
+    (({"base_setback_dist": BASE_SETBACK_DIST},
+      WATER_REGS_FPATH_VALUE),
+     ({"hub_height": 4, "rotor_diameter": 2},
+      WATER_REGS_FPATH_VALUE),
+     ({"base_setback_dist": BASE_SETBACK_DIST},
+      WATER_REGS_FPATH_MULTIPLIER_SOLAR),
+     ({"hub_height": 4, "rotor_diameter": 2},
+      WATER_REGS_FPATH_MULTIPLIER_WIND)))
+@pytest.mark.parametrize(
+    "water_path",
+    (os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                  'Rhode_Island.shp'),
+     os.path.join(TESTDATADIR, 'setbacks',
+                  'Rhode_Island_Water.gpkg')))
+def test_cli_water(runner, config_input, regs, water_path):
     """
     Test CLI with water setbacks.
     """
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(WATER_REGS_FPATH_VALUE)
+        regs_fpath = os.path.basename(regs)
         regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(WATER_REGS_FPATH_VALUE, regs_fpath)
+        shutil.copy(regs, regs_fpath)
         config = {
             "log_directory": td,
             "execution_control": {
