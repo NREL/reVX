@@ -120,7 +120,7 @@ def from_config(ctx, config):
                     'regs_fpath, will be ignored, multiplied with max-tip '
                     'height, by default None'))
 @click.option('--weights_calculation_upscale_factor', '-wcuf',
-              default=None, type=int, show_default=True,
+              default=None, type=INT, show_default=True,
               help=('Scale factor to use for inclusion weights calculation. '
                     'See the `BaseSetbacks` documentation for more details. '
                     'By default None.'))
