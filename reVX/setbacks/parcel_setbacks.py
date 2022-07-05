@@ -15,7 +15,7 @@ from reVX.setbacks.wind_setbacks import BaseWindSetbacks
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=no-member
+# pylint: disable=no-member, too-few-public-methods
 class _BaseParcelSetbacks:
     """
     Parcel setbacks - facilitates the use of negative buffers.
