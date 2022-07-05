@@ -92,10 +92,7 @@ class BaseSetbacks(ABC):
             `Feature Type` column that labels the type of setback
             that each row represents. Valid options for the `Value Type`
             are:
-                - "Max-tip Height Multiplier"
-                - "Rotor-Diameter Multiplier"
-                - "Hub-height Multiplier"
-                - "Structure Height multiplier"
+                - "Structure Height Multiplier"
                 - "Meters"
             If this input is `None`, a generic setback of
             `base_setback_dist * multiplier` is used. By default `None`.
@@ -453,7 +450,7 @@ class BaseSetbacks(ABC):
             specifies wether the value is a multiplier or static height,
             `Value`, which specifies the numeric value of the setback or
             multiplier. Valid options for the `Value Type` are:
-                - "Structure Height multiplier"
+                - "Structure Height Multiplier"
                 - "Meters"
 
         Returns
@@ -881,7 +878,7 @@ class BaseSetbacks(ABC):
             `Feature Type` column that labels the type of setback
             that each row represents. Valid options for the `Value Type`
             are:
-                - "Structure Height multiplier"
+                - "Structure Height Multiplier"
                 - "Meters"
             If this input is `None`, a generic setback of
             `base_setback_dist * multiplier` is used. By default `None`.

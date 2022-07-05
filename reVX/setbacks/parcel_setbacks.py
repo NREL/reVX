@@ -9,14 +9,18 @@ import geopandas as gpd
 from rex.utilities import log_mem
 
 from reVX.setbacks.base import BaseSetbacks
+from reVX.setbacks.wind_setbacks import BaseWindSetbacks
 
 
 logger = logging.getLogger(__name__)
 
 
-class ParcelSetbacks(BaseSetbacks):
+# pylint: disable=no-member, too-few-public-methods
+class _BaseParcelSetbacks:
     """
-    Parcel setbacks, using negative buffers.
+    Parcel setbacks - facilitates the use of negative buffers.
+    This class uses duck typing to override `BaseSetbacks` behavior
+    and should thus always be inherited alongside `BaseSetbacks`.
     """
 
     def compute_generic_setbacks(self, features_fpath):
@@ -152,3 +156,12 @@ class ParcelSetbacks(BaseSetbacks):
         if features.crs is None:
             features = features.set_crs("EPSG:4326")
         return features.to_crs(crs=self.crs)
+
+
+
+class SolarParcelSetbacks(_BaseParcelSetbacks, BaseSetbacks):
+    """Solar Parcel Setbacks. """
+
+
+class WindParcelSetbacks(_BaseParcelSetbacks, BaseWindSetbacks):
+    """Wind Parcel Setbacks. """

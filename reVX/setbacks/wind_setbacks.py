@@ -162,7 +162,7 @@ class BaseWindSetbacks(BaseSetbacks):
             was not recognized
         """
 
-        setback_type = county_regulations["Value Type"]
+        setback_type = county_regulations["Value Type"].strip()
         setback = county_regulations["Value"]
         if setback_type.lower() == "max-tip height multiplier":
             setback *= self.base_setback_dist
@@ -171,7 +171,7 @@ class BaseWindSetbacks(BaseSetbacks):
         elif setback_type.lower() == "hub-height multiplier":
             setback *= self.hub_height
         elif setback_type.lower() != "meters":
-            msg = ("Cannot create setback for {}, expecting "
+            msg = ('Cannot create setback for {}, expecting '
                    '"Max-tip Height Multiplier", '
                    '"Rotor-Diameter Multiplier", '
                    '"Hub-height Multiplier", or '

@@ -5,5 +5,5 @@ Compute setbacks
 """
 from .wind_setbacks import (StructureWindSetbacks, RoadWindSetbacks,
                             RailWindSetbacks, TransmissionWindSetbacks)
-from .parcel_setbacks import ParcelSetbacks
-from .water_setbacks import WaterSetbacks
+from .parcel_setbacks import SolarParcelSetbacks, WindParcelSetbacks
+from .water_setbacks import SolarWaterSetbacks, WindWaterSetbacks

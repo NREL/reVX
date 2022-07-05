@@ -41,6 +41,17 @@ class SetbacksConfig(AnalysisConfig):
             logger.error(e)
             raise ConfigError(e)
 
+        no_base_setback = self.base_setback_dist is None
+        invalid_turbine_specs = (self.rotor_diameter is None
+                                 or self.hub_height is None)
+        not_enough_info = no_base_setback and invalid_turbine_specs
+        too_much_info = not no_base_setback and not invalid_turbine_specs
+        if not_enough_info or too_much_info:
+            raise RuntimeError(
+                "Must provide either `base_setback_dist` or both "
+                "`rotor_diameter` and `hub_height` (but not all three)."
+            )
+
     @property
     def feature_type(self):
         """
