@@ -22,7 +22,7 @@ from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.setbacks import (StructureWindSetbacks, RailWindSetbacks,
                            SolarParcelSetbacks, WindParcelSetbacks,
-                           WaterSetbacks)
+                           SolarWaterSetbacks)
 from reVX.setbacks.setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
@@ -291,12 +291,12 @@ def test_local_parcels_wind(max_workers, regulations_fpath):
 def test_generic_water_setbacks(water_path):
     """Test generic water setbacks. """
 
-    setbacks_x1 = WaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                                regulations_fpath=None, multiplier=1)
+    setbacks_x1 = SolarWaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                     regulations_fpath=None, multiplier=1)
     test_x1 = setbacks_x1.compute_setbacks(water_path)
 
-    setbacks_x100 = WaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                                  regulations_fpath=None, multiplier=100)
+    setbacks_x100 = SolarWaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                       regulations_fpath=None, multiplier=100)
     test_x100 = setbacks_x100.compute_setbacks(water_path)
 
     # A total of 88,994 regions should be excluded for this particular
@@ -326,7 +326,7 @@ def test_local_water(max_workers, regulations_fpath, expected_sum):
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(regulations_fpath, regs_fpath)
 
-        setbacks = WaterSetbacks(
+        setbacks = SolarWaterSetbacks(
             EXCL_H5, BASE_SETBACK_DIST,
             regulations_fpath=regs_fpath,
             multiplier=None
@@ -464,7 +464,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
      (SolarParcelSetbacks,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
-     (WaterSetbacks,
+     (SolarWaterSetbacks,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
       WATER_REGS_FPATH_VALUE, 88_994, 83, [BASE_SETBACK_DIST])])
 @pytest.mark.parametrize('sf', [None, 10])
