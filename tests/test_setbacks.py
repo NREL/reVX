@@ -630,20 +630,26 @@ def test_cli_railroads(runner, rail_path):
     LOGGERS.clear()
 
 
-@pytest.mark.parametrize("config_input",
-                         ({"base_setback_dist": BASE_SETBACK_DIST},
-                          {"hub_height": BASE_SETBACK_DIST,
-                           "rotor_diameter": 0}))
-def test_cli_parcels(runner, config_input):
+@pytest.mark.parametrize(
+    ("config_input", "regs"),
+    (({"base_setback_dist": BASE_SETBACK_DIST},
+      PARCEL_REGS_FPATH_VALUE),
+     ({"hub_height": 0.75, "rotor_diameter": 0.5},
+      PARCEL_REGS_FPATH_VALUE),
+     ({"base_setback_dist": BASE_SETBACK_DIST},
+      PARCEL_REGS_FPATH_MULTIPLIER_SOLAR),
+     ({"hub_height": 0.75, "rotor_diameter": 0.5},
+      PARCEL_REGS_FPATH_MULTIPLIER_WIND)))
+def test_cli_parcels(runner, config_input, regs):
     """
     Test CLI with Parcels.
     """
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.basename(regs)
         regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        shutil.copy(regs, regs_fpath)
         config = {
             "log_directory": td,
             "execution_control": {
