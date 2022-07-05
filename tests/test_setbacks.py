@@ -969,7 +969,7 @@ def test_cli_invalid_config_tmi(runner):
             json.dump(config, f)
 
         result = runner.invoke(main, ['from-config',
-                                        '-c', config_path])
+                                      '-c', config_path])
         assert result.exit_code == 1
         assert result.exc_info
         assert result.exc_info[0] == RuntimeError
