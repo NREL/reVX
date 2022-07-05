@@ -798,7 +798,7 @@ def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
     assert out["generic"].sum() > out["merged"].sum() > out["local"].sum()
 
 
-def test_cli_invalid_config(runner):
+def test_cli_invalid_config_missing_height(runner):
     """
     Test CLI with invalid config (missing plant height info).
     """
@@ -829,6 +829,45 @@ def test_cli_invalid_config(runner):
                                           '-c', config_path])
 
             assert result.exit_code == 1
+
+    LOGGERS.clear()
+
+
+def test_cli_invalid_config_tmi(runner):
+    """
+    Test CLI with invalid config (too much height info).
+    """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": EXCL_H5,
+            "feature_type": "parcel",
+            "features_path": parcel_path,
+            "log_level": "INFO",
+            "regs_fpath": regs_fpath,
+            "replace": True,
+            "base_setback_dist": 1,
+            "rotor_diameter": 1,
+            "hub_height": 1
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                        '-c', config_path])
+        assert result.exit_code == 1
+        assert result.exc_info
+        assert result.exc_info[0] == RuntimeError
+        assert "Must provide either" in str(result.exception)
 
     LOGGERS.clear()
 
