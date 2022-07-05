@@ -18,7 +18,8 @@ from reVX.setbacks import (StructureWindSetbacks,
                            RoadWindSetbacks,
                            RailWindSetbacks,
                            TransmissionWindSetbacks,
-                           ParcelSetbacks,
+                           SolarParcelSetbacks,
+                           WindParcelSetbacks,
                            WaterSetbacks)
 from reVX import __version__
 
@@ -29,7 +30,7 @@ STATE_SETBACKS = {'structure': StructureWindSetbacks,
                   'road': RoadWindSetbacks,
                   'rail': RailWindSetbacks,
                   'transmission': TransmissionWindSetbacks,
-                  'parcel': ParcelSetbacks,
+                  'parcel': SolarParcelSetbacks,
                   'water': WaterSetbacks}
 
 
@@ -166,12 +167,17 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
     log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(ctx.obj['NAME'], log_dir, modules=log_modules, verbose=verbose)
 
+    # same check as the config in case someone invokes this from the
+    # direct command line instead of a config file for some bizarre reason
     no_base_setback = base_setback_dist is None
     invalid_turbine_specs = rotor_diameter is None or hub_height is None
-    if no_base_setback and invalid_turbine_specs:
+
+    not_enough_info = no_base_setback and invalid_turbine_specs
+    too_much_info = not no_base_setback and not invalid_turbine_specs
+    if not_enough_info or too_much_info:
         raise RuntimeError(
             "Must provide either `base_setback_dist` or both `rotor_diameter` "
-            "and `hub_height`."
+            "and `hub_height` (but not all three)."
         )
 
 
@@ -354,29 +360,49 @@ def parcel_setbacks(ctx):
     hsds = ctx.obj['HSDS']
     wcuf = ctx.obj['UPSCALE_FACTOR']
 
+    logger.info('Computing setbacks from parcels in {}'.format(features_path))
+
     if base_setback_dist is None:
         # hub-height and rotor diameter guaranteed to exist if
         # `base_setback_dist = None`` due to check performed in `local`
         hub_height = ctx.obj['HUB_HEIGHT']
         rotor_diameter = ctx.obj['ROTOR_DIAMETER']
-        base_setback_dist = hub_height + rotor_diameter / 2
+        logger.debug('Setbacks to be computed with:\n'
+                    '- base_setback_dist = {}\n'
+                    '- regs_fpath = {}\n'
+                    '- multiplier = {}\n'
+                    '- using max_workers = {}\n'
+                    '- replace layer if needed = {}\n'
+                    '- weights calculation upscale factor = {}\n'
+                    .format(base_setback_dist, regs_fpath, multiplier,
+                            max_workers, replace, wcuf))
 
-    logger.info('Computing setbacks from parcels in {}'
-                .format(features_path))
-    logger.debug('Setbacks to be computed with:\n'
-                 '- base_setback_dist = {}\n'
-                 '- regs_fpath = {}\n'
-                 '- multiplier = {}\n'
-                 '- using max_workers = {}\n'
-                 '- replace layer if needed = {}\n'
-                 '- weights calculation upscale factor = {}\n'
-                 .format(base_setback_dist, regs_fpath, multiplier,
-                         max_workers, replace, wcuf))
+        WindParcelSetbacks.run(excl_fpath, features_path, out_dir,
+                               hub_height=hub_height,
+                               rotor_diameter=rotor_diameter,
+                               regulations_fpath=regs_fpath,
+                               multiplier=multiplier,
+                               weights_calculation_upscale_factor=wcuf,
+                               max_workers=max_workers, replace=replace,
+                               hsds=hsds)
+    else:
+        logger.debug('Setbacks to be computed with:\n'
+                    '- base_setback_dist = {}\n'
+                    '- regs_fpath = {}\n'
+                    '- multiplier = {}\n'
+                    '- using max_workers = {}\n'
+                    '- replace layer if needed = {}\n'
+                    '- weights calculation upscale factor = {}\n'
+                    .format(base_setback_dist, regs_fpath, multiplier,
+                            max_workers, replace, wcuf))
 
-    ParcelSetbacks.run(excl_fpath, features_path, out_dir, base_setback_dist,
-                       regulations_fpath=regs_fpath, multiplier=multiplier,
-                       weights_calculation_upscale_factor=wcuf,
-                       max_workers=max_workers, replace=replace, hsds=hsds)
+        SolarParcelSetbacks.run(excl_fpath, features_path, out_dir,
+                                base_setback_dist,
+                                regulations_fpath=regs_fpath,
+                                multiplier=multiplier,
+                                weights_calculation_upscale_factor=wcuf,
+                                max_workers=max_workers, replace=replace,
+                                hsds=hsds)
     logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
