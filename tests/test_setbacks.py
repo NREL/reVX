@@ -21,7 +21,8 @@ from rex.utilities.loggers import LOGGERS
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.setbacks import (StructureWindSetbacks, RailWindSetbacks,
-                           SolarParcelSetbacks, WaterSetbacks)
+                           SolarParcelSetbacks, WindParcelSetbacks,
+                           WaterSetbacks)
 from reVX.setbacks.setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
@@ -34,8 +35,11 @@ REGS_GPKG = os.path.join(TESTDATADIR, 'setbacks', 'ri_wind_regs_fips.gpkg')
 PARCEL_REGS_FPATH_VALUE = os.path.join(
     TESTDATADIR, 'setbacks', 'ri_parcel_regs_value.csv'
 )
-PARCEL_REGS_FPATH_MULTIPLIER = os.path.join(
-    TESTDATADIR, 'setbacks', 'ri_parcel_regs_multiplier.csv'
+PARCEL_REGS_FPATH_MULTIPLIER_SOLAR = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_parcel_regs_multiplier_solar.csv'
+)
+PARCEL_REGS_FPATH_MULTIPLIER_WIND = os.path.join(
+    TESTDATADIR, 'setbacks', 'ri_parcel_regs_multiplier_wind.csv'
 )
 WATER_REGS_FPATH_VALUE = os.path.join(
     TESTDATADIR, 'setbacks', 'ri_water_regs_value.csv'
@@ -191,9 +195,9 @@ def test_generic_parcels_with_invalid_shape_input():
 @pytest.mark.parametrize(
     'regulations_fpath',
     [PARCEL_REGS_FPATH_VALUE,
-     PARCEL_REGS_FPATH_MULTIPLIER]
+     PARCEL_REGS_FPATH_MULTIPLIER_SOLAR]
 )
-def test_local_parcels(max_workers, regulations_fpath):
+def test_local_parcels_solar(max_workers, regulations_fpath):
     """
     Test local parcel setbacks
     """
@@ -205,6 +209,52 @@ def test_local_parcels(max_workers, regulations_fpath):
 
         setbacks = SolarParcelSetbacks(
             EXCL_H5, BASE_SETBACK_DIST,
+            regulations_fpath=regs_fpath,
+            multiplier=None
+        )
+
+        parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                                   'Rhode_Island.gpkg')
+        test = setbacks.compute_setbacks(parcel_path, max_workers=max_workers)
+
+    assert test.sum() == 3
+
+    # Make sure only counties in the regulations csv
+    # have exclusions applied
+    with ExclusionLayers(EXCL_H5) as exc:
+        counties_with_exclusions = set(exc['cnty_fips'][np.where(test)])
+
+    regulations = pd.read_csv(regulations_fpath)
+    property_lines = (
+        regulations['Feature Type'].str.strip() == 'Property Line'
+    )
+    counties_should_have_exclusions = set(
+        regulations[property_lines].FIPS.unique()
+    )
+    counties_with_exclusions_but_not_in_regulations_csv = (
+        counties_with_exclusions - counties_should_have_exclusions
+    )
+    assert not counties_with_exclusions_but_not_in_regulations_csv
+
+
+@pytest.mark.parametrize('max_workers', [None, 1])
+@pytest.mark.parametrize(
+    'regulations_fpath',
+    [PARCEL_REGS_FPATH_VALUE,
+     PARCEL_REGS_FPATH_MULTIPLIER_WIND]
+)
+def test_local_parcels_wind(max_workers, regulations_fpath):
+    """
+    Test local parcel setbacks
+    """
+
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(regulations_fpath, regs_fpath)
+
+        setbacks = WindParcelSetbacks(
+            EXCL_H5, hub_height=1.75, rotor_diameter=0.5,
             regulations_fpath=regs_fpath,
             multiplier=None
         )
