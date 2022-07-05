@@ -57,12 +57,12 @@ class BaseWindSetbacks(BaseSetbacks):
             If this input is `None`, a generic setback of
             `max_tip_height * multiplier` is used. By default `None`.
         multiplier : int | float | str | None, optional
-            Setback multiplier to use if wind regulations are not
-            supplied. It is multiplied with max-tip height to calculate
-            the setback distance. If str, must be a one of
-            {'high', 'moderate'}. If supplied along with
-            `regulations_fpath`, this input will be
-            ignored. By default `None`.
+            A setback multiplier to use if regulations are not supplied.
+            This multiplier will be applied to the ``base_setback_dist``
+            to calculate the setback. If supplied along with
+            ``regulations_fpath``, this input will be used to apply a
+            setback to all counties not listed in the regulations file.
+            By default `None`.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
@@ -183,7 +183,7 @@ class BaseWindSetbacks(BaseSetbacks):
 
         return setback
 
-    def _preflight_check(self, regulations_fpath, multiplier):
+    def _preflight_check(self, regulations_fpath):
         """
         Run preflight checks on WindSetBack inputs:
         1) Ensure either a wind regulations .csv is provided, or
@@ -198,27 +198,12 @@ class BaseWindSetbacks(BaseSetbacks):
         regulations_fpath : str | None
             Path to wind regulations .csv file, if None create global
             setbacks.
-        multiplier : int | float | str | None
-            setback multiplier to use if wind regulations are not
-            supplied, if str, must one of {'high', 'moderate'}.
-
-        Returns
-        -------
-        regulations: `geopandas.GeoDataFrame` | None
-            GeoDataFrame with county level wind setback regulations
-            merged with county geometries, use for intersecting with
-            setback features.
-        Multiplier : float | None
-            Generic setbacks multiplier.
         """
-        regulations, multiplier = super()._preflight_check(
-            regulations_fpath, multiplier
-        )
-        if isinstance(multiplier, str):
-            multiplier = self.MULTIPLIERS[multiplier]
+        super()._preflight_check(regulations_fpath)
+        if isinstance(self._multi, str):
+            self._multi = self.MULTIPLIERS[self._multi]
             logger.debug('Computing setbacks using generic Max-tip Height '
-                         'Multiplier of {}'.format(multiplier))
-        return regulations, multiplier
+                         'Multiplier of {}'.format(self._multi))
 
     # pylint: disable=arguments-renamed
     @classmethod
@@ -230,7 +215,8 @@ class BaseWindSetbacks(BaseSetbacks):
         Compute setbacks and write them to a geotiff. If a regulations
         file is given, compute local setbacks, otherwise compute generic
         setbacks using the given multiplier and the base setback
-        distance.
+        distance. If both are provided, generic and local setbacks are
+        merged such that the local setbacks override the generic ones.
 
         Parameters
         ----------
@@ -278,8 +264,9 @@ class BaseWindSetbacks(BaseSetbacks):
             A setback multiplier to use if regulations are not supplied.
             This multiplier will be applied to the ``base_setback_dist``
             to calculate the setback. If supplied along with
-            ``regulations_fpath``, this input will be ignored. By
-            default `None`.
+            ``regulations_fpath``, this input will be used to apply a
+            setback to all counties not listed in the regulations file.
+            By default `None`.
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default
             chunk size in excl_fpath, By default `(128, 128)`.
@@ -336,13 +323,9 @@ class BaseWindSetbacks(BaseSetbacks):
         features_path = setbacks._get_feature_paths(features_path)
         for fpath in features_path:
             geotiff = os.path.basename(fpath)
-
-            if cls._FEATURE_FILE_EXTENSION:
-                geotiff = geotiff.replace(cls._FEATURE_FILE_EXTENSION, '.tif')
-            else:
-                geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
-
+            geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
             geotiff = os.path.join(out_dir, geotiff)
+
             if os.path.exists(geotiff) and not replace:
                 msg = ('{} already exists, setbacks will not be re-computed '
                        'unless replace=True'.format(geotiff))
@@ -359,7 +342,6 @@ class StructureWindSetbacks(BaseWindSetbacks):
     """
     Structure Wind setbacks
     """
-    _FEATURE_FILE_EXTENSION = '.geojson'
 
     @staticmethod
     def _split_state_name(state_name):
@@ -402,12 +384,15 @@ class StructureWindSetbacks(BaseWindSetbacks):
             List of file paths to all structures .geojson files in
             structures_dir
         """
-        if features_fpath.endswith('.geojson'):
+        is_file = (features_fpath.endswith('.geojson')
+                   or features_fpath.endswith('.gpkg'))
+        if is_file:
             file_paths = [features_fpath]
         else:
             file_paths = []
             for file in sorted(os.listdir(features_fpath)):
-                if file.endswith('.geojson'):
+                is_file = file.endswith('.geojson') or file.endswith('.gpkg')
+                if is_file:
                     file_paths.append(os.path.join(features_fpath, file))
 
         return file_paths
@@ -428,7 +413,7 @@ class StructureWindSetbacks(BaseWindSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = ((regulations['Feature Type'] == 'Structures')
+        mask = ((regulations['Feature Type'] == 'structures')
                 & (regulations['Comment'] != 'Occupied Community Buildings'))
         regulations = regulations.loc[mask]
 
@@ -470,8 +455,6 @@ class RoadWindSetbacks(BaseWindSetbacks):
     Road Wind setbacks
     """
 
-    _FEATURE_FILE_EXTENSION = '.gdb'
-
     def _parse_features(self, features_fpath):
         """
         Load roads from gdb file, convert to exclusions coordinate
@@ -510,12 +493,15 @@ class RoadWindSetbacks(BaseWindSetbacks):
         file_paths : list
             List of file paths to all roads .gdp files in roads_dir
         """
-        if features_fpath.endswith('.gdb'):
+        is_file = (features_fpath.endswith('.gdb')
+                   or features_fpath.endswith('.gpkg'))
+        if is_file:
             file_paths = [features_fpath]
         else:
             file_paths = []
             for file in sorted(os.listdir(features_fpath)):
-                if file.endswith('.gdb') and file.startswith('Streets_USA'):
+                is_file = file.endswith('.gdb') or file.endswith('.gpkg')
+                if is_file and file.startswith('Streets_USA'):
                     file_paths.append(os.path.join(features_fpath, file))
 
         return file_paths
@@ -536,7 +522,7 @@ class RoadWindSetbacks(BaseWindSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        feature_types = {'Roads', 'Highways', 'Highways 111'}
+        feature_types = {'roads', 'highways', 'highways 111'}
         mask = regulations['Feature Type'].isin(feature_types)
         regulations = regulations.loc[mask]
 
@@ -599,7 +585,7 @@ class TransmissionWindSetbacks(BaseWindSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = regulations['Feature Type'] == 'Transmission'
+        mask = regulations['Feature Type'] == 'transmission'
         regulations = regulations.loc[mask]
 
         return regulations
@@ -631,7 +617,7 @@ class RailWindSetbacks(TransmissionWindSetbacks):
         sup = super(TransmissionWindSetbacks, self)
         regulations = sup._parse_regulations(regulations_fpath)
 
-        mask = regulations['Feature Type'] == 'Railroads'
+        mask = regulations['Feature Type'] == 'railroads'
         regulations = regulations.loc[mask]
 
         return regulations

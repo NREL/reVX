@@ -65,7 +65,6 @@ class BaseSetbacks(ABC):
     """
     Create exclusions layers for setbacks
     """
-    _FEATURE_FILE_EXTENSION = None  # Unknown - can be any
 
     def __init__(self, excl_fpath, base_setback_dist, regulations_fpath=None,
                  multiplier=None, hsds=False, chunks=(128, 128),
@@ -100,12 +99,13 @@ class BaseSetbacks(ABC):
                 - "Meters"
             If this input is `None`, a generic setback of
             `base_setback_dist * multiplier` is used. By default `None`.
-        multiplier : int | float | None, optional
+        multiplier : int | float | str | None, optional
             A setback multiplier to use if regulations are not supplied.
             This multiplier will be applied to the ``base_setback_dist``
             to calculate the setback. If supplied along with
-            ``regulations_fpath``, this input will be ignored. By
-            default `None`.
+            ``regulations_fpath``, this input will be used to apply a
+            setback to all counties not listed in the regulations file.
+            By default `None`.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
@@ -135,7 +135,7 @@ class BaseSetbacks(ABC):
             with the upscale factor. A good way to estimate your minimum
             memory requirement is to use the following formula:
 
-            .. math:: memory (GB) = s_0 * s_1 * ((sf^2) * 2 + 4) / 1073741824,
+            .. math:: memory (GB) = s_0 * s_1 * (sf^2 * 2 + 4) / 1073741824,
 
             where :math:`s_0` and :math:`s_1` are the dimensions (shape)
             of your exclusion layer and :math:`sf` is the scale factor
@@ -152,10 +152,10 @@ class BaseSetbacks(ABC):
         self._shape, self._chunks, self._profile = excl_props
         self._scale_factor = weights_calculation_upscale_factor or 1
         self._scale_factor = int(self._scale_factor // 1)
+        self._regulations = None
+        self._multi = multiplier
 
-        self._regulations, self._multi = self._preflight_check(
-            regulations_fpath, multiplier
-        )
+        self._preflight_check(regulations_fpath)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
@@ -205,12 +205,12 @@ class BaseSetbacks(ABC):
 
         return dset_shape, chunks, profile
 
-    def _preflight_check(self, regulations_fpath, multiplier):
+    def _preflight_check(self, regulations_fpath):
         """Apply preflight checks to the regulations path and multiplier.
 
         Run preflight checks on setback inputs:
-        1) Ensure either a regulations .csv is provided, or
-           a setback multiplier
+        1) Ensure either a regulations .csv or
+           a setback multiplier (or both) is provided
         2) Ensure regulations has county FIPS, map regulations to county
            geometries from exclusions .h5 file
 
@@ -219,40 +219,21 @@ class BaseSetbacks(ABC):
         regulations_fpath : str | None
             Path to regulations .csv file, if `None`, create global
             setbacks.
-        multiplier : int | float | str | None
-            Setback multiplier to use if regulations are not supplied.
-
-        Returns
-        -------
-        regulations: `geopandas.GeoDataFrame` | None
-            GeoDataFrame with county level setback regulations merged
-            with county geometries, use for intersecting with setback
-            features.
-        Multiplier : float | None
-            Generic setbacks multiplier
         """
         if regulations_fpath:
-            if multiplier:
-                msg = ('A regulation .csv file was also provided and '
-                       'will be used to determine setback multipliers!')
-                logger.warning(msg)
-                warn(msg)
-
-            multiplier = None
-            regulations = self._parse_regulations(regulations_fpath)
+            self._regulations = self._parse_regulations(regulations_fpath)
             logger.debug('Computing setbacks using regulations provided in: {}'
                          .format(regulations_fpath))
-        elif multiplier:
-            regulations = None
+
+        if self._multi:
             logger.debug('Computing setbacks using base setback distance '
-                         'multiplier of {}'.format(multiplier))
-        else:
+                         'multiplier of {}'.format(self._multi))
+
+        if not regulations_fpath and not self._multi:
             msg = ('Computing setbacks requires either a regulations '
                    '.csv file or a generic multiplier!')
             logger.error(msg)
             raise RuntimeError(msg)
-
-        return regulations, multiplier
 
     def _parse_regulations(self, regulations_fpath):
         """Parse regulations file.
@@ -289,6 +270,9 @@ class BaseSetbacks(ABC):
                    .format(regulations.loc[fips_check, 'FIPS']))
             logger.error(msg)
             raise RuntimeError(msg)
+
+        feature_types = regulations['Feature Type'].str.strip().str.lower()
+        regulations['Feature Type'] = feature_types
 
         return regulations.to_crs(crs=self.crs)
 
@@ -666,7 +650,7 @@ class BaseSetbacks(ABC):
         """
         regulations = self._check_regulations(features_fpath)
         if regulations.empty:
-            return self._no_exclusions_array()
+            return self._rasterize_setbacks(shapes=None)
 
         setbacks = []
         setback_features = self._parse_features(features_fpath)
@@ -769,17 +753,46 @@ class BaseSetbacks(ABC):
         setbacks : ndarray
             Raster array of setbacks
         """
-        if self._regulations is not None:
-            setbacks = self.compute_local_setbacks(features_fpath,
-                                                   max_workers=max_workers)
-        else:
-            setbacks = self.compute_generic_setbacks(features_fpath)
+        setbacks = self._compute_merged_setbacks(features_fpath,
+                                                 max_workers=max_workers)
 
         if geotiff is not None:
             logger.debug('Writing setbacks to {}'.format(geotiff))
             self._write_setbacks(geotiff, setbacks, replace=replace)
 
         return setbacks
+
+    def _compute_merged_setbacks(self, features_fpath, max_workers=None):
+        """Compute and merge local and generic setbacks, if necessary. """
+
+        if self.generic_setback is not None and self.regulations is None:
+            return self.compute_generic_setbacks(features_fpath)
+
+        if self.regulations is not None and self.generic_setback is None:
+            return self.compute_local_setbacks(features_fpath,
+                                               max_workers=max_workers)
+
+        generic_setbacks = self.compute_generic_setbacks(features_fpath)
+        local_setbacks = self.compute_local_setbacks(features_fpath,
+                                                     max_workers=max_workers)
+        return self._merge_setbacks(generic_setbacks, local_setbacks,
+                                    features_fpath)
+
+    def _merge_setbacks(self, generic_setbacks, local_setbacks,
+                        features_fpath):
+        """Merge local setbacks onto the generic setbacks."""
+        logger.info('Merging local setbacks onto the generic setbacks')
+
+        regulations = self._check_regulations(features_fpath)
+        with ExclusionLayers(self._excl_fpath) as exc:
+            fips = exc['cnty_fips']
+
+        local_setbacks_mask = np.isin(fips, regulations["FIPS"].unique())
+
+        generic_setbacks[local_setbacks_mask] = (
+            local_setbacks[local_setbacks_mask]
+        )
+        return generic_setbacks
 
     @staticmethod
     def _get_feature_paths(features_fpath):
@@ -831,7 +844,8 @@ class BaseSetbacks(ABC):
         Compute setbacks and write them to a geotiff. If a regulations
         file is given, compute local setbacks, otherwise compute generic
         setbacks using the given multiplier and the base setback
-        distance.
+        distance. If both are provided, generic and local setbacks are
+        merged such that the local setbacks override the generic ones.
 
         Parameters
         ----------
@@ -875,8 +889,9 @@ class BaseSetbacks(ABC):
             A setback multiplier to use if regulations are not supplied.
             This multiplier will be applied to the ``base_setback_dist``
             to calculate the setback. If supplied along with
-            ``regulations_fpath``, this input will be ignored. By
-            default `None`.
+            ``regulations_fpath``, this input will be used to apply a
+            setback to all counties not listed in the regulations file.
+            By default `None`.
         chunks : tuple, optional
             Chunk size to use for setback layers, if None use default
             chunk size in excl_fpath, By default `(128, 128)`.
@@ -933,13 +948,9 @@ class BaseSetbacks(ABC):
         features_path = setbacks._get_feature_paths(features_path)
         for fpath in features_path:
             geotiff = os.path.basename(fpath)
-
-            if cls._FEATURE_FILE_EXTENSION:
-                geotiff = geotiff.replace(cls._FEATURE_FILE_EXTENSION, '.tif')
-            else:
-                geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
-
+            geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
             geotiff = os.path.join(out_dir, geotiff)
+
             if os.path.exists(geotiff) and not replace:
                 msg = ('{} already exists, setbacks will not be re-computed '
                        'unless replace=True'.format(geotiff))

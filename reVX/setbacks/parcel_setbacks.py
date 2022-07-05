@@ -97,7 +97,7 @@ class ParcelSetbacks(BaseSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        mask = regulations['Feature Type'].apply(str.strip) == 'Property Line'
+        mask = regulations['Feature Type'] == 'property line'
         regulations = regulations.loc[mask]
 
         return regulations

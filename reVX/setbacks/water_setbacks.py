@@ -29,7 +29,7 @@ class WaterSetbacks(BaseSetbacks):
         """
         regulations = super()._parse_regulations(regulations_fpath)
 
-        feats = regulations['Feature Type'].apply(str.strip).apply(str.lower)
-        regulations = regulations.loc[feats == 'water']
+        mask = regulations['Feature Type'] == 'water'
+        regulations = regulations.loc[mask]
 
         return regulations

@@ -72,6 +72,19 @@ def test_generic_structure():
     assert np.allclose(baseline, test)
 
 
+def test_generic_structure_gpkg():
+    """
+    Test generic structures setbacks with gpkg input
+    """
+    setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
+                                     regulations_fpath=None,
+                                     multiplier=MULTIPLIER)
+    structure_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
+    test = setbacks.compute_setbacks(structure_path)
+
+    assert test.sum() == 6830
+
+
 @pytest.mark.parametrize('max_workers', [None, 1])
 def test_local_structures(max_workers):
     """
@@ -92,7 +105,12 @@ def test_local_structures(max_workers):
     assert np.allclose(baseline, test)
 
 
-def test_generic_railroads():
+@pytest.mark.parametrize('rail_path',
+                         [os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                                       'RI_Railroads.shp'),
+                          os.path.join(TESTDATADIR, 'setbacks',
+                                       'Rhode_Island_Railroads.gpkg')])
+def test_generic_railroads(rail_path):
     """
     Test generic rail setbacks
     """
@@ -102,8 +120,6 @@ def test_generic_railroads():
 
     setbacks = RailWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                                 regulations_fpath=None, multiplier=MULTIPLIER)
-    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
-                             'RI_Railroads.shp')
     test = setbacks.compute_setbacks(rail_path)
 
     assert np.allclose(baseline, test)
@@ -206,7 +222,7 @@ def test_local_parcels(max_workers, regulations_fpath):
 
     regulations = pd.read_csv(regulations_fpath)
     property_lines = (
-        regulations['Feature Type'].apply(str.strip) == 'Property Line'
+        regulations['Feature Type'].str.strip() == 'Property Line'
     )
     counties_should_have_exclusions = set(
         regulations[property_lines].FIPS.unique()
@@ -217,11 +233,13 @@ def test_local_parcels(max_workers, regulations_fpath):
     assert not counties_with_exclusions_but_not_in_regulations_csv
 
 
-def test_generic_water_setbacks():
+@pytest.mark.parametrize('water_path',
+                         [os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                                       'Rhode_Island.shp'),
+                          os.path.join(TESTDATADIR, 'setbacks',
+                                       'Rhode_Island_Water.gpkg')])
+def test_generic_water_setbacks(water_path):
     """Test generic water setbacks. """
-
-    water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
-                              'Rhode_Island.shp')
 
     setbacks_x1 = WaterSetbacks(EXCL_H5, BASE_SETBACK_DIST,
                                 regulations_fpath=None, multiplier=1)
@@ -276,7 +294,7 @@ def test_local_water(max_workers, regulations_fpath, expected_sum):
         counties_with_exclusions = set(exc['cnty_fips'][np.where(test)])
 
     regulations = pd.read_csv(regulations_fpath)
-    feats = regulations['Feature Type'].apply(str.strip).apply(str.lower)
+    feats = regulations['Feature Type'].str.strip().str.lower()
     counties_should_have_exclusions = set(
         regulations[feats == 'water'].FIPS.unique()
     )
@@ -293,6 +311,18 @@ def test_setback_preflight_check():
     with pytest.raises(RuntimeError):
         StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
                               regulations_fpath=None, multiplier=None)
+
+
+def test_setbacks_regulations_and_multiplier_input():
+    """
+    Test Setbacks with both regulations and multiplier inputs
+    """
+
+    setbacks = StructureWindSetbacks(EXCL_H5, HUB_HEIGHT, ROTOR_DIAMETER,
+                                     regulations_fpath=REGS_FPATH,
+                                     multiplier=MULTIPLIER)
+    assert setbacks.multiplier == MULTIPLIER
+    assert setbacks.regulations.shape[0] > 0
 
 
 def test_high_res_excl_array():
@@ -372,13 +402,139 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
     assert np.isclose(exclusion_mask, inclusion_weights).all()
 
 
-def test_cli_railroads(runner):
+@pytest.mark.parametrize(
+    ('setbacks_class', 'features_path', 'regulations_fpath',
+     'generic_sum', 'local_sum', 'setback_distance'),
+    [(StructureWindSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+      REGS_GPKG, 332_887, 142, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (RailWindSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
+      REGS_GPKG, 754_082, 9_402, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (ParcelSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
+      PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
+     (WaterSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
+      WATER_REGS_FPATH_VALUE, 88_994, 83, [BASE_SETBACK_DIST])])
+@pytest.mark.parametrize('sf', [None, 10])
+def test_merged_setbacks(setbacks_class, features_path, regulations_fpath,
+                         generic_sum, local_sum, setback_distance, sf):
+    """ Test merged setback layers. """
+
+    generic_setbacks = setbacks_class(EXCL_H5, *setback_distance,
+                                      regulations_fpath=None, multiplier=100,
+                                      weights_calculation_upscale_factor=sf)
+    generic_layer = generic_setbacks.compute_setbacks(features_path,
+                                                      max_workers=1)
+
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(regulations_fpath, regs_fpath)
+
+        local_setbacks = setbacks_class(EXCL_H5, *setback_distance,
+                                        regulations_fpath=regs_fpath,
+                                        weights_calculation_upscale_factor=sf,
+                                        multiplier=None)
+
+        local_layer = local_setbacks.compute_setbacks(features_path,
+                                                      max_workers=1)
+
+        merged_setbacks = setbacks_class(EXCL_H5, *setback_distance,
+                                         regulations_fpath=regs_fpath,
+                                         weights_calculation_upscale_factor=sf,
+                                         multiplier=100)
+        merged_layer = merged_setbacks.compute_setbacks(features_path,
+                                                        max_workers=1)
+
+        feats = local_setbacks._check_regulations(features_path)
+
+    # make sure the comparison layers match what we expect
+    if sf is None:
+        assert generic_layer.sum() == generic_sum
+        assert local_layer.sum() == local_sum
+        assert generic_layer.sum() > merged_layer.sum() > local_layer.sum()
+    else:
+        for layer in (generic_layer, local_layer, merged_layer):
+            assert (layer[layer > 0] < 1).any()
+
+    assert not np.isclose(generic_layer, local_layer).all()
+    assert not np.isclose(generic_layer, merged_layer).all()
+    assert not np.isclose(local_layer, merged_layer).all()
+
+    # Make sure counties in the regulations csv
+    # have correct exclusions applied
+    with ExclusionLayers(EXCL_H5) as exc:
+        fips = exc['cnty_fips']
+
+    counties_should_have_exclusions = feats.FIPS.unique()
+    local_setbacks_mask = np.isin(fips, counties_should_have_exclusions)
+
+    assert not np.isclose(generic_layer[local_setbacks_mask],
+                          merged_layer[local_setbacks_mask]).all()
+    assert np.isclose(local_layer[local_setbacks_mask],
+                      merged_layer[local_setbacks_mask]).all()
+
+    assert not np.isclose(local_layer[~local_setbacks_mask],
+                          merged_layer[~local_setbacks_mask]).all()
+    assert np.isclose(generic_layer[~local_setbacks_mask],
+                      merged_layer[~local_setbacks_mask]).all()
+
+
+def test_cli_structures(runner):
+    """
+    Test CLI for structures.
+    """
+    structures_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(REGS_FPATH, regs_fpath)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": EXCL_H5,
+            "feature_type": "structure",
+            "features_path": structures_path,
+            "hub_height": HUB_HEIGHT,
+            "log_level": "INFO",
+            "multiplier": MULTIPLIER,
+            "replace": True,
+            "rotor_diameter": ROTOR_DIAMETER
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test_fp = os.path.join(td, 'RhodeIsland.tif')
+
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert test.sum() == 6830
+
+    LOGGERS.clear()
+
+
+@pytest.mark.parametrize("rail_path",
+                         (os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                                       'RI_Railroads.shp'),
+                          os.path.join(TESTDATADIR, 'setbacks',
+                                       'Rhode_Island_Railroads.gpkg')))
+def test_cli_railroads(runner, rail_path):
     """
     Test CLI. Use the RI rails as test case, using all structures results
     in suspected mem error on github actions.
     """
-    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
-                             'RI_Railroads.shp')
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(REGS_FPATH)
         regs_fpath = os.path.join(td, regs_fpath)
@@ -409,7 +565,10 @@ def test_cli_railroads(runner):
 
         baseline_fp = os.path.join(TESTDATADIR, 'setbacks',
                                    'existing_rails.tif')
-        test_fp = os.path.join(td, 'RI_Railroads.tif')
+
+        test_fp = os.path.basename(rail_path)
+        test_fp = ".".join(test_fp.split('.')[:-1] + ['tif'])
+        test_fp = os.path.join(td, test_fp)
 
         with Geotiff(baseline_fp) as tif:
             baseline = tif.values
@@ -472,12 +631,15 @@ def test_cli_parcels(runner, config_input):
                          ({"base_setback_dist": BASE_SETBACK_DIST},
                           {"hub_height": BASE_SETBACK_DIST,
                            "rotor_diameter": 0}))
-def test_cli_water(runner, config_input):
+@pytest.mark.parametrize("water_path",
+                         (os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
+                                       'Rhode_Island.shp'),
+                          os.path.join(TESTDATADIR, 'setbacks',
+                                       'Rhode_Island_Water.gpkg')))
+def test_cli_water(runner, config_input, water_path):
     """
     Test CLI with water setbacks.
     """
-    water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
-                              'Rhode_Island.shp')
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(WATER_REGS_FPATH_VALUE)
         regs_fpath = os.path.join(td, regs_fpath)
@@ -505,7 +667,9 @@ def test_cli_water(runner, config_input):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test_fp = os.path.join(td, 'Rhode_Island.tif')
+        test_fp = os.path.basename(water_path)
+        test_fp = ".".join(test_fp.split('.')[:-1] + ['tif'])
+        test_fp = os.path.join(td, test_fp)
 
         with Geotiff(test_fp) as tif:
             test = tif.values
@@ -560,6 +724,78 @@ def test_cli_partial_setbacks(runner):
         assert (test < 1).any()
 
     LOGGERS.clear()
+
+
+@pytest.mark.parametrize(
+    ('setbacks_type', "out_fn", 'features_path', 'regulations_fpath',
+     'config_input'),
+    [("structure", "RhodeIsland.tif",
+      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+      REGS_GPKG, {"hub_height": BASE_SETBACK_DIST, "rotor_diameter": 0}),
+     ("rail", "Rhode_Island_Railroads.tif",
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
+      REGS_GPKG, {"hub_height": BASE_SETBACK_DIST, "rotor_diameter": 0}),
+     ("parcel", "Rhode_Island.tif",
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
+      PARCEL_REGS_FPATH_VALUE, {"base_setback_dist": BASE_SETBACK_DIST}),
+     ("water", "Rhode_Island_Water.tif",
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
+      WATER_REGS_FPATH_VALUE, {"base_setback_dist": BASE_SETBACK_DIST})])
+def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
+                           regulations_fpath, config_input):
+    """
+    Test CLI for merging layers.
+    """
+    out = {}
+    config_run_inputs = {
+        "generic": {"multiplier": 100},
+        "local": {"regs_fpath": None},
+        "merged": {"multiplier": 100, "regs_fpath": None}
+    }
+
+    for run_type, c_in in config_run_inputs.items():
+        with tempfile.TemporaryDirectory() as td:
+            regs_fpath = os.path.basename(regulations_fpath)
+            regs_fpath = os.path.join(td, regs_fpath)
+            shutil.copy(regulations_fpath, regs_fpath)
+
+            if "regs_fpath" in c_in:
+                c_in["regs_fpath"] = regs_fpath
+
+            config = {
+                "log_directory": td,
+                "execution_control": {
+                    "option": "local"
+                },
+                "excl_fpath": EXCL_H5,
+                "feature_type": setbacks_type,
+                "features_path": features_path,
+                "log_level": "INFO",
+                "replace": True,
+            }
+
+            config.update(c_in)
+            config.update(config_input)
+            config_path = os.path.join(td, 'config.json')
+            with open(config_path, 'w') as f:
+                json.dump(config, f)
+
+            result = runner.invoke(main, ['from-config', '-c', config_path])
+            msg = ('Failed with error {}'
+                   .format(traceback.print_exception(*result.exc_info)))
+            assert result.exit_code == 0, msg
+
+            test_fp = os.path.join(td, out_fn)
+
+            with Geotiff(test_fp) as tif:
+                out[run_type] = tif.values
+
+    LOGGERS.clear()
+
+    assert not np.isclose(out["generic"], out["local"]).all()
+    assert not np.isclose(out["generic"], out["merged"]).all()
+    assert not np.isclose(out["local"], out["merged"]).all()
+    assert out["generic"].sum() > out["merged"].sum() > out["local"].sum()
 
 
 def test_cli_invalid_config(runner):
