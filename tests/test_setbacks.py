@@ -21,7 +21,7 @@ from rex.utilities.loggers import LOGGERS
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.setbacks import (StructureWindSetbacks, RailWindSetbacks,
-                           ParcelSetbacks, WaterSetbacks)
+                           SolarParcelSetbacks, WaterSetbacks)
 from reVX.setbacks.setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
@@ -148,12 +148,12 @@ def test_generic_parcels():
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
-    setbacks_x1 = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                                 regulations_fpath=None, multiplier=1)
+    setbacks_x1 = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                      regulations_fpath=None, multiplier=1)
     test_x1 = setbacks_x1.compute_setbacks(parcel_path)
 
-    setbacks_x100 = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                                   regulations_fpath=None, multiplier=100)
+    setbacks_x100 = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                        regulations_fpath=None, multiplier=100)
     test_x100 = setbacks_x100.compute_setbacks(parcel_path)
 
     # when the setbacks are so large that they span the entire parcels,
@@ -173,8 +173,8 @@ def test_generic_parcels_with_invalid_shape_input():
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'invalid', 'Rhode_Island.gpkg')
-    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                              regulations_fpath=None, multiplier=100)
+    setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                   regulations_fpath=None, multiplier=100)
 
     # Ensure data we are using contains invalid shapes
     parcels = setbacks._parse_features(parcel_path)
@@ -203,7 +203,7 @@ def test_local_parcels(max_workers, regulations_fpath):
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(regulations_fpath, regs_fpath)
 
-        setbacks = ParcelSetbacks(
+        setbacks = SolarParcelSetbacks(
             EXCL_H5, BASE_SETBACK_DIST,
             regulations_fpath=regs_fpath,
             multiplier=None
@@ -329,9 +329,9 @@ def test_high_res_excl_array():
     """Test the multiplier of the exclusion array is applied correctly. """
 
     mult = 5
-    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                              regulations_fpath=None, multiplier=1,
-                              weights_calculation_upscale_factor=mult)
+    setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                   regulations_fpath=None, multiplier=1,
+                                   weights_calculation_upscale_factor=mult)
 
     hr_array = setbacks._no_exclusions_array(multiplier=mult)
 
@@ -344,9 +344,9 @@ def test_aggregate_high_res():
     """Test the aggregation of a high_resolution array. """
 
     mult = 5
-    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                              regulations_fpath=None, multiplier=1,
-                              weights_calculation_upscale_factor=mult)
+    setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                   regulations_fpath=None, multiplier=1,
+                                   weights_calculation_upscale_factor=mult)
 
     hr_array = setbacks._no_exclusions_array(multiplier=mult)
     hr_array = hr_array.astype(np.float32)
@@ -367,11 +367,11 @@ def test_partial_exclusions():
                                'Rhode_Island.gpkg')
 
     mult = 5
-    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                              regulations_fpath=None, multiplier=10)
-    setbacks_hr = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                                 regulations_fpath=None, multiplier=10,
-                                 weights_calculation_upscale_factor=mult)
+    setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                   regulations_fpath=None, multiplier=10)
+    setbacks_hr = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                      regulations_fpath=None, multiplier=10,
+                                      weights_calculation_upscale_factor=mult)
 
     exclusion_mask = setbacks.compute_setbacks(parcel_path)
     inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
@@ -390,11 +390,11 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
 
-    setbacks = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                              regulations_fpath=None, multiplier=10)
-    setbacks_hr = ParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-                                 regulations_fpath=None, multiplier=10,
-                                 weights_calculation_upscale_factor=mult)
+    setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                   regulations_fpath=None, multiplier=10)
+    setbacks_hr = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                                      regulations_fpath=None, multiplier=10,
+                                      weights_calculation_upscale_factor=mult)
 
     exclusion_mask = setbacks.compute_setbacks(parcel_path)
     inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
@@ -411,7 +411,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
      (RailWindSetbacks,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
       REGS_GPKG, 754_082, 9_402, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (ParcelSetbacks,
+     (SolarParcelSetbacks,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
      (WaterSetbacks,
