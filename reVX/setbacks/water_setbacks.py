@@ -3,9 +3,11 @@
 Compute setbacks exclusions
 """
 from reVX.setbacks.base import BaseSetbacks, features_clipped_to_county
+from reVX.setbacks.wind_setbacks import BaseWindSetbacks
 
 
-class WaterSetbacks(BaseSetbacks):
+# pylint: disable=no-member, too-few-public-methods
+class _BaseWaterSetbacks:
     """Water setbacks. """
 
     @staticmethod
@@ -33,3 +35,11 @@ class WaterSetbacks(BaseSetbacks):
         regulations = regulations.loc[mask]
 
         return regulations
+
+
+class SolarWaterSetbacks(_BaseWaterSetbacks, BaseSetbacks):
+    """Solar Water Setbacks. """
+
+
+class WindWaterSetbacks(_BaseWaterSetbacks, BaseWindSetbacks):
+    """Wind Water Setbacks. """

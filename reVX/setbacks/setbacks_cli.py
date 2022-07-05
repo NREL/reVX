@@ -20,7 +20,8 @@ from reVX.setbacks import (StructureWindSetbacks,
                            TransmissionWindSetbacks,
                            SolarParcelSetbacks,
                            WindParcelSetbacks,
-                           WaterSetbacks)
+                           SolarWaterSetbacks,
+                           WindWaterSetbacks)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ STATE_SETBACKS = {'structure': StructureWindSetbacks,
                   'rail': RailWindSetbacks,
                   'transmission': TransmissionWindSetbacks,
                   'parcel': SolarParcelSetbacks,
-                  'water': WaterSetbacks}
+                  'water': SolarWaterSetbacks}
 
 
 @click.group()
@@ -368,13 +369,14 @@ def parcel_setbacks(ctx):
         hub_height = ctx.obj['HUB_HEIGHT']
         rotor_diameter = ctx.obj['ROTOR_DIAMETER']
         logger.debug('Setbacks to be computed with:\n'
-                    '- base_setback_dist = {}\n'
+                    '- hub_height = {}\n'
+                    '- rotor_diameter = {}\n'
                     '- regs_fpath = {}\n'
                     '- multiplier = {}\n'
                     '- using max_workers = {}\n'
                     '- replace layer if needed = {}\n'
                     '- weights calculation upscale factor = {}\n'
-                    .format(base_setback_dist, regs_fpath, multiplier,
+                    .format(hub_height, rotor_diameter, regs_fpath, multiplier,
                             max_workers, replace, wcuf))
 
         WindParcelSetbacks.run(excl_fpath, features_path, out_dir,
@@ -423,29 +425,52 @@ def water_setbacks(ctx):
     hsds = ctx.obj['HSDS']
     wcuf = ctx.obj['UPSCALE_FACTOR']
 
+    logger.info('Computing setbacks from water in {}'
+                .format(features_path))
+
     if base_setback_dist is None:
         # hub-height and rotor diameter guaranteed to exist if
         # `base_setback_dist = None`` due to check performed in `local`
         hub_height = ctx.obj['HUB_HEIGHT']
         rotor_diameter = ctx.obj['ROTOR_DIAMETER']
-        base_setback_dist = hub_height + rotor_diameter / 2
+        logger.debug('Setbacks to be computed with:\n'
+                    '- hub_height = {}\n'
+                    '- rotor_diameter = {}\n'
+                    '- regs_fpath = {}\n'
+                    '- multiplier = {}\n'
+                    '- using max_workers = {}\n'
+                    '- replace layer if needed = {}\n'
+                    '- weights calculation upscale factor = {}\n'
+                    .format(hub_height, rotor_diameter, regs_fpath, multiplier,
+                            max_workers, replace, wcuf))
 
-    logger.info('Computing setbacks from water in {}'
-                .format(features_path))
-    logger.debug('Setbacks to be computed with:\n'
-                 '- base_setback_dist = {}\n'
-                 '- regs_fpath = {}\n'
-                 '- multiplier = {}\n'
-                 '- using max_workers = {}\n'
-                 '- replace layer if needed = {}\n'
-                 '- weights calculation upscale factor = {}\n'
-                 .format(base_setback_dist, regs_fpath, multiplier,
-                         max_workers, replace, wcuf))
+        WindWaterSetbacks.run(excl_fpath, features_path, out_dir,
+                              hub_height=hub_height,
+                              rotor_diameter=rotor_diameter,
+                              regulations_fpath=regs_fpath,
+                              multiplier=multiplier,
+                              weights_calculation_upscale_factor=wcuf,
+                              max_workers=max_workers, replace=replace,
+                              hsds=hsds)
+    else:
+        logger.debug('Setbacks to be computed with:\n'
+                    '- base_setback_dist = {}\n'
+                    '- regs_fpath = {}\n'
+                    '- multiplier = {}\n'
+                    '- using max_workers = {}\n'
+                    '- replace layer if needed = {}\n'
+                    '- weights calculation upscale factor = {}\n'
+                    .format(base_setback_dist, regs_fpath, multiplier,
+                            max_workers, replace, wcuf))
 
-    WaterSetbacks.run(excl_fpath, features_path, out_dir, base_setback_dist,
-                      regulations_fpath=regs_fpath, multiplier=multiplier,
-                      weights_calculation_upscale_factor=wcuf,
-                      max_workers=max_workers, replace=replace, hsds=hsds)
+        SolarWaterSetbacks.run(excl_fpath, features_path, out_dir,
+                               base_setback_dist,
+                               regulations_fpath=regs_fpath,
+                               multiplier=multiplier,
+                               weights_calculation_upscale_factor=wcuf,
+                               max_workers=max_workers, replace=replace,
+                               hsds=hsds)
+
     logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
