@@ -369,15 +369,15 @@ def parcel_setbacks(ctx):
         hub_height = ctx.obj['HUB_HEIGHT']
         rotor_diameter = ctx.obj['ROTOR_DIAMETER']
         logger.debug('Setbacks to be computed with:\n'
-                    '- hub_height = {}\n'
-                    '- rotor_diameter = {}\n'
-                    '- regs_fpath = {}\n'
-                    '- multiplier = {}\n'
-                    '- using max_workers = {}\n'
-                    '- replace layer if needed = {}\n'
-                    '- weights calculation upscale factor = {}\n'
-                    .format(hub_height, rotor_diameter, regs_fpath, multiplier,
-                            max_workers, replace, wcuf))
+                     '- hub_height = {}\n'
+                     '- rotor_diameter = {}\n'
+                     '- regs_fpath = {}\n'
+                     '- multiplier = {}\n'
+                     '- using max_workers = {}\n'
+                     '- replace layer if needed = {}\n'
+                     '- weights calculation upscale factor = {}\n'
+                     .format(hub_height, rotor_diameter, regs_fpath,
+                             multiplier, max_workers, replace, wcuf))
 
         WindParcelSetbacks.run(excl_fpath, features_path, out_dir,
                                hub_height=hub_height,
@@ -389,14 +389,14 @@ def parcel_setbacks(ctx):
                                hsds=hsds)
     else:
         logger.debug('Setbacks to be computed with:\n'
-                    '- base_setback_dist = {}\n'
-                    '- regs_fpath = {}\n'
-                    '- multiplier = {}\n'
-                    '- using max_workers = {}\n'
-                    '- replace layer if needed = {}\n'
-                    '- weights calculation upscale factor = {}\n'
-                    .format(base_setback_dist, regs_fpath, multiplier,
-                            max_workers, replace, wcuf))
+                     '- base_setback_dist = {}\n'
+                     '- regs_fpath = {}\n'
+                     '- multiplier = {}\n'
+                     '- using max_workers = {}\n'
+                     '- replace layer if needed = {}\n'
+                     '- weights calculation upscale factor = {}\n'
+                     .format(base_setback_dist, regs_fpath, multiplier,
+                             max_workers, replace, wcuf))
 
         SolarParcelSetbacks.run(excl_fpath, features_path, out_dir,
                                 base_setback_dist,
@@ -434,15 +434,15 @@ def water_setbacks(ctx):
         hub_height = ctx.obj['HUB_HEIGHT']
         rotor_diameter = ctx.obj['ROTOR_DIAMETER']
         logger.debug('Setbacks to be computed with:\n'
-                    '- hub_height = {}\n'
-                    '- rotor_diameter = {}\n'
-                    '- regs_fpath = {}\n'
-                    '- multiplier = {}\n'
-                    '- using max_workers = {}\n'
-                    '- replace layer if needed = {}\n'
-                    '- weights calculation upscale factor = {}\n'
-                    .format(hub_height, rotor_diameter, regs_fpath, multiplier,
-                            max_workers, replace, wcuf))
+                     '- hub_height = {}\n'
+                     '- rotor_diameter = {}\n'
+                     '- regs_fpath = {}\n'
+                     '- multiplier = {}\n'
+                     '- using max_workers = {}\n'
+                     '- replace layer if needed = {}\n'
+                     '- weights calculation upscale factor = {}\n'
+                     .format(hub_height, rotor_diameter, regs_fpath,
+                             multiplier, max_workers, replace, wcuf))
 
         WindWaterSetbacks.run(excl_fpath, features_path, out_dir,
                               hub_height=hub_height,
@@ -454,14 +454,14 @@ def water_setbacks(ctx):
                               hsds=hsds)
     else:
         logger.debug('Setbacks to be computed with:\n'
-                    '- base_setback_dist = {}\n'
-                    '- regs_fpath = {}\n'
-                    '- multiplier = {}\n'
-                    '- using max_workers = {}\n'
-                    '- replace layer if needed = {}\n'
-                    '- weights calculation upscale factor = {}\n'
-                    .format(base_setback_dist, regs_fpath, multiplier,
-                            max_workers, replace, wcuf))
+                     '- base_setback_dist = {}\n'
+                     '- regs_fpath = {}\n'
+                     '- multiplier = {}\n'
+                     '- using max_workers = {}\n'
+                     '- replace layer if needed = {}\n'
+                     '- weights calculation upscale factor = {}\n'
+                     .format(base_setback_dist, regs_fpath, multiplier,
+                             max_workers, replace, wcuf))
 
         SolarWaterSetbacks.run(excl_fpath, features_path, out_dir,
                                base_setback_dist,
