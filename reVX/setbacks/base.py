@@ -295,6 +295,7 @@ class BaseSetbacks:
         if 'geometry' not in regulations:
             regulations['geometry'] = None
 
+        regulations = regulations[~regulations['FIPS'].isna()]
         regulations = regulations.set_index('FIPS')
 
         logger.info('Merging county geometries w/ local regulations')
