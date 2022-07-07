@@ -250,11 +250,6 @@ class BaseSetbacks:
             regulations = parse_table(regulations_fpath)
             regulations = self._parse_county_regulations(regulations)
             log_mem(logger)
-
-            out_path = regulations_fpath.split('.')[0] + '.gpkg'
-            logger.debug('Saving regulations with county geometries as: '
-                         '{}'.format(out_path))
-            regulations.to_file(out_path, driver='GPKG')
         except ValueError:
             regulations = gpd.read_file(regulations_fpath)
 
