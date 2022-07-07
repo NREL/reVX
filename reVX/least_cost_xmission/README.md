@@ -31,10 +31,18 @@ TODO
 ### Required data files
 TODO 
 
-## Workflow
+## CONUS Workflow
 TODO
 
+## Atlantic Off-Shore Wind Transmission (AOSWT) Workflow
+General steps to run the AOSWT analysis:
 
+1. Convert points-of-interconnection (grid connections on land) to transmission feature lines. Example notebook is at `reVX/examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`. The input CSV requires the following fields: 'POI Name', 'State', 'Voltage (kV)', 'Lat', 'Long'.
+2. Create offshore friction and barrier (exclusion) layers and merge with CONUS costa nd barrier layers. Example notbook is at `reVX/examples/least_cost_paths/combine_layers_and_add_to_h5.ipynb`. 
+3. Determine desired sc\_point_gids to process.
+4. Select appropriate clipping radius. Unlike the CONUS analysis, which clips the cost raster by proximity to infinite sinks, the AOSWT uses a fixed search radius. 5000 is a good starting point. Note that memory usage increases with the square of radius.
+5. Run analysis. See examples below.
+6. Convert the output to GeoJSON (optional). See post processing below.
 
 ## CONUS (on-shore) Examples
 TODO: add cost calculator examples
@@ -132,7 +140,7 @@ python least_cost_xmission_cli.py local -v \
 ```
 
 ### Run AOSWT from a config file
-Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. Note that SLURM high quality of service on a standard node can be requested with `"feature": "--qos=high"`. This file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
+Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. Note that SLURM high quality of service on a standard node can be requested with `"feature": "--qos=high"`. This file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Memory usage increases with the square of radius. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
 
 ```
 {
