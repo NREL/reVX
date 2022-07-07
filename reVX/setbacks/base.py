@@ -262,6 +262,14 @@ class BaseSetbacks:
             logger.error(msg)
             raise RuntimeError(msg)
 
+        missing = [col for col in ["Feature Type", "Value Type", "Value"]
+                   if col not in regulations]
+        if any(missing):
+            msg = ('Regulations are missing the following required columns: {}'
+                   .format(missing))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
         feature_types = regulations['Feature Type'].str.strip().str.lower()
         regulations['Feature Type'] = feature_types
 

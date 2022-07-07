@@ -75,6 +75,22 @@ def test_regulations_with_nan_fips():
     assert regs_df.shape[0] > setbacks.regulations.shape[0]
 
 
+@pytest.mark.parametrize("regs_file",
+                         ("missing_ft.csv", "missing_vt.csv", "missing_v.csv"))
+def test_regulations_with_missing_columns(regs_file):
+    """Test regulations file with missing required columns."""
+
+    regs_file = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
+                             regs_file)
+
+    with pytest.raises(RuntimeError) as excinfo:
+        BaseSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                     regulations_fpath=regs_file, multiplier=None)
+
+    expected_err_msg = "Regulations are missing the following required columns"
+    assert expected_err_msg in str(excinfo.value)
+
+
 def test_generic_structure():
     """
     Test generic structures setbacks
