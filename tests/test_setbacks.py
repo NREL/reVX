@@ -61,17 +61,22 @@ def runner():
     return CliRunner()
 
 
-def test_regulations_with_nan_fips():
+@pytest.mark.parametrize(("regs_file", "col"),
+                         (("nan_fips.csv", "FIPS"),
+                          ("nan_feature_types.csv", "Feature Type"),
+                          ("nan_value_types.csv", "Value Type"),
+                          ("nan_values.csv", "Value")))
+def test_regulations_with_nan(regs_file, col):
     """Test regulations file with nan fips. """
 
     regs_file = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-                             'nan_fips.csv')
+                             regs_file)
     setbacks = BaseSetbacks(EXCL_H5, BASE_SETBACK_DIST,
                             regulations_fpath=regs_file, multiplier=None)
 
     regs_df = pd.read_csv(regs_file)
-    assert regs_df.FIPS.isna().any()
-    assert not setbacks.regulations.FIPS.isna().any()
+    assert regs_df[col].isna().any()
+    assert not setbacks.regulations[col].isna().any()
     assert regs_df.shape[0] > setbacks.regulations.shape[0]
 
 

@@ -275,6 +275,9 @@ class BaseSetbacks:
             logger.error(msg)
             raise RuntimeError(msg)
 
+        for non_nan_col in ["Feature Type", "Value Type", "Value", "FIPS"]:
+            regulations = regulations[~regulations[non_nan_col].isna()]
+
         feature_types = regulations['Feature Type'].str.strip().str.lower()
         regulations['Feature Type'] = feature_types
 
