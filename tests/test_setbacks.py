@@ -91,6 +91,20 @@ def test_regulations_with_missing_columns(regs_file):
     assert expected_err_msg in str(excinfo.value)
 
 
+def test_regulations_with_non_caps_columns():
+    """Test regulations file with mixed capitalization columns."""
+
+    regs_file = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
+                             "col_names_not_caps.csv")
+
+    setbacks = BaseSetbacks(EXCL_H5, BASE_SETBACK_DIST,
+                            regulations_fpath=regs_file, multiplier=None)
+    assert all(name[0].upper() for name in setbacks.regulations.columns)
+    assert all(col in setbacks.regulations.columns
+               for col in ["County", "State", "Feature Type", "Value Type",
+                           "Value", "FIPS"])
+
+
 def test_generic_structure():
     """
     Test generic structures setbacks

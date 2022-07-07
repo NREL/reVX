@@ -262,6 +262,11 @@ class BaseSetbacks:
             logger.error(msg)
             raise RuntimeError(msg)
 
+        new_col_names = {col: col.lower().title()
+                         for col in regulations.columns
+                         if col.lower() not in {"geometry", "fips"}}
+        regulations = regulations.rename(new_col_names, axis=1)
+
         missing = [col for col in ["Feature Type", "Value Type", "Value"]
                    if col not in regulations]
         if any(missing):
