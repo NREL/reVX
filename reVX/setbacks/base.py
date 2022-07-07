@@ -2,7 +2,6 @@
 """
 Compute setbacks exclusions
 """
-from abc import ABC
 from concurrent.futures import as_completed
 from warnings import warn
 from itertools import product
@@ -61,7 +60,7 @@ def features_clipped_to_county(features, cnty):
     return tmp[~tmp.is_empty]
 
 
-class BaseSetbacks(ABC):
+class BaseSetbacks:
     """
     Create exclusions layers for setbacks
     """
