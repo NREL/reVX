@@ -249,10 +249,10 @@ class BaseSetbacks:
         try:
             regulations = parse_table(regulations_fpath)
             regulations = self._parse_county_regulations(regulations)
-            log_mem(logger)
         except ValueError:
             regulations = gpd.read_file(regulations_fpath)
 
+        log_mem(logger)
         fips_check = regulations['geometry'].isnull()
         if fips_check.any():
             msg = ('The following county FIPS were requested in the '
