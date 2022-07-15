@@ -66,8 +66,11 @@ class PlexosAggregation(BaseProfileAggregation):
             File path to capacity factor file (reV gen output) to
             get profiles from.
         forecast_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file.
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
         build_year : int, optional
             REEDS year of interest, by default 2050
         plexos_columns : list | None
@@ -657,8 +660,11 @@ class PlexosAggregation(BaseProfileAggregation):
             File path to capacity factor file (reV gen output) to
             get profiles from.
         forecast_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file.
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
         build_year : int
             REEDS year of interest.
         plexos_columns : list | None
@@ -726,8 +732,11 @@ class RevReedsPlexosManager:
             File path to capacity factor file (reV gen output) to
             get profiles from.
         forecast_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file.
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
         wait : int
             Integer seconds to wait for DB connection to become available
             before raising exception.
@@ -802,8 +811,11 @@ class RevReedsPlexosManager:
             File path to capacity factor file (reV gen output) to
             get profiles from.
         forecast_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file.
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
         agg_kwargs : dict
             Optional additional kwargs for the aggregation run.
         wait : int
