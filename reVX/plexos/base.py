@@ -35,8 +35,10 @@ class PlexosNode:
         ----------
         sc_build : pd.DataFrame
             Supply curve buildout table. Must only have rows that are built
-            in this plexos node. Must have resource_gid lookup, counts per
-            resource_gid, and capacity at each SC point.
+            in this plexos node. Must have res_gids, gid_counts, gid_capacity,
+            and built_capacity at each SC point. Note that the gen_gids column
+            in the rev_sc is ignored and only the res_gids from rev_sc are
+            mapped to the corresponding "gid" column in the cf_fpath meta data.
         cf_fpath : str
             File path to capacity factor file (reV gen output) to
             get profiles from.
@@ -147,7 +149,11 @@ class PlexosNode:
         Parameters
         ----------
         sc_point : pd.Series
-            Single row in the reV supply curve table to parse
+            Single row in the reV supply curve table to parse. Must have
+            res_gids, gid_counts, gid_capacity, and built_capacity at each SC
+            point. Note that the gen_gids column in the rev_sc is ignored and
+            only the res_gids from rev_sc are mapped to the corresponding "gid"
+            column in the cf_fpath meta data.
         all_res_gids : list | np.ndarray
             ALL resource GID's available in cf_fpath
 
@@ -158,7 +164,10 @@ class PlexosNode:
         res_gids : list
             Resource GIDs associated with SC point i.
         gen_gids : list
-            Generation (reV gen output) GIDs associated with SC point i
+            Generation (reV gen output) GIDs associated with SC point i. This
+            is parsed from the res_gids column in the sc_point and the location
+            of the res_gids in the all_res_gids array which is from the
+            cf_fpath input. This is not taken directly from the gen_gids column
         gid_counts : list
             Number of exclusion pixels that are included associated
             with each res_gid.
@@ -330,8 +339,10 @@ class PlexosNode:
         ----------
         sc_build : pd.DataFrame
             Supply curve buildout table. Must only have rows that are built
-            in this plexos node. Must have resource_gid lookup, counts per
-            resource_gid, and capacity at each SC point.
+            in this plexos node. Must have res_gids, gid_counts, gid_capacity,
+            and built_capacity at each SC point. Note that the gen_gids column
+            in the rev_sc is ignored and only the res_gids from rev_sc are
+            mapped to the corresponding "gid" column in the cf_fpath meta data.
         cf_fpath : str
             File path to capacity factor file (reV gen output) to
             get profiles from.

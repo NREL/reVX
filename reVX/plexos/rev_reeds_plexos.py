@@ -641,7 +641,9 @@ class PlexosAggregation(BaseProfileAggregation):
         rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, latitude,
             longitude, res_gids, gid_counts. Or file path to reV supply
-            curve table.
+            curve table. Note that the gen_gids column in the rev_sc is ignored
+            and only the res_gids from rev_sc are mapped to the corresponding
+            "gid" column in the cf_fpath meta data.
         reeds_build : pd.DataFrame
             ReEDS buildout with rows for built capacity (MW) at each reV SC
             point. This should have columns: reeds_year, built_capacity, and
