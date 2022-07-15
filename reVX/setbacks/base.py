@@ -2,7 +2,6 @@
 """
 Compute setbacks exclusions
 """
-from abc import ABC
 from concurrent.futures import as_completed
 from warnings import warn
 from itertools import product
@@ -61,7 +60,7 @@ def features_clipped_to_county(features, cnty):
     return tmp[~tmp.is_empty]
 
 
-class BaseSetbacks(ABC):
+class BaseSetbacks:
     """
     Create exclusions layers for setbacks
     """
@@ -250,15 +249,10 @@ class BaseSetbacks(ABC):
         try:
             regulations = parse_table(regulations_fpath)
             regulations = self._parse_county_regulations(regulations)
-            log_mem(logger)
-
-            out_path = regulations_fpath.split('.')[0] + '.gpkg'
-            logger.debug('Saving regulations with county geometries as: '
-                         '{}'.format(out_path))
-            regulations.to_file(out_path, driver='GPKG')
         except ValueError:
             regulations = gpd.read_file(regulations_fpath)
 
+        log_mem(logger)
         fips_check = regulations['geometry'].isnull()
         if fips_check.any():
             msg = ('The following county FIPS were requested in the '
@@ -267,6 +261,22 @@ class BaseSetbacks(ABC):
                    .format(regulations.loc[fips_check, 'FIPS']))
             logger.error(msg)
             raise RuntimeError(msg)
+
+        new_col_names = {col: col.lower().title()
+                         for col in regulations.columns
+                         if col.lower() not in {"geometry", "fips"}}
+        regulations = regulations.rename(new_col_names, axis=1)
+
+        missing = [col for col in ["Feature Type", "Value Type", "Value"]
+                   if col not in regulations]
+        if any(missing):
+            msg = ('Regulations are missing the following required columns: {}'
+                   .format(missing))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        for col in ["Feature Type", "Value Type", "Value", "FIPS"]:
+            regulations = regulations[~regulations[col].isna()]
 
         feature_types = regulations['Feature Type'].str.strip().str.lower()
         regulations['Feature Type'] = feature_types
@@ -301,6 +311,7 @@ class BaseSetbacks(ABC):
         if 'geometry' not in regulations:
             regulations['geometry'] = None
 
+        regulations = regulations[~regulations['FIPS'].isna()]
         regulations = regulations.set_index('FIPS')
 
         logger.info('Merging county geometries w/ local regulations')
