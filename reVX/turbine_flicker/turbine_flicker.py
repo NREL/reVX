@@ -75,7 +75,7 @@ class TurbineFlicker:
         lon : float
             Longitude coordinate of turbine
         blade_length : float
-            Turbine blade length. Hub height = 2.5 * blade length
+            Turbine blade length.
         wind_dir : ndarray
             Time-series of wind direction for turbine
 
@@ -233,7 +233,8 @@ class TurbineFlicker:
         with ExclusionLayers(excl_fpath) as f:
             shape = f.shape
             row_slice, col_slice = MeanWindDirectionsPoint.get_agg_slices(
-                gid, shape, resolution)
+                gid, shape, resolution
+            )
 
             sc_blds = f[building_layer, row_slice, col_slice]
 
@@ -288,7 +289,7 @@ class TurbineFlicker:
 
     @classmethod
     def _exclude_turbine_flicker(cls, point, excl_fpath, res_fpath,
-                                 building_layer, hub_height,
+                                 building_layer, hub_height, rotor_diameter,
                                  building_threshold=0, flicker_threshold=30,
                                  resolution=640):
         """
@@ -314,7 +315,9 @@ class TurbineFlicker:
             Exclusion layer containing buildings from which turbine flicker
             exclusions will be computed.
         hub_height : int
-            Hub-height in meters to compute turbine shadow flicker for
+            Hub-height in meters to compute turbine shadow flicker.
+        rotor_diameter : int
+            Rotor diamter in meters to compute shadow flicker.
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
             buildings, values are % of pixel containing a building,
@@ -343,7 +346,7 @@ class TurbineFlicker:
             if len(wind_dir) == 8784:
                 wind_dir = wind_dir[:-24]
 
-        blade_length = hub_height / 2.5
+        blade_length = rotor_diameter / 2
         shadow_flicker = cls._compute_shadow_flicker(point['latitude'],
                                                      point['longitude'],
                                                      blade_length,
@@ -417,9 +420,9 @@ class TurbineFlicker:
 
         return points
 
-    def compute_exclusions(self, hub_height, building_threshold=0,
-                           flicker_threshold=30, max_workers=None,
-                           out_layer=None):
+    def compute_exclusions(self, hub_height, rotor_diameter,
+                           building_threshold=0, flicker_threshold=30,
+                           max_workers=None, out_layer=None):
         """
         Exclude all pixels that will cause flicker exceeding the
         "flicker_threshold" on any building in "building_layer". Buildings
@@ -431,7 +434,9 @@ class TurbineFlicker:
         Parameters
         ----------
         hub_height : int
-            Hub-height in meters to compute turbine shadow flicker for
+            Hub-height in meters to compute turbine shadow flicker.
+        rotor_diameter : int
+            Rotor diameter in meters to compute turbine shadow flicker.
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
             buildings, values are % of pixel containing a building,
@@ -466,9 +471,10 @@ class TurbineFlicker:
                       "resolution": self._res}
         flicker_arr = np.ones(exclusion_shape, dtype=np.uint8)
         if max_workers > 1:
-            msg = ('Computing exclusions from {} based on {}m turbines '
-                   'in parallel using {} workers'
-                   .format(self, hub_height, max_workers))
+            msg = ('Computing exclusions from {} based on {}m hub height '
+                   'turbines with {}m rotor diameters in parallel using {} '
+                   'workers'.format(self, hub_height, rotor_diameter,
+                                    max_workers))
             logger.info(msg)
 
             loggers = [__name__, 'reVX', 'rex']
@@ -479,6 +485,7 @@ class TurbineFlicker:
                     future = exe.submit(self._exclude_turbine_flicker,
                                         point, self._excl_h5, self._res_h5,
                                         self._bld_layer, hub_height,
+                                        rotor_diameter,
                                         **etf_kwargs)
                     futures.append(future)
 
@@ -489,13 +496,16 @@ class TurbineFlicker:
                                 .format((i + 1), len(futures)))
                     log_mem(logger)
         else:
-            msg = ('Computing exclusions from {} based on {}m turbines in '
-                   'serial'.format(self, hub_height))
+            msg = (
+                'Computing exclusions from {} based on {}m hub height, {}m '
+                'rotor diameter turbines in serial.'
+                .format(self, hub_height, rotor_diameter)
+            )
             logger.info(msg)
             for i, (_, point) in enumerate(self._sc_points.iterrows()):
                 row_idx, col_idx = self._exclude_turbine_flicker(
                     point, self._excl_h5, self._res_h5, self._bld_layer,
-                    hub_height, **etf_kwargs)
+                    hub_height, rotor_diameter, **etf_kwargs)
                 flicker_arr[row_idx, col_idx] = 0
                 logger.debug('Completed {} out of {} gids'
                              .format((i + 1), len(self._sc_points)))
@@ -504,12 +514,14 @@ class TurbineFlicker:
         if out_layer:
             logger.info('Saving flicker inclusion layer to {} as {}'
                         .format(self._excl_h5, out_layer))
-            description = ("Pixels with value 0 are excluded as they "
-                           "will cause greater than {} "
-                           "hours of flicker on buildings in {}. Shadow "
-                           "flicker is computed using a {}m turbine."
-                           .format(flicker_threshold, self._bld_layer,
-                                   hub_height))
+            description = (
+                'Pixels with value 0 are excluded as they will cause greater '
+                'than {} hours of flicker on buildings in {}. Shadow flicker '
+                'is computed using a {}m hub height, {}m rotor diameter '
+                'turbine.'
+                .format(flicker_threshold, self._bld_layer, hub_height,
+                        rotor_diameter)
+            )
             ExclusionsConverter._write_layer(self._excl_h5, out_layer,
                                              profile, flicker_arr,
                                              description=description)
@@ -518,9 +530,9 @@ class TurbineFlicker:
 
     @classmethod
     def run(cls, excl_fpath, res_fpath, building_layer, hub_height,
-            tm_dset='techmap_wtk', building_threshold=0,
-            flicker_threshold=30, resolution=640,
-            max_workers=None, out_layer=None):
+            rotor_diameter, tm_dset='techmap_wtk', building_threshold=0,
+            flicker_threshold=30, resolution=640, max_workers=None,
+            out_layer=None):
         """
         Exclude all pixels that will cause flicker exceeding the
         "flicker_threshold" on any building in "building_layer". Buildings
@@ -541,7 +553,9 @@ class TurbineFlicker:
             Exclusion layer containing buildings from which turbine flicker
             exclusions will be computed.
         hub_height : int
-            Hub-height in meters to compute turbine shadow flicker for
+            Hub-height in meters to compute turbine shadow flicker.
+        rotor_diameter : int
+            Rotor diameter in meters to compute turbine shadow flicker.
         tm_dset : str, optional
             Dataset / layer name for wind toolkit techmap,
             by default 'techmap_wtk'
@@ -568,13 +582,14 @@ class TurbineFlicker:
             flicker on buildings in "building_layer"
         """
         flicker = cls(excl_fpath, res_fpath, building_layer,
-                      resolution=resolution,
-                      tm_dset=tm_dset)
+                      resolution=resolution, tm_dset=tm_dset)
         out_excl = flicker.compute_exclusions(
             hub_height,
+            rotor_diameter,
             building_threshold=building_threshold,
             flicker_threshold=flicker_threshold,
             max_workers=max_workers,
-            out_layer=out_layer)
+            out_layer=out_layer
+        )
 
         return out_excl

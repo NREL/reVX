@@ -23,6 +23,7 @@ pytest.importorskip('hybrid.flicker')
 EXCL_H5 = os.path.join(TESTDATADIR, 'turbine_flicker', 'blue_creek_blds.h5')
 RES_H5 = os.path.join(TESTDATADIR, 'turbine_flicker', 'blue_creek_wind.h5')
 HUB_HEIGHT = 135
+ROTOR_DIAMETER = 108
 BASELINE = 'turbine_flicker'
 BLD_LAYER = 'blue_creek_buildings'
 
@@ -64,7 +65,7 @@ def test_shadow_flicker(flicker_threshold):
     """
     Test shadow_flicker
     """
-    blade_length = HUB_HEIGHT / 2.5
+    blade_length = ROTOR_DIAMETER / 2
     lat, lon = 39.913373, -105.220105
     wind_dir = np.zeros(8760)
     shadow_flicker = TurbineFlicker._compute_shadow_flicker(lat,
@@ -118,8 +119,8 @@ def test_turbine_flicker(max_workers):
         baseline = f[BASELINE]
 
     test = TurbineFlicker.run(EXCL_H5, RES_H5, BLD_LAYER, HUB_HEIGHT,
-                              tm_dset='techmap_wind', resolution=64,
-                              max_workers=max_workers)
+                              ROTOR_DIAMETER, tm_dset='techmap_wind',
+                              resolution=64, max_workers=max_workers)
     assert np.allclose(baseline, test)
 
 
@@ -131,6 +132,7 @@ def test_cli(runner):
     with tempfile.TemporaryDirectory() as td:
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)
+        out_layer = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd"
         config = {
             "log_directory": td,
             "excl_fpath": excl_h5,
@@ -139,6 +141,8 @@ def test_cli(runner):
             },
             "building_layer": BLD_LAYER,
             "hub_height": HUB_HEIGHT,
+            "out_layer": out_layer,
+            "rotor_diameter": ROTOR_DIAMETER,
             "log_level": "INFO",
             "res_fpath": RES_H5,
             "resolution": 64,
@@ -148,17 +152,17 @@ def test_cli(runner):
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
-        msg = ('Failed with error {}'
-               .format(traceback.print_exception(*result.exc_info)))
+        result = runner.invoke(main, ['from-config', '-c', config_path])
+        msg = 'Failed with error {}'.format(
+                traceback.print_exception(*result.exc_info)
+              )
         assert result.exit_code == 0, msg
 
         with ExclusionLayers(EXCL_H5) as f:
             baseline = f[BASELINE]
 
         with ExclusionLayers(excl_h5) as f:
-            test = f[f"{BLD_LAYER}-{HUB_HEIGHT}m"]
+            test = f[out_layer]
 
         assert np.allclose(baseline, test)
 

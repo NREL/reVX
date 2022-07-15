@@ -10,7 +10,8 @@ class TurbineFlickerConfig(AnalysisConfig):
     """Config framework for turbine flicker calculation"""
 
     NAME = 'TurbineFlicker'
-    REQUIREMENTS = ('excl_fpath', 'res_fpath', 'building_layer', 'hub_height')
+    REQUIREMENTS = ('excl_fpath', 'res_fpath', 'building_layer', 'hub_height',
+                    'rotor_diameter')
 
     def __init__(self, config):
         """
@@ -46,6 +47,13 @@ class TurbineFlickerConfig(AnalysisConfig):
         Get the turbine hub-height for which shadow flicker will be computed.
         """
         return self['hub_height']
+
+    @property
+    def rotor_diameter(self):
+        """
+        Get turbine rotor diameter for which shadow flicker will be computed.
+        """
+        return self['rotor_diameter']
 
     @property
     def tm_dset(self):
