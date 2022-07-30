@@ -6,6 +6,7 @@ import logging
 
 from reV.config.base_analysis_config import AnalysisConfig
 from reV.utilities.exceptions import ConfigError
+from reVX.setbacks.regulations import validate_regulations_input
 
 logger = logging.getLogger(__name__)
 
@@ -41,16 +42,9 @@ class SetbacksConfig(AnalysisConfig):
             logger.error(e)
             raise ConfigError(e)
 
-        no_base_setback = self.base_setback_dist is None
-        invalid_turbine_specs = (self.rotor_diameter is None
-                                 or self.hub_height is None)
-        not_enough_info = no_base_setback and invalid_turbine_specs
-        too_much_info = not no_base_setback and not invalid_turbine_specs
-        if not_enough_info or too_much_info:
-            raise RuntimeError(
-                "Must provide either `base_setback_dist` or both "
-                "`rotor_diameter` and `hub_height` (but not all three)."
-            )
+        validate_regulations_input(base_setback_dist=self.base_setback_dist,
+                                   hub_height=self.hub_height,
+                                   rotor_diameter=self.rotor_diameter)
 
     @property
     def feature_type(self):
