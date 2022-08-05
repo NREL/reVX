@@ -295,7 +295,7 @@ def test_plexos_agg_fout():
         plexos_meta, _, profiles = PlexosAggregation.run(
             PLEXOS_NODES, REV_SC, REEDS_1, CF_FPATH.format(2007),
             build_year=2050, max_workers=1,
-            plant_name_col='plexos_id', timezone='EST', tech_tag='wind',
+            plant_name_col='plexos_id', timezone='US/Eastern', tech_tag='wind',
             out_fpath=out_fpath)
 
         assert os.path.exists(out_fpath.replace('.h5', '_est.h5'))
