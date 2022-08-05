@@ -278,11 +278,11 @@ def test_plexos_agg_fout():
     """Test plexos node aggregation with file output and timezone roll"""
     with tempfile.TemporaryDirectory() as td:
         out_fpath = os.path.join(td, 'plexos_out.h5')
-        plexos_meta, _, profiles = PlexosAggregation.run(
-            PLEXOS_NODES, REV_SC, REEDS_1, CF_FPATH.format(2007),
-            build_year=2050, max_workers=1,
-            plant_name_col='plexos_id', timezone='UTC', tech_tag='wind',
-            out_fpath=out_fpath)
+        PlexosAggregation.run(PLEXOS_NODES, REV_SC, REEDS_1,
+                              CF_FPATH.format(2007), build_year=2050,
+                              max_workers=1, plant_name_col='plexos_id',
+                              timezone='UTC', tech_tag='wind',
+                              out_fpath=out_fpath)
 
         assert os.path.exists(out_fpath.replace('.h5', '_utc.h5'))
         assert os.path.exists(out_fpath.replace('.h5', '_utc.csv'))
@@ -292,11 +292,11 @@ def test_plexos_agg_fout():
         assert all(' wind' in c for c in df_utc.columns.values)
 
         out_fpath = os.path.join(td, 'plexos_out.h5')
-        plexos_meta, _, profiles = PlexosAggregation.run(
-            PLEXOS_NODES, REV_SC, REEDS_1, CF_FPATH.format(2007),
-            build_year=2050, max_workers=1,
-            plant_name_col='plexos_id', timezone='US/Eastern', tech_tag='wind',
-            out_fpath=out_fpath)
+        PlexosAggregation.run(PLEXOS_NODES, REV_SC, REEDS_1,
+                              CF_FPATH.format(2007), build_year=2050,
+                              max_workers=1, plant_name_col='plexos_id',
+                              timezone='US/Eastern', tech_tag='wind',
+                              out_fpath=out_fpath)
 
         assert os.path.exists(out_fpath.replace('.h5', '_est.h5'))
         assert os.path.exists(out_fpath.replace('.h5', '_est.csv'))
