@@ -122,16 +122,6 @@ class Regulations:
         for col in self.REQUIRED_COLUMNS:
             regulations = regulations[~regulations[col].isna()]
 
-        log_mem(logger)
-        fips_check = regulations['geometry'].isnull()
-        if fips_check.any():
-            msg = ('The following county FIPS were requested in the '
-                   'regulations but were not available in the '
-                   'Exclusions "cnty_fips" layer:\n{}'
-                   .format(regulations.loc[fips_check, 'FIPS']))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
         feature_types = regulations['Feature Type'].str.strip().str.lower()
         regulations['Feature Type'] = feature_types
 
