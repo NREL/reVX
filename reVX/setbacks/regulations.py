@@ -72,7 +72,10 @@ class Regulations:
             setbacks.
         """
         if regulations_fpath:
-            self._regulations = self._parse_regulations(regulations_fpath)
+            try:
+                self.regulations = parse_table(regulations_fpath)
+            except ValueError:
+                self.regulations = gpd.read_file(regulations_fpath)
             logger.debug('Computing setbacks using regulations provided in: {}'
                          .format(regulations_fpath))
 
@@ -86,46 +89,57 @@ class Regulations:
             logger.error(msg)
             raise RuntimeError(msg)
 
-    def _parse_regulations(self, regulations_fpath):
-        """Parse regulations file.
-
-        Parameters
-        ----------
-        regulations_fpath : str
-            Path to regulations .csv or .gpkg file .
+    @property
+    def regulations(self):
+        """Regulations table.
 
         Returns
         -------
-        regulations: `geopandas.GeoDataFrame`
-            GeoDataFrame with county level setback regulations merged
-            with county geometries, use for intersecting with setback
-            features.
+        geopandas.GeoDataFrame | None
         """
-        try:
-            regulations = parse_table(regulations_fpath)
-        except ValueError:
-            regulations = gpd.read_file(regulations_fpath)
+        return self._regulations
 
+    @regulations.setter
+    def regulations(self, regulations):
+        self._regulations = regulations
+        self._validate_regulations()
+
+    def _validate_regulations(self):
+        """Perform several validations on regulations"""
+
+        self._convert_cols_to_title()
+        self._check_for_req_missing_cols()
+        self._remove_nans_from_req_cols()
+        self._casefold_feature_types()
+
+    def _convert_cols_to_title(self):
+        """Convert column names in regulations DataFrame to str.title(). """
         new_col_names = {col: col.lower().title()
-                         for col in regulations.columns
+                         for col in self._regulations.columns
                          if col.lower() not in {"geometry", "fips"}}
-        regulations = regulations.rename(new_col_names, axis=1)
+        self._regulations = self._regulations.rename(new_col_names, axis=1)
 
+    def _check_for_req_missing_cols(self):
+        """Check for missing (required) columns in regulations DataFrame. """
         missing = [col for col in self.REQUIRED_COLUMNS
-                   if col not in regulations]
+                   if col not in self._regulations]
         if any(missing):
             msg = ('Regulations are missing the following required columns: {}'
                    .format(missing))
             logger.error(msg)
             raise RuntimeError(msg)
 
+    def _remove_nans_from_req_cols(self):
+        """Remove rows with NaN values from required columns. """
         for col in self.REQUIRED_COLUMNS:
-            regulations = regulations[~regulations[col].isna()]
+            na_rows = self._regulations[col].isna()
+            self._regulations = self._regulations[~na_rows]
 
-        feature_types = regulations['Feature Type'].str.strip().str.lower()
-        regulations['Feature Type'] = feature_types
-
-        return regulations
+    def _casefold_feature_types(self):
+        """Casefold "Feature Type" values. """
+        feature_types = self._regulations['Feature Type'].str.strip()
+        feature_types = feature_types.str.casefold()
+        self._regulations['Feature Type'] = feature_types
 
     @property
     def base_setback_dist(self):
@@ -164,55 +178,21 @@ class Regulations:
         """
         return self._multi
 
-    @property
-    def regulations(self):
-        """Regulations table.
-
-        Returns
-        -------
-        geopandas.GeoDataFrame | None
-        """
-        return self._regulations
-
-    def get_regulation_setback(self, county_regulations):
-        """Compute the setback distance for the county.
-
-        Compute the setback distance (in meters) from the
-        county regulations or the base setback distance.
-
-        Parameters
-        ----------
-        county_regulations : pandas.Series
-            Pandas Series with regulations for a single county
-            or feature type. At a minimum, this Series must
-            contain the following columns: `Value Type`, which
-            specifies wether the value is a multiplier or static height,
-            `Value`, which specifies the numeric value of the setback or
-            multiplier. Valid options for the `Value Type` are:
-                - "Structure Height Multiplier"
-                - "Meters"
-
-        Returns
-        -------
-        setback : float | None
-            Setback distance in meters, or `None` if the setback
-            `Value Type` was not recognized.
-        """
-
-        setback_type = county_regulations["Value Type"].strip()
-        setback = float(county_regulations["Value"])
-        if setback_type.lower() == "structure height multiplier":
-            setback *= self.base_setback_dist
-        elif setback_type.lower() != "meters":
-            msg = ("Cannot create setback for {}, expecting "
-                   '"Structure Height Multiplier", or '
-                   '"Meters", but got {}'
-                   .format(county_regulations["County"], setback_type))
-            logger.warning(msg)
-            warn(msg)
-            setback = None
-
-        return setback
+    def __iter__(self):
+        for ind, county_regulations in self.regulations.iterrows():
+            setback_type = county_regulations["Value Type"].strip()
+            setback = float(county_regulations["Value"])
+            if setback_type.lower() == "structure height multiplier":
+                setback *= self.base_setback_dist
+            elif setback_type.lower() != "meters":
+                msg = ("Cannot create setback for {}, expecting "
+                    '"Structure Height Multiplier", or '
+                    '"Meters", but got {}'
+                    .format(county_regulations["County"], setback_type))
+                logger.warning(msg)
+                warn(msg)
+                continue
+            yield setback, self.regulations.iloc[[ind]].copy()
 
 
 class WindRegulations(Regulations):
@@ -305,52 +285,27 @@ class WindRegulations(Regulations):
         """
         return self._rotor_diameter
 
-    def get_regulation_setback(self, county_regulations):
-        """
-        Compute the setback distance in meters from the county
-        regulations, turbine tip height or rotor diameter.
-
-        Parameters
-        ----------
-        county_regulations : pandas.Series
-            Pandas Series with wind regulations for a single county or
-            feature type. At a minimum, this Series must
-            contain the following columns: `Value Type`, which
-            specifies wether the value is a multiplier or static height,
-            `Value`, which specifies the numeric value of the setback or
-            multiplier. Valid options for the `Value Type` are:
-                - "Max-tip Height Multiplier"
-                - "Rotor-Diameter Multiplier"
-                - "Hub-height Multiplier"
-                - "Meters"
-
-        Returns
-        -------
-        setback : float | None
-            setback distance in meters, None if the setback "Value Type"
-            was not recognized
-        """
-
-        setback_type = county_regulations["Value Type"].strip()
-        setback = county_regulations["Value"]
-        if setback_type.lower() == "max-tip height multiplier":
-            setback *= self.base_setback_dist
-        elif setback_type.lower() == "rotor-diameter multiplier":
-            setback *= self.rotor_diameter
-        elif setback_type.lower() == "hub-height multiplier":
-            setback *= self.hub_height
-        elif setback_type.lower() != "meters":
-            msg = ('Cannot create setback for {}, expecting '
-                   '"Max-tip Height Multiplier", '
-                   '"Rotor-Diameter Multiplier", '
-                   '"Hub-height Multiplier", or '
-                   '"Meters", but got {}'
-                   .format(county_regulations["County"], setback_type))
-            logger.warning(msg)
-            warn(msg)
-            setback = None
-
-        return setback
+    def __iter__(self):
+        for ind, county_regulations in self.regulations.iterrows():
+            setback_type = county_regulations["Value Type"].strip()
+            setback = float(county_regulations["Value"])
+            if setback_type.lower() == "max-tip height multiplier":
+                setback *= self.base_setback_dist
+            elif setback_type.lower() == "rotor-diameter multiplier":
+                setback *= self.rotor_diameter
+            elif setback_type.lower() == "hub-height multiplier":
+                setback *= self.hub_height
+            elif setback_type.lower() != "meters":
+                msg = ('Cannot create setback for {}, expecting '
+                    '"Max-tip Height Multiplier", '
+                    '"Rotor-Diameter Multiplier", '
+                    '"Hub-height Multiplier", or '
+                    '"Meters", but got {}'
+                    .format(county_regulations["County"], setback_type))
+                logger.warning(msg)
+                warn(msg)
+                continue
+            yield setback, self.regulations.iloc[[ind]].copy()
 
 
 def validate_regulations_input(base_setback_dist=None, hub_height=None,
