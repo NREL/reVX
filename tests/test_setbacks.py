@@ -21,7 +21,9 @@ from rex.utilities.loggers import LOGGERS
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.setbacks.base import BaseSetbacks
-from reVX.setbacks.regulations import Regulations, WindRegulations
+from reVX.setbacks.regulations import (Regulations, WindRegulations,
+                                       validate_regulations_input,
+                                       select_regulations)
 from reVX.setbacks import (StructureWindSetbacks, RailWindSetbacks,
                            SolarParcelSetbacks, WindParcelSetbacks,
                            SolarWaterSetbacks, WindWaterSetbacks)
@@ -717,6 +719,29 @@ def test_wind_regulations():
         assert np.isclose(setback, expected_setbacks[ind])
         assert regs.regulations.iloc[[ind]].equals(cnty)
 
+
+def test_validate_regulations_input():
+    """Test that `validate_regulations_input` throws for incorrect input. """
+    with pytest.raises(RuntimeError):
+        validate_regulations_input()
+
+    with pytest.raises(RuntimeError):
+        validate_regulations_input(1, 2, 3)
+
+
+def test_select_regulations():
+    """Test that `test_select_regulations` returns correct class. """
+    with pytest.raises(RuntimeError):
+        select_regulations()
+
+    with pytest.raises(RuntimeError):
+        select_regulations(1, 2, 3)
+
+    assert isinstance(select_regulations(None, 2, 3, None, 1.1),
+                      WindRegulations)
+
+    assert isinstance(select_regulations(1, None, None, None, 1.1),
+                      Regulations)
 
 def test_cli_structures(runner):
     """
