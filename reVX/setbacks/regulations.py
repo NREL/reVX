@@ -81,8 +81,8 @@ class Regulations:
                          'multiplier of {}'.format(self._multi))
 
         if not regulations_fpath and not self._multi:
-            msg = ('Computing setbacks requires either a regulations '
-                   '.csv file or a generic multiplier!')
+            msg = ('Computing setbacks requires a regulations '
+                   '.csv file and/or a generic multiplier!')
             logger.error(msg)
             raise RuntimeError(msg)
 
