@@ -6,7 +6,7 @@ from warnings import warn
 import logging
 import geopandas as gpd
 
-from rex.utilities import parse_table, log_mem
+from rex.utilities import parse_table
 
 
 logger = logging.getLogger(__name__)
