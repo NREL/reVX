@@ -414,6 +414,8 @@ class BaseProfileAggregation(ABC):
         self._output_meta = None
         self._time_index = None
         self._timezone = None
+        self._plant_name_col = None
+        self._tech_tag = None
 
     @property
     def time_index(self):
@@ -671,3 +673,53 @@ class BaseProfileAggregation(ABC):
                             counter += 1
 
         return names
+
+    def export(self, meta, time_index, profiles, out_fpath):
+        """Export generation profiles to h5 and plexos-formatted csv
+
+        Parameters
+        ----------
+        plant_meta : pd.DataFrame
+            Plant / plexos node meta data with built capacities and mappings to
+            the resource used.
+        time_index : pd.datetimeindex
+            Time index for the profiles.
+        profiles : np.ndarray
+            Generation profile timeseries in MW at each plant / plexos node.
+        out_fpath : str, optional
+            Path to .h5 file into which plant buildout should be saved. A
+            plexos-formatted csv will also be written in the same directory.
+            By default None.
+        """
+
+        if not out_fpath.endswith('.h5'):
+            out_fpath = out_fpath + '.h5'
+
+        out_fpath = out_fpath.replace('.h5', f'_{self.tz_alias}.h5')
+
+        logger.info('Saving result to file: {}'.format(out_fpath))
+
+        profiles = self.tz_convert_profiles(profiles, self._timezone)
+
+        with Outputs(out_fpath, mode='a') as out:
+            out.meta = meta
+            out.time_index = time_index
+            out._create_dset('profiles',
+                             profiles.shape,
+                             profiles.dtype,
+                             chunks=(None, 100),
+                             data=profiles,
+                             attrs={'units': 'MW'})
+
+        names = np.arange(profiles.shape[1])
+        if self._plant_name_col is not None:
+            names = self.get_unique_plant_names(meta, self._plant_name_col,
+                                                self._tech_tag)
+
+        df_plx = pd.DataFrame(profiles, columns=names,
+                              index=time_index.tz_convert(None))
+        df_plx.index.name = 'DATETIME'
+        csv_fp = out_fpath.replace('.h5', '.csv')
+        df_plx.to_csv(csv_fp)
+
+        logger.info('Wrote plexos formatted profiles to: {}'.format(csv_fp))

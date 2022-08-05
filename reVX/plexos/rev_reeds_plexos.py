@@ -644,46 +644,12 @@ class PlexosAggregation(BaseProfileAggregation):
 
         return profiles
 
-    def export(self, profiles, out_fpath):
-
-        if not out_fpath.endswith('.h5'):
-            out_fpath = out_fpath + '.h5'
-
-        out_fpath = out_fpath.replace('.h5', f'_{self.tz_alias}.h5')
-
-        logger.info('Saving result to file: {}'.format(out_fpath))
-
-        profiles = self.tz_convert_profiles(profiles, self._timezone)
-
-        with Outputs(out_fpath, mode='a') as out:
-            out.meta = self.plexos_meta
-            out.time_index = self.time_index
-            out._create_dset('gen_profiles',
-                             profiles.shape,
-                             profiles.dtype,
-                             chunks=(None, 100),
-                             data=profiles,
-                             attrs={'units': 'MW'})
-
-        names = np.arange(profiles.shape[1])
-        if self._plant_name_col is not None:
-            names = BaseProfileAggregation.get_unique_plant_names(
-                self.plexos_meta, self._plant_name_col, self._tech_tag)
-
-        df_plx = pd.DataFrame(profiles, columns=names,
-                              index=self.time_index.tz_convert(None))
-        df_plx.index.name = 'DATETIME'
-        csv_fp = out_fpath.replace('.h5', '.csv')
-        df_plx.to_csv(csv_fp)
-
-        logger.info('Wrote plexos formatted profiles to: {}'.format(csv_fp))
-
     @classmethod
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
             forecast_fpath=None, build_year=2050, plexos_columns=None,
             force_full_build=False, force_shape_map=False,
             plant_name_col=None, tech_tag=None, timezone='UTC',
-            max_workers=None):
+            out_fpath=None, max_workers=None):
         """Run plexos aggregation.
 
         Parameters
@@ -740,6 +706,10 @@ class PlexosAggregation(BaseProfileAggregation):
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
             US/Central, US/Eastern, or UTC. For a list of all available
             timezones, see pytz.all_timezones
+        out_fpath : str, optional
+            Path to .h5 file into which plant buildout should be saved. A
+            plexos-formatted csv will also be written in the same directory.
+            By default None.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -766,6 +736,9 @@ class PlexosAggregation(BaseProfileAggregation):
                  max_workers=max_workers)
 
         profiles = pa.make_profiles()
+
+        if out_fpath is not None:
+            pa.export(pa.plexos_meta, pa.time_index, profiles, out_fpath)
 
         return pa.plexos_meta, pa.time_index, profiles
 
