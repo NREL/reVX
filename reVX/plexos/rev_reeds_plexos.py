@@ -41,6 +41,7 @@ class PlexosAggregation(BaseProfileAggregation):
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
                  force_full_build=False, force_shape_map=False,
+                 plant_name_col=None, tech_tag=None, timezone='UTC',
                  max_workers=None):
         """
         Parameters
@@ -84,6 +85,17 @@ class PlexosAggregation(BaseProfileAggregation):
             Flag to force the mapping of supply curve points to the plexos
             node shape file input (if a shape file is input) via nearest
             neighbor to shape centroid.
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -99,6 +111,9 @@ class PlexosAggregation(BaseProfileAggregation):
         self._force_full_build = force_full_build
         self._force_shape_map = force_shape_map
         self.max_workers = max_workers
+        self._plant_name_col = plant_name_col
+        self._tech_tag = tech_tag
+        self._timezone = timezone
 
         if plexos_columns is None:
             plexos_columns = tuple()
@@ -632,7 +647,9 @@ class PlexosAggregation(BaseProfileAggregation):
     @classmethod
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
             forecast_fpath=None, build_year=2050, plexos_columns=None,
-            force_full_build=False, force_shape_map=False, max_workers=None):
+            force_full_build=False, force_shape_map=False,
+            plant_name_col=None, tech_tag=None, timezone='UTC',
+            out_fpath=None, max_workers=None):
         """Run plexos aggregation.
 
         Parameters
@@ -678,6 +695,21 @@ class PlexosAggregation(BaseProfileAggregation):
             Flag to force the mapping of supply curve points to the plexos
             node shape file input (if a shape file is input) via nearest
             neighbor to shape centroid.
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
+        out_fpath : str, optional
+            Path to .h5 file into which plant buildout should be saved. A
+            plexos-formatted csv will also be written in the same directory.
+            By default None.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -698,9 +730,15 @@ class PlexosAggregation(BaseProfileAggregation):
                  plexos_columns=plexos_columns,
                  force_full_build=force_full_build,
                  force_shape_map=force_shape_map,
+                 plant_name_col=plant_name_col,
+                 tech_tag=tech_tag,
+                 timezone=timezone,
                  max_workers=max_workers)
 
         profiles = pa.make_profiles()
+
+        if out_fpath is not None:
+            pa.export(pa.plexos_meta, pa.time_index, profiles, out_fpath)
 
         return pa.plexos_meta, pa.time_index, profiles
 

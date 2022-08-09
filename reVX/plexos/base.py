@@ -5,6 +5,9 @@ Created on Wed Aug 21 13:47:43 2019
 @author: gbuster
 """
 from abc import ABC
+from collections import Counter
+import datetime
+import pytz
 import copy
 import json
 import logging
@@ -16,6 +19,15 @@ from reVX.handlers.outputs import Outputs
 from reVX.plexos.utilities import DataCleaner, get_coord_labels
 
 logger = logging.getLogger(__name__)
+
+
+TZ_ALIASES = {'UTC': 'utc',
+              'Universal': 'utc',
+              'US/Pacific': 'pst',
+              'US/Mountain': 'mst',
+              'US/Central': 'cst',
+              'US/Eastern': 'est',
+              }
 
 
 class PlexosNode:
@@ -402,6 +414,9 @@ class BaseProfileAggregation(ABC):
         self._forecast_map = None
         self._output_meta = None
         self._time_index = None
+        self._timezone = None
+        self._plant_name_col = None
+        self._tech_tag = None
 
     @property
     def time_index(self):
@@ -418,6 +433,17 @@ class BaseProfileAggregation(ABC):
                 self._time_index = cf_outs.time_index
 
         return self._time_index
+
+    @property
+    def tz_alias(self):
+        """Get a short 3-char tz alias if the timezone is common in the US
+        (pst, mst, cst, est)
+
+        Returns
+        -------
+        str
+        """
+        return TZ_ALIASES.get(self._timezone, self._timezone)
 
     @property
     def available_res_gids(self):
@@ -561,3 +587,151 @@ class BaseProfileAggregation(ABC):
             self._output_meta.at[index, 'res_gids'] += res_gids
             self._output_meta.at[index, 'gen_gids'] += gen_gids
             self._output_meta.at[index, 'res_built'] += res_built
+
+    @staticmethod
+    def tz_convert_profiles(profiles, timezone):
+        """Convert profiles to local time and forward/back fill missing data.
+
+        Parameters
+        ----------
+        profiles : np.ndarray
+            Profiles of shape (time, n_plants) in UTC
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
+
+        Returns
+        -------
+        profiles : np.ndarray
+            Profiles of shape (time, n_plants) in timezone
+        """
+
+        logger.info('Converting profiles timezone to {}'.format(timezone))
+
+        if len(profiles) < 8760:
+            msg = ('Cannot use profiles that are not at least hourly! '
+                   'Received shape {}'.format(profiles.shape))
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        steps_per_hour = len(profiles) // 8760
+
+        # use jan 1 to avoid daylight savings
+        date = datetime.datetime(2011, 1, 1)
+        date = pytz.timezone(timezone).localize(date)
+        tz_offset = int(date.strftime('%z')[:3])
+        roll_int = steps_per_hour * tz_offset
+
+        profiles = np.roll(profiles, roll_int, axis=0)
+
+        if roll_int < 0:
+            for i in range(roll_int, 0):
+                # don't fill nighttime for solar
+                if not (profiles[i, :] == 0).all():
+                    profiles[i, :] = np.nan
+            profiles = pd.DataFrame(profiles).ffill().values
+        elif roll_int > 0:
+            for i in range(1, roll_int + 1):
+                # don't fill nighttime for solar
+                if not (profiles[i, :] == 0).all():
+                    profiles[i, :] = np.nan
+            profiles = pd.DataFrame(profiles).bfill().values
+
+        return profiles
+
+    @staticmethod
+    def get_unique_plant_names(table, name_col, tech_tag=None):
+        """Get a list of ordered unique plant names
+
+        Parameters
+        ----------
+        table : pd.DataFrame
+            Plexos / plant meta data table where every row is a plant
+        name_col : str
+            Column label in table. Exception will be raised if not found.
+        tech_tag : str
+            Technology tag to append to plant names like "pv" or "wind"
+
+        Returns
+        -------
+        names : list | None
+            List of unique plant names
+        """
+
+        names = None
+        if name_col is None:
+            return names
+
+        if name_col not in table:
+            msg = ('Could not find requested name column "{}" in plexos '
+                   'table, the available columns are: {}'
+                   .format(name_col, sorted(table.columns.values)))
+            logger.error(msg)
+            raise KeyError(msg)
+
+        names = table[name_col].values.tolist()
+
+        if tech_tag is not None:
+            names = [name + f' {tech_tag}' for name in names]
+
+        counter = Counter(names)
+        if any(c > 1 for c in counter.values()):
+            for name, count in counter.items():
+                if count > 1:
+                    dup_names = [name + f' {c}' for c in range(count)]
+                    for dup_name in dup_names:
+                        names[names.index(name)] = dup_name
+
+        return names
+
+    def export(self, meta, time_index, profiles, out_fpath):
+        """Export generation profiles to h5 and plexos-formatted csv
+
+        Parameters
+        ----------
+        plant_meta : pd.DataFrame
+            Plant / plexos node meta data with built capacities and mappings to
+            the resource used.
+        time_index : pd.datetimeindex
+            Time index for the profiles.
+        profiles : np.ndarray
+            Generation profile timeseries in MW at each plant / plexos node.
+        out_fpath : str, optional
+            Path to .h5 file into which plant buildout should be saved. A
+            plexos-formatted csv will also be written in the same directory.
+            By default None.
+        """
+
+        if not out_fpath.endswith('.h5'):
+            out_fpath = out_fpath + '.h5'
+
+        out_fpath = out_fpath.replace('.h5', f'_{self.tz_alias}.h5')
+
+        logger.info('Saving result to file: {}'.format(out_fpath))
+
+        profiles = self.tz_convert_profiles(profiles, self._timezone)
+
+        with Outputs(out_fpath, mode='a') as out:
+            out.meta = meta
+            out.time_index = time_index
+            out._create_dset('profiles',
+                             profiles.shape,
+                             profiles.dtype,
+                             chunks=(None, 100),
+                             data=profiles,
+                             attrs={'units': 'MW'})
+
+        names = np.arange(profiles.shape[1])
+        if self._plant_name_col is not None:
+            names = self.get_unique_plant_names(meta, self._plant_name_col,
+                                                self._tech_tag)
+
+        df_plx = pd.DataFrame(profiles, columns=names,
+                              index=time_index.tz_convert(None))
+        df_plx.index.name = 'DATETIME'
+        csv_fp = out_fpath.replace('.h5', '.csv')
+        df_plx.to_csv(csv_fp)
+
+        logger.info('Wrote plexos formatted profiles to: {}'.format(csv_fp))
