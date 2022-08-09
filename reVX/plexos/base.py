@@ -5,6 +5,7 @@ Created on Wed Aug 21 13:47:43 2019
 @author: gbuster
 """
 from abc import ABC
+from collections import Counter
 import datetime
 import pytz
 import copy
@@ -644,33 +645,44 @@ class BaseProfileAggregation(ABC):
     def get_unique_plant_names(table, name_col, tech_tag=None):
         """Get a list of ordered unique plant names
 
+        Parameters
+        ----------
+        table : pd.DataFrame
+            Plexos / plant meta data table where every row is a plant
+        name_col : str
+            Column label in table. Exception will be raised if not found.
+        tech_tag : str
+            Technology tag to append to plant names like "pv" or "wind"
+
         Returns
         -------
-        list | None
+        names : list | None
+            List of unique plant names
         """
+
         names = None
-        if name_col is not None:
-            if name_col not in table:
-                msg = ('Could not find requested name column "{}" in plexos '
-                       'table, the available columns are: {}'
-                       .format(name_col, sorted(table.columns.values)))
-                logger.error(msg)
-                raise KeyError(msg)
+        if name_col is None:
+            return names
 
-            names = table[name_col].values.tolist()
+        if name_col not in table:
+            msg = ('Could not find requested name column "{}" in plexos '
+                   'table, the available columns are: {}'
+                   .format(name_col, sorted(table.columns.values)))
+            logger.error(msg)
+            raise KeyError(msg)
 
-            if tech_tag is not None:
-                names = [name + f' {tech_tag}' for name in names]
+        names = table[name_col].values.tolist()
 
-            seen = set()
-            dups = [x for x in names if x in seen or seen.add(x)]
-            if any(dups):
-                for dup in dups:
-                    counter = 1
-                    for i, name in enumerate(names):
-                        if name == dup:
-                            names[i] = name + ' {}'.format(counter)
-                            counter += 1
+        if tech_tag is not None:
+            names = [name + f' {tech_tag}' for name in names]
+
+        counter = Counter(names)
+        if any(c > 1 for c in counter.values()):
+            for name, count in counter.items():
+                if count > 1:
+                    dup_names = [name + f' {c}' for c in range(count)]
+                    for dup_name in dup_names:
+                        names[names.index(name)] = dup_name
 
         return names
 

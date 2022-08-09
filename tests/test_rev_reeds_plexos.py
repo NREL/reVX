@@ -318,6 +318,24 @@ def test_plexos_agg_fout():
             assert len(set(df_est.iloc[-5:, i].values)) == 1
 
 
+def test_dup_names():
+    """Test the duplicate plexos plant name functionality"""
+    table = pd.DataFrame({'plant_name': ['a', 'b', 'c']})
+    names = PlexosAggregation.get_unique_plant_names(table, 'plant_name',
+                                                     tech_tag=None)
+    assert names == ['a', 'b', 'c']
+
+    table = pd.DataFrame({'plant_name': ['a', 'a', 'c']})
+    names = PlexosAggregation.get_unique_plant_names(table, 'plant_name',
+                                                     tech_tag=None)
+    assert names == ['a 0', 'a 1', 'c']
+
+    table = pd.DataFrame({'plant_name': ['a', 'a', 'c']})
+    names = PlexosAggregation.get_unique_plant_names(table, 'plant_name',
+                                                     tech_tag='pv')
+    assert names == ['a pv 0', 'a pv 1', 'c pv']
+
+
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 
