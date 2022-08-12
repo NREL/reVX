@@ -6,12 +6,15 @@ import logging
 
 from reVX.setbacks.base import BaseSetbacks, features_clipped_to_county
 
-
 logger = logging.getLogger(__name__)
 
 
-class WaterSetbacks(BaseSetbacks):
-    """Water setbacks. """
+class RailSetbacks(BaseSetbacks):
+    """Rail setbacks.
+
+    These setbacks are computed against a single set of railroad
+    features instead of state level features.
+    """
 
     @staticmethod
     def _feature_filter(features, cnty):
@@ -27,7 +30,7 @@ class WaterSetbacks(BaseSetbacks):
         features_fpath : str
             Path to shape file with features to compute setbacks from
         """
-        mask = self.regulations_table['Feature Type'] == 'water'
+        mask = self.regulations_table['Feature Type'] == 'railroads'
 
         if not mask.any():
             msg = "Found no local regulations!"
@@ -37,4 +40,3 @@ class WaterSetbacks(BaseSetbacks):
         self.regulations_table = (self.regulations_table.loc[mask]
                                   .reset_index(drop=True))
         super()._check_regulations_table(features_fpath)
-
