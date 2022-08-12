@@ -179,6 +179,8 @@ class Regulations:
         return self._multi
 
     def __iter__(self):
+        if self._regulations is None:
+            return
         for ind, county_regulations in self.regulations.iterrows():
             setback = self._county_regulation_setback(county_regulations)
             if setback is None:

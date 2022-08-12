@@ -703,6 +703,9 @@ def test_regulations_iter():
         assert np.isclose(setback, expected_setbacks[ind])
         assert regs.regulations.iloc[[ind]].equals(cnty)
 
+    regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
+    assert len([(setback, cnty) for setback, cnty in regs]) == 0
+
 
 def test_wind_regulations():
     """Test `WindRegulations` initialization and iteration. """
