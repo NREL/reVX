@@ -180,19 +180,26 @@ class Regulations:
 
     def __iter__(self):
         for ind, county_regulations in self.regulations.iterrows():
-            setback_type = county_regulations["Value Type"].strip()
-            setback = float(county_regulations["Value"])
-            if setback_type.lower() == "structure height multiplier":
-                setback *= self.base_setback_dist
-            elif setback_type.lower() != "meters":
-                msg = ("Cannot create setback for {}, expecting "
-                       '"Structure Height Multiplier", or '
-                       '"Meters", but got {}'
-                       .format(county_regulations["County"], setback_type))
-                logger.warning(msg)
-                warn(msg)
+            setback = self._county_regulation_setback(county_regulations)
+            if setback is None:
                 continue
             yield setback, self.regulations.iloc[[ind]].copy()
+
+    def _county_regulation_setback(self, county_regulations):
+        """Retrieve county regulation setback. """
+        setback_type = county_regulations["Value Type"].strip()
+        setback = float(county_regulations["Value"])
+        if setback_type.lower() == "structure height multiplier":
+            setback *= self.base_setback_dist
+        elif setback_type.lower() != "meters":
+            msg = ("Cannot create setback for {}, expecting "
+                   '"Structure Height Multiplier", or '
+                   '"Meters", but got {}'
+                   .format(county_regulations["County"], setback_type))
+            logger.warning(msg)
+            warn(msg)
+            return
+        return setback
 
 
 class WindRegulations(Regulations):
@@ -285,27 +292,27 @@ class WindRegulations(Regulations):
         """
         return self._rotor_diameter
 
-    def __iter__(self):
-        for ind, county_regulations in self.regulations.iterrows():
-            setback_type = county_regulations["Value Type"].strip()
-            setback = float(county_regulations["Value"])
-            if setback_type.lower() == "max-tip height multiplier":
-                setback *= self.base_setback_dist
-            elif setback_type.lower() == "rotor-diameter multiplier":
-                setback *= self.rotor_diameter
-            elif setback_type.lower() == "hub-height multiplier":
-                setback *= self.hub_height
-            elif setback_type.lower() != "meters":
-                msg = ('Cannot create setback for {}, expecting '
-                       '"Max-tip Height Multiplier", '
-                       '"Rotor-Diameter Multiplier", '
-                       '"Hub-height Multiplier", or '
-                       '"Meters", but got {}'
-                       .format(county_regulations["County"], setback_type))
-                logger.warning(msg)
-                warn(msg)
-                continue
-            yield setback, self.regulations.iloc[[ind]].copy()
+    def _county_regulation_setback(self, county_regulations):
+        """Retrieve county regulation setback. """
+        setback_type = county_regulations["Value Type"].strip()
+        setback = float(county_regulations["Value"])
+        if setback_type.lower() == "max-tip height multiplier":
+            setback *= self.base_setback_dist
+        elif setback_type.lower() == "rotor-diameter multiplier":
+            setback *= self.rotor_diameter
+        elif setback_type.lower() == "hub-height multiplier":
+            setback *= self.hub_height
+        elif setback_type.lower() != "meters":
+            msg = ('Cannot create setback for {}, expecting '
+                   '"Max-tip Height Multiplier", '
+                   '"Rotor-Diameter Multiplier", '
+                   '"Hub-height Multiplier", or '
+                   '"Meters", but got {}'
+                   .format(county_regulations["County"], setback_type))
+            logger.warning(msg)
+            warn(msg)
+            return
+        return setback
 
 
 def validate_regulations_input(base_setback_dist=None, hub_height=None,
