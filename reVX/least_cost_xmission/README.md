@@ -86,6 +86,9 @@ python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
 ```
 
 ## Atlantic Off-Show Wind Transmission (AOSWT) Examples
+### Creating POI transmission features from points
+The onshore point of interconnections (POIs) have typically been provided in a CSV file. These must be converted to short lines in a GeoPackage to work with the LCP code. Note that the POIs must also be connected to a transmission line. The `convert_pois_to_lines()` function in `aoswt_utilities.py` will perform all necessary operations to convert the CSV file to a properly configured GeoPackage. An example notebook is in this repo at `examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`. Paths from POIs to the fake transmission line can be removed in post processing using the `--drop TransLine` optoin.
+
 ### Build friction and barriers layer
 An example Jupyter notebook for building the friction and barrier layers can be found in the `examples/least_cost_paths` directory of this repo.
 
@@ -140,7 +143,10 @@ python least_cost_xmission_cli.py local -v \
 ```
 
 ### Run AOSWT from a config file
-Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. Note that SLURM high quality of service on a standard node can be requested with `"feature": "--qos=high"`. This file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Memory usage increases with the square of radius. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
+Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. Note that SLURM high quality of service on a standard node can be requested with `"feature": "--qos=high"`. This file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Memory usage increases with the square of radius. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The `simplify_geo` key is set to `100`. Be default, the saved paths will have vertices for each raster cell, resulting in very large output files. Using `simplify_geo` simplifies the geometry, greatly reduces output file sizes, and improves run times. Large number will result in less vertices and smaller files sizes.
+
+
+The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out. 
 
 ```
 {
@@ -163,7 +169,8 @@ Using a config file is the prefered method of running an analysis. The below fil
   "sc_point_gids": [40139],
   "resolution": 118,
   "save_paths": true,
-  "radius": 5000
+  "radius": 5000,
+  "simplify_geo": 100
 }
 ```
 
@@ -192,12 +199,11 @@ python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
 output_files_*.gpkg
 ```
 
-Additionally, the results may be split into GeoJSONs by transmission feature connected with the following. This will not create a combined GeoPackage file. The optional `--simplify-geo` flag is also used. By default, the paths contain a vertex every 90m which results in large output files. Simplifying the geometries reduces the file size and creates more realistic paths. `simplify_geo` can also be set in the processing config file if desired. 
+Additionally, the results may be split into GeoJSONs by transmission feature connected to with the following. This will not create a combined GeoPackage file. The optional `--simplify-geo YYY` argument, where `YYY` is a number, can also be used if not set in the config file. Setting `simplify-geo` in the config file results in much faster run times than in post-processing.
 
 ```
 python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
---drop TransLine --drop LoadCen \
+--drop TransLine \
 --split-to-geojson --out-path ./out \
---simplify-geo 100 \
 output_files_*.gpkg
 ```
