@@ -454,170 +454,188 @@ def test_local_water_wind(max_workers, regulations_fpath):
     assert not counties_with_exclusions_but_not_in_regulations_csv
 
 
-# def test_regulations_preflight_check():
-#     """
-#     Test Regulations preflight_checks
-#     """
-#     with pytest.raises(RuntimeError):
-#         WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
+def test_regulations_preflight_check():
+    """
+    Test Regulations preflight_checks
+    """
+    with pytest.raises(RuntimeError):
+        WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
 
 
-# def test_high_res_excl_array():
-#     """Test the multiplier of the exclusion array is applied correctly. """
+def test_high_res_excl_array():
+    """Test the multiplier of the exclusion array is applied correctly. """
 
-#     mult = 5
-#     setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                                    regulations_fpath=None, multiplier=1,
-#                                    weights_calculation_upscale_factor=mult)
+    mult = 5
+    regulations = Regulations(BASE_SETBACK_DIST, regulations_fpath=None,
+                              multiplier=1)
+    setbacks = ParcelSetbacks(EXCL_H5, regulations,
+                              weights_calculation_upscale_factor=mult)
 
-#     hr_array = setbacks._no_exclusions_array(multiplier=mult)
+    hr_array = setbacks._no_exclusions_array(multiplier=mult)
 
-#     for ind, shape in enumerate(setbacks.arr_shape[1:]):
-#         assert shape != hr_array.shape[ind]
-#         assert shape * mult == hr_array.shape[ind]
-
-
-# def test_aggregate_high_res():
-#     """Test the aggregation of a high_resolution array. """
-
-#     mult = 5
-#     setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                                    regulations_fpath=None, multiplier=1,
-#                                    weights_calculation_upscale_factor=mult)
-
-#     hr_array = setbacks._no_exclusions_array(multiplier=mult)
-#     hr_array = hr_array.astype(np.float32)
-#     arr_to_rep = np.arange(setbacks.arr_shape[1] * setbacks.arr_shape[2],
-#                            dtype=np.float32)
-#     arr_to_rep = arr_to_rep.reshape(setbacks.arr_shape[1:])
-
-#     for i, j in product(range(mult), range(mult)):
-#         hr_array[i::mult, j::mult] += arr_to_rep
-
-#     assert np.isclose(setbacks._aggregate_high_res(hr_array),
-#                       arr_to_rep * mult ** 2).all()
+    for ind, shape in enumerate(setbacks.arr_shape[1:]):
+        assert shape != hr_array.shape[ind]
+        assert shape * mult == hr_array.shape[ind]
 
 
-# def test_partial_exclusions():
-#     """Test the aggregation of a high_resolution array. """
-#     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-#                                'Rhode_Island.gpkg')
+def test_aggregate_high_res():
+    """Test the aggregation of a high_resolution array. """
 
-#     mult = 5
-#     setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                                    regulations_fpath=None, multiplier=10)
-#     setbacks_hr = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                                       regulations_fpath=None, multiplier=10,
-#                                       weights_calculation_upscale_factor=mult)
+    mult = 5
+    regulations = Regulations(BASE_SETBACK_DIST, regulations_fpath=None,
+                              multiplier=1)
+    setbacks = ParcelSetbacks(EXCL_H5, regulations,
+                              weights_calculation_upscale_factor=mult)
 
-#     exclusion_mask = setbacks.compute_setbacks(parcel_path)
-#     inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
+    hr_array = setbacks._no_exclusions_array(multiplier=mult)
+    hr_array = hr_array.astype(np.float32)
+    arr_to_rep = np.arange(setbacks.arr_shape[1] * setbacks.arr_shape[2],
+                           dtype=np.float32)
+    arr_to_rep = arr_to_rep.reshape(setbacks.arr_shape[1:])
 
-#     assert exclusion_mask.shape == inclusion_weights.shape
-#     assert (inclusion_weights < 1).any()
-#     assert ((0 <= inclusion_weights) & (inclusion_weights <= 1)).all()
-#     assert exclusion_mask.sum() > (1 - inclusion_weights).sum()
-#     assert exclusion_mask.sum() * 0.5 < (1 - inclusion_weights).sum()
+    for i, j in product(range(mult), range(mult)):
+        hr_array[i::mult, j::mult] += arr_to_rep
 
-
-# @pytest.mark.parametrize('mult', [None, 0.5, 1])
-# def test_partial_exclusions_upscale_factor_less_than_1(mult):
-#     """Test that the exclusion mask is still computed for sf <= 1. """
-
-#     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-#                                'Rhode_Island.gpkg')
-
-#     setbacks = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                                    regulations_fpath=None, multiplier=10)
-#     setbacks_hr = SolarParcelSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                                       regulations_fpath=None, multiplier=10,
-#                                       weights_calculation_upscale_factor=mult)
-
-#     exclusion_mask = setbacks.compute_setbacks(parcel_path)
-#     inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
-
-#     assert np.isclose(exclusion_mask, inclusion_weights).all()
+    assert np.isclose(setbacks._aggregate_high_res(hr_array),
+                      arr_to_rep * mult ** 2).all()
 
 
-# @pytest.mark.parametrize(
-#     ('setbacks_class', 'features_path', 'regulations_fpath',
-#      'generic_sum', 'local_sum', 'setback_distance'),
-#     [(StructureWindSetbacks,
-#       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-#       REGS_GPKG, 332_887, 142, [HUB_HEIGHT, ROTOR_DIAMETER]),
-#      (RailWindSetbacks,
-#       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-#       REGS_GPKG, 754_082, 9_402, [HUB_HEIGHT, ROTOR_DIAMETER]),
-#      (SolarParcelSetbacks,
-#       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
-#       PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
-#      (SolarWaterSetbacks,
-#       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
-#       WATER_REGS_FPATH_VALUE, 88_994, 83, [BASE_SETBACK_DIST])])
-# @pytest.mark.parametrize('sf', [None, 10])
-# def test_merged_setbacks(setbacks_class, features_path, regulations_fpath,
-#                          generic_sum, local_sum, setback_distance, sf):
-#     """ Test merged setback layers. """
+def test_partial_exclusions():
+    """Test the aggregation of a high_resolution array. """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
 
-#     generic_setbacks = setbacks_class(EXCL_H5, *setback_distance,
-#                                       regulations_fpath=None, multiplier=100,
-#                                       weights_calculation_upscale_factor=sf)
-#     generic_layer = generic_setbacks.compute_setbacks(features_path,
-#                                                       max_workers=1)
+    mult = 5
+    regulations = Regulations(BASE_SETBACK_DIST, regulations_fpath=None,
+                              multiplier=10)
+    setbacks = ParcelSetbacks(EXCL_H5, regulations,)
+    setbacks_hr = ParcelSetbacks(EXCL_H5, regulations,
+                                 weights_calculation_upscale_factor=mult)
 
-#     with tempfile.TemporaryDirectory() as td:
-#         regs_fpath = os.path.basename(regulations_fpath)
-#         regs_fpath = os.path.join(td, regs_fpath)
-#         shutil.copy(regulations_fpath, regs_fpath)
+    exclusion_mask = setbacks.compute_setbacks(parcel_path)
+    inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
 
-#         local_setbacks = setbacks_class(EXCL_H5, *setback_distance,
-#                                         regulations_fpath=regs_fpath,
-#                                         weights_calculation_upscale_factor=sf,
-#                                         multiplier=None)
+    assert exclusion_mask.shape == inclusion_weights.shape
+    assert (inclusion_weights < 1).any()
+    assert ((0 <= inclusion_weights) & (inclusion_weights <= 1)).all()
+    assert exclusion_mask.sum() > (1 - inclusion_weights).sum()
+    assert exclusion_mask.sum() * 0.5 < (1 - inclusion_weights).sum()
 
-#         local_layer = local_setbacks.compute_setbacks(features_path,
-#                                                       max_workers=1)
 
-#         merged_setbacks = setbacks_class(EXCL_H5, *setback_distance,
-#                                          regulations_fpath=regs_fpath,
-#                                          weights_calculation_upscale_factor=sf,
-#                                          multiplier=100)
-#         merged_layer = merged_setbacks.compute_setbacks(features_path,
-#                                                         max_workers=1)
+@pytest.mark.parametrize('mult', [None, 0.5, 1])
+def test_partial_exclusions_upscale_factor_less_than_1(mult):
+    """Test that the exclusion mask is still computed for sf <= 1. """
 
-#         local_setbacks._check_regulations_table(features_path)
-#         feats = local_setbacks.regulations_table
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
 
-#     # make sure the comparison layers match what we expect
-#     if sf is None:
-#         assert generic_layer.sum() == generic_sum
-#         assert local_layer.sum() == local_sum
-#         assert generic_layer.sum() > merged_layer.sum() > local_layer.sum()
-#     else:
-#         for layer in (generic_layer, local_layer, merged_layer):
-#             assert (layer[layer > 0] < 1).any()
+    regulations = Regulations(BASE_SETBACK_DIST, regulations_fpath=None,
+                              multiplier=10)
+    setbacks = ParcelSetbacks(EXCL_H5, regulations)
+    setbacks_hr = ParcelSetbacks(EXCL_H5, regulations,
+                                 weights_calculation_upscale_factor=mult)
 
-#     assert not np.isclose(generic_layer, local_layer).all()
-#     assert not np.isclose(generic_layer, merged_layer).all()
-#     assert not np.isclose(local_layer, merged_layer).all()
+    exclusion_mask = setbacks.compute_setbacks(parcel_path)
+    inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
 
-#     # Make sure counties in the regulations csv
-#     # have correct exclusions applied
-#     with ExclusionLayers(EXCL_H5) as exc:
-#         fips = exc['cnty_fips']
+    assert np.isclose(exclusion_mask, inclusion_weights).all()
 
-#     counties_should_have_exclusions = feats.FIPS.unique()
-#     local_setbacks_mask = np.isin(fips, counties_should_have_exclusions)
 
-#     assert not np.isclose(generic_layer[local_setbacks_mask],
-#                           merged_layer[local_setbacks_mask]).all()
-#     assert np.isclose(local_layer[local_setbacks_mask],
-#                       merged_layer[local_setbacks_mask]).all()
+@pytest.mark.parametrize(
+    ('setbacks_class', 'regulations_class', 'features_path',
+     'regulations_fpath', 'generic_sum', 'local_sum', 'setback_distance'),
+    [(StructureSetbacks, WindRegulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+      REGS_GPKG, 332_887, 142, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (RailSetbacks, WindRegulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
+      REGS_GPKG, 754_082, 9_402, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (ParcelSetbacks, WindRegulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
+      PARCEL_REGS_FPATH_VALUE, 474, 3, [HUB_HEIGHT, ROTOR_DIAMETER]),
+    (WaterSetbacks, WindRegulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
+      WATER_REGS_FPATH_VALUE, 1_159_266, 83, [HUB_HEIGHT, ROTOR_DIAMETER]),
+    (StructureSetbacks, Regulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+      REGS_FPATH, 260_963, 112, [BASE_SETBACK_DIST + 199]),
+     (RailSetbacks, Regulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
+      REGS_FPATH, 5_355, 194, [BASE_SETBACK_DIST]),
+     (ParcelSetbacks, Regulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
+      PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
+     (WaterSetbacks, Regulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
+      WATER_REGS_FPATH_VALUE, 88_994, 83, [BASE_SETBACK_DIST])])
+@pytest.mark.parametrize('sf', [None, 10])
+def test_merged_setbacks(setbacks_class, regulations_class, features_path,
+                         regulations_fpath, generic_sum, local_sum,
+                         setback_distance, sf):
+    """ Test merged setback layers. """
 
-#     assert not np.isclose(local_layer[~local_setbacks_mask],
-#                           merged_layer[~local_setbacks_mask]).all()
-#     assert np.isclose(generic_layer[~local_setbacks_mask],
-#                       merged_layer[~local_setbacks_mask]).all()
+    regulations = regulations_class(*setback_distance, regulations_fpath=None,
+                                    multiplier=100)
+    generic_setbacks = setbacks_class(EXCL_H5, regulations,
+                                      weights_calculation_upscale_factor=sf)
+    generic_layer = generic_setbacks.compute_setbacks(features_path,
+                                                      max_workers=1)
+
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(regulations_fpath, regs_fpath)
+
+        regulations = regulations_class(*setback_distance,
+                                        regulations_fpath=regs_fpath,
+                                        multiplier=None)
+        local_setbacks = setbacks_class(EXCL_H5, regulations,
+                                        weights_calculation_upscale_factor=sf)
+
+        local_layer = local_setbacks.compute_setbacks(features_path,
+                                                      max_workers=1)
+
+        regulations = regulations_class(*setback_distance,
+                                        regulations_fpath=regs_fpath,
+                                        multiplier=100)
+        merged_setbacks = setbacks_class(EXCL_H5, regulations,
+                                         weights_calculation_upscale_factor=sf)
+        merged_layer = merged_setbacks.compute_setbacks(features_path,
+                                                        max_workers=1)
+
+        local_setbacks._check_regulations_table(features_path)
+        feats = local_setbacks.regulations_table
+
+    # make sure the comparison layers match what we expect
+    if sf is None:
+        assert generic_layer.sum() == generic_sum
+        assert local_layer.sum() == local_sum
+        assert generic_layer.sum() > merged_layer.sum() > local_layer.sum()
+    else:
+        for layer in (generic_layer, local_layer, merged_layer):
+            assert (layer[layer > 0] < 1).any()
+
+    assert not np.isclose(generic_layer, local_layer).all()
+    assert not np.isclose(generic_layer, merged_layer).all()
+    assert not np.isclose(local_layer, merged_layer).all()
+
+    # Make sure counties in the regulations csv
+    # have correct exclusions applied
+    with ExclusionLayers(EXCL_H5) as exc:
+        fips = exc['cnty_fips']
+
+    counties_should_have_exclusions = feats.FIPS.unique()
+    local_setbacks_mask = np.isin(fips, counties_should_have_exclusions)
+
+    assert not np.isclose(generic_layer[local_setbacks_mask],
+                          merged_layer[local_setbacks_mask]).all()
+    assert np.isclose(local_layer[local_setbacks_mask],
+                      merged_layer[local_setbacks_mask]).all()
+
+    assert not np.isclose(local_layer[~local_setbacks_mask],
+                          merged_layer[~local_setbacks_mask]).all()
+    assert np.isclose(generic_layer[~local_setbacks_mask],
+                      merged_layer[~local_setbacks_mask]).all()
 
 
 # def test_regulations_init():
