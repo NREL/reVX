@@ -5,10 +5,18 @@ reVX Setbacks Configuration
 import logging
 
 from reV.config.base_analysis_config import AnalysisConfig
-from reV.utilities.exceptions import ConfigError
 from reVX.setbacks.regulations import validate_regulations_input
+from reVX.setbacks import (StructureSetbacks, RoadSetbacks, RailSetbacks,
+                           TransmissionSetbacks, ParcelSetbacks, WaterSetbacks)
 
 logger = logging.getLogger(__name__)
+
+SETBACKS = {'structure': StructureSetbacks,
+            'road': RoadSetbacks,
+            'rail': RailSetbacks,
+            'transmission': TransmissionSetbacks,
+            'parcel': ParcelSetbacks,
+            'water': WaterSetbacks}
 
 
 class SetbacksConfig(AnalysisConfig):
@@ -16,32 +24,12 @@ class SetbacksConfig(AnalysisConfig):
 
     NAME = 'Setbacks'
     REQUIREMENTS = ('excl_fpath', 'features_path', 'feature_type')
-    FEATURE_TYPE_EXTRA_REQUIREMENTS = {
-        'structure': ['hub_height', 'rotor_diameter'],
-        'road': ['hub_height', 'rotor_diameter'],
-        'rail': ['hub_height', 'rotor_diameter'],
-        'transmission': ['hub_height', 'rotor_diameter'],
-        'parcel': [],
-        'water': [],
-    }
 
     def _preflight(self):
         """
         Run a preflight check for extra requirements based on feature type.
         """
         super()._preflight()
-
-        missing = []
-        for req in self.FEATURE_TYPE_EXTRA_REQUIREMENTS[self.feature_type]:
-            if req not in self:
-                missing.append(req)
-
-        if any(missing):
-            e = ('{} missing the following keys: {}'
-                 .format(self.__class__.__name__, missing))
-            logger.error(e)
-            raise ConfigError(e)
-
         validate_regulations_input(base_setback_dist=self.base_setback_dist,
                                    hub_height=self.hub_height,
                                    rotor_diameter=self.rotor_diameter)
@@ -53,11 +41,9 @@ class SetbacksConfig(AnalysisConfig):
         must be one of the keys of `FEATURE_TYPE_EXTRA_REQUIREMENTS`
         """
         feature_type = self['feature_type']
-        options = set(self.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
-        msg = ("feature_type must be one of: {}; got {}".format(
-            options, feature_type)
-        )
-        assert feature_type in options, msg
+        msg = ("feature_type must be one of: {}; got {}"
+               .format(SETBACKS, feature_type))
+        assert feature_type in SETBACKS, msg
 
         return feature_type
 
