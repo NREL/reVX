@@ -84,53 +84,126 @@ def county_wind_regulations_gpkg():
     return WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
                            regulations_fpath=REGS_GPKG)
 
-# @pytest.mark.parametrize(("regs_file", "col"),
-#                          (("nan_fips.csv", "FIPS"),
-#                           ("nan_feature_types.csv", "Feature Type"),
-#                           ("nan_value_types.csv", "Value Type"),
-#                           ("nan_values.csv", "Value")))
-# def test_regulations_with_nan(regs_file, col):
-#     """Test regulations file with nan fips. """
 
-#     regs_file = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-#                              regs_file)
-#     setbacks = BaseSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                             regulations_fpath=regs_file, multiplier=None)
+def test_regulations_init():
+    """Test initializing a normal regulations file. """
+    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
+    assert regs.base_setback_dist == 10
+    assert np.isclose(regs.generic_setback, 10 * 1.1)
+    assert np.isclose(regs.multiplier, 1.1)
 
-#     regs_df = pd.read_csv(regs_file)
-#     assert regs_df[col].isna().any()
-#     assert not setbacks.regulations_table[col].isna().any()
-#     assert regs_df.shape[0] > setbacks.regulations_table.shape[0]
+    for col in Regulations.REQUIRED_COLUMNS:
+        assert col in regs.regulations
+        assert not regs.regulations[col].isna().any()
 
+    assert regs.regulations['Feature Type'].str.islower().all()
 
-# @pytest.mark.parametrize("regs_file",
-#                          ("missing_ft.csv", "missing_vt.csv", "missing_v.csv"))
-# def test_regulations_with_missing_columns(regs_file):
-#     """Test regulations file with missing required columns."""
-
-#     regs_file = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-#                              regs_file)
-
-#     with pytest.raises(RuntimeError) as excinfo:
-#         BaseSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                      regulations_fpath=regs_file, multiplier=None)
-
-#     expected_err_msg = "Regulations are missing the following required columns"
-#     assert expected_err_msg in str(excinfo.value)
+    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
+    assert regs.generic_setback is None
 
 
-# def test_regulations_with_non_caps_columns():
-#     """Test regulations file with mixed capitalization columns."""
+def test_regulations_missing_init():
+    """Test initializing `Regulations` with missing info. """
+    with pytest.raises(RuntimeError) as excinfo:
+        Regulations(10)
 
-#     regs_file = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-#                              "col_names_not_caps.csv")
+    expected_err_msg = ('Computing setbacks requires a regulations '
+                        '.csv file and/or a generic multiplier!')
+    assert expected_err_msg in str(excinfo.value)
 
-#     setbacks = BaseSetbacks(EXCL_H5, BASE_SETBACK_DIST,
-#                             regulations_fpath=regs_file, multiplier=None)
-#     assert all(name[0].upper() for name in setbacks.regulations.columns)
-#     assert all(col in setbacks.regulations.columns
-#                for col in ["County", "State", "Feature Type", "Value Type",
-#                            "Value", "FIPS"])
+
+def test_regulations_non_capitalized_cols():
+    """Test `Regulations` for csv with non-capitalized cols. """
+    regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
+                             'col_names_not_caps.csv')
+
+    regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
+    for col in regs.regulations.columns:
+        if col.lower() not in {"geometry", "fips"}:
+            assert col.istitle()
+
+
+def test_regulations_missing_cols():
+    """Test `Regulations` for csv with missing cols. """
+    expected_err_msg = 'Regulations are missing the following required columns'
+
+    for fn in ['missing_ft.csv', 'missing_vt.csv', 'missing_vt.csv']:
+        regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
+                                 fn)
+
+        with pytest.raises(RuntimeError) as excinfo:
+            Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
+        assert expected_err_msg in str(excinfo.value)
+
+
+def test_regulations_na_cols():
+    """Test `Regulations` for csv with cols containing NaN's. """
+
+    for fn in ['nan_feature_types.csv', 'nan_fips.csv', 'nan_value_types.csv',
+               'nan_values.csv']:
+        regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
+                                 fn)
+        regs_df = pd.read_csv(regs_path)
+        assert regs_df[Regulations.REQUIRED_COLUMNS].isna().values.any()
+
+        regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
+        for col in Regulations.REQUIRED_COLUMNS:
+            assert not regs.regulations[col].isna().any()
+
+
+def test_regulations_iter():
+    """Test `Regulations` iterator. """
+    expected_setbacks = [20, 23]
+    regs_path = os.path.join(TESTDATADIR, 'setbacks',
+                             'ri_parcel_regs_multiplier_solar.csv')
+
+    regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
+    for ind, (setback, cnty) in enumerate(regs):
+        assert np.isclose(setback, expected_setbacks[ind])
+        assert regs.regulations.iloc[[ind]].equals(cnty)
+
+    regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
+    assert len([(setback, cnty) for setback, cnty in regs]) == 0
+
+
+def test_regulations_wind():
+    """Test `WindRegulations` initialization and iteration. """
+
+    expected_setbacks = [250, 23]
+    regs_path = os.path.join(TESTDATADIR, 'setbacks',
+                             'ri_parcel_regs_multiplier_wind.csv')
+    regs = WindRegulations(hub_height=100, rotor_diameter=50,
+                           regulations_fpath=regs_path, multiplier=1.1)
+    assert regs.hub_height == 100
+    assert regs.rotor_diameter == 50
+
+    for ind, (setback, cnty) in enumerate(regs):
+        assert np.isclose(setback, expected_setbacks[ind])
+        assert regs.regulations.iloc[[ind]].equals(cnty)
+
+
+def test_validate_regulations_input():
+    """Test that `validate_regulations_input` throws for incorrect input. """
+    with pytest.raises(RuntimeError):
+        validate_regulations_input()
+
+    with pytest.raises(RuntimeError):
+        validate_regulations_input(1, 2, 3)
+
+
+def test_select_regulations():
+    """Test that `test_select_regulations` returns correct class. """
+    with pytest.raises(RuntimeError):
+        select_regulations()
+
+    with pytest.raises(RuntimeError):
+        select_regulations(1, 2, 3)
+
+    assert isinstance(select_regulations(None, 2, 3, None, 1.1),
+                      WindRegulations)
+
+    assert isinstance(select_regulations(1, None, None, None, 1.1),
+                      Regulations)
 
 
 def test_generic_structure(generic_wind_regulations):
@@ -636,125 +709,6 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
                           merged_layer[~local_setbacks_mask]).all()
     assert np.isclose(generic_layer[~local_setbacks_mask],
                       merged_layer[~local_setbacks_mask]).all()
-
-
-# def test_regulations_init():
-#     """Test initializing a normal regulations file. """
-#     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
-#     assert regs.base_setback_dist == 10
-#     assert np.isclose(regs.generic_setback, 10 * 1.1)
-#     assert np.isclose(regs.multiplier, 1.1)
-
-#     for col in Regulations.REQUIRED_COLUMNS:
-#         assert col in regs.regulations
-#         assert not regs.regulations[col].isna().any()
-
-#     assert regs.regulations['Feature Type'].str.islower().all()
-
-#     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
-#     assert regs.generic_setback is None
-
-
-# def test_regulations_missing_init():
-#     """Test initializing `Regulations` with missing info. """
-#     with pytest.raises(RuntimeError) as excinfo:
-#         Regulations(10)
-
-#     expected_err_msg = ('Computing setbacks requires a regulations '
-#                         '.csv file and/or a generic multiplier!')
-#     assert expected_err_msg in str(excinfo.value)
-
-
-# def test_regulations_non_capitalized_cols():
-#     """Test `Regulations` for csv with non-capitalized cols. """
-#     regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-#                              'col_names_not_caps.csv')
-
-#     regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
-#     for col in regs.regulations.columns:
-#         if col.lower() not in {"geometry", "fips"}:
-#             assert col.istitle()
-
-
-# def test_regulations_missing_cols():
-#     """Test `Regulations` for csv with missing cols. """
-#     expected_err_msg = 'Regulations are missing the following required columns'
-
-#     for fn in ['missing_ft.csv', 'missing_vt.csv', 'missing_vt.csv']:
-#         regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-#                                  fn)
-
-#         with pytest.raises(RuntimeError) as excinfo:
-#             Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
-#         assert expected_err_msg in str(excinfo.value)
-
-
-# def test_regulations_na_cols():
-#     """Test `Regulations` for csv with cols containing NaN's. """
-
-#     for fn in ['nan_feature_types.csv', 'nan_fips.csv', 'nan_value_types.csv',
-#                'nan_values.csv']:
-#         regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-#                                  fn)
-
-#         regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
-#         for col in Regulations.REQUIRED_COLUMNS:
-#             assert not regs.regulations[col].isna().any()
-
-
-# def test_regulations_iter():
-#     """Test `Regulations` iterator. """
-#     expected_setbacks = [20, 23]
-#     regs_path = os.path.join(TESTDATADIR, 'setbacks',
-#                              'ri_parcel_regs_multiplier_solar.csv')
-
-#     regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
-#     for ind, (setback, cnty) in enumerate(regs):
-#         assert np.isclose(setback, expected_setbacks[ind])
-#         assert regs.regulations.iloc[[ind]].equals(cnty)
-
-#     regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
-#     assert len([(setback, cnty) for setback, cnty in regs]) == 0
-
-
-# def test_wind_regulations():
-#     """Test `WindRegulations` initialization and iteration. """
-
-#     expected_setbacks = [250, 23]
-#     regs_path = os.path.join(TESTDATADIR, 'setbacks',
-#                              'ri_parcel_regs_multiplier_wind.csv')
-#     regs = WindRegulations(hub_height=100, rotor_diameter=50,
-#                            regulations_fpath=regs_path, multiplier=1.1)
-#     assert regs.hub_height == 100
-#     assert regs.rotor_diameter == 50
-
-#     for ind, (setback, cnty) in enumerate(regs):
-#         assert np.isclose(setback, expected_setbacks[ind])
-#         assert regs.regulations.iloc[[ind]].equals(cnty)
-
-
-# def test_validate_regulations_input():
-#     """Test that `validate_regulations_input` throws for incorrect input. """
-#     with pytest.raises(RuntimeError):
-#         validate_regulations_input()
-
-#     with pytest.raises(RuntimeError):
-#         validate_regulations_input(1, 2, 3)
-
-
-# def test_select_regulations():
-#     """Test that `test_select_regulations` returns correct class. """
-#     with pytest.raises(RuntimeError):
-#         select_regulations()
-
-#     with pytest.raises(RuntimeError):
-#         select_regulations(1, 2, 3)
-
-#     assert isinstance(select_regulations(None, 2, 3, None, 1.1),
-#                       WindRegulations)
-
-#     assert isinstance(select_regulations(1, None, None, None, 1.1),
-#                       Regulations)
 
 # def test_cli_structures(runner):
 #     """
