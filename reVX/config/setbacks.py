@@ -6,17 +6,9 @@ import logging
 
 from reV.config.base_analysis_config import AnalysisConfig
 from reVX.setbacks.regulations import validate_regulations_input
-from reVX.setbacks import (StructureSetbacks, RoadSetbacks, RailSetbacks,
-                           TransmissionSetbacks, ParcelSetbacks, WaterSetbacks)
+from reVX.setbacks import SETBACKS
 
 logger = logging.getLogger(__name__)
-
-SETBACKS = {'structure': StructureSetbacks,
-            'road': RoadSetbacks,
-            'rail': RailSetbacks,
-            'transmission': TransmissionSetbacks,
-            'parcel': ParcelSetbacks,
-            'water': WaterSetbacks}
 
 
 class SetbacksConfig(AnalysisConfig):
@@ -38,7 +30,7 @@ class SetbacksConfig(AnalysisConfig):
     def feature_type(self):
         """
         Get the setback feature type (required).
-        must be one of the keys of `FEATURE_TYPE_EXTRA_REQUIREMENTS`
+        must be one of the keys of `SETBACKS`
         """
         feature_type = self['feature_type']
         msg = ("feature_type must be one of: {}; got {}"

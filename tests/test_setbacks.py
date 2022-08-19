@@ -1132,9 +1132,9 @@ def test_cli_invalid_inputs(runner):
         main,
         ['local',
          '-excl', EXCL_H5,
+         '-ft', "rail",
          '-feats', rail_path,
-         '-o', TESTDATADIR,
-         'rail-setbacks']
+         '-o', TESTDATADIR]
     )
 
     assert result.exit_code == 1

@@ -13,11 +13,10 @@ from rex.utilities.cli_dtypes import STR, FLOAT, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reVX.config.setbacks import SetbacksConfig, SETBACKS
+from reVX.config.setbacks import SetbacksConfig
+from reVX.setbacks import SETBACKS
 from reVX.setbacks.regulations import (validate_regulations_input,
                                        select_regulations)
-from reVX.setbacks import (StructureSetbacks, RoadSetbacks, RailSetbacks,
-                           TransmissionSetbacks, ParcelSetbacks, WaterSetbacks)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -49,28 +48,13 @@ def valid_config_keys():
 
 
 @main.command()
-@click.option('--config', '-c', required=True,
-              type=click.Path(exists=True),
-              help='Filepath to Setbacks config json file.')
-@click.pass_context
-def from_config(ctx, config):
-    """
-    Run Setbacks from a config.
-    """
-    config = SetbacksConfig(config)
-
-    if config.execution_control.option == 'local':
-        run_local(ctx, config)
-
-    if config.execution_control.option == 'eagle':
-        eagle(config)
-
-
-@main.group()
 @click.option('--excl_fpath', '-excl', required=True,
               type=click.Path(exists=True),
               help=('Path to .h5 file containing exclusion layers, will also '
                     'be the location of any new setback layers'))
+@click.option('--feature_type', '-ft', required=True, type=STR,
+              help=('Setback feature type. Must be one of {}'
+                    .format(set(SETBACKS.keys()))))
 @click.option('--features_path', '-feats', required=True,
               type=click.Path(exists=True),
               help=('Path to:/n'
@@ -80,19 +64,19 @@ def from_config(ctx, config):
                     'files./n'
                     '-transmission or railroad CONUS wide .shp file./n'
                     '- State level parcel .gpkg file.'))
-@click.option('--out_dir', '-o', required=True, type=str,
+@click.option('--out_dir', '-o', required=True, type=STR,
               help=('Directory to save setbacks geotiff(s) into'))
-@click.option('--hub_height', '-hh', default=None, type=float,
+@click.option('--hub_height', '-hh', default=None, type=FLOAT,
               help=('Turbine hub height(m), used along with rotor diameter to '
                     'compute blade tip height which is used to determine '
                     'setback distance. Must be provided if '
                     '`base_setback_dist` is not given'))
-@click.option('--rotor_diameter', '-rd', default=None, type=float,
+@click.option('--rotor_diameter', '-rd', default=None, type=FLOAT,
               help=('Turbine rotor diameter(m), used along with hub height to '
                     'compute blade tip height which is used to determine '
                     'setback distance. Must be provided if '
                     '`base_setback_dist` is not given'))
-@click.option('--base_setback_dist', '-bsd', default=None, type=float,
+@click.option('--base_setback_dist', '-bsd', default=None, type=FLOAT,
               help=('Base setback distance value. Must be provided if '
                     'hub_height and rotor_diameter are not given'))
 @click.option('--regs_fpath', '-regs', default=None, type=STR,
@@ -130,20 +114,17 @@ def from_config(ctx, config):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
-          base_setback_dist, regs_fpath, multiplier,
+def local(ctx, excl_fpath, feature_type, features_path, out_dir, hub_height,
+          rotor_diameter, base_setback_dist, regs_fpath, multiplier,
           weights_calculation_upscale_factor, max_workers, replace, hsds,
           log_dir, verbose):
     """
     Compute Setbacks locally
     """
-    ctx.obj['excl_fpath'] = excl_fpath
-    ctx.obj['FEATURES_PATH'] = features_path
-    ctx.obj['OUT_DIR'] = out_dir
-    ctx.obj['MAX_WORKERS'] = max_workers
-    ctx.obj['REPLACE'] = replace
-    ctx.obj['HSDS'] = hsds
-    ctx.obj['UPSCALE_FACTOR'] = weights_calculation_upscale_factor
+    if feature_type not in SETBACKS:
+        msg = ("feature_type must be one of: {}; got {!r}"
+               .format(set(SETBACKS.keys()), feature_type))
+        raise RuntimeError(msg)
 
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
@@ -155,6 +136,8 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
     # direct command line instead of a config file for some bizarre reason
     validate_regulations_input(base_setback_dist, hub_height, rotor_diameter)
 
+    logger.info('Computing setbacks from structures in {}'
+                .format(features_path))
     logger.debug('Setbacks to be computed with:\n'
                  '- base_setback_dist = {}\n'
                  '- hub_height = {}\n'
@@ -168,153 +151,33 @@ def local(ctx, excl_fpath, features_path, out_dir, hub_height, rotor_diameter,
                          regs_fpath, multiplier, max_workers, replace,
                          weights_calculation_upscale_factor))
 
-    ctx.obj['REGULATIONS'] = select_regulations(base_setback_dist, hub_height,
-                                                rotor_diameter, regs_fpath,
-                                                multiplier)
+    regulations = select_regulations(base_setback_dist, hub_height,
+                                     rotor_diameter, regs_fpath, multiplier)
 
-
-@local.command()
-@click.pass_context
-def structure_setbacks(ctx):
-    """
-    Compute setbacks from structures
-    """
-    excl_fpath = ctx.obj['excl_fpath']
-    features_path = ctx.obj['FEATURES_PATH']
-    out_dir = ctx.obj['OUT_DIR']
-    max_workers = ctx.obj['MAX_WORKERS']
-    replace = ctx.obj['REPLACE']
-    hsds = ctx.obj['HSDS']
-    wcuf = ctx.obj['UPSCALE_FACTOR']
-    regulations = ctx.obj['REGULATIONS']
-
-    logger.info('Computing setbacks from structures in {}'
-                .format(features_path))
-    StructureSetbacks.run(excl_fpath, features_path, out_dir, regulations,
-                          weights_calculation_upscale_factor=wcuf,
-                          max_workers=max_workers, replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and written to {}'.format(out_dir))
-
-
-@local.command()
-@click.pass_context
-def road_setbacks(ctx):
-    """
-    Compute setbacks from roads
-    """
-    excl_fpath = ctx.obj['excl_fpath']
-    features_path = ctx.obj['FEATURES_PATH']
-    out_dir = ctx.obj['OUT_DIR']
-    max_workers = ctx.obj['MAX_WORKERS']
-    replace = ctx.obj['REPLACE']
-    hsds = ctx.obj['HSDS']
-    wcuf = ctx.obj['UPSCALE_FACTOR']
-    regulations = ctx.obj['REGULATIONS']
-
-    logger.info('Computing setbacks from roads in {}'
-                .format(features_path))
-
-    RoadSetbacks.run(excl_fpath, features_path, out_dir, regulations,
-                     weights_calculation_upscale_factor=wcuf,
-                     max_workers=max_workers, replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and written to {}'.format(out_dir))
-
-
-@local.command()
-@click.pass_context
-def transmission_setbacks(ctx):
-    """
-    Compute setbacks from transmission
-    """
-    excl_fpath = ctx.obj['excl_fpath']
-    features_path = ctx.obj['FEATURES_PATH']
-    out_dir = ctx.obj['OUT_DIR']
-    max_workers = ctx.obj['MAX_WORKERS']
-    replace = ctx.obj['REPLACE']
-    hsds = ctx.obj['HSDS']
-    wcuf = ctx.obj['UPSCALE_FACTOR']
-    regulations = ctx.obj['REGULATIONS']
-
-    logger.info('Computing setbacks from transmission in {}'
-                .format(features_path))
-
-    TransmissionSetbacks.run(excl_fpath, features_path, out_dir, regulations,
-                             weights_calculation_upscale_factor=wcuf,
-                             max_workers=max_workers, replace=replace,
-                             hsds=hsds)
-    logger.info('Setbacks computed and written to {}'.format(out_dir))
-
-
-@local.command()
-@click.pass_context
-def rail_setbacks(ctx):
-    """
-    Compute setbacks from railroads
-    """
-    excl_fpath = ctx.obj['excl_fpath']
-    features_path = ctx.obj['FEATURES_PATH']
-    out_dir = ctx.obj['OUT_DIR']
-    max_workers = ctx.obj['MAX_WORKERS']
-    replace = ctx.obj['REPLACE']
-    hsds = ctx.obj['HSDS']
-    wcuf = ctx.obj['UPSCALE_FACTOR']
-    regulations = ctx.obj['REGULATIONS']
-
-    logger.info('Computing setbacks from structures in {}'
-                .format(features_path))
-
-    RailSetbacks.run(excl_fpath, features_path, out_dir, regulations,
-                     weights_calculation_upscale_factor=wcuf,
-                     max_workers=max_workers, replace=replace, hsds=hsds)
-    logger.info('Setbacks computed and written to {}'.format(out_dir))
-
-
-@local.command()
-@click.pass_context
-def parcel_setbacks(ctx):
-    """
-    Compute setbacks from parcels
-    """
-    excl_fpath = ctx.obj['excl_fpath']
-    features_path = ctx.obj['FEATURES_PATH']
-    out_dir = ctx.obj['OUT_DIR']
-    max_workers = ctx.obj['MAX_WORKERS']
-    replace = ctx.obj['REPLACE']
-    hsds = ctx.obj['HSDS']
-    wcuf = ctx.obj['UPSCALE_FACTOR']
-    regulations = ctx.obj['REGULATIONS']
-
-    logger.info('Computing setbacks from parcels in {}'.format(features_path))
-
-    ParcelSetbacks.run(excl_fpath, features_path, out_dir, regulations,
+    setbacks_class = SETBACKS[feature_type]
+    wcuf = weights_calculation_upscale_factor
+    setbacks_class.run(excl_fpath, features_path, out_dir, regulations,
                        weights_calculation_upscale_factor=wcuf,
                        max_workers=max_workers, replace=replace, hsds=hsds)
     logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
-@local.command()
+@main.command()
+@click.option('--config', '-c', required=True,
+              type=click.Path(exists=True),
+              help='Filepath to Setbacks config json file.')
 @click.pass_context
-def water_setbacks(ctx):
+def from_config(ctx, config):
     """
-    Compute setbacks from water
+    Run Setbacks from a config.
     """
-    excl_fpath = ctx.obj['excl_fpath']
-    features_path = ctx.obj['FEATURES_PATH']
-    out_dir = ctx.obj['OUT_DIR']
-    max_workers = ctx.obj['MAX_WORKERS']
-    replace = ctx.obj['REPLACE']
-    hsds = ctx.obj['HSDS']
-    wcuf = ctx.obj['UPSCALE_FACTOR']
-    regulations = ctx.obj['REGULATIONS']
+    config = SetbacksConfig(config)
 
-    logger.info('Computing setbacks from water in {}'
-                .format(features_path))
+    if config.execution_control.option == 'local':
+        run_local(ctx, config)
 
-    WaterSetbacks.run(excl_fpath, features_path, out_dir, regulations,
-                      weights_calculation_upscale_factor=wcuf,
-                      max_workers=max_workers, replace=replace, hsds=hsds)
-
-    logger.info('Setbacks computed and written to {}'.format(out_dir))
+    if config.execution_control.option == 'eagle':
+        eagle(config)
 
 
 def run_local(ctx, config):
@@ -332,6 +195,7 @@ def run_local(ctx, config):
     wcuf = config.weights_calculation_upscale_factor
     ctx.invoke(local,
                excl_fpath=config.excl_fpath,
+               feature_type=config.feature_type,
                features_path=config.features_path,
                out_dir=config.dirout,
                hub_height=config.hub_height,
@@ -343,84 +207,29 @@ def run_local(ctx, config):
                max_workers=config.execution_control.max_workers,
                replace=config.replace)
 
-    feature_type = config.feature_type
-    if feature_type == 'structure':
-        ctx.invoke(structure_setbacks)
-    elif feature_type == 'road':
-        ctx.invoke(road_setbacks)
-    elif feature_type == 'transmission':
-        ctx.invoke(transmission_setbacks)
-    elif feature_type == 'rail':
-        ctx.invoke(rail_setbacks)
-    elif feature_type == 'parcel':
-        ctx.invoke(parcel_setbacks)
-    elif feature_type == 'water':
-        ctx.invoke(water_setbacks)
-    else:
-        options = set(config.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
-        msg = 'Feature type must be one of {}; got {}'.format(
-            options, feature_type
-        )
-        raise RuntimeError(msg)
 
-
-def get_node_cmd(name, config):
+def eagle(config):
     """
-    Get the node CLI call for the Setbacks computation
+    Run Setbacks on Eagle HPC.
 
     Parameters
     ----------
     config : `reVX.config.setbacks.SetbacksConfig`
         Setbacks config object.
-
-    Returns
-    -------
-    cmd : str
-        CLI call to submit to SLURM execution.
     """
-    wcuf = config.weights_calculation_upscale_factor
-    args = ['-n {}'.format(SLURM.s(name)),
-            'local',
-            '-excl {}'.format(SLURM.s(config.excl_fpath)),
-            '-feats {}'.format(SLURM.s(config.features_path)),
-            '-o {}'.format(SLURM.s(config.dirout)),
-            '-regs {}'.format(SLURM.s(config.regs_fpath)),
-            '-mult {}'.format(SLURM.s(config.multiplier)),
-            '-wcuf {}'.format(SLURM.s(wcuf)),
-            '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
-            '-log {}'.format(SLURM.s(config.log_directory)),
-            ]
+    features_path = config.features_path
+    cls = SETBACKS[config.feature_type]
+    features = cls._get_feature_paths(features_path)
+    if not features:
+        msg = ('No valid feature files were found at {}!'
+               .format(features_path))
+        logger.error(msg)
+        raise FileNotFoundError(msg)
 
-    if config.base_setback_dist is None:
-        args.append('-hh {}'.format(SLURM.s(config.hub_height)))
-        args.append('-rd {}'.format(SLURM.s(config.rotor_diameter)))
-    else:
-        args.append('-bsd {}'.format(SLURM.s(config.base_setback_dist)))
-
-    if config.replace:
-        args.append('-r')
-
-    if config.hsds:
-        args.append('-hsds')
-
-    if config.log_level == logging.DEBUG:
-        args.append('-v')
-
-    feature_type = config.feature_type
-    if feature_type in SETBACKS:
-        args.append('{}-setbacks'.format(feature_type))
-    else:
-        options = set(SETBACKS.keys())
-        msg = 'Feature type must be one of {}; got {}'.format(
-            options, feature_type
-        )
-        raise RuntimeError(msg)
-
-    cmd = ('python -m reVX.setbacks.setbacks_cli {}'
-           .format(' '.join(args)))
-    logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
-
-    return cmd
+    for fpath in features:
+        fpath_config = deepcopy(config)
+        fpath_config['features_path'] = fpath
+        launch_job(fpath_config)
 
 
 def launch_job(config):
@@ -446,8 +255,7 @@ def launch_job(config):
                                memory=config.execution_control.memory,
                                walltime=config.execution_control.walltime,
                                feature=config.execution_control.feature,
-                               name=name,
-                               stdout_path=stdout_path,
+                               name=name, stdout_path=stdout_path,
                                conda_env=config.execution_control.conda_env,
                                module=config.execution_control.module)[0]
     if out:
@@ -463,28 +271,53 @@ def launch_job(config):
     logger.info(msg)
 
 
-def eagle(config):
+def get_node_cmd(name, config):
     """
-    Run Setbacks on Eagle HPC.
+    Get the node CLI call for the Setbacks computation
 
     Parameters
     ----------
     config : `reVX.config.setbacks.SetbacksConfig`
         Setbacks config object.
-    """
-    features_path = config.features_path
-    cls = SETBACKS[config.feature_type]
-    features = cls._get_feature_paths(features_path)
-    if not features:
-        msg = ('No valid feature files were found at {}!'
-               .format(features_path))
-        logger.error(msg)
-        raise FileNotFoundError(msg)
 
-    for fpath in features:
-        fpath_config = deepcopy(config)
-        fpath_config['features_path'] = fpath
-        launch_job(fpath_config)
+    Returns
+    -------
+    cmd : str
+        CLI call to submit to SLURM execution.
+    """
+    wcuf = config.weights_calculation_upscale_factor
+    args = ['-n {}'.format(SLURM.s(name)),
+            'local',
+            '-excl {}'.format(SLURM.s(config.excl_fpath)),
+            '-ft {}'.format(SLURM.s(config.feature_type)),
+            '-feats {}'.format(SLURM.s(config.features_path)),
+            '-o {}'.format(SLURM.s(config.dirout)),
+            '-regs {}'.format(SLURM.s(config.regs_fpath)),
+            '-mult {}'.format(SLURM.s(config.multiplier)),
+            '-wcuf {}'.format(SLURM.s(wcuf)),
+            '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
+            '-log {}'.format(SLURM.s(config.log_directory)),
+            ]
+
+    if config.base_setback_dist is None:
+        args.append('-hh {}'.format(SLURM.s(config.hub_height)))
+        args.append('-rd {}'.format(SLURM.s(config.rotor_diameter)))
+    else:
+        args.append('-bsd {}'.format(SLURM.s(config.base_setback_dist)))
+
+    if config.replace:
+        args.append('-r')
+
+    if config.hsds:
+        args.append('-hsds')
+
+    if config.log_level == logging.DEBUG:
+        args.append('-v')
+
+    cmd = 'python -m reVX.setbacks.setbacks_cli {}'.format(' '.join(args))
+    logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
+
+    return cmd
 
 
 if __name__ == '__main__':
