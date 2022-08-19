@@ -540,10 +540,10 @@ def test_high_res_excl_array():
                               multiplier=1)
     setbacks = ParcelSetbacks(EXCL_H5, regulations,
                               weights_calculation_upscale_factor=mult)
+    rasterizer = setbacks._rasterizer
+    hr_array = rasterizer._no_exclusions_array(multiplier=mult)
 
-    hr_array = setbacks._no_exclusions_array(multiplier=mult)
-
-    for ind, shape in enumerate(setbacks.arr_shape[1:]):
+    for ind, shape in enumerate(rasterizer.arr_shape[1:]):
         assert shape != hr_array.shape[ind]
         assert shape * mult == hr_array.shape[ind]
 
@@ -556,17 +556,18 @@ def test_aggregate_high_res():
                               multiplier=1)
     setbacks = ParcelSetbacks(EXCL_H5, regulations,
                               weights_calculation_upscale_factor=mult)
+    rasterizer = setbacks._rasterizer
 
-    hr_array = setbacks._no_exclusions_array(multiplier=mult)
+    hr_array = rasterizer._no_exclusions_array(multiplier=mult)
     hr_array = hr_array.astype(np.float32)
-    arr_to_rep = np.arange(setbacks.arr_shape[1] * setbacks.arr_shape[2],
+    arr_to_rep = np.arange(rasterizer.arr_shape[1] * rasterizer.arr_shape[2],
                            dtype=np.float32)
-    arr_to_rep = arr_to_rep.reshape(setbacks.arr_shape[1:])
+    arr_to_rep = arr_to_rep.reshape(rasterizer.arr_shape[1:])
 
     for i, j in product(range(mult), range(mult)):
         hr_array[i::mult, j::mult] += arr_to_rep
 
-    assert np.isclose(setbacks._aggregate_high_res(hr_array),
+    assert np.isclose(rasterizer._aggregate_high_res(hr_array),
                       arr_to_rep * mult ** 2).all()
 
 
@@ -673,7 +674,7 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
         merged_layer = merged_setbacks.compute_setbacks(features_path,
                                                         max_workers=1)
 
-        local_setbacks._check_regulations_table(features_path)
+        local_setbacks._pre_process_regulations(features_path)
         feats = local_setbacks.regulations_table
 
     # make sure the comparison layers match what we expect

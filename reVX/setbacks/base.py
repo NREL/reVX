@@ -60,6 +60,153 @@ def features_clipped_to_county(features, cnty):
     return tmp[~tmp.is_empty]
 
 
+class _Rasterizer:
+    """Helper class to rasterize setbacks."""
+
+    def __init__(self, shape, weights_calculation_upscale_factor, transform):
+        """
+        Parameters
+        ----------
+        shape : tuple
+            Shape of array to rasterize onto.
+        weights_calculation_upscale_factor : int, optional
+            If this value is an int > 1, the output will be a layer with
+            **inclusion** weight values instead of exclusion booleans.
+            For example, a cell that was previously excluded with a
+            a boolean mask (value of 1) may instead be converted to an
+            inclusion weight value of 0.75, meaning that 75% of the area
+            corresponding to that point should be included (i.e. the
+            exclusion feature only intersected a small portion - 25% -
+            of the cell). This percentage inclusion value is calculated
+            by upscaling the output array using this input value,
+            rasterizing the exclusion features onto it, and counting the
+            number of resulting sub-cells excluded by the feature. For
+            example, setting the value to `3` would split each output
+            cell into nine sub-cells - 3 divisions in each dimension.
+            After the feature is rasterized on this high-resolution
+            sub-grid, the area of the non-excluded sub-cells is totaled
+            and divided by the area of the original cell to obtain the
+            final inclusion percentage. Therefore, a larger upscale
+            factor results in more accurate percentage values. However,
+            this process is memory intensive and scales quadratically
+            with the upscale factor. A good way to estimate your minimum
+            memory requirement is to use the following formula:
+
+            .. math:: memory (GB) = s_0 * s_1 * (sf^2 * 2 + 4) / 1073741824,
+
+            where :math:`s_0` and :math:`s_1` are the dimensions (shape)
+            of your exclusion layer and :math:`sf` is the scale factor
+            (be sure to add several GB for any other overhead required
+            by the rest of the process). If `None` (or a value <= 1),
+            this process is skipped and the output is a boolean
+            exclusion mask. By default `None`.
+        transform : tuple
+            Geotiff profile transform.
+        """
+        self._shape = shape
+        self._scale_factor = weights_calculation_upscale_factor or 1
+        self._scale_factor = int(self._scale_factor // 1)
+        self._transform = transform
+
+    @property
+    def arr_shape(self):
+        """Rasterize array shape.
+
+        Returns
+        -------
+        tuple
+        """
+        return self._shape
+
+    def _no_exclusions_array(self, multiplier=1):
+        """Get an array of the correct shape representing no exclusions.
+
+        The array contains all zeros, and a new one is created
+        for every function call.
+
+        Parameters
+        ----------
+        multiplier : int, optional
+            Integer multiplier value used to scale up the dimensions of
+            the array exclusions array (e.g. multiplier of 3 turns an
+            array of shape (10, 20) into an array of shape (30, 60)).
+
+        Returns
+        -------
+        np.array
+            Array of zeros representing no exclusions.
+        """
+        high_res_shape = tuple(x * multiplier for x in self.arr_shape[1:])
+        return np.zeros(high_res_shape, dtype='uint8')
+
+    def rasterize_setbacks(self, shapes):
+        """Convert setbacks geometries into exclusions array.
+
+        Parameters
+        ----------
+        shapes : list, optional
+            List of (geometry, 1) pairs to rasterize. Each geometry is a
+            feature buffered by the desired setback distance in meters.
+            If `None` or empty list, returns array of zeros.
+
+        Returns
+        -------
+        arr : ndarray
+            Rasterized array of setbacks.
+        """
+        logger.debug('Generating setbacks exclusion array of shape {}'
+                     .format(self.arr_shape))
+        log_mem(logger)
+
+        if self._scale_factor > 1:
+            return self._rasterize_to_weights(shapes)
+
+        return self._rasterize_to_mask(shapes)
+
+    def _rasterize_to_weights(self, shapes):
+        """Rasterize features to weights using a high-resolution array."""
+
+        if not shapes:
+            return 1 - self._no_exclusions_array()
+
+        hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
+        new_transform = list(self._transform)[:6]
+        new_transform[0] = new_transform[0] / self._scale_factor
+        new_transform[4] = new_transform[4] / self._scale_factor
+
+        features.rasterize(shapes=shapes,
+                           out=hr_arr,
+                           out_shape=hr_arr.shape[1:],
+                           fill=0,
+                           transform=new_transform)
+
+        arr = self._aggregate_high_res(hr_arr)
+        return 1 - (arr / self._scale_factor ** 2)
+
+    def _rasterize_to_mask(self, shapes):
+        """Rasterize features with to an exclusion mask."""
+
+        arr = self._no_exclusions_array()
+        if shapes:
+            features.rasterize(shapes=shapes,
+                               out=arr,
+                               out_shape=arr.shape[1:],
+                               fill=0,
+                               transform=self._transform)
+
+        return arr
+
+    def _aggregate_high_res(self, hr_arr):
+        """Aggregate the high resolution exclusions array to output shape. """
+
+        arr = self._no_exclusions_array().astype(np.float32)
+        for i, j in product(range(self._scale_factor),
+                            range(self._scale_factor)):
+            arr += hr_arr[i::self._scale_factor, j::self._scale_factor]
+        return arr
+
+
+
 class BaseSetbacks:
     """
     Create exclusions layers for setbacks
@@ -117,10 +264,11 @@ class BaseSetbacks:
         self._excl_fpath = excl_fpath
         self._hsds = hsds
         excl_props = self._parse_excl_properties(excl_fpath, chunks, hsds=hsds)
-        self._shape, self._chunks, self._profile = excl_props
-        self._scale_factor = weights_calculation_upscale_factor or 1
-        self._scale_factor = int(self._scale_factor // 1)
+        shape, self._chunks, self._profile = excl_props
         self._regulations = regulations
+        self._rasterizer = _Rasterizer(shape,
+                                       weights_calculation_upscale_factor,
+                                       self.profile['transform'])
 
         self._preflight_check()
 
@@ -227,48 +375,6 @@ class BaseSetbacks:
         regulations_df = regulations_df.reset_index().to_crs(crs=self.crs)
         self.regulations_table = regulations_df
 
-    # @property
-    # def base_setback_dist(self):
-    #     """The base setback distance, in meters.
-
-    #     Returns
-    #     -------
-    #     float
-    #     """
-    #     return self._base_setback_dist
-
-    # @property
-    # def generic_setback(self):
-    #     """Default setback of base setback distance * multiplier.
-
-    #     This value is used for global setbacks.
-
-    #     Returns
-    #     -------
-    #     float
-    #     """
-    #     return self._generic_setback
-
-    # @property
-    # def multiplier(self):
-    #     """Generic setback multiplier.
-
-    #     Returns
-    #     -------
-    #     int | float
-    #     """
-    #     return self._multi
-
-    @property
-    def arr_shape(self):
-        """Rasterize array shape.
-
-        Returns
-        -------
-        tuple
-        """
-        return self._shape
-
     @property
     def profile(self):
         """Geotiff profile.
@@ -320,7 +426,7 @@ class BaseSetbacks:
         return gpd.read_file(features_fpath).to_crs(crs=self.crs)
 
     # pylint: disable=unused-argument
-    def _check_regulations_table(self, features_fpath):
+    def _pre_process_regulations(self, features_fpath):
         """Reduce regulations to state corresponding to features_fpath.
 
         Parameters
@@ -368,93 +474,6 @@ class BaseSetbacks:
         """Filter the features given a county."""
         return features_with_centroid_in_county(features, cnty)
 
-    def _no_exclusions_array(self, multiplier=1):
-        """Get an array of the correct shape representing no exclusions.
-
-        The array contains all zeros, and a new one is created
-        for every function call.
-
-        Parameters
-        ----------
-        multiplier : int, optional
-            Integer multiplier value used to scale up the dimensions of
-            the array exclusions array (e.g. multiplier of 3 turns an
-            array of shape (10, 20) into an array of shape (30, 60)).
-
-        Returns
-        -------
-        np.array
-            Array of zeros representing no exclusions.
-        """
-        high_res_shape = tuple(x * multiplier for x in self.arr_shape[1:])
-        return np.zeros(high_res_shape, dtype='uint8')
-
-    def _rasterize_setbacks(self, shapes):
-        """Convert setbacks geometries into exclusions array.
-
-        Parameters
-        ----------
-        shapes : list, optional
-            List of (geometry, 1) pairs to rasterize. Each geometry is a
-            feature buffered by the desired setback distance in meters.
-            If `None` or empty list, returns array of zeros.
-
-        Returns
-        -------
-        arr : ndarray
-            Rasterized array of setbacks.
-        """
-        logger.debug('Generating setbacks exclusion array of shape {}'
-                     .format(self.arr_shape))
-        log_mem(logger)
-
-        if self._scale_factor > 1:
-            return self._rasterize_to_weights(shapes)
-
-        return self._rasterize_to_mask(shapes)
-
-    def _rasterize_to_mask(self, shapes):
-        """Rasterize features with to an exclusion mask."""
-
-        arr = self._no_exclusions_array()
-        if shapes:
-            features.rasterize(shapes=shapes,
-                               out=arr,
-                               out_shape=arr.shape[1:],
-                               fill=0,
-                               transform=self.profile['transform'])
-
-        return arr
-
-    def _rasterize_to_weights(self, shapes):
-        """Rasterize features to weights using a high-resolution array."""
-
-        if not shapes:
-            return 1 - self._no_exclusions_array()
-
-        hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
-        new_transform = list(self.profile['transform'])[:6]
-        new_transform[0] = new_transform[0] / self._scale_factor
-        new_transform[4] = new_transform[4] / self._scale_factor
-
-        features.rasterize(shapes=shapes,
-                           out=hr_arr,
-                           out_shape=hr_arr.shape[1:],
-                           fill=0,
-                           transform=new_transform)
-
-        arr = self._aggregate_high_res(hr_arr)
-        return 1 - (arr / self._scale_factor ** 2)
-
-    def _aggregate_high_res(self, hr_arr):
-        """Aggregate the high resolution exclusions array to output shape. """
-
-        arr = self._no_exclusions_array().astype(np.float32)
-        for i, j in product(range(self._scale_factor),
-                            range(self._scale_factor)):
-            arr += hr_arr[i::self._scale_factor, j::self._scale_factor]
-        return arr
-
     def _write_setbacks(self, geotiff, setbacks, replace=False):
         """
         Write setbacks to geotiff, replace if requested
@@ -501,9 +520,9 @@ class BaseSetbacks:
         setbacks : ndarray
             Raster array of setbacks.
         """
-        self._check_regulations_table(features_fpath)
+        self._pre_process_regulations(features_fpath)
         if self.regulations_table.empty:
-            return self._rasterize_setbacks(shapes=None)
+            return self._rasterizer.rasterize_setbacks(shapes=None)
 
         setbacks = []
         setback_features = self._parse_features(features_fpath)
@@ -533,7 +552,7 @@ class BaseSetbacks:
                 logger.debug('Computed setbacks for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 
-        return self._rasterize_setbacks(setbacks)
+        return self._rasterizer.rasterize_setbacks(setbacks)
 
     def _setback_computation(self, setback_features):
         """Get function and args for setbacks computation. """
@@ -565,7 +584,7 @@ class BaseSetbacks:
         )
         setbacks = [(geom, 1) for geom in setback_features['geometry']]
 
-        return self._rasterize_setbacks(setbacks)
+        return self._rasterizer.rasterize_setbacks(setbacks)
 
     def compute_setbacks(self, features_fpath, max_workers=None,
                          geotiff=None, replace=False):
@@ -626,7 +645,7 @@ class BaseSetbacks:
         """Merge local setbacks onto the generic setbacks."""
         logger.info('Merging local setbacks onto the generic setbacks')
 
-        self._check_regulations_table(features_fpath)
+        self._pre_process_regulations(features_fpath)
         with ExclusionLayers(self._excl_fpath) as exc:
             fips = exc['cnty_fips']
 
@@ -647,7 +666,7 @@ class BaseSetbacks:
             Path to features file. This path can contain
             any pattern that can be used in the glob function.
             For example, `/path/to/features/[A]*` would match
-            with all the features in the direcotry
+            with all the features in the directory
             `/path/to/features/` that start with "A". This input
             can also be a directory, but that directory must ONLY
             contain feature files. If your feature files are mixed

@@ -21,7 +21,7 @@ class RailSetbacks(BaseSetbacks):
         """Filter the features given a county."""
         return features_clipped_to_county(features, cnty)
 
-    def _check_regulations_table(self, features_fpath):
+    def _pre_process_regulations(self, features_fpath):
         """
         Reduce regs to state corresponding to features_fpath if needed
 
@@ -39,4 +39,4 @@ class RailSetbacks(BaseSetbacks):
 
         self.regulations_table = (self.regulations_table.loc[mask]
                                   .reset_index(drop=True))
-        super()._check_regulations_table(features_fpath)
+        super()._pre_process_regulations(features_fpath)

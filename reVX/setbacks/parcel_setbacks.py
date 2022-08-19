@@ -46,7 +46,7 @@ class ParcelSetbacks(BaseSetbacks):
             )
         ]
 
-        return self._rasterize_setbacks(setbacks)
+        return self._rasterizer.rasterize_setbacks(setbacks)
 
     def _compute_local_setbacks(self, features, cnty, setback):
         """Compute local features setbacks.
@@ -83,7 +83,7 @@ class ParcelSetbacks(BaseSetbacks):
 
         return setbacks
 
-    def _check_regulations_table(self, features_fpath):
+    def _pre_process_regulations(self, features_fpath):
         """
         Reduce regs to state corresponding to features_fpath if needed.
 
@@ -108,7 +108,7 @@ class ParcelSetbacks(BaseSetbacks):
 
         self.regulations_table = (self.regulations_table[mask]
                                   .reset_index(drop=True))
-        super()._check_regulations_table(features_fpath)
+        super()._pre_process_regulations(features_fpath)
 
     def _parse_features(self, features_fpath):
         """Abstract method to parse features.
