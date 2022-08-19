@@ -196,7 +196,7 @@ class Regulations:
         elif setback_type.lower() != "meters":
             msg = ("Cannot create setback for {}, expecting "
                    '"Structure Height Multiplier", or '
-                   '"Meters", but got {}'
+                   '"Meters", but got {!r}'
                    .format(county_regulations["County"], setback_type))
             logger.warning(msg)
             warn(msg)
@@ -309,7 +309,7 @@ class WindRegulations(Regulations):
                    '"Max-tip Height Multiplier", '
                    '"Rotor-Diameter Multiplier", '
                    '"Hub-height Multiplier", or '
-                   '"Meters", but got {}'
+                   '"Meters", but got {!r}'
                    .format(county_regulations["County"], setback_type))
             logger.warning(msg)
             warn(msg)
