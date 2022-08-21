@@ -83,8 +83,8 @@ class StructureSetbacks(BaseSetbacks):
         state = self._split_state_name(state_name)
         states = self.regulations_table["State"] == state
         structures = self.regulations_table['Feature Type'] == 'structures'
-        not_ocb =  (self.regulations_table['Comment']
-                    != 'Occupied Community Buildings')
+        not_ocb = (self.regulations_table['Comment']
+                   != 'Occupied Community Buildings')
         mask = (states & structures & not_ocb)
 
         if not mask.any():

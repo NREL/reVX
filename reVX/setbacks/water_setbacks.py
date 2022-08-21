@@ -37,4 +37,3 @@ class WaterSetbacks(BaseSetbacks):
         self.regulations_table = (self.regulations_table.loc[mask]
                                   .reset_index(drop=True))
         super()._pre_process_regulations(features_fpath)
-
