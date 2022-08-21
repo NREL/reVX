@@ -62,20 +62,20 @@ def runner():
     return CliRunner()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def generic_wind_regulations():
     """Wind regulations with multiplier. """
     return WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER, multiplier=MULTIPLIER)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def county_wind_regulations():
     """Wind regulations with multiplier. """
     return WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
                            regulations_fpath=REGS_FPATH)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def county_wind_regulations_gpkg():
     """Wind regulations with multiplier. """
     return WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
