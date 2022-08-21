@@ -2,8 +2,6 @@
 """
 Module to create wind and solar plants for PLEXOS buses
 """
-import datetime
-import pytz
 import json
 import logging
 import numpy as np
@@ -19,6 +17,7 @@ from rex.utilities.utilities import to_records_array
 from reVX.handlers.outputs import Outputs
 from reVX.handlers.sc_points import SupplyCurvePoints
 from reVX.utilities.utilities import log_versions
+from reVX.plexos.base import BaseProfileAggregation, TZ_ALIASES
 
 logger = logging.getLogger(__name__)
 
@@ -973,21 +972,10 @@ class PlantProfileAggregation:
         list | None
         """
         names = None
+
         if self._plant_name_col is not None:
-            names = self.plexos_table[self._plant_name_col].values.tolist()
-
-            if self._tech_tag is not None:
-                names = [name + f' {self._tech_tag}' for name in names]
-
-            seen = set()
-            dups = [x for x in names if x in seen or seen.add(x)]
-            if any(dups):
-                for dup in dups:
-                    counter = 1
-                    for i, name in enumerate(names):
-                        if name == dup:
-                            names[i] = name + ' {}'.format(counter)
-                            counter += 1
+            names = BaseProfileAggregation.get_unique_plant_names(
+                self.plexos_table, self._plant_name_col, self._tech_tag)
 
         return names
 
@@ -1000,59 +988,7 @@ class PlantProfileAggregation:
         -------
         str
         """
-        aliases = {'UTC': 'utc',
-                   'Universal': 'utc',
-                   'US/Pacific': 'pst',
-                   'US/Mountain': 'mst',
-                   'US/Central': 'cst',
-                   'US/Eastern': 'est',
-                   }
-        return aliases.get(self._timezone, self._timezone)
-
-    def tz_convert_profiles(self, profiles):
-        """Convert profiles to local time and forward/back fill missing data.
-
-        Parameters
-        ----------
-        profiles : np.ndarray
-            Profiles of shape (time, n_plants) in UTC
-
-        Returns
-        -------
-        profiles : np.ndarray
-            Profiles of shape (time, n_plants) in self._timezone
-        """
-
-        if len(profiles) < 8760:
-            msg = ('Cannot use profiles that are not at least hourly! '
-                   'Received shape {}'.format(profiles.shape))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        steps_per_hour = len(profiles) // 8760
-
-        # use jan 1 to avoid daylight savings
-        date = datetime.datetime(2011, 1, 1)
-        date = pytz.timezone(self._timezone).localize(date)
-        tz_offset = int(date.strftime('%z')[:3])
-        roll_int = steps_per_hour * tz_offset
-
-        profiles = np.roll(profiles, roll_int, axis=0)
-
-        if roll_int < 0:
-            for i in range(roll_int, 0):
-                # don't fill nighttime for solar
-                if not (profiles[i, :] == 0).all():
-                    profiles[i, :] = np.nan
-            profiles = pd.DataFrame(profiles).ffill().values
-        elif roll_int > 0:
-            for i in range(1, roll_int + 1):
-                # don't fill nighttime for solar
-                if not (profiles[i, :] == 0).all():
-                    profiles[i, :] = np.nan
-            profiles = pd.DataFrame(profiles).bfill().values
-
-        return profiles
+        return TZ_ALIASES.get(self._timezone, self._timezone)
 
     def get_gen_gid(self, res_gid):
         """Get a generation gid from a resource gid using cf_gid_map. Accounts
@@ -1301,8 +1237,8 @@ class PlantProfileAggregation:
             A companion .csv with be saved at the same location for plexos.
         """
 
-        msg = 'Must be an h5 output: {}'.format(out_fpath)
-        assert out_fpath.endswith('.h5'), msg
+        if not out_fpath.endswith('.h5'):
+            out_fpath = out_fpath + '.h5'
 
         if not os.path.exists(os.path.dirname(out_fpath)):
             os.makedirs(os.path.dirname(out_fpath))
@@ -1339,7 +1275,8 @@ class PlantProfileAggregation:
 
             logger.info('Writing Generation Profiles')
             gen_profiles = np.dstack(gen_profiles)[0].astype('float32')
-            gen_profiles = self.tz_convert_profiles(gen_profiles)
+            gen_profiles = BaseProfileAggregation.tz_convert_profiles(
+                gen_profiles, self._timezone)
             f_out._create_dset('gen_profiles',
                                gen_profiles.shape,
                                gen_profiles.dtype,
