@@ -624,10 +624,10 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
      (ParcelSetbacks, WindRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 474, 3, [HUB_HEIGHT, ROTOR_DIAMETER]),
-    (WaterSetbacks, WindRegulations,
+     (WaterSetbacks, WindRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
       WATER_REGS_FPATH_VALUE, 1_159_266, 83, [HUB_HEIGHT, ROTOR_DIAMETER]),
-    (StructureSetbacks, Regulations,
+     (StructureSetbacks, Regulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
       REGS_FPATH, 260_963, 112, [BASE_SETBACK_DIST + 199]),
      (RailSetbacks, Regulations,
@@ -712,7 +712,7 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
 @pytest.mark.parametrize(
     "config_input",
     ({"base_setback_dist": HUB_HEIGHT + ROTOR_DIAMETER / 2},
-     {"hub_height":HUB_HEIGHT, "rotor_diameter": ROTOR_DIAMETER}))
+     {"hub_height": HUB_HEIGHT, "rotor_diameter": ROTOR_DIAMETER}))
 def test_cli_structures(runner, config_input):
     """
     Test CLI for structures.
@@ -760,7 +760,7 @@ def test_cli_structures(runner, config_input):
 @pytest.mark.parametrize(
     "config_input",
     ({"base_setback_dist": HUB_HEIGHT + ROTOR_DIAMETER / 2},
-     {"hub_height":HUB_HEIGHT, "rotor_diameter": ROTOR_DIAMETER}))
+     {"hub_height": HUB_HEIGHT, "rotor_diameter": ROTOR_DIAMETER}))
 def test_cli_railroads(runner, rail_path, config_input):
     """
     Test CLI. Use the RI rails as test case, using all structures results
