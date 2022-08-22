@@ -101,6 +101,8 @@ class Regulations:
 
     @regulations.setter
     def regulations(self, regulations):
+        if regulations is None:
+            raise ValueError("Cannot set regulations to `None`")
         self._regulations = regulations
         self._validate_regulations()
 

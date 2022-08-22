@@ -163,6 +163,13 @@ def test_regulations_iter():
     assert len([(setback, cnty) for setback, cnty in regs]) == 0
 
 
+def test_regulations_set_to_none():
+    """Test setting regulations to `None` not allowed. """
+    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
+    with pytest.raises(ValueError):
+        regs.regulations = None
+
+
 def test_regulations_wind():
     """Test `WindRegulations` initialization and iteration. """
 
