@@ -425,7 +425,6 @@ class BaseSetbacks:
         """
         return gpd.read_file(features_fpath).to_crs(crs=self.crs)
 
-    # pylint: disable=unused-argument
     def _pre_process_regulations(self, features_fpath):
         """Reduce regulations to state corresponding to features_fpath.
 
@@ -434,8 +433,22 @@ class BaseSetbacks:
         features_fpath : str
             Path to shape file with features to compute setbacks from.
         """
+        mask = self._regulation_table_mask(features_fpath)
+        if not mask.any():
+            msg = "Found no local regulations!"
+            logger.warning(msg)
+            warn(msg)
+
         logger.debug('Computing setbacks for regulations in {} counties'
                      .format(len(self.regulations_table)))
+
+        self.regulations_table = (self.regulations_table[mask]
+                                  .reset_index(drop=True))
+
+    # pylint: disable=unused-argument
+    def _regulation_table_mask(self, features_fpath):
+        """Return the regulation table mask for setback feature. """
+        return self.regulations_table.index >= 0
 
     def _compute_local_setbacks(self, features, cnty, setback):
         """Compute local features setbacks.
@@ -622,25 +635,30 @@ class BaseSetbacks:
 
     def _compute_merged_setbacks(self, features_fpath, max_workers=None):
         """Compute and merge local and generic setbacks, if necessary. """
-        self._pre_process_regulations(features_fpath)
-        regs = self._regulations
+        mw = max_workers
 
-        if regs.generic_setback is None and not self._regulations.exist:
+        if self._regulations.local_exist:
+            self._pre_process_regulations(features_fpath)
+
+        generic_setbacks_exist = self._regulations.generic_exist
+        local_setbacks_exist = self._regulations.local_exist
+
+        if not generic_setbacks_exist and not local_setbacks_exist:
             msg = ("Found no setbacks to compute: No regulations detected, "
                    "and generic multiplier not set.")
             logger.error(msg)
             raise ValueError(msg)
 
-        if regs.generic_setback is not None and not self._regulations.exist:
+        if generic_setbacks_exist and not local_setbacks_exist:
             return self._compute_generic_setbacks(features_fpath)
 
-        if self._regulations.exist and regs.generic_setback is None:
+        if local_setbacks_exist and not generic_setbacks_exist:
             return self._compute_all_local_setbacks(features_fpath,
-                                               max_workers=max_workers)
+                                                    max_workers=mw)
 
         generic_setbacks = self._compute_generic_setbacks(features_fpath)
         local_setbacks = self._compute_all_local_setbacks(features_fpath,
-                                                     max_workers=max_workers)
+                                                          max_workers=mw)
         return self._merge_setbacks(generic_setbacks, local_setbacks,
                                     features_fpath)
 

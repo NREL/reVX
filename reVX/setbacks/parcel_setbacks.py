@@ -5,7 +5,6 @@ Compute setbacks exclusions
 import logging
 import os
 import geopandas as gpd
-from warnings import warn
 
 from rex.utilities import log_mem
 
@@ -22,7 +21,7 @@ class ParcelSetbacks(BaseSetbacks):
     and should thus always be inherited alongside `BaseSetbacks`.
     """
 
-    def compute_generic_setbacks(self, features_fpath):
+    def _compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
@@ -84,9 +83,8 @@ class ParcelSetbacks(BaseSetbacks):
 
         return setbacks
 
-    def _pre_process_regulations(self, features_fpath):
-        """
-        Reduce regs to state corresponding to features_fpath if needed.
+    def _regulation_table_mask(self, features_fpath):
+        """Return the regulation table mask for setback feature.
 
         Parameters
         ----------
@@ -100,16 +98,7 @@ class ParcelSetbacks(BaseSetbacks):
         states = states == state
         property_line = (self.regulations_table['Feature Type']
                          == 'property line')
-        mask = states & property_line
-
-        if not mask.any():
-            msg = ("There are no local regulations in {}!".format(state))
-            logger.warning(msg)
-            warn(msg)
-
-        self.regulations_table = (self.regulations_table[mask]
-                                  .reset_index(drop=True))
-        super()._pre_process_regulations(features_fpath)
+        return states & property_line
 
     def _parse_features(self, features_fpath):
         """Abstract method to parse features.

@@ -5,7 +5,6 @@ Compute setbacks exclusions
 import os
 import re
 import logging
-from warnings import warn
 
 from reVX.setbacks.base import BaseSetbacks
 
@@ -71,9 +70,8 @@ class StructureSetbacks(BaseSetbacks):
 
         return file_paths
 
-    def _pre_process_regulations(self, features_fpath):
-        """
-        Reduce regs to state corresponding to features_fpath if needed
+    def _regulation_table_mask(self, features_fpath):
+        """Return the regulation table mask for setback feature.
 
         Parameters
         ----------
@@ -86,13 +84,4 @@ class StructureSetbacks(BaseSetbacks):
         structures = self.regulations_table['Feature Type'] == 'structures'
         not_ocb = (self.regulations_table['Comment']
                    != 'Occupied Community Buildings')
-        mask = (states & structures & not_ocb)
-
-        if not mask.any():
-            msg = ("There are no local regulations in {}!".format(state))
-            logger.warning(msg)
-            warn(msg)
-
-        self.regulations_table = (self.regulations_table.loc[mask]
-                                  .reset_index(drop=True))
-        super()._pre_process_regulations(features_fpath)
+        return states & structures & not_ocb

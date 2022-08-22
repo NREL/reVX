@@ -183,14 +183,24 @@ class Regulations:
         return self._multi
 
     @property
-    def exist(self):
-        """Flag indicating wether regulations exist.
+    def local_exist(self):
+        """Flag indicating wether local regulations exist.
 
         Returns
         -------
         bool
         """
         return (self.regulations is not None and not self.regulations.empty)
+
+    @property
+    def generic_exist(self):
+        """Flag indicating wether generic regulations exist.
+
+        Returns
+        -------
+        bool
+        """
+        return self.generic_setback is not None
 
     def __iter__(self):
         if self._regulations is None:

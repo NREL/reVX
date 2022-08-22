@@ -24,7 +24,7 @@ from reVX.setbacks.regulations import (Regulations, WindRegulations,
                                        validate_regulations_input,
                                        select_regulations)
 from reVX.setbacks import (ParcelSetbacks, RailSetbacks, StructureSetbacks,
-                           WaterSetbacks)
+                           WaterSetbacks, SETBACKS)
 from reVX.setbacks.setbacks_cli import main
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
@@ -160,7 +160,7 @@ def test_regulations_iter():
         assert regs.regulations.iloc[[ind]].equals(cnty)
 
     regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
-    assert len([(setback, cnty) for setback, cnty in regs]) == 0
+    assert len(list(regs)) == 0
 
 
 def test_regulations_set_to_none():
@@ -170,12 +170,14 @@ def test_regulations_set_to_none():
         regs.regulations = None
 
 
-def test_regulations_exist():
-    """Test exist property. """
+def test_regulations_locals_exist():
+    """Test locals_exist property. """
     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
-    assert regs.exist
+    assert regs.local_exist
+    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
+    assert regs.local_exist
     regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
-    assert not regs.exist
+    assert not regs.local_exist
 
     with tempfile.TemporaryDirectory() as td:
         regs = pd.read_csv(REGS_FPATH).iloc[0:0]
@@ -183,7 +185,18 @@ def test_regulations_exist():
         regs_fpath = os.path.join(td, regs_fpath)
         regs.to_csv(regs_fpath, index=False)
         regs = Regulations(10, regulations_fpath=regs_fpath, multiplier=1.1)
-        assert not regs.exist
+        assert not regs.local_exist
+        regs = Regulations(10, regulations_fpath=regs_fpath, multiplier=None)
+        assert not regs.local_exist
+
+def test_regulations_generic_exist():
+    """Test locals_exist property. """
+    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
+    assert regs.generic_exist
+    regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
+    assert regs.generic_exist
+    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
+    assert not regs.generic_exist
 
 
 def test_regulations_wind():
@@ -745,6 +758,70 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
                           merged_layer[~local_setbacks_mask]).all()
     assert np.isclose(generic_layer[~local_setbacks_mask],
                       merged_layer[~local_setbacks_mask]).all()
+
+
+@pytest.mark.parametrize(
+    ('setbacks_class', 'regulations_class', 'features_path',
+     'regulations_fpath', 'generic_sum', 'setback_distance'),
+    [(StructureSetbacks, WindRegulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+      REGS_FPATH, 332_887, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (RailSetbacks, WindRegulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
+      REGS_FPATH, 754_082, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (ParcelSetbacks, WindRegulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
+      PARCEL_REGS_FPATH_VALUE, 474, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (WaterSetbacks, WindRegulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
+      WATER_REGS_FPATH_VALUE, 1_159_266, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (StructureSetbacks, Regulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
+      REGS_FPATH, 260_963, [BASE_SETBACK_DIST + 199]),
+     (RailSetbacks, Regulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
+      REGS_FPATH, 5_355, [BASE_SETBACK_DIST]),
+     (ParcelSetbacks, Regulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
+      PARCEL_REGS_FPATH_VALUE, 438, [BASE_SETBACK_DIST]),
+     (WaterSetbacks, Regulations,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
+      WATER_REGS_FPATH_VALUE, 88_994, [BASE_SETBACK_DIST])])
+def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
+                                       features_path, regulations_fpath,
+                                       generic_sum, setback_distance):
+    """ Test merged setback layers. """
+
+    regulations = regulations_class(*setback_distance, regulations_fpath=None,
+                                    multiplier=100)
+    generic_setbacks = setbacks_class(EXCL_H5, regulations)
+    generic_layer = generic_setbacks.compute_setbacks(features_path,
+                                                      max_workers=1)
+
+    with tempfile.TemporaryDirectory() as td:
+        regs = pd.read_csv(regulations_fpath).iloc[0:0]
+        regs_fpath = os.path.basename(regulations_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        regs.to_csv(regs_fpath, index=False)
+
+        regulations = regulations_class(*setback_distance,
+                                        regulations_fpath=regs_fpath,
+                                        multiplier=None)
+        local_setbacks = setbacks_class(EXCL_H5, regulations)
+        with pytest.raises(ValueError):
+            local_setbacks.compute_setbacks(features_path, max_workers=1)
+
+        regulations = regulations_class(*setback_distance,
+                                        regulations_fpath=regs_fpath,
+                                        multiplier=100)
+        merged_setbacks = setbacks_class(EXCL_H5, regulations)
+        merged_layer = merged_setbacks.compute_setbacks(features_path,
+                                                        max_workers=1)
+
+    # make sure the comparison layers match what we expect
+    assert generic_layer.sum() == generic_sum
+    assert generic_layer.sum() == merged_layer.sum()
+    assert np.isclose(generic_layer, merged_layer).all()
 
 
 @pytest.mark.parametrize(

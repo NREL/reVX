@@ -6,7 +6,6 @@ import os
 import logging
 import fiona
 import geopandas as gpd
-from warnings import warn
 
 from reVX.setbacks.base import BaseSetbacks
 
@@ -69,9 +68,8 @@ class RoadSetbacks(BaseSetbacks):
 
         return file_paths
 
-    def _pre_process_regulations(self, features_fpath):
-        """
-        Reduce regs to state corresponding to features_fpath if needed
+    def _regulation_table_mask(self, features_fpath):
+        """Return the regulation table mask for setback feature.
 
         Parameters
         ----------
@@ -83,13 +81,4 @@ class RoadSetbacks(BaseSetbacks):
 
         feature_types = {'roads', 'highways', 'highways 111'}
         features = self.regulations_table['Feature Type'].isin(feature_types)
-        mask = states & features
-
-        if not mask.any():
-            msg = ("There are no local regulations in {}!".format(state))
-            logger.warning(msg)
-            warn(msg)
-
-        self.regulations_table = (self.regulations_table.loc[mask]
-                                  .reset_index(drop=True))
-        super()._pre_process_regulations(features_fpath)
+        return states & features
