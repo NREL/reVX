@@ -502,7 +502,7 @@ class BaseSetbacks:
 
         ExclusionsConverter._write_geotiff(geotiff, self.profile, setbacks)
 
-    def compute_local_setbacks(self, features_fpath, max_workers=None):
+    def _compute_all_local_setbacks(self, features_fpath, max_workers=None):
         """Compute local setbacks for all counties either.
 
         Parameters
@@ -520,10 +520,6 @@ class BaseSetbacks:
         setbacks : ndarray
             Raster array of setbacks.
         """
-        self._pre_process_regulations(features_fpath)
-        if self.regulations_table.empty:
-            return self._rasterizer.rasterize_setbacks(shapes=None)
-
         setbacks = []
         setback_features = self._parse_features(features_fpath)
         max_workers = max_workers or os.cpu_count()
@@ -561,7 +557,7 @@ class BaseSetbacks:
             cnty_feats = setback_features.iloc[list(idx)].copy()
             yield self._compute_local_setbacks, cnty_feats, cnty, setback
 
-    def compute_generic_setbacks(self, features_fpath):
+    def _compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
@@ -626,16 +622,24 @@ class BaseSetbacks:
 
     def _compute_merged_setbacks(self, features_fpath, max_workers=None):
         """Compute and merge local and generic setbacks, if necessary. """
+        self._pre_process_regulations(features_fpath)
         regs = self._regulations
-        if regs.generic_setback is not None and regs.regulations is None:
-            return self.compute_generic_setbacks(features_fpath)
 
-        if regs.regulations is not None and regs.generic_setback is None:
-            return self.compute_local_setbacks(features_fpath,
+        if regs.generic_setback is None and not self._regulations.exist:
+            msg = ("Found no setbacks to compute: No regulations detected, "
+                   "and generic multiplier not set.")
+            logger.error(msg)
+            raise ValueError(msg)
+
+        if regs.generic_setback is not None and not self._regulations.exist:
+            return self._compute_generic_setbacks(features_fpath)
+
+        if self._regulations.exist and regs.generic_setback is None:
+            return self._compute_all_local_setbacks(features_fpath,
                                                max_workers=max_workers)
 
-        generic_setbacks = self.compute_generic_setbacks(features_fpath)
-        local_setbacks = self.compute_local_setbacks(features_fpath,
+        generic_setbacks = self._compute_generic_setbacks(features_fpath)
+        local_setbacks = self._compute_all_local_setbacks(features_fpath,
                                                      max_workers=max_workers)
         return self._merge_setbacks(generic_setbacks, local_setbacks,
                                     features_fpath)

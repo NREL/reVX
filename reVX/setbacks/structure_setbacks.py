@@ -5,6 +5,7 @@ Compute setbacks exclusions
 import os
 import re
 import logging
+from warnings import warn
 
 from reVX.setbacks.base import BaseSetbacks
 
@@ -89,8 +90,8 @@ class StructureSetbacks(BaseSetbacks):
 
         if not mask.any():
             msg = ("There are no local regulations in {}!".format(state))
-            logger.error(msg)
-            raise RuntimeError(msg)
+            logger.warning(msg)
+            warn(msg)
 
         self.regulations_table = (self.regulations_table.loc[mask]
                                   .reset_index(drop=True))

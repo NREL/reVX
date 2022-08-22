@@ -226,6 +226,21 @@ def test_select_regulations():
                       Regulations)
 
 
+@pytest.mark.parametrize('setbacks_class', SETBACKS.values())
+def test_setbacks_no_computation(setbacks_class):
+    """Test setbacks computation for invalid input. """
+
+    with tempfile.TemporaryDirectory() as td:
+        regs = pd.read_csv(REGS_FPATH).iloc[0:0]
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        regs.to_csv(regs_fpath, index=False)
+        regs = Regulations(10, regulations_fpath=regs_fpath)
+        setbacks = setbacks_class(EXCL_H5, regs)
+        with pytest.raises(ValueError):
+            setbacks.compute_setbacks("RhodeIsland.file")
+
+
 def test_generic_structure(generic_wind_regulations):
     """
     Test generic structures setbacks

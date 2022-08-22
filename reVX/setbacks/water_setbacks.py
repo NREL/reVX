@@ -3,6 +3,7 @@
 Compute setbacks exclusions
 """
 import logging
+from warnings import warn
 
 from reVX.setbacks.base import BaseSetbacks, features_clipped_to_county
 
@@ -31,8 +32,8 @@ class WaterSetbacks(BaseSetbacks):
 
         if not mask.any():
             msg = "Found no local regulations!"
-            logger.error(msg)
-            raise RuntimeError(msg)
+            logger.warning(msg)
+            warn(msg)
 
         self.regulations_table = (self.regulations_table.loc[mask]
                                   .reset_index(drop=True))

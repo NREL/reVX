@@ -5,6 +5,7 @@ Compute setbacks exclusions
 import logging
 import os
 import geopandas as gpd
+from warnings import warn
 
 from rex.utilities import log_mem
 
@@ -103,8 +104,8 @@ class ParcelSetbacks(BaseSetbacks):
 
         if not mask.any():
             msg = ("There are no local regulations in {}!".format(state))
-            logger.error(msg)
-            raise RuntimeError(msg)
+            logger.warning(msg)
+            warn(msg)
 
         self.regulations_table = (self.regulations_table[mask]
                                   .reset_index(drop=True))
