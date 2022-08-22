@@ -180,6 +180,16 @@ class Regulations:
         """
         return self._multi
 
+    @property
+    def exist(self):
+        """Flag indicating wether regulations exist.
+
+        Returns
+        -------
+        bool
+        """
+        return (self.regulations is not None and not self.regulations.empty)
+
     def __iter__(self):
         if self._regulations is None:
             return

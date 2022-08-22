@@ -170,6 +170,22 @@ def test_regulations_set_to_none():
         regs.regulations = None
 
 
+def test_regulations_exist():
+    """Test exist property. """
+    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
+    assert regs.exist
+    regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
+    assert not regs.exist
+
+    with tempfile.TemporaryDirectory() as td:
+        regs = pd.read_csv(REGS_FPATH).iloc[0:0]
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        regs.to_csv(regs_fpath, index=False)
+        regs = Regulations(10, regulations_fpath=regs_fpath, multiplier=1.1)
+        assert not regs.exist
+
+
 def test_regulations_wind():
     """Test `WindRegulations` initialization and iteration. """
 
