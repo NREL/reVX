@@ -189,6 +189,7 @@ def test_regulations_locals_exist():
         regs = Regulations(10, regulations_fpath=regs_fpath, multiplier=None)
         assert not regs.local_exist
 
+
 def test_regulations_generic_exist():
     """Test locals_exist property. """
     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)

@@ -206,7 +206,6 @@ class _Rasterizer:
         return arr
 
 
-
 class BaseSetbacks:
     """
     Create exclusions layers for setbacks
