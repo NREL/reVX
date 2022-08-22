@@ -438,11 +438,10 @@ class BaseSetbacks:
             logger.warning(msg)
             warn(msg)
 
-        logger.debug('Computing setbacks for regulations in {} counties'
-                     .format(len(self.regulations_table)))
-
         self.regulations_table = (self.regulations_table[mask]
                                   .reset_index(drop=True))
+        logger.debug('Computing setbacks for regulations in {} counties'
+                     .format(len(self.regulations_table)))
 
     # pylint: disable=unused-argument
     def _regulation_table_mask(self, features_fpath):
