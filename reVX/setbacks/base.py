@@ -706,8 +706,8 @@ class BaseSetbacks:
 
     @classmethod
     def run(cls, excl_fpath, features_path, out_dir, regulations,
-            chunks=(128, 128), weights_calculation_upscale_factor=None,
-            max_workers=None, replace=False, hsds=False):
+            weights_calculation_upscale_factor=None, max_workers=None,
+            replace=False, hsds=False):
         """
         Compute setbacks and write them to a geotiff. If a regulations
         file is given, compute local setbacks, otherwise compute generic
@@ -734,9 +734,6 @@ class BaseSetbacks:
             Directory to save setbacks geotiff(s) into
         regulations : `~reVX.setbacks.regulations.Regulations`
             A `Regulations` object used to extract setback distances.
-        chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default
-            chunk size in excl_fpath, By default `(128, 128)`.
         weights_calculation_upscale_factor : int, optional
             If this value is an int > 1, the output will be a layer with
             **inclusion** weight values instead of exclusion booleans.
@@ -781,8 +778,7 @@ class BaseSetbacks:
             AWS behind HSDS. By default `False`.
         """
         scale_factor = weights_calculation_upscale_factor
-        setbacks = cls(excl_fpath, regulations=regulations,
-                       hsds=hsds, chunks=chunks,
+        setbacks = cls(excl_fpath, regulations=regulations, hsds=hsds,
                        weights_calculation_upscale_factor=scale_factor)
 
         features_path = setbacks._get_feature_paths(features_path)
