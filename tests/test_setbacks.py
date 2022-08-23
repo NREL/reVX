@@ -255,6 +255,21 @@ def test_setbacks_no_computation(setbacks_class):
             setbacks.compute_setbacks("RhodeIsland.file")
 
 
+@pytest.mark.parametrize(
+    ('setbacks_class', 'feature_file'),
+    [(ParcelSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                   'Rhode_Island.gpkg')),
+     (WaterSetbacks,
+      os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'))])
+def test_setbacks_no_generic_value(setbacks_class, feature_file):
+    """Test setbacks computation for invalid input. """
+    regs = Regulations(0, regulations_fpath=None, multiplier=1)
+    setbacks = setbacks_class(EXCL_H5, regs)
+    out = setbacks.compute_setbacks(feature_file)
+    assert np.isclose(out, 0).all()
+
+
 def test_generic_structure(generic_wind_regulations):
     """
     Test generic structures setbacks
@@ -1277,4 +1292,11 @@ def execute_pytest(capture='all', flags='-rapP'):
 
 
 if __name__ == '__main__':
-    execute_pytest()
+    # execute_pytest()
+    runner = CliRunner()
+    runner.invoke(
+        main,
+        ['from-config',
+         '-c', "/shared-projects/rev/projects/seto/fy22/data/paper_exclusions/pv/setbacks/pv_parcel_50/pv_parcel_50_debug.json",
+        ]
+    )

@@ -4,6 +4,7 @@ Compute setbacks exclusions
 """
 import logging
 import os
+import numpy as np
 import geopandas as gpd
 
 from rex.utilities import log_mem
@@ -38,6 +39,9 @@ class ParcelSetbacks(BaseSetbacks):
             Raster array of setbacks
         """
         logger.info("Computing generic setbacks")
+        if np.isclose(self._regulations.generic_setback, 0):
+            return self._rasterizer.rasterize_setbacks(shapes=None)
+
         setback_features = self._parse_features(features_fpath)
 
         setbacks = [

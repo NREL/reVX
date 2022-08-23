@@ -585,6 +585,9 @@ class BaseSetbacks:
             Raster array of setbacks
         """
         logger.info('Computing generic setbacks')
+        if np.isclose(self._regulations.generic_setback, 0):
+            return self._rasterizer.rasterize_setbacks(shapes=None)
+
         setback_features = self._parse_features(features_fpath)
         setback_features.loc[:, 'geometry'] = setback_features.buffer(
             self._regulations.generic_setback
