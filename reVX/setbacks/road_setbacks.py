@@ -8,6 +8,7 @@ import fiona
 import geopandas as gpd
 
 from reVX.setbacks.base import BaseSetbacks
+from reVX.utilities.utilities import STATES_ABBR_MAP
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,9 @@ class RoadSetbacks(BaseSetbacks):
             Path to shape file with features to compute setbacks from
         """
         state = features_fpath.split('.')[0].split('_')[-1]
+        if 'Abbr' not in self.regulations_table:
+            states = self.regulations_table['state'].str.title()
+            self.regulations_table['Abbr'] = states.map(STATES_ABBR_MAP)
         states = self.regulations_table['Abbr'] == state
 
         feature_types = {'roads', 'highways', 'highways 111'}
