@@ -79,7 +79,7 @@ class RoadSetbacks(BaseSetbacks):
         """
         state = features_fpath.split('.')[0].split('_')[-1]
         if 'Abbr' not in self.regulations_table:
-            states = self.regulations_table['state'].str.title()
+            states = self.regulations_table['State'].str.title()
             self.regulations_table['Abbr'] = states.map(STATES_ABBR_MAP)
         states = self.regulations_table['Abbr'] == state
 
