@@ -214,7 +214,7 @@ class BaseSetbacks:
     Create exclusions layers for setbacks
     """
 
-    def __init__(self, excl_fpath, regulations, hsds=False, chunks=(128, 128),
+    def __init__(self, excl_fpath, regulations, hsds=False,
                  weights_calculation_upscale_factor=None):
         """
         Parameters
@@ -227,9 +227,6 @@ class BaseSetbacks:
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
-        chunks : tuple, optional
-            Chunk size to use for setback layers, if None use default
-            chunk size in excl_fpath. By default `(128, 128)`.
         weights_calculation_upscale_factor : int, optional
             If this value is an int > 1, the output will be a layer with
             **inclusion** weight values instead of exclusion booleans.
@@ -264,9 +261,8 @@ class BaseSetbacks:
         """
         log_versions(logger)
         self._excl_fpath = excl_fpath
-        self._hsds = hsds
-        excl_props = self._parse_excl_properties(excl_fpath, chunks, hsds=hsds)
-        shape, self._chunks, self._profile = excl_props
+        shape, self._profile = self._parse_excl_properties(excl_fpath,
+                                                           hsds=hsds)
         self._regulations = regulations
         self._rasterizer = _Rasterizer(shape,
                                        weights_calculation_upscale_factor,
@@ -279,7 +275,7 @@ class BaseSetbacks:
         return msg
 
     @staticmethod
-    def _parse_excl_properties(excl_fpath, chunks, hsds=False):
+    def _parse_excl_properties(excl_fpath, hsds=False):
         """Parse shape, chunk size, and profile from exclusions file.
 
         Parameters
@@ -287,8 +283,6 @@ class BaseSetbacks:
         excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be
             the location of any new setback layers
-        chunks : tuple | None
-            Chunk size of exclusions datasets
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
@@ -297,30 +291,22 @@ class BaseSetbacks:
         -------
         shape : tuple
             Shape of exclusions datasets
-        chunks : tuple | None
-            Chunk size of exclusions datasets
         profile : str
             GeoTiff profile for exclusions datasets
         """
         with ExclusionLayers(excl_fpath, hsds=hsds) as exc:
             dset_shape = exc.shape
             profile = exc.profile
-            if chunks is None:
-                chunks = exc.chunks
-
-        if len(chunks) < 3:
-            chunks = (1, ) + chunks
 
         if len(dset_shape) < 3:
             dset_shape = (1, ) + dset_shape
 
         logger.debug('Exclusions properties:\n'
                      'shape : {}\n'
-                     'chunks : {}\n'
                      'profile : {}\n'
-                     .format(dset_shape, chunks, profile))
+                     .format(dset_shape, profile))
 
-        return dset_shape, chunks, profile
+        return dset_shape, profile
 
     def _preflight_check(self):
         """Parse the county regulations.
