@@ -16,11 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class ParcelSetbacks(BaseSetbacks):
-    """
-    Parcel setbacks - facilitates the use of negative buffers.
-    This class uses duck typing to override `BaseSetbacks` behavior
-    and should thus always be inherited alongside `BaseSetbacks`.
-    """
+    """Parcel setbacks - facilitates the use of negative buffers. """
 
     def _compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
@@ -42,15 +38,10 @@ class ParcelSetbacks(BaseSetbacks):
         if np.isclose(self._regulations.generic_setback, 0):
             return self._rasterizer.rasterize_setbacks(shapes=None)
 
-        setback_features = self._parse_features(features_fpath)
-
-        setbacks = [
-            (geom, 1) for geom in setback_features.buffer(0).difference(
-                setback_features.buffer(-1 * self._regulations.generic_setback)
-            )
-        ]
-
-        return self._rasterizer.rasterize_setbacks(setbacks)
+        features = self._parse_features(features_fpath)
+        setbacks = features.buffer(0).difference(
+            features.buffer(-1 * self._regulations.generic_setback))
+        return self._rasterizer.rasterize_setbacks(list(setbacks))
 
     def _compute_local_setbacks(self, features, cnty, setback):
         """Compute local features setbacks.
@@ -78,14 +69,8 @@ class ParcelSetbacks(BaseSetbacks):
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
         features = self._feature_filter(features, cnty)
-
-        setbacks = [
-            (geom, 1) for geom in features.buffer(0).difference(
-                features.buffer(-1 * setback)
-            )
-        ]
-
-        return setbacks
+        setbacks = features.buffer(0).difference(features.buffer(-1 * setback))
+        return list(setbacks)
 
     def _regulation_table_mask(self, features_fpath):
         """Return the regulation table mask for setback feature.

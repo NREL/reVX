@@ -158,6 +158,9 @@ class _Rasterizer:
                      .format(self.arr_shape))
         log_mem(logger)
 
+        shapes = shapes or []
+        shapes = [(geom, 1) for geom in shapes if geom is not None]
+
         if self._scale_factor > 1:
             return self._rasterize_to_weights(shapes)
 
@@ -474,11 +477,7 @@ class BaseSetbacks:
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
         features = self._feature_filter(features, cnty)
-        features.loc[:, 'geometry'] = features.buffer(setback)
-
-        setbacks = [(geom, 1) for geom in features['geometry']]
-
-        return setbacks
+        return list(features.buffer(setback))
 
     @staticmethod
     def _feature_filter(features, cnty):
@@ -589,10 +588,9 @@ class BaseSetbacks:
             return self._rasterizer.rasterize_setbacks(shapes=None)
 
         setback_features = self._parse_features(features_fpath)
-        setback_features.loc[:, 'geometry'] = setback_features.buffer(
+        setbacks = list(setback_features.buffer(
             self._regulations.generic_setback
-        )
-        setbacks = [(geom, 1) for geom in setback_features['geometry']]
+        ))
 
         return self._rasterizer.rasterize_setbacks(setbacks)
 
