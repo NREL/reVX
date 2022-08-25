@@ -4,13 +4,13 @@ Compute setbacks exclusions
 """
 import logging
 
-from reVX.setbacks.base import BaseSetbacks, features_clipped_to_county
+from reVX.setbacks.base import AbstractBaseSetbacks, features_clipped_to_county
 
 
 logger = logging.getLogger(__name__)
 
 
-class WaterSetbacks(BaseSetbacks):
+class WaterSetbacks(AbstractBaseSetbacks):
     """Water setbacks. """
 
     @staticmethod

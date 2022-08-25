@@ -9,13 +9,13 @@ import geopandas as gpd
 
 from rex.utilities import log_mem
 
-from reVX.setbacks.base import BaseSetbacks
+from reVX.setbacks.base import AbstractBaseSetbacks
 
 
 logger = logging.getLogger(__name__)
 
 
-class ParcelSetbacks(BaseSetbacks):
+class ParcelSetbacks(AbstractBaseSetbacks):
     """Parcel setbacks - facilitates the use of negative buffers. """
 
     def _compute_generic_setbacks(self, features_fpath):
@@ -90,7 +90,7 @@ class ParcelSetbacks(BaseSetbacks):
         return states & property_line
 
     def _parse_features(self, features_fpath):
-        """Abstract method to parse features.
+        """Method to parse features.
 
         Parameters
         ----------

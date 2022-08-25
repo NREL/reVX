@@ -2,6 +2,7 @@
 """
 Compute setbacks exclusions
 """
+from abc import ABC, abstractmethod
 from concurrent.futures import as_completed
 from warnings import warn
 from itertools import product
@@ -60,7 +61,7 @@ def features_clipped_to_county(features, cnty):
     return tmp[~tmp.is_empty]
 
 
-class _Rasterizer:
+class Rasterizer:
     """Helper class to rasterize setbacks."""
 
     def __init__(self, shape, weights_calculation_upscale_factor, transform):
@@ -69,9 +70,12 @@ class _Rasterizer:
         ----------
         shape : tuple
             Shape of array to rasterize onto.
-        weights_calculation_upscale_factor : int, optional
+        weights_calculation_upscale_factor : int
             If this value is an int > 1, the output will be a layer with
-            **inclusion** weight values instead of exclusion booleans.
+            **inclusion** weight values (floats ranging from 0 to 1).
+            Note that this is backwards w.r.t the typical output of
+            exclusion integer values (1 for excluded, 0 otherwise).
+            Values <= 1 will still return a standard exclusion mask.
             For example, a cell that was previously excluded with a
             a boolean mask (value of 1) may instead be converted to an
             inclusion weight value of 0.75, meaning that 75% of the area
@@ -145,9 +149,8 @@ class _Rasterizer:
         Parameters
         ----------
         shapes : list, optional
-            List of (geometry, 1) pairs to rasterize. Each geometry is a
-            feature buffered by the desired setback distance in meters.
-            If `None` or empty list, returns array of zeros.
+            List of shapes to rasterize. If `None` or empty list,
+            returns array of zeros.
 
         Returns
         -------
@@ -209,7 +212,7 @@ class _Rasterizer:
         return arr
 
 
-class BaseSetbacks:
+class AbstractBaseSetbacks(ABC):
     """
     Create exclusions layers for setbacks
     """
@@ -264,9 +267,9 @@ class BaseSetbacks:
         shape, self._profile = self._parse_excl_properties(excl_fpath,
                                                            hsds=hsds)
         self._regulations = regulations
-        self._rasterizer = _Rasterizer(shape,
-                                       weights_calculation_upscale_factor,
-                                       self.profile['transform'])
+        self._rasterizer = Rasterizer(shape,
+                                      weights_calculation_upscale_factor,
+                                      self.profile['transform'])
 
         self._preflight_check()
 
@@ -398,7 +401,7 @@ class BaseSetbacks:
         self._regulations.regulations = regulations_table
 
     def _parse_features(self, features_fpath):
-        """Abstract method to parse features.
+        """Method to parse features.
 
         Parameters
         ----------
@@ -433,9 +436,10 @@ class BaseSetbacks:
                      .format(len(self.regulations_table)))
 
     # pylint: disable=unused-argument
+    @abstractmethod
     def _regulation_table_mask(self, features_fpath):
         """Return the regulation table mask for setback feature. """
-        return self.regulations_table.index >= 0
+        raise NotImplementedError
 
     def _compute_local_setbacks(self, features, cnty, setback):
         """Compute local features setbacks.

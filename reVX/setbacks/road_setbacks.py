@@ -7,13 +7,13 @@ import logging
 import fiona
 import geopandas as gpd
 
-from reVX.setbacks.base import BaseSetbacks
+from reVX.setbacks.base import AbstractBaseSetbacks
 from reVX.utilities.utilities import STATES_ABBR_MAP
 
 logger = logging.getLogger(__name__)
 
 
-class RoadSetbacks(BaseSetbacks):
+class RoadSetbacks(AbstractBaseSetbacks):
     """
     Road setbacks
     """

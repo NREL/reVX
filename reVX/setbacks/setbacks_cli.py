@@ -94,8 +94,8 @@ def valid_config_keys():
 @click.option('--weights_calculation_upscale_factor', '-wcuf',
               default=None, type=INT, show_default=True,
               help=('Scale factor to use for inclusion weights calculation. '
-                    'See the `BaseSetbacks` documentation for more details. '
-                    'By default None.'))
+                    'See the `AbstractBaseSetbacks` documentation for more '
+                    'details. By default None.'))
 @click.option('--max_workers', '-mw', default=None, type=INT,
               show_default=True,
               help=('Number of workers to use for setback computation, if 1 '

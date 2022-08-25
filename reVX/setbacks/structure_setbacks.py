@@ -6,12 +6,12 @@ import os
 import re
 import logging
 
-from reVX.setbacks.base import BaseSetbacks
+from reVX.setbacks.base import AbstractBaseSetbacks
 
 logger = logging.getLogger(__name__)
 
 
-class StructureSetbacks(BaseSetbacks):
+class StructureSetbacks(AbstractBaseSetbacks):
     """
     Structure setbacks
     """
