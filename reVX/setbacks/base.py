@@ -61,15 +61,51 @@ def features_clipped_to_county(features, cnty):
     return tmp[~tmp.is_empty]
 
 
-class Rasterizer:
-    """Helper class to rasterize setbacks."""
+def _parse_excl_properties(excl_fpath, hsds=False):
+    """Parse shape, chunk size, and profile from exclusions file.
 
-    def __init__(self, shape, weights_calculation_upscale_factor, transform):
+    Parameters
+    ----------
+    excl_fpath : str
+        Path to .h5 file containing exclusion layers, will also be
+        the location of any new setback layers
+    hsds : bool, optional
+        Boolean flag to use h5pyd to handle .h5 'files' hosted on
+        AWS behind HSDS. By default `False`.
+
+    Returns
+    -------
+    shape : tuple
+        Shape of exclusions datasets
+    profile : str
+        GeoTiff profile for exclusions datasets
+    """
+    with ExclusionLayers(excl_fpath, hsds=hsds) as exc:
+        dset_shape = exc.shape
+        profile = exc.profile
+
+    if len(dset_shape) < 3:
+        dset_shape = (1, ) + dset_shape
+
+    logger.debug('Exclusions properties:\n'
+                 'shape : {}\n'
+                 'profile : {}\n'
+                 .format(dset_shape, profile))
+
+    return dset_shape, profile
+
+
+class Rasterizer:
+    """Helper class to rasterize shapes."""
+
+    def __init__(self, excl_fpath, weights_calculation_upscale_factor,
+                 hsds=False):
         """
         Parameters
         ----------
-        shape : tuple
-            Shape of array to rasterize onto.
+        excl_fpath : str
+            Path to .h5 file containing template layers. The raster will
+            match the shape and profile of these layers.
         weights_calculation_upscale_factor : int
             If this value is an int > 1, the output will be a layer with
             **inclusion** weight values (floats ranging from 0 to 1).
@@ -104,15 +140,21 @@ class Rasterizer:
             by the rest of the process). If `None` (or a value <= 1),
             this process is skipped and the output is a boolean
             exclusion mask. By default `None`.
-        transform : tuple
-            Geotiff profile transform.
         """
-        if len(shape) < 3:
-            shape = (1, *shape)
-        self._shape = shape
+        props = _parse_excl_properties(excl_fpath, hsds=hsds)
+        self._shape, self._profile = props
         self._scale_factor = weights_calculation_upscale_factor or 1
         self._scale_factor = int(self._scale_factor // 1)
-        self._transform = transform
+
+    @property
+    def profile(self):
+        """Geotiff profile.
+
+        Returns
+        -------
+        dict
+        """
+        return self._profile
 
     @property
     def arr_shape(self):
@@ -178,7 +220,7 @@ class Rasterizer:
             return 1 - self._no_exclusions_array()
 
         hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
-        new_transform = list(self._transform)[:6]
+        new_transform = list(self.profile['transform'])[:6]
         new_transform[0] = new_transform[0] / self._scale_factor
         new_transform[4] = new_transform[4] / self._scale_factor
 
@@ -200,7 +242,7 @@ class Rasterizer:
                                out=arr,
                                out_shape=arr.shape[1:],
                                fill=0,
-                               transform=self._transform)
+                               transform=self.profile['transform'])
 
         return arr
 
@@ -266,52 +308,15 @@ class AbstractBaseSetbacks(ABC):
         """
         log_versions(logger)
         self._excl_fpath = excl_fpath
-        shape, self._profile = self._parse_excl_properties(excl_fpath,
-                                                           hsds=hsds)
         self._regulations = regulations
-        self._rasterizer = Rasterizer(shape,
-                                      weights_calculation_upscale_factor,
-                                      self.profile['transform'])
+        self._rasterizer = Rasterizer(excl_fpath,
+                                      weights_calculation_upscale_factor, hsds)
 
         self._preflight_check()
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
         return msg
-
-    @staticmethod
-    def _parse_excl_properties(excl_fpath, hsds=False):
-        """Parse shape, chunk size, and profile from exclusions file.
-
-        Parameters
-        ----------
-        excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be
-            the location of any new setback layers
-        hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on
-            AWS behind HSDS. By default `False`.
-
-        Returns
-        -------
-        shape : tuple
-            Shape of exclusions datasets
-        profile : str
-            GeoTiff profile for exclusions datasets
-        """
-        with ExclusionLayers(excl_fpath, hsds=hsds) as exc:
-            dset_shape = exc.shape
-            profile = exc.profile
-
-        if len(dset_shape) < 3:
-            dset_shape = (1, ) + dset_shape
-
-        logger.debug('Exclusions properties:\n'
-                     'shape : {}\n'
-                     'profile : {}\n'
-                     .format(dset_shape, profile))
-
-        return dset_shape, profile
 
     def _preflight_check(self):
         """Parse the county regulations.
@@ -363,30 +368,14 @@ class AbstractBaseSetbacks(ABC):
                 regulations_df.at[v, 'geometry'] = shape(p)
 
         regulations_df = gpd.GeoDataFrame(
-            regulations_df, crs=self.crs, geometry='geometry'
+            regulations_df,
+            crs=self._rasterizer.profile['crs'],
+            geometry='geometry'
         )
-        regulations_df = regulations_df.reset_index().to_crs(crs=self.crs)
+        regulations_df = regulations_df.reset_index()
+        regulations_df = regulations_df.to_crs(
+            crs=self._rasterizer.profile['crs'])
         self.regulations_table = regulations_df
-
-    @property
-    def profile(self):
-        """Geotiff profile.
-
-        Returns
-        -------
-        dict
-        """
-        return self._profile
-
-    @property
-    def crs(self):
-        """Coordinate reference system.
-
-        Returns
-        -------
-        str
-        """
-        return self.profile['crs']
 
     @property
     def regulations_table(self):
@@ -416,7 +405,8 @@ class AbstractBaseSetbacks(ABC):
             Geometries of features to setback from in exclusion
             coordinate system.
         """
-        return gpd.read_file(features_fpath).to_crs(crs=self.crs)
+        return gpd.read_file(features_fpath).to_crs(
+            crs=self._rasterizer.profile['crs'])
 
     def _pre_process_regulations(self, features_fpath):
         """Reduce regulations to state corresponding to features_fpath.
@@ -502,7 +492,8 @@ class AbstractBaseSetbacks(ABC):
                 logger.warning(msg)
                 warn(msg)
 
-        ExclusionsConverter._write_geotiff(geotiff, self.profile, setbacks)
+        ExclusionsConverter._write_geotiff(geotiff, self._rasterizer.profile,
+                                           setbacks)
 
     def _compute_all_local_setbacks(self, features_fpath, max_workers=None):
         """Compute local setbacks for all counties either.
