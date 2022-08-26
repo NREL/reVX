@@ -107,6 +107,8 @@ class Rasterizer:
         transform : tuple
             Geotiff profile transform.
         """
+        if len(shape) < 3:
+            shape = (1, *shape)
         self._shape = shape
         self._scale_factor = weights_calculation_upscale_factor or 1
         self._scale_factor = int(self._scale_factor // 1)
@@ -143,8 +145,8 @@ class Rasterizer:
         high_res_shape = tuple(x * multiplier for x in self.arr_shape[1:])
         return np.zeros(high_res_shape, dtype='uint8')
 
-    def rasterize_setbacks(self, shapes):
-        """Convert setbacks geometries into exclusions array.
+    def rasterize(self, shapes):
+        """Convert geometries into exclusions array.
 
         Parameters
         ----------
@@ -155,9 +157,9 @@ class Rasterizer:
         Returns
         -------
         arr : ndarray
-            Rasterized array of setbacks.
+            Rasterized array of shapes.
         """
-        logger.debug('Generating setbacks exclusion array of shape {}'
+        logger.debug('Generating exclusion array of shape {}'
                      .format(self.arr_shape))
         log_mem(logger)
 
@@ -548,7 +550,7 @@ class AbstractBaseSetbacks(ABC):
                 logger.debug('Computed setbacks for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 
-        return self._rasterizer.rasterize_setbacks(setbacks)
+        return self._rasterizer.rasterize(setbacks)
 
     def _setback_computation(self, setback_features):
         """Get function and args for setbacks computation. """
@@ -575,14 +577,14 @@ class AbstractBaseSetbacks(ABC):
         """
         logger.info('Computing generic setbacks')
         if np.isclose(self._regulations.generic_setback, 0):
-            return self._rasterizer.rasterize_setbacks(shapes=None)
+            return self._rasterizer.rasterize(shapes=None)
 
         setback_features = self._parse_features(features_fpath)
         setbacks = list(setback_features.buffer(
             self._regulations.generic_setback
         ))
 
-        return self._rasterizer.rasterize_setbacks(setbacks)
+        return self._rasterizer.rasterize(setbacks)
 
     def compute_setbacks(self, features_fpath, max_workers=None,
                          geotiff=None, replace=False):
