@@ -37,7 +37,7 @@ class RoadSetbacks(AbstractBaseSetbacks):
         lyr = fiona.listlayers(features_fpath)[0]
         roads = gpd.read_file(features_fpath, driver='FileGDB', layer=lyr)
 
-        return roads.to_crs(crs=self.crs)
+        return roads.to_crs(crs=self._rasterizer.profile["crs"])
 
     @staticmethod
     def _get_feature_paths(features_fpath):

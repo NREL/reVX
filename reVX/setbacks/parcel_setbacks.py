@@ -106,7 +106,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         features = gpd.read_file(features_fpath)
         if features.crs is None:
             features = features.set_crs("EPSG:4326")
-        return features.to_crs(crs=self.crs)
+        return features.to_crs(crs=self._rasterizer.profile["crs"])
 
 
 def _get_state_name(state):
