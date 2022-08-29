@@ -3,7 +3,16 @@
 """
 Compute setbacks
 """
-from .wind_setbacks import (StructureWindSetbacks, RoadWindSetbacks,
-                            RailWindSetbacks, TransmissionWindSetbacks)
-from .parcel_setbacks import SolarParcelSetbacks, WindParcelSetbacks
-from .water_setbacks import SolarWaterSetbacks, WindWaterSetbacks
+from .parcel_setbacks import ParcelSetbacks
+from .rail_setbacks import RailSetbacks
+from .road_setbacks import RoadSetbacks
+from .structure_setbacks import StructureSetbacks
+from .transmission_setbacks import TransmissionSetbacks
+from .water_setbacks import WaterSetbacks
+
+SETBACKS = {'structure': StructureSetbacks,
+            'road': RoadSetbacks,
+            'rail': RailSetbacks,
+            'transmission': TransmissionSetbacks,
+            'parcel': ParcelSetbacks,
+            'water': WaterSetbacks}

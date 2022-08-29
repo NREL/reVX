@@ -4,26 +4,21 @@ Compute setbacks exclusions
 """
 import logging
 import os
+import numpy as np
 import geopandas as gpd
 
 from rex.utilities import log_mem
 
-from reVX.setbacks.base import BaseSetbacks
-from reVX.setbacks.wind_setbacks import BaseWindSetbacks
+from reVX.setbacks.base import AbstractBaseSetbacks
 
 
 logger = logging.getLogger(__name__)
 
 
-# pylint: disable=no-member, too-few-public-methods
-class _BaseParcelSetbacks:
-    """
-    Parcel setbacks - facilitates the use of negative buffers.
-    This class uses duck typing to override `BaseSetbacks` behavior
-    and should thus always be inherited alongside `BaseSetbacks`.
-    """
+class ParcelSetbacks(AbstractBaseSetbacks):
+    """Parcel setbacks - facilitates the use of negative buffers. """
 
-    def compute_generic_setbacks(self, features_fpath):
+    def _compute_generic_setbacks(self, features_fpath):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
@@ -40,15 +35,13 @@ class _BaseParcelSetbacks:
             Raster array of setbacks
         """
         logger.info("Computing generic setbacks")
-        setback_features = self._parse_features(features_fpath)
+        if np.isclose(self._regulations.generic_setback, 0):
+            return self._rasterizer.rasterize(shapes=None)
 
-        setbacks = [
-            (geom, 1) for geom in setback_features.buffer(0).difference(
-                setback_features.buffer(-1 * self.generic_setback)
-            )
-        ]
-
-        return self._rasterize_setbacks(setbacks)
+        features = self._parse_features(features_fpath)
+        setbacks = features.buffer(0).difference(
+            features.buffer(-1 * self._regulations.generic_setback))
+        return self._rasterizer.rasterize(list(setbacks))
 
     def _compute_local_setbacks(self, features, cnty, setback):
         """Compute local features setbacks.
@@ -76,70 +69,28 @@ class _BaseParcelSetbacks:
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
         features = self._feature_filter(features, cnty)
+        setbacks = features.buffer(0).difference(features.buffer(-1 * setback))
+        return list(setbacks)
 
-        setbacks = [
-            (geom, 1) for geom in features.buffer(0).difference(
-                features.buffer(-1 * setback)
-            )
-        ]
-
-        return setbacks
-
-    def _parse_regulations(self, regulations_fpath):
-        """
-        Parse parcel regulations, reduce table to just property lines
-
-        Parameters
-        ----------
-        regulations_fpath : str
-            Path to parcel regulations .csv file
-
-        Returns
-        -------
-        regulations : pandas.DataFrame
-            Parcel regulations table
-        """
-        regulations = super()._parse_regulations(regulations_fpath)
-
-        mask = regulations['Feature Type'] == 'property line'
-        regulations = regulations.loc[mask]
-
-        return regulations
-
-    def _check_regulations(self, features_fpath):
-        """
-        Reduce regs to state corresponding to features_fpath if needed.
+    def _regulation_table_mask(self, features_fpath):
+        """Return the regulation table mask for setback feature.
 
         Parameters
         ----------
         features_fpath : str
             Path to shape file with features to compute setbacks from.
             This file needs to have the state in the filename.
-
-        Returns
-        -------
-        regulations : geopandas.GeoDataFrame
-            Parcel regulations
         """
         state = os.path.basename(features_fpath).split('.')[0]
-        state = ''.join(filter(str.isalpha, state.lower()))
-
-        regulation_states = self.regulations.State.apply(
-            lambda s: ''.join(filter(str.isalpha, s.lower()))
-        )
-
-        mask = regulation_states == state
-        regulations = self.regulations[mask].reset_index(drop=True)
-
-        logger.debug(
-            'Computing setbacks for parcel regulations in {} counties'
-            .format(len(regulations))
-        )
-
-        return regulations
+        state = _get_state_name(state)
+        states = self.regulations_table.State.apply(_get_state_name)
+        states = states == state
+        property_line = (self.regulations_table['Feature Type']
+                         == 'property line')
+        return states & property_line
 
     def _parse_features(self, features_fpath):
-        """Abstract method to parse features.
+        """Method to parse features.
 
         Parameters
         ----------
@@ -155,13 +106,9 @@ class _BaseParcelSetbacks:
         features = gpd.read_file(features_fpath)
         if features.crs is None:
             features = features.set_crs("EPSG:4326")
-        return features.to_crs(crs=self.crs)
+        return features.to_crs(crs=self._rasterizer.profile["crs"])
 
 
-
-class SolarParcelSetbacks(_BaseParcelSetbacks, BaseSetbacks):
-    """Solar Parcel Setbacks. """
-
-
-class WindParcelSetbacks(_BaseParcelSetbacks, BaseWindSetbacks):
-    """Wind Parcel Setbacks. """
+def _get_state_name(state):
+    """Filter out non-alpha chars and casefold name"""
+    return ''.join(filter(str.isalpha, state.casefold()))
