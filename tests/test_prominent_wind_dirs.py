@@ -64,11 +64,14 @@ def test_prominent_wind_directions():
     test = ProminentWindDirections.run(PR_H5, EXCL_H5, resolution=64,
                                        sites_per_worker=10)
 
-    for c in test:
-        for c in ['source_gids', 'gid_counts']:
-            test[c] = test[c].astype(str)
+    for c in ['source_gids', 'gid_counts']:
+        test[c] = test[c].astype(str)
 
-    assert_frame_equal(baseline, test, check_dtype=False, rtol=0.0001)
+    ignore = ['state', 'country']
+    cols = [c for c in test.columns if c not in ignore]
+
+    assert_frame_equal(baseline[cols], test[cols],
+                       check_dtype=False, rtol=0.0001)
 
 
 def test_cli(runner):
@@ -106,7 +109,11 @@ def test_cli(runner):
             for c in ['source_gids', 'gid_counts']:
                 test[c] = test[c].astype(str)
 
-    assert_frame_equal(baseline, test, check_dtype=False, rtol=0.0001)
+    ignore = ['state', 'country']
+    cols = [c for c in test.columns if c not in ignore]
+
+    assert_frame_equal(baseline[cols], test[cols],
+                       check_dtype=False, rtol=0.0001)
 
     LOGGERS.clear()
 
