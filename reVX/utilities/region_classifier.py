@@ -1,7 +1,6 @@
 """
 Region Classifier Module
 """
-import numpy as np
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
@@ -39,7 +38,8 @@ class RegionClassifier():
     CRS = "EPSG:4326"
     DEFAULT_REGIONS_LABEL = 'regions_index'
 
-    def __init__(self, meta_path, regions, regions_label=None):
+    def __init__(self, meta_path, regions, regions_label=None,
+                 outlier_value=-999):
         """
         Parameters
         ----------
@@ -51,6 +51,8 @@ class RegionClassifier():
             a pre-loaded GeoDataFrame
         regions_label : str
             Attribute to use as label in the regions shapefile
+        outlier_value : float | int | str
+            Value to assign to outliers if not force
         """
         log_versions(logger)
         self._regions_label = regions_label
@@ -59,6 +61,7 @@ class RegionClassifier():
 
         self._meta = self._get_meta(meta_path)
         self._regions = self._get_regions(regions, self._regions_label)
+        self._outlier_value = outlier_value
 
     @property
     def regions(self):
@@ -228,6 +231,12 @@ class RegionClassifier():
                 logger.exception('Cannot run region classification')
                 raise
 
+        classified_meta = self._meta.copy()
+        classified_meta[self._regions_label] = self._outlier_value
+        region_labels = self._regions.loc[region_inds, self._regions_label]
+        region_labels = list(region_labels)
+        classified_meta.loc[meta_inds, self._regions_label] = region_labels
+
         # Check for any intersection outliers
         num_outliers = len(outlier_inds)
         if (num_outliers and force):
@@ -237,21 +246,11 @@ class RegionClassifier():
             cols = self._get_lat_lon_labels(self._meta)
             lookup = self._regions[['latitude', 'longitude']]
             target = self._meta.loc[outlier_inds][cols]
-            region_inds += list(self._nearest(target, lookup))
+            out_inds = list(self._nearest(target, lookup))
 
-        # Get full list of meta indices and region labels
-        meta_inds += outlier_inds
-        region_labels = list(self._regions.loc[region_inds,
-                                               self._regions_label])
-        if (num_outliers and not force):
-            # Fill unclassified labels
-            region_labels += [-999 for _ in range(num_outliers)]
-
-        # Build classification mapping
-        region_labels = np.array(region_labels).astype(str)
-        classified_meta = self._meta.loc[meta_inds]
-        classified_meta[self._regions_label] = region_labels
-        classified_meta.sort_index(inplace=True)
+            region_labels = self._regions.loc[out_inds, self._regions_label]
+            region_labels = list(region_labels)
+            classified_meta.loc[out_inds, self._regions_label] = region_labels
 
         return classified_meta
 
