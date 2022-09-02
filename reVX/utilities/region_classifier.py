@@ -248,9 +248,9 @@ class RegionClassifier():
             target = self._meta.loc[outlier_inds][cols]
             out_inds = list(self._nearest(target, lookup))
 
-            region_labels = self._regions.loc[out_inds, self._regions_label]
-            region_labels = list(region_labels)
-            classified_meta.loc[out_inds, self._regions_label] = region_labels
+            regions = self._regions.loc[out_inds, self._regions_label]
+            regions = list(regions)
+            classified_meta.loc[outlier_inds, self._regions_label] = regions
 
         return classified_meta
 
