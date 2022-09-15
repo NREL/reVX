@@ -63,6 +63,7 @@ def run_local(ctx, config):
                hub_height=config.hub_height,
                rotor_diameter=config.rotor_diameter,
                out_layer=config.out_layer,
+               out_tiff=config.out_tiff,
                tm_dset=config.tm_dset,
                building_threshold=config.building_threshold,
                flicker_threshold=config.flicker_threshold,
@@ -119,6 +120,11 @@ def from_config(ctx, config, verbose):
               help=("Layer to save exclusions under. Layer will be saved in "
                     "excl_fpath, if not provided will be generated from the "
                     "building_layer name and hub-height"))
+@click.option('--out_tiff', '-ot', default=None, type=STR,
+              show_default=True,
+              help=("Path to output tiff file where exclusions should be "
+                    "saved, if not provided, data will not be written to "
+                    "a file"))
 @click.option('--tm_dset', '-td', default='techmap_wtk', type=STR,
               show_default=True,
               help=("Dataset name in the techmap file containing the "
@@ -147,7 +153,7 @@ def from_config(ctx, config, verbose):
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
-          rotor_diameter, out_layer, tm_dset, building_threshold,
+          rotor_diameter, out_layer, out_tiff, tm_dset, building_threshold,
           flicker_threshold, resolution, max_workers, log_dir, verbose):
     """
     Compute turbine flicker on local hardware
@@ -171,7 +177,7 @@ def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
                        building_threshold=building_threshold,
                        flicker_threshold=flicker_threshold,
                        resolution=resolution, max_workers=max_workers,
-                       out_layer=out_layer)
+                       out_layer=out_layer, out_tiff=out_tiff)
 
 
 def get_node_cmd(config):
@@ -196,6 +202,7 @@ def get_node_cmd(config):
             '-h {}'.format(SLURM.s(config.hub_height)),
             '-rd {}'.format(SLURM.s(config.rotor_diameter)),
             '-o {}'.format(SLURM.s(config.out_layer)),
+            '-ot {}'.format(SLURM.s(config.out_tiff)),
             '-td {}'.format(SLURM.s(config.tm_dset)),
             '-bldt {}'.format(SLURM.s(config.building_threshold)),
             '-ft {}'.format(SLURM.s(config.flicker_threshold)),

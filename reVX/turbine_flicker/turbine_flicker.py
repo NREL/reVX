@@ -422,14 +422,16 @@ class TurbineFlicker:
 
     def compute_exclusions(self, hub_height, rotor_diameter,
                            building_threshold=0, flicker_threshold=30,
-                           max_workers=None, out_layer=None):
-        """
+                           max_workers=None, out_layer=None, out_tiff=None):
+        """Compute turbine flicker exclusions.
+
         Exclude all pixels that will cause flicker exceeding the
-        "flicker_threshold" on any building in "building_layer". Buildings
-        are defined as pixels with >= the "building_threshold value in
-        "building_layer". Shadow flicker is computed at the supply curve point
-        resolution based on a turbine with "hub_height" (m) and applied to all
-        buildings within that supply curve point sub-array.
+        "flicker_threshold" on any building in "building_layer".
+        Buildings are defined as pixels with >= the "building_threshold
+        value in "building_layer". Shadow flicker is computed at the
+        supply curve point resolution based on a turbine with
+        "hub_height" (m) and applied to all buildings within that supply
+        curve point sub-array.
 
         Parameters
         ----------
@@ -439,25 +441,25 @@ class TurbineFlicker:
             Rotor diameter in meters to compute turbine shadow flicker.
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, values are % of pixel containing a building,
-            by default 0
+            buildings, values are % of pixel containing a building. By
+            default, `0`.
         flicker_threshold : int, optional
-            Maximum number of allowable flicker hours, by default 30
-        resolution : int, optional
-            SC resolution, must be input in combination with gid,
-            by default 640
-        max_workers : None | int, optional
-            Number of workers to use, if 1 run in serial, if None use all
-            available cores, by default None
+            Maximum number of allowable flicker hours. By default, `30`.
+        max_workers : int, optional
+            Number of workers to use. If 1 run, in serial. If `None`,
+            use all available cores. By default, `None`.
         out_layer : str, optional
             Layer to save exclusions under. Layer will be saved in
-            "excl_fpath", by default None
+            `excl_fpath`. By default, `None`.
+        out_tiff : str, optional
+            Path to output tiff file where exclusions should be saved.
+            By default, `None`.
 
         Returns
         -------
         flicker_arr : ndarray
             2D inclusion array. Pixels to exclude (0) to prevent shadow
-            flicker on buildings in "building_layer"
+            flicker on buildings in "building_layer
         """
         with ExclusionLayers(self._excl_h5) as f:
             exclusion_shape = f.shape
@@ -525,6 +527,10 @@ class TurbineFlicker:
             ExclusionsConverter._write_layer(self._excl_h5, out_layer,
                                              profile, flicker_arr,
                                              description=description)
+        if out_tiff:
+            logger.info('Saving flicker inclusion layer to {}'
+                        .format(out_tiff))
+            ExclusionsConverter._write_geotiff(out_tiff, profile, flicker_arr)
 
         return flicker_arr
 
@@ -532,48 +538,53 @@ class TurbineFlicker:
     def run(cls, excl_fpath, res_fpath, building_layer, hub_height,
             rotor_diameter, tm_dset='techmap_wtk', building_threshold=0,
             flicker_threshold=30, resolution=640, max_workers=None,
-            out_layer=None):
-        """
+            out_layer=None, out_tiff=None):
+        """Run flicker exclusion layer generation.
+
         Exclude all pixels that will cause flicker exceeding the
-        "flicker_threshold" on any building in "building_layer". Buildings
-        are defined as pixels with >= the "building_threshold value in
-        "building_layer". Shadow flicker is computed at the supply curve point
-        resolution based on a turbine with "hub_height" (m) and applied to all
-        buildings within that supply curve point sub-array.
+        "flicker_threshold" on any building in "building_layer".
+        Buildings are defined as pixels with >= the "building_threshold
+        value in "building_layer". Shadow flicker is computed at the
+        supply curve point resolution based on a turbine with
+        "hub_height" (m) and applied to all buildings within that supply
+        curve point sub-array.
 
         Parameters
         ----------
         excl_fpath : str
-            Filepath to exclusions h5 file. File must contain "building_layer"
-            and "tm_dset".
+            Filepath to exclusions h5 file. File must contain
+            `building_layer` and `tm_dset`.
         res_fpath : str
             Filepath to wind resource .h5 file containing hourly wind
-            direction data
+            direction data.
         building_layer : str
-            Exclusion layer containing buildings from which turbine flicker
-            exclusions will be computed.
+            Exclusion layer containing buildings from which turbine
+            flicker exclusions will be computed.
         hub_height : int
-            Hub-height in meters to compute turbine shadow flicker.
+            Hub-height (m) used to compute turbine shadow flicker.
         rotor_diameter : int
-            Rotor diameter in meters to compute turbine shadow flicker.
+            Rotor diameter (m) used to compute turbine shadow flicker.
         tm_dset : str, optional
-            Dataset / layer name for wind toolkit techmap,
-            by default 'techmap_wtk'
+            Dataset / layer name for wind toolkit techmap. By default,
+            `'techmap_wtk'`.
         building_threshold : float, optional
             Threshold for exclusion layer values to identify pixels with
-            buildings, values are % of pixel containing a building,
-            by default 0
+            buildings, values are % of pixel containing a building. By
+            default, `0`.
         flicker_threshold : int, optional
-            Maximum number of allowable flicker hours, by default 30
+            Maximum number of allowable flicker hours. By default, `30`.
         resolution : int, optional
-            SC resolution, must be input in combination with gid,
-            by default 640
-        max_workers : None | int, optional
-            Number of workers to use, if 1 run in serial, if None use all
-            available cores, by default None
+            SC resolution, must be input in combination with gid.
+            By default, `640`.
+        max_workers : int, optional
+            Number of workers to use. If 1 run, in serial. If `None`,
+            use all available cores. By default, `None`.
         out_layer : str, optional
             Layer to save exclusions under. Layer will be saved in
-            "excl_fpath", by default None
+            `excl_fpath`. By default, `None`.
+        out_tiff : str, optional
+            Path to output tiff file where exclusions should be saved.
+            By default, `None`.
 
         Returns
         -------
@@ -589,7 +600,8 @@ class TurbineFlicker:
             building_threshold=building_threshold,
             flicker_threshold=flicker_threshold,
             max_workers=max_workers,
-            out_layer=out_layer
+            out_layer=out_layer,
+            out_tiff=out_tiff
         )
 
         return out_excl

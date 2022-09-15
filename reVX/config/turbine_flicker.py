@@ -88,3 +88,8 @@ class TurbineFlickerConfig(AnalysisConfig):
         be saved
         """
         return self.get('out_layer', None)
+
+    @property
+    def out_tiff(self):
+        """str: Path to output tiff file where exclusions should be saved. """
+        return self.get('out_tiff', None)

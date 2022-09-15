@@ -17,6 +17,7 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.turbine_flicker.turbine_flicker import TurbineFlicker
 from reVX.turbine_flicker.turbine_flicker_cli import main
+from reVX.handlers.geotiff import Geotiff
 
 pytest.importorskip('hybrid.flicker')
 
@@ -154,8 +155,8 @@ def test_cli(runner):
 
         result = runner.invoke(main, ['from-config', '-c', config_path])
         msg = 'Failed with error {}'.format(
-                traceback.print_exception(*result.exc_info)
-              )
+            traceback.print_exception(*result.exc_info)
+        )
         assert result.exit_code == 0, msg
 
         with ExclusionLayers(EXCL_H5) as f:
@@ -163,6 +164,53 @@ def test_cli(runner):
 
         with ExclusionLayers(excl_h5) as f:
             test = f[out_layer]
+
+        assert np.allclose(baseline, test)
+
+    LOGGERS.clear()
+
+
+def test_cli_tiff(runner):
+    """Test Turbine Flicker CLI for saving to tiff. """
+
+    with tempfile.TemporaryDirectory() as td:
+        excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
+        shutil.copy(EXCL_H5, excl_h5)
+        out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd.tiff"
+        config = {
+            "log_directory": td,
+            "excl_fpath": excl_h5,
+            "execution_control": {
+                "option": "local",
+            },
+            "building_layer": BLD_LAYER,
+            "hub_height": HUB_HEIGHT,
+            "out_tiff": os.path.join(td, out_tiff),
+            "rotor_diameter": ROTOR_DIAMETER,
+            "log_level": "INFO",
+            "res_fpath": RES_H5,
+            "resolution": 64,
+            "tm_dset": "techmap_wind"
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config', '-c', config_path])
+        msg = 'Failed with error {}'.format(
+            traceback.print_exception(*result.exc_info)
+        )
+        assert result.exit_code == 0, msg
+
+        with ExclusionLayers(EXCL_H5) as f:
+            baseline = f[BASELINE]
+
+        with ExclusionLayers(excl_h5) as f:
+            assert out_tiff not in f.layers
+            assert out_tiff.split('.') not in f.layers
+
+        with Geotiff(os.path.join(td, out_tiff)) as f:
+            test = f.values[0]
 
         assert np.allclose(baseline, test)
 
