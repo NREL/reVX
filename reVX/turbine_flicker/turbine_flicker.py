@@ -58,9 +58,7 @@ class TurbineFlicker:
         self._sc_points = self._get_sc_points(tm_dset=tm_dset)
 
     def __repr__(self):
-        msg = ("{} from {}"
-               .format(self.__class__.__name__, self._bld_layer))
-
+        msg = "{} from {}".format(self.__class__.__name__, self._bld_layer)
         return msg
 
     @classmethod
@@ -131,7 +129,7 @@ class TurbineFlicker:
         hub_height : int
             Hub-height in meters to compute turbine shadow flicker.
         rotor_diameter : int
-            Rotor diamter in meters to compute shadow flicker.
+            Rotor diameter in meters to compute shadow flicker.
         flicker_threshold : int, optional
             Maximum number of allowable flicker hours, by default 30
 
@@ -146,6 +144,7 @@ class TurbineFlicker:
             dset = 'winddirection_{}m'.format(hub_height)
             wind_dir = f[dset, :, int(point['res_gid'])]
 
+            # pylint: disable=unsubscriptable-object
             if len(wind_dir) == 8784:
                 wind_dir = wind_dir[:-24]
 
@@ -551,8 +550,8 @@ def _invert_shadow_flicker_arr(shadow_flicker):
         shape_in = shadow_flicker.shape
         shadow_flicker = shadow_flicker[reduce_slice]
         msg = ('Shadow flicker array with shape {} does not have a '
-                'central pixel! Shade has been reduced to {}!'
-                .format(shape_in, shadow_flicker.shape))
+               'central pixel! Shade has been reduced to {}!'
+               .format(shape_in, shadow_flicker.shape))
         logger.warning(msg)
         warn(msg)
 
