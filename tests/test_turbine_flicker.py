@@ -15,7 +15,13 @@ from rex.utilities.loggers import LOGGERS
 
 from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
-from reVX.turbine_flicker.turbine_flicker import TurbineFlicker
+from reVX.turbine_flicker.turbine_flicker import (
+    TurbineFlicker,
+    _create_excl_indices,
+    _get_building_indices,
+    _get_flicker_excl_shifts,
+    _invert_shadow_flicker_arr
+)
 from reVX.turbine_flicker.turbine_flicker_cli import main
 from reVX.handlers.geotiff import Geotiff
 
@@ -53,9 +59,10 @@ def test_shadow_mapping(shadow_loc):
     shadow_arr = np.zeros(shape, dtype=np.int8)
     shadow_arr[bld_idx[0] + shadow_loc[0], bld_idx[1] + shadow_loc[1]] = 1
 
-    flicker_shifts = TurbineFlicker._get_flicker_excl_shifts(shadow_arr)
-    test_row_idx, test_col_idx = TurbineFlicker._create_excl_indices(
-        bld_idx, flicker_shifts, shape)
+    flicker_shifts = _get_flicker_excl_shifts(shadow_arr)
+    test_row_idx, test_col_idx = _create_excl_indices(bld_idx,
+                                                      flicker_shifts,
+                                                      shape)
 
     assert np.allclose(baseline_row_idx, test_row_idx)
     assert np.allclose(baseline_col_idx, test_col_idx)
@@ -76,7 +83,7 @@ def test_shadow_flicker(flicker_threshold):
 
     baseline = (shadow_flicker[::-1, ::-1].copy()
                 <= (flicker_threshold / 8760)).astype(np.int8)
-    row_shifts, col_shifts = TurbineFlicker._get_flicker_excl_shifts(
+    row_shifts, col_shifts = _get_flicker_excl_shifts(
         shadow_flicker, flicker_threshold=flicker_threshold)
 
     L = TurbineFlicker.FLICKER_ARRAY_LEN
@@ -99,16 +106,42 @@ def test_excl_indices_mapping():
     baseline = (arr <= 0.8).astype(np.int8)
 
     bld_idx = (np.array([64]), np.array([64]))
-    flicker_shifts = TurbineFlicker._get_flicker_excl_shifts(
-        arr[::-1, ::-1], flicker_threshold=(0.8 * 8760))
+    flicker_shifts = _get_flicker_excl_shifts(arr[::-1, ::-1],
+                                              flicker_threshold=(0.8 * 8760))
 
-    row_idx, col_idx = TurbineFlicker._create_excl_indices(bld_idx,
-                                                           flicker_shifts,
-                                                           shape)
+    row_idx, col_idx = _create_excl_indices(bld_idx, flicker_shifts, shape)
     test = np.ones(shape, dtype=np.int8)
     test[row_idx, col_idx] = 0
 
     assert np.allclose(baseline, test)
+
+
+def test_get_building_indices():
+    """Test retrieving building indices. """
+    row_idx, col_idx, __ = _get_building_indices(EXCL_H5, BLD_LAYER, 0,
+                                                 resolution=64,
+                                                 building_threshold=0)
+    with ExclusionLayers(EXCL_H5) as f:
+        buildings = f[BLD_LAYER, 0:64, 0:64]
+
+    assert (buildings[row_idx, col_idx] > 0).all()
+
+
+def test_invert_shadow_flicker_arr():
+    """Test inverting the shadow flicker array. """
+
+    arr = np.array([[ 0,  1,  2,  3],
+                    [ 4,  5,  6,  7],
+                    [ 8,  9, 10, 11],
+                    [12, 13, 14, 15]])
+
+    expected = np.array([[10, 9, 8],
+                         [ 6, 5, 4],
+                         [ 2, 1, 0]])
+
+    with pytest.warns(Warning):
+        out = _invert_shadow_flicker_arr(arr)
+    assert np.allclose(out, expected)
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
