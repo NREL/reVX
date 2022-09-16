@@ -73,24 +73,21 @@ def test_shadow_flicker(flicker_threshold):
     """
     Test shadow_flicker
     """
-    blade_length = ROTOR_DIAMETER / 2
     lat, lon = 39.913373, -105.220105
     wind_dir = np.zeros(8760)
-    shadow_flicker = TurbineFlicker._compute_shadow_flicker(lat,
-                                                            lon,
-                                                            blade_length,
-                                                            wind_dir)
+    tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, grid_cell_size=90,
+                        max_flicker_exclusion_range=4_510)
+    shadow_flicker = tf._compute_shadow_flicker(lat, lon, ROTOR_DIAMETER,
+                                                wind_dir)
 
     baseline = (shadow_flicker[::-1, ::-1].copy()
                 <= (flicker_threshold / 8760)).astype(np.int8)
     row_shifts, col_shifts = _get_flicker_excl_shifts(
         shadow_flicker, flicker_threshold=flicker_threshold)
 
-    L = TurbineFlicker.FLICKER_ARRAY_LEN
-    L2 = int((L - 1) / 2)
-    test = np.ones((L, L), dtype=np.int8)
-    test[L2, L2] = 0
-    test[row_shifts + L2, col_shifts + L2] = 0
+    test = np.ones_like(baseline)
+    test[50, 50] = 0
+    test[row_shifts + 50, col_shifts + 50] = 0
 
     assert np.allclose(baseline, test)
 

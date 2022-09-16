@@ -26,11 +26,11 @@ class TurbineFlicker:
     cause excessive flicker on building
     """
     STEPS_PER_HOUR = 1
-    GRIDCELL_SIZE = 90
-    FLICKER_ARRAY_LEN = 101
 
     def __init__(self, excl_fpath, res_fpath, building_layer,
-                 resolution=640, tm_dset='techmap_wtk'):
+                 resolution=640, grid_cell_size=90,
+                 max_flicker_exclusion_range=10_000,
+                 tm_dset='techmap_wtk'):
         """
         Parameters
         ----------
@@ -43,17 +43,27 @@ class TurbineFlicker:
         building_layer : str
             Exclusion layer containing buildings from which turbine flicker
             exclusions will be computed.
-        tm_dset : str, optional
-            Dataset / layer name for wind toolkit techmap,
-            by default 'techmap_wtk'
         resolution : int, optional
             SC resolution, must be input in combination with gid,
             by default 640
+        grid_cell_size : float, optional
+            Length (m) of a side of each grid cell in `excl_fpath`.
+        max_flicker_exclusion_range : float, optional
+            Max distance (m) that flicker exclusions will extend in
+            any of the cardinal directions. Note that increasing this
+            value can lead to drastically instead memory requirements.
+            This value may be increased slightly in order to yield
+            odd exclusion array shapes.
+        tm_dset : str, optional
+            Dataset / layer name for wind toolkit techmap,
+            by default 'techmap_wtk'
         """
         self._excl_h5 = excl_fpath
         self._res_h5 = res_fpath
         self._bld_layer = building_layer
         self._res = resolution
+        self._grid_cell_size = grid_cell_size
+        self._max_flicker_exclusion_range = max_flicker_exclusion_range
         self._preflight_check(tm_dset=tm_dset)
         self._sc_points = self._get_sc_points(tm_dset=tm_dset)
 
@@ -61,46 +71,44 @@ class TurbineFlicker:
         msg = "{} from {}".format(self.__class__.__name__, self._bld_layer)
         return msg
 
-    @classmethod
-    def _compute_shadow_flicker(cls, lat, lon, blade_length, wind_dir):
+    def _compute_shadow_flicker(self, lat, lon, rotor_diameter, wind_dir):
         """
         Compute shadow flicker for given location
 
         Parameters
         ----------
         lat : float
-            Latitude coordinate of turbine
+            Latitude coordinate of turbine.
         lon : float
-            Longitude coordinate of turbine
-        blade_length : float
-            Turbine blade length.
+            Longitude coordinate of turbine.
+        rotor_diameter : float
+            Turbine rotor diameter (m).
         wind_dir : ndarray
-            Time-series of wind direction for turbine
+            Time-series of wind direction for turbine.
 
         Returns
         -------
         shadow_flicker : ndarray
-            2D array centered on the turbine with the number of flicker hours
-            per "exclusion" pixel
+            2D array centered on the turbine with the number of flicker
+            hours per "exclusion" pixel
         """
         # Import HOPP dynamically so its not a requirement
         from hybrid.flicker.flicker_mismatch_grid import FlickerMismatch
 
-        mult = (cls.FLICKER_ARRAY_LEN * cls.GRIDCELL_SIZE) / 2
-        mult = mult / (blade_length * 2)
+        mult = self._max_flicker_exclusion_range / rotor_diameter
         FlickerMismatch.diam_mult_nwe = mult
         FlickerMismatch.diam_mult_s = mult
-        FlickerMismatch.steps_per_hour = cls.STEPS_PER_HOUR
+        FlickerMismatch.steps_per_hour = self.STEPS_PER_HOUR
         FlickerMismatch.turbine_tower_shadow = False
 
         assert len(wind_dir) == 8760
 
         shadow_flicker = FlickerMismatch(lat, lon,
-                                         blade_length=blade_length,
+                                         blade_length=rotor_diameter / 2,
                                          angles_per_step=None,
                                          wind_dir=wind_dir,
-                                         gridcell_height=cls.GRIDCELL_SIZE,
-                                         gridcell_width=cls.GRIDCELL_SIZE,
+                                         gridcell_height=self._grid_cell_size,
+                                         gridcell_width=self._grid_cell_size,
                                          gridcells_per_string=1)
         shadow_flicker = shadow_flicker.create_heat_maps(range(0, 8760),
                                                          ("time", ))[0]
@@ -148,10 +156,9 @@ class TurbineFlicker:
             if len(wind_dir) == 8784:
                 wind_dir = wind_dir[:-24]
 
-        blade_length = rotor_diameter / 2
         shadow_flicker = self._compute_shadow_flicker(point['latitude'],
                                                       point['longitude'],
-                                                      blade_length,
+                                                      rotor_diameter,
                                                       wind_dir)
 
         flicker_shifts = _get_flicker_excl_shifts(
@@ -189,6 +196,14 @@ class TurbineFlicker:
                 logger.exception('TechMapping process failed. Received the '
                                  'following error:\n{}'.format(e))
                 raise e
+
+        self._set_max_grid_size_for_odd_shaped_arr()
+
+    def _set_max_grid_size_for_odd_shaped_arr(self):
+        """Set the max_flicker_exclusion_range to multiple of 0.5 grids """
+        mult = np.round(self._max_flicker_exclusion_range
+                        / self._grid_cell_size ) + 0.5
+        self._max_flicker_exclusion_range = mult * self._grid_cell_size
 
     def _get_sc_points(self, tm_dset='techmap_wtk'):
         """
@@ -591,9 +606,9 @@ def _get_flicker_excl_shifts(shadow_flicker, flicker_threshold=30):
     check = (np.any(np.isin(row_shifts, [0, shape[0] - 1]))
                 or np.any(np.isin(col_shifts, [0, shape[1] - 1])))
     if check:
-        msg = ("Turbine flicker appears to extend beyond the "
-                "FlickerModel domain! Please increase the "
-                "FLICKER_ARRAY_LEN and try again!")
+        msg = ("Turbine flicker appears to extend beyond the FlickerModel "
+               "domain! Consider increasing the maximum flicker exclusion "
+               "range.")
         logger.warning(msg)
         warn(msg)
 
