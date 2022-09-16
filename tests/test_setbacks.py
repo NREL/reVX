@@ -86,7 +86,7 @@ def test_regulations_init():
     """Test initializing a normal regulations file. """
     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
     assert regs.base_setback_dist == 10
-    assert np.isclose(regs.generic_setback, 10 * 1.1)
+    assert np.isclose(regs.generic, 10 * 1.1)
     assert np.isclose(regs.multiplier, 1.1)
 
     for col in Regulations.REQUIRED_COLUMNS:
@@ -96,7 +96,7 @@ def test_regulations_init():
     assert regs.regulations['Feature Type'].str.islower().all()
 
     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
-    assert regs.generic_setback is None
+    assert regs.generic is None
 
 
 def test_regulations_missing_init():
@@ -173,11 +173,11 @@ def test_regulations_set_to_none():
 def test_regulations_locals_exist():
     """Test locals_exist property. """
     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
-    assert regs.local_exist
+    assert regs.locals_exist
     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
-    assert regs.local_exist
+    assert regs.locals_exist
     regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
-    assert not regs.local_exist
+    assert not regs.locals_exist
 
     with tempfile.TemporaryDirectory() as td:
         regs = pd.read_csv(REGS_FPATH).iloc[0:0]
@@ -185,19 +185,19 @@ def test_regulations_locals_exist():
         regs_fpath = os.path.join(td, regs_fpath)
         regs.to_csv(regs_fpath, index=False)
         regs = Regulations(10, regulations_fpath=regs_fpath, multiplier=1.1)
-        assert not regs.local_exist
+        assert not regs.locals_exist
         regs = Regulations(10, regulations_fpath=regs_fpath, multiplier=None)
-        assert not regs.local_exist
+        assert not regs.locals_exist
 
 
-def test_regulations_generic_exist():
+def test_regulations_generic_exists():
     """Test locals_exist property. """
     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
-    assert regs.generic_exist
+    assert regs.generic_exists
     regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
-    assert regs.generic_exist
+    assert regs.generic_exists
     regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
-    assert not regs.generic_exist
+    assert not regs.generic_exists
 
 
 def test_regulations_wind():

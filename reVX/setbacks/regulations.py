@@ -156,10 +156,10 @@ class Regulations:
         return self._base_setback_dist
 
     @property
-    def generic_setback(self):
-        """Default setback of base setback distance * multiplier.
+    def generic(self):
+        """Default regulation value.
 
-        This value is used for global setbacks.
+        This value is used for global regulations.
 
         Returns
         -------
@@ -183,7 +183,7 @@ class Regulations:
         return self._multi
 
     @property
-    def local_exist(self):
+    def locals_exist(self):
         """Flag indicating wether local regulations exist.
 
         Returns
@@ -193,14 +193,14 @@ class Regulations:
         return (self.regulations is not None and not self.regulations.empty)
 
     @property
-    def generic_exist(self):
+    def generic_exists(self):
         """Flag indicating wether generic regulations exist.
 
         Returns
         -------
         bool
         """
-        return self.generic_setback is not None
+        return self.generic is not None
 
     def __iter__(self):
         if self._regulations is None:

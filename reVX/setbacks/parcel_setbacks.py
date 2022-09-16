@@ -35,12 +35,12 @@ class ParcelSetbacks(AbstractBaseSetbacks):
             Raster array of setbacks
         """
         logger.info("Computing generic setbacks")
-        if np.isclose(self._regulations.generic_setback, 0):
+        if np.isclose(self._regulations.generic, 0):
             return self._rasterizer.rasterize(shapes=None)
 
         features = self._parse_features(features_fpath)
         setbacks = features.buffer(0).difference(
-            features.buffer(-1 * self._regulations.generic_setback))
+            features.buffer(-1 * self._regulations.generic))
         return self._rasterizer.rasterize(list(setbacks))
 
     def _compute_local_setbacks(self, features, cnty, setback):
