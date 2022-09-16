@@ -66,6 +66,9 @@ class TurbineFlicker:
         self._max_flicker_exclusion_range = max_flicker_exclusion_range
         self._preflight_check(tm_dset=tm_dset)
         self._sc_points = self._get_sc_points(tm_dset=tm_dset)
+        with ExclusionLayers(excl_fpath) as f:
+            self.profile = f.profile
+            self._exclusion_shape = f.shape
 
     def __repr__(self):
         msg = "{} from {}".format(self.__class__.__name__, self._bld_layer)
@@ -275,14 +278,11 @@ class TurbineFlicker:
             2D inclusion array. Pixels to exclude (0) to prevent shadow
             flicker on buildings in "building_layer
         """
-        with ExclusionLayers(self._excl_h5) as f:
-            exclusion_shape = f.shape
-            profile = f.profile
 
         if max_workers is None:
             max_workers = os.cpu_count()
 
-        flicker_arr = np.ones(exclusion_shape, dtype=np.uint8)
+        flicker_arr = np.ones(self._exclusion_shape, dtype=np.uint8)
         if max_workers > 1:
             msg = ('Computing exclusions from {} based on {}m hub height '
                    'turbines with {}m rotor diameters in parallel using {} '
@@ -362,12 +362,13 @@ class TurbineFlicker:
                         rotor_diameter)
             )
             ExclusionsConverter._write_layer(self._excl_h5, out_layer,
-                                             profile, flicker_arr,
+                                             self.profile, flicker_arr,
                                              description=description)
         if out_tiff:
             logger.info('Saving flicker inclusion layer to {}'
                         .format(out_tiff))
-            ExclusionsConverter._write_geotiff(out_tiff, profile, flicker_arr)
+            ExclusionsConverter._write_geotiff(out_tiff, self.profile,
+                                               flicker_arr)
 
         return flicker_arr
 
