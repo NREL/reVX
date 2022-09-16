@@ -23,6 +23,8 @@ class TurbineFlickerConfig(AnalysisConfig):
         super().__init__(config)
         self._default_tm_dset = 'techmap_wtk'
         self._default_resolution = 128
+        self._default_grid_cell_size = 90
+        self._default_max_flicker_exclusion_range = 10_000
         self._default_building_threshold = 0
         self._default_flicker_threshold = 30
 
@@ -64,6 +66,20 @@ class TurbineFlickerConfig(AnalysisConfig):
     def resolution(self):
         """Get the supply curve resolution."""
         return self.get('resolution', self._default_resolution)
+
+    @property
+    def grid_cell_size(self):
+        """Get the length (m) of a side of each grid cell in `excl_fpath`."""
+        return self.get('grid_cell_size', self._default_grid_cell_size)
+
+    @property
+    def max_flicker_exclusion_range(self):
+        """
+        Get the max distance (m) that flicker exclusions will extend in
+        any of the cardinal directions.
+        """
+        return self.get('max_flicker_exclusion_range',
+                        self._default_max_flicker_exclusion_range)
 
     @property
     def building_threshold(self):

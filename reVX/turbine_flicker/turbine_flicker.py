@@ -373,7 +373,8 @@ class TurbineFlicker:
     @classmethod
     def run(cls, excl_fpath, res_fpath, building_layer, hub_height,
             rotor_diameter, tm_dset='techmap_wtk', building_threshold=0,
-            flicker_threshold=30, resolution=640, max_workers=None,
+            flicker_threshold=30, resolution=640, grid_cell_size=90,
+            max_flicker_exclusion_range=10_000, max_workers=None,
             out_layer=None, out_tiff=None):
         """Run flicker exclusion layer generation.
 
@@ -412,6 +413,14 @@ class TurbineFlicker:
         resolution : int, optional
             SC resolution, must be input in combination with gid.
             By default, `640`.
+        grid_cell_size : float, optional
+            Length (m) of a side of each grid cell in `excl_fpath`.
+        max_flicker_exclusion_range : float, optional
+            Max distance (m) that flicker exclusions will extend in
+            any of the cardinal directions. Note that increasing this
+            value can lead to drastically instead memory requirements.
+            This value may be increased slightly in order to yield
+            odd exclusion array shapes.
         max_workers : int, optional
             Number of workers to use. If 1 run, in serial. If `None`,
             use all available cores. By default, `None`.
@@ -429,7 +438,9 @@ class TurbineFlicker:
             flicker on buildings in "building_layer"
         """
         flicker = cls(excl_fpath, res_fpath, building_layer,
-                      resolution=resolution, tm_dset=tm_dset)
+                      resolution=resolution, grid_cell_size=grid_cell_size,
+                      max_flicker_exclusion_range=max_flicker_exclusion_range,
+                      tm_dset=tm_dset)
         out_excl = flicker.compute_exclusions(
             hub_height,
             rotor_diameter,

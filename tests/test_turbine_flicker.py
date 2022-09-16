@@ -247,6 +247,73 @@ def test_cli_tiff(runner):
     LOGGERS.clear()
 
 
+def test_cli_max_flicker_exclusion_range(runner):
+    """Test Turbine Flicker CLI with max_flicker_exclusion_range value. """
+
+    with tempfile.TemporaryDirectory() as td:
+        excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
+        shutil.copy(EXCL_H5, excl_h5)
+        out_tiff_def = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd.tiff"
+        config = {
+            "log_directory": td,
+            "excl_fpath": excl_h5,
+            "execution_control": {
+                "option": "local",
+            },
+            "building_layer": BLD_LAYER,
+            "hub_height": HUB_HEIGHT,
+            "out_tiff": os.path.join(td, out_tiff_def),
+            "rotor_diameter": ROTOR_DIAMETER,
+            "log_level": "INFO",
+            "res_fpath": RES_H5,
+            "resolution": 64,
+            "tm_dset": "techmap_wind"
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config', '-c', config_path])
+        msg = 'Failed with error {}'.format(
+            traceback.print_exception(*result.exc_info)
+        )
+        assert result.exit_code == 0, msg
+
+        out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5k.tiff"
+        config["out_tiff"] = os.path.join(td, out_tiff)
+        config["max_flicker_exclusion_range"] = 5_000
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config', '-c', config_path])
+        msg = 'Failed with error {}'.format(
+            traceback.print_exception(*result.exc_info)
+        )
+        assert result.exit_code == 0, msg
+
+        with ExclusionLayers(EXCL_H5) as f:
+            baseline = f[BASELINE]
+
+        with ExclusionLayers(excl_h5) as f:
+            assert out_tiff_def not in f.layers
+            assert out_tiff_def.split('.') not in f.layers
+            assert out_tiff not in f.layers
+            assert out_tiff.split('.') not in f.layers
+
+        with Geotiff(os.path.join(td, out_tiff_def)) as f:
+            test = f.values[0]
+
+        with Geotiff(os.path.join(td, out_tiff)) as f:
+            test2 = f.values[0]
+
+        assert np.allclose(baseline, test)
+        assert np.allclose(baseline, test2)
+        assert np.allclose(test, test2)
+
+    LOGGERS.clear()
+
+
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 

@@ -68,6 +68,8 @@ def run_local(ctx, config):
                building_threshold=config.building_threshold,
                flicker_threshold=config.flicker_threshold,
                resolution=config.resolution,
+               grid_cell_size=config.grid_cell_size,
+               max_flicker_exclusion_range=config.max_flicker_exclusion_range,
                max_workers=config.execution_control.max_workers,
                log_dir=config.log_directory,
                verbose=config.log_level)
@@ -142,6 +144,16 @@ def from_config(ctx, config, verbose):
               help=("SC resolution, must be input in combination with gid. "
                     "Prefered option is to use the row / col slices to define "
                     "the SC point instead"))
+@click.option('--grid_cell_size', '-gcs', default=90, type=INT,
+              show_default=True,
+              help=("Length (m) of a side of each grid cell in `excl_fpath`."))
+@click.option('--max_flicker_exclusion_range', '-mfer', default=10_000,
+              type=INT, show_default=True,
+              help=("Max distance (m) that flicker exclusions will extend in "
+                    "any of the cardinal directions. Note that increasing "
+                    "this value can lead to drastically instead memory "
+                    "requirements. This value may be increased slightly in "
+                    "order to yield odd exclusion array shapes."))
 @click.option('--max_workers', '-mw', default=None, type=INT,
               show_default=True,
               help=("Number of cores to run summary on. None is all "
@@ -154,7 +166,8 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
           rotor_diameter, out_layer, out_tiff, tm_dset, building_threshold,
-          flicker_threshold, resolution, max_workers, log_dir, verbose):
+          flicker_threshold, resolution, grid_cell_size,
+          max_flicker_exclusion_range, max_workers, log_dir, verbose):
     """
     Compute turbine flicker on local hardware
     """
@@ -177,7 +190,9 @@ def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
                        building_threshold=building_threshold,
                        flicker_threshold=flicker_threshold,
                        resolution=resolution, max_workers=max_workers,
-                       out_layer=out_layer, out_tiff=out_tiff)
+                       out_layer=out_layer, out_tiff=out_tiff,
+                       grid_cell_size=grid_cell_size,
+                       max_flicker_exclusion_range=max_flicker_exclusion_range)
 
 
 def get_node_cmd(config):
@@ -207,6 +222,8 @@ def get_node_cmd(config):
             '-bldt {}'.format(SLURM.s(config.building_threshold)),
             '-ft {}'.format(SLURM.s(config.flicker_threshold)),
             '-res {}'.format(SLURM.s(config.resolution)),
+            '-gcs {}'.format(SLURM.s(config.grid_cell_size)),
+            '-mfer {}'.format(SLURM.s(config.max_flicker_exclusion_range)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
