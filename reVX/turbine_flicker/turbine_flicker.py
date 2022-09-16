@@ -334,7 +334,7 @@ class TurbineFlicker:
             for i, (_, point) in enumerate(self._sc_points.iterrows()):
                 row_idx, col_idx, shape = _get_building_indices(
                     self._excl_h5, self._bld_layer, point.name,
-                    resolution=self._res, 
+                    resolution=self._res,
                     building_threshold=building_threshold)
                 if row_idx.size == 0:
                     continue
