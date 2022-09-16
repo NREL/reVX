@@ -11,7 +11,7 @@ from rex.utilities.loggers import init_logger
 from rex.utilities.utilities import safe_json_load
 
 from reVX.offshore.dist_to_ports_converter import DistToPortsConverter
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 from reVX.utilities.forecasts import FcstUtils
 from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region_classifier import RegionClassifier
