@@ -202,7 +202,7 @@ class TurbineFlicker:
     def _set_max_grid_size_for_odd_shaped_arr(self):
         """Set the max_flicker_exclusion_range to multiple of 0.5 grids """
         mult = np.round(self._max_flicker_exclusion_range
-                        / self._grid_cell_size ) + 0.5
+                        / self._grid_cell_size) + 0.5
         self._max_flicker_exclusion_range = mult * self._grid_cell_size
 
     def _get_sc_points(self, tm_dset='techmap_wtk'):
@@ -616,7 +616,7 @@ def _get_flicker_excl_shifts(shadow_flicker, flicker_threshold=30):
     shape = shadow_flicker.shape
     row_shifts, col_shifts = np.where(shadow_flicker > flicker_threshold)
     check = (np.any(np.isin(row_shifts, [0, shape[0] - 1]))
-                or np.any(np.isin(col_shifts, [0, shape[1] - 1])))
+             or np.any(np.isin(col_shifts, [0, shape[1] - 1])))
     if check:
         msg = ("Turbine flicker appears to extend beyond the FlickerModel "
                "domain! Consider increasing the maximum flicker exclusion "
