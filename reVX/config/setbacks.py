@@ -88,3 +88,8 @@ class SetbacksConfig(AnalysisConfig):
     def weights_calculation_upscale_factor(self):
         """Get upscale factor for weights calculation. """
         return self.get("weights_calculation_upscale_factor", None)
+
+    @property
+    def out_layers(self):
+        """Get out_layers dictionary. """
+        return self.get("out_layers", None)

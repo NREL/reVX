@@ -323,22 +323,41 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         exclusions : ndarray
             Rasterized array of exclusions.
         replace : bool, optional
+            Flag to replace local layer data with arr if file already
+            exists on disk. By default `False`.
+        """
+        if os.path.exists(geotiff):
+            _error_or_warn(geotiff, replace)
+
+        ExclusionsConverter._write_geotiff(geotiff, self.profile, exclusions)
+
+    def _write_layer(self, out_layer, exclusions, replace=False):
+        """Write exclusions to H5, replace if requested
+
+        Parameters
+        ----------
+        out_layer : str
+            Name of new exclusion layer to add to h5.
+        exclusions : ndarray
+            Rasterized array of exclusions.
+        replace : bool, optional
             Flag to replace local layer data with arr if layer already
             exists in the exclusion .h5 file. By default `False`.
         """
-        if os.path.exists(geotiff):
-            if not replace:
-                msg = ('{} already exists. To replace it set "replace=True"'
-                       .format(geotiff))
-                logger.error(msg)
-                raise IOError(msg)
-            else:
-                msg = ('{} already exists and will be replaced!'
-                       .format(geotiff))
-                logger.warning(msg)
-                warn(msg)
+        with ExclusionLayers(self._excl_fpath) as exc:
+            layers = exc.layers
 
-        ExclusionsConverter._write_geotiff(geotiff, self.profile, exclusions)
+        if out_layer in layers:
+            _error_or_warn(out_layer, replace)
+
+        try:
+            description = self.description
+        except AttributeError:
+            description = None
+
+        ExclusionsConverter._write_layer(self._excl_fpath, out_layer,
+                                         self.profile, exclusions,
+                                         description=description)
 
     def compute_all_local_exclusions(self, features_fpath, max_workers=None):
         """Compute local exclusions for all counties either.
@@ -429,7 +448,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         # TODO: Delegate this to class
 
     def compute_exclusions(self, features_fpath, max_workers=None,
-                           geotiff=None, replace=False):
+                           out_layer=None, out_tiff=None, replace=False):
         """
         Compute exclusions for all states either in serial or parallel.
         Existing exclusions are computed if a regulations file was
@@ -445,8 +464,13 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             in serial, if > 1 run in parallel with that many workers,
             if `None`, run in parallel on all available cores.
             By default `None`.
-        geotiff : str, optional
+        out_layer : str, optional
+            Name to save rasterized exclusions under in .h5 file.
+            If `None`, exclusions will not be written to the .h5 file.
+            By default `None`.
+        out_tiff : str, optional
             Path to save geotiff containing rasterized exclusions.
+            If `None`, exclusions will not be written to a geotiff file.
             By default `None`.
         replace : bool, optional
             Flag to replace geotiff if it already exists.
@@ -460,9 +484,14 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         exclusions = self._compute_merged_exclusions(features_fpath,
                                                      max_workers=max_workers)
 
-        if geotiff is not None:
-            logger.debug('Writing exclusions to {}'.format(geotiff))
-            self._write_exclusions(geotiff, exclusions, replace=replace)
+        if out_layer is not None:
+            logger.info('Saving exclusion layer to {} as {}'
+                        .format(self._excl_fpath, out_layer))
+            self._write_layer(out_layer, exclusions, replace=replace)
+
+        if out_tiff is not None:
+            logger.debug('Writing exclusions to {}'.format(out_tiff))
+            self._write_exclusions(out_tiff, exclusions, replace=replace)
 
         return exclusions
 
@@ -517,7 +546,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
     @classmethod
     def run(cls, excl_fpath, features_path, out_dir, regulations,
             weights_calculation_upscale_factor=None, max_workers=None,
-            replace=False, hsds=False):
+            replace=False, hsds=False, out_layers=None):
         """
         Compute exclusions and write them to a geotiff. If a regulations
         file is given, compute local exclusions, otherwise compute
@@ -587,17 +616,22 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
+        out_layers : dict, optional
+            Dictionary mapping feature file names (with extension) to
+            names of layers under which exclusions should be saved in
+            the `excl_fpath` .h5 file. If `None` or empty dictionary,
+            no layers are saved to the h5 file. By default `None`.
         """
         scale_factor = weights_calculation_upscale_factor
         exclusions = cls(excl_fpath, regulations=regulations, hsds=hsds,
                          weights_calculation_upscale_factor=scale_factor)
 
         features_path = exclusions.get_feature_paths(features_path)
+        out_layers = out_layers or {}
         for fpath in features_path:
-            geotiff = os.path.basename(fpath)
-            geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
+            fn = os.path.basename(fpath)
+            geotiff = ".".join(fn.split('.')[:-1] + ['tif'])
             geotiff = os.path.join(out_dir, geotiff)
-
             if os.path.exists(geotiff) and not replace:
                 msg = ('{} already exists, exclusions will not be re-computed '
                        'unless replace=True'.format(geotiff))
@@ -605,7 +639,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             else:
                 logger.info("Computing exclusions from {} and saving "
                             "to {}".format(fpath, geotiff))
-                exclusions.compute_exclusions(fpath, geotiff=geotiff,
+                exclusions.compute_exclusions(fpath, out_tiff=geotiff,
+                                              out_layer=out_layers.get(fn),
                                               max_workers=max_workers,
                                               replace=replace)
 
@@ -1455,3 +1490,16 @@ class Regulations:
             warn(msg)
             return
         return reg
+
+def _error_or_warn(name, replace):
+    """If replace, throw warning, otherwise throw error. """
+    if not replace:
+        msg = ('{} already exists. To replace it set "replace=True"'
+                .format(name))
+        logger.error(msg)
+        raise IOError(msg)
+    else:
+        msg = ('{} already exists and will be replaced!'
+                .format(name))
+        logger.warning(msg)
+        warn(msg)

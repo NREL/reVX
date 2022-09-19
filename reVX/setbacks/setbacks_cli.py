@@ -11,7 +11,7 @@ import os
 from rex.utilities.loggers import init_mult
 from rex.utilities.cli_dtypes import STR, FLOAT, INT
 from rex.utilities.hpc import SLURM
-from rex.utilities.utilities import get_class_properties
+from rex.utilities.utilities import get_class_properties, dict_str_load
 
 from reVX.config.setbacks import SetbacksConfig
 from reVX.setbacks import SETBACKS
@@ -108,6 +108,13 @@ def valid_config_keys():
 @click.option('--hsds', '-hsds', is_flag=True,
               help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
                     'behind HSDS'))
+@click.option('--out_layers', '-ol', type=STR, default=None,
+              show_default=True,
+              help=('String representation of a dictionary mapping feature '
+                    'file names (with extension) to names of layers under '
+                    'which exclusions should be saved in the "excl_fpath" '
+                    '.h5 file. If "None" or empty dictionary, no layers are '
+                    'saved to the h5 file.'))
 @click.option('--log_dir', '-log', default=None, type=STR,
               show_default=True,
               help='Directory to dump log files. Default is out_dir.')
@@ -117,7 +124,7 @@ def valid_config_keys():
 def local(ctx, excl_fpath, feature_type, features_path, out_dir, hub_height,
           rotor_diameter, base_setback_dist, regs_fpath, multiplier,
           weights_calculation_upscale_factor, max_workers, replace, hsds,
-          log_dir, verbose):
+          out_layers, log_dir, verbose):
     """
     Compute Setbacks locally
     """
@@ -147,18 +154,23 @@ def local(ctx, excl_fpath, feature_type, features_path, out_dir, hub_height,
                  '- using max_workers = {}\n'
                  '- replace layer if needed = {}\n'
                  '- weights calculation upscale factor = {}\n'
+                 '- out_layers = {}\n'
                  .format(base_setback_dist, hub_height, rotor_diameter,
                          regs_fpath, multiplier, max_workers, replace,
-                         weights_calculation_upscale_factor))
+                         weights_calculation_upscale_factor, out_layers))
 
     regulations = select_regulations(base_setback_dist, hub_height,
                                      rotor_diameter, regs_fpath, multiplier)
 
     setbacks_class = SETBACKS[feature_type]
     wcuf = weights_calculation_upscale_factor
+    if isinstance(out_layers, str):
+        out_layers = dict_str_load(out_layers)
+
     setbacks_class.run(excl_fpath, features_path, out_dir, regulations,
                        weights_calculation_upscale_factor=wcuf,
-                       max_workers=max_workers, replace=replace, hsds=hsds)
+                       max_workers=max_workers, replace=replace, hsds=hsds,
+                       out_layers=out_layers)
     logger.info('Setbacks computed and written to {}'.format(out_dir))
 
 
@@ -205,7 +217,8 @@ def run_local(ctx, config):
                multiplier=config.multiplier,
                weights_calculation_upscale_factor=wcuf,
                max_workers=config.execution_control.max_workers,
-               replace=config.replace)
+               replace=config.replace,
+               out_layers=config.out_layers)
 
 
 def eagle(config):
@@ -295,6 +308,7 @@ def get_node_cmd(name, config):
             '-regs {}'.format(SLURM.s(config.regs_fpath)),
             '-mult {}'.format(SLURM.s(config.multiplier)),
             '-wcuf {}'.format(SLURM.s(wcuf)),
+            '-ol {}'.format(SLURM.s(config.out_layers)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]

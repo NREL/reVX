@@ -270,6 +270,33 @@ def test_setbacks_no_generic_value(setbacks_class, feature_file):
     assert np.isclose(out, 0).all()
 
 
+def test_setbacks_saving_tiff_h5():
+    """Test setbacks saves to tiff and h5. """
+    feature_file = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                                'Rhode_Island.gpkg')
+    regs = Regulations(0, regulations_fpath=None, multiplier=1)
+    with tempfile.TemporaryDirectory() as td:
+        assert not os.path.exists(os.path.join(td, "Rhode_Island.tif"))
+
+        excl_fpath = os.path.basename(EXCL_H5)
+        excl_fpath = os.path.join(td, excl_fpath)
+        shutil.copy(EXCL_H5, excl_fpath)
+        with ExclusionLayers(excl_fpath) as exc:
+            assert "ri_parcel_setbacks" not in exc.layers
+
+        ParcelSetbacks.run(excl_fpath, feature_file, td, regs,
+                           out_layers={'Rhode_Island.gpkg':
+                                        "ri_parcel_setbacks"})
+
+        assert os.path.exists(os.path.join(td, "Rhode_Island.tif"))
+        with Geotiff(os.path.join(td, "Rhode_Island.tif")) as tif:
+            assert np.isclose(tif.values, 0).all()
+
+        with ExclusionLayers(excl_fpath) as exc:
+            assert "ri_parcel_setbacks" in exc.layers
+            assert np.isclose(exc["ri_parcel_setbacks"], 0).all()
+
+
 def test_generic_structure(generic_wind_regulations):
     """
     Test generic structures setbacks
@@ -1281,6 +1308,63 @@ def test_cli_invalid_inputs(runner):
 
     assert result.exit_code == 1
     assert isinstance(result.exception, RuntimeError)
+
+    LOGGERS.clear()
+
+
+def test_cli_saving(runner):
+    """
+    Test CLI saving files.
+    """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        test_fp = os.path.join(td, 'Rhode_Island.tif')
+        assert not os.path.exists(test_fp)
+
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+
+        excl_fpath = os.path.basename(EXCL_H5)
+        excl_fpath = os.path.join(td, excl_fpath)
+        shutil.copy(EXCL_H5, excl_fpath)
+        with ExclusionLayers(excl_fpath) as exc:
+            assert "ri_parcel_setbacks" not in exc.layers
+
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": excl_fpath,
+            "feature_type": "parcel",
+            "features_path": parcel_path,
+            "log_level": "INFO",
+            "regs_fpath": regs_fpath,
+            "replace": True,
+            "base_setback_dist": BASE_SETBACK_DIST,
+            "out_layers": {
+                "Rhode_Island.gpkg": "ri_parcel_setbacks"
+            }
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        assert os.path.exists(test_fp)
+        with Geotiff(test_fp) as tif:
+            assert tif.values.sum() == 3
+
+        with ExclusionLayers(excl_fpath) as exc:
+            assert "ri_parcel_setbacks" in exc.layers
+            assert exc["ri_parcel_setbacks"].sum() == 3
 
     LOGGERS.clear()
 
