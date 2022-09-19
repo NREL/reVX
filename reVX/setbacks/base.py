@@ -361,7 +361,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
     #         cnty_feats = setback_features.iloc[list(idx)].copy()
     #         yield self._compute_local_setbacks, cnty_feats, cnty, setback
 
-    def compute_local_exclusions(self, features, cnty, regulation_value):
+    def compute_local_exclusions(self, regulation_value, cnty, features):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -371,12 +371,12 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
 
         Parameters
         ----------
-        features : geopandas.GeoDataFrame
-            Features to setback from.
+        regulation_value : float | int
+            Setback distance in meters.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        regulation_value : int
-            Setback distance in meters.
+        features : geopandas.GeoDataFrame
+            Features to setback from.
 
         Returns
         -------

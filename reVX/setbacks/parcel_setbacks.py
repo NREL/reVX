@@ -43,7 +43,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
             features.buffer(-1 * self._regulations.generic))
         return self._rasterizer.rasterize(list(setbacks))
 
-    def compute_local_exclusions(self, features, cnty, regulation_value):
+    def compute_local_exclusions(self, regulation_value, cnty, features):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -53,12 +53,12 @@ class ParcelSetbacks(AbstractBaseSetbacks):
 
         Parameters
         ----------
-        features : geopandas.GeoDataFrame
-            Features to setback from.
+        regulation_value : float | int
+            Setback distance in meters.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        regulation_value : int
-            Setback distance in meters.
+        features : geopandas.GeoDataFrame
+            Features to setback from.
 
         Returns
         -------

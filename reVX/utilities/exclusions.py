@@ -68,7 +68,7 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def compute_local_exclusions(self, features, cnty, regulation_value):
+    def compute_local_exclusions(self, regulation_value, cnty, features):
         """Compute local feature exclusions.
 
         This method should compute the exclusions using the information
@@ -76,12 +76,12 @@ class AbstractExclusionCalculatorInterface(ABC):
 
         Parameters
         ----------
-        features : geopandas.GeoDataFrame
-            Features used to calculate exclusions from.
+        regulation_value : float | int
+            Regulation value for county.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        regulation_value : int
-            Regulation value for county.
+        features : geopandas.GeoDataFrame
+            Features used to calculate exclusions from.
 
         Returns
         -------
@@ -390,7 +390,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                                   loggers=loggers) as exe:
                 futures = {}
                 for func, *args in self._exclusions_computation(features):
-                    cnty_feats, cnty, exclusion = args
+                    exclusion, cnty, cnty_feats = args
                     future = exe.submit(func, cnty_feats, cnty, exclusion)
                     futures[future] = cnty['FIPS'].unique()
 
@@ -404,7 +404,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             logger.info('Computing local exclusions in serial')
             computation = self._exclusions_computation(features)
             for i, (func, *args) in enumerate(computation):
-                cnty_feats, cnty, exclusion = args
+                exclusion, cnty, cnty_feats = args
                 exclusions = self._combine_exclusions(exclusions, func(*args),
                                                       cnty['FIPS'].unique())
                 logger.debug('Computed exclusions for {} of {} counties'
@@ -417,7 +417,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         for exclusion, cnty in self._regulations:
             idx = features.sindex.intersection(cnty.total_bounds)
             cnty_feats = features.iloc[list(idx)].copy()
-            yield self.compute_local_exclusions, cnty_feats, cnty, exclusion
+            yield self.compute_local_exclusions, exclusion, cnty, cnty_feats
 
     # def _compute_generic_setbacks(self, features_fpath):
     #     """Compute generic setbacks.
