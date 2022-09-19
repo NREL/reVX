@@ -727,7 +727,7 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
     generic_setbacks = setbacks_class(EXCL_H5, regulations,
                                       weights_calculation_upscale_factor=sf)
     generic_layer = generic_setbacks.compute_exclusions(features_path,
-                                                      max_workers=1)
+                                                        max_workers=1)
 
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(regulations_fpath)
@@ -1302,11 +1302,4 @@ def execute_pytest(capture='all', flags='-rapP'):
 
 
 if __name__ == '__main__':
-    # execute_pytest()
-    runner = CliRunner()
-    runner.invoke(
-        main,
-        ['from-config',
-         '-c', "/shared-projects/rev/projects/seto/fy22/data/paper_exclusions/pv/setbacks/pv_parcel_50/pv_parcel_50_debug.json",
-        ]
-    )
+    execute_pytest()
