@@ -129,7 +129,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
     Create exclusions layers for exclusions
     """
 
-    def __init__(self, excl_fpath, regulations):
+    def __init__(self, excl_fpath, regulations, hsds=False):
         """
         Parameters
         ----------
@@ -139,11 +139,15 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations : `Regulations`
             A `Regulations` object used to extract exclusion regulation
             values.
+        hsds : bool, optional
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
         """
         log_versions(logger)
         self._excl_fpath = excl_fpath
         self._regulations = regulations
-        with ExclusionLayers(self._excl_fpath) as exc:
+        self._hsds = hsds
+        with ExclusionLayers(self._excl_fpath, hsds=hsds) as exc:
             self._fips = exc['cnty_fips']
             self._cnty_fips_profile = exc.get_layer_profile('cnty_fips')
         self._preflight_check()
@@ -252,7 +256,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             Flag to replace local layer data with arr if layer already
             exists in the exclusion .h5 file. By default `False`.
         """
-        with ExclusionLayers(self._excl_fpath) as exc:
+        with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as exc:
             layers = exc.layers
 
         if out_layer in layers:

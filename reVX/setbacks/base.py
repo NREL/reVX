@@ -304,7 +304,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """
         self._rasterizer = Rasterizer(excl_fpath,
                                       weights_calculation_upscale_factor, hsds)
-        super().__init__(excl_fpath, regulations)
+        super().__init__(excl_fpath, regulations, hsds)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
