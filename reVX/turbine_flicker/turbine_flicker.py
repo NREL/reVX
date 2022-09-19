@@ -29,7 +29,7 @@ class TurbineFlicker:
 
     def __init__(self, excl_fpath, res_fpath, building_layer,
                  resolution=640, grid_cell_size=90,
-                 max_flicker_exclusion_range=10_000,
+                 max_flicker_exclusion_range="10x",
                  tm_dset='techmap_wtk'):
         """
         Parameters
@@ -48,12 +48,14 @@ class TurbineFlicker:
             by default 640
         grid_cell_size : float, optional
             Length (m) of a side of each grid cell in `excl_fpath`.
-        max_flicker_exclusion_range : float, optional
+        max_flicker_exclusion_range : float | int | str, optional
             Max distance (m) that flicker exclusions will extend in
-            any of the cardinal directions. Note that increasing this
-            value can lead to drastically instead memory requirements.
-            This value may be increased slightly in order to yield
-            odd exclusion array shapes.
+            any of the cardinal directions. Can also be a string like
+            ``"10x"`` (default), which is interpreted as 10 times the
+            turbine rotor diameter. Note that increasing this value can
+            lead to drastically instead memory requirements. This value
+            may be increased slightly (no more then the size of one grid
+            cell) in order to yield odd exclusion array shapes.
         tm_dset : str, optional
             Dataset / layer name for wind toolkit techmap,
             by default 'techmap_wtk'
@@ -98,6 +100,7 @@ class TurbineFlicker:
         # Import HOPP dynamically so its not a requirement
         from hybrid.flicker.flicker_mismatch_grid import FlickerMismatch
 
+        self._set_max_grid_size_for_odd_shaped_arr(rotor_diameter)
         mult = self._max_flicker_exclusion_range / rotor_diameter
         FlickerMismatch.diam_mult_nwe = mult
         FlickerMismatch.diam_mult_s = mult
@@ -117,6 +120,29 @@ class TurbineFlicker:
                                                          ("time", ))[0]
 
         return shadow_flicker
+
+    def _set_max_grid_size_for_odd_shaped_arr(self, rotor_diameter):
+        """Set the max_flicker_exclusion_range to multiple of 0.5 grids """
+        excl_range = self._parse_max_flicker_exclusion_rang(rotor_diameter)
+        mult = np.round(excl_range / self._grid_cell_size) + 0.5
+        self._max_flicker_exclusion_range = mult * self._grid_cell_size
+
+    def _parse_max_flicker_exclusion_rang(self, rotor_diameter):
+        """Convert max_flicker_exclusion_range to float if necessary. """
+        excl_range = self._max_flicker_exclusion_range
+        if isinstance(excl_range, str) and excl_range.endswith('x'):
+            return float(excl_range.strip('x')) * rotor_diameter
+
+        if not isinstance(excl_range, (int, float)):
+            try:
+                excl_range = float(excl_range)
+            except Exception as e:
+                msg = ('max_flicker_exclusion_range must be numeric but '
+                       'received: {}, {}'.format(excl_range, type(excl_range)))
+                logger.error(msg)
+                raise TypeError(msg) from e
+
+        return excl_range
 
     def _exclude_turbine_flicker(self, point, res_fpath, hub_height,
                                  rotor_diameter, flicker_threshold=30):

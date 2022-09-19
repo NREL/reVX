@@ -8,7 +8,7 @@ import logging
 import os
 
 from rex.utilities.loggers import init_mult
-from rex.utilities.cli_dtypes import STR, INT
+from rex.utilities.cli_dtypes import STR, INT, STRFLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
@@ -147,10 +147,12 @@ def from_config(ctx, config, verbose):
 @click.option('--grid_cell_size', '-gcs', default=90, type=INT,
               show_default=True,
               help=("Length (m) of a side of each grid cell in `excl_fpath`."))
-@click.option('--max_flicker_exclusion_range', '-mfer', default=10_000,
-              type=INT, show_default=True,
+@click.option('--max_flicker_exclusion_range', '-mfer', default="10x",
+              type=STRFLOAT, show_default=True,
               help=("Max distance (m) that flicker exclusions will extend in "
-                    "any of the cardinal directions. Note that increasing "
+                    "any of the cardinal directions. Can also be a string "
+                    "like ``'10x'`` (default), which is interpreted as 10 "
+                    "times the turbine rotor diameter. Note that increasing "
                     "this value can lead to drastically instead memory "
                     "requirements. This value may be increased slightly in "
                     "order to yield odd exclusion array shapes."))

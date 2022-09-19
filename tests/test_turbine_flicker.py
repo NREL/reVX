@@ -155,6 +155,17 @@ def test_turbine_flicker(max_workers):
     assert np.allclose(baseline, test)
 
 
+def test_turbine_flicker_bad_max_flicker_exclusion_range_input():
+    """
+    Test Turbine Flicker with bad input for max_flicker_exclusion_range
+    """
+    with pytest.raises(TypeError) as excinfo:
+        TurbineFlicker.run(EXCL_H5, RES_H5, BLD_LAYER, HUB_HEIGHT,
+                           ROTOR_DIAMETER, max_flicker_exclusion_range='abc')
+
+    assert "max_flicker_exclusion_range must be numeric" in str(excinfo.value)
+
+
 def test_cli(runner):
     """
     Test MeanWindDirections CLI
@@ -292,6 +303,19 @@ def test_cli_max_flicker_exclusion_range(runner):
         )
         assert result.exit_code == 0, msg
 
+        out_tiff_20d = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5d.tiff"
+        config["out_tiff"] = os.path.join(td, out_tiff_20d)
+        config["max_flicker_exclusion_range"] = "20x"
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config', '-c', config_path])
+        msg = 'Failed with error {}'.format(
+            traceback.print_exception(*result.exc_info)
+        )
+        assert result.exit_code == 0, msg
+
         with ExclusionLayers(EXCL_H5) as f:
             baseline = f[BASELINE]
 
@@ -307,9 +331,15 @@ def test_cli_max_flicker_exclusion_range(runner):
         with Geotiff(os.path.join(td, out_tiff)) as f:
             test2 = f.values[0]
 
+        with Geotiff(os.path.join(td, out_tiff_20d)) as f:
+            test3 = f.values[0]
+
         assert np.allclose(baseline, test)
         assert np.allclose(baseline, test2)
+        assert np.allclose(baseline, test3)
         assert np.allclose(test, test2)
+        assert np.allclose(test, test3)
+        assert np.allclose(test2, test3)
 
     LOGGERS.clear()
 
