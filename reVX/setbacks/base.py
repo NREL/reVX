@@ -380,8 +380,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
 
         Returns
         -------
-        setbacks : list
-            List of setback geometries.
+        setbacks : ndarray
+            Raster array of setbacks
         """
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
