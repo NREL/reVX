@@ -226,14 +226,6 @@ class TurbineFlicker:
                                  'following error:\n{}'.format(e))
                 raise e
 
-        self._set_max_grid_size_for_odd_shaped_arr()
-
-    def _set_max_grid_size_for_odd_shaped_arr(self):
-        """Set the max_flicker_exclusion_range to multiple of 0.5 grids """
-        mult = np.round(self._max_flicker_exclusion_range
-                        / self._grid_cell_size) + 0.5
-        self._max_flicker_exclusion_range = mult * self._grid_cell_size
-
     def _get_sc_points(self, tm_dset='techmap_wtk'):
         """
         Get the valid sc points to run turbine flicker for
