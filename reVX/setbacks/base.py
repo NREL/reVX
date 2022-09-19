@@ -2,22 +2,18 @@
 """
 Compute setbacks exclusions
 """
-from abc import ABC, abstractmethod
-from concurrent.futures import as_completed
+from abc import abstractmethod
 from warnings import warn
 from itertools import product
-import os
 import logging
 import pathlib
 import numpy as np
 import geopandas as gpd
 from rasterio import features
-from shapely.geometry import shape
 
-from rex.utilities import SpawnProcessPool, log_mem
+from rex.utilities import log_mem
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.utilities.exclusions import AbstractBaseExclusionsMerger
-from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
 
@@ -354,14 +350,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         logger.debug('Computing setbacks for regulations in {} counties'
                      .format(len(self.regulations_table)))
 
-    # def _setback_computation(self, setback_features):
-    #     """Get function and args for setbacks computation. """
-    #     for setback, cnty in self._regulations:
-    #         idx = setback_features.sindex.intersection(cnty.total_bounds)
-    #         cnty_feats = setback_features.iloc[list(idx)].copy()
-    #         yield self._compute_local_setbacks, cnty_feats, cnty, setback
-
-    def compute_local_exclusions(self, regulation_value, cnty, features):
+    def compute_local_exclusions(self, regulation_value, cnty, features_fpath):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -375,8 +364,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Setback distance in meters.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        features : geopandas.GeoDataFrame
-            Features to setback from.
+        features_fpath : str
+            Path to shape file with features to compute exclusions from
 
         Returns
         -------
@@ -385,10 +374,13 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
+        features = self.parse_features(features_fpath)
+        idx = features.sindex.intersection(cnty.total_bounds)
+        features = features.iloc[list(idx)].copy()
         log_mem(logger)
         features = self._feature_filter(features, cnty)
-        setback = regulation_value
-        return self._rasterizer.rasterize(list(features.buffer(setback)))
+        features = list(features.buffer(regulation_value))
+        return self._rasterizer.rasterize(features)
 
     def compute_generic_exclusions(self, features_fpath):
         """Compute generic setbacks.

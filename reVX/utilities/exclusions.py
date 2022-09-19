@@ -37,23 +37,6 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def parse_features(self, features_fpath):
-        """Parse features the feature file.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to file containing features to compute exclusions from.
-
-        Returns
-        -------
-        `geopandas.GeoDataFrame`
-            Geometries of features to compute exclusions from in
-            exclusion coordinate system.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def pre_process_regulations(self, features_fpath):
         """Reduce regulations to correct state and features.
 
@@ -68,7 +51,7 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def compute_local_exclusions(self, regulation_value, cnty, features):
+    def compute_local_exclusions(self, regulation_value, cnty, features_fpath):
         """Compute local feature exclusions.
 
         This method should compute the exclusions using the information
@@ -80,8 +63,9 @@ class AbstractExclusionCalculatorInterface(ABC):
             Regulation value for county.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        features : geopandas.GeoDataFrame
-            Features used to calculate exclusions from.
+        features_fpath : str
+            Path to shape file with features to compute exclusions from
+
 
         Returns
         -------
@@ -236,82 +220,6 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
     def regulations_table(self, regulations_table):
         self._regulations.regulations = regulations_table
 
-    # def _parse_features(self, features_fpath):
-    #     """Method to parse features.
-
-    #     Parameters
-    #     ----------
-    #     features_fpath : str
-    #         Path to file containing features to setback from.
-
-    #     Returns
-    #     -------
-    #     `geopandas.GeoDataFrame`
-    #         Geometries of features to setback from in exclusion
-    #         coordinate system.
-    #     """
-    #     return gpd.read_file(features_fpath).to_crs(
-    #         crs=self._rasterizer.profile['crs'])
-
-    # def _pre_process_regulations(self, features_fpath):
-    #     """Reduce regulations to state corresponding to features_fpath.
-
-    #     Parameters
-    #     ----------
-    #     features_fpath : str
-    #         Path to shape file with features to compute setbacks from.
-    #     """
-    #     mask = self._regulation_table_mask(features_fpath)
-    #     if not mask.any():
-    #         msg = "Found no local regulations!"
-    #         logger.warning(msg)
-    #         warn(msg)
-
-    #     self.regulations_table = (self.regulations_table[mask]
-    #                               .reset_index(drop=True))
-    #     logger.debug('Computing setbacks for regulations in {} counties'
-    #                  .format(len(self.regulations_table)))
-
-    # pylint: disable=unused-argument
-    # @abstractmethod
-    # def _regulation_table_mask(self, features_fpath):
-    #     """Return the regulation table mask for setback feature. """
-    #     raise NotImplementedError
-
-    # def _compute_local_setbacks(self, features, cnty, setback):
-    #     """Compute local features setbacks.
-
-    #     This method will compute the setbacks using a county-specific
-    #     regulations file that specifies either a static setback or a
-    #     multiplier value that will be used along with the base setback
-    #     distance to compute the setback.
-
-    #     Parameters
-    #     ----------
-    #     features : geopandas.GeoDataFrame
-    #         Features to setback from.
-    #     cnty : geopandas.GeoDataFrame
-    #         Regulations for a single county.
-    #     setback : int
-    #         Setback distance in meters.
-
-    #     Returns
-    #     -------
-    #     setbacks : list
-    #         List of setback geometries.
-    #     """
-        # logger.debug('- Computing setbacks for county FIPS {}'
-        #              .format(cnty.iloc[0]['FIPS']))
-        # log_mem(logger)
-        # features = self._feature_filter(features, cnty)
-        # return list(features.buffer(setback))
-        # TODO: Delegate this to class
-
-    # @staticmethod
-    # def _feature_filter(features, cnty):
-    #     """Filter the features given a county."""
-    #     return features_with_centroid_in_county(features, cnty)
-
     def _write_exclusions(self, geotiff, exclusions, replace=False):
         """
         Write exclusions to geotiff, replace if requested
@@ -378,7 +286,6 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             Raster array of exclusions.
         """
         exclusions = None
-        features = self.parse_features(features_fpath)
         max_workers = max_workers or os.cpu_count()
 
         log_mem(logger)
@@ -389,9 +296,9 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 futures = {}
-                for func, *args in self._exclusions_computation(features):
-                    exclusion, cnty, cnty_feats = args
-                    future = exe.submit(func, cnty_feats, cnty, exclusion)
+                for exclusion, cnty in self._regulations:
+                    future = exe.submit(self.compute_local_exclusions,
+                                        exclusion, cnty, features_fpath)
                     futures[future] = cnty['FIPS'].unique()
 
                 for i, future in enumerate(as_completed(futures)):
@@ -402,50 +309,16 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                                  .format((i + 1), len(self.regulations_table)))
         else:
             logger.info('Computing local exclusions in serial')
-            computation = self._exclusions_computation(features)
-            for i, (func, *args) in enumerate(computation):
-                exclusion, cnty, cnty_feats = args
-                exclusions = self._combine_exclusions(exclusions, func(*args),
+            for i, (exclusion, cnty) in enumerate(self._regulations):
+                local_exclusions = self.compute_local_exclusions(
+                    exclusion, cnty, features_fpath)
+                exclusions = self._combine_exclusions(exclusions,
+                                                      local_exclusions,
                                                       cnty['FIPS'].unique())
                 logger.debug('Computed exclusions for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 
         return exclusions
-
-    def _exclusions_computation(self, features):
-        """Get function and args for exclusions computation. """
-        for exclusion, cnty in self._regulations:
-            idx = features.sindex.intersection(cnty.total_bounds)
-            cnty_feats = features.iloc[list(idx)].copy()
-            yield self.compute_local_exclusions, exclusion, cnty, cnty_feats
-
-    # def _compute_generic_setbacks(self, features_fpath):
-    #     """Compute generic setbacks.
-
-    #     This method will compute the setbacks using a generic setback
-    #     of `base_setback_dist * multiplier`.
-
-    #     Parameters
-    #     ----------
-    #     features_fpath : str
-    #         Path to shape file with features to compute setbacks from.
-
-    #     Returns
-    #     -------
-    #     setbacks : ndarray
-    #         Raster array of setbacks
-    #     """
-        # logger.info('Computing generic setbacks')
-        # if np.isclose(self._regulations.generic_setback, 0):
-        #     return self._rasterizer.rasterize(shapes=None)
-
-        # setback_features = self._parse_features(features_fpath)
-        # setbacks = list(setback_features.buffer(
-        #     self._regulations.generic_setback
-        # ))
-
-        # return self._rasterizer.rasterize(setbacks)
-        # TODO: Delegate this to class
 
     def compute_exclusions(self, features_fpath, max_workers=None,
                            out_layer=None, out_tiff=None, replace=False):
