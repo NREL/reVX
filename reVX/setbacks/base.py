@@ -16,7 +16,7 @@ from shapely.geometry import shape
 
 from rex.utilities import SpawnProcessPool, log_mem
 from reV.handlers.exclusions import ExclusionLayers
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities.exclusions import AbstractBaseExclusionsMerger
 from reVX.utilities.utilities import log_versions
 
 logger = logging.getLogger(__name__)
@@ -256,7 +256,7 @@ class Rasterizer:
         return arr
 
 
-class AbstractBaseSetbacks(ABC):
+class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
     """
     Create exclusions layers for setbacks
     """
@@ -306,92 +306,20 @@ class AbstractBaseSetbacks(ABC):
             this process is skipped and the output is a boolean
             exclusion mask. By default `None`.
         """
-        log_versions(logger)
-        self._excl_fpath = excl_fpath
-        self._regulations = regulations
         self._rasterizer = Rasterizer(excl_fpath,
                                       weights_calculation_upscale_factor, hsds)
-
-        self._preflight_check()
+        super().__init__(excl_fpath, regulations)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
         return msg
 
-    def _preflight_check(self):
-        """Parse the county regulations.
-
-        Parse regulations, combine with county geometries from
-        exclusions .h5 file. The county geometries are intersected with
-        features to compute county specific setbacks.
-
-        Parameters
-        ----------
-        regulations : pandas.DataFrame
-            Regulations table
-
-        Returns
-        -------
-        regulations: `geopandas.GeoDataFrame`
-            GeoDataFrame with county level setback regulations merged
-            with county geometries, use for intersecting with setback
-            features.
-        """
-        if self.regulations_table is None:
-            return
-
-        regulations_df = self.regulations_table
-        if 'FIPS' not in regulations_df:
-            msg = ('Regulations does not have county FIPS! Please add a '
-                   '"FIPS" columns with the unique county FIPS values.')
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        if 'geometry' not in regulations_df:
-            regulations_df['geometry'] = None
-
-        regulations_df = regulations_df[~regulations_df['FIPS'].isna()]
-        regulations_df = regulations_df.set_index('FIPS')
-
-        logger.info('Merging county geometries w/ local regulations')
-        with ExclusionLayers(self._excl_fpath) as exc:
-            fips = exc['cnty_fips']
-            profile = exc.get_layer_profile('cnty_fips')
-
-        s = features.shapes(
-            fips.astype(np.int32),
-            transform=profile['transform']
-        )
-        for p, v in s:
-            v = int(v)
-            if v in regulations_df.index:
-                regulations_df.at[v, 'geometry'] = shape(p)
-
-        regulations_df = gpd.GeoDataFrame(
-            regulations_df,
-            crs=self._rasterizer.profile['crs'],
-            geometry='geometry'
-        )
-        regulations_df = regulations_df.reset_index()
-        regulations_df = regulations_df.to_crs(
-            crs=self._rasterizer.profile['crs'])
-        self.regulations_table = regulations_df
-
     @property
-    def regulations_table(self):
-        """Regulations table.
+    def profile(self):
+        """dict: Geotiff profile. """
+        return self._rasterizer.profile
 
-        Returns
-        -------
-        geopandas.GeoDataFrame | None
-        """
-        return self._regulations.regulations
-
-    @regulations_table.setter
-    def regulations_table(self, regulations_table):
-        self._regulations.regulations = regulations_table
-
-    def _parse_features(self, features_fpath):
+    def parse_features(self, features_fpath):
         """Method to parse features.
 
         Parameters
@@ -405,10 +333,9 @@ class AbstractBaseSetbacks(ABC):
             Geometries of features to setback from in exclusion
             coordinate system.
         """
-        return gpd.read_file(features_fpath).to_crs(
-            crs=self._rasterizer.profile['crs'])
+        return gpd.read_file(features_fpath).to_crs(crs=self.profile['crs'])
 
-    def _pre_process_regulations(self, features_fpath):
+    def pre_process_regulations(self, features_fpath):
         """Reduce regulations to state corresponding to features_fpath.
 
         Parameters
@@ -427,13 +354,14 @@ class AbstractBaseSetbacks(ABC):
         logger.debug('Computing setbacks for regulations in {} counties'
                      .format(len(self.regulations_table)))
 
-    # pylint: disable=unused-argument
-    @abstractmethod
-    def _regulation_table_mask(self, features_fpath):
-        """Return the regulation table mask for setback feature. """
-        raise NotImplementedError
+    # def _setback_computation(self, setback_features):
+    #     """Get function and args for setbacks computation. """
+    #     for setback, cnty in self._regulations:
+    #         idx = setback_features.sindex.intersection(cnty.total_bounds)
+    #         cnty_feats = setback_features.iloc[list(idx)].copy()
+    #         yield self._compute_local_setbacks, cnty_feats, cnty, setback
 
-    def _compute_local_setbacks(self, features, cnty, setback):
+    def compute_local_exclusions(self, features, cnty, regulation_value):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -447,7 +375,7 @@ class AbstractBaseSetbacks(ABC):
             Features to setback from.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        setback : int
+        regulation_value : int
             Setback distance in meters.
 
         Returns
@@ -459,98 +387,10 @@ class AbstractBaseSetbacks(ABC):
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
         features = self._feature_filter(features, cnty)
-        return list(features.buffer(setback))
+        setback = regulation_value
+        return self._rasterizer.rasterize(list(features.buffer(setback)))
 
-    @staticmethod
-    def _feature_filter(features, cnty):
-        """Filter the features given a county."""
-        return features_with_centroid_in_county(features, cnty)
-
-    def _write_setbacks(self, geotiff, setbacks, replace=False):
-        """
-        Write setbacks to geotiff, replace if requested
-
-        Parameters
-        ----------
-        geotiff : str
-            Path to geotiff file to save setbacks too
-        setbacks : ndarray
-            Rasterized array of setbacks
-        replace : bool, optional
-            Flag to replace local layer data with arr if layer already
-            exists in the exclusion .h5 file. By default `False`.
-        """
-        if os.path.exists(geotiff):
-            if not replace:
-                msg = ('{} already exists. To replace it set "replace=True"'
-                       .format(geotiff))
-                logger.error(msg)
-                raise IOError(msg)
-            else:
-                msg = ('{} already exists and will be replaced!'
-                       .format(geotiff))
-                logger.warning(msg)
-                warn(msg)
-
-        ExclusionsConverter._write_geotiff(geotiff, self._rasterizer.profile,
-                                           setbacks)
-
-    def _compute_all_local_setbacks(self, features_fpath, max_workers=None):
-        """Compute local setbacks for all counties either.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from
-        max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run
-            in serial, if > 1 run in parallel with that many workers,
-            if `None` run in parallel on all available cores.
-            By default `None`.
-
-        Returns
-        -------
-        setbacks : ndarray
-            Raster array of setbacks.
-        """
-        setbacks = []
-        setback_features = self._parse_features(features_fpath)
-        max_workers = max_workers or os.cpu_count()
-
-        log_mem(logger)
-        if max_workers > 1:
-            logger.info('Computing local setbacks in parallel using {} '
-                        'workers'.format(max_workers))
-            loggers = [__name__, 'reVX']
-            with SpawnProcessPool(max_workers=max_workers,
-                                  loggers=loggers) as exe:
-                futures = []
-                for func, *args in self._setback_computation(setback_features):
-                    future = exe.submit(func, *args)
-                    futures.append(future)
-
-                for i, future in enumerate(as_completed(futures)):
-                    setbacks.extend(future.result())
-                    logger.debug('Computed setbacks for {} of {} counties'
-                                 .format((i + 1), len(self.regulations_table)))
-        else:
-            logger.info('Computing local setbacks in serial')
-            computation = self._setback_computation(setback_features)
-            for i, (func, *args) in enumerate(computation):
-                setbacks.extend(func(*args))
-                logger.debug('Computed setbacks for {} of {} counties'
-                             .format((i + 1), len(self.regulations_table)))
-
-        return self._rasterizer.rasterize(setbacks)
-
-    def _setback_computation(self, setback_features):
-        """Get function and args for setbacks computation. """
-        for setback, cnty in self._regulations:
-            idx = setback_features.sindex.intersection(cnty.total_bounds)
-            cnty_feats = setback_features.iloc[list(idx)].copy()
-            yield self._compute_local_setbacks, cnty_feats, cnty, setback
-
-    def _compute_generic_setbacks(self, features_fpath):
+    def compute_generic_exclusions(self, features_fpath):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
@@ -567,101 +407,16 @@ class AbstractBaseSetbacks(ABC):
             Raster array of setbacks
         """
         logger.info('Computing generic setbacks')
-        if np.isclose(self._regulations.generic_setback, 0):
+        if np.isclose(self._regulations.generic, 0):
             return self._rasterizer.rasterize(shapes=None)
 
-        setback_features = self._parse_features(features_fpath)
-        setbacks = list(setback_features.buffer(
-            self._regulations.generic_setback
-        ))
+        setback_features = self.parse_features(features_fpath)
+        setbacks = list(setback_features.buffer(self._regulations.generic))
 
         return self._rasterizer.rasterize(setbacks)
 
-    def compute_setbacks(self, features_fpath, max_workers=None,
-                         geotiff=None, replace=False):
-        """
-        Compute setbacks for all states either in serial or parallel.
-        Existing setbacks are computed if a regulations file was
-        supplied during class initialization, otherwise generic setbacks
-        are computed.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from
-        max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run
-            in serial, if > 1 run in parallel with that many workers,
-            if `None`, run in parallel on all available cores.
-            By default `None`.
-        geotiff : str, optional
-            Path to save geotiff containing rasterized setbacks.
-            By default `None`.
-        replace : bool, optional
-            Flag to replace geotiff if it already exists.
-            By default `False`.
-
-        Returns
-        -------
-        setbacks : ndarray
-            Raster array of setbacks
-        """
-        setbacks = self._compute_merged_setbacks(features_fpath,
-                                                 max_workers=max_workers)
-
-        if geotiff is not None:
-            logger.debug('Writing setbacks to {}'.format(geotiff))
-            self._write_setbacks(geotiff, setbacks, replace=replace)
-
-        return setbacks
-
-    def _compute_merged_setbacks(self, features_fpath, max_workers=None):
-        """Compute and merge local and generic setbacks, if necessary. """
-        mw = max_workers
-
-        if self._regulations.local_exist:
-            self._pre_process_regulations(features_fpath)
-
-        generic_setbacks_exist = self._regulations.generic_exist
-        local_setbacks_exist = self._regulations.local_exist
-
-        if not generic_setbacks_exist and not local_setbacks_exist:
-            msg = ("Found no setbacks to compute: No regulations detected, "
-                   "and generic multiplier not set.")
-            logger.error(msg)
-            raise ValueError(msg)
-
-        if generic_setbacks_exist and not local_setbacks_exist:
-            return self._compute_generic_setbacks(features_fpath)
-
-        if local_setbacks_exist and not generic_setbacks_exist:
-            return self._compute_all_local_setbacks(features_fpath,
-                                                    max_workers=mw)
-
-        generic_setbacks = self._compute_generic_setbacks(features_fpath)
-        local_setbacks = self._compute_all_local_setbacks(features_fpath,
-                                                          max_workers=mw)
-        return self._merge_setbacks(generic_setbacks, local_setbacks,
-                                    features_fpath)
-
-    def _merge_setbacks(self, generic_setbacks, local_setbacks,
-                        features_fpath):
-        """Merge local setbacks onto the generic setbacks."""
-        logger.info('Merging local setbacks onto the generic setbacks')
-
-        self._pre_process_regulations(features_fpath)
-        with ExclusionLayers(self._excl_fpath) as exc:
-            fips = exc['cnty_fips']
-
-        local_setbacks_mask = np.isin(fips,
-                                      self.regulations_table["FIPS"].unique())
-
-        generic_setbacks[local_setbacks_mask] = (
-            local_setbacks[local_setbacks_mask])
-        return generic_setbacks
-
     @staticmethod
-    def _get_feature_paths(features_fpath):
+    def get_feature_paths(features_fpath):
         """Ensure features path exists and return as list.
 
         Parameters
@@ -701,96 +456,14 @@ class AbstractBaseSetbacks(ABC):
 
         return paths
 
-    @classmethod
-    def run(cls, excl_fpath, features_path, out_dir, regulations,
-            weights_calculation_upscale_factor=None, max_workers=None,
-            replace=False, hsds=False):
-        """
-        Compute setbacks and write them to a geotiff. If a regulations
-        file is given, compute local setbacks, otherwise compute generic
-        setbacks using the given multiplier and the base setback
-        distance. If both are provided, generic and local setbacks are
-        merged such that the local setbacks override the generic ones.
+    @staticmethod
+    def _feature_filter(features, cnty):
+        """Filter the features given a county."""
+        return features_with_centroid_in_county(features, cnty)
 
-        Parameters
-        ----------
-        excl_fpath : str
-            Path to .h5 file containing exclusion layers, will also be
-            the location of any new setback layers.
-        features_path : str
-            Path to file or directory feature shape files.
-            This path can contain any pattern that can be used in the
-            glob function. For example, `/path/to/features/[A]*` would
-            match with all the features in the directory
-            `/path/to/features/` that start with "A". This input
-            can also be a directory, but that directory must ONLY
-            contain feature files. If your feature files are mixed
-            with other files or directories, use something like
-            `/path/to/features/*.geojson`.
-        out_dir : str
-            Directory to save setbacks geotiff(s) into
-        regulations : `~reVX.setbacks.regulations.Regulations`
-            A `Regulations` object used to extract setback distances.
-        weights_calculation_upscale_factor : int, optional
-            If this value is an int > 1, the output will be a layer with
-            **inclusion** weight values instead of exclusion booleans.
-            For example, a cell that was previously excluded with a
-            a boolean mask (value of 1) may instead be converted to an
-            inclusion weight value of 0.75, meaning that 75% of the area
-            corresponding to that point should be included (i.e. the
-            exclusion feature only intersected a small portion - 25% -
-            of the cell). This percentage inclusion value is calculated
-            by upscaling the output array using this input value,
-            rasterizing the exclusion features onto it, and counting the
-            number of resulting sub-cells excluded by the feature. For
-            example, setting the value to `3` would split each output
-            cell into nine sub-cells - 3 divisions in each dimension.
-            After the feature is rasterized on this high-resolution
-            sub-grid, the area of the non-excluded sub-cells is totaled
-            and divided by the area of the original cell to obtain the
-            final inclusion percentage. Therefore, a larger upscale
-            factor results in more accurate percentage values. However,
-            this process is memory intensive and scales quadratically
-            with the upscale factor. A good way to estimate your minimum
-            memory requirement is to use the following formula:
-
-            .. math:: memory (GB) = s_0 * s_1 * ((sf^2) * 2 + 4) / 1073741824,
-
-            where :math:`s_0` and :math:`s_1` are the dimensions (shape)
-            of your exclusion layer and :math:`sf` is the scale factor
-            (be sure to add several GB for any other overhead required
-            by the rest of the process). If `None` (or a value <= 1),
-            this process is skipped and the output is a boolean
-            exclusion mask. By default `None`.
-        max_workers : int, optional
-            Number of workers to use for setback computation, if 1 run
-            in serial, if > 1 run in parallel with that many workers,
-            if `None`, run in parallel on all available cores.
-            By default `None`.
-        replace : bool, optional
-            Flag to replace geotiff if it already exists.
-            By default `False`.
-        hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on
-            AWS behind HSDS. By default `False`.
-        """
-        scale_factor = weights_calculation_upscale_factor
-        setbacks = cls(excl_fpath, regulations=regulations, hsds=hsds,
-                       weights_calculation_upscale_factor=scale_factor)
-
-        features_path = setbacks._get_feature_paths(features_path)
-        for fpath in features_path:
-            geotiff = os.path.basename(fpath)
-            geotiff = ".".join(geotiff.split('.')[:-1] + ['tif'])
-            geotiff = os.path.join(out_dir, geotiff)
-
-            if os.path.exists(geotiff) and not replace:
-                msg = ('{} already exists, setbacks will not be re-computed '
-                       'unless replace=True'.format(geotiff))
-                logger.error(msg)
-            else:
-                logger.info("Computing setbacks from {} and saving "
-                            "to {}".format(fpath, geotiff))
-                setbacks.compute_setbacks(fpath, geotiff=geotiff,
-                                          max_workers=max_workers,
-                                          replace=replace)
+    # pylint: disable=unused-argument
+    @staticmethod
+    @abstractmethod
+    def _regulation_table_mask(features_fpath):
+        """Return the regulation table mask for setback feature. """
+        raise NotImplementedError

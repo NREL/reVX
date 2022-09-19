@@ -12,7 +12,7 @@ from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.supply_curve.tech_mapping import TechMapping
 from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 from rex.resource_extraction.resource_extraction import WindX
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem

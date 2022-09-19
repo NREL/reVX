@@ -40,7 +40,7 @@ class StructureSetbacks(AbstractBaseSetbacks):
         return state_name
 
     @staticmethod
-    def _get_feature_paths(features_fpath):
+    def get_feature_paths(features_fpath):
         """
         Find all structures .geojson files in structures dir
 

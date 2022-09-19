@@ -18,7 +18,7 @@ class RoadSetbacks(AbstractBaseSetbacks):
     Road setbacks
     """
 
-    def _parse_features(self, features_fpath):
+    def parse_features(self, features_fpath):
         """
         Load roads from gdb file, convert to exclusions coordinate
         system.
@@ -40,7 +40,7 @@ class RoadSetbacks(AbstractBaseSetbacks):
         return roads.to_crs(crs=self._rasterizer.profile["crs"])
 
     @staticmethod
-    def _get_feature_paths(features_fpath):
+    def get_feature_paths(features_fpath):
         """
         Find all roads gdb files in roads_dir
 

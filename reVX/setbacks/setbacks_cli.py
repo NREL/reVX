@@ -219,7 +219,7 @@ def eagle(config):
     """
     features_path = config.features_path
     cls = SETBACKS[config.feature_type]
-    features = cls._get_feature_paths(features_path)
+    features = cls.get_feature_paths(features_path)
     if not features:
         msg = ('No valid feature files were found at {}!'
                .format(features_path))

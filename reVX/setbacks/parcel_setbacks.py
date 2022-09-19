@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class ParcelSetbacks(AbstractBaseSetbacks):
     """Parcel setbacks - facilitates the use of negative buffers. """
 
-    def _compute_generic_setbacks(self, features_fpath):
+    def compute_generic_exclusions(self, features_fpath):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
@@ -38,12 +38,12 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         if np.isclose(self._regulations.generic, 0):
             return self._rasterizer.rasterize(shapes=None)
 
-        features = self._parse_features(features_fpath)
+        features = self.parse_features(features_fpath)
         setbacks = features.buffer(0).difference(
             features.buffer(-1 * self._regulations.generic))
         return self._rasterizer.rasterize(list(setbacks))
 
-    def _compute_local_setbacks(self, features, cnty, setback):
+    def compute_local_exclusions(self, features, cnty, regulation_value):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -57,7 +57,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
             Features to setback from.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        setback : int
+        regulation_value : int
             Setback distance in meters.
 
         Returns
@@ -69,8 +69,9 @@ class ParcelSetbacks(AbstractBaseSetbacks):
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
         features = self._feature_filter(features, cnty)
+        setback = regulation_value
         setbacks = features.buffer(0).difference(features.buffer(-1 * setback))
-        return list(setbacks)
+        return self._rasterizer.rasterize(list(setbacks))
 
     def _regulation_table_mask(self, features_fpath):
         """Return the regulation table mask for setback feature.
@@ -89,7 +90,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
                          == 'property line')
         return states & property_line
 
-    def _parse_features(self, features_fpath):
+    def parse_features(self, features_fpath):
         """Method to parse features.
 
         Parameters
