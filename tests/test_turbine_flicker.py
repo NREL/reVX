@@ -123,7 +123,7 @@ def test_get_building_indices():
 
     assert (buildings[row_idx, col_idx] > 0).all()
 
-
+# noqa: E201,E241
 def test_invert_shadow_flicker_arr():
     """Test inverting the shadow flicker array. """
 
