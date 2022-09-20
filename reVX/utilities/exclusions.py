@@ -1337,15 +1337,16 @@ class Regulations:
             return
         return reg
 
+
 def _error_or_warn(name, replace):
     """If replace, throw warning, otherwise throw error. """
     if not replace:
         msg = ('{} already exists. To replace it set "replace=True"'
-                .format(name))
+               .format(name))
         logger.error(msg)
         raise IOError(msg)
     else:
         msg = ('{} already exists and will be replaced!'
-                .format(name))
+               .format(name))
         logger.warning(msg)
         warn(msg)
