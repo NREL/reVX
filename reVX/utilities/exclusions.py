@@ -422,8 +422,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
     @classmethod
     def run(cls, excl_fpath, features_path, out_dir, regulations,
-            weights_calculation_upscale_factor=None, max_workers=None,
-            replace=False, hsds=False, out_layers=None):
+            max_workers=None, replace=False, out_layers=None, hsds=False,
+            **kwargs):
         """
         Compute exclusions and write them to a geotiff. If a regulations
         file is given, compute local exclusions, otherwise compute
@@ -451,37 +451,6 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations : `Regulations`
             A `Regulations` object used to extract exclusion regulation
             distances.
-        weights_calculation_upscale_factor : int, optional
-            If this value is an int > 1, the output will be a layer with
-            **inclusion** weight values instead of exclusion booleans.
-            For example, a cell that was previously excluded with a
-            a boolean mask (value of 1) may instead be converted to an
-            inclusion weight value of 0.75, meaning that 75% of the area
-            corresponding to that point should be included (i.e. the
-            exclusion feature only intersected a small portion - 25% -
-            of the cell). This percentage inclusion value is calculated
-            by upscaling the output array using this input value,
-            rasterizing the exclusion features onto it, and counting the
-            number of resulting sub-cells excluded by the feature. For
-            example, setting the value to `3` would split each output
-            cell into nine sub-cells - 3 divisions in each dimension.
-            After the feature is rasterized on this high-resolution
-            sub-grid, the area of the non-excluded sub-cells is totaled
-            and divided by the area of the original cell to obtain the
-            final inclusion percentage. Therefore, a larger upscale
-            factor results in more accurate percentage values. However,
-            this process is memory intensive and scales quadratically
-            with the upscale factor. A good way to estimate your minimum
-            memory requirement is to use the following formula:
-
-            .. math:: memory (GB) = s_0 * s_1 * ((sf^2) * 2 + 4) / 1073741824,
-
-            where :math:`s_0` and :math:`s_1` are the dimensions (shape)
-            of your exclusion layer and :math:`sf` is the scale factor
-            (be sure to add several GB for any other overhead required
-            by the rest of the process). If `None` (or a value <= 1),
-            this process is skipped and the output is a boolean
-            exclusion mask. By default `None`.
         max_workers : int, optional
             Number of workers to use for exclusion computation, if 1 run
             in serial, if > 1 run in parallel with that many workers,
@@ -490,22 +459,22 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         replace : bool, optional
             Flag to replace geotiff if it already exists.
             By default `False`.
-        hsds : bool, optional
-            Boolean flag to use h5pyd to handle .h5 'files' hosted on
-            AWS behind HSDS. By default `False`.
         out_layers : dict, optional
             Dictionary mapping feature file names (with extension) to
             names of layers under which exclusions should be saved in
             the `excl_fpath` .h5 file. If `None` or empty dictionary,
             no layers are saved to the h5 file. By default `None`.
+        hsds : bool, optional
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
+        **kwargs
+            Keyword args to exclusions calculator class.
         """
-        scale_factor = weights_calculation_upscale_factor
-        exclusions = cls(excl_fpath, regulations=regulations, hsds=hsds,
-                         weights_calculation_upscale_factor=scale_factor)
+        exclusions = cls(excl_fpath=excl_fpath, regulations=regulations,
+                         hsds=hsds, **kwargs)
 
-        features_path = exclusions.get_feature_paths(features_path)
         out_layers = out_layers or {}
-        for fpath in features_path:
+        for fpath in exclusions.get_feature_paths(features_path):
             fn = os.path.basename(fpath)
             geotiff = ".".join(fn.split('.')[:-1] + ['tif'])
             geotiff = os.path.join(out_dir, geotiff)
