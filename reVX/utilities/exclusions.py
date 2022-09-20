@@ -41,7 +41,7 @@ class AbstractExclusionCalculatorInterface(ABC):
         """Reduce regulations to correct state and features.
 
         When implementing this method, make sure to update
-        `self.regulations_table`.
+        `self._regulations.regulations`.
 
         Parameters
         ----------
@@ -147,16 +147,14 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         self._excl_fpath = excl_fpath
         self._regulations = regulations
         self._hsds = hsds
-        with ExclusionLayers(self._excl_fpath, hsds=hsds) as exc:
-            self._fips = exc['cnty_fips']
-            self._cnty_fips_profile = exc.get_layer_profile('cnty_fips')
-        self._preflight_check()
+        self._fips = None
+        self._process_regulations(regulations.regulations)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
         return msg
 
-    def _preflight_check(self):
+    def _process_regulations(self, regulations_df):
         """Parse the county regulations.
 
         Parse regulations, combine with county geometries from
@@ -175,10 +173,13 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             with county geometries, use for intersecting with exclusion
             features.
         """
-        if self.regulations_table is None:
+        if regulations_df is None:
             return
 
-        regulations_df = self.regulations_table
+        with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as exc:
+            self._fips = exc['cnty_fips']
+            cnty_fips_profile = exc.get_layer_profile('cnty_fips')
+
         if 'FIPS' not in regulations_df:
             msg = ('Regulations does not have county FIPS! Please add a '
                    '"FIPS" columns with the unique county FIPS values.')
@@ -194,7 +195,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         logger.info('Merging county geometries w/ local regulations')
         s = features.shapes(
             self._fips.astype(np.int32),
-            transform=self._cnty_fips_profile['transform']
+            transform=cnty_fips_profile['transform']
         )
         for p, v in s:
             v = int(v)
@@ -208,7 +209,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         )
         regulations_df = regulations_df.reset_index()
         regulations_df = regulations_df.to_crs(crs=self.profile['crs'])
-        self.regulations_table = regulations_df
+        self._regulations.regulations = regulations_df
 
     @property
     def regulations_table(self):
@@ -222,7 +223,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
     @regulations_table.setter
     def regulations_table(self, regulations_table):
-        self._regulations.regulations = regulations_table
+        self._process_regulations(regulations_table)
 
     def _write_exclusions(self, geotiff, exclusions, replace=False):
         """
