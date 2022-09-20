@@ -24,9 +24,10 @@ class TurbineFlickerConfig(AnalysisConfig):
         self._default_tm_dset = 'techmap_wtk'
         self._default_resolution = 128
         self._default_grid_cell_size = 90
-        self._default_max_flicker_exclusion_range = 10_000
+        self._default_max_flicker_exclusion_range = "10x"
         self._default_building_threshold = 0
         self._default_flicker_threshold = 30
+        self._default_hsds_flag = False
 
     @property
     def excl_fpath(self):
@@ -37,6 +38,11 @@ class TurbineFlickerConfig(AnalysisConfig):
     def res_fpath(self):
         """Get the resource .h5 file path (required)."""
         return self['res_fpath']
+
+    @property
+    def regs_fpath(self):
+        """Get regulations .csv path"""
+        return self.get('regs_fpath', None)
 
     @property
     def building_layer(self):
@@ -105,7 +111,18 @@ class TurbineFlickerConfig(AnalysisConfig):
         """
         return self.get('out_layer', None)
 
+    # @property
+    # def out_tiff(self):
+    #     """str: Path to output tiff file where exclusions should be saved. """
+    #     out_tiff = self.get('out_tiff', None)
+    #     return self.get('out_tiff', None)
+
     @property
-    def out_tiff(self):
-        """str: Path to output tiff file where exclusions should be saved. """
-        return self.get('out_tiff', None)
+    def replace(self):
+        """Get replace flag"""
+        return self.get('replace', False)
+
+    @property
+    def hsds(self):
+        """Get hsds flag"""
+        return self.get('hsds', self._default_hsds_flag)

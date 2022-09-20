@@ -16,6 +16,7 @@ from rex.utilities.loggers import LOGGERS
 from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.turbine_flicker.turbine_flicker import (
+    FlickerRegulations,
     TurbineFlicker,
     _create_excl_indices,
     _get_building_indices,
@@ -75,10 +76,11 @@ def test_shadow_flicker(flicker_threshold):
     """
     lat, lon = 39.913373, -105.220105
     wind_dir = np.zeros(8760)
-    tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, grid_cell_size=90,
-                        max_flicker_exclusion_range=4_510)
-    shadow_flicker = tf._compute_shadow_flicker(lat, lon, ROTOR_DIAMETER,
-                                                wind_dir)
+    regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                     flicker_threshold=flicker_threshold)
+    tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
+                        grid_cell_size=90, max_flicker_exclusion_range=4_510)
+    shadow_flicker = tf._compute_shadow_flicker(lat, lon, wind_dir)
 
     baseline = (shadow_flicker[::-1, ::-1].copy()
                 <= (flicker_threshold / 8760)).astype(np.int8)
@@ -149,9 +151,11 @@ def test_turbine_flicker(max_workers):
     with ExclusionLayers(EXCL_H5) as f:
         baseline = f[BASELINE]
 
-    test = TurbineFlicker.run(EXCL_H5, RES_H5, BLD_LAYER, HUB_HEIGHT,
-                              ROTOR_DIAMETER, tm_dset='techmap_wind',
-                              resolution=64, max_workers=max_workers)
+    regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
+    tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
+                        resolution=64, tm_dset='techmap_wind',
+                        max_flicker_exclusion_range=4540)
+    test = tf.compute_flicker_exclusions(max_workers=max_workers)
     assert np.allclose(baseline, test)
 
 
@@ -159,16 +163,17 @@ def test_turbine_flicker_bad_max_flicker_exclusion_range_input():
     """
     Test Turbine Flicker with bad input for max_flicker_exclusion_range
     """
+    regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
     with pytest.raises(TypeError) as excinfo:
-        TurbineFlicker.run(EXCL_H5, RES_H5, BLD_LAYER, HUB_HEIGHT,
-                           ROTOR_DIAMETER, max_flicker_exclusion_range='abc')
+        TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
+                       max_flicker_exclusion_range='abc')
 
     assert "max_flicker_exclusion_range must be numeric" in str(excinfo.value)
 
 
 def test_cli(runner):
     """
-    Test MeanWindDirections CLI
+    Test Flicker CLI
     """
 
     with tempfile.TemporaryDirectory() as td:
@@ -188,7 +193,8 @@ def test_cli(runner):
             "log_level": "INFO",
             "res_fpath": RES_H5,
             "resolution": 64,
-            "tm_dset": "techmap_wind"
+            "tm_dset": "techmap_wind",
+            "max_flicker_exclusion_range": 4540
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -217,7 +223,8 @@ def test_cli_tiff(runner):
     with tempfile.TemporaryDirectory() as td:
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)
-        out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd.tiff"
+        # out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd.tiff"
+        out_tiff = "flicker.tif"
         config = {
             "log_directory": td,
             "excl_fpath": excl_h5,
@@ -226,12 +233,12 @@ def test_cli_tiff(runner):
             },
             "building_layer": BLD_LAYER,
             "hub_height": HUB_HEIGHT,
-            "out_tiff": os.path.join(td, out_tiff),
             "rotor_diameter": ROTOR_DIAMETER,
             "log_level": "INFO",
             "res_fpath": RES_H5,
             "resolution": 64,
-            "tm_dset": "techmap_wind"
+            "tm_dset": "techmap_wind",
+            "max_flicker_exclusion_range": 4540
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -273,12 +280,12 @@ def test_cli_max_flicker_exclusion_range(runner):
             },
             "building_layer": BLD_LAYER,
             "hub_height": HUB_HEIGHT,
-            "out_tiff": os.path.join(td, out_tiff_def),
             "rotor_diameter": ROTOR_DIAMETER,
             "log_level": "INFO",
             "res_fpath": RES_H5,
             "resolution": 64,
-            "tm_dset": "techmap_wind"
+            "tm_dset": "techmap_wind",
+            "max_flicker_exclusion_range": 4_540
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -289,9 +296,11 @@ def test_cli_max_flicker_exclusion_range(runner):
             traceback.print_exception(*result.exc_info)
         )
         assert result.exit_code == 0, msg
+        shutil.move(os.path.join(td, "flicker.tif"),
+                    os.path.join(td, out_tiff_def))
 
-        out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5k.tiff"
-        config["out_tiff"] = os.path.join(td, out_tiff)
+        out_tiff_5k = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5k.tiff"
+        # config["out_tiff"] = os.path.join(td, out_tiff)
         config["max_flicker_exclusion_range"] = 5_000
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -302,9 +311,11 @@ def test_cli_max_flicker_exclusion_range(runner):
             traceback.print_exception(*result.exc_info)
         )
         assert result.exit_code == 0, msg
+        shutil.move(os.path.join(td, "flicker.tif"),
+                    os.path.join(td, out_tiff_5k))
 
         out_tiff_20d = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5d.tiff"
-        config["out_tiff"] = os.path.join(td, out_tiff_20d)
+        # config["out_tiff"] = os.path.join(td, out_tiff_20d)
         config["max_flicker_exclusion_range"] = "20x"
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -315,6 +326,9 @@ def test_cli_max_flicker_exclusion_range(runner):
             traceback.print_exception(*result.exc_info)
         )
         assert result.exit_code == 0, msg
+        shutil.move(os.path.join(td, "flicker.tif"),
+                    os.path.join(td, out_tiff_20d))
+
 
         with ExclusionLayers(EXCL_H5) as f:
             baseline = f[BASELINE]
@@ -322,13 +336,13 @@ def test_cli_max_flicker_exclusion_range(runner):
         with ExclusionLayers(excl_h5) as f:
             assert out_tiff_def not in f.layers
             assert out_tiff_def.split('.') not in f.layers
-            assert out_tiff not in f.layers
-            assert out_tiff.split('.') not in f.layers
+            assert out_tiff_5k not in f.layers
+            assert out_tiff_5k.split('.') not in f.layers
 
         with Geotiff(os.path.join(td, out_tiff_def)) as f:
             test = f.values[0]
 
-        with Geotiff(os.path.join(td, out_tiff)) as f:
+        with Geotiff(os.path.join(td, out_tiff_5k)) as f:
             test2 = f.values[0]
 
         with Geotiff(os.path.join(td, out_tiff_20d)) as f:
