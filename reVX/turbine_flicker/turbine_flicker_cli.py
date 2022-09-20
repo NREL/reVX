@@ -14,7 +14,8 @@ from rex.utilities.utilities import get_class_properties
 
 from reVX.config.turbine_flicker import TurbineFlickerConfig
 from reVX.turbine_flicker.turbine_flicker import (FlickerRegulations,
-                                                  TurbineFlicker)
+                                                  TurbineFlicker,
+                                                  load_building_layer)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -60,6 +61,7 @@ def run_local(ctx, config):
     ctx.invoke(local,
                excl_fpath=config.excl_fpath,
                res_fpath=config.res_fpath,
+               features_path=config.features_path,
                building_layer=config.building_layer,
                hub_height=config.hub_height,
                rotor_diameter=config.rotor_diameter,
@@ -113,9 +115,16 @@ def from_config(ctx, config, verbose):
 @click.option('--res_fpath', '-ref', required=True,
               type=click.Path(exists=True),
               help="Filepath to .h5 file containing wind direction data")
-@click.option('--building_layer', '-bldl', required=True, type=str,
+@click.option('--features_path', '-feats',
+              type=click.Path(exists=True),
+              help=("Filepath to geotiff file containing buildings from "
+                    "which turbine 'flicker exclusions will be computed. "
+                    "If this input is provided, `building_layer` should "
+                    "NOT be set."))
+@click.option('--building_layer', '-bldl', type=str,
               help=('Exclusion layer containing buildings from which turbine '
-                    'flicker exclusions will be computed.'))
+                    'flicker exclusions will be computed. If this input is '
+                    'provided, `features_path` should NOT be set.'))
 @click.option('--hub_height', '-h', required=True, type=int,
               help=('Hub-height in meters to compute turbine shadow flicker.'))
 @click.option('--rotor_diameter', '-rd', required=True, type=int,
@@ -178,9 +187,9 @@ def from_config(ctx, config, verbose):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
-          rotor_diameter, out_layer, out_dir, tm_dset, building_threshold,
-          flicker_threshold, resolution, grid_cell_size,
+def local(ctx, excl_fpath, res_fpath, features_path, building_layer,
+          hub_height, rotor_diameter, out_layer, out_dir, tm_dset,
+          building_threshold, flicker_threshold, resolution, grid_cell_size,
           max_flicker_exclusion_range, regs_fpath, max_workers, replace, hsds,
           log_dir, verbose):
     """
@@ -190,7 +199,7 @@ def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
     #     out_layer = "{}-{}m".format(building_layer, hub_height)
 
     if out_layer is not None:
-        out_layers = {"flicker.tiff": out_layer}
+        out_layers = {TurbineFlicker.DEFAULT_FEATURE_OUTFILE: out_layer}
     else:
         out_layers = {}
 
@@ -227,8 +236,11 @@ def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
 
     regulations = FlickerRegulations(hub_height, rotor_diameter,
                                      flicker_threshold, regs_fpath)
-
-    TurbineFlicker.run(excl_fpath, building_layer, out_dir,
+    building_layer = load_building_layer(excl_fpath=excl_fpath,
+                                         building_layer=building_layer,
+                                         features_path=features_path,
+                                         hsds=hsds)
+    TurbineFlicker.run(excl_fpath, features_path, out_dir,
                        res_fpath=res_fpath,
                        building_layer=building_layer,
                        regulations=regulations,
@@ -258,6 +270,7 @@ def get_node_cmd(config):
             'local',
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
             '-ref {}'.format(SLURM.s(config.res_fpath)),
+            '-feats {}'.format(SLURM.s(config.features_path)),
             '-bldl {}'.format(SLURM.s(config.building_layer)),
             '-h {}'.format(SLURM.s(config.hub_height)),
             '-rd {}'.format(SLURM.s(config.rotor_diameter)),

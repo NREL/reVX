@@ -18,6 +18,7 @@ from reVX import TESTDATADIR
 from reVX.turbine_flicker.turbine_flicker import (
     FlickerRegulations,
     TurbineFlicker,
+    load_building_layer,
     _create_excl_indices,
     _get_building_indices,
     _get_flicker_excl_shifts,
@@ -78,7 +79,8 @@ def test_shadow_flicker(flicker_threshold):
     wind_dir = np.zeros(8760)
     regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
                                      flicker_threshold=flicker_threshold)
-    tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
+    building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
+    tf = TurbineFlicker(EXCL_H5, RES_H5, building_layer, regulations,
                         grid_cell_size=90, max_flicker_exclusion_range=4_510)
     shadow_flicker = tf._compute_shadow_flicker(lat, lon, wind_dir)
 
@@ -117,9 +119,9 @@ def test_excl_indices_mapping():
 
 def test_get_building_indices():
     """Test retrieving building indices. """
-    row_idx, col_idx, __ = _get_building_indices(EXCL_H5, BLD_LAYER, 0,
-                                                 resolution=64,
-                                                 building_threshold=0)
+    building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
+    row_idx, col_idx = _get_building_indices(building_layer, 0, resolution=64,
+                                             building_threshold=0)
     with ExclusionLayers(EXCL_H5) as f:
         buildings = f[BLD_LAYER, 0:64, 0:64]
 
@@ -152,11 +154,24 @@ def test_turbine_flicker(max_workers):
         baseline = f[BASELINE]
 
     regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
-    tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
+    building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
+    tf = TurbineFlicker(EXCL_H5, RES_H5, building_layer, regulations,
                         resolution=64, tm_dset='techmap_wind',
                         max_flicker_exclusion_range=4540)
     test = tf.compute_flicker_exclusions(max_workers=max_workers)
     assert np.allclose(baseline, test)
+
+
+def test_turbine_flicker_bad_building_layer_input():
+    """
+    Test Turbine Flicker with bad input for max_flicker_exclusion_range
+    """
+    regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
+    with pytest.raises(RuntimeError) as excinfo:
+        TurbineFlicker(EXCL_H5, RES_H5, np.zeros((10, 10)), regulations)
+
+    assert "Shape of building layer" in str(excinfo.value)
+    assert "does not match shape of ExclusionLayers" in str(excinfo.value)
 
 
 def test_turbine_flicker_bad_max_flicker_exclusion_range_input():
@@ -164,8 +179,9 @@ def test_turbine_flicker_bad_max_flicker_exclusion_range_input():
     Test Turbine Flicker with bad input for max_flicker_exclusion_range
     """
     regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
+    building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
     with pytest.raises(TypeError) as excinfo:
-        TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
+        TurbineFlicker(EXCL_H5, RES_H5, building_layer, regulations,
                        max_flicker_exclusion_range='abc')
 
     assert "max_flicker_exclusion_range must be numeric" in str(excinfo.value)
