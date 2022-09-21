@@ -19,6 +19,7 @@ from reVX.turbine_flicker.turbine_flicker import (
     FlickerRegulations,
     TurbineFlicker,
     load_building_layer,
+    flicker_fn_out,
     _create_excl_indices,
     _get_building_indices,
     _get_flicker_excl_shifts,
@@ -240,7 +241,7 @@ def test_cli_tiff(runner):
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)
         # out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd.tiff"
-        out_tiff = "flicker.tif"
+        out_tiff = flicker_fn_out(HUB_HEIGHT, ROTOR_DIAMETER)
         config = {
             "log_directory": td,
             "excl_fpath": excl_h5,
@@ -283,7 +284,7 @@ def test_cli_tiff(runner):
 
 def test_cli_max_flicker_exclusion_range(runner):
     """Test Turbine Flicker CLI with max_flicker_exclusion_range value. """
-
+    def_tiff_name = flicker_fn_out(HUB_HEIGHT, ROTOR_DIAMETER)
     with tempfile.TemporaryDirectory() as td:
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)
@@ -312,7 +313,7 @@ def test_cli_max_flicker_exclusion_range(runner):
             traceback.print_exception(*result.exc_info)
         )
         assert result.exit_code == 0, msg
-        shutil.move(os.path.join(td, "flicker.tif"),
+        shutil.move(os.path.join(td, def_tiff_name),
                     os.path.join(td, out_tiff_def))
 
         out_tiff_5k = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5k.tiff"
@@ -327,7 +328,7 @@ def test_cli_max_flicker_exclusion_range(runner):
             traceback.print_exception(*result.exc_info)
         )
         assert result.exit_code == 0, msg
-        shutil.move(os.path.join(td, "flicker.tif"),
+        shutil.move(os.path.join(td, def_tiff_name),
                     os.path.join(td, out_tiff_5k))
 
         out_tiff_20d = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5d.tiff"
@@ -342,9 +343,8 @@ def test_cli_max_flicker_exclusion_range(runner):
             traceback.print_exception(*result.exc_info)
         )
         assert result.exit_code == 0, msg
-        shutil.move(os.path.join(td, "flicker.tif"),
+        shutil.move(os.path.join(td, def_tiff_name),
                     os.path.join(td, out_tiff_20d))
-
 
         with ExclusionLayers(EXCL_H5) as f:
             baseline = f[BASELINE]

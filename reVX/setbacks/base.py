@@ -2,6 +2,7 @@
 """
 Compute setbacks exclusions
 """
+import os
 from abc import abstractmethod
 from warnings import warn
 from itertools import product
@@ -406,6 +407,26 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         setbacks = list(setback_features.buffer(self._regulations.generic))
 
         return self._rasterizer.rasterize(setbacks)
+
+    def input_output_filenames(self, out_dir, features_fpath):
+        """Generate pairs of input/output file names.
+
+        Parameters
+        ----------
+        out_dir : str
+            Path to output file directory.
+        features_fpath : str
+            Path to shape file with features to compute exclusions from.
+
+        Yields
+        ------
+        tuple
+            An input-output filename pair.
+        """
+        for fpath in self.get_feature_paths(features_fpath):
+            fn = os.path.basename(fpath)
+            geotiff = ".".join(fn.split('.')[:-1] + ['tif'])
+            yield fpath, os.path.join(out_dir, geotiff)
 
     @staticmethod
     def get_feature_paths(features_fpath):

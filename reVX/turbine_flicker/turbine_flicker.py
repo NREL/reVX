@@ -531,34 +531,28 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         return self.compute_flicker_exclusions(flicker_threshold=30,
                                                fips=None, max_workers=None)
 
-    @staticmethod
-    def get_feature_paths(features_fpath):
-        """Ensure features path exists and return as list.
+    def input_output_filenames(self, out_dir, features_fpath):
+        """Generate pairs of input/output file names.
 
         Parameters
         ----------
+        out_dir : str
+            Path to output file directory.
         features_fpath : str
-            Path to features file. This path can contain
-            any pattern that can be used in the glob function.
-            For example, `/path/to/features/[A]*` would match
-            with all the features in the directory
-            `/path/to/features/` that start with "A". This input
-            can also be a directory, but that directory must ONLY
-            contain feature files. If your feature files are mixed
-            with other files or directories, use something like
-            `/path/to/features/*.geojson`.
+            Path to shape file with features to compute exclusions from.
 
-        Returns
-        -------
-        features_fpath : list
-            Features path as a list of strings.
-
-        Notes
-        -----
-        This method is required for `run` classmethods for exclusion
-        features that are spread out over multiple files.
+        Yields
+        ------
+        tuple
+            An input-output filename pair.
         """
-        return [TurbineFlicker.DEFAULT_FEATURE_OUTFILE]
+        for fpath in [self.DEFAULT_FEATURE_OUTFILE]:
+            fn = flicker_fn_out(self._regulations.hub_height,
+                                self._regulations.rotor_diameter)
+            geotiff = ".".join(fn.split('.')[:-1] + ['tif'])
+            yield fpath, os.path.join(out_dir, geotiff)
+
+
 
     # @classmethod
     # def run(cls, excl_fpath, res_fpath, building_layer, tm_dset='techmap_wtk',
@@ -873,3 +867,21 @@ def load_building_layer(excl_fpath, building_layer=None, features_path=None,
 
     raise RuntimeError("Must provide either `features_path` or "
                         "`building_layer` (but not both).")
+
+
+def flicker_fn_out(hub_height, rotor_diameter):
+    """Generate flicker tiff outfile name.
+
+    Parameters
+    ----------
+    hub_height : int
+        Turbine hub-height (m).
+    rotor_diameter : int
+        Turbine rotor diameter (m).
+
+    Returns
+    -------
+    str
+        Name of flicker outfile.
+    """
+    return "flicker_{}hh_{}rd.tif".format(hub_height, rotor_diameter)

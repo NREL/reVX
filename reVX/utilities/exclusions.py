@@ -93,33 +93,22 @@ class AbstractExclusionCalculatorInterface(ABC):
         """
         raise NotImplementedError
 
-    @staticmethod
+
     @abstractmethod
-    def get_feature_paths(features_fpath):
-        """Ensure features path exists and return as list.
+    def input_output_filenames(self, out_dir, features_fpath):
+        """Generate pairs of input/output file names.
 
         Parameters
         ----------
+        out_dir : str
+            Path to output file directory.
         features_fpath : str
-            Path to features file. This path can contain
-            any pattern that can be used in the glob function.
-            For example, `/path/to/features/[A]*` would match
-            with all the features in the directory
-            `/path/to/features/` that start with "A". This input
-            can also be a directory, but that directory must ONLY
-            contain feature files. If your feature files are mixed
-            with other files or directories, use something like
-            `/path/to/features/*.geojson`.
+            Path to shape file with features to compute exclusions from.
 
-        Returns
-        -------
-        features_fpath : list
-            Features path as a list of strings.
-
-        Notes
-        -----
-        This method is required for `run` classmethods for exclusion
-        features that are spread out over multiple files.
+        Yields
+        ------
+        tuple
+            An input-output filename pair.
         """
         raise NotImplementedError
 
@@ -475,19 +464,18 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                          hsds=hsds, **kwargs)
 
         out_layers = out_layers or {}
-        for fpath in exclusions.get_feature_paths(features_path):
-            fn = os.path.basename(fpath)
-            geotiff = ".".join(fn.split('.')[:-1] + ['tif'])
-            geotiff = os.path.join(out_dir, geotiff)
-            if os.path.exists(geotiff) and not replace:
+        files = exclusions.input_output_filenames(out_dir, features_path)
+        for f_in, f_out in files:
+            if os.path.exists(f_out) and not replace:
                 msg = ('{} already exists, exclusions will not be re-computed '
-                       'unless replace=True'.format(geotiff))
+                       'unless replace=True'.format(f_out))
                 logger.error(msg)
             else:
                 logger.info("Computing exclusions from {} and saving "
-                            "to {}".format(fpath, geotiff))
-                exclusions.compute_exclusions(fpath, out_tiff=geotiff,
-                                              out_layer=out_layers.get(fn),
+                            "to {}".format(f_in, f_out))
+                out_layer = out_layers.get(os.path.basename(f_in))
+                exclusions.compute_exclusions(f_in, out_tiff=f_out,
+                                              out_layer=out_layer,
                                               max_workers=max_workers,
                                               replace=replace)
 

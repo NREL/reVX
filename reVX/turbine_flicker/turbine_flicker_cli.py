@@ -217,6 +217,8 @@ def local(ctx, excl_fpath, res_fpath, features_path, building_layer,
     logger.info('Computing Turbine Flicker Exclusions from structures in {}'
                 .format(building_layer))
     logger.debug('Flicker to be computed with:\n'
+                 '- features_path = {}\n'
+                 '- building_layer = {}\n'
                  '- hub_height = {}\n'
                  '- rotor_diameter = {}\n'
                  '- tm_dset = {}\n'
@@ -229,10 +231,11 @@ def local(ctx, excl_fpath, res_fpath, features_path, building_layer,
                  '- using max_workers = {}\n'
                  '- replace layer if needed = {}\n'
                  '- out_layer = {}\n'
-                 .format(hub_height, rotor_diameter, tm_dset,
-                         building_threshold, flicker_threshold, resolution,
-                         grid_cell_size, max_flicker_exclusion_range,
-                         regs_fpath, max_workers, replace, out_layer))
+                 .format(features_path, building_layer, hub_height,
+                         rotor_diameter, tm_dset, building_threshold,
+                         flicker_threshold, resolution, grid_cell_size,
+                         max_flicker_exclusion_range, regs_fpath, max_workers,
+                         replace, out_layer))
 
     regulations = FlickerRegulations(hub_height, rotor_diameter,
                                      flicker_threshold, regs_fpath)
