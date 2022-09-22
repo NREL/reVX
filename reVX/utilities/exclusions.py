@@ -37,21 +37,16 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def pre_process_regulations(self, features_fpath):
+    def pre_process_regulations(self):
         """Reduce regulations to correct state and features.
 
         When implementing this method, make sure to update
         `self._regulations.regulations`.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute exclusions from.
         """
         raise NotImplementedError
 
     @abstractmethod
-    def compute_local_exclusions(self, regulation_value, cnty, features_fpath):
+    def compute_local_exclusions(self, regulation_value, cnty):
         """Compute local feature exclusions.
 
         This method should compute the exclusions using the information
@@ -63,8 +58,6 @@ class AbstractExclusionCalculatorInterface(ABC):
             Regulation value for county.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        features_fpath : str
-            Path to shape file with features to compute exclusions from
 
 
         Returns
@@ -75,16 +68,11 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def compute_generic_exclusions(self, features_fpath):
+    def compute_generic_exclusions(self):
         """Compute generic exclusions.
 
         This method should compute the exclusions using a generic
         regulation value (`self._regulations.generic`).
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute exclusions from.
 
         Returns
         -------
@@ -103,7 +91,15 @@ class AbstractExclusionCalculatorInterface(ABC):
         out_dir : str
             Path to output file directory.
         features_fpath : str
-            Path to shape file with features to compute exclusions from.
+            Path to features file. This path can contain
+            any pattern that can be used in the glob function.
+            For example, `/path/to/features/[A]*` would match
+            with all the features in the directory
+            `/path/to/features/` that start with "A". This input
+            can also be a directory, but that directory must ONLY
+            contain feature files. If your feature files are mixed
+            with other files or directories, use something like
+            `/path/to/features/*.geojson`.
 
         Yields
         ------
@@ -136,7 +132,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         self._excl_fpath = excl_fpath
         self._regulations = regulations
         self._hsds = hsds
-        self._fips = None
+        self._fips = self._features_fpath = None
         self._process_regulations(regulations.regulations)
 
     def __repr__(self):
@@ -261,13 +257,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                                          self.profile, exclusions,
                                          description=description)
 
-    def compute_all_local_exclusions(self, features_fpath, max_workers=None):
+    def compute_all_local_exclusions(self, max_workers=None):
         """Compute local exclusions for all counties either.
 
         Parameters
         ----------
-        features_fpath : str
-            Path to shape file with features to compute exclusions from
         max_workers : int, optional
             Number of workers to use for exclusions computation, if 1
             run in serial, if > 1 run in parallel with that many
@@ -292,7 +286,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 futures = {}
                 for exclusion, cnty in self._regulations:
                     future = exe.submit(self.compute_local_exclusions,
-                                        exclusion, cnty, features_fpath)
+                                        exclusion, cnty)
                     futures[future] = cnty['FIPS'].unique()
 
                 for i, future in enumerate(as_completed(futures)):
@@ -304,8 +298,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         else:
             logger.info('Computing local exclusions in serial')
             for i, (exclusion, cnty) in enumerate(self._regulations):
-                local_exclusions = self.compute_local_exclusions(
-                    exclusion, cnty, features_fpath)
+                local_exclusions = self.compute_local_exclusions(exclusion,
+                                                                 cnty)
                 exclusions = self._combine_exclusions(exclusions,
                                                       local_exclusions,
                                                       cnty['FIPS'].unique())
@@ -348,8 +342,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         exclusions : ndarray
             Raster array of exclusions
         """
-        exclusions = self._compute_merged_exclusions(features_fpath,
-                                                     max_workers=max_workers)
+        self._features_fpath = features_fpath
+        exclusions = self._compute_merged_exclusions(max_workers=max_workers)
 
         if out_layer is not None:
             logger.info('Saving exclusion layer to {} as {}'
@@ -362,12 +356,12 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         return exclusions
 
-    def _compute_merged_exclusions(self, features_fpath, max_workers=None):
+    def _compute_merged_exclusions(self, max_workers=None):
         """Compute and merge local and generic exclusions, if necessary. """
         mw = max_workers
 
         if self._regulations.locals_exist:
-            self.pre_process_regulations(features_fpath)
+            self.pre_process_regulations()
 
         generic_exclusions_exist = self._regulations.generic_exists
         local_exclusions_exist = self._regulations.locals_exist
@@ -379,24 +373,20 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             raise ValueError(msg)
 
         if generic_exclusions_exist and not local_exclusions_exist:
-            return self.compute_generic_exclusions(features_fpath)
+            return self.compute_generic_exclusions()
 
         if local_exclusions_exist and not generic_exclusions_exist:
-            return self.compute_all_local_exclusions(features_fpath,
-                                                     max_workers=mw)
+            return self.compute_all_local_exclusions(max_workers=mw)
 
-        generic_exclusions = self.compute_generic_exclusions(features_fpath)
-        local_exclusions = self.compute_all_local_exclusions(features_fpath,
-                                                             max_workers=mw)
-        return self._merge_exclusions(generic_exclusions, local_exclusions,
-                                      features_fpath)
+        generic_exclusions = self.compute_generic_exclusions()
+        local_exclusions = self.compute_all_local_exclusions(max_workers=mw)
+        return self._merge_exclusions(generic_exclusions, local_exclusions,)
 
-    def _merge_exclusions(self, generic_exclusions, local_exclusions,
-                          features_fpath):
+    def _merge_exclusions(self, generic_exclusions, local_exclusions):
         """Merge local exclusions onto the generic exclusions."""
         logger.info('Merging local exclusions onto the generic exclusions')
 
-        self.pre_process_regulations(features_fpath)
+        self.pre_process_regulations()
         local_fips = self.regulations_table["FIPS"].unique()
         return self._combine_exclusions(generic_exclusions, local_exclusions,
                                         local_fips)

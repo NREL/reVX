@@ -421,7 +421,8 @@ def test_generic_parcels_with_invalid_shape_input():
     setbacks = ParcelSetbacks(EXCL_H5, regulations)
 
     # Ensure data we are using contains invalid shapes
-    parcels = setbacks.parse_features(parcel_path)
+    setbacks._features_fpath = parcel_path
+    parcels = setbacks.parse_features()
     assert not parcels.geometry.is_valid.any()
 
     # This code would throw an error if invalid shape not handled properly
@@ -778,7 +779,7 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
         merged_layer = merged_setbacks.compute_exclusions(features_path,
                                                           max_workers=1)
 
-        local_setbacks.pre_process_regulations(features_path)
+        local_setbacks.pre_process_regulations()
         feats = local_setbacks.regulations_table
 
     # make sure the comparison layers match what we expect

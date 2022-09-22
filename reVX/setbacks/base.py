@@ -316,13 +316,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """dict: Geotiff profile. """
         return self._rasterizer.profile
 
-    def parse_features(self, features_fpath):
+    def parse_features(self):
         """Method to parse features.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to file containing features to setback from.
 
         Returns
         -------
@@ -330,17 +325,14 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Geometries of features to setback from in exclusion
             coordinate system.
         """
-        return gpd.read_file(features_fpath).to_crs(crs=self.profile['crs'])
+        return (gpd.read_file(self._features_fpath)
+                .to_crs(crs=self.profile['crs']))
 
-    def pre_process_regulations(self, features_fpath):
+    def pre_process_regulations(self):
         """Reduce regulations to state corresponding to features_fpath.
 
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from.
         """
-        mask = self._regulation_table_mask(features_fpath)
+        mask = self._regulation_table_mask()
         if not mask.any():
             msg = "Found no local regulations!"
             logger.warning(msg)
@@ -351,7 +343,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         logger.debug('Computing setbacks for regulations in {} counties'
                      .format(len(self.regulations_table)))
 
-    def compute_local_exclusions(self, regulation_value, cnty, features_fpath):
+    def compute_local_exclusions(self, regulation_value, cnty):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -365,8 +357,6 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Setback distance in meters.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        features_fpath : str
-            Path to shape file with features to compute exclusions from
 
         Returns
         -------
@@ -375,7 +365,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
-        features = self.parse_features(features_fpath)
+        features = self.parse_features()
         idx = features.sindex.intersection(cnty.total_bounds)
         features = features.iloc[list(idx)].copy()
         log_mem(logger)
@@ -383,16 +373,11 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         features = list(features.buffer(regulation_value))
         return self._rasterizer.rasterize(features)
 
-    def compute_generic_exclusions(self, features_fpath):
+    def compute_generic_exclusions(self):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
         of `base_setback_dist * multiplier`.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from.
 
         Returns
         -------
@@ -403,7 +388,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         if np.isclose(self._regulations.generic, 0):
             return self._rasterizer.rasterize(shapes=None)
 
-        setback_features = self.parse_features(features_fpath)
+        setback_features = self.parse_features()
         setbacks = list(setback_features.buffer(self._regulations.generic))
 
         return self._rasterizer.rasterize(setbacks)
@@ -416,7 +401,15 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         out_dir : str
             Path to output file directory.
         features_fpath : str
-            Path to shape file with features to compute exclusions from.
+            Path to features file. This path can contain
+            any pattern that can be used in the glob function.
+            For example, `/path/to/features/[A]*` would match
+            with all the features in the directory
+            `/path/to/features/` that start with "A". This input
+            can also be a directory, but that directory must ONLY
+            contain feature files. If your feature files are mixed
+            with other files or directories, use something like
+            `/path/to/features/*.geojson`.
 
         Yields
         ------
@@ -474,9 +467,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """Filter the features given a county."""
         return features_with_centroid_in_county(features, cnty)
 
-    # pylint: disable=unused-argument
-    @staticmethod
     @abstractmethod
-    def _regulation_table_mask(features_fpath):
+    def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """
         raise NotImplementedError

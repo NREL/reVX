@@ -473,14 +473,8 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         """dict: Geotiff profile. """
         return self._profile
 
-    def pre_process_regulations(self, features_fpath):
-        """Reduce regulations to correct state and features.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute exclusions from.
-        """
+    def pre_process_regulations(self):
+        """Reduce regulations to correct state and features. """
 
         self._fips_to_gid = {}
         reg_fips = self._regulations.FIPS.unique()
@@ -493,7 +487,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         # TODO: Turn this into a warning
         assert len(self._fips_to_gid) == len(reg_fips), "Some FIPS not found"
 
-    def compute_local_exclusions(self, regulation_value, cnty, features_fpath):
+    def compute_local_exclusions(self, regulation_value, cnty):
         """Compute local flicker exclusions.
 
         This method computes a flicker exclusion layer using the
@@ -517,7 +511,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         return self.compute_flicker_exclusions(
             flicker_threshold=regulation_value, fips=cnty_fips, max_workers=1)
 
-    def compute_generic_exclusions(self, features_fpath):
+    def compute_generic_exclusions(self):
         """Compute generic flicker exclusions.
 
         This method will compute a generic flicker exclusion layer.
@@ -538,8 +532,16 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         ----------
         out_dir : str
             Path to output file directory.
-        features_fpath : str
-            Path to shape file with features to compute exclusions from.
+        features_fpath : : str
+            Path to features file. This path can contain
+            any pattern that can be used in the glob function.
+            For example, `/path/to/features/[A]*` would match
+            with all the features in the directory
+            `/path/to/features/` that start with "A". This input
+            can also be a directory, but that directory must ONLY
+            contain feature files. If your feature files are mixed
+            with other files or directories, use something like
+            `/path/to/features/*.geojson`.
 
         Yields
         ------
