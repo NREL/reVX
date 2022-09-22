@@ -511,10 +511,18 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         return self.compute_flicker_exclusions(
             flicker_threshold=regulation_value, fips=cnty_fips, max_workers=1)
 
-    def compute_generic_exclusions(self):
+    def compute_generic_exclusions(self, max_workers=None):
         """Compute generic flicker exclusions.
 
         This method will compute a generic flicker exclusion layer.
+
+        Parameters
+        ----------
+        max_workers : int, optional
+            Number of workers to use for exclusions computation, if 1
+            run in serial, if > 1 run in parallel with that many
+            workers, if `None` run in parallel on all available cores.
+            By default `None`.
 
         Returns
         -------
@@ -523,7 +531,8 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         """
         logger.info('Computing generic flicker exclusions...')
         return self.compute_flicker_exclusions(flicker_threshold=30,
-                                               fips=None, max_workers=None)
+                                               fips=None,
+                                               max_workers=max_workers)
 
     def input_output_filenames(self, out_dir, features_fpath):
         """Generate pairs of input/output file names.

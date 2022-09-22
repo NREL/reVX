@@ -68,11 +68,19 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def compute_generic_exclusions(self):
+    def compute_generic_exclusions(self, max_workers=None):
         """Compute generic exclusions.
 
         This method should compute the exclusions using a generic
         regulation value (`self._regulations.generic`).
+
+        Parameters
+        ----------
+        max_workers : int, optional
+            Number of workers to use for exclusions computation, if 1
+            run in serial, if > 1 run in parallel with that many
+            workers, if `None` run in parallel on all available cores.
+            By default `None`.
 
         Returns
         -------
@@ -372,12 +380,12 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             raise ValueError(msg)
 
         if generic_exclusions_exist and not local_exclusions_exist:
-            return self.compute_generic_exclusions()
+            return self.compute_generic_exclusions(max_workers=mw)
 
         if local_exclusions_exist and not generic_exclusions_exist:
             return self.compute_all_local_exclusions(max_workers=mw)
 
-        generic_exclusions = self.compute_generic_exclusions()
+        generic_exclusions = self.compute_generic_exclusions(max_workers=mw)
         local_exclusions = self.compute_all_local_exclusions(max_workers=mw)
         return self._merge_exclusions(generic_exclusions, local_exclusions,)
 

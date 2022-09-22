@@ -373,7 +373,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         features = list(features.buffer(regulation_value))
         return self._rasterizer.rasterize(features)
 
-    def compute_generic_exclusions(self):
+    def compute_generic_exclusions(self, **__):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback

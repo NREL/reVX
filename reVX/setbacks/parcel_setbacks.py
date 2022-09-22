@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class ParcelSetbacks(AbstractBaseSetbacks):
     """Parcel setbacks - facilitates the use of negative buffers. """
 
-    def compute_generic_exclusions(self):
+    def compute_generic_exclusions(self, **__):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
