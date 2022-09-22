@@ -286,7 +286,7 @@ def test_setbacks_saving_tiff_h5():
 
         ParcelSetbacks.run(excl_fpath, feature_file, td, regs,
                            out_layers={'Rhode_Island.gpkg':
-                                        "ri_parcel_setbacks"})
+                                       "ri_parcel_setbacks"})
 
         assert os.path.exists(os.path.join(td, "Rhode_Island.tif"))
         with Geotiff(os.path.join(td, "Rhode_Island.tif")) as tif:

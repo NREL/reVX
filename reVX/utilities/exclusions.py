@@ -81,7 +81,6 @@ class AbstractExclusionCalculatorInterface(ABC):
         """
         raise NotImplementedError
 
-
     @abstractmethod
     def input_output_filenames(self, out_dir, features_fpath):
         """Generate pairs of input/output file names.
