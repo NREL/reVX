@@ -190,7 +190,7 @@ def test_get_building_indices():
 
     assert (buildings[row_idx, col_idx] > 0).all()
 
-# noqa: E201,E241
+# flake8: noqa
 def test_invert_shadow_flicker_arr():
     """Test inverting the shadow flicker array. """
 
@@ -222,7 +222,7 @@ def test_turbine_flicker(max_workers):
     tf = TurbineFlicker(EXCL_H5, RES_H5, building_layer, regulations,
                         resolution=64, tm_dset=TM,
                         max_flicker_exclusion_range=4540)
-    test = tf.compute_flicker_exclusions(max_workers=max_workers)
+    test = tf.compute_flicker_exclusions(30, max_workers=max_workers)
     assert np.allclose(baseline, test)
 
 
@@ -247,7 +247,7 @@ def test_local_turbine_flicker():
         tf = TurbineFlicker(excl_h5, RES_H5, building_layer, regulations,
                             resolution=64, tm_dset=TM,
                             max_flicker_exclusion_range=4540)
-        test = tf.compute_exclusions(None, max_workers=1)
+        test = tf.compute_exclusions(max_workers=1)
 
     with ExclusionLayers(EXCL_H5) as f:
         baseline = f[BASELINE]
@@ -283,7 +283,7 @@ def test_local_flicker_empty_regs():
                             resolution=64, tm_dset=TM,
                             max_flicker_exclusion_range=4540)
         with pytest.raises(ValueError):
-            tf.compute_exclusions(None, max_workers=1)
+            tf.compute_exclusions(max_workers=1)
 
 
 def test_local_and_generic_turbine_flicker():
@@ -304,7 +304,7 @@ def test_local_and_generic_turbine_flicker():
                         regulations_generic_only,
                         resolution=64, tm_dset=TM,
                         max_flicker_exclusion_range=4540)
-    generic_flicker = tf.compute_exclusions(None, max_workers=1)
+    generic_flicker = tf.compute_exclusions(max_workers=1)
 
     with tempfile.TemporaryDirectory() as td:
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
@@ -318,7 +318,7 @@ def test_local_and_generic_turbine_flicker():
         tf = TurbineFlicker(excl_h5, RES_H5, building_layer, regulations,
                             resolution=64, tm_dset=TM,
                             max_flicker_exclusion_range=4540)
-        test = tf.compute_exclusions(None, max_workers=1)
+        test = tf.compute_exclusions(max_workers=1)
 
     with ExclusionLayers(EXCL_H5) as f:
         baseline = f[BASELINE]
@@ -409,7 +409,6 @@ def test_cli_tiff(runner):
     with tempfile.TemporaryDirectory() as td:
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)
-        # out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd.tiff"
         out_tiff = flicker_fn_out(HUB_HEIGHT, ROTOR_DIAMETER)
         config = {
             "log_directory": td,
@@ -465,7 +464,6 @@ def test_cli_tiff_input(runner):
 
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)
-        # out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd.tiff"
         out_tiff = flicker_fn_out(HUB_HEIGHT, ROTOR_DIAMETER)
         config = {
             "log_directory": td,
@@ -570,7 +568,6 @@ def test_cli_max_flicker_exclusion_range(runner):
                     os.path.join(td, out_tiff_def))
 
         out_tiff_5k = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5k.tiff"
-        # config["out_tiff"] = os.path.join(td, out_tiff)
         config["max_flicker_exclusion_range"] = 5_000
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -585,7 +582,6 @@ def test_cli_max_flicker_exclusion_range(runner):
                     os.path.join(td, out_tiff_5k))
 
         out_tiff_20d = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd_5d.tiff"
-        # config["out_tiff"] = os.path.join(td, out_tiff_20d)
         config["max_flicker_exclusion_range"] = "20x"
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:

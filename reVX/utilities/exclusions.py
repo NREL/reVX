@@ -18,7 +18,7 @@ from rasterio import features
 from shapely.geometry import shape
 
 from rex import Outputs
-from rex.utilities import SpawnProcessPool, log_mem, parse_table
+from rex.utilities import SpawnProcessPool, log_mem
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.utilities import log_versions
@@ -325,7 +325,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         return exclusions
 
-    def compute_exclusions(self, features_fpath, max_workers=None,
+    def compute_exclusions(self, features_fpath=None, max_workers=None,
                            out_layer=None, out_tiff=None, replace=False):
         """
         Compute exclusions for all states either in serial or parallel.
@@ -335,8 +335,10 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         Parameters
         ----------
-        features_fpath : str
-            Path to shape file with features to compute exclusions from
+        features_fpath : str, optional
+            Path to shape file with features to compute exclusions from.
+            Only required if the exclusions calculator requires it.
+            By default `None`.
         max_workers : int, optional
             Number of workers to use for exclusion computation, if 1 run
             in serial, if > 1 run in parallel with that many workers,
@@ -483,7 +485,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 logger.info("Computing exclusions from {} and saving "
                             "to {}".format(f_in, f_out))
                 out_layer = out_layers.get(os.path.basename(f_in))
-                exclusions.compute_exclusions(f_in, out_tiff=f_out,
+                exclusions.compute_exclusions(features_fpath=f_in,
+                                              out_tiff=f_out,
                                               out_layer=out_layer,
                                               max_workers=max_workers,
                                               replace=replace)

@@ -117,12 +117,6 @@ class TurbineFlickerConfig(AnalysisConfig):
         """
         return self.get('out_layer', None)
 
-    # @property
-    # def out_tiff(self):
-    #     """str: Path to output tiff file where exclusions should be saved. """
-    #     out_tiff = self.get('out_tiff', None)
-    #     return self.get('out_tiff', None)
-
     @property
     def replace(self):
         """Get replace flag"""

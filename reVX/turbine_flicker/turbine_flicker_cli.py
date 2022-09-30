@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=all
 """
 Turbine Flicker Command Line Interface
 """
@@ -195,9 +194,6 @@ def local(ctx, excl_fpath, res_fpath, features_path, building_layer,
     """
     Compute turbine flicker on local hardware
     """
-    # if out_layer is None:
-    #     out_layer = "{}-{}m".format(building_layer, hub_height)
-
     if out_layer is not None:
         out_layers = {TurbineFlicker.DEFAULT_FEATURE_OUTFILE: out_layer}
     else:
@@ -209,10 +205,6 @@ def local(ctx, excl_fpath, res_fpath, features_path, building_layer,
 
     log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
-
-    # logger.info('Computing Turbine Flicker Exclusions, '
-    #             'outputs to be save as a a new exclusions layer : {}'
-    #             .format(out_layer))
 
     logger.info('Computing Turbine Flicker Exclusions from structures in {}'
                 .format(building_layer))
