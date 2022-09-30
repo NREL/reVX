@@ -4,6 +4,7 @@ Turbine Flicker tests
 """
 from click.testing import CliRunner
 import json
+import pandas as pd
 import numpy as np
 import os
 import pytest
@@ -235,6 +236,35 @@ def test_local_turbine_flicker():
     assert np.allclose(baseline[:10], test[:10])
     assert not np.allclose(baseline[10:], test[10:])
     assert np.allclose(test[10:], 1)
+
+
+def test_local_flicker_empty_regs():
+    """
+    Test Turbine Flicker for empty local regulations
+    """
+    regs_fpath = os.path.join(TESTDATADIR, 'turbine_flicker',
+                              'blue_creek_regs_value.csv')
+    building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
+    with tempfile.TemporaryDirectory() as td:
+        regs = pd.read_csv(regs_fpath).iloc[0:0]
+        regs_fpath = os.path.basename(regs_fpath)
+        regs_fpath = os.path.join(td, regs_fpath)
+        regs.to_csv(regs_fpath, index=False)
+        regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                         regulations_fpath=regs_fpath)
+
+        excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
+        shutil.copy(EXCL_H5, excl_h5)
+        with ExclusionLayers(EXCL_H5) as f:
+            fips = np.zeros(f.shape, dtype=np.uint32)
+            ExclusionsConverter._write_layer(excl_h5, 'cnty_fips', f.profile,
+                                             fips, chunks=f.chunks)
+
+        tf = TurbineFlicker(excl_h5, RES_H5, building_layer, regulations,
+                            resolution=64, tm_dset='techmap_wind',
+                            max_flicker_exclusion_range=4540)
+        with pytest.raises(ValueError):
+            tf.compute_exclusions(None, max_workers=1)
 
 
 def test_local_and_generic_turbine_flicker():
