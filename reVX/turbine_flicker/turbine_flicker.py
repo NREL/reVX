@@ -366,7 +366,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         else:
             gids = self._fips_to_gid.get(fips, [])
 
-        flicker_arr = np.ones(self._bld_layer.shape, dtype=np.uint8)
+        flicker_arr = self.no_exclusions_array
         if max_workers > 1:
             msg = ('Computing exclusions from {} based on {}m hub height '
                    'turbines with {}m rotor diameters in parallel using {} '

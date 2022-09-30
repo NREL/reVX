@@ -323,6 +323,11 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         return (gpd.read_file(self._features_fpath)
                 .to_crs(crs=self.profile['crs']))
 
+    @property
+    def no_exclusions_array(self):
+        """np.array: Array representing no exclusions. """
+        return self._rasterizer.rasterize(shapes=None)
+
     def pre_process_regulations(self):
         """Reduce regulations to state corresponding to features_fpath.
 
@@ -380,8 +385,10 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Raster array of setbacks
         """
         logger.info('Computing generic setbacks')
-        if np.isclose(self._regulations.generic, 0):
-            return self._rasterizer.rasterize(shapes=None)
+        generic_regs_dne = (self._regulations.generic is None
+                            or np.isclose(self._regulations.generic, 0))
+        if generic_regs_dne:
+            return self.no_exclusions_array
 
         setback_features = self.parse_features()
         setbacks = list(setback_features.buffer(self._regulations.generic))

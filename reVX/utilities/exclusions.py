@@ -30,6 +30,12 @@ logger = logging.getLogger(__name__)
 class AbstractExclusionCalculatorInterface(ABC):
     """Abstract Exclusion Calculator Interface. """
 
+    @property
+    @abstractmethod
+    def no_exclusions_array(self):
+        """np.array: Array representing no exclusions. """
+        raise NotImplementedError
+
     @abstractmethod
     def pre_process_regulations(self):
         """Reduce regulations to correct state and features.
@@ -52,7 +58,6 @@ class AbstractExclusionCalculatorInterface(ABC):
             Regulation value for county.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-
 
         Returns
         -------
@@ -388,11 +393,12 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             return self.compute_generic_exclusions(max_workers=mw)
 
         if local_exclusions_exist and not generic_exclusions_exist:
-            return self.compute_all_local_exclusions(max_workers=mw)
+            local_excl = self.compute_all_local_exclusions(max_workers=mw)
+            return self._merge_exclusions(self.no_exclusions_array, local_excl)
 
         generic_exclusions = self.compute_generic_exclusions(max_workers=mw)
         local_exclusions = self.compute_all_local_exclusions(max_workers=mw)
-        return self._merge_exclusions(generic_exclusions, local_exclusions,)
+        return self._merge_exclusions(generic_exclusions, local_exclusions)
 
     def _merge_exclusions(self, generic_exclusions, local_exclusions):
         """Merge local exclusions onto the generic exclusions."""
