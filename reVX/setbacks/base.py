@@ -325,6 +325,17 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
                 .to_crs(crs=self.profile['crs']))
 
     @property
+    def description(self):
+        """str: Description to be added to excl H5."""
+        return ('{} computed with a base setback distance of {} and a '
+                'multiplier of {} for a total generic setback value of {} '
+                '(local exclusions may differ).'
+                .format(self.__class__,
+                        self._regulations.base_setback_dist,
+                        self._regulations.multiplier,
+                        self._regulations.generic))
+
+    @property
     def no_exclusions_array(self):
         """np.array: Array representing no exclusions. """
         return self._rasterizer.rasterize(shapes=None)

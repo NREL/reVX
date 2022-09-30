@@ -261,6 +261,15 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
 
         return flicker_shifts
 
+    @property
+    def description(self):
+        """str: Description to be added to excl H5."""
+        return ('Pixels with value 0 are excluded as they will cause shadow '
+                'flicker on buildings. Shadow flicker is computed using a '
+                '{}m hub height, {}m rotor diameter turbine.'
+                .format(self._regulations.hub_height,
+                        self._regulations.rotor_diameter))
+
     def compute_flicker_exclusions(self, flicker_threshold=30, fips=None,
                                    max_workers=None, out_layer=None,
                                    out_tiff=None):
