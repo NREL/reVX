@@ -256,7 +256,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                                                       wind_dir)
 
         flicker_shifts = _get_flicker_excl_shifts(
-            shadow_flicker,flicker_threshold=flicker_threshold)
+            shadow_flicker, flicker_threshold=flicker_threshold)
 
         return flicker_shifts
 
@@ -704,7 +704,7 @@ def load_building_layer(excl_fpath, building_layer=None, features_path=None,
             return f.values[0]
 
     raise RuntimeError("Must provide either `features_path` or "
-                        "`building_layer` (but not both).")
+                       "`building_layer` (but not both).")
 
 
 def flicker_fn_out(hub_height, rotor_diameter):
