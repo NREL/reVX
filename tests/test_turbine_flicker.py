@@ -38,6 +38,7 @@ HUB_HEIGHT = 135
 ROTOR_DIAMETER = 108
 BASELINE = 'turbine_flicker'
 BLD_LAYER = 'blue_creek_buildings'
+TM = 'techmap_wind'
 
 
 @pytest.fixture(scope="module")
@@ -114,7 +115,24 @@ def test_shadow_mapping(shadow_loc):
     assert np.allclose(baseline_col_idx, test_col_idx)
 
 
-@pytest.mark.parametrize('flicker_threshold', [10, 30])
+def test_flicker_tech_mapping():
+    """Tets that flicker runs tech mapping if it DNE. """
+    building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
+    regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                     flicker_threshold=30)
+    with tempfile.TemporaryDirectory() as td:
+        excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
+        shutil.copy(EXCL_H5, excl_h5)
+        with ExclusionLayers(excl_h5) as f:
+            assert "techmap_wtk" not in f.layers
+
+        TurbineFlicker(excl_h5, RES_H5, building_layer, regulations)
+
+        with ExclusionLayers(excl_h5) as f:
+            assert "techmap_wtk" in f.layers
+
+
+@pytest.mark.parametrize('flicker_threshold', [10])
 def test_shadow_flicker(flicker_threshold):
     """
     Test shadow_flicker
@@ -125,7 +143,8 @@ def test_shadow_flicker(flicker_threshold):
                                      flicker_threshold=flicker_threshold)
     building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
     tf = TurbineFlicker(EXCL_H5, RES_H5, building_layer, regulations,
-                        grid_cell_size=90, max_flicker_exclusion_range=4_510)
+                        grid_cell_size=90, max_flicker_exclusion_range=4_510,
+                        tm_dset=TM)
     shadow_flicker = tf._compute_shadow_flicker(lat, lon, wind_dir)
 
     baseline = (shadow_flicker[::-1, ::-1].copy()
@@ -201,7 +220,7 @@ def test_turbine_flicker(max_workers):
                                      flicker_threshold=30)
     building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
     tf = TurbineFlicker(EXCL_H5, RES_H5, building_layer, regulations,
-                        resolution=64, tm_dset='techmap_wind',
+                        resolution=64, tm_dset=TM,
                         max_flicker_exclusion_range=4540)
     test = tf.compute_flicker_exclusions(max_workers=max_workers)
     assert np.allclose(baseline, test)
@@ -226,7 +245,7 @@ def test_local_turbine_flicker():
                                              fips, chunks=f.chunks)
 
         tf = TurbineFlicker(excl_h5, RES_H5, building_layer, regulations,
-                            resolution=64, tm_dset='techmap_wind',
+                            resolution=64, tm_dset=TM,
                             max_flicker_exclusion_range=4540)
         test = tf.compute_exclusions(None, max_workers=1)
 
@@ -261,7 +280,7 @@ def test_local_flicker_empty_regs():
                                              fips, chunks=f.chunks)
 
         tf = TurbineFlicker(excl_h5, RES_H5, building_layer, regulations,
-                            resolution=64, tm_dset='techmap_wind',
+                            resolution=64, tm_dset=TM,
                             max_flicker_exclusion_range=4540)
         with pytest.raises(ValueError):
             tf.compute_exclusions(None, max_workers=1)
@@ -283,7 +302,7 @@ def test_local_and_generic_turbine_flicker():
 
     tf = TurbineFlicker(EXCL_H5, RES_H5, building_layer,
                         regulations_generic_only,
-                        resolution=64, tm_dset='techmap_wind',
+                        resolution=64, tm_dset=TM,
                         max_flicker_exclusion_range=4540)
     generic_flicker = tf.compute_exclusions(None, max_workers=1)
 
@@ -297,7 +316,7 @@ def test_local_and_generic_turbine_flicker():
                                              fips, chunks=f.chunks)
 
         tf = TurbineFlicker(excl_h5, RES_H5, building_layer, regulations,
-                            resolution=64, tm_dset='techmap_wind',
+                            resolution=64, tm_dset=TM,
                             max_flicker_exclusion_range=4540)
         test = tf.compute_exclusions(None, max_workers=1)
 
@@ -317,7 +336,8 @@ def test_turbine_flicker_bad_building_layer_input():
     regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
                                      flicker_threshold=30)
     with pytest.raises(RuntimeError) as excinfo:
-        TurbineFlicker(EXCL_H5, RES_H5, np.zeros((10, 10)), regulations)
+        TurbineFlicker(EXCL_H5, RES_H5, np.zeros((10, 10)), regulations,
+                       tm_dset=TM)
 
     assert "Shape of building layer" in str(excinfo.value)
     assert "does not match shape of ExclusionLayers" in str(excinfo.value)
@@ -332,7 +352,7 @@ def test_turbine_flicker_bad_max_flicker_exclusion_range_input():
     building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
     with pytest.raises(TypeError) as excinfo:
         TurbineFlicker(EXCL_H5, RES_H5, building_layer, regulations,
-                       max_flicker_exclusion_range='abc')
+                       tm_dset=TM, max_flicker_exclusion_range='abc')
 
     assert "max_flicker_exclusion_range must be numeric" in str(excinfo.value)
 
@@ -359,7 +379,7 @@ def test_cli(runner):
             "log_level": "INFO",
             "res_fpath": RES_H5,
             "resolution": 64,
-            "tm_dset": "techmap_wind",
+            "tm_dset": TM,
             "max_flicker_exclusion_range": 4540
         }
         config_path = os.path.join(td, 'config.json')
@@ -403,7 +423,7 @@ def test_cli_tiff(runner):
             "log_level": "INFO",
             "res_fpath": RES_H5,
             "resolution": 64,
-            "tm_dset": "techmap_wind",
+            "tm_dset": TM,
             "max_flicker_exclusion_range": 4540
         }
         config_path = os.path.join(td, 'config.json')
@@ -459,7 +479,7 @@ def test_cli_tiff_input(runner):
             "res_fpath": RES_H5,
             "features_path": tiff_fp,
             "resolution": 64,
-            "tm_dset": "techmap_wind",
+            "tm_dset": TM,
             "max_flicker_exclusion_range": 4540
         }
         config_path = os.path.join(td, 'config.json')
@@ -502,7 +522,7 @@ def test_cli_bad_input(runner):
             "building_layer": BLD_LAYER,
             "features_path": tiff_fp,
             "resolution": 64,
-            "tm_dset": "techmap_wind",
+            "tm_dset": TM,
             "max_flicker_exclusion_range": 4540
         }
         config_path = os.path.join(td, 'config.json')
@@ -534,7 +554,7 @@ def test_cli_max_flicker_exclusion_range(runner):
             "log_level": "INFO",
             "res_fpath": RES_H5,
             "resolution": 64,
-            "tm_dset": "techmap_wind",
+            "tm_dset": TM,
             "max_flicker_exclusion_range": 4_540
         }
         config_path = os.path.join(td, 'config.json')
