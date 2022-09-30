@@ -278,8 +278,12 @@ def select_setback_regulations(base_setback_dist=None, hub_height=None,
 
     Parameters
     ----------
-    base_setback_dist : _type_, optional
-        _description_. By default, `None`.
+    base_setback_dist : float | int
+        Base setback distance (m). This value will be used to calculate
+        the setback distance when a multiplier is provided either via
+        the `regulations_fpath` csv or the `multiplier` input. In these
+        cases, the setbacks will be calculated using
+        `base_setback_dist * multiplier`. By default, `None`.
     hub_height : float | int
         Turbine hub height (m), used along with rotor diameter to
         compute blade tip height which is used to determine setback
