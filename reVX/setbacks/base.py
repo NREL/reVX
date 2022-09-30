@@ -311,11 +311,6 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
         return msg
 
-    @property
-    def profile(self):
-        """dict: Geotiff profile. """
-        return self._rasterizer.profile
-
     def parse_features(self):
         """Method to parse features.
 

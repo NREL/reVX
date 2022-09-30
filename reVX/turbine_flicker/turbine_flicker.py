@@ -142,7 +142,6 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         self._max_flicker_exclusion_range = (
             self._parse_max_flicker_exclusion_range(
                 max_flicker_exclusion_range))
-        self._profile = None
         self._flicker_preflight_check(tm_dset=tm_dset)
         self._sc_points = self._get_sc_points(tm_dset=tm_dset)
         self._fips_to_gid = {}
@@ -177,7 +176,6 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as f:
             layers = f.layers
             exclusion_shape = f.shape
-            self._profile = f.profile
 
         if self._bld_layer.shape != exclusion_shape:
             msg = ("Shape of building layer {} does not match shape of "
@@ -467,11 +465,6 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         #                                        flicker_arr)
 
         return flicker_arr
-
-    @property
-    def profile(self):
-        """dict: Geotiff profile. """
-        return self._profile
 
     def pre_process_regulations(self):
         """Reduce regulations to correct state and features. """

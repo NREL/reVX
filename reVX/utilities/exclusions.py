@@ -30,12 +30,6 @@ logger = logging.getLogger(__name__)
 class AbstractExclusionCalculatorInterface(ABC):
     """Abstract Exclusion Calculator Interface. """
 
-    @property
-    @abstractmethod
-    def profile(self):
-        """dict: Geotiff profile. """
-        raise NotImplementedError
-
     @abstractmethod
     def pre_process_regulations(self):
         """Reduce regulations to correct state and features.
@@ -139,12 +133,18 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         self._excl_fpath = excl_fpath
         self._regulations = regulations
         self._hsds = hsds
-        self._fips = self._features_fpath = None
+        self._fips = self._features_fpath = self._profile = None
+        self._set_profile()
         self._process_regulations(regulations.regulations)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
         return msg
+
+    def _set_profile(self):
+        """Extract profile from excl h5."""
+        with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as f:
+            self._profile = f.profile
 
     def _process_regulations(self, regulations_df):
         """Parse the county regulations.
@@ -202,6 +202,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations_df = regulations_df.reset_index()
         regulations_df = regulations_df.to_crs(crs=self.profile['crs'])
         self._regulations.regulations = regulations_df
+
+    @property
+    def profile(self):
+        """dict: Geotiff profile. """
+        return self._profile
 
     @property
     def regulations_table(self):
