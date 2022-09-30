@@ -266,8 +266,9 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be
             the location of any new setback layers
-        regulations : `~reVX.setbacks.regulations.Regulations`
-            A `Regulations` object used to extract setback distances.
+        regulations : `~reVX.setbacks.regulations.SetbackRegulations`
+            A `SetbackRegulations` object used to extract setback
+            distances.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
@@ -338,8 +339,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             logger.warning(msg)
             warn(msg)
 
-        self._regulations.regulations = (self.regulations_table[mask]
-                                         .reset_index(drop=True))
+        self._regulations.df = (self.regulations_table[mask]
+                                .reset_index(drop=True))
         logger.debug('Computing setbacks for regulations in {} counties'
                      .format(len(self.regulations_table)))
 

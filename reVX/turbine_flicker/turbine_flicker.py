@@ -12,7 +12,7 @@ from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.supply_curve.tech_mapping import TechMapping
 from reVX.handlers.geotiff import Geotiff
-from reVX.setbacks.regulations import WindRegulations
+from reVX.utilities.regulations import AbstractBaseRegulations
 from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
 from reVX.utilities.exclusions import (ExclusionsConverter,
                                        AbstractBaseExclusionsMerger)
@@ -21,65 +21,6 @@ from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
 logger = logging.getLogger(__name__)
-
-
-class FlickerRegulations(WindRegulations):
-    """Shadow flicker regulation values. """
-
-    def __init__(self, hub_height, rotor_diameter, flicker_threshold=30,
-                 regulations_fpath=None):
-        """
-        Parameters
-        ----------
-        hub_height : float | int
-            Turbine hub height (m).
-        rotor_diameter : float | int
-            Turbine rotor diameter (m).
-        flicker_threshold : float | int, optional
-            Maximum number of allowable flicker hours per year.
-            By default, `30`.
-        regulations_fpath : str, optional
-            Path to regulations .csv or .gpkg file. At a minimum, this
-            file must contain the following columns: `Feature Type`
-            which labels the type of setback that each row represents,
-            `Value Type`, which specifies wether the value is a
-            multiplier or static height, `Value`, which specifies the
-            numeric value of the setback or multiplier, and `FIPS`,
-            which specifies a unique 5-digit code for each county (this
-            can be an integer - no leading zeros required). Valid
-            options for the `Value Type` are:
-                - "Hrs/Year"
-            If this input is `None`, a generic setback of
-            `max_tip_height * multiplier` is used. By default `None`.
-        """
-        super().__init__(hub_height=hub_height, rotor_diameter=rotor_diameter,
-                         regulations_fpath=regulations_fpath,
-                         multiplier=1)
-        self._base_setback_dist = flicker_threshold
-
-    @property
-    def flicker_threshold(self):
-        """
-        Maximum number of allowable flicker hours per year.
-
-        Returns
-        -------
-        float
-        """
-        return self._base_setback_dist
-
-    def _county_regulation_setback(self, county_regulations):
-        """Retrieve county regulation setback. """
-        setback_type = county_regulations["Value Type"].strip()
-        setback = float(county_regulations["Value"])
-        if setback_type.lower() != "hrs/year":
-            msg = ('Cannot create setback for {}, expecting '
-                   '"Hrs/Year", but got {!r}'
-                   .format(county_regulations["County"], setback_type))
-            logger.warning(msg)
-            warn(msg)
-            return
-        return setback
 
 
 class TurbineFlicker(AbstractBaseExclusionsMerger):
@@ -368,11 +309,12 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
 
         flicker_arr = self.no_exclusions_array
         if max_workers > 1:
-            msg = ('Computing exclusions from {} based on {}m hub height '
-                   'turbines with {}m rotor diameters in parallel using {} '
-                   'workers'.format(self, self._regulations.hub_height,
-                                    self._regulations.rotor_diameter,
-                                    max_workers))
+            msg = ('Computing local flicker exclusions based on {}m hub '
+                   'height turbines with {}m rotor diameters in parallel '
+                   'using {} workers'
+                   .format(self._regulations.hub_height,
+                           self._regulations.rotor_diameter,
+                           max_workers))
             logger.info(msg)
 
             loggers = [__name__, 'reVX', 'rex']
@@ -411,9 +353,9 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                     log_mem(logger)
         else:
             msg = (
-                'Computing exclusions from {} based on {}m hub height, {}m '
-                'rotor diameter turbines in serial.'
-                .format(self, self._regulations.hub_height,
+                'Computing local flicker exclusions based on {}m hub height, '
+                '{}m rotor diameter turbines in serial.'
+                .format(self._regulations.hub_height,
                         self._regulations.rotor_diameter)
             )
             logger.info(msg)
@@ -466,19 +408,48 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
 
         return flicker_arr
 
-    def pre_process_regulations(self):
-        """Reduce regulations to correct state and features. """
+    def _apply_regulations_mask(self):
+        """Mask regulations to only shadow flicker. """
+        flicker = self._regulations.df['Feature Type'] == 'shadow flicker'
+
+        if not flicker.any():
+            msg = "Found no local flicker regulations!"
+            logger.warning(msg)
+            warn(msg)
+
+        self._regulations.df = (self._regulations.df[flicker]
+                                .reset_index(drop=True))
+        logger.debug('Computing flicker for regulations in {} counties'
+                     .format(len(self._regulations.df)))
+
+    def _map_fips_to_gid(self):
+        """Map county FIPS values to corresponding SC gids. """
 
         self._fips_to_gid = {}
-        reg_fips = self._regulations.FIPS.unique()
+        reg_fips = self._regulations.df.FIPS.unique()
         with SupplyCurveExtent(self._excl_fpath, resolution=self._res) as sc:
             for gid in self._sc_points.index:
                 for fips in np.unique(sc.get_excl_points('cnty_fips', gid)):
                     if fips in reg_fips:
                         self._fips_to_gid.setdefault(fips, []).append(gid)
 
-        # TODO: Turn this into a warning
-        assert len(self._fips_to_gid) == len(reg_fips), "Some FIPS not found"
+        missing_fips = set(reg_fips) - set(self._fips_to_gid)
+        if missing_fips:
+            msg = ("{} counties with flicker regulations were not found on "
+                   "the supply curve grid ({}): {}"
+                   .format(len(missing_fips), self._excl_fpath, missing_fips))
+            logger.warning(msg)
+            warn(msg)
+
+    @property
+    def no_exclusions_array(self):
+        """np.array: Array representing no exclusions. """
+        return np.ones(self._bld_layer.shape, dtype=np.uint8)
+
+    def pre_process_regulations(self):
+        """Reduce regulations to correct state and features. """
+        self._apply_regulations_mask()
+        self._map_fips_to_gid()
 
     def compute_local_exclusions(self, regulation_value, cnty):
         """Compute local flicker exclusions.
@@ -522,9 +493,13 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         flicker : ndarray
             Raster array of flicker exclusions
         """
-        logger.info('Computing generic flicker exclusions...')
-        return self.compute_flicker_exclusions(flicker_threshold=30,
-                                               fips=None,
+        ft = self._regulations.generic
+        logger.info('Computing generic flicker exclusions using a threshold '
+                    'of from {} hrs/year based on {}m hub height, {}m '
+                    'rotor diameter turbines'
+                    .format(ft, self._regulations.hub_height,
+                            self._regulations.rotor_diameter))
+        return self.compute_flicker_exclusions(flicker_threshold=ft, fips=None,
                                                max_workers=max_workers)
 
     def input_output_filenames(self, out_dir, features_fpath):

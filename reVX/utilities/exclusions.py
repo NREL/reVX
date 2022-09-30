@@ -41,7 +41,7 @@ class AbstractExclusionCalculatorInterface(ABC):
         """Reduce regulations to correct state and features.
 
         When implementing this method, make sure to update
-        `self._regulations.regulations`.
+        `self._regulations.df`.
         """
         raise NotImplementedError
 
@@ -127,8 +127,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         excl_fpath : str
             Path to .h5 file containing exclusion layers, will also be
             the location of any new exclusion layers
-        regulations : `Regulations`
-            A `Regulations` object used to extract exclusion regulation
+        regulations : `~reVX.utilities.AbstractBaseRegulations` subclass
+            A regulations object used to extract exclusion regulation
             values.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
@@ -140,7 +140,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         self._hsds = hsds
         self._fips = self._features_fpath = self._profile = None
         self._set_profile()
-        self._process_regulations(regulations.regulations)
+        self._process_regulations(regulations.df)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
@@ -206,7 +206,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         )
         regulations_df = regulations_df.reset_index()
         regulations_df = regulations_df.to_crs(crs=self.profile['crs'])
-        self._regulations.regulations = regulations_df
+        self._regulations.df = regulations_df
 
     @property
     def profile(self):
@@ -221,7 +221,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         -------
         geopandas.GeoDataFrame | None
         """
-        return self._regulations.regulations
+        return self._regulations.df
 
     @regulations_table.setter
     def regulations_table(self, regulations_table):
@@ -394,7 +394,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         if local_exclusions_exist and not generic_exclusions_exist:
             local_excl = self.compute_all_local_exclusions(max_workers=mw)
-            return self._merge_exclusions(self.no_exclusions_array, local_excl)
+            nea = self.no_exclusions_array.astype(local_excl.dtype)
+            return self._merge_exclusions(nea, local_excl)
 
         generic_exclusions = self.compute_generic_exclusions(max_workers=mw)
         local_exclusions = self.compute_all_local_exclusions(max_workers=mw)
@@ -446,8 +447,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             `/path/to/features/*.geojson`.
         out_dir : str
             Directory to save exclusion geotiff(s) into
-        regulations : `Regulations`
-            A `Regulations` object used to extract exclusion regulation
+        regulations : `~reVX.utilities.AbstractBaseRegulations` subclass
+            A regulations object used to extract exclusion regulation
             distances.
         max_workers : int, optional
             Number of workers to use for exclusion computation, if 1 run
@@ -1116,223 +1117,6 @@ class ExclusionsConverter:
             geotiff = os.path.join(out_dir, "{}.tif".format(layer))
             logger.info('- Extracting {}'.format(geotiff))
             excls.layer_to_geotiff(layer, geotiff)
-
-
-class Regulations:
-    """Exclusion Regulations. """
-
-    REQUIRED_COLUMNS = ["Feature Type", "Value Type", "Value", "FIPS"]
-
-    def __init__(self, base_regulation_value, regulations_fpath=None,
-                 multiplier=None):
-        """
-        Parameters
-        ----------
-        base_regulation_value : float | int
-            Base regulation value. This value will be used to calculate
-            the exclusion regulation value (e.g. setback distance,
-            flicker hours, etc.) if a multiplier is provided either via
-            the `regulations_fpath`csv or the `multiplier` input. In
-            these cases, the exclusion regulation value will be
-            set to `base_regulation_value * multiplier`.
-        regulations_fpath : str | None, optional
-            Path to regulations .csv or .gpkg file. At a minimum, this
-            file must contain the following columns: `Feature Type`
-            which labels the type of exclusion that each row represents,
-            `Value Type`, which specifies wether the value is a
-            multiplier or static height, `Value`, which specifies the
-            numeric value of the exclusion or multiplier, and `FIPS`,
-            which specifies a unique 5-digit code for each county (this
-            can be an integer - no leading zeros required). Valid
-            options for the `Value Type` are:
-                - "Structure Height Multiplier"
-                - "Meters"
-            If this input is `None`, a generic regulation value of
-            `base_regulation_value * multiplier` is used. By default
-            `None`.
-        multiplier : int | float | str | None, optional
-            A regulation value multiplier to use if regulations are not
-            supplied. This multiplier will be applied to the
-            ``base_regulation_value`` to calculate the exclusion
-            regulation value. If supplied along with
-            ``regulations_fpath``, this input will be used to calculate
-            exclusions for all counties not listed in the regulations
-            file. By default `None`.
-        """
-        self._base_regulation_value = base_regulation_value
-        self._regulations = None
-        self._multi = multiplier
-        self._preflight_check(regulations_fpath)
-
-    def _preflight_check(self, regulations_fpath):
-        """Apply preflight checks to the regulations path and multiplier.
-
-        Run preflight checks on exclusion inputs:
-        1) Ensure either a regulations .csv or
-           an exclusion value multiplier (or both) is provided
-        2) Ensure regulations has county FIPS, map regulations to county
-           geometries from exclusions .h5 file
-
-        Parameters
-        ----------
-        regulations_fpath : str | None
-            Path to regulations .csv file, if `None`, create global
-            exclusions.
-        """
-        if regulations_fpath:
-            try:
-                self.regulations = parse_table(regulations_fpath)
-            except ValueError:
-                self.regulations = gpd.read_file(regulations_fpath)
-            logger.debug('Computing exclusions using regulations provided '
-                         'in: {}'.format(regulations_fpath))
-
-        if self._multi:
-            logger.debug('Computing exclusions using base regulation value '
-                         'multiplier of {}'.format(self._multi))
-
-        if not regulations_fpath and not self._multi:
-            msg = ('Computing exclusions requires a regulations '
-                   '.csv file and/or a generic multiplier!')
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-    @property
-    def regulations(self):
-        """Regulations table.
-
-        Returns
-        -------
-        geopandas.GeoDataFrame | None
-        """
-        return self._regulations
-
-    @regulations.setter
-    def regulations(self, regulations):
-        if regulations is None:
-            msg = "Cannot set regulations to `None`"
-            logger.error(msg)
-            raise ValueError(msg)
-        self._regulations = regulations
-        self._validate_regulations()
-
-    def _validate_regulations(self):
-        """Perform several validations on regulations"""
-
-        self._convert_cols_to_title()
-        self._check_for_req_missing_cols()
-        self._remove_nans_from_req_cols()
-        self._casefold_feature_types()
-
-    def _convert_cols_to_title(self):
-        """Convert column names in regulations DataFrame to str.title(). """
-        new_col_names = {col: col.lower().title()
-                         for col in self._regulations.columns
-                         if col.lower() not in {"geometry", "fips"}}
-        self._regulations = self._regulations.rename(new_col_names, axis=1)
-
-    def _check_for_req_missing_cols(self):
-        """Check for missing (required) columns in regulations DataFrame. """
-        missing = [col for col in self.REQUIRED_COLUMNS
-                   if col not in self._regulations]
-        if any(missing):
-            msg = ('Regulations are missing the following required columns: {}'
-                   .format(missing))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-    def _remove_nans_from_req_cols(self):
-        """Remove rows with NaN values from required columns. """
-        for col in self.REQUIRED_COLUMNS:
-            na_rows = self._regulations[col].isna()
-            self._regulations = self._regulations[~na_rows]
-
-    def _casefold_feature_types(self):
-        """Casefold "Feature Type" values. """
-        feature_types = self._regulations['Feature Type'].str.strip()
-        feature_types = feature_types.str.casefold()
-        self._regulations['Feature Type'] = feature_types
-
-    @property
-    def base_regulation_value(self):
-        """The base regulation value.
-
-        Returns
-        -------
-        int | float
-        """
-        return self._base_regulation_value
-
-    @property
-    def generic(self):
-        """Default regulation value.
-
-        This value is used for global regulations.
-
-        Returns
-        -------
-        float | None
-        """
-        if self.multiplier is None:
-            regulation_value = None
-        else:
-            regulation_value = self.base_regulation_value * self.multiplier
-
-        return regulation_value
-
-    @property
-    def multiplier(self):
-        """Generic exclusion value multiplier.
-
-        Returns
-        -------
-        int | float
-        """
-        return self._multi
-
-    @property
-    def locals_exist(self):
-        """Flag indicating wether local regulations exist.
-
-        Returns
-        -------
-        bool
-        """
-        return (self.regulations is not None and not self.regulations.empty)
-
-    @property
-    def generic_exists(self):
-        """Flag indicating wether generic regulations exist.
-
-        Returns
-        -------
-        bool
-        """
-        return self.generic is not None
-
-    def __iter__(self):
-        if self._regulations is None:
-            return
-        for ind, county_regulations in self.regulations.iterrows():
-            reg = self._county_regulation_value(county_regulations)
-            if reg is None:
-                continue
-            yield reg, self.regulations.iloc[[ind]].copy()
-
-    def _county_regulation_value(self, county_regulations):
-        """Retrieve county exclusion regulation. """
-        exclusion_type = county_regulations["Value Type"].strip()
-        reg = float(county_regulations["Value"])
-        if exclusion_type.lower() == "structure height multiplier":
-            reg *= self.base_regulation_value
-        elif exclusion_type.lower() != "meters":
-            msg = ("Cannot create exclusions for {}, expecting "
-                   '"Meters", but got {!r}'
-                   .format(county_regulations["County"], exclusion_type))
-            logger.warning(msg)
-            warn(msg)
-            return
-        return reg
 
 
 def _error_or_warn(name, replace):

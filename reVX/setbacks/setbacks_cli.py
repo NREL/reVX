@@ -15,8 +15,8 @@ from rex.utilities.utilities import get_class_properties, dict_str_load
 
 from reVX.config.setbacks import SetbacksConfig
 from reVX.setbacks import SETBACKS
-from reVX.setbacks.regulations import (validate_regulations_input,
-                                       select_regulations)
+from reVX.setbacks.regulations import (validate_setback_regulations_input,
+                                       select_setback_regulations)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -141,7 +141,8 @@ def local(ctx, excl_fpath, feature_type, features_path, out_dir, hub_height,
 
     # same check as the config in case someone invokes this from the
     # direct command line instead of a config file for some bizarre reason
-    validate_regulations_input(base_setback_dist, hub_height, rotor_diameter)
+    validate_setback_regulations_input(base_setback_dist, hub_height,
+                                       rotor_diameter)
 
     logger.info('Computing setbacks from structures in {}'
                 .format(features_path))
@@ -159,8 +160,9 @@ def local(ctx, excl_fpath, feature_type, features_path, out_dir, hub_height,
                          regs_fpath, multiplier, max_workers, replace,
                          weights_calculation_upscale_factor, out_layers))
 
-    regulations = select_regulations(base_setback_dist, hub_height,
-                                     rotor_diameter, regs_fpath, multiplier)
+    regulations = select_setback_regulations(base_setback_dist, hub_height,
+                                             rotor_diameter, regs_fpath,
+                                             multiplier)
 
     setbacks_class = SETBACKS[feature_type]
     wcuf = weights_calculation_upscale_factor

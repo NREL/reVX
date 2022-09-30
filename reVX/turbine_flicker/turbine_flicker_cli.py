@@ -13,9 +13,9 @@ from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
 from reVX.config.turbine_flicker import TurbineFlickerConfig
-from reVX.turbine_flicker.turbine_flicker import (FlickerRegulations,
-                                                  TurbineFlicker,
+from reVX.turbine_flicker.turbine_flicker import (TurbineFlicker,
                                                   load_building_layer)
+from reVX.turbine_flicker.regulations import FlickerRegulations
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
