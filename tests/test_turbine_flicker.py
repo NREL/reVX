@@ -62,6 +62,32 @@ def test_flicker_regulations():
         assert np.isclose(flicker_threshold, 30)
 
 
+def test_load_building_layer():
+    """Test the load building layer function. """
+    building_layer = load_building_layer(EXCL_H5, BLD_LAYER)
+    with ExclusionLayers(EXCL_H5) as f:
+        baseline = f[BLD_LAYER]
+        profile = f.profile
+
+    assert np.allclose(building_layer, baseline)
+
+    with tempfile.TemporaryDirectory() as td:
+        tiff_fp = os.path.join(td, "temp.tiff")
+        ExclusionsConverter._write_geotiff(tiff_fp, profile, baseline)
+        building_layer = load_building_layer(EXCL_H5, features_path=tiff_fp)
+        assert np.allclose(building_layer, baseline)
+
+
+@pytest.mark.parametrize('inputs', [[], [BLD_LAYER, "A fake path"]])
+def test_load_building_layer_bad_input(inputs):
+    """Test the load building layer function with bad inputs. """
+    with pytest.raises(RuntimeError) as excinfo:
+        load_building_layer(EXCL_H5, *inputs)
+
+    assert "Must provide either `features_path` or " in str(excinfo.value)
+    assert "`building_layer` (but not both)." in str(excinfo.value)
+
+
 @pytest.mark.parametrize('shadow_loc',
                          [(2, 2),
                           (-2, -2),
@@ -371,6 +397,90 @@ def test_cli_tiff(runner):
             test = f.values[0]
 
         assert np.allclose(baseline, test)
+
+    LOGGERS.clear()
+
+
+def test_cli_tiff_input(runner):
+    """Test Turbine Flicker CLI with input building tiff. """
+
+    with ExclusionLayers(EXCL_H5) as f:
+        building_layer = f[BLD_LAYER]
+        profile = f.profile
+        baseline = f[BASELINE]
+
+    with tempfile.TemporaryDirectory() as td:
+        tiff_fp = os.path.join(td, "temp.tiff")
+        ExclusionsConverter._write_geotiff(tiff_fp, profile, building_layer)
+
+        excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
+        shutil.copy(EXCL_H5, excl_h5)
+        # out_tiff = f"{BLD_LAYER}_{HUB_HEIGHT}hh_{ROTOR_DIAMETER}rd.tiff"
+        out_tiff = flicker_fn_out(HUB_HEIGHT, ROTOR_DIAMETER)
+        config = {
+            "log_directory": td,
+            "excl_fpath": excl_h5,
+            "execution_control": {
+                "option": "local",
+            },
+            "hub_height": HUB_HEIGHT,
+            "rotor_diameter": ROTOR_DIAMETER,
+            "log_level": "INFO",
+            "res_fpath": RES_H5,
+            "features_path": tiff_fp,
+            "resolution": 64,
+            "tm_dset": "techmap_wind",
+            "max_flicker_exclusion_range": 4540
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config', '-c', config_path])
+        msg = 'Failed with error {}'.format(
+            traceback.print_exception(*result.exc_info)
+        )
+        assert result.exit_code == 0, msg
+
+        with ExclusionLayers(excl_h5) as f:
+            assert out_tiff not in f.layers
+            assert out_tiff.split('.') not in f.layers
+
+        with Geotiff(os.path.join(td, out_tiff)) as f:
+            test = f.values[0]
+
+        assert np.allclose(baseline, test)
+
+    LOGGERS.clear()
+
+
+def test_cli_bad_input(runner):
+    """Test Turbine Flicker CLI with bad input. """
+
+    with tempfile.TemporaryDirectory() as td:
+        tiff_fp = os.path.join(td, "temp.tiff")
+        config = {
+            "log_directory": td,
+            "excl_fpath": EXCL_H5,
+            "execution_control": {
+                "option": "local",
+            },
+            "hub_height": HUB_HEIGHT,
+            "rotor_diameter": ROTOR_DIAMETER,
+            "log_level": "INFO",
+            "res_fpath": RES_H5,
+            "building_layer": BLD_LAYER,
+            "features_path": tiff_fp,
+            "resolution": 64,
+            "tm_dset": "techmap_wind",
+            "max_flicker_exclusion_range": 4540
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config', '-c', config_path])
+        assert result.exit_code == 1
 
     LOGGERS.clear()
 

@@ -4,9 +4,7 @@ Compute setbacks exclusions
 """
 from warnings import warn
 import logging
-import geopandas as gpd
 
-from rex.utilities import parse_table
 from reVX.utilities.regulations import AbstractBaseRegulations
 
 

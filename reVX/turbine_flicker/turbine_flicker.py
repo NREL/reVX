@@ -12,7 +12,6 @@ from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.supply_curve.tech_mapping import TechMapping
 from reVX.handlers.geotiff import Geotiff
-from reVX.utilities.regulations import AbstractBaseRegulations
 from reVX.wind_dirs.mean_wind_dirs_point import MeanWindDirectionsPoint
 from reVX.utilities.exclusions import (ExclusionsConverter,
                                        AbstractBaseExclusionsMerger)
@@ -827,8 +826,7 @@ def load_building_layer(excl_fpath, building_layer=None, features_path=None,
         If `building_layer` is not None but also does not exist in
         `excl_fpath` .h5 file.
     """
-
-    if building_layer is not None:
+    if building_layer is not None and features_path is None:
         with ExclusionLayers(excl_fpath, hsds=hsds) as f:
             if building_layer not in f.layers:
                 msg = ("{} is not available in {}"
@@ -839,7 +837,7 @@ def load_building_layer(excl_fpath, building_layer=None, features_path=None,
                          .format(excl_fpath, building_layer))
             return f[building_layer]
 
-    if features_path is not None:
+    if building_layer is None and features_path is not None:
         logger.debug("Loading building data from {}".format(features_path))
         with Geotiff(features_path) as f:
             return f.values[0]
