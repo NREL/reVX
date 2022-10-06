@@ -9,7 +9,7 @@ from warnings import warn
 
 from reVX.handlers.geotiff import Geotiff
 from reVX.handlers.outputs import Outputs
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
 

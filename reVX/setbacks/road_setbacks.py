@@ -18,15 +18,10 @@ class RoadSetbacks(AbstractBaseSetbacks):
     Road setbacks
     """
 
-    def _parse_features(self, features_fpath):
+    def parse_features(self):
         """
         Load roads from gdb file, convert to exclusions coordinate
         system.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to here streets gdb file for given state.
 
         Returns
         -------
@@ -34,13 +29,14 @@ class RoadSetbacks(AbstractBaseSetbacks):
             Geometries for roads in gdb file, in exclusion coordinate
             system
         """
-        lyr = fiona.listlayers(features_fpath)[0]
-        roads = gpd.read_file(features_fpath, driver='FileGDB', layer=lyr)
+        lyr = fiona.listlayers(self._features_fpath)[0]
+        roads = gpd.read_file(self._features_fpath,
+                              driver='FileGDB', layer=lyr)
 
         return roads.to_crs(crs=self._rasterizer.profile["crs"])
 
     @staticmethod
-    def _get_feature_paths(features_fpath):
+    def get_feature_paths(features_fpath):
         """
         Find all roads gdb files in roads_dir
 
@@ -69,15 +65,9 @@ class RoadSetbacks(AbstractBaseSetbacks):
 
         return file_paths
 
-    def _regulation_table_mask(self, features_fpath):
-        """Return the regulation table mask for setback feature.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from
-        """
-        state = features_fpath.split('.')[0].split('_')[-1]
+    def _regulation_table_mask(self):
+        """Return the regulation table mask for setback feature. """
+        state = self._features_fpath.split('.')[0].split('_')[-1]
         if 'Abbr' not in self.regulations_table:
             states = self.regulations_table['State'].str.title()
             self.regulations_table['Abbr'] = states.map(STATES_ABBR_MAP)

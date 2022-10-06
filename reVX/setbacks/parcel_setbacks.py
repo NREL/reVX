@@ -18,16 +18,11 @@ logger = logging.getLogger(__name__)
 class ParcelSetbacks(AbstractBaseSetbacks):
     """Parcel setbacks - facilitates the use of negative buffers. """
 
-    def _compute_generic_setbacks(self, features_fpath):
+    def compute_generic_exclusions(self, **__):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
         of `base_setback_dist * multiplier`.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from.
 
         Returns
         -------
@@ -35,15 +30,15 @@ class ParcelSetbacks(AbstractBaseSetbacks):
             Raster array of setbacks
         """
         logger.info("Computing generic setbacks")
-        if np.isclose(self._regulations.generic_setback, 0):
+        if np.isclose(self._regulations.generic, 0):
             return self._rasterizer.rasterize(shapes=None)
 
-        features = self._parse_features(features_fpath)
+        features = self.parse_features()
         setbacks = features.buffer(0).difference(
-            features.buffer(-1 * self._regulations.generic_setback))
+            features.buffer(-1 * self._regulations.generic))
         return self._rasterizer.rasterize(list(setbacks))
 
-    def _compute_local_setbacks(self, features, cnty, setback):
+    def compute_local_exclusions(self, regulation_value, cnty):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -53,12 +48,10 @@ class ParcelSetbacks(AbstractBaseSetbacks):
 
         Parameters
         ----------
-        features : geopandas.GeoDataFrame
-            Features to setback from.
+        regulation_value : float | int
+            Setback distance in meters.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
-        setback : int
-            Setback distance in meters.
 
         Returns
         -------
@@ -67,21 +60,18 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         """
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
+        features = self.parse_features()
+        idx = features.sindex.intersection(cnty.total_bounds)
+        features = features.iloc[list(idx)].copy()
         log_mem(logger)
         features = self._feature_filter(features, cnty)
+        setback = regulation_value
         setbacks = features.buffer(0).difference(features.buffer(-1 * setback))
-        return list(setbacks)
+        return self._rasterizer.rasterize(list(setbacks))
 
-    def _regulation_table_mask(self, features_fpath):
-        """Return the regulation table mask for setback feature.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from.
-            This file needs to have the state in the filename.
-        """
-        state = os.path.basename(features_fpath).split('.')[0]
+    def _regulation_table_mask(self):
+        """Return the regulation table mask for setback feature. """
+        state = os.path.basename(self._features_fpath).split('.')[0]
         state = _get_state_name(state)
         states = self.regulations_table.State.apply(_get_state_name)
         states = states == state
@@ -89,13 +79,8 @@ class ParcelSetbacks(AbstractBaseSetbacks):
                          == 'property line')
         return states & property_line
 
-    def _parse_features(self, features_fpath):
+    def parse_features(self):
         """Method to parse features.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to file containing features to setback from.
 
         Returns
         -------
@@ -103,7 +88,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
             Geometries of features to setback from in exclusion
             coordinate system.
         """
-        features = gpd.read_file(features_fpath)
+        features = gpd.read_file(self._features_fpath)
         if features.crs is None:
             features = features.set_crs("EPSG:4326")
         return features.to_crs(crs=self._rasterizer.profile["crs"])

@@ -1,24 +1,495 @@
 # -*- coding: utf-8 -*-
 """
-Handler to convert exclusion to/from .h5 and .geotiff
+Driver class to compute exclusions
 """
 import h5py
 import json
-import logging
-import numpy as np
 import os
-from pyproj.crs import CRS
-import rasterio
+import logging
+from abc import ABC, abstractmethod
+from concurrent.futures import as_completed
 from warnings import warn
 
-from reV.handlers.exclusions import ExclusionLayers
-from reV.handlers.outputs import Outputs
+import numpy as np
+import geopandas as gpd
+from pyproj.crs import CRS
+import rasterio
+from rasterio import features
+from shapely.geometry import shape
 
+from rex import Outputs
+from rex.utilities import SpawnProcessPool, log_mem
+from reV.handlers.exclusions import ExclusionLayers
 from reVX.handlers.geotiff import Geotiff
-from reVX.utilities.exceptions import ExclusionsCheckError
 from reVX.utilities.utilities import log_versions
+from reVX.utilities.exceptions import ExclusionsCheckError
 
 logger = logging.getLogger(__name__)
+
+
+class AbstractExclusionCalculatorInterface(ABC):
+    """Abstract Exclusion Calculator Interface. """
+
+    @property
+    @abstractmethod
+    def no_exclusions_array(self):
+        """np.array: Array representing no exclusions. """
+        raise NotImplementedError
+
+    @abstractmethod
+    def pre_process_regulations(self):
+        """Reduce regulations to correct state and features.
+
+        When implementing this method, make sure to update
+        `self._regulations.df`.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def compute_local_exclusions(self, regulation_value, cnty):
+        """Compute local feature exclusions.
+
+        This method should compute the exclusions using the information
+        about the input county.
+
+        Parameters
+        ----------
+        regulation_value : float | int
+            Regulation value for county.
+        cnty : geopandas.GeoDataFrame
+            Regulations for a single county.
+
+        Returns
+        -------
+        exclusions : list
+            List of exclusion geometries.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def compute_generic_exclusions(self, max_workers=None):
+        """Compute generic exclusions.
+
+        This method should compute the exclusions using a generic
+        regulation value (`self._regulations.generic`).
+
+        Parameters
+        ----------
+        max_workers : int, optional
+            Number of workers to use for exclusions computation, if 1
+            run in serial, if > 1 run in parallel with that many
+            workers, if `None` run in parallel on all available cores.
+            By default `None`.
+
+        Returns
+        -------
+        exclusions : ndarray
+            Raster array of exclusions
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def input_output_filenames(self, out_dir, features_fpath):
+        """Generate pairs of input/output file names.
+
+        Parameters
+        ----------
+        out_dir : str
+            Path to output file directory.
+        features_fpath : str
+            Path to features file. This path can contain
+            any pattern that can be used in the glob function.
+            For example, `/path/to/features/[A]*` would match
+            with all the features in the directory
+            `/path/to/features/` that start with "A". This input
+            can also be a directory, but that directory must ONLY
+            contain feature files. If your feature files are mixed
+            with other files or directories, use something like
+            `/path/to/features/*.geojson`.
+
+        Yields
+        ------
+        tuple
+            An input-output filename pair.
+        """
+        raise NotImplementedError
+
+
+class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
+    """
+    Create exclusions layers for exclusions
+    """
+
+    def __init__(self, excl_fpath, regulations, hsds=False):
+        """
+        Parameters
+        ----------
+        excl_fpath : str
+            Path to .h5 file containing exclusion layers, will also be
+            the location of any new exclusion layers
+        regulations : `~reVX.utilities.AbstractBaseRegulations` subclass
+            A regulations object used to extract exclusion regulation
+            values.
+        hsds : bool, optional
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
+        """
+        log_versions(logger)
+        self._excl_fpath = excl_fpath
+        self._regulations = regulations
+        self._hsds = hsds
+        self._fips = self._features_fpath = self._profile = None
+        self._set_profile()
+        self._process_regulations(regulations.df)
+
+    def __repr__(self):
+        msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
+        return msg
+
+    def _set_profile(self):
+        """Extract profile from excl h5."""
+        with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as f:
+            self._profile = f.profile
+
+    def _process_regulations(self, regulations_df):
+        """Parse the county regulations.
+
+        Parse regulations, combine with county geometries from
+        exclusions .h5 file. The county geometries are intersected with
+        features to compute county specific exclusions.
+
+        Parameters
+        ----------
+        regulations : pandas.DataFrame
+            Regulations table
+
+        Returns
+        -------
+        regulations: `geopandas.GeoDataFrame`
+            GeoDataFrame with county level exclusion regulations merged
+            with county geometries, use for intersecting with exclusion
+            features.
+        """
+        if regulations_df is None:
+            return
+
+        with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as exc:
+            self._fips = exc['cnty_fips']
+            cnty_fips_profile = exc.get_layer_profile('cnty_fips')
+
+        if 'FIPS' not in regulations_df:
+            msg = ('Regulations does not have county FIPS! Please add a '
+                   '"FIPS" columns with the unique county FIPS values.')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        if 'geometry' not in regulations_df:
+            regulations_df['geometry'] = None
+
+        regulations_df = regulations_df[~regulations_df['FIPS'].isna()]
+        regulations_df = regulations_df.set_index('FIPS')
+
+        logger.info('Merging county geometries w/ local regulations')
+        s = features.shapes(
+            self._fips.astype(np.int32),
+            transform=cnty_fips_profile['transform']
+        )
+        for p, v in s:
+            v = int(v)
+            if v in regulations_df.index:
+                regulations_df.at[v, 'geometry'] = shape(p)
+
+        regulations_df = gpd.GeoDataFrame(
+            regulations_df,
+            crs=self.profile['crs'],
+            geometry='geometry'
+        )
+        regulations_df = regulations_df.reset_index()
+        regulations_df = regulations_df.to_crs(crs=self.profile['crs'])
+        self._regulations.df = regulations_df
+
+    @property
+    def profile(self):
+        """dict: Geotiff profile. """
+        return self._profile
+
+    @property
+    def regulations_table(self):
+        """Regulations table.
+
+        Returns
+        -------
+        geopandas.GeoDataFrame | None
+        """
+        return self._regulations.df
+
+    @regulations_table.setter
+    def regulations_table(self, regulations_table):
+        self._process_regulations(regulations_table)
+
+    def _write_exclusions(self, geotiff, exclusions, replace=False):
+        """
+        Write exclusions to geotiff, replace if requested
+
+        Parameters
+        ----------
+        geotiff : str
+            Path to geotiff file to save exclusions too
+        exclusions : ndarray
+            Rasterized array of exclusions.
+        replace : bool, optional
+            Flag to replace local layer data with arr if file already
+            exists on disk. By default `False`.
+        """
+        if os.path.exists(geotiff):
+            _error_or_warn(geotiff, replace)
+
+        ExclusionsConverter._write_geotiff(geotiff, self.profile, exclusions)
+
+    def _write_layer(self, out_layer, exclusions, replace=False):
+        """Write exclusions to H5, replace if requested
+
+        Parameters
+        ----------
+        out_layer : str
+            Name of new exclusion layer to add to h5.
+        exclusions : ndarray
+            Rasterized array of exclusions.
+        replace : bool, optional
+            Flag to replace local layer data with arr if layer already
+            exists in the exclusion .h5 file. By default `False`.
+        """
+        with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as exc:
+            layers = exc.layers
+
+        if out_layer in layers:
+            _error_or_warn(out_layer, replace)
+
+        try:
+            description = self.description
+        except AttributeError:
+            description = None
+
+        ExclusionsConverter._write_layer(self._excl_fpath, out_layer,
+                                         self.profile, exclusions,
+                                         description=description)
+
+    def compute_all_local_exclusions(self, max_workers=None):
+        """Compute local exclusions for all counties either.
+
+        Parameters
+        ----------
+        max_workers : int, optional
+            Number of workers to use for exclusions computation, if 1
+            run in serial, if > 1 run in parallel with that many
+            workers, if `None` run in parallel on all available cores.
+            By default `None`.
+
+        Returns
+        -------
+        exclusions : ndarray
+            Raster array of exclusions.
+        """
+        exclusions = None
+        max_workers = max_workers or os.cpu_count()
+
+        log_mem(logger)
+        if max_workers > 1:
+            logger.info('Computing local exclusions in parallel using {} '
+                        'workers'.format(max_workers))
+            loggers = [__name__, 'reVX']
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
+                futures = {}
+                for exclusion, cnty in self._regulations:
+                    future = exe.submit(self.compute_local_exclusions,
+                                        exclusion, cnty)
+                    futures[future] = cnty['FIPS'].unique()
+
+                for i, future in enumerate(as_completed(futures)):
+                    exclusions = self._combine_exclusions(exclusions,
+                                                          future.result(),
+                                                          futures[future])
+                    logger.debug('Computed exclusions for {} of {} counties'
+                                 .format((i + 1), len(self.regulations_table)))
+        else:
+            logger.info('Computing local exclusions in serial')
+            for i, (exclusion, cnty) in enumerate(self._regulations):
+                local_exclusions = self.compute_local_exclusions(exclusion,
+                                                                 cnty)
+                exclusions = self._combine_exclusions(exclusions,
+                                                      local_exclusions,
+                                                      cnty['FIPS'].unique())
+                logger.debug('Computed exclusions for {} of {} counties'
+                             .format((i + 1), len(self.regulations_table)))
+
+        return exclusions
+
+    def compute_exclusions(self, features_fpath=None, max_workers=None,
+                           out_layer=None, out_tiff=None, replace=False):
+        """
+        Compute exclusions for all states either in serial or parallel.
+        Existing exclusions are computed if a regulations file was
+        supplied during class initialization, otherwise generic exclusions
+        are computed.
+
+        Parameters
+        ----------
+        features_fpath : str, optional
+            Path to shape file with features to compute exclusions from.
+            Only required if the exclusions calculator requires it.
+            By default `None`.
+        max_workers : int, optional
+            Number of workers to use for exclusion computation, if 1 run
+            in serial, if > 1 run in parallel with that many workers,
+            if `None`, run in parallel on all available cores.
+            By default `None`.
+        out_layer : str, optional
+            Name to save rasterized exclusions under in .h5 file.
+            If `None`, exclusions will not be written to the .h5 file.
+            By default `None`.
+        out_tiff : str, optional
+            Path to save geotiff containing rasterized exclusions.
+            If `None`, exclusions will not be written to a geotiff file.
+            By default `None`.
+        replace : bool, optional
+            Flag to replace geotiff if it already exists.
+            By default `False`.
+
+        Returns
+        -------
+        exclusions : ndarray
+            Raster array of exclusions
+        """
+        self._features_fpath = features_fpath
+        exclusions = self._compute_merged_exclusions(max_workers=max_workers)
+
+        if out_layer is not None:
+            logger.info('Saving exclusion layer to {} as {}'
+                        .format(self._excl_fpath, out_layer))
+            self._write_layer(out_layer, exclusions, replace=replace)
+
+        if out_tiff is not None:
+            logger.debug('Writing exclusions to {}'.format(out_tiff))
+            self._write_exclusions(out_tiff, exclusions, replace=replace)
+
+        return exclusions
+
+    def _compute_merged_exclusions(self, max_workers=None):
+        """Compute and merge local and generic exclusions, if necessary. """
+        mw = max_workers
+
+        if self._regulations.locals_exist:
+            self.pre_process_regulations()
+
+        generic_exclusions_exist = self._regulations.generic_exists
+        local_exclusions_exist = self._regulations.locals_exist
+
+        if not generic_exclusions_exist and not local_exclusions_exist:
+            msg = ("Found no exclusions to compute: No regulations detected, "
+                   "and generic multiplier not set.")
+            logger.error(msg)
+            raise ValueError(msg)
+
+        if generic_exclusions_exist and not local_exclusions_exist:
+            return self.compute_generic_exclusions(max_workers=mw)
+
+        if local_exclusions_exist and not generic_exclusions_exist:
+            local_excl = self.compute_all_local_exclusions(max_workers=mw)
+            nea = self.no_exclusions_array.astype(local_excl.dtype)
+            return self._merge_exclusions(nea, local_excl)
+
+        generic_exclusions = self.compute_generic_exclusions(max_workers=mw)
+        local_exclusions = self.compute_all_local_exclusions(max_workers=mw)
+        return self._merge_exclusions(generic_exclusions, local_exclusions)
+
+    def _merge_exclusions(self, generic_exclusions, local_exclusions):
+        """Merge local exclusions onto the generic exclusions."""
+        logger.info('Merging local exclusions onto the generic exclusions')
+
+        self.pre_process_regulations()
+        local_fips = self.regulations_table["FIPS"].unique()
+        return self._combine_exclusions(generic_exclusions, local_exclusions,
+                                        local_fips)
+
+    def _combine_exclusions(self, existing, additional, cnty_fips):
+        """Combine local exclusions using FIPS code"""
+        if existing is None:
+            return additional
+
+        local_exclusions_mask = np.isin(self._fips, cnty_fips)
+        existing[local_exclusions_mask] = additional[local_exclusions_mask]
+        return existing
+
+    @classmethod
+    def run(cls, excl_fpath, features_path, out_dir, regulations,
+            max_workers=None, replace=False, out_layers=None, hsds=False,
+            **kwargs):
+        """
+        Compute exclusions and write them to a geotiff. If a regulations
+        file is given, compute local exclusions, otherwise compute
+        generic exclusions. If both are provided, generic and local
+        exclusions are merged such that the local exclusions override
+        the generic ones.
+
+        Parameters
+        ----------
+        excl_fpath : str
+            Path to .h5 file containing exclusion layers, will also be
+            the location of any new exclusion layers.
+        features_path : str
+            Path to file or directory feature shape files.
+            This path can contain any pattern that can be used in the
+            glob function. For example, `/path/to/features/[A]*` would
+            match with all the features in the directory
+            `/path/to/features/` that start with "A". This input
+            can also be a directory, but that directory must ONLY
+            contain feature files. If your feature files are mixed
+            with other files or directories, use something like
+            `/path/to/features/*.geojson`.
+        out_dir : str
+            Directory to save exclusion geotiff(s) into
+        regulations : `~reVX.utilities.AbstractBaseRegulations` subclass
+            A regulations object used to extract exclusion regulation
+            distances.
+        max_workers : int, optional
+            Number of workers to use for exclusion computation, if 1 run
+            in serial, if > 1 run in parallel with that many workers,
+            if `None`, run in parallel on all available cores.
+            By default `None`.
+        replace : bool, optional
+            Flag to replace geotiff if it already exists.
+            By default `False`.
+        out_layers : dict, optional
+            Dictionary mapping feature file names (with extension) to
+            names of layers under which exclusions should be saved in
+            the `excl_fpath` .h5 file. If `None` or empty dictionary,
+            no layers are saved to the h5 file. By default `None`.
+        hsds : bool, optional
+            Boolean flag to use h5pyd to handle .h5 'files' hosted on
+            AWS behind HSDS. By default `False`.
+        **kwargs
+            Keyword args to exclusions calculator class.
+        """
+        exclusions = cls(excl_fpath=excl_fpath, regulations=regulations,
+                         hsds=hsds, **kwargs)
+
+        out_layers = out_layers or {}
+        files = exclusions.input_output_filenames(out_dir, features_path)
+        for f_in, f_out in files:
+            if os.path.exists(f_out) and not replace:
+                msg = ('{} already exists, exclusions will not be re-computed '
+                       'unless replace=True'.format(f_out))
+                logger.error(msg)
+            else:
+                logger.info("Computing exclusions from {} and saving "
+                            "to {}".format(f_in, f_out))
+                out_layer = out_layers.get(os.path.basename(f_in))
+                exclusions.compute_exclusions(features_fpath=f_in,
+                                              out_tiff=f_out,
+                                              out_layer=out_layer,
+                                              max_workers=max_workers,
+                                              replace=replace)
 
 
 class ExclusionsConverter:
@@ -649,3 +1120,17 @@ class ExclusionsConverter:
             geotiff = os.path.join(out_dir, "{}.tif".format(layer))
             logger.info('- Extracting {}'.format(geotiff))
             excls.layer_to_geotiff(layer, geotiff)
+
+
+def _error_or_warn(name, replace):
+    """If replace, throw warning, otherwise throw error. """
+    if not replace:
+        msg = ('{} already exists. To replace it set "replace=True"'
+               .format(name))
+        logger.error(msg)
+        raise IOError(msg)
+    else:
+        msg = ('{} already exists and will be replaced!'
+               .format(name))
+        logger.warning(msg)
+        warn(msg)

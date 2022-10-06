@@ -20,9 +20,10 @@ from rex.utilities.loggers import LOGGERS
 
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
-from reVX.setbacks.regulations import (Regulations, WindRegulations,
-                                       validate_regulations_input,
-                                       select_regulations)
+from reVX.setbacks.regulations import (SetbackRegulations,
+                                       WindSetbackRegulations,
+                                       validate_setback_regulations_input,
+                                       select_setback_regulations)
 from reVX.setbacks import (ParcelSetbacks, RailSetbacks, StructureSetbacks,
                            WaterSetbacks, SETBACKS)
 from reVX.setbacks.setbacks_cli import main
@@ -65,179 +66,133 @@ def runner():
 @pytest.fixture
 def generic_wind_regulations():
     """Wind regulations with multiplier. """
-    return WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER, multiplier=MULTIPLIER)
+    return WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                  multiplier=MULTIPLIER)
 
 
 @pytest.fixture
 def county_wind_regulations():
     """Wind regulations with multiplier. """
-    return WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
-                           regulations_fpath=REGS_FPATH)
+    return WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                  regulations_fpath=REGS_FPATH)
 
 
 @pytest.fixture
 def county_wind_regulations_gpkg():
     """Wind regulations with multiplier. """
-    return WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
-                           regulations_fpath=REGS_GPKG)
+    return WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                  regulations_fpath=REGS_GPKG)
 
 
-def test_regulations_init():
+def test_setback_regulations_init():
     """Test initializing a normal regulations file. """
-    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
+    regs = SetbackRegulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
     assert regs.base_setback_dist == 10
-    assert np.isclose(regs.generic_setback, 10 * 1.1)
+    assert np.isclose(regs.generic, 10 * 1.1)
     assert np.isclose(regs.multiplier, 1.1)
 
-    for col in Regulations.REQUIRED_COLUMNS:
-        assert col in regs.regulations
-        assert not regs.regulations[col].isna().any()
-
-    assert regs.regulations['Feature Type'].str.islower().all()
-
-    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
-    assert regs.generic_setback is None
+    regs = SetbackRegulations(10, regulations_fpath=REGS_FPATH,
+                              multiplier=None)
+    assert regs.generic is None
 
 
-def test_regulations_missing_init():
-    """Test initializing `Regulations` with missing info. """
+def test_setback_regulations_missing_init():
+    """Test initializing `SetbackRegulations` with missing info. """
     with pytest.raises(RuntimeError) as excinfo:
-        Regulations(10)
+        SetbackRegulations(10)
 
     expected_err_msg = ('Computing setbacks requires a regulations '
                         '.csv file and/or a generic multiplier!')
     assert expected_err_msg in str(excinfo.value)
 
 
-def test_regulations_non_capitalized_cols():
-    """Test `Regulations` for csv with non-capitalized cols. """
-    regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-                             'col_names_not_caps.csv')
-
-    regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
-    for col in regs.regulations.columns:
-        if col.lower() not in {"geometry", "fips"}:
-            assert col.istitle()
-
-
-def test_regulations_missing_cols():
-    """Test `Regulations` for csv with missing cols. """
-    expected_err_msg = 'Regulations are missing the following required columns'
-
-    for fn in ['missing_ft.csv', 'missing_vt.csv', 'missing_vt.csv']:
-        regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-                                 fn)
-
-        with pytest.raises(RuntimeError) as excinfo:
-            Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
-        assert expected_err_msg in str(excinfo.value)
-
-
-def test_regulations_na_cols():
-    """Test `Regulations` for csv with cols containing NaN's. """
-
-    for fn in ['nan_feature_types.csv', 'nan_fips.csv', 'nan_value_types.csv',
-               'nan_values.csv']:
-        regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
-                                 fn)
-        regs_df = pd.read_csv(regs_path)
-        assert regs_df[Regulations.REQUIRED_COLUMNS].isna().values.any()
-
-        regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
-        for col in Regulations.REQUIRED_COLUMNS:
-            assert not regs.regulations[col].isna().any()
-
-
-def test_regulations_iter():
-    """Test `Regulations` iterator. """
+def test_setback_regulations_iter():
+    """Test `SetbackRegulations` iterator. """
     expected_setbacks = [20, 23]
     regs_path = os.path.join(TESTDATADIR, 'setbacks',
                              'ri_parcel_regs_multiplier_solar.csv')
 
-    regs = Regulations(10, regulations_fpath=regs_path, multiplier=1.1)
+    regs = SetbackRegulations(10, regulations_fpath=regs_path, multiplier=1.1)
     for ind, (setback, cnty) in enumerate(regs):
         assert np.isclose(setback, expected_setbacks[ind])
-        assert regs.regulations.iloc[[ind]].equals(cnty)
+        assert regs.df.iloc[[ind]].equals(cnty)
 
-    regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
+    regs = SetbackRegulations(10, regulations_fpath=None, multiplier=1.1)
     assert len(list(regs)) == 0
 
 
-def test_regulations_set_to_none():
-    """Test setting regulations to `None` not allowed. """
-    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
-    with pytest.raises(ValueError):
-        regs.regulations = None
-
-
-def test_regulations_locals_exist():
+def test_setback_regulations_locals_exist():
     """Test locals_exist property. """
-    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
-    assert regs.local_exist
-    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
-    assert regs.local_exist
-    regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
-    assert not regs.local_exist
+    regs = SetbackRegulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
+    assert regs.locals_exist
+    regs = SetbackRegulations(10, regulations_fpath=REGS_FPATH,
+                              multiplier=None)
+    assert regs.locals_exist
+    regs = SetbackRegulations(10, regulations_fpath=None, multiplier=1.1)
+    assert not regs.locals_exist
 
     with tempfile.TemporaryDirectory() as td:
         regs = pd.read_csv(REGS_FPATH).iloc[0:0]
         regs_fpath = os.path.basename(REGS_FPATH)
         regs_fpath = os.path.join(td, regs_fpath)
         regs.to_csv(regs_fpath, index=False)
-        regs = Regulations(10, regulations_fpath=regs_fpath, multiplier=1.1)
-        assert not regs.local_exist
-        regs = Regulations(10, regulations_fpath=regs_fpath, multiplier=None)
-        assert not regs.local_exist
+        regs = SetbackRegulations(10, regulations_fpath=regs_fpath,
+                                  multiplier=1.1)
+        assert not regs.locals_exist
+        regs = SetbackRegulations(10, regulations_fpath=regs_fpath,
+                                  multiplier=None)
+        assert not regs.locals_exist
 
 
-def test_regulations_generic_exist():
+def test_setback_regulations_generic_exists():
     """Test locals_exist property. """
-    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
-    assert regs.generic_exist
-    regs = Regulations(10, regulations_fpath=None, multiplier=1.1)
-    assert regs.generic_exist
-    regs = Regulations(10, regulations_fpath=REGS_FPATH, multiplier=None)
-    assert not regs.generic_exist
+    regs = SetbackRegulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
+    assert regs.generic_exists
+    regs = SetbackRegulations(10, regulations_fpath=None, multiplier=1.1)
+    assert regs.generic_exists
+    regs = SetbackRegulations(10, regulations_fpath=REGS_FPATH,
+                              multiplier=None)
+    assert not regs.generic_exists
 
 
-def test_regulations_wind():
-    """Test `WindRegulations` initialization and iteration. """
+def test_setback_regulations_wind():
+    """Test `WindSetbackRegulations` initialization and iteration. """
 
     expected_setbacks = [250, 23]
     regs_path = os.path.join(TESTDATADIR, 'setbacks',
                              'ri_parcel_regs_multiplier_wind.csv')
-    regs = WindRegulations(hub_height=100, rotor_diameter=50,
-                           regulations_fpath=regs_path, multiplier=1.1)
+    regs = WindSetbackRegulations(hub_height=100, rotor_diameter=50,
+                                  regulations_fpath=regs_path, multiplier=1.1)
     assert regs.hub_height == 100
     assert regs.rotor_diameter == 50
 
     for ind, (setback, cnty) in enumerate(regs):
         assert np.isclose(setback, expected_setbacks[ind])
-        assert regs.regulations.iloc[[ind]].equals(cnty)
+        assert regs.df.iloc[[ind]].equals(cnty)
 
 
-def test_validate_regulations_input():
-    """Test that `validate_regulations_input` throws for incorrect input. """
+def test_validate_setback_regulations_input():
+    """Test that `validate_setback_regulations_input` throws for bad input. """
     with pytest.raises(RuntimeError):
-        validate_regulations_input()
-
-    with pytest.raises(RuntimeError):
-        validate_regulations_input(1, 2, 3)
-
-
-def test_select_regulations():
-    """Test that `test_select_regulations` returns correct class. """
-    with pytest.raises(RuntimeError):
-        select_regulations()
+        validate_setback_regulations_input()
 
     with pytest.raises(RuntimeError):
-        select_regulations(1, 2, 3)
+        validate_setback_regulations_input(1, 2, 3)
 
-    assert isinstance(select_regulations(None, 2, 3, None, 1.1),
-                      WindRegulations)
 
-    assert isinstance(select_regulations(1, None, None, None, 1.1),
-                      Regulations)
+def test_select_setback_regulations():
+    """Test that `select_setback_regulations` returns correct class. """
+    with pytest.raises(RuntimeError):
+        select_setback_regulations()
+
+    with pytest.raises(RuntimeError):
+        select_setback_regulations(1, 2, 3)
+
+    assert isinstance(select_setback_regulations(None, 2, 3, None, 1.1),
+                      WindSetbackRegulations)
+
+    assert isinstance(select_setback_regulations(1, None, None, None, 1.1),
+                      SetbackRegulations)
 
 
 @pytest.mark.parametrize('setbacks_class', SETBACKS.values())
@@ -249,10 +204,10 @@ def test_setbacks_no_computation(setbacks_class):
         regs_fpath = os.path.basename(REGS_FPATH)
         regs_fpath = os.path.join(td, regs_fpath)
         regs.to_csv(regs_fpath, index=False)
-        regs = Regulations(10, regulations_fpath=regs_fpath)
+        regs = SetbackRegulations(10, regulations_fpath=regs_fpath)
         setbacks = setbacks_class(EXCL_H5, regs)
         with pytest.raises(ValueError):
-            setbacks.compute_setbacks("RhodeIsland.file")
+            setbacks.compute_exclusions(features_fpath="RhodeIsland.file")
 
 
 @pytest.mark.parametrize(
@@ -264,10 +219,37 @@ def test_setbacks_no_computation(setbacks_class):
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'))])
 def test_setbacks_no_generic_value(setbacks_class, feature_file):
     """Test setbacks computation for invalid input. """
-    regs = Regulations(0, regulations_fpath=None, multiplier=1)
+    regs = SetbackRegulations(0, regulations_fpath=None, multiplier=1)
     setbacks = setbacks_class(EXCL_H5, regs)
-    out = setbacks.compute_setbacks(feature_file)
+    out = setbacks.compute_exclusions(features_fpath=feature_file)
     assert np.isclose(out, 0).all()
+
+
+def test_setbacks_saving_tiff_h5():
+    """Test setbacks saves to tiff and h5. """
+    feature_file = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                                'Rhode_Island.gpkg')
+    regs = SetbackRegulations(0, regulations_fpath=None, multiplier=1)
+    with tempfile.TemporaryDirectory() as td:
+        assert not os.path.exists(os.path.join(td, "Rhode_Island.tif"))
+
+        excl_fpath = os.path.basename(EXCL_H5)
+        excl_fpath = os.path.join(td, excl_fpath)
+        shutil.copy(EXCL_H5, excl_fpath)
+        with ExclusionLayers(excl_fpath) as exc:
+            assert "ri_parcel_setbacks" not in exc.layers
+
+        ParcelSetbacks.run(excl_fpath, feature_file, td, regs,
+                           out_layers={'Rhode_Island.gpkg':
+                                       "ri_parcel_setbacks"})
+
+        assert os.path.exists(os.path.join(td, "Rhode_Island.tif"))
+        with Geotiff(os.path.join(td, "Rhode_Island.tif")) as tif:
+            assert np.isclose(tif.values, 0).all()
+
+        with ExclusionLayers(excl_fpath) as exc:
+            assert "ri_parcel_setbacks" in exc.layers
+            assert np.isclose(exc["ri_parcel_setbacks"], 0).all()
 
 
 def test_generic_structure(generic_wind_regulations):
@@ -282,7 +264,7 @@ def test_generic_structure(generic_wind_regulations):
     setbacks = StructureSetbacks(EXCL_H5, generic_wind_regulations)
     structure_path = os.path.join(TESTDATADIR, 'setbacks',
                                   'RhodeIsland.geojson')
-    test = setbacks.compute_setbacks(structure_path)
+    test = setbacks.compute_exclusions(features_fpath=structure_path)
 
     assert np.allclose(baseline, test)
 
@@ -293,7 +275,7 @@ def test_generic_structure_gpkg(generic_wind_regulations):
     """
     setbacks = StructureSetbacks(EXCL_H5, generic_wind_regulations)
     structure_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
-    test = setbacks.compute_setbacks(structure_path)
+    test = setbacks.compute_exclusions(features_fpath=structure_path)
 
     assert test.sum() == 6830
 
@@ -306,14 +288,19 @@ def test_local_structures(max_workers, county_wind_regulations_gpkg):
     baseline = os.path.join(TESTDATADIR, 'setbacks',
                             'existing_structures.tif')
     with Geotiff(baseline) as tif:
-        baseline = tif.values
+        baseline = tif.values[0]
 
     setbacks = StructureSetbacks(EXCL_H5, county_wind_regulations_gpkg)
     structure_path = os.path.join(TESTDATADIR, 'setbacks',
                                   'RhodeIsland.geojson')
-    test = setbacks.compute_setbacks(structure_path, max_workers=max_workers)
+    test = setbacks.compute_exclusions(features_fpath=structure_path,
+                                       max_workers=max_workers)
 
-    assert np.allclose(baseline, test)
+    # baseline was generated when code did not clip to county bounds,
+    # so test should be a subset of baseline
+    assert baseline.sum() > test.sum()
+    assert (baseline[test > 0] == 1).all()
+    assert (test[baseline == 0] == 0).all()
 
 
 @pytest.mark.parametrize('rail_path',
@@ -330,7 +317,7 @@ def test_generic_railroads(rail_path, generic_wind_regulations):
         baseline = tif.values
 
     setbacks = RailSetbacks(EXCL_H5, generic_wind_regulations)
-    test = setbacks.compute_setbacks(rail_path)
+    test = setbacks.compute_exclusions(features_fpath=rail_path)
 
     assert np.allclose(baseline, test)
 
@@ -342,14 +329,19 @@ def test_local_railroads(max_workers, county_wind_regulations_gpkg):
     """
     baseline = os.path.join(TESTDATADIR, 'setbacks', 'existing_rails.tif')
     with Geotiff(baseline) as tif:
-        baseline = tif.values
+        baseline = tif.values[0]
 
     setbacks = RailSetbacks(EXCL_H5, county_wind_regulations_gpkg)
     rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
                              'RI_Railroads.shp')
-    test = setbacks.compute_setbacks(rail_path, max_workers=max_workers)
+    test = setbacks.compute_exclusions(features_fpath=rail_path,
+                                       max_workers=max_workers)
 
-    assert np.allclose(baseline, test)
+    # baseline was generated when code did not clip to county bounds,
+    # so test should be a subset of baseline
+    assert baseline.sum() > test.sum()
+    assert (baseline[test > 0] == 1).all()
+    assert (test[baseline == 0] == 0).all()
 
 
 def test_generic_parcels():
@@ -357,13 +349,13 @@ def test_generic_parcels():
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
-    regulations_x1 = Regulations(BASE_SETBACK_DIST, multiplier=1)
+    regulations_x1 = SetbackRegulations(BASE_SETBACK_DIST, multiplier=1)
     setbacks_x1 = ParcelSetbacks(EXCL_H5, regulations_x1)
-    test_x1 = setbacks_x1.compute_setbacks(parcel_path)
+    test_x1 = setbacks_x1.compute_exclusions(features_fpath=parcel_path)
 
-    regulations_x100 = Regulations(BASE_SETBACK_DIST, multiplier=100)
+    regulations_x100 = SetbackRegulations(BASE_SETBACK_DIST, multiplier=100)
     setbacks_x100 = ParcelSetbacks(EXCL_H5, regulations_x100)
-    test_x100 = setbacks_x100.compute_setbacks(parcel_path)
+    test_x100 = setbacks_x100.compute_exclusions(features_fpath=parcel_path)
 
     # when the setbacks are so large that they span the entire parcels,
     # a total of 438 regions should be excluded for this particular
@@ -382,15 +374,16 @@ def test_generic_parcels_with_invalid_shape_input():
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'invalid', 'Rhode_Island.gpkg')
-    regulations = Regulations(BASE_SETBACK_DIST, multiplier=100)
+    regulations = SetbackRegulations(BASE_SETBACK_DIST, multiplier=100)
     setbacks = ParcelSetbacks(EXCL_H5, regulations)
 
     # Ensure data we are using contains invalid shapes
-    parcels = setbacks._parse_features(parcel_path)
+    setbacks._features_fpath = parcel_path
+    parcels = setbacks.parse_features()
     assert not parcels.geometry.is_valid.any()
 
     # This code would throw an error if invalid shape not handled properly
-    test = setbacks.compute_setbacks(parcel_path)
+    test = setbacks.compute_exclusions(features_fpath=parcel_path)
 
     # add a test for expected output
     assert not test.any()
@@ -412,13 +405,14 @@ def test_local_parcels_solar(max_workers, regulations_fpath):
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(regulations_fpath, regs_fpath)
 
-        regulations = Regulations(BASE_SETBACK_DIST,
-                                  regulations_fpath=regs_fpath)
+        regulations = SetbackRegulations(BASE_SETBACK_DIST,
+                                         regulations_fpath=regs_fpath)
         setbacks = ParcelSetbacks(EXCL_H5, regulations)
 
         parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                    'Rhode_Island.gpkg')
-        test = setbacks.compute_setbacks(parcel_path, max_workers=max_workers)
+        test = setbacks.compute_exclusions(features_fpath=parcel_path,
+                                           max_workers=max_workers)
 
     assert test.sum() == 3
 
@@ -456,13 +450,15 @@ def test_local_parcels_wind(max_workers, regulations_fpath):
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(regulations_fpath, regs_fpath)
 
-        regulations = WindRegulations(hub_height=1.75, rotor_diameter=0.5,
-                                      regulations_fpath=regs_fpath)
+        regulations = WindSetbackRegulations(hub_height=1.75,
+                                             rotor_diameter=0.5,
+                                             regulations_fpath=regs_fpath)
         setbacks = ParcelSetbacks(EXCL_H5, regulations)
 
         parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                    'Rhode_Island.gpkg')
-        test = setbacks.compute_setbacks(parcel_path, max_workers=max_workers)
+        test = setbacks.compute_exclusions(features_fpath=parcel_path,
+                                           max_workers=max_workers)
 
     assert test.sum() == 3
 
@@ -492,13 +488,13 @@ def test_local_parcels_wind(max_workers, regulations_fpath):
 def test_generic_water_setbacks(water_path):
     """Test generic water setbacks. """
 
-    regulations_x1 = Regulations(BASE_SETBACK_DIST, multiplier=1)
+    regulations_x1 = SetbackRegulations(BASE_SETBACK_DIST, multiplier=1)
     setbacks_x1 = WaterSetbacks(EXCL_H5, regulations_x1)
-    test_x1 = setbacks_x1.compute_setbacks(water_path)
+    test_x1 = setbacks_x1.compute_exclusions(features_fpath=water_path)
 
-    regulations_x100 = Regulations(BASE_SETBACK_DIST, multiplier=100)
+    regulations_x100 = SetbackRegulations(BASE_SETBACK_DIST, multiplier=100)
     setbacks_x100 = WaterSetbacks(EXCL_H5, regulations_x100)
-    test_x100 = setbacks_x100.compute_setbacks(water_path)
+    test_x100 = setbacks_x100.compute_exclusions(features_fpath=water_path)
 
     # A total of 88,994 regions should be excluded for this particular
     # Rhode Island subset
@@ -525,13 +521,14 @@ def test_local_water_solar(max_workers, regulations_fpath):
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(regulations_fpath, regs_fpath)
 
-        regulations = Regulations(BASE_SETBACK_DIST,
-                                  regulations_fpath=regs_fpath)
+        regulations = SetbackRegulations(BASE_SETBACK_DIST,
+                                         regulations_fpath=regs_fpath)
         setbacks = WaterSetbacks(EXCL_H5, regulations)
 
         water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
                                   'Rhode_Island.shp')
-        test = setbacks.compute_setbacks(water_path, max_workers=max_workers)
+        test = setbacks.compute_exclusions(features_fpath=water_path,
+                                           max_workers=max_workers)
 
     assert test.sum() == 83
 
@@ -565,13 +562,14 @@ def test_local_water_wind(max_workers, regulations_fpath):
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(regulations_fpath, regs_fpath)
 
-        regulations = WindRegulations(hub_height=4, rotor_diameter=2,
-                                      regulations_fpath=regs_fpath)
+        regulations = WindSetbackRegulations(hub_height=4, rotor_diameter=2,
+                                             regulations_fpath=regs_fpath)
         setbacks = WaterSetbacks(EXCL_H5, regulations)
 
         water_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Water',
                                   'Rhode_Island.shp')
-        test = setbacks.compute_setbacks(water_path, max_workers=max_workers)
+        test = setbacks.compute_exclusions(features_fpath=water_path,
+                                           max_workers=max_workers)
 
     assert test.sum() == 83
 
@@ -592,19 +590,17 @@ def test_local_water_wind(max_workers, regulations_fpath):
 
 
 def test_regulations_preflight_check():
-    """
-    Test Regulations preflight_checks
-    """
+    """Test WindSetbackRegulations preflight_checks"""
     with pytest.raises(RuntimeError):
-        WindRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
+        WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER)
 
 
 def test_high_res_excl_array():
     """Test the multiplier of the exclusion array is applied correctly. """
 
     mult = 5
-    regulations = Regulations(BASE_SETBACK_DIST, regulations_fpath=None,
-                              multiplier=1)
+    regulations = SetbackRegulations(BASE_SETBACK_DIST, regulations_fpath=None,
+                                     multiplier=1)
     setbacks = ParcelSetbacks(EXCL_H5, regulations,
                               weights_calculation_upscale_factor=mult)
     rasterizer = setbacks._rasterizer
@@ -619,8 +615,8 @@ def test_aggregate_high_res():
     """Test the aggregation of a high_resolution array. """
 
     mult = 5
-    regulations = Regulations(BASE_SETBACK_DIST, regulations_fpath=None,
-                              multiplier=1)
+    regulations = SetbackRegulations(BASE_SETBACK_DIST, regulations_fpath=None,
+                                     multiplier=1)
     setbacks = ParcelSetbacks(EXCL_H5, regulations,
                               weights_calculation_upscale_factor=mult)
     rasterizer = setbacks._rasterizer
@@ -644,14 +640,15 @@ def test_partial_exclusions():
                                'Rhode_Island.gpkg')
 
     mult = 5
-    regulations = Regulations(BASE_SETBACK_DIST, regulations_fpath=None,
-                              multiplier=10)
+    regulations = SetbackRegulations(BASE_SETBACK_DIST, regulations_fpath=None,
+                                     multiplier=10)
     setbacks = ParcelSetbacks(EXCL_H5, regulations,)
     setbacks_hr = ParcelSetbacks(EXCL_H5, regulations,
                                  weights_calculation_upscale_factor=mult)
 
-    exclusion_mask = setbacks.compute_setbacks(parcel_path)
-    inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
+    exclusion_mask = setbacks.compute_exclusions(features_fpath=parcel_path)
+    inclusion_weights = setbacks_hr.compute_exclusions(
+        features_fpath=parcel_path)
 
     assert exclusion_mask.shape == inclusion_weights.shape
     assert (inclusion_weights < 1).any()
@@ -667,14 +664,15 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
 
-    regulations = Regulations(BASE_SETBACK_DIST, regulations_fpath=None,
-                              multiplier=10)
+    regulations = SetbackRegulations(BASE_SETBACK_DIST, regulations_fpath=None,
+                                     multiplier=10)
     setbacks = ParcelSetbacks(EXCL_H5, regulations)
     setbacks_hr = ParcelSetbacks(EXCL_H5, regulations,
                                  weights_calculation_upscale_factor=mult)
 
-    exclusion_mask = setbacks.compute_setbacks(parcel_path)
-    inclusion_weights = setbacks_hr.compute_setbacks(parcel_path)
+    exclusion_mask = setbacks.compute_exclusions(features_fpath=parcel_path)
+    inclusion_weights = setbacks_hr.compute_exclusions(
+        features_fpath=parcel_path)
 
     assert np.isclose(exclusion_mask, inclusion_weights).all()
 
@@ -682,28 +680,28 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
 @pytest.mark.parametrize(
     ('setbacks_class', 'regulations_class', 'features_path',
      'regulations_fpath', 'generic_sum', 'local_sum', 'setback_distance'),
-    [(StructureSetbacks, WindRegulations,
+    [(StructureSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_GPKG, 332_887, 142, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (RailSetbacks, WindRegulations,
+      REGS_GPKG, 332_887, 128, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (RailSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_GPKG, 754_082, 9_402, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (ParcelSetbacks, WindRegulations,
+      REGS_GPKG, 754_082, 9_276, [HUB_HEIGHT, ROTOR_DIAMETER]),
+     (ParcelSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 474, 3, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (WaterSetbacks, WindRegulations,
+     (WaterSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
       WATER_REGS_FPATH_VALUE, 1_159_266, 83, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (StructureSetbacks, Regulations,
+     (StructureSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_FPATH, 260_963, 112, [BASE_SETBACK_DIST + 199]),
-     (RailSetbacks, Regulations,
+      REGS_FPATH, 260_963, 104, [BASE_SETBACK_DIST + 199]),
+     (RailSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_FPATH, 5_355, 194, [BASE_SETBACK_DIST]),
-     (ParcelSetbacks, Regulations,
+      REGS_FPATH, 5_355, 163, [BASE_SETBACK_DIST]),
+     (ParcelSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
-     (WaterSetbacks, Regulations,
+     (WaterSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
       WATER_REGS_FPATH_VALUE, 88_994, 83, [BASE_SETBACK_DIST])])
 @pytest.mark.parametrize('sf', [None, 10])
@@ -716,8 +714,8 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
                                     multiplier=100)
     generic_setbacks = setbacks_class(EXCL_H5, regulations,
                                       weights_calculation_upscale_factor=sf)
-    generic_layer = generic_setbacks.compute_setbacks(features_path,
-                                                      max_workers=1)
+    generic_layer = generic_setbacks.compute_exclusions(
+        features_fpath=features_path, max_workers=1)
 
     with tempfile.TemporaryDirectory() as td:
         regs_fpath = os.path.basename(regulations_fpath)
@@ -730,18 +728,18 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
         local_setbacks = setbacks_class(EXCL_H5, regulations,
                                         weights_calculation_upscale_factor=sf)
 
-        local_layer = local_setbacks.compute_setbacks(features_path,
-                                                      max_workers=1)
+        local_layer = local_setbacks.compute_exclusions(
+            features_fpath=features_path, max_workers=1)
 
         regulations = regulations_class(*setback_distance,
                                         regulations_fpath=regs_fpath,
                                         multiplier=100)
         merged_setbacks = setbacks_class(EXCL_H5, regulations,
                                          weights_calculation_upscale_factor=sf)
-        merged_layer = merged_setbacks.compute_setbacks(features_path,
-                                                        max_workers=1)
+        merged_layer = merged_setbacks.compute_exclusions(
+            features_fpath=features_path, max_workers=1)
 
-        local_setbacks._pre_process_regulations(features_path)
+        local_setbacks.pre_process_regulations()
         feats = local_setbacks.regulations_table
 
     # make sure the comparison layers match what we expect
@@ -779,28 +777,28 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
 @pytest.mark.parametrize(
     ('setbacks_class', 'regulations_class', 'features_path',
      'regulations_fpath', 'generic_sum', 'setback_distance'),
-    [(StructureSetbacks, WindRegulations,
+    [(StructureSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
       REGS_FPATH, 332_887, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (RailSetbacks, WindRegulations,
+     (RailSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
       REGS_FPATH, 754_082, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (ParcelSetbacks, WindRegulations,
+     (ParcelSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 474, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (WaterSetbacks, WindRegulations,
+     (WaterSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
       WATER_REGS_FPATH_VALUE, 1_159_266, [HUB_HEIGHT, ROTOR_DIAMETER]),
-     (StructureSetbacks, Regulations,
+     (StructureSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
       REGS_FPATH, 260_963, [BASE_SETBACK_DIST + 199]),
-     (RailSetbacks, Regulations,
+     (RailSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
       REGS_FPATH, 5_355, [BASE_SETBACK_DIST]),
-     (ParcelSetbacks, Regulations,
+     (ParcelSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 438, [BASE_SETBACK_DIST]),
-     (WaterSetbacks, Regulations,
+     (WaterSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Water.gpkg'),
       WATER_REGS_FPATH_VALUE, 88_994, [BASE_SETBACK_DIST])])
 def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
@@ -811,8 +809,8 @@ def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
     regulations = regulations_class(*setback_distance, regulations_fpath=None,
                                     multiplier=100)
     generic_setbacks = setbacks_class(EXCL_H5, regulations)
-    generic_layer = generic_setbacks.compute_setbacks(features_path,
-                                                      max_workers=1)
+    generic_layer = generic_setbacks.compute_exclusions(
+        features_fpath=features_path, max_workers=1)
 
     with tempfile.TemporaryDirectory() as td:
         regs = pd.read_csv(regulations_fpath).iloc[0:0]
@@ -825,14 +823,15 @@ def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
                                         multiplier=None)
         local_setbacks = setbacks_class(EXCL_H5, regulations)
         with pytest.raises(ValueError):
-            local_setbacks.compute_setbacks(features_path, max_workers=1)
+            local_setbacks.compute_exclusions(features_fpath=features_path,
+                                              max_workers=1)
 
         regulations = regulations_class(*setback_distance,
                                         regulations_fpath=regs_fpath,
                                         multiplier=100)
         merged_setbacks = setbacks_class(EXCL_H5, regulations)
-        merged_layer = merged_setbacks.compute_setbacks(features_path,
-                                                        max_workers=1)
+        merged_layer = merged_setbacks.compute_exclusions(
+            features_fpath=features_path, max_workers=1)
 
     # make sure the comparison layers match what we expect
     assert generic_layer.sum() == generic_sum
@@ -1275,6 +1274,63 @@ def test_cli_invalid_inputs(runner):
     LOGGERS.clear()
 
 
+def test_cli_saving(runner):
+    """
+    Test CLI saving files.
+    """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        test_fp = os.path.join(td, 'Rhode_Island.tif')
+        assert not os.path.exists(test_fp)
+
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+
+        excl_fpath = os.path.basename(EXCL_H5)
+        excl_fpath = os.path.join(td, excl_fpath)
+        shutil.copy(EXCL_H5, excl_fpath)
+        with ExclusionLayers(excl_fpath) as exc:
+            assert "ri_parcel_setbacks" not in exc.layers
+
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local"
+            },
+            "excl_fpath": excl_fpath,
+            "feature_type": "parcel",
+            "features_path": parcel_path,
+            "log_level": "INFO",
+            "regs_fpath": regs_fpath,
+            "replace": True,
+            "base_setback_dist": BASE_SETBACK_DIST,
+            "out_layers": {
+                "Rhode_Island.gpkg": "ri_parcel_setbacks"
+            }
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        assert os.path.exists(test_fp)
+        with Geotiff(test_fp) as tif:
+            assert tif.values.sum() == 3
+
+        with ExclusionLayers(excl_fpath) as exc:
+            assert "ri_parcel_setbacks" in exc.layers
+            assert exc["ri_parcel_setbacks"].sum() == 3
+
+    LOGGERS.clear()
+
+
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 
@@ -1292,11 +1348,4 @@ def execute_pytest(capture='all', flags='-rapP'):
 
 
 if __name__ == '__main__':
-    # execute_pytest()
-    runner = CliRunner()
-    runner.invoke(
-        main,
-        ['from-config',
-         '-c', "/shared-projects/rev/projects/seto/fy22/data/paper_exclusions/pv/setbacks/pv_parcel_50/pv_parcel_50_debug.json",
-        ]
-    )
+    execute_pytest()

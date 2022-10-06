@@ -14,7 +14,7 @@ import time
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 from reVX.utilities.utilities import log_versions, coordinate_distance
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem

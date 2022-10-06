@@ -21,13 +21,6 @@ class RailSetbacks(AbstractBaseSetbacks):
         """Filter the features given a county."""
         return features_clipped_to_county(features, cnty)
 
-    # pylint: disable=unused-argument
-    def _regulation_table_mask(self, features_fpath):
-        """Return the regulation table mask for setback feature.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from
-        """
+    def _regulation_table_mask(self):
+        """Return the regulation table mask for setback feature. """
         return self.regulations_table['Feature Type'] == 'railroads'

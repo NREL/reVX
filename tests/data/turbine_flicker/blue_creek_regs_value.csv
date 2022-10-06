@@ -1,0 +1,8 @@
+County,State,STATE_FIPS,CNTY_FIPS,FIPS,Feature Type,Value Type,Value,Comment
+Bristol,Rhode Island,44,1,44001, wAter  ,Meters,10,
+Bristol,Rhode Island,44,1,44001,Property Line  ,Meters,4.1,
+Bristol,Rhode Island,44,1,44001, Highway,Meters,23,
+Test1,Ohio,39,1,39001, wAter  ,Meters,10,
+Test2,Ohio,39,2,39002,Property Line  ,Meters,4.1,
+Test1,Ohio,39,1,39001,Shadow Flicker,hrs/Year,30,
+Bristol,Rhode Island,44,1,44001,Shadow Flicker,hrs/Year,30,

@@ -40,7 +40,7 @@ class StructureSetbacks(AbstractBaseSetbacks):
         return state_name
 
     @staticmethod
-    def _get_feature_paths(features_fpath):
+    def get_feature_paths(features_fpath):
         """
         Find all structures .geojson files in structures dir
 
@@ -70,15 +70,9 @@ class StructureSetbacks(AbstractBaseSetbacks):
 
         return file_paths
 
-    def _regulation_table_mask(self, features_fpath):
-        """Return the regulation table mask for setback feature.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to shape file with features to compute setbacks from
-        """
-        state_name = os.path.basename(features_fpath).split('.')[0]
+    def _regulation_table_mask(self):
+        """Return the regulation table mask for setback feature. """
+        state_name = os.path.basename(self._features_fpath).split('.')[0]
         state = self._split_state_name(state_name)
         states = self.regulations_table["State"] == state
         structures = self.regulations_table['Feature Type'] == 'structures'
