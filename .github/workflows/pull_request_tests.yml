@@ -9,10 +9,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: [3.8]
+        python-version: [3.9]
         include:
           - os: ubuntu-latest
             python-version: 3.7
+          - os: ubuntu-latest
+            python-version: 3.8
 
     steps:
     - uses: actions/checkout@v2
@@ -26,7 +28,8 @@ jobs:
     - name: Install conda dependencies
       shell: bash -l {0}
       run: |
-        conda install rtree pip pytest geopandas
+        conda install rtree pip pytest
+        pip install geopandas
         pip install --upgrade --force-reinstall shapely
         pip install pytest-cov
         pip install -e .
