@@ -89,7 +89,7 @@ setup(
     license="BSD 3-Clause",
     zip_safe=False,
     keywords="reVX",
-    python_requires='>=3.7,<3.9',
+    python_requires='>=3.7,<3.10',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
@@ -97,6 +97,7 @@ setup(
         "Natural Language :: English",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     test_suite="tests",
     install_requires=install_requires,
