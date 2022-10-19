@@ -23,6 +23,13 @@ class RoadSetbacks(AbstractBaseSetbacks):
         Load roads from gdb file, convert to exclusions coordinate
         system.
 
+        Warnings
+        --------
+        Use caution when calling this method, especially in multiple
+        processes, as the returned feature files may be quite large.
+        Reading 100 GB feature files in each of 36 sub-processes will
+        quickly overwhelm your RAM.
+
         Returns
         -------
         roads : `geopandas.GeoDataFrame.sindex`

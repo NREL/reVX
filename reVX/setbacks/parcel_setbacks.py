@@ -18,6 +18,45 @@ logger = logging.getLogger(__name__)
 class ParcelSetbacks(AbstractBaseSetbacks):
     """Parcel setbacks - facilitates the use of negative buffers. """
 
+    @staticmethod
+    def compute_local_exclusions(regulation_value, cnty, *args):
+        """Compute local features setbacks.
+
+        This method will compute the setbacks using a county-specific
+        regulations file that specifies either a static setback or a
+        multiplier value that will be used along with the base setback
+        distance to compute the setback.
+
+        Parameters
+        ----------
+        regulation_value : float | int
+            Setback distance in meters.
+        cnty : geopandas.GeoDataFrame
+            Regulations for a single county.
+        features : geopandas.GeoDataFrame
+            Features for the local county.
+        feature_filter : callable
+            A callable function that takes `features` and `cnty` as
+            inputs and outputs a geopandas.GeoDataFrame with features
+            clipped and/or localized to the input county.
+        rasterizer : Rasterizer
+            Instance of `Rasterizer` class used to rasterize the
+            buffered county features.
+
+        Returns
+        -------
+        setbacks : ndarray
+            Raster array of setbacks
+        """
+        features, feature_filter, rasterizer = args
+        logger.debug('- Computing setbacks for county FIPS {}'
+                     .format(cnty.iloc[0]['FIPS']))
+        log_mem(logger)
+        features = feature_filter(features, cnty)
+        negative_buffer = features.buffer(-1 * regulation_value)
+        setbacks = features.buffer(0).difference(negative_buffer)
+        return rasterizer.rasterize(list(setbacks))
+
     def compute_generic_exclusions(self, **__):
         """Compute generic setbacks.
 
@@ -33,40 +72,8 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         if np.isclose(self._regulations.generic, 0):
             return self._rasterizer.rasterize(shapes=None)
 
-        features = self.parse_features()
-        setbacks = features.buffer(0).difference(
-            features.buffer(-1 * self._regulations.generic))
-        return self._rasterizer.rasterize(list(setbacks))
-
-    def compute_local_exclusions(self, regulation_value, cnty):
-        """Compute local features setbacks.
-
-        This method will compute the setbacks using a county-specific
-        regulations file that specifies either a static setback or a
-        multiplier value that will be used along with the base setback
-        distance to compute the setback.
-
-        Parameters
-        ----------
-        regulation_value : float | int
-            Setback distance in meters.
-        cnty : geopandas.GeoDataFrame
-            Regulations for a single county.
-
-        Returns
-        -------
-        setbacks : list
-            List of setback geometries.
-        """
-        logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(cnty.iloc[0]['FIPS']))
-        features = self.parse_features()
-        idx = features.sindex.intersection(cnty.total_bounds)
-        features = features.iloc[list(idx)].copy()
-        log_mem(logger)
-        features = self._feature_filter(features, cnty)
-        setback = regulation_value
-        setbacks = features.buffer(0).difference(features.buffer(-1 * setback))
+        negative_buffer = self.features.buffer(-1 * self._regulations.generic)
+        setbacks = self.features.buffer(0).difference(negative_buffer)
         return self._rasterizer.rasterize(list(setbacks))
 
     def _regulation_table_mask(self):
@@ -80,7 +87,14 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         return states & property_line
 
     def parse_features(self):
-        """Method to parse features.
+        """Parse in parcel features.
+
+        Warnings
+        --------
+        Use caution when calling this method, especially in multiple
+        processes, as the returned feature files may be quite large.
+        Reading 100 GB feature files in each of 36 sub-processes will
+        quickly overwhelm your RAM.
 
         Returns
         -------
