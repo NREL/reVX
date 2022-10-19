@@ -47,7 +47,7 @@ class AbstractExclusionCalculatorInterface(ABC):
 
     @abstractmethod
     def parse_features(self):
-        """Parse features used to compute setbacks.
+        """Parse features used to compute exclusions.
 
         Warnings
         --------
