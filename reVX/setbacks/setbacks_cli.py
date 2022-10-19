@@ -219,7 +219,9 @@ def run_local(ctx, config):
                weights_calculation_upscale_factor=wcuf,
                max_workers=config.execution_control.max_workers,
                replace=config.replace,
-               out_layers=config.out_layers)
+               hsds=config.hsds,
+               out_layers=config.out_layers,
+               verbose=config.log_level==logging.DEBUG)
 
 
 def eagle(config):
