@@ -14,7 +14,7 @@ import numpy as np
 import geopandas as gpd
 from pyproj.crs import CRS
 import rasterio
-from rasterio import features
+from rasterio import features as rio_features
 from shapely.geometry import shape
 
 from rex import Outputs
@@ -167,7 +167,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations : `~reVX.utilities.AbstractBaseRegulations` subclass
             A regulations object used to extract exclusion regulation
             values.
-        features_fpath : str
+        features : str
             Path to file containing features to compute exclusions from.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
@@ -231,7 +231,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations_df = regulations_df.set_index('FIPS')
 
         logger.info('Merging county geometries w/ local regulations')
-        s = features.shapes(
+        s = rio_features.shapes(
             self._fips.astype(np.int32),
             transform=cnty_fips_profile['transform']
         )
