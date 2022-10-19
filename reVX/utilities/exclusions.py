@@ -157,7 +157,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
     Create exclusions layers for exclusions
     """
 
-    def __init__(self, excl_fpath, regulations, features_fpath, hsds=False):
+    def __init__(self, excl_fpath, regulations, features, hsds=False):
         """
         Parameters
         ----------
@@ -176,7 +176,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         log_versions(logger)
         self._excl_fpath = excl_fpath
         self._regulations = regulations
-        self._features_fpath = features_fpath
+        self._features = features
         self._hsds = hsds
         self._fips = self._profile = None
         self._set_profile()
@@ -523,7 +523,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                             "to {}".format(f_in, f_out))
                 out_layer = out_layers.get(os.path.basename(f_in))
                 exclusions = cls(excl_fpath=excl_fpath,
-                                 regulations=regulations, features_fpath=f_in,
+                                 regulations=regulations, features=f_in,
                                  hsds=hsds, **kwargs)
                 exclusions.compute_exclusions(out_tiff=f_out,
                                               out_layer=out_layer,

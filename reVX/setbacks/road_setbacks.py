@@ -36,10 +36,8 @@ class RoadSetbacks(AbstractBaseSetbacks):
             Geometries for roads in gdb file, in exclusion coordinate
             system
         """
-        lyr = fiona.listlayers(self._features_fpath)[0]
-        roads = gpd.read_file(self._features_fpath,
-                              driver='FileGDB', layer=lyr)
-
+        lyr = fiona.listlayers(self._features)[0]
+        roads = gpd.read_file(self._features, driver='FileGDB', layer=lyr)
         return roads.to_crs(crs=self._rasterizer.profile["crs"])
 
     @staticmethod
@@ -74,7 +72,7 @@ class RoadSetbacks(AbstractBaseSetbacks):
 
     def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """
-        state = self._features_fpath.split('.')[0].split('_')[-1]
+        state = self._features.split('.')[0].split('_')[-1]
         if 'Abbr' not in self.regulations_table:
             states = self.regulations_table['State'].str.title()
             self.regulations_table['Abbr'] = states.map(STATES_ABBR_MAP)

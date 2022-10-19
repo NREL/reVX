@@ -78,7 +78,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
 
     def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """
-        state = os.path.basename(self._features_fpath).split('.')[0]
+        state = os.path.basename(self._features).split('.')[0]
         state = _get_state_name(state)
         states = self.regulations_table.State.apply(_get_state_name)
         states = states == state
@@ -102,7 +102,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
             Geometries of features to setback from in exclusion
             coordinate system.
         """
-        features = gpd.read_file(self._features_fpath)
+        features = gpd.read_file(self._features)
         if features.crs is None:
             features = features.set_crs("EPSG:4326")
         return features.to_crs(crs=self._rasterizer.profile["crs"])

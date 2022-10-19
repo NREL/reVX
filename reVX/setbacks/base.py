@@ -258,7 +258,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
     Create exclusions layers for setbacks
     """
 
-    def __init__(self, excl_fpath, regulations, features_fpath, hsds=False,
+    def __init__(self, excl_fpath, regulations, features, hsds=False,
                  weights_calculation_upscale_factor=None):
         """
         Parameters
@@ -269,7 +269,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         regulations : `~reVX.setbacks.regulations.SetbackRegulations`
             A `SetbackRegulations` object used to extract setback
             distances.
-        features_fpath : str
+        features : str
             Path to file containing features to compute exclusions from.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
@@ -308,7 +308,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """
         self._rasterizer = Rasterizer(excl_fpath,
                                       weights_calculation_upscale_factor, hsds)
-        super().__init__(excl_fpath, regulations, features_fpath, hsds)
+        super().__init__(excl_fpath, regulations, features, hsds)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
@@ -323,8 +323,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Geometries of features to setback from in exclusion
             coordinate system.
         """
-        logger.debug("Loading features from {}".format(self._features_fpath))
-        return (gpd.read_file(self._features_fpath)
+        logger.debug("Loading features from {}".format(self._features))
+        return (gpd.read_file(self._features)
                 .to_crs(crs=self.profile['crs']))
 
     @property
@@ -344,7 +344,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         return self._rasterizer.rasterize(shapes=None)
 
     def pre_process_regulations(self):
-        """Reduce regulations to state corresponding to features_fpath.
+        """Reduce regulations to state corresponding to features.
 
         """
         mask = self._regulation_table_mask()
