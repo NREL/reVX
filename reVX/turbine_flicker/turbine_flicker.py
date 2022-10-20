@@ -720,9 +720,9 @@ def compute_flicker_exclusions(hub_height, rotor_diameter, points, res_fpath,
     flicker_arr = np.ones(building_layer.shape, dtype=np.uint8)
     if max_workers > 1:
         msg = ('Computing flicker exclusions based on {}m hub '
-                'height turbines with {}m rotor diameters in parallel '
-                'using {} workers'
-                .format(hub_height, rotor_diameter, max_workers))
+               'height turbines with {}m rotor diameters in parallel '
+               'using {} workers'
+               .format(hub_height, rotor_diameter, max_workers))
         logger.info(msg)
 
         loggers = [__name__, 'reVX', 'rex']
