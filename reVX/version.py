@@ -3,4 +3,4 @@
 reVX version number
 """
 
-__version__ = "0.3.46"
+__version__ = "0.3.47"
