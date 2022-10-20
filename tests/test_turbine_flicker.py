@@ -20,7 +20,7 @@ from reVX.turbine_flicker.turbine_flicker import (
     TurbineFlicker,
     flicker_fn_out,
     _create_excl_indices,
-    _get_building_indices,
+    _compute_shadow_flicker,
     _get_flicker_excl_shifts,
     _invert_shadow_flicker_arr
 )
@@ -111,12 +111,11 @@ def test_shadow_flicker(flicker_threshold):
     """
     lat, lon = 39.913373, -105.220105
     wind_dir = np.zeros(8760)
-    regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
-                                     flicker_threshold=flicker_threshold)
-    tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
-                        grid_cell_size=90, max_flicker_exclusion_range=4_510,
-                        tm_dset=TM)
-    shadow_flicker = tf._compute_shadow_flicker(lat, lon, wind_dir)
+    shadow_flicker = _compute_shadow_flicker(ROTOR_DIAMETER, lat, lon,
+                                             wind_dir,
+                                             max_flicker_exclusion_range=4_545,
+                                             grid_cell_size=90,
+                                             steps_per_hour=1)
 
     baseline = (shadow_flicker[::-1, ::-1].copy()
                 <= (flicker_threshold / 8760)).astype(np.int8)
@@ -170,7 +169,7 @@ def test_invert_shadow_flicker_arr():
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
-def test_turbine_flicker(max_workers):
+def test_turbine_flicker_compute_exclusions(max_workers):
     """
     Test Turbine Flicker
     """
@@ -182,7 +181,33 @@ def test_turbine_flicker(max_workers):
     tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
                         resolution=64, tm_dset=TM,
                         max_flicker_exclusion_range=4540)
-    test = tf.compute_flicker_exclusions(30, max_workers=max_workers)
+    test = tf.compute_exclusions(max_workers=max_workers)
+    assert np.allclose(baseline, test)
+
+
+def test_turbine_flicker_compute_exclusions_split_points():
+    """
+    Test Turbine Flicker with split points input
+    """
+    with ExclusionLayers(EXCL_H5) as f:
+        baseline = f[BASELINE]
+
+    regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                     flicker_threshold=30)
+    tf = TurbineFlicker(EXCL_H5, RES_H5, BLD_LAYER, regulations,
+                        resolution=64, tm_dset=TM,
+                        max_flicker_exclusion_range=4540)
+    points = tf._sc_points.sample(n=tf._sc_points.shape[0],
+                                  replace=False).copy()
+    tf._sc_points = points.iloc[[0]].copy()
+    test1 = tf.compute_exclusions()
+
+    tf._sc_points = points.iloc[1:].copy()
+    test2 = tf.compute_exclusions()
+
+    test = np.ones_like(baseline)
+    test[test1 == 0] = 0
+    test[test2 == 0] = 0
     assert np.allclose(baseline, test)
 
 
