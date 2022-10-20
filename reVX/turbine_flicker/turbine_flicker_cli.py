@@ -12,8 +12,7 @@ from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
 from reVX.config.turbine_flicker import TurbineFlickerConfig
-from reVX.turbine_flicker.turbine_flicker import (TurbineFlicker,
-                                                  load_building_layer)
+from reVX.turbine_flicker.turbine_flicker import TurbineFlicker
 from reVX.turbine_flicker.regulations import FlickerRegulations
 from reVX import __version__
 
@@ -60,7 +59,6 @@ def run_local(ctx, config):
     ctx.invoke(local,
                excl_fpath=config.excl_fpath,
                res_fpath=config.res_fpath,
-               features_path=config.features_path,
                building_layer=config.building_layer,
                hub_height=config.hub_height,
                rotor_diameter=config.rotor_diameter,
@@ -114,16 +112,9 @@ def from_config(ctx, config, verbose):
 @click.option('--res_fpath', '-ref', required=True,
               type=click.Path(exists=True),
               help="Filepath to .h5 file containing wind direction data")
-@click.option('--features_path', '-feats',
-              type=click.Path(exists=True),
-              help=("Filepath to geotiff file containing buildings from "
-                    "which turbine 'flicker exclusions will be computed. "
-                    "If this input is provided, `building_layer` should "
-                    "NOT be set."))
 @click.option('--building_layer', '-bldl', type=str,
               help=('Exclusion layer containing buildings from which turbine '
-                    'flicker exclusions will be computed. If this input is '
-                    'provided, `features_path` should NOT be set.'))
+                    'flicker exclusions will be computed.'))
 @click.option('--hub_height', '-h', required=True, type=int,
               help=('Hub-height in meters to compute turbine shadow flicker.'))
 @click.option('--rotor_diameter', '-rd', required=True, type=int,
@@ -186,16 +177,16 @@ def from_config(ctx, config, verbose):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, excl_fpath, res_fpath, features_path, building_layer,
-          hub_height, rotor_diameter, out_layer, out_dir, tm_dset,
-          building_threshold, flicker_threshold, resolution, grid_cell_size,
+def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
+          rotor_diameter, out_layer, out_dir, tm_dset, building_threshold,
+          flicker_threshold, resolution, grid_cell_size,
           max_flicker_exclusion_range, regs_fpath, max_workers, replace, hsds,
           log_dir, verbose):
     """
     Compute turbine flicker on local hardware
     """
     if out_layer is not None:
-        out_layers = {TurbineFlicker.DEFAULT_FEATURE_OUTFILE: out_layer}
+        out_layers = {os.path.basename(building_layer): out_layer}
     else:
         out_layers = {}
 
@@ -209,7 +200,6 @@ def local(ctx, excl_fpath, res_fpath, features_path, building_layer,
     logger.info('Computing Turbine Flicker Exclusions from structures in {}'
                 .format(building_layer))
     logger.debug('Flicker to be computed with:\n'
-                 '- features_path = {}\n'
                  '- building_layer = {}\n'
                  '- hub_height = {}\n'
                  '- rotor_diameter = {}\n'
@@ -223,21 +213,16 @@ def local(ctx, excl_fpath, res_fpath, features_path, building_layer,
                  '- using max_workers = {}\n'
                  '- replace layer if needed = {}\n'
                  '- out_layer = {}\n'
-                 .format(features_path, building_layer, hub_height,
-                         rotor_diameter, tm_dset, building_threshold,
-                         flicker_threshold, resolution, grid_cell_size,
+                 .format(building_layer, hub_height, rotor_diameter,
+                         tm_dset, building_threshold, flicker_threshold,
+                         resolution, grid_cell_size,
                          max_flicker_exclusion_range, regs_fpath, max_workers,
                          replace, out_layer))
 
     regulations = FlickerRegulations(hub_height, rotor_diameter,
                                      flicker_threshold, regs_fpath)
-    building_layer = load_building_layer(excl_fpath=excl_fpath,
-                                         building_layer=building_layer,
-                                         features_path=features_path,
-                                         hsds=hsds)
-    TurbineFlicker.run(excl_fpath, features_path, out_dir,
+    TurbineFlicker.run(excl_fpath, building_layer, out_dir,
                        res_fpath=res_fpath,
-                       building_layer=building_layer,
                        regulations=regulations,
                        building_threshold=building_threshold,
                        resolution=resolution,
@@ -265,7 +250,6 @@ def get_node_cmd(config):
             'local',
             '-excl {}'.format(SLURM.s(config.excl_fpath)),
             '-ref {}'.format(SLURM.s(config.res_fpath)),
-            '-feats {}'.format(SLURM.s(config.features_path)),
             '-bldl {}'.format(SLURM.s(config.building_layer)),
             '-h {}'.format(SLURM.s(config.hub_height)),
             '-rd {}'.format(SLURM.s(config.rotor_diameter)),

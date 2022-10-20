@@ -29,7 +29,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
     STEPS_PER_HOUR = 1
     DEFAULT_FEATURE_OUTFILE = 'flicker.tif'
 
-    def __init__(self, excl_fpath, res_fpath, building_layer, regulations,
+    def __init__(self, excl_fpath, res_fpath, features, regulations,
                  building_threshold=0, resolution=640, grid_cell_size=90,
                  max_flicker_exclusion_range="10x", tm_dset='techmap_wtk',
                  hsds=False):
@@ -42,9 +42,11 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         res_fpath : str
             Filepath to wind resource .h5 file containing hourly wind
             direction data
-        building_layer : np.ndarray
-            Exclusion layer containing buildings from which turbine
-            flicker exclusions will be computed.
+        features : str
+            This input should either be the name of an exclusion layer
+            in `excl_fpath` or a file path to a GeoTIFF file containing
+            buildings data from which turbine flicker exclusions should
+            be computed.
         regulations : `FlickerRegulations`
             A `FlickerRegulations` object used to shadow flicker
             regulation values.
@@ -72,9 +74,9 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
         """
-        super().__init__(excl_fpath, regulations, hsds)
+        super().__init__(excl_fpath, regulations, features=features,
+                         hsds=hsds)
         self._res_h5 = res_fpath
-        self._bld_layer = building_layer
         self._res = resolution
         self._building_threshold = building_threshold
         self._grid_cell_size = grid_cell_size
@@ -116,10 +118,10 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
             layers = f.layers
             exclusion_shape = f.shape
 
-        if self._bld_layer.shape != exclusion_shape:
+        if self.features.shape != exclusion_shape:
             msg = ("Shape of building layer {} does not match shape of "
                    "ExclusionLayers {}"
-                   .format(self._bld_layer.shape, exclusion_shape))
+                   .format(self.features.shape, exclusion_shape))
             logger.error(msg)
             raise RuntimeError(msg)
 
@@ -309,7 +311,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
 
         flicker_arr = self.no_exclusions_array
         if max_workers > 1:
-            msg = ('Computing local flicker exclusions based on {}m hub '
+            msg = ('Computing flicker exclusions based on {}m hub '
                    'height turbines with {}m rotor diameters in parallel '
                    'using {} workers'
                    .format(self._regulations.hub_height,
@@ -332,12 +334,12 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                     point = futures[future]
 
                     row_idx, col_idx = _get_building_indices(
-                        self._bld_layer, point.name,
+                        self.features, point.name,
                         resolution=self._res,
                         building_threshold=self._building_threshold)
                     row_idx, col_idx = _create_excl_indices(
                         (row_idx, col_idx), flicker_shifts,
-                        self._bld_layer.shape)
+                        self.features.shape)
 
                     flicker_arr[row_idx, col_idx] = 0
                     logger.info('Completed {} out of {} gids'
@@ -357,12 +359,12 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                     point, self._res_h5, flicker_threshold)
 
                 row_idx, col_idx = _get_building_indices(
-                    self._bld_layer, point.name,
+                    self.features, point.name,
                     resolution=self._res,
                     building_threshold=self._building_threshold)
                 row_idx, col_idx = _create_excl_indices((row_idx, col_idx),
                                                         flicker_shifts,
-                                                        self._bld_layer.shape)
+                                                        self.features.shape)
 
                 flicker_arr[row_idx, col_idx] = 0
                 logger.debug('Completed {} out of {} gids'
@@ -407,14 +409,54 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
     @property
     def no_exclusions_array(self):
         """np.array: Array representing no exclusions. """
-        return np.ones(self._bld_layer.shape, dtype=np.uint8)
+        return np.ones(self.features.shape, dtype=np.uint8)
 
     def pre_process_regulations(self):
         """Reduce regulations to correct state and features. """
         self._apply_regulations_mask()
         self._map_fips_to_gid()
 
-    def compute_local_exclusions(self, regulation_value, cnty):
+    def parse_features(self):
+        """Get the building layer used to compute flicker exclusions. """
+        if os.path.exists(self._features):
+            logger.debug("Loading building data from {}"
+                         .format(self._features))
+            with Geotiff(self._features) as f:
+                return f.values[0]
+
+        with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as f:
+            if self._features not in f.layers:
+                msg = ("{} is not available in {}"
+                       .format(self._features, self._excl_fpath))
+                logger.error(msg)
+                raise RuntimeError(msg)
+            logger.debug("Loading building data from {}, layer {}"
+                         .format(self._excl_fpath, self._features))
+            return f[self._features]
+
+    def _local_exclusions_arguments(self, regulation_value, cnty):
+        """Compile and return arguments to `compute_local_exclusions`.
+
+        This method should return a list or tuple of extra args to be
+        passed to `compute_local_exclusions`.
+
+        Parameters
+        ----------
+        regulation_value : float | int
+            Regulation value for county.
+        cnty : geopandas.GeoDataFrame
+            Regulations for a single county.
+
+        Returns
+        -------
+        TurbineFlicker
+            `TurbineFlicker` object used as an extra argument to
+            calculate local flicker exclusions.
+        """
+        return self,
+
+    @staticmethod
+    def compute_local_exclusions(regulation_value, cnty, *args):
         """Compute local flicker exclusions.
 
         This method computes a flicker exclusion layer using the
@@ -426,17 +468,21 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
             Maximum number of allowable flicker hours in county.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
+        tf : `TurbineFlicker`
+            Instance of `TurbineFlicker` objects used to compute the
+            flicker exclusions.
 
         Returns
         -------
         flicker : ndarray
             Raster array of flicker exclusions
         """
+        tf, = args
         cnty_fips = cnty.iloc[0]['FIPS']
         logger.debug('- Computing flicker for county FIPS {}'
                      .format(cnty_fips))
-        return self.compute_flicker_exclusions(regulation_value,
-                                               fips=cnty_fips, max_workers=1)
+        return tf.compute_flicker_exclusions(regulation_value,
+                                             fips=cnty_fips, max_workers=1)
 
     def compute_generic_exclusions(self, max_workers=None):
         """Compute generic flicker exclusions.
@@ -465,24 +511,32 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         return self.compute_flicker_exclusions(ft, fips=None,
                                                max_workers=max_workers)
 
-    def input_output_filenames(self, out_dir, *__, **___):
+    @classmethod
+    def input_output_filenames(cls, out_dir, features_fpath, kwargs):
         """Generate pairs of input/output file names.
 
         Parameters
         ----------
         out_dir : str
             Path to output file directory.
+        features_fpath : str
+            This input should either be the name of an exclusion layer
+            in `excl_fpath` or a file path to a GeoTIFF file containing
+            buildings data from which turbine flicker exclusions should
+            be computed.
+        kwargs : dict
+            Dictionary of extra keyword-argument pairs used to
+            instantiate the `exclusion_class`.
 
         Yields
         ------
         tuple
             An input-output filename pair.
         """
-        for fpath in [self.DEFAULT_FEATURE_OUTFILE]:
-            fn = flicker_fn_out(self._regulations.hub_height,
-                                self._regulations.rotor_diameter)
-            geotiff = ".".join(fn.split('.')[:-1] + ['tif'])
-            yield fpath, os.path.join(out_dir, geotiff)
+        regulations = kwargs['regulations']
+        fn = flicker_fn_out(regulations.hub_height,
+                            regulations.rotor_diameter)
+        yield features_fpath, os.path.join(out_dir, fn)
 
 
 def _get_building_indices(building_layer, gid, resolution=640,
@@ -652,59 +706,6 @@ def _get_flicker_excl_shifts(shadow_flicker, flicker_threshold=30):
     col_shifts -= shape[1] // 2
 
     return row_shifts, col_shifts
-
-
-def load_building_layer(excl_fpath, building_layer=None, features_path=None,
-                        hsds=False):
-    """Load building data from excl .h5 file or geotiff.
-
-    Parameters
-    ----------
-    excl_fpath : str
-        Filepath to exclusions h5 file. If `building_layer` is not
-        `None`, this file must contain `building_layer`.
-    building_layer : float | int
-        Exclusion layer containing buildings from which turbine
-        flicker exclusions will be computed.  By default, `None`.
-    features_path : str | int
-        Path to input tif  containing buildings from which turbine
-        flicker exclusions will be computed. By default, `None`.
-    hsds : bool, optional
-        Boolean flag to use h5pyd to handle .h5 'files' hosted on AWS
-        behind HSDS. By default `False`.
-
-    Returns
-    -------
-    np.ndarray
-        Array containing building data.
-
-    Raises
-    ------
-    RuntimeError
-        If not enough info is provided (all inputs are `None`), or too
-        much info is given (all inputs are not `None`).
-    RuntimeError
-        If `building_layer` is not None but also does not exist in
-        `excl_fpath` .h5 file.
-    """
-    if building_layer is not None and features_path is None:
-        with ExclusionLayers(excl_fpath, hsds=hsds) as f:
-            if building_layer not in f.layers:
-                msg = ("{} is not available in {}"
-                       .format(building_layer, excl_fpath))
-                logger.error(msg)
-                raise RuntimeError(msg)
-            logger.debug("Loading building data from {}, layer {}"
-                         .format(excl_fpath, building_layer))
-            return f[building_layer]
-
-    if building_layer is None and features_path is not None:
-        logger.debug("Loading building data from {}".format(features_path))
-        with Geotiff(features_path) as f:
-            return f.values[0]
-
-    raise RuntimeError("Must provide either `features_path` or "
-                       "`building_layer` (but not both).")
 
 
 def flicker_fn_out(hub_height, rotor_diameter):
