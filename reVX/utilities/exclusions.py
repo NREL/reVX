@@ -512,7 +512,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         """
 
         out_layers = out_layers or {}
-        files = cls.input_output_filenames(out_dir, features_path, kwargs)
+        cls_init_kwargs = {"excl_fpath": excl_fpath,
+                           "regulations": regulations}
+        cls_init_kwargs.update(kwargs)
+        files = cls.input_output_filenames(out_dir, features_path,
+                                           cls_init_kwargs)
         for f_in, f_out in files:
             if os.path.exists(f_out) and not replace:
                 msg = ('{} already exists, exclusions will not be re-computed '
