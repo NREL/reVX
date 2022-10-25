@@ -14,7 +14,7 @@ import numpy as np
 import geopandas as gpd
 from pyproj.crs import CRS
 import rasterio
-from rasterio import features
+from rasterio import features as rio_features
 from shapely.geometry import shape
 
 from rex import Outputs
@@ -46,7 +46,38 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def compute_local_exclusions(self, regulation_value, cnty):
+    def parse_features(self):
+        """Parse features used to compute exclusions.
+
+        Warnings
+        --------
+        Use caution when calling this method, especially in multiple
+        processes, as the returned feature files may be quite large.
+        Reading 100 GB feature files in each of 36 sub-processes will
+        quickly overwhelm your RAM.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def _local_exclusions_arguments(self, regulation_value, cnty):
+        """Compile and return arguments to `compute_local_exclusions`.
+
+        This method should return a list or tuple of extra args to be
+        passed to `compute_local_exclusions`. Do not include the
+        `regulation_value` or `cnty`.
+
+        Parameters
+        ----------
+        regulation_value : float | int
+            Regulation value for county.
+        cnty : geopandas.GeoDataFrame
+            Regulations for a single county.
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def compute_local_exclusions(regulation_value, cnty, *args):
         """Compute local feature exclusions.
 
         This method should compute the exclusions using the information
@@ -58,11 +89,13 @@ class AbstractExclusionCalculatorInterface(ABC):
             Regulation value for county.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
+        *args
+            Other arguments required for local exclusion calculation.
 
         Returns
         -------
-        exclusions : list
-            List of exclusion geometries.
+        exclusions : np.ndarray
+            Array of exclusions.
         """
         raise NotImplementedError
 
@@ -88,8 +121,9 @@ class AbstractExclusionCalculatorInterface(ABC):
         """
         raise NotImplementedError
 
+    @classmethod
     @abstractmethod
-    def input_output_filenames(self, out_dir, features_fpath):
+    def input_output_filenames(cls, out_dir, features_fpath, kwargs):
         """Generate pairs of input/output file names.
 
         Parameters
@@ -106,6 +140,9 @@ class AbstractExclusionCalculatorInterface(ABC):
             contain feature files. If your feature files are mixed
             with other files or directories, use something like
             `/path/to/features/*.geojson`.
+        kwargs : dict
+            Dictionary of extra keyword-argument pairs used to
+            instantiate the `exclusion_class`.
 
         Yields
         ------
@@ -120,7 +157,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
     Create exclusions layers for exclusions
     """
 
-    def __init__(self, excl_fpath, regulations, hsds=False):
+    def __init__(self, excl_fpath, regulations, features, hsds=False):
         """
         Parameters
         ----------
@@ -130,6 +167,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations : `~reVX.utilities.AbstractBaseRegulations` subclass
             A regulations object used to extract exclusion regulation
             values.
+        features : str
+            Path to file containing features to compute exclusions from.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
@@ -137,10 +176,12 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         log_versions(logger)
         self._excl_fpath = excl_fpath
         self._regulations = regulations
+        self._features = features
         self._hsds = hsds
-        self._fips = self._features_fpath = self._profile = None
+        self._fips = self._profile = None
         self._set_profile()
         self._process_regulations(regulations.df)
+        self.features = self.parse_features()
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
@@ -190,7 +231,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations_df = regulations_df.set_index('FIPS')
 
         logger.info('Merging county geometries w/ local regulations')
-        s = features.shapes(
+        s = rio_features.shapes(
             self._fips.astype(np.int32),
             transform=cnty_fips_profile['transform']
         )
@@ -302,21 +343,24 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                                   loggers=loggers) as exe:
                 futures = {}
                 for exclusion, cnty in self._regulations:
+                    args = self._local_exclusions_arguments(exclusion, cnty)
                     future = exe.submit(self.compute_local_exclusions,
-                                        exclusion, cnty)
+                                        exclusion, cnty, *args)
                     futures[future] = cnty['FIPS'].unique()
 
                 for i, future in enumerate(as_completed(futures)):
                     exclusions = self._combine_exclusions(exclusions,
                                                           future.result(),
                                                           futures[future])
-                    logger.debug('Computed exclusions for {} of {} counties'
+                    logger.info('Computed exclusions for {} of {} counties'
                                  .format((i + 1), len(self.regulations_table)))
         else:
             logger.info('Computing local exclusions in serial')
             for i, (exclusion, cnty) in enumerate(self._regulations):
+                args = self._local_exclusions_arguments(exclusion, cnty)
                 local_exclusions = self.compute_local_exclusions(exclusion,
-                                                                 cnty)
+                                                                 cnty,
+                                                                 *args)
                 exclusions = self._combine_exclusions(exclusions,
                                                       local_exclusions,
                                                       cnty['FIPS'].unique())
@@ -325,8 +369,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         return exclusions
 
-    def compute_exclusions(self, features_fpath=None, max_workers=None,
-                           out_layer=None, out_tiff=None, replace=False):
+    def compute_exclusions(self, out_layer=None, out_tiff=None, replace=False,
+                           max_workers=None):
         """
         Compute exclusions for all states either in serial or parallel.
         Existing exclusions are computed if a regulations file was
@@ -335,15 +379,6 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         Parameters
         ----------
-        features_fpath : str, optional
-            Path to shape file with features to compute exclusions from.
-            Only required if the exclusions calculator requires it.
-            By default `None`.
-        max_workers : int, optional
-            Number of workers to use for exclusion computation, if 1 run
-            in serial, if > 1 run in parallel with that many workers,
-            if `None`, run in parallel on all available cores.
-            By default `None`.
         out_layer : str, optional
             Name to save rasterized exclusions under in .h5 file.
             If `None`, exclusions will not be written to the .h5 file.
@@ -355,13 +390,17 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         replace : bool, optional
             Flag to replace geotiff if it already exists.
             By default `False`.
+        max_workers : int, optional
+            Number of workers to use for exclusion computation, if 1 run
+            in serial, if > 1 run in parallel with that many workers,
+            if `None`, run in parallel on all available cores.
+            By default `None`.
 
         Returns
         -------
         exclusions : ndarray
             Raster array of exclusions
         """
-        self._features_fpath = features_fpath
         exclusions = self._compute_merged_exclusions(max_workers=max_workers)
 
         if out_layer is not None:
@@ -471,11 +510,13 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         **kwargs
             Keyword args to exclusions calculator class.
         """
-        exclusions = cls(excl_fpath=excl_fpath, regulations=regulations,
-                         hsds=hsds, **kwargs)
 
         out_layers = out_layers or {}
-        files = exclusions.input_output_filenames(out_dir, features_path)
+        cls_init_kwargs = {"excl_fpath": excl_fpath,
+                           "regulations": regulations}
+        cls_init_kwargs.update(kwargs)
+        files = cls.input_output_filenames(out_dir, features_path,
+                                           cls_init_kwargs)
         for f_in, f_out in files:
             if os.path.exists(f_out) and not replace:
                 msg = ('{} already exists, exclusions will not be re-computed '
@@ -485,8 +526,10 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 logger.info("Computing exclusions from {} and saving "
                             "to {}".format(f_in, f_out))
                 out_layer = out_layers.get(os.path.basename(f_in))
-                exclusions.compute_exclusions(features_fpath=f_in,
-                                              out_tiff=f_out,
+                exclusions = cls(excl_fpath=excl_fpath,
+                                 regulations=regulations, features=f_in,
+                                 hsds=hsds, **kwargs)
+                exclusions.compute_exclusions(out_tiff=f_out,
                                               out_layer=out_layer,
                                               max_workers=max_workers,
                                               replace=replace)

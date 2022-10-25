@@ -72,7 +72,7 @@ class StructureSetbacks(AbstractBaseSetbacks):
 
     def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """
-        state_name = os.path.basename(self._features_fpath).split('.')[0]
+        state_name = os.path.basename(self._features).split('.')[0]
         state = self._split_state_name(state_name)
         states = self.regulations_table["State"] == state
         structures = self.regulations_table['Feature Type'] == 'structures'

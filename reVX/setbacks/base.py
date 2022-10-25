@@ -10,7 +10,7 @@ import logging
 import pathlib
 import numpy as np
 import geopandas as gpd
-from rasterio import features
+from rasterio import features as rio_features
 
 from rex.utilities import log_mem
 from reV.handlers.exclusions import ExclusionLayers
@@ -221,11 +221,11 @@ class Rasterizer:
         new_transform[0] = new_transform[0] / self._scale_factor
         new_transform[4] = new_transform[4] / self._scale_factor
 
-        features.rasterize(shapes=shapes,
-                           out=hr_arr,
-                           out_shape=hr_arr.shape[1:],
-                           fill=0,
-                           transform=new_transform)
+        rio_features.rasterize(shapes=shapes,
+                               out=hr_arr,
+                               out_shape=hr_arr.shape[1:],
+                               fill=0,
+                               transform=new_transform)
 
         arr = self._aggregate_high_res(hr_arr)
         return 1 - (arr / self._scale_factor ** 2)
@@ -235,11 +235,11 @@ class Rasterizer:
 
         arr = self._no_exclusions_array()
         if shapes:
-            features.rasterize(shapes=shapes,
-                               out=arr,
-                               out_shape=arr.shape[1:],
-                               fill=0,
-                               transform=self.profile['transform'])
+            rio_features.rasterize(shapes=shapes,
+                                   out=arr,
+                                   out_shape=arr.shape[1:],
+                                   fill=0,
+                                   transform=self.profile['transform'])
 
         return arr
 
@@ -258,7 +258,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
     Create exclusions layers for setbacks
     """
 
-    def __init__(self, excl_fpath, regulations, hsds=False,
+    def __init__(self, excl_fpath, regulations, features, hsds=False,
                  weights_calculation_upscale_factor=None):
         """
         Parameters
@@ -269,6 +269,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         regulations : `~reVX.setbacks.regulations.SetbackRegulations`
             A `SetbackRegulations` object used to extract setback
             distances.
+        features : str
+            Path to file containing features to compute exclusions from.
         hsds : bool, optional
             Boolean flag to use h5pyd to handle .h5 'files' hosted on
             AWS behind HSDS. By default `False`.
@@ -306,7 +308,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """
         self._rasterizer = Rasterizer(excl_fpath,
                                       weights_calculation_upscale_factor, hsds)
-        super().__init__(excl_fpath, regulations, hsds)
+        super().__init__(excl_fpath, regulations, features, hsds)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
@@ -321,7 +323,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Geometries of features to setback from in exclusion
             coordinate system.
         """
-        return (gpd.read_file(self._features_fpath)
+        logger.debug("Loading features from {}".format(self._features))
+        return (gpd.read_file(self._features)
                 .to_crs(crs=self.profile['crs']))
 
     @property
@@ -341,7 +344,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         return self._rasterizer.rasterize(shapes=None)
 
     def pre_process_regulations(self):
-        """Reduce regulations to state corresponding to features_fpath.
+        """Reduce regulations to state corresponding to features.
 
         """
         mask = self._regulation_table_mask()
@@ -355,7 +358,14 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         logger.debug('Computing setbacks for regulations in {} counties'
                      .format(len(self.regulations_table)))
 
-    def compute_local_exclusions(self, regulation_value, cnty):
+    def _local_exclusions_arguments(self, __, cnty):
+        """Compile and return arguments to `compute_local_exclusions`. """
+        idx = self.features.sindex.intersection(cnty.total_bounds)
+        cnty_features = self.features.iloc[list(idx)].copy()
+        return cnty_features, self._feature_filter, self._rasterizer
+
+    @staticmethod
+    def compute_local_exclusions(regulation_value, cnty, *args):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -369,22 +379,30 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Setback distance in meters.
         cnty : geopandas.GeoDataFrame
             Regulations for a single county.
+        features : geopandas.GeoDataFrame
+            Features for the local county.
+        feature_filter : callable
+            A callable function that takes `features` and `cnty` as
+            inputs and outputs a geopandas.GeoDataFrame with features
+            clipped and/or localized to the input county.
+        rasterizer : Rasterizer
+            Instance of `Rasterizer` class used to rasterize the
+            buffered county features.
 
         Returns
         -------
         setbacks : ndarray
             Raster array of setbacks
         """
+        features, feature_filter, rasterizer = args
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(cnty.iloc[0]['FIPS']))
-        features = self.parse_features()
-        idx = features.sindex.intersection(cnty.total_bounds)
-        features = features.iloc[list(idx)].copy()
         log_mem(logger)
-        features = self._feature_filter(features, cnty)
+        features = feature_filter(features, cnty)
         features = list(features.buffer(regulation_value))
-        return self._rasterizer.rasterize(features)
+        return rasterizer.rasterize(features)
 
+    # pylint: disable=arguments-differ
     def compute_generic_exclusions(self, **__):
         """Compute generic setbacks.
 
@@ -402,12 +420,12 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         if generic_regs_dne:
             return self.no_exclusions_array
 
-        setback_features = self.parse_features()
-        setbacks = list(setback_features.buffer(self._regulations.generic))
+        setbacks = list(self.features.buffer(self._regulations.generic))
 
         return self._rasterizer.rasterize(setbacks)
 
-    def input_output_filenames(self, out_dir, features_fpath):
+    @classmethod
+    def input_output_filenames(cls, out_dir, features_fpath, *__, **___):
         """Generate pairs of input/output file names.
 
         Parameters
@@ -424,13 +442,16 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             contain feature files. If your feature files are mixed
             with other files or directories, use something like
             `/path/to/features/*.geojson`.
+        kwargs : dict
+            Dictionary of extra keyword-argument pairs used to
+            instantiate the `exclusion_class`.
 
         Yields
         ------
         tuple
             An input-output filename pair.
         """
-        for fpath in self.get_feature_paths(features_fpath):
+        for fpath in cls.get_feature_paths(features_fpath):
             fn = os.path.basename(fpath)
             geotiff = ".".join(fn.split('.')[:-1] + ['tif'])
             yield fpath, os.path.join(out_dir, geotiff)
