@@ -135,8 +135,9 @@ class XmissionCostCreator(ExclusionsConverter):
         indices = []  # [(index0, multiplier0, _class_value0), ...]
         for _class, multiplier in multipliers.items():
             if _class not in land_use_classes:
-                msg = (f'Class {_class} not in land_use_classes: '
-                       f'{land_use_classes}')
+                msg = ('Class {} not in land_use_classes: {}'
+                       .format(_class, land_use_classes))
+                logger.error(msg)
                 raise ValueError(msg)
 
             values = land_use_classes[_class]
@@ -205,12 +206,12 @@ class XmissionCostCreator(ExclusionsConverter):
 
         for r_conf in iso_mults:
             iso = r_conf['iso']
-            logger.info(f'Processing multipliers for region {iso}')
+            logger.info('Processing multipliers for region {}'.format(iso))
 
             if self._iso_lookup is not None:
                 iso_name = iso
                 iso = self._iso_lookup[iso]
-                logger.debug(f'{iso_name} has id {iso}')
+                logger.debug('{} has id {}'.format(iso_name, iso))
 
             mask = self._iso_regions == iso
             regions_mask = regions_mask | mask
@@ -272,12 +273,13 @@ class XmissionCostCreator(ExclusionsConverter):
         base_cost = -1 * np.ones(self._iso_regions.shape, dtype=np.float32)
 
         for iso in base_line_costs:
-            logger.info(f'Processing costs for {iso} for {capacity}MW')
+            logger.info('Processing costs for {} for {}MW'
+                        .format(iso, capacity))
             iso_code = self._iso_lookup[iso]
             cost_per_mile = base_line_costs[iso][str(capacity)]
             cost_per_cell = cost_per_mile / 1609.344 * self.PIXEL_SIZE
-            logger.debug(f'$/mile is {cost_per_mile}, $/cell is '
-                         f'{cost_per_cell}')
+            logger.debug('$/mile is {}, $/cell is {}'
+                         .format(cost_per_mile, cost_per_cell))
             mask = self._iso_regions == iso_code
             base_cost[mask] = cost_per_cell
 
@@ -294,7 +296,7 @@ class XmissionCostCreator(ExclusionsConverter):
         data : np.ndarray
             Data to savein h5
         """
-        logger.debug(f'Saving {layer_name} to h5')
+        logger.debug('Saving {} to h5'.format(layer_name))
         self._profile['nodata'] = None
         self._write_layer(self._excl_h5, layer_name, self._profile, data)
 
@@ -312,7 +314,7 @@ class XmissionCostCreator(ExclusionsConverter):
             Data to save
         """
         nodata = self._profile['nodata']
-        logger.debug(f'Saving {geotiff_fpath}')
+        logger.debug('Saving {}'.format(geotiff_fpath))
         self._write_geotiff(geotiff_fpath, self._profile, data)
 
         # _write_geotiff sets nodata to the max for the dtype. For float32 this
@@ -388,23 +390,25 @@ class XmissionCostCreator(ExclusionsConverter):
             xcc.create_geotiff(tiff_path, mults_arr)
 
         for power_class, capacity in xc['power_classes'].items():
-            logger.info(f'Calculating costs for class {power_class} using a '
-                        f'{capacity}MW line')
+            logger.info('Calculating costs for class {} using a {}MW line'
+                        .format(power_class, capacity))
             blc_arr = xcc.compute_base_line_costs(capacity,
                                                   xc['base_line_costs'])
 
             if save_geotiff:
                 tiff_path = os.path.join(tiff_dir,
-                                         f'base_line_costs_{capacity}MW.tif')
+                                         'base_line_costs_{}MW.tif'
+                                         .format(capacity))
                 xcc.create_geotiff(tiff_path, blc_arr)
 
             costs_arr = blc_arr * mults_arr
 
-            xcc.save_layer(f'tie_line_costs_{capacity}MW', costs_arr)
+            xcc.save_layer('tie_line_costs_{}MW'.format(capacity), costs_arr)
 
             if save_geotiff:
                 tiff_path = os.path.join(tiff_dir,
-                                         f'tie_line_costs{capacity}MW.tif')
+                                         'tie_line_costs{}MW.tif'
+                                         .format(capacity))
                 xcc.create_geotiff(tiff_path, costs_arr)
 
         if extra_layers:

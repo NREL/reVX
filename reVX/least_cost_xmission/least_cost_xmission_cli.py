@@ -80,7 +80,7 @@ def from_config(ctx, config, verbose):
         return
 
     if option != 'eagle':
-        click.echo(f'Option "{option}" is not supported')
+        click.echo('Option "{}" is not supported'.format(option))
         return
 
     if config.execution_control.nodes == 1:
@@ -90,10 +90,10 @@ def from_config(ctx, config, verbose):
     # Split gids over mulitple SLURM jobs
     gids = config.sc_point_gids
     name = config.name
-    logger.info(f'Splitting {len(gids)} SC points over '
-                f'{config.execution_control.nodes} SLURM jobs')
+    logger.info('Splitting {} SC points over {} SLURM jobs'
+                .format(len(gids), config.execution_control.nodes))
     for i in range(config.execution_control.nodes):
-        config.name = f'{name}_{i}'
+        config.name = '{}_{}'.format(name, i)
         config.sc_point_gids = gids[i::config.execution_control.nodes]
         eagle(config)
 
@@ -189,7 +189,7 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
     fn_out = '{}_{}_{}.{}'.format(name, capacity_class, resolution, ext)
     fpath_out = os.path.join(out_dir, fn_out)
 
-    logger.info(f'Writing output to {fpath_out}')
+    logger.info('Writing output to {}'.format(fpath_out))
     if save_paths:
         least_costs.to_file(fpath_out, driver='GPKG')
     else:
@@ -204,8 +204,8 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
 @click.option('--out-file', '-of', default=None, type=STR,
               help='Name for output GeoPackage file.')
 @click.option('--drop', '-d', default=None, type=STR, multiple=True,
-              help='Transmission feature category types to drop from results'
-              f'. Options: {", ".join(TRANS_CAT_TYPES)}')
+              help=('Transmission feature category types to drop from '
+                    'results. Options: {}'.format(", ".join(TRANS_CAT_TYPES))))
 @click.option('--out-path', '-op', type=click.Path(exists=True),
               default='.', show_default=True,
               help='Output path for output files. Path must exist.')
@@ -220,25 +220,25 @@ def merge_output(ctx, split_to_geojson, out_file, out_path, drop, simplify_geo,
     Merge output GeoPackage files and optionally convert to GeoJSON
     """
     if len(gpkg_files) == 0:
-        click.echo('No files passsed to be merged')
+        click.echo('No files passed to be merged')
         return
 
     if drop:
         for cat in drop:
             if cat not in TRANS_CAT_TYPES:
-                click.echo('--drop options must on or more of '
-                           f'{TRANS_CAT_TYPES}, received {drop}')
+                click.echo('--drop options must on or more of {}, received {}'
+                           .format(TRANS_CAT_TYPES, drop))
                 return
 
-    click.echo(f'Loading: {", ".join(gpkg_files)}')
+    click.echo('Loading: {}'.format(", ".join(gpkg_files)))
     warnings.filterwarnings('ignore', category=RuntimeWarning)
     gdf = pd.concat([gpd.read_file(f) for f in gpkg_files])
     warnings.filterwarnings('default', category=RuntimeWarning)
 
     if drop:
         mask = gdf['category'].isin(drop)
-        click.echo(f'Dropping {mask.sum()} of {len(gdf)} total features '
-                   f'with category(ies): {", ".join(drop)}')
+        click.echo('Dropping {} of {} total features with category(ies): {}'
+                   .format(mask.sum(), len(gdf), ", ".join(drop)))
         gdf = gdf[~mask]
 
     gdf = gdf.reset_index()
@@ -249,21 +249,24 @@ def merge_output(ctx, split_to_geojson, out_file, out_path, drop, simplify_geo,
         return
 
     if simplify_geo:
-        click.echo(f'Simplifying geometries by {simplify_geo}')
+        click.echo('Simplifying geometries by {}'.format(simplify_geo))
         gdf.geometry = gdf.geometry.simplify(simplify_geo)
 
     if not split_to_geojson:
-        out_file = f'combo_{gpkg_files[0]}' if out_file is None else out_file
+        out_file = ('combo_{}'.format(gpkg_files[0])
+                    if out_file is None else out_file)
         out_file = os.path.join(out_path, out_file)
-        click.echo(f'Saving to {out_file}')
+        click.echo('Saving to {}'.format(out_file))
         gdf.to_file(out_file, driver="GPKG")
         return
 
     # Split out put in to GeoJSON by POI name
     for poi in set(gdf['POI Name']):
-        outf = os.path.join(out_path, f"{poi.replace(' ', '_')}_paths.geojson")
+        outf = os.path.join(out_path,
+                            "{}_paths.geojson".format(poi.replace(' ', '_')))
         paths = gdf[gdf['POI Name'] == poi].to_crs(epsg=4326)
-        click.echo(f'Writing {len(paths)} paths for {poi} to {outf}')
+        click.echo('Writing {} paths for {} to {}'
+                   .format(len(paths), poi, outf))
         paths.to_file(outf, driver="GeoJSON")
 
 
@@ -301,9 +304,9 @@ def get_node_cmd(config):
     if config.save_paths:
         args.append('--save_paths')
     if config.radius:
-        args.append(f'-rad {config.radius}')
+        args.append('-rad {}'.format(config.radius))
     if config.simplify_geo:
-        args.append(f'--simplify-geo {config.simplify_geo}')
+        args.append('--simplify-geo {}'.format(config.simplify_geo))
 
     if config.log_level == logging.DEBUG:
         args.append('-v')

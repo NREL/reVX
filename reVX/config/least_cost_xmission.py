@@ -122,11 +122,8 @@ class LeastCostXmissionConfig(AnalysisConfig):
             Job name.
         """
         if self._name is None:
-            if self.get('name') is not None:
-                self._name = self.get('name')
-            else:
-                # name defaults to base directory name
-                self._name = os.path.basename(os.path.normpath(self.dirout))
+            default_name = os.path.basename(os.path.normpath(self.dirout))
+            self._name = self.get('name', default_name)
         return self._name
 
     @name.setter
@@ -199,7 +196,8 @@ class LeastCostXmissionConfig(AnalysisConfig):
             sc_point_gids = self.get('sc_point_gids', None)
             if not (isinstance(sc_point_gids, list) or sc_point_gids is None):
                 raise ValueError('sc_point_gids must be a list, got a '
-                                 f'{type(sc_point_gids)} ({sc_point_gids})')
+                                 '{} ({})'
+                                 .format(type(sc_point_gids), sc_point_gids))
             self._sc_point_gids = sc_point_gids
 
         return self._sc_point_gids

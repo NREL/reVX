@@ -167,8 +167,8 @@ class TieLineCosts:
                        .format((self.row, self.col)))
                 raise InvalidMCPStartValueError(msg)
 
-            logger.debug('Building MCP instance for size '
-                         f'{self.mcp_cost.shape}')
+            logger.debug('Building MCP instance for size {}'
+                         .format(self.mcp_cost.shape))
             self._mcp = MCP_Geometric(self.mcp_cost)
             self._mcp.find_costs(starts=[(self.row, self.col)])
 
@@ -1070,8 +1070,9 @@ class TransCapCosts(TieLineCosts):
             costs added. Will include paths if save_paths == True
         """
         ts = time.time()
-        logger.debug(f'Processing sc_point {sc_point.sc_point_gid}, '
-                     f'{sc_point.geometry}, save_paths={save_paths}')
+        logger.debug('Processing sc_point {}, {}, save_paths={}'
+                     .format(sc_point.sc_point_gid, sc_point.geometry,
+                             save_paths))
 
         try:
             tcc = cls(cost_fpath, sc_point, features, capacity_class,

@@ -223,7 +223,8 @@ class LeastCostXmission(LeastCostPaths):
         sc_points : gpd.GeoDataFrame
             SC points
         """
-        logger.debug(f'Loading Supply Curve Points for res: {resolution}')
+        logger.debug('Loading Supply Curve Points for res: {}'
+                     .format(resolution))
         sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
         sc_points = sce.points.rename(columns={'row_ind': 'sc_row_ind',
                                                'col_ind': 'sc_col_ind'})
@@ -375,7 +376,7 @@ class LeastCostXmission(LeastCostPaths):
                 radius = int(np.ceil(radius * clipping_buffer))
 
             if radius:
-                logger.debug(f'Using forced radius of {radius}')
+                logger.debug('Using forced radius of {}'.format(radius))
             else:
                 logger.debug('Radius to {} nearest sink is: {}'
                              .format(nn_sinks, radius))
@@ -587,14 +588,15 @@ class LeastCostXmission(LeastCostPaths):
                     if num_jobs <= max_workers:
                         time.sleep(mp_delay)
 
-            logger.debug(f'Completed kicking off {num_jobs} jobs for '
-                         f'{max_workers} workers.')
+            logger.debug('Completed kicking off {} jobs for {} workers.'
+                         .format(num_jobs, max_workers))
             for i, future in enumerate(as_completed(futures)):
                 sc_costs = future.result()
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
 
-                logger.debug(f'SC point {i + 1} of {len(futures)} complete!')
+                logger.debug('SC point {} of {} complete!'
+                             .format(i + 1, len(futures)))
                 log_mem(logger)
 
         return least_costs
@@ -663,7 +665,8 @@ class LeastCostXmission(LeastCostPaths):
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
 
-                logger.debug(f'SC point {i} of {len(sc_point_gids)} complete!')
+                logger.debug('SC point {} of {} complete!'
+                             .format(i, len(sc_point_gids)))
                 log_mem(logger)
                 i += 1
         return least_costs

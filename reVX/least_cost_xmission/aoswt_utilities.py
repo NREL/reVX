@@ -5,17 +5,21 @@ Mike Bannister 5/2022
 """
 import os
 import json
+import logging
+from functools import reduce
+
 import h5py
 import numpy as np
 import pandas as pd
 import geopandas as gpd
 import rasterio as rio
-from functools import reduce
 from rasterio import features
 from rasterio.warp import reproject, Resampling
 from shapely.geometry import Point, LineString
 
 import rex
+
+logger = logging.getLogger(__name__)
 
 
 def _sum(a, b):
@@ -36,7 +40,8 @@ def convert_pois_to_lines(poi_csv_f, template_f, out_f):
     out_f : str
         Path and file name for geopackage
     """
-    print(f'Converting POIs in {poi_csv_f} to lines in {out_f}')
+    logger.info('Converting POIs in {} to lines in {}'
+                .format(poi_csv_f, out_f))
     with rio.open(template_f) as ras:
         crs = ras.crs
 
@@ -81,7 +86,7 @@ def convert_pois_to_lines(poi_csv_f, template_f, out_f):
     pois['gid'] = pois.index
 
     pois.to_file(out_f, driver="GPKG")
-    print('Complete')
+    logger.info('Complete')
 
 
 class CombineRasters:
@@ -89,8 +94,8 @@ class CombineRasters:
     Combine layers to create composite friction and barrier rasters. Merge
     with existing land cost and barriers and save to h5.
     """
-    OS_FRICTION_FNAME = 'os_friction.tif'
-    OS_BARRIERS_FNAME = 'os_barriers.tif'
+    OFFSHORE_FRICTION_FNAME = 'offshore_friction.tif'
+    OFFSHORE_BARRIERS_FNAME = 'offshore_barriers.tif'
     COMBO_LAYER_FNAME = 'combo_{}.tif'
     LAND_MASK_FNAME = 'land_mask.tif'
     SLOPE_CUTOFF = 15  # slopes >= this value are barriers
@@ -107,8 +112,8 @@ class CombineRasters:
         self.layer_dir = layer_dir
 
         self._os_profile = self._extract_profile(template_f)
-        self._os_profile['dtype'] = (f'MUST SET in {self.__class__.__name__}'
-                                     '.profile()!')
+        self._os_profile['dtype'] = ('MUST SET in {}.profile()!'
+                                     .format(self.__class__.__name__))
         self._os_shape = (self.profile()['height'],
                           self.profile()['width'])
 
@@ -128,7 +133,7 @@ class CombineRasters:
             Save mask as tiff if true
         """
         ldf = gpd.read_file(mask_shp_f)
-        print(f'Rasterizing {mask_shp_f}')
+        logger.info('Rasterizing {}'.format(mask_shp_f))
         l_geom = list(ldf.geometry)
         l_rast = features.rasterize(l_geom, out_shape=self._os_shape, fill=0,
                                     out=None,
@@ -137,11 +142,11 @@ class CombineRasters:
                                     dtype=None)
 
         if save_tiff:
-            print(f'Saving land mask to {self.LAND_MASK_FNAME}')
+            logger.info('Saving land mask to {}'.format(self.LAND_MASK_FNAME))
             self._save_tiff(l_rast, self.LAND_MASK_FNAME)
 
         self._land_mask = l_rast == 1
-        print('Rasterizing complete')
+        logger.info('Rasterizing complete')
 
     def load_land_mask(self, mask_f=None):
         """
@@ -162,7 +167,7 @@ class CombineRasters:
         assert l_rast.shape == self._os_shape
 
         self._land_mask = l_rast == 1
-        print(f'Successfully loaded land mask from {mask_f}')
+        logger.info('Successfully loaded land mask from {}'.format(mask_f))
 
     def build_off_shore_friction(self, friction_files, slope_file=None,
                                  save_tiff=None):
@@ -184,12 +189,13 @@ class CombineRasters:
         save_tiff : bool, optional
             Save composite friction to tiff if true
         """
-        print('Loading friction layers')
+        logger.info('Loading friction layers')
         fr_layers = {}
         for fr_dict, f in friction_files:
             d = None
             for k, val in fr_dict.items():
-                print(f'--- setting raster value {k} to fricton {val} for {f}')
+                logger.info('--- setting raster value {} to friction '
+                            '{} for {}'.format(k, val, f))
                 tmp_d = self._load_layer(f, k) * val
                 d = tmp_d if d is None else d + tmp_d
 
@@ -197,7 +203,7 @@ class CombineRasters:
             fr_layers[f] = d.astype('uint16')
 
         if slope_file is not None:
-            print('--- calculating slope friction')
+            logger.info('--- calculating slope friction')
             HIGH_FRICTION = 10
             MEDIUM_FRICTION = 5
             LOW_FRICTION = 1
@@ -205,7 +211,7 @@ class CombineRasters:
             if not os.path.exists(slope_file):
                 slope_file = os.path.join(self.layer_dir, slope_file)
             if not os.path.exists(slope_file):
-                raise FileNotFoundError(f'Unable to find {slope_file}')
+                raise FileNotFoundError('Unable to find {}'.format(slope_file))
 
             d = rio.open(slope_file).read(1)
             d[d < 0] = 0
@@ -217,14 +223,14 @@ class CombineRasters:
 
             fr_layers[slope_file] = d2.astype('uint16')
 
-        print('Combining off-shore friction layers')
+        logger.info('Combining off-shore friction layers')
         self._os_friction = reduce(_sum, fr_layers.values()).astype('uint16')
 
         if save_tiff:
-            print('Saving combined friction to tiff')
-            self._save_tiff(self._os_friction, self.OS_FRICTION_FNAME)
+            logger.info('Saving combined friction to tiff')
+            self._save_tiff(self._os_friction, self.OFFSHORE_FRICTION_FNAME)
 
-        print('Done processing friction layers')
+        logger.info('Done processing friction layers')
 
     def build_off_shore_barriers(self, barrier_files, fi_files,
                                  slope_file=None, save_tiff=False):
@@ -250,20 +256,20 @@ class CombineRasters:
         save_tiff : bool, options
             Save composite layer to geotiff if true
         """
-        print('Loading barrier layers')
+        logger.info('Loading barrier layers')
         barrier_layers = {}
         for val, f in barrier_files:
-            print(f'--- {f}')
+            logger.info('--- {}'.format(f))
             d = self._load_layer(f, val)
             assert d.shape == self._os_shape and d.min() == 0 and d.max() == 1
             barrier_layers[f] = d
 
         if slope_file is not None:
-            print('--- calculating slope barrier')
+            logger.info('--- calculating slope barrier')
             if not os.path.exists(slope_file):
                 slope_file = os.path.join(self.layer_dir, slope_file)
             if not os.path.exists(slope_file):
-                raise FileNotFoundError(f'Unable to find {slope_file}')
+                raise FileNotFoundError('Unable to find {}'.format(slope_file))
 
             d = rio.open(slope_file).read(1)
             assert d.shape == self._os_shape
@@ -273,21 +279,21 @@ class CombineRasters:
             barrier_layers[slope_file] = d2.astype('uint8')
 
         # Add all the exclusion layers together and normalize
-        print('Building composite off-shore barrier layers')
+        logger.info('Building composite off-shore barrier layers')
         comp_bar = reduce(_sum, barrier_layers.values())
         comp_bar[comp_bar >= 1] = 1
 
         if len(fi_files) > 0:
-            print('Loading forced inclusion layers')
+            logger.info('Loading forced inclusion layers')
             fi_layers = {}
             for val, f in fi_files:
-                print(f'--- {f}')
+                logger.info('--- {}'.format(f))
                 d = self._load_layer(f, val)
                 assert d.shape == self._os_shape and d.min() == 0 and \
                     d.max() == 1
                 fi_layers[f] = d
 
-            print('Building composite forced inclusion layers')
+            logger.info('Building composite forced inclusion layers')
             comp_fi = reduce(_sum, fi_layers.values())
             comp_fi[comp_fi >= 1] = 1
 
@@ -299,11 +305,12 @@ class CombineRasters:
         assert comp_bar.min() == 0
 
         if save_tiff:
-            print(f'Saving barriers to {self.OS_BARRIERS_FNAME}')
-            self._save_tiff(comp_bar, self.OS_BARRIERS_FNAME)
+            logger.info('Saving barriers to {}'
+                        .format(self.OFFSHORE_BARRIERS_FNAME))
+            self._save_tiff(comp_bar, self.OFFSHORE_BARRIERS_FNAME)
 
         self._os_barriers = comp_bar
-        print('Done building barrier layers')
+        logger.info('Done building barrier layers')
 
     def merge_os_and_land_friction(self, land_h5, land_cost_layer,
                                    aoswt_h5, os_friction_layer=None,
@@ -338,16 +345,17 @@ class CombineRasters:
             os_friction = self._os_friction
         else:
             if os_friction_f is None:
-                os_friction_f = self.OS_FRICTION_FNAME
+                os_friction_f = self.OFFSHORE_FRICTION_FNAME
             if not os.path.exists(os_friction_f):
                 msg = ('Off-shore friction has not been calculated and cached'
-                       f' friction was not found at {os_friction_f}. Please '
-                       f'run {self.__class__.__name__}.'
+                       ' friction was not found at {}. Please run {}.'
                        'build_off_shore_friction() first or pass a valid '
-                       'filename to os_friction_f')
+                       'filename to os_friction_f'
+                       .format(os_friction_f, self.__class__.__name__))
                 raise AttributeError(msg)
 
-            print(f'Loading off-shore friction from {os_friction_f}')
+            logger.info('Loading off-shore friction from {}'
+                        .format(os_friction_f))
             with rio.open(os_friction_f) as ras:
                 os_friction = ras.read(1)
 
@@ -389,16 +397,17 @@ class CombineRasters:
             os_barriers = self._os_barriers
         else:
             if os_barriers_f is None:
-                os_barriers_f = self.OS_BARRIERS_FNAME
+                os_barriers_f = self.OFFSHORE_BARRIERS_FNAME
             if not os.path.exists(os_barriers_f):
                 msg = ('Off-shore barriers have not been calculated and cached'
-                       f' barriers were not found at {os_barriers_f}. Please '
-                       f'run {self.__class__.__name__}.'
+                       ' barriers were not found at {}. Please run {}.'
                        'build_off_shore_barriers() first or pass a valid '
-                       'filename to os_barriers_f')
+                       'filename to os_barriers_f'
+                       .format(os_barriers_f, self.__class__.__name__))
                 raise AttributeError(msg)
 
-            print(f'Loading off-shore barriers from {os_barriers_f}')
+            logger.info('Loading off-shore barriers from {}'
+                        .format(os_barriers_f))
             with rio.open(os_barriers_f) as ras:
                 os_barriers = ras.read(1)
 
@@ -442,14 +451,15 @@ class CombineRasters:
             Initial value to seed combined raster
         """
         # Load land layer
-        print(f'Loading land {layer_name} "{land_layer}" from {land_h5}')
+        logger.info('Loading land {} "{}" from {}'
+                    .format(layer_name, land_layer, land_h5))
         with rex.Resource(land_h5) as res:
             profile_json = res.attrs[land_layer]['profile']
             old_land_profile = json.loads(profile_json)
             old_land_data = res[land_layer][0]
 
         # Reproject land barriers to new off-shore projection
-        print(f'Reprojecting land {layer_name}')
+        logger.info('Reprojecting land {}'.format(layer_name))
         land_data = np.ones(self._os_shape, dtype=dtype)
         reproject(old_land_data,
                   destination=land_data,
@@ -462,22 +472,23 @@ class CombineRasters:
                   INIT_DEST=init_dest)
 
         assert os_data.shape == land_data.shape
-        setattr(self, f'_land_{layer_name}', land_data)
+        setattr(self, '_land_{}'.format(layer_name), land_data)
 
         # Combine the land and off-shore data
-        print(f'Combining land and off-shore {layer_name}')
+        logger.info('Combining land and off-shore {}'.format(layer_name))
         combo_data = land_data * land_mult
         combo_data[~self.land_mask] = os_data[~self.land_mask]
         combo_data = combo_data.astype(dtype)
 
         if save_tiff:
             fname = self.COMBO_LAYER_FNAME.format(layer_name)
-            print(f'Saving combined {layer_name} to {fname}')
+            logger.info('Saving combined {} to {}'.format(layer_name, fname))
             self._save_tiff(combo_data, fname)
 
-        setattr(self, f'_combo_{layer_name}', combo_data)
+        setattr(self, '_combo_{}'.format(layer_name), combo_data)
 
-        print(f'Writing combined data to "{os_layer}" in {aoswt_h5}')
+        logger.info('Writing combined data to "{}" in {}'
+                    .format(os_layer, aoswt_h5))
         combo_data = combo_data[np.newaxis, ...]
         with h5py.File(aoswt_h5, 'a') as f:
             if os_layer in f.keys():
@@ -501,7 +512,7 @@ class CombineRasters:
 
         """
         if os.path.exists(aoswt_h5) and not overwrite:
-            raise AttributeError(f'File {aoswt_h5} exits')
+            raise AttributeError('File {} exits'.format(aoswt_h5))
 
         with rex.Resource(aoswt_ex_h5) as res:
             lats = res['latitude']
@@ -523,8 +534,8 @@ class CombineRasters:
     def land_mask(self):
         if self._land_mask is None:
             cls_name = self.__class__.__name__
-            msg = (f'Must run {cls_name}.create_land_mask() or {cls_name}.'
-                   'load_land_mask() first')
+            msg = ('Must run {}.create_land_mask() or {}.'
+                   'load_land_mask() first'.format(cls_name, cls_name))
             raise RuntimeError(msg)
 
         return self._land_mask
@@ -570,11 +581,12 @@ class CombineRasters:
             f_old = f
             f = os.path.join(self.layer_dir, f)
         if not os.path.exists(f):
-            raise FileNotFoundError(f'Unable to find file {f_old} or {f}')
+            raise FileNotFoundError('Unable to find file {} or {}'
+                                    .format(f_old, f))
 
         name = f.split('/')[-1]
         if verbose:
-            print(f'Processing val {val} for {name}')
+            logger.info('Processing val {} for {}'.format(val, name))
         d = rio.open(f).read(1)
         if isinstance(val, int):
             d[d != val] = 0
@@ -583,9 +595,10 @@ class CombineRasters:
             d[~np.in1d(d, val).reshape(d.shape)] = 0
             d[np.in1d(d, val).reshape(d.shape)] = 1
         else:
-            raise AttributeError(f'Unknown type for val: {val} - {type(val)}')
+            raise AttributeError('Unknown type for val: {} - {}'
+                                 .format(val, type(val)))
         if verbose:
-            print(d.shape, d.max(), d.min())
+            logger.info(d.shape, d.max(), d.min())
         return d
 
     def _save_tiff(self, data, f_name):
