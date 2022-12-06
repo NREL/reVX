@@ -477,6 +477,7 @@ class CombineRasters:
         # Combine the land and off-shore data
         logger.info('Combining land and off-shore {}'.format(layer_name))
         combo_data = land_data * land_mult
+        # pylint: disable=invalid-unary-operand-type
         combo_data[~self.land_mask] = os_data[~self.land_mask]
         combo_data = combo_data.astype(dtype)
 
@@ -532,15 +533,28 @@ class CombineRasters:
 
     @property
     def land_mask(self):
+        """np.ndarray: Land mask layer."""
         if self._land_mask is None:
             cls_name = self.__class__.__name__
-            msg = ('Must run {}.create_land_mask() or {}.'
-                   'load_land_mask() first'.format(cls_name, cls_name))
+            msg = ('Must run {0}.create_land_mask() or {0}.'
+                   'load_land_mask() first'.format(cls_name))
             raise RuntimeError(msg)
 
         return self._land_mask
 
     def profile(self, dtype=None):
+        """Copy CRS Profile.
+
+        Parameters
+        ----------
+        dtype : str, optional
+            Optional dtype fill. By default, `None`.
+
+        Returns
+        -------
+        dict
+            CRS Profile.
+        """
         prof = self._os_profile.copy()
         if dtype:
             prof['dtype'] = dtype
@@ -548,6 +562,7 @@ class CombineRasters:
 
     @staticmethod
     def _extract_profile(template_f):
+        """Extract profile from file. """
         with rio.open(template_f) as ras:
             profile = {
                 'crs': ras.crs,

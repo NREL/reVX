@@ -487,6 +487,7 @@ class LeastCostXmission(LeastCostPaths):
                 barrier_mult=barrier_mult,
                 save_paths=save_paths,
                 radius=radius,
+                mp_delay=mp_delay,
                 simplify_geo=simplify_geo,
                 max_workers=max_workers)
         else:
