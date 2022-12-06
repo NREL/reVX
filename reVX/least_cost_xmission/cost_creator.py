@@ -9,7 +9,7 @@ import os
 from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.handlers.geotiff import Geotiff
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 from reVX.least_cost_xmission.config import XmissionConfig
 
 logger = logging.getLogger(__name__)

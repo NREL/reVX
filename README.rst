@@ -75,12 +75,16 @@ Option 1: Install from PIP or Conda (recommended for analysts):
 1. Create a new environment:
     ``conda create --name revx python=3.7``
 
+        - NOTE: reVX currently only supports python versions 3.7, 3.8, and 3.9. Python 3.10+ conflicts with the reV dependency.
+
 2. Activate directory:
     ``conda activate revx``
 
 3. Install reVX:
     1) ``pip install NREL-reVX`` or
     2) ``conda install nrel-revx --channel=nrel``
+
+        - NOTE: The best guarantee you will have of a correct installation is by following the same `installation process that we use for our automated test suite <https://github.com/NREL/reVX/blob/7932a095c222e2e5c70bfc7b4813a68a1da2493a/.github/workflows/pull_request_tests.yml#L29-L33>`_.
 
         - NOTE: If you install using conda and you want to use:
             * `HSDS <https://github.com/NREL/hsds-examples>`_ you will also need to install h5pyd manually: ``pip install h5pyd``

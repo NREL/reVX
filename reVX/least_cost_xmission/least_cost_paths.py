@@ -18,7 +18,7 @@ from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
 from reVX.least_cost_xmission.trans_cap_costs import TieLineCosts
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
 

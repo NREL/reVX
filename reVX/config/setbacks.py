@@ -5,7 +5,8 @@ reVX Setbacks Configuration
 import logging
 
 from reV.config.base_analysis_config import AnalysisConfig
-from reV.utilities.exceptions import ConfigError
+from reVX.setbacks.regulations import validate_setback_regulations_input
+from reVX.setbacks import SETBACKS
 
 logger = logging.getLogger(__name__)
 
@@ -15,43 +16,27 @@ class SetbacksConfig(AnalysisConfig):
 
     NAME = 'Setbacks'
     REQUIREMENTS = ('excl_fpath', 'features_path', 'feature_type')
-    FEATURE_TYPE_EXTRA_REQUIREMENTS = {
-        'structure': ['hub_height', 'rotor_diameter'],
-        'road': ['hub_height', 'rotor_diameter'],
-        'rail': ['hub_height', 'rotor_diameter'],
-        'transmission': ['hub_height', 'rotor_diameter'],
-        'parcel': [],
-    }
 
     def _preflight(self):
         """
         Run a preflight check for extra requirements based on feature type.
         """
         super()._preflight()
-
-        missing = []
-        for req in self.FEATURE_TYPE_EXTRA_REQUIREMENTS[self.feature_type]:
-            if req not in self:
-                missing.append(req)
-
-        if any(missing):
-            e = ('{} missing the following keys: {}'
-                 .format(self.__class__.__name__, missing))
-            logger.error(e)
-            raise ConfigError(e)
+        validate_setback_regulations_input(
+            base_setback_dist=self.base_setback_dist,
+            hub_height=self.hub_height,
+            rotor_diameter=self.rotor_diameter)
 
     @property
     def feature_type(self):
         """
         Get the setback feature type (required).
-        must be one of the keys of `FEATURE_TYPE_EXTRA_REQUIREMENTS`
+        must be one of the keys of `SETBACKS`
         """
         feature_type = self['feature_type']
-        options = set(self.FEATURE_TYPE_EXTRA_REQUIREMENTS.keys())
-        msg = ("feature_type must be one of: {}; got {}".format(
-            options, feature_type)
-        )
-        assert feature_type in options, msg
+        msg = ("feature_type must be one of: {}; got {}"
+               .format(SETBACKS, feature_type))
+        assert feature_type in SETBACKS, msg
 
         return feature_type
 
@@ -99,3 +84,13 @@ class SetbacksConfig(AnalysisConfig):
     def hsds(self):
         """Get hsds flag"""
         return self.get('hsds', False)
+
+    @property
+    def weights_calculation_upscale_factor(self):
+        """Get upscale factor for weights calculation. """
+        return self.get("weights_calculation_upscale_factor", None)
+
+    @property
+    def out_layers(self):
+        """Get out_layers dictionary. """
+        return self.get("out_layers", None)

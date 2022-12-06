@@ -11,7 +11,7 @@ from rex.utilities.loggers import init_logger
 from rex.utilities.utilities import safe_json_load
 
 from reVX.offshore.dist_to_ports_converter import DistToPortsConverter
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 from reVX.utilities.forecasts import FcstUtils
 from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region_classifier import RegionClassifier
@@ -176,8 +176,10 @@ def layers_to_h5(ctx, layers, check_tiff, setbacks, distance_to_ports,
         raise RuntimeError(msg)
 
     if setbacks:
+        incl_layers = inputs.get('are_inclusion_layers', False)
         SetbacksConverter.layers_to_h5(excl_h5, layers,
                                        check_tiff=check_tiff,
+                                       are_inclusion_layers=incl_layers,
                                        transform_atol=transform_atol,
                                        coord_atol=coord_atol,
                                        descriptions=descriptions,

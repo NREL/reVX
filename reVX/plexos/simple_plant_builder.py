@@ -14,7 +14,6 @@ from sklearn.neighbors import BallTree
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.utilities import parse_table
 
-from reVX.handlers.outputs import Outputs
 from reVX.plexos.base import BaseProfileAggregation, PlexosNode
 from reVX.plexos.utilities import get_coord_labels
 
@@ -27,6 +26,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
     """
 
     def __init__(self, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
+                 plant_name_col=None, tech_tag=None, timezone='UTC',
                  share_resource=True, max_workers=None):
         """Run plexos aggregation.
 
@@ -47,6 +47,17 @@ class SimplePlantBuilder(BaseProfileAggregation):
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
         share_resource : bool
             Flag to share available capacity within a single resource GID
             between multiple plants.
@@ -63,6 +74,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._forecast_fpath = forecast_fpath
         self._share_res = share_resource
         self._output_meta = None
+        self._plant_name_col = plant_name_col
+        self._tech_tag = tech_tag
+        self._timezone = timezone
         self.max_workers = max_workers
 
         required = ('sc_gid', 'latitude', 'longitude', 'res_gids',
@@ -361,6 +375,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
 
     @classmethod
     def run(cls, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
+            plant_name_col=None, tech_tag=None, timezone='UTC',
             share_resource=True, max_workers=None, out_fpath=None):
         """Build profiles and meta data.
 
@@ -381,6 +396,17 @@ class SimplePlantBuilder(BaseProfileAggregation):
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results).
             If not None, the generation profiles are sourced from this file.
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
         share_resource : bool
             Flag to share available capacity within a single resource GID
             between multiple plants.
@@ -388,8 +414,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
         out_fpath : str, optional
-            Path to .h5 file into which plant buildout should be saved,
-            by default None
+            Path to .h5 file into which plant buildout should be saved. A
+            plexos-formatted csv will also be written in the same directory.
+            By default None.
 
         Returns
         -------
@@ -403,16 +430,15 @@ class SimplePlantBuilder(BaseProfileAggregation):
         """
 
         pb = cls(plant_meta, rev_sc, cf_fpath, forecast_fpath=forecast_fpath,
-                 share_resource=share_resource, max_workers=max_workers)
+                 plant_name_col=plant_name_col, tech_tag=tech_tag,
+                 timezone=timezone, share_resource=share_resource,
+                 max_workers=max_workers)
 
         plant_sc_builds = pb.assign_plant_buildouts()
         pb.check_valid_buildouts(plant_sc_builds)
         profiles = pb.make_profiles(plant_sc_builds)
 
         if out_fpath is not None:
-            if out_fpath.endswith('.h5'):
-                Outputs.write_profiles(out_fpath, pb.plant_meta, pb.time_index,
-                                       'plant_profiles', profiles,
-                                       profiles.dtype)
+            pb.export(pb.plant_meta, pb.time_index, profiles, out_fpath)
 
         return pb.plant_meta, pb.time_index, profiles
