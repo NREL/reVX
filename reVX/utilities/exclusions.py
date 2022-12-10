@@ -757,20 +757,20 @@ class ExclusionsConverter:
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
-                # lat, lon = tif.lat_lon
-                # if not np.allclose(h5.latitude, lat, atol=coord_atol):
-                #     error = ('Latitude coordinates {} and {} do not match to '
-                #              'within {} degrees!'
-                #              .format(geotiff, excl_h5, coord_atol))
-                #     logger.error(error)
-                #     raise ExclusionsCheckError(error)
+                lat, lon = tif.lat_lon
+                if not np.allclose(h5.latitude, lat, atol=coord_atol):
+                    error = ('Latitude coordinates {} and {} do not match to '
+                             'within {} degrees!'
+                             .format(geotiff, excl_h5, coord_atol))
+                    logger.error(error)
+                    raise ExclusionsCheckError(error)
 
-                # if not np.allclose(h5.longitude, lon, atol=coord_atol):
-                #     error = ('Longitude coordinates {} and {} do not match to '
-                #              'within {} degrees!'
-                #              .format(geotiff, excl_h5, coord_atol))
-                #     logger.error(error)
-                #     raise ExclusionsCheckError(error)
+                if not np.allclose(h5.longitude, lon, atol=coord_atol):
+                    error = ('Longitude coordinates {} and {} do not match to '
+                             'within {} degrees!'
+                             .format(geotiff, excl_h5, coord_atol))
+                    logger.error(error)
+                    raise ExclusionsCheckError(error)
 
     @classmethod
     def _parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
