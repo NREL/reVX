@@ -331,31 +331,19 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         exclusions : ndarray
             Raster array of exclusions.
         """
-        exclusions = None
         max_workers = max_workers or os.cpu_count()
 
         log_mem(logger)
         if max_workers > 1:
             logger.info('Computing local exclusions in parallel using {} '
                         'workers'.format(max_workers))
-            loggers = [__name__, 'reVX']
-            with SpawnProcessPool(max_workers=max_workers,
-                                  loggers=loggers) as exe:
-                futures = {}
-                for exclusion, cnty in self._regulations:
-                    args = self._local_exclusions_arguments(exclusion, cnty)
-                    future = exe.submit(self.compute_local_exclusions,
-                                        exclusion, cnty, *args)
-                    futures[future] = cnty['FIPS'].unique()
-
-                for i, future in enumerate(as_completed(futures)):
-                    exclusions = self._combine_exclusions(exclusions,
-                                                          future.result(),
-                                                          futures[future])
-                    logger.info('Computed exclusions for {} of {} counties'
-                                 .format((i + 1), len(self.regulations_table)))
+            spp_kwargs = {"max_workers": max_workers,
+                          "loggers": [__name__, 'reVX']}
+            with SpawnProcessPool(**spp_kwargs) as exe:
+                exclusions = self._compute_exclusions_spp(exe, max_workers)
         else:
             logger.info('Computing local exclusions in serial')
+            exclusions = None
             for i, (exclusion, cnty) in enumerate(self._regulations):
                 args = self._local_exclusions_arguments(exclusion, cnty)
                 local_exclusions = self.compute_local_exclusions(exclusion,
@@ -367,6 +355,32 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 logger.debug('Computed exclusions for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 
+        return exclusions
+
+    def _compute_exclusions_spp(self, exe, max_submissions):
+        """Compute exclusions in parallel using futures. """
+        futures, exclusions = {}, None
+
+        for ind, regulation_info in enumerate(self._regulations, start=1):
+            exclusion_value, cnty = regulation_info
+            logger.info('Computing exclusions for {}/{} counties'
+                        .format(ind, len(self.regulations_table)))
+            args = self._local_exclusions_arguments(exclusion_value, cnty)
+            future = exe.submit(self.compute_local_exclusions,
+                                exclusion_value, cnty, *args)
+            futures[future] = cnty['FIPS'].unique()
+            if ind % max_submissions == 0:
+                exclusions = self._collect_futures(futures, exclusions)
+        exclusions = self._collect_futures(futures, exclusions)
+        return exclusions
+
+    def _collect_futures(self, futures, exclusions):
+        """Collect all futures from the input dictionary. """
+        for future in as_completed(futures):
+            exclusions = self._combine_exclusions(exclusions,
+                                                  future.result(),
+                                                  futures.pop(future))
+            log_mem(logger)
         return exclusions
 
     def compute_exclusions(self, out_layer=None, out_tiff=None, replace=False,
@@ -743,20 +757,20 @@ class ExclusionsConverter:
                     logger.error(error)
                     raise ExclusionsCheckError(error)
 
-                lat, lon = tif.lat_lon
-                if not np.allclose(h5.latitude, lat, atol=coord_atol):
-                    error = ('Latitude coordinates {} and {} do not match to '
-                             'within {} degrees!'
-                             .format(geotiff, excl_h5, coord_atol))
-                    logger.error(error)
-                    raise ExclusionsCheckError(error)
+                # lat, lon = tif.lat_lon
+                # if not np.allclose(h5.latitude, lat, atol=coord_atol):
+                #     error = ('Latitude coordinates {} and {} do not match to '
+                #              'within {} degrees!'
+                #              .format(geotiff, excl_h5, coord_atol))
+                #     logger.error(error)
+                #     raise ExclusionsCheckError(error)
 
-                if not np.allclose(h5.longitude, lon, atol=coord_atol):
-                    error = ('Longitude coordinates {} and {} do not match to '
-                             'within {} degrees!'
-                             .format(geotiff, excl_h5, coord_atol))
-                    logger.error(error)
-                    raise ExclusionsCheckError(error)
+                # if not np.allclose(h5.longitude, lon, atol=coord_atol):
+                #     error = ('Longitude coordinates {} and {} do not match to '
+                #              'within {} degrees!'
+                #              .format(geotiff, excl_h5, coord_atol))
+                #     logger.error(error)
+                #     raise ExclusionsCheckError(error)
 
     @classmethod
     def _parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
