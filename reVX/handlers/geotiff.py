@@ -162,7 +162,7 @@ class Geotiff:
         n_rows : int
             Number of row entries in the full geotiff.
         """
-        return self.shape[1]
+        return self.shape[0]
 
     @property
     def n_cols(self):
@@ -173,7 +173,7 @@ class Geotiff:
         n_cols : int
             Number of column entries in the full geotiff.
         """
-        return self.shape[2]
+        return self.shape[1]
 
     @property
     def bands(self):
