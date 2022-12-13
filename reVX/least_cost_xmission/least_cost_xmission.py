@@ -516,7 +516,7 @@ class LeastCostXmission(LeastCostPaths):
         return least_costs.reset_index(drop=True)
 
     def _process_multi_core(self, capacity_class, tie_line_voltage,
-                            sc_point_gids, nn_sinks=2,
+                            sc_point_gids=None, nn_sinks=2,
                             clipping_buffer=1.05, barrier_mult=100,
                             max_workers=2, save_paths=False, radius=None,
                             mp_delay=3, simplify_geo=None):
@@ -531,7 +531,7 @@ class LeastCostXmission(LeastCostPaths):
             points to
         tie_line_voltage : int
             Tie-line volatage (kV)
-        sc_point_gids : list | set
+        sc_point_gids : list, optional
             List of sc_point_gids to connect to, by default connect to all
         nn_sinks : int, optional
             Number of nearest neighbor sinks to use for clipping radius
@@ -603,7 +603,7 @@ class LeastCostXmission(LeastCostPaths):
         return least_costs
 
     def _process_single_core(self, capacity_class, tie_line_voltage,
-                             sc_point_gids, nn_sinks=2,
+                             sc_point_gids=None, nn_sinks=2,
                              clipping_buffer=1.05, barrier_mult=100,
                              save_paths=False, radius=None,
                              simplify_geo=None):
@@ -618,7 +618,7 @@ class LeastCostXmission(LeastCostPaths):
             points to
         tie_line_voltage : int
             Tie-line volatage (kV)
-        sc_point_gids : list | set
+        sc_point_gids : list, optional
             List of sc_point_gids to connect to, by default connect to all
         nn_sinks : int, optional
             Number of nearest neighbor sinks to use for clipping radius

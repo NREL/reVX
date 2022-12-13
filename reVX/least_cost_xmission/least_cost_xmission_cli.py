@@ -18,7 +18,6 @@ from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reV.supply_curve.extent import SupplyCurveExtent
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
@@ -89,12 +88,14 @@ def from_config(ctx, config, verbose):
         return
 
     # Split gids over mulitple SLURM jobs
+    gids = config.sc_point_gids
     name = config.name
-    logger.info('Splitting SC points over {} SLURM jobs'
-                .format(config.execution_control.nodes))
+    logger.info('Splitting {} SC points over {} SLURM jobs'
+                .format(len(gids), config.execution_control.nodes))
     for i in range(config.execution_control.nodes):
         config.name = '{}_{}'.format(name, i)
-        eagle(config, start_index=i)
+        config.sc_point_gids = gids[i::config.execution_control.nodes]
+        eagle(config)
 
 
 @main.command()
@@ -114,12 +115,9 @@ def from_config(ctx, config, verbose):
 @click.option('--xmission_config', '-xcfg', type=STR, show_default=True,
               default=None,
               help=("Path to Xmission config .json"))
-@click.option('--sc_point_start_index', '-start', type=int,
-              show_default=True, default=0,
-              help=("Start index of supply curve points to run."))
-@click.option('--sc_point_step_index', '-step', type=int,
-              show_default=True, default=1,
-              help=("Step index of supply curve points to run."))
+@click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
+              default=None,
+              help=("List of sc_point_gids to connect to"))
 @click.option('--nn_sinks', '-nn', type=int,
               show_default=True, default=2,
               help=("Number of nearest neighbor sinks to use for clipping "
@@ -155,9 +153,9 @@ def from_config(ctx, config, verbose):
                     "GeoPackage."))
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
-          xmission_config, sc_point_start_index, sc_point_step_index,
-          nn_sinks, clipping_buffer, barrier_mult, max_workers, out_dir,
-          log_dir, verbose, save_paths, radius, simplify_geo):
+          xmission_config, sc_point_gids, nn_sinks, clipping_buffer,
+          barrier_mult, max_workers, out_dir, log_dir, verbose, save_paths,
+          radius, simplify_geo):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -171,9 +169,6 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, resolution,
     create_dirs(out_dir)
     logger.info('Computing Least Cost Xmission connections and writing them {}'
                 .format(out_dir))
-    sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
-    sc_point_gids = list(sce.points.index.values)
-    sc_point_gids = sc_point_gids[sc_point_start_index::sc_point_step_index]
     least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
                                         capacity_class,
                                         resolution=resolution,
@@ -275,7 +270,7 @@ def merge_output(ctx, split_to_geojson, out_file, out_path, drop, simplify_geo,
         paths.to_file(outf, driver="GeoJSON")
 
 
-def get_node_cmd(config, start_index=0):
+def get_node_cmd(config):
     """
     Get the node CLI call for Least Cost Xmission
 
@@ -297,8 +292,7 @@ def get_node_cmd(config, start_index=0):
             '-cap {}'.format(SLURM.s(config.capacity_class)),
             '-res {}'.format(SLURM.s(config.resolution)),
             '-xcfg {}'.format(SLURM.s(config.xmission_config)),
-            '-start {}'.format(SLURM.s(start_index)),
-            '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
+            '-gids {}'.format(SLURM.s(config.sc_point_gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
@@ -342,8 +336,7 @@ def run_local(ctx, config):
                capacity_class=config.capacity_class,
                resolution=config.resolution,
                xmission_config=config.xmission_config,
-               sc_point_start_index=0,
-               sc_point_step_index=1,
+               sc_point_gids=config.sc_point_gids,
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
                barrier_mult=config.barrier_mult,
@@ -357,7 +350,7 @@ def run_local(ctx, config):
                )
 
 
-def eagle(config, start_index=0):
+def eagle(config):
     """
     Run Least Cost Xmission on Eagle HPC.
 
@@ -368,7 +361,7 @@ def eagle(config, start_index=0):
     """
     init_logger('rex', log_level='DEBUG')
 
-    cmd = get_node_cmd(config, start_index)
+    cmd = get_node_cmd(config)
     name = config.name
     log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')

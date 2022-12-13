@@ -8,7 +8,7 @@ import logging
 import numpy as np
 import pandas as pd
 import rasterio
-from shapely.geometry import Polygon, Point
+from shapely.geometry import Polygon
 from shapely.geometry.linestring import LineString
 from shapely.ops import nearest_points
 from skimage.graph import MCP_Geometric
@@ -367,8 +367,9 @@ class TieLineCosts:
             row = indices[:, 0] + self.row_offset
             col = indices[:, 1] + self.col_offset
             x, y = rasterio.transform.xy(self.transform, row, col)
-            geom = Point if indices.shape[0] == 1 else LineString
-            out = length, cost, geom(list(zip(x, y)))
+            path = LineString(list(zip(x, y)))
+
+            out = length, cost, path
         else:
             out = length, cost
 
@@ -903,12 +904,11 @@ class TransCapCosts(TieLineCosts):
             except LeastCostPathNotFoundError as ex:
                 msg = ("Could not connect SC point {} to transmission feature "
                        "{}: {}"
-                       .format(self.sc_point_gid, feat['trans_gid'], ex))
+                       .format(self.sc_point_gid,
+                               feat['trans_gid'], ex))
                 logger.debug(msg)
                 if t_line:
                     features.loc[index, 'raw_line_cost'] = 1e12
-                if save_paths:
-                    paths.append(self._sc_point.geometry)
             except InvalidMCPStartValueError:
                 raise
             except Exception:
