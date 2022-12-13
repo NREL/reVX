@@ -193,8 +193,7 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test = '{}_LeastCostXmission_{}MW_128.csv'.format(os.path.basename(td),
-                                                          capacity)
+        test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
         test = os.path.join(td, test)
         test = pd.read_csv(test)
         SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')

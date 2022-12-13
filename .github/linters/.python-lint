@@ -55,6 +55,8 @@ confidence=
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
 disable=
+        arguments-renamed,
+        unspecified-encoding,
         use-maxsplit-arg,
         arguments-renamed,
         unspecified-encoding,

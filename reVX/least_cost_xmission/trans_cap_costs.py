@@ -167,6 +167,8 @@ class TieLineCosts:
                        .format((self.row, self.col)))
                 raise InvalidMCPStartValueError(msg)
 
+            logger.debug('Building MCP instance for size {}'
+                         .format(self.mcp_cost.shape))
             self._mcp = MCP_Geometric(self.mcp_cost)
             self._mcp.find_costs(starts=[(self.row, self.col)])
 
@@ -829,7 +831,8 @@ class TransCapCosts(TieLineCosts):
 
         return [row, col]
 
-    def compute_tie_line_costs(self, min_line_length=5.7):
+    def compute_tie_line_costs(self, min_line_length=5.7,  # noqa: C901
+                               save_paths=False):
         """
         Compute least cost path and distance between supply curve point and
         every tranmission feature
@@ -838,6 +841,9 @@ class TransCapCosts(TieLineCosts):
         ----------
         min_line_length : float, optional
             Minimum line length in km, by default 5.7
+        save_paths : bool, optional
+            Flag to save least cost path as a multi-line geometry,
+            by default False
 
         Returns
         -------
@@ -849,6 +855,8 @@ class TransCapCosts(TieLineCosts):
         features = self.features.copy()
         features['raw_line_cost'] = None
         features['dist_km'] = None
+        if save_paths:
+            paths = []
 
         logger.debug('Determining path lengths and costs')
 
@@ -862,7 +870,11 @@ class TransCapCosts(TieLineCosts):
 
             try:
                 # pylint: disable=unbalanced-tuple-unpacking
-                length, cost = self.least_cost_path(feat_idx)
+                result = self.least_cost_path(feat_idx, save_path=save_paths)
+                if save_paths:
+                    (length, cost, path) = result
+                else:
+                    (length, cost) = result
 
                 if t_line and feat['max_volts'] < tie_voltage:
                     msg = ('Tie-line {} voltage of {}kV is less than tie line '
@@ -886,6 +898,9 @@ class TransCapCosts(TieLineCosts):
 
                 features.loc[index, 'dist_km'] = length
                 features.loc[index, 'raw_line_cost'] = cost
+                if save_paths:
+                    paths.append(path)
+
             except LeastCostPathNotFoundError as ex:
                 msg = ("Could not connect SC point {} to transmission feature "
                        "{}: {}"
@@ -901,6 +916,11 @@ class TransCapCosts(TieLineCosts):
                                  'transmission features!'
                                  .format(self.sc_point_gid))
                 raise
+
+        if save_paths:
+            with ExclusionLayers(self._cost_fpath) as el:
+                crs = el.crs
+            features = gpd.GeoDataFrame(features, geometry=paths, crs=crs)
 
         return features
 
@@ -955,7 +975,8 @@ class TransCapCosts(TieLineCosts):
 
         return features
 
-    def compute(self, min_line_length=5.7):
+    def compute(self, min_line_length=5.7, save_paths=False,
+                simplify_geo=None):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -965,14 +986,20 @@ class TransCapCosts(TieLineCosts):
         ----------
         min_line_length : float, optional
             Minimum line length in km, by default 5.7
+        save_paths : bool, optional
+            Flag to save least cost path as a multi-line geometry,
+            by default False
+        simplify_geo : float | None, optional
+            If float, simplify geometres using this value
 
         Returns
         -------
-        features : pd.DataFrame
+        features : pd.DataFrame | gpd.GeoDataFrame
             Transmission table with tie-line costs and distances and connection
-            costs added
+            costs added. Includes paths if save_paths == True
         """
-        features = self.compute_tie_line_costs(min_line_length=min_line_length)
+        features = self.compute_tie_line_costs(min_line_length=min_line_length,
+                                               save_paths=save_paths)
 
         mask = features['raw_line_cost'].isna()
         if mask.any():
@@ -987,18 +1014,25 @@ class TransCapCosts(TieLineCosts):
 
         features['trans_cap_cost'] = (features['tie_line_cost']
                                       + features['connection_cost'])
+        drop_cols = ['row', 'col']
+        if not save_paths:
+            drop_cols.append('geometry')
+        features = features.drop(columns=drop_cols, errors='ignore'
+                                 ).reset_index(drop=True)
 
-        features = features.drop(columns=['row', 'col', 'geometry'],
-                                 errors='ignore').reset_index(drop=True)
         features['sc_row_ind'] = self.sc_point['sc_row_ind']
         features['sc_col_ind'] = self.sc_point['sc_col_ind']
         features['sc_point_gid'] = self.sc_point_gid
+
+        if save_paths and simplify_geo:
+            features.geometry = features.geometry.simplify(simplify_geo)
 
         return features
 
     @classmethod
     def run(cls, cost_fpath, sc_point, features, capacity_class, radius=None,
-            xmission_config=None, barrier_mult=100, min_line_length=5.7):
+            xmission_config=None, barrier_mult=100, min_line_length=5.7,
+            save_paths=False, simplify_geo=None):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1023,20 +1057,31 @@ class TransCapCosts(TieLineCosts):
             Multiplier on transmission barrier costs, by default 100
         min_line_length : float, optional
             Minimum line length in km, by default 5.7
+        save_paths : bool, optional
+            Flag to save least cost path as a multi-line geometry,
+            by default False
+        simplify_geo : float | None, optional
+            If float, simplify geometres using this value
 
         Returns
         -------
-        features : pd.DataFrame | None
+        features : pd.DataFrame | gpd.GeoDataFrame | None
             Transmission table with tie-line costs and distances and connection
-            costs added
+            costs added. Will include paths if save_paths == True
         """
         ts = time.time()
+        logger.debug('Processing sc_point {}, {}, save_paths={}'
+                     .format(sc_point.sc_point_gid, sc_point.geometry,
+                             save_paths))
+
         try:
             tcc = cls(cost_fpath, sc_point, features, capacity_class,
                       radius=radius, xmission_config=xmission_config,
                       barrier_mult=barrier_mult)
 
-            features = tcc.compute(min_line_length=min_line_length)
+            features = tcc.compute(min_line_length=min_line_length,
+                                   save_paths=save_paths,
+                                   simplify_geo=simplify_geo)
             logger.debug('Least Cost transmission costs computed for '
                          'SC point {} in {:.4f}s'
                          .format(tcc.sc_point_gid, time.time() - ts))

@@ -2,6 +2,7 @@
 """
 reVX Least Cost Xmission Configurations
 """
+import os
 
 from reV.config.base_analysis_config import AnalysisConfig
 
@@ -109,6 +110,47 @@ class LeastCostXmissionConfig(AnalysisConfig):
         self._default_clipping_buffer = 1.05
         self._default_barrier_mult = 100
         self._default_min_line_length = 5.7
+        self._sc_point_gids = None
+
+    @property
+    def name(self):
+        """Get the job name, defaults to the output directory name.
+
+        Returns
+        -------
+        _name : str
+            Job name.
+        """
+        if self._name is None:
+            default_name = os.path.basename(os.path.normpath(self.dirout))
+            self._name = self.get('name', default_name)
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+
+    @property
+    def radius(self):
+        """
+        Optional radius to use for clipping
+        """
+        return self.get('radius', None)
+
+    @property
+    def simplify_geo(self):
+        """
+        Optional float to use to simplify path geometries before saving to
+        geopackage
+        """
+        return self.get('simplify_geo', None)
+
+    @property
+    def save_paths(self):
+        """
+        Save paths as GPKG if true
+        """
+        return self.get('save_paths', False)
 
     @property
     def cost_fpath(self):
@@ -150,7 +192,19 @@ class LeastCostXmissionConfig(AnalysisConfig):
         """
         List of sc_point_gids to compute Least Cost Xmission for
         """
-        return self.get('sc_point_gids', None)
+        if self._sc_point_gids is None:
+            sc_point_gids = self.get('sc_point_gids', None)
+            if not (isinstance(sc_point_gids, list) or sc_point_gids is None):
+                raise ValueError('sc_point_gids must be a list, got a '
+                                 '{} ({})'
+                                 .format(type(sc_point_gids), sc_point_gids))
+            self._sc_point_gids = sc_point_gids
+
+        return self._sc_point_gids
+
+    @sc_point_gids.setter
+    def sc_point_gids(self, gids):
+        self._sc_point_gids = gids
 
     @property
     def nn_sinks(self):
