@@ -81,16 +81,6 @@ def test_geotiff_getter():
     assert np.allclose(values.ravel(), band)
 
 
-def test_geotiff_shapes():
-    """Test Geotiff shapes"""
-    geotiff = os.path.join(DIR, 'ri_padus.tif')
-    with Geotiff(geotiff) as f:
-        assert f.shape == f.tiff_shape[1:]
-        assert f.bands == f.tiff_shape[0]
-        assert f.n_rows == f.tiff_shape[1]
-        assert f.n_cols == f.tiff_shape[2]
-
-
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 
