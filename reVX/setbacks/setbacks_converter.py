@@ -14,44 +14,48 @@ from reVX.utilities import ExclusionsConverter
 logger = logging.getLogger(__name__)
 
 
+def parse_setbacks(setbacks, chunks=(128, 128), is_inclusion_layer=False):
+    """Load setbacks, combine multiple setbacks by state if needed
+
+    This method assumes the data in separate files is non-overlapping.
+    In other words, a file containing setbacks exclusions for Illinois
+    should not contain any exclusions for Indiana, assuming the setbacks
+    for Indiana are in a separate tif file in the same directory.
+
+    Parameters
+    ----------
+    setbacks : list
+        List of paths to setback geotiffs to load and combine
+    chunks : tuple, optional
+        Chunk size of exclusions in Geotiff, by default (128, 128)
+    is_inclusion_layer : bool, optional
+        Flag indicating wether this layer should be an inclusion
+        layer instead of an exclusion mask, by default False.
+
+    Returns
+    -------
+    values : ndarray
+        Setbacks exclusion array
+    """
+    logger.info("Merging setbacks...")
+    logger.debug("\n\t- ".join([""] + setbacks))
+    values = None
+    reduction_func = np.minimum if is_inclusion_layer else np.maximum
+    for geotiff in setbacks:
+        data = ExclusionsConverter.parse_tiff(geotiff, chunks=chunks,
+                                              check_tiff=False)[1]
+        if values is None:
+            values = data
+        else:
+            values = reduction_func(values, data)
+
+    return values
+
+
 class SetbacksConverter(ExclusionsConverter):
     """
     Convert setbacks goetiff(s) to excl .h5 layers
     """
-
-    @classmethod
-    def _parse_setbacks(cls, setbacks, chunks=(128, 128),
-                        is_inclusion_layer=False):
-        """
-        Load setbacks, combine multiple setbacks by state if needed
-
-        Parameters
-        ----------
-        setbacks : list
-            List of paths to setback geotiffs to load and combine
-        chunks : tuple, optional
-            Chunk size of exclusions in Geotiff, by default (128, 128)
-        is_inclusion_layer : bool, optional
-            Flag indicating wether this layer should be an inclusion
-            layer instead of an exclusion mask, by default False.
-
-        Returns
-        -------
-        values : ndarray
-            Setbacks exclusion array
-        """
-        logger.info("Merging setbacks...")
-        logger.debug("\n\t- ".join([""] + setbacks))
-        values = None
-        reduction_func = np.minimum if is_inclusion_layer else np.maximum
-        for geotiff in setbacks:
-            v = cls._parse_tiff(geotiff, chunks=chunks, check_tiff=False)[1]
-            if values is None:
-                values = v
-            else:
-                values = reduction_func(values, v)
-
-        return values
 
     def setbacks_to_layer(self, layer, setbacks, check_tiff=True,
                           is_inclusion_layer=False, transform_atol=0.01,
@@ -121,8 +125,8 @@ class SetbacksConverter(ExclusionsConverter):
         with Geotiff(setbacks[0], chunks=self._chunks) as tif:
             profile = tif.profile
 
-        setbacks = self._parse_setbacks(setbacks, chunks=self._chunks,
-                                        is_inclusion_layer=is_inclusion_layer)
+        setbacks = parse_setbacks(setbacks, chunks=self._chunks,
+                                  is_inclusion_layer=is_inclusion_layer)
         if scale_factor is not None:
             setbacks = Outputs._check_data_dtype(setbacks, dtype,
                                                  scale_factor=scale_factor)

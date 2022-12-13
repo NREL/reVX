@@ -27,6 +27,7 @@ from reVX.setbacks.regulations import (SetbackRegulations,
 from reVX.setbacks import (ParcelSetbacks, RailSetbacks, StructureSetbacks,
                            WaterSetbacks, SETBACKS)
 from reVX.setbacks.setbacks_cli import main
+from reVX.utilities import ExclusionsConverter
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
 HUB_HEIGHT = 135
@@ -1335,6 +1336,37 @@ def test_cli_saving(runner):
             assert exc["ri_parcel_setbacks"].sum() == 3
 
     LOGGERS.clear()
+
+
+def test_cli_merge_setbacks(runner):
+    """Test the setbacks merge CLI command."""
+
+    with ExclusionLayers(EXCL_H5) as excl:
+        shape, profile = excl.shape, excl.profile
+
+    arr1 = np.zeros(shape)
+    arr2 = np.zeros(shape)
+
+    arr1[:shape[0] // 2] = 1
+    arr2[shape[0] // 2:] = 1
+    with tempfile.TemporaryDirectory() as td:
+        tiff_1 = os.path.join(td, 'test1.tif')
+        tiff_2 = os.path.join(td, 'test2.tif')
+        out_fp = os.path.join(td, 'merged.tif')
+
+        result = runner.invoke(main, ['merge', '-td', td, '-o', out_fp])
+        assert result.exit_code == 1
+
+        ExclusionsConverter.write_geotiff(tiff_1, profile, arr1)
+        ExclusionsConverter.write_geotiff(tiff_2, profile, arr2)
+
+        runner.invoke(main, ['merge', '-td', td, '-o', out_fp])
+        with Geotiff(out_fp) as tif:
+            assert np.allclose(tif.values, 1)
+
+        runner.invoke(main, ['merge', '-td', td, '-o', out_fp, '-inclusions'])
+        with Geotiff(out_fp) as tif:
+            assert np.allclose(tif.values, 0)
 
 
 def execute_pytest(capture='all', flags='-rapP'):

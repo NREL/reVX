@@ -285,7 +285,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         if os.path.exists(geotiff):
             _error_or_warn(geotiff, replace)
 
-        ExclusionsConverter._write_geotiff(geotiff, self.profile, exclusions)
+        ExclusionsConverter.write_geotiff(geotiff, self.profile, exclusions)
 
     def _write_layer(self, out_layer, exclusions, replace=False):
         """Write exclusions to H5, replace if requested
@@ -773,8 +773,8 @@ class ExclusionsConverter:
                     raise ExclusionsCheckError(error)
 
     @classmethod
-    def _parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
-                    check_tiff=True, transform_atol=0.01, coord_atol=0.001):
+    def parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
+                   check_tiff=True, transform_atol=0.01, coord_atol=0.001):
         """
         Extract exclusion layer from given geotiff, compare with excl_h5
         if provided
@@ -906,7 +906,7 @@ class ExclusionsConverter:
         logger.debug('\t- {} being extracted from {} and added to {}'
                      .format(layer, geotiff, os.path.basename(excl_h5)))
 
-        profile, values = cls._parse_tiff(
+        profile, values = cls.parse_tiff(
             geotiff, excl_h5=excl_h5, chunks=chunks, check_tiff=check_tiff,
             transform_atol=transform_atol, coord_atol=coord_atol)
 
@@ -920,7 +920,7 @@ class ExclusionsConverter:
                          scale_factor=scale_factor)
 
     @staticmethod
-    def _write_geotiff(geotiff, profile, values):
+    def write_geotiff(geotiff, profile, values):
         """
         Write values to geotiff with given profile
 
@@ -986,7 +986,7 @@ class ExclusionsConverter:
 
         if geotiff is not None:
             logger.debug('\t- Writing {} to {}'.format(layer, geotiff))
-            cls._write_geotiff(geotiff, profile, values)
+            cls.write_geotiff(geotiff, profile, values)
 
         return profile, values
 
