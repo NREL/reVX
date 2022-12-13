@@ -315,9 +315,9 @@ class XmissionCostCreator(ExclusionsConverter):
         """
         nodata = self._profile['nodata']
         logger.debug('Saving {}'.format(geotiff_fpath))
-        self._write_geotiff(geotiff_fpath, self._profile, data)
+        self.write_geotiff(geotiff_fpath, self._profile, data)
 
-        # _write_geotiff sets nodata to the max for the dtype. For float32 this
+        # write_geotiff sets nodata to the max for the dtype. For float32 this
         # then breaks JSONifying the profile when writing h5s. Reset it.
         self._profile['nodata'] = nodata
 
