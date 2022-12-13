@@ -64,7 +64,12 @@ def valid_config_keys():
                     '1 = exclude pixel)'))
 def merge(tiff_dir, out_file, are_partial_inclusions):
     """
-    Combine setbacks geotiffs into a single exclusion (or inclusion) layer
+    Combine setbacks geotiffs into a single exclusion (or inclusion) layer.
+
+    This command assumes the data in separate files is non-overlapping.
+    In other words, a file containing setbacks exclusions for Illinois
+    should not contain any exclusions for Indiana, assuming the setbacks
+    for Indiana are in a separate tif file in the same directory.
     """
     tiff_dir = Path(tiff_dir)
     setbacks = [path.as_posix() for path in tiff_dir.glob("*.tif*")]

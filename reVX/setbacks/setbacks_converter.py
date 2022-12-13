@@ -17,6 +17,11 @@ logger = logging.getLogger(__name__)
 def parse_setbacks(setbacks, chunks=(128, 128), is_inclusion_layer=False):
     """Load setbacks, combine multiple setbacks by state if needed
 
+    This method assumes the data in separate files is non-overlapping.
+    In other words, a file containing setbacks exclusions for Illinois
+    should not contain any exclusions for Indiana, assuming the setbacks
+    for Indiana are in a separate tif file in the same directory.
+
     Parameters
     ----------
     setbacks : list
