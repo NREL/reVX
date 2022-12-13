@@ -6,6 +6,7 @@ import click
 from copy import deepcopy
 import logging
 import os
+from pathlib import Path
 
 from rex.utilities.loggers import init_mult
 from rex.utilities.cli_dtypes import STR, FLOAT, INT
@@ -16,6 +17,9 @@ from reVX.config.setbacks import SetbacksConfig
 from reVX.setbacks import SETBACKS
 from reVX.setbacks.regulations import (validate_setback_regulations_input,
                                        select_setback_regulations)
+from reVX.setbacks.setbacks_converter import parse_setbacks
+from reVX.handlers.geotiff import Geotiff
+from reVX.utilities import ExclusionsConverter
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -44,6 +48,38 @@ def valid_config_keys():
     Echo the valid Setbacks config keys
     """
     click.echo(', '.join(get_class_properties(SetbacksConfig)))
+
+
+@main.command()
+@click.option('--tiff_dir', '-td', required=True,
+              type=click.Path(exists=True),
+              help=("Path to directory containing geotiffs to be merged."))
+@click.option('--out_file', '-o', required=True,
+              type=click.Path(),
+              help=("Path to output tiff file."))
+@click.option('--are_partial_inclusions', '-inclusions', is_flag=True,
+              help=('Flag to indicate that the data in the tiff layers '
+                    'represent partial inclusion values (i.e. 0.25 = 25% '
+                    'included), NOT typical exclusion values (i.e. '
+                    '1 = exclude pixel)'))
+def merge(tiff_dir, out_file, are_partial_inclusions):
+    """
+    Combine setbacks geotiffs into a single exclusion (or inclusion) layer
+    """
+    tiff_dir = Path(tiff_dir)
+    setbacks = [path.as_posix() for path in tiff_dir.glob("*.tif*")]
+    if not setbacks:
+        msg = ("Did not find any files ending in '.tif' in directory: {}"
+               .format(tiff_dir))
+        logger.error(msg)
+        raise FileNotFoundError(msg)
+
+    with Geotiff(setbacks[0]) as tif:
+        profile = tif.profile
+
+    combined_setbacks = parse_setbacks(
+        setbacks, is_inclusion_layer=are_partial_inclusions)
+    ExclusionsConverter.write_geotiff(out_file, profile, combined_setbacks)
 
 
 @main.command()
