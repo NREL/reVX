@@ -1368,6 +1368,11 @@ def test_cli_merge_setbacks(runner):
         with Geotiff(out_fp) as tif:
             assert np.allclose(tif.values, 0)
 
+        os.chdir(td)
+        runner.invoke(main, ['merge', '-td', td, '-o', "m.tif"])
+        with Geotiff(os.path.join(td, "m.tif")) as tif:
+            assert np.allclose(tif.values, 1)
+
 
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
