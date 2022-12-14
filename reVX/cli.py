@@ -5,10 +5,13 @@ reVX command line interface (CLI).
 import click
 import logging
 import os
+import json
+from pathlib import Path
 
 from rex.utilities.cli_dtypes import STR, STRLIST, FLOAT
 from rex.utilities.loggers import init_logger
 from rex.utilities.utilities import safe_json_load
+from reV.supply_curve.exclusions import ExclusionMaskFromDict, ExclusionLayers
 
 from reVX.offshore.dist_to_ports_converter import DistToPortsConverter
 from reVX.utilities import ExclusionsConverter
@@ -220,6 +223,50 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
         ExclusionsConverter.extract_layers(excl_h5, layers, hsds=hsds)
     else:
         ExclusionsConverter.extract_all_layers(excl_h5, out_dir, hsds=hsds)
+
+
+@exclusions.command()
+@click.option('--excl_fpath', '-excl', required=True,
+              type=click.Path(exists=True),
+              help=('Path to .h5 file containing exclusion layers.'))
+@click.option('--excl_dict_fpath', '-ed', required=True,
+              type=click.Path(exists=True),
+              help=('Path to JSON file containing the "exclusion_dictionary"'
+                    'key which points to the exclusion dictionary defining'
+                    'the mask that should be generated.'))
+@click.option('--out_fpath', '-o', required=True,
+              type=click.Path(),
+              help=('Path to .h5 file containing exclusion layers, will also '
+                    'be the location of any new setback layers'))
+@click.option('--min_area', '-ma', default=None, type=FLOAT,
+              help=('Minimum required contiguous area in sq-km.'))
+@click.option('--kernel', '-k', type=STR, default='queen',
+              show_default=True,
+              help=('Contiguous filter method to use on final exclusion.'))
+@click.option('--hsds', '-hsds', is_flag=True,
+              help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
+                    'behind HSDS'))
+@click.pass_context
+def mask(ctx, excl_fpath, excl_dict_fpath, out_fpath, min_area, kernel, hsds):
+    """
+    Compute Setbacks locally
+    """
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reV', log_level=log_level)
+    init_logger('reVX', log_level=log_level)
+
+    with ExclusionLayers(excl_fpath, hsds=hsds) as f:
+        profile = f.profile
+
+    with open(excl_dict_fpath, 'r') as fh:
+        excl_dict = json.load(fh)
+
+    mask_ = ExclusionMaskFromDict.run(excl_fpath, layers_dict=excl_dict,
+                                      min_area=min_area, kernel=kernel,
+                                      hsds=hsds)
+
+    out_fpath = Path(out_fpath).resolve().as_posix()
+    ExclusionsConverter.write_geotiff(out_fpath, profile, mask_)
 
 
 if __name__ == '__main__':
