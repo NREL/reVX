@@ -226,14 +226,12 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
 
 
 @exclusions.command()
-@click.option('--excl_fpath', '-excl', required=True,
-              type=click.Path(exists=True),
-              help=('Path to .h5 file containing exclusion layers.'))
 @click.option('--excl_dict_fpath', '-ed', required=True,
               type=click.Path(exists=True),
-              help=('Path to JSON file containing the "exclusion_dictionary"'
-                    'key which points to the exclusion dictionary defining'
-                    'the mask that should be generated.'))
+              help=('Path to JSON file containing the "excl_dict" '
+                    'key which points to the exclusion dictionary defining '
+                    'the mask that should be generated. A typical reV '
+                    'aggregation config satisfied this requirement.'))
 @click.option('--out_fpath', '-o', required=True,
               type=click.Path(),
               help=('Path to .h5 file containing exclusion layers, will also '
@@ -247,7 +245,7 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
               help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
                     'behind HSDS'))
 @click.pass_context
-def mask(ctx, excl_fpath, excl_dict_fpath, out_fpath, min_area, kernel, hsds):
+def mask(ctx, excl_dict_fpath, out_fpath, min_area, kernel, hsds):
     """
     Compute Setbacks locally
     """
@@ -255,17 +253,24 @@ def mask(ctx, excl_fpath, excl_dict_fpath, out_fpath, min_area, kernel, hsds):
     init_logger('reV', log_level=log_level)
     init_logger('reVX', log_level=log_level)
 
-    with ExclusionLayers(excl_fpath, hsds=hsds) as f:
-        profile = f.profile
+    excl_fpath = ctx.obj['EXCL_H5']
+
+    logger.info("Calculating exclusion mask from {!r}".format(excl_dict_fpath))
 
     with open(excl_dict_fpath, 'r') as fh:
-        excl_dict = json.load(fh)
+        config = json.load(fh)
 
+    excl_dict = config['excl_dict']
+    logger.debug("Exclusion dictionary: {!r}".format(excl_dict))
     mask_ = ExclusionMaskFromDict.run(excl_fpath, layers_dict=excl_dict,
                                       min_area=min_area, kernel=kernel,
                                       hsds=hsds)
 
+    with ExclusionLayers(excl_fpath, hsds=hsds) as f:
+        profile = f.profile
+
     out_fpath = Path(out_fpath).resolve().as_posix()
+    logger.info("Writing mask to {!r}".format(out_fpath))
     ExclusionsConverter.write_geotiff(out_fpath, profile, mask_)
 
 
