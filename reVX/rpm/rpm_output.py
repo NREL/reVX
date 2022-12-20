@@ -333,7 +333,7 @@ class RPMOutput:
                  techmap_dset, excl_area=None, include_threshold=0.001,
                  n_profiles=1, rerank=True, cluster_kwargs=None,
                  max_workers=None, trg_bins=None, trg_dset='lcoe_fcr',
-                 pre_extract_inclusions=False):
+                 pre_extract_inclusions=False, target_crs=None):
         """
         Parameters
         ----------
@@ -379,6 +379,10 @@ class RPMOutput:
             Flag to pre-extract the inclusion mask using excl_fpath and
             excl_dict. This is advantageous if the excl_dict is highly complex
             and if you're processing a lot of points. Default is False.
+        target_crs : str
+            Target coordinate reference system, e.g. "EPSG:4326". Note that
+            everything is in EPSG:4326/WGS84 by default (raw lat/lon with lon=0
+            at Greenwich).
         """
 
         logger.info('Initializing RPM output processing...')
@@ -394,6 +398,7 @@ class RPMOutput:
         self.include_threshold = include_threshold
         self.n_profiles = n_profiles
         self.rerank = rerank
+        self.target_crs = target_crs
 
         if self.excl_area is None and self._excl_fpath is not None:
             with ExclusionLayers(self._excl_fpath) as excl:
@@ -1137,7 +1142,8 @@ class RPMOutput:
         """
 
         labels = ['cluster_id', 'latitude', 'longitude']
-        RPMClusters._generate_shapefile(self._clusters[labels], fpath_shp)
+        RPMClusters.generate_shapefile(self._clusters[labels], fpath_shp,
+                                       target_crs=self.target_crs)
 
     @staticmethod
     def _get_fout_names(job_tag):
@@ -1264,7 +1270,7 @@ class RPMOutput:
                         excl_area=None, include_threshold=0.001,
                         n_profiles=1, rerank=True,
                         trg_bins=None, trg_dset='lcoe_fcr',
-                        pre_extract_inclusions=False):
+                        pre_extract_inclusions=False, target_crs=None):
         """Perform output processing on clusters and write results to disk.
 
         Parameters
@@ -1314,6 +1320,10 @@ class RPMOutput:
             Flag to pre-extract the inclusion mask using excl_fpath and
             excl_dict. This is advantageous if the excl_dict is highly complex
             and if you're processing a lot of points. Default is False.
+        target_crs : str
+            Target coordinate reference system, e.g. "EPSG:4326". Note that
+            everything is in EPSG:4326/WGS84 by default (raw lat/lon with lon=0
+            at Greenwich).
         """
 
         rpmo = cls(rpm_clusters, cf_fpath, excl_fpath, excl_dict,
@@ -1321,5 +1331,6 @@ class RPMOutput:
                    max_workers=max_workers, excl_area=excl_area,
                    include_threshold=include_threshold, n_profiles=n_profiles,
                    rerank=rerank, trg_bins=trg_bins, trg_dset=trg_dset,
-                   pre_extract_inclusions=pre_extract_inclusions)
+                   pre_extract_inclusions=pre_extract_inclusions,
+                   target_crs=target_crs)
         rpmo.export_all(out_dir, job_tag=job_tag)

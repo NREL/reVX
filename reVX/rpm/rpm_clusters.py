@@ -46,8 +46,9 @@ class RPMClusters:
 
     Generate Shape File of Cluster
 
-    >>> RPMClusters._generate_shapefile(clusters.meta, fpath='./test.shp')
+    >>> RPMClusters.generate_shapefile(clusters.meta, fpath='./test.shp')
     """
+
     def __init__(self, cf_fpath, gen_gids, n_clusters, region=None):
         """
         Parameters
@@ -322,13 +323,17 @@ class RPMClusters:
         return clusters, mean_dist
 
     @classmethod
-    def _generate_shapefile(cls, meta, fpath, beautify=True):
+    def generate_shapefile(cls, meta, fpath, beautify=True,
+                           source_crs="EPSG:4326", target_crs=None):
         """
         Generate cluster polygons and save to shapefile
         """
         geometry = [Point(xy) for xy in zip(meta.longitude, meta.latitude)]
         gdf_points = gpd.GeoDataFrame(meta, geometry=geometry,
-                                      crs="EPSG:5070")
+                                      crs=source_crs)
+
+        if target_crs is not None:
+            gdf_points = gdf_points.to_crs(target_crs)
 
         clusters, mean_dist = cls._get_cluster_geom(gdf_points)
 
@@ -344,7 +349,8 @@ class RPMClusters:
         clusters[['cluster_id', 'geometry']].to_file(fpath)
         return fpath
 
-    def _contiguous_filter(self, drop_islands=True, buffer_weight=2):
+    def _contiguous_filter(self, drop_islands=True, buffer_weight=2,
+                           source_crs="EPSG:4326"):
         """
         Re-classify clusters by making contigous cluster polygons
         """
@@ -352,7 +358,7 @@ class RPMClusters:
 
         geometry = [Point(xy) for xy in zip(meta.longitude, meta.latitude)]
         gdf_points = gpd.GeoDataFrame(meta, geometry=geometry,
-                                      crs="EPSG:5070")
+                                      crs=source_crs)
 
         clusters, mean_dist = self._get_cluster_geom(gdf_points)
 
