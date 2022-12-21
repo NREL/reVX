@@ -28,7 +28,7 @@ EXCL_DICT = {'ri_srtm_slope': {'inclusion_range': (None, 5),
                                   'exclude_nodata': True}}
 
 RTOL = 0.001
-ATOL = 0
+ATOL = 0.1
 
 
 @pytest.fixture(scope="module")
