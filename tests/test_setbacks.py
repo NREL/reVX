@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=protected-access
+# pylint: disable=protected-access,unused-argument,redefined-outer-name
 """
 Setbacks tests
 """
