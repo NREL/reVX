@@ -232,10 +232,13 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
                     'key which points to the exclusion dictionary defining '
                     'the mask that should be generated. A typical reV '
                     'aggregation config satisfied this requirement.'))
-@click.option('--out_fpath', '-o', required=True,
-              type=click.Path(),
-              help=('Path to .h5 file containing exclusion layers, will also '
-                    'be the location of any new setback layers'))
+@click.option('--out', '-o', required=True, type=STR,
+              help=('Output name. If this string value ends in ".tif" '
+                    'or ".tiff", this input is assumed to be a path to an '
+                    'output tiff file, and the mask will be written to that '
+                    'destination. Otherwise, this input is assumed to be the '
+                    'name of the layer in the exclusion file to write the '
+                    'mask to.'))
 @click.option('--min_area', '-ma', default=None, type=FLOAT,
               help=('Minimum required contiguous area in sq-km.'))
 @click.option('--kernel', '-k', type=STR, default='queen',
@@ -245,7 +248,7 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
               help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
                     'behind HSDS'))
 @click.pass_context
-def mask(ctx, excl_dict_fpath, out_fpath, min_area, kernel, hsds):
+def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
     """
     Compute Setbacks locally
     """
@@ -269,9 +272,18 @@ def mask(ctx, excl_dict_fpath, out_fpath, min_area, kernel, hsds):
     with ExclusionLayers(excl_fpath, hsds=hsds) as f:
         profile = f.profile
 
-    out_fpath = Path(out_fpath).resolve().as_posix()
-    logger.info("Writing mask to {!r}".format(out_fpath))
-    ExclusionsConverter.write_geotiff(out_fpath, profile, mask_)
+    if out.endswith(".tif") or out.endswith(".tiff"):
+        out = Path(out).resolve().as_posix()
+        logger.info("Writing mask to {!r}".format(out))
+        ExclusionsConverter.write_geotiff(out, profile, mask_)
+    else:
+        logger.info("Writing mask to layer {!r} in {!r}"
+                    .format(out, excl_fpath))
+        desc = ("Exclusion mask computed from exclusion dictionary: {!r}"
+                .format(excl_dict))
+        # pylint: disable=protected-access
+        ExclusionsConverter._write_layer(excl_fpath, out, profile, mask_,
+                                         description=desc)
 
 
 if __name__ == '__main__':
