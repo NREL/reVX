@@ -163,6 +163,17 @@ class Rasterizer:
         """
         return self._shape
 
+    @property
+    def inclusions(self):
+        """Flag indicating wether or not the output raster represents
+        inclusion values.
+
+        Returns
+        -------
+        bool
+        """
+        return self._scale_factor > 1
+
     def _no_exclusions_array(self, multiplier=1):
         """Get an array of the correct shape representing no exclusions.
 
@@ -205,7 +216,7 @@ class Rasterizer:
         shapes = shapes or []
         shapes = [(geom, 1) for geom in shapes if geom is not None]
 
-        if self._scale_factor > 1:
+        if self.inclusions:
             return self._rasterize_to_weights(shapes)
 
         return self._rasterize_to_mask(shapes)
@@ -496,6 +507,23 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             raise FileNotFoundError(msg)
 
         return paths
+
+    def _combine_exclusions(self, existing, additional, cnty_fips):
+        """Combine local exclusions using FIPS code"""
+        if existing is None:
+            return additional
+
+        local_exclusions_mask = np.isin(self._fips, cnty_fips)
+        if self._rasterizer.inclusions:
+            existing[local_exclusions_mask] = np.minimum(
+                existing[local_exclusions_mask],
+                additional[local_exclusions_mask])
+        else:
+            existing[local_exclusions_mask] = np.maximum(
+                existing[local_exclusions_mask],
+                additional[local_exclusions_mask])
+
+        return existing
 
     @staticmethod
     def _feature_filter(features, cnty):
