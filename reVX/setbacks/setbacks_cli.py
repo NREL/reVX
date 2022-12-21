@@ -8,7 +8,7 @@ import logging
 import os
 from pathlib import Path
 
-from rex.utilities.loggers import init_mult
+from rex.utilities.loggers import init_mult, init_logger
 from rex.utilities.cli_dtypes import STR, FLOAT, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, dict_str_load
@@ -62,7 +62,8 @@ def valid_config_keys():
                     'represent partial inclusion values (i.e. 0.25 = 25% '
                     'included), NOT typical exclusion values (i.e. '
                     '1 = exclude pixel)'))
-def merge(tiff_dir, out_file, are_partial_inclusions):
+@click.pass_context
+def merge(ctx, tiff_dir, out_file, are_partial_inclusions):
     """
     Combine setbacks geotiffs into a single exclusion (or inclusion) layer.
 
@@ -71,8 +72,11 @@ def merge(tiff_dir, out_file, are_partial_inclusions):
     should not contain any exclusions for Indiana, assuming the setbacks
     for Indiana are in a separate tif file in the same directory.
     """
-    tiff_dir = Path(tiff_dir)
-    setbacks = [path.as_posix() for path in tiff_dir.glob("*.tif*")]
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    logger.info("Merging tiff files in {!r}".format(tiff_dir))
+    setbacks = [path.as_posix() for path in Path(tiff_dir).glob("*.tif*")]
     if not setbacks:
         msg = ("Did not find any files ending in '.tif' in directory: {}"
                .format(tiff_dir))
@@ -82,8 +86,11 @@ def merge(tiff_dir, out_file, are_partial_inclusions):
     with Geotiff(setbacks[0]) as tif:
         profile = tif.profile
 
+    out_file = Path(out_file).resolve().as_posix()
     combined_setbacks = parse_setbacks(
         setbacks, is_inclusion_layer=are_partial_inclusions)
+
+    logger.info("Writing data to {!r}".format(out_file))
     ExclusionsConverter.write_geotiff(out_file, profile, combined_setbacks)
 
 

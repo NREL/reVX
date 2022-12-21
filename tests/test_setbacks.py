@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=protected-access
+# pylint: disable=protected-access,unused-argument,redefined-outer-name
 """
 Setbacks tests
 """
@@ -83,6 +83,24 @@ def county_wind_regulations_gpkg():
     """Wind regulations with multiplier. """
     return WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
                                   regulations_fpath=REGS_GPKG)
+
+
+@pytest.fixture()
+def return_to_main_test_dir():
+    """Return to the starting dir after running a test.
+
+    This fixture helps avoid issues for downstream pytests if the test
+    code contains any calls to os.chdir().
+    """
+    # Startup
+    previous_dir = os.getcwd()
+
+    try:
+        # test happens here
+        yield
+    finally:
+        # teardown (i.e. return to original dir)
+        os.chdir(previous_dir)
 
 
 def test_setback_regulations_init():
@@ -1338,7 +1356,7 @@ def test_cli_saving(runner):
     LOGGERS.clear()
 
 
-def test_cli_merge_setbacks(runner):
+def test_cli_merge_setbacks(runner, return_to_main_test_dir):
     """Test the setbacks merge CLI command."""
 
     with ExclusionLayers(EXCL_H5) as excl:
@@ -1367,6 +1385,11 @@ def test_cli_merge_setbacks(runner):
         runner.invoke(main, ['merge', '-td', td, '-o', out_fp, '-inclusions'])
         with Geotiff(out_fp) as tif:
             assert np.allclose(tif.values, 0)
+
+        os.chdir(td)
+        runner.invoke(main, ['merge', '-td', td, '-o', "m.tif"])
+        with Geotiff(os.path.join(td, "m.tif")) as tif:
+            assert np.allclose(tif.values, 1)
 
 
 def execute_pytest(capture='all', flags='-rapP'):
