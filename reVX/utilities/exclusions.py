@@ -12,6 +12,7 @@ from warnings import warn
 
 import numpy as np
 import geopandas as gpd
+import pandas as pd
 from pyproj.crs import CRS
 import rasterio
 from rasterio import features as rio_features
@@ -231,17 +232,20 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations_df = regulations_df.set_index('FIPS')
 
         logger.info('Merging county geometries w/ local regulations')
-        s = rio_features.shapes(
+        shapes_from_raster = rio_features.shapes(
             self._fips.astype(np.int32),
             transform=cnty_fips_profile['transform']
         )
-        for p, v in s:
-            v = int(v)
-            if v in regulations_df.index:
-                regulations_df.at[v, 'geometry'] = shape(p)
+        county_regs = []
+        for polygon, fips_code in shapes_from_raster:
+            fips_code = int(fips_code)
+            if fips_code in regulations_df.index:
+                local_regs = regulations_df.loc[[fips_code]].copy()
+                local_regs['geometry'] = shape(polygon)
+                county_regs.append(local_regs)
 
         regulations_df = gpd.GeoDataFrame(
-            regulations_df,
+            pd.concat(county_regs),
             crs=self.profile['crs'],
             geometry='geometry'
         )
