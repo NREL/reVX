@@ -332,7 +332,7 @@ class RPMClusters:
         gdf_points = gpd.GeoDataFrame(meta, geometry=geometry,
                                       crs=source_crs)
 
-        if target_crs is not None:
+        if target_crs is not None and source_crs != target_crs:
             gdf_points = gdf_points.to_crs(target_crs)
 
         clusters, mean_dist = cls._get_cluster_geom(gdf_points)
