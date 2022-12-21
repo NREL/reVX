@@ -85,6 +85,24 @@ def county_wind_regulations_gpkg():
                                   regulations_fpath=REGS_GPKG)
 
 
+@pytest.fixture()
+def return_to_main_test_dir():
+    """Return to the starting dir after running a test.
+
+    This fixture helps avoid issues for downstream pytests if the test
+    code contains any calls to os.chdir().
+    """
+    # Startup
+    previous_dir = os.getcwd()
+
+    try:
+        # test happens here
+        yield
+    finally:
+        # teardown (i.e. return to original dir)
+        os.chdir(previous_dir)
+
+
 def test_setback_regulations_init():
     """Test initializing a normal regulations file. """
     regs = SetbackRegulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
@@ -1338,7 +1356,7 @@ def test_cli_saving(runner):
     LOGGERS.clear()
 
 
-def test_cli_merge_setbacks(runner):
+def test_cli_merge_setbacks(runner, return_to_main_test_dir):
     """Test the setbacks merge CLI command."""
 
     with ExclusionLayers(EXCL_H5) as excl:
