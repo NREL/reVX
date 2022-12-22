@@ -88,9 +88,11 @@ def test_cli(runner, excl_dict, baseline_name):
 
         result = runner.invoke(main, ['from-config',
                                       '-c', config_path])
-        msg = ('Failed with error {}'
-               .format(traceback.print_exception(*result.exc_info)))
-        assert result.exit_code == 0, msg
+
+        if result.exit_code != 0:
+            msg = ('Failed with error {}'
+                   .format(traceback.print_exception(*result.exc_info)))
+            raise RuntimeError(msg)
 
         test = os.path.basename(RES_H5).replace('.h5', '_means_64.h5')
         test = os.path.join(td, test)
