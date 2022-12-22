@@ -1208,7 +1208,6 @@ def _error_or_warn(name, replace):
         logger.error(msg)
         raise IOError(msg)
 
-    msg = ('{} already exists and will be replaced!'
-            .format(name))
+    msg = ('{} already exists and will be replaced!'.format(name))
     logger.warning(msg)
     warn(msg)
