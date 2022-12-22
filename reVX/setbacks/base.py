@@ -354,6 +354,11 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """np.array: Array representing no exclusions. """
         return self._rasterizer.rasterize(shapes=None)
 
+    @property
+    def exclusion_merge_func(self):
+        """callable: Function to merge overlapping exclusion layers. """
+        return np.minimum if self._rasterizer.inclusions else np.maximum
+
     def pre_process_regulations(self):
         """Reduce regulations to state corresponding to features.
 
@@ -507,23 +512,6 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             raise FileNotFoundError(msg)
 
         return paths
-
-    def _combine_exclusions(self, existing, additional, cnty_fips):
-        """Combine local exclusions using FIPS code"""
-        if existing is None:
-            return additional
-
-        local_exclusions_mask = np.isin(self._fips, cnty_fips)
-        if self._rasterizer.inclusions:
-            existing[local_exclusions_mask] = np.minimum(
-                existing[local_exclusions_mask],
-                additional[local_exclusions_mask])
-        else:
-            existing[local_exclusions_mask] = np.maximum(
-                existing[local_exclusions_mask],
-                additional[local_exclusions_mask])
-
-        return existing
 
     @staticmethod
     def _feature_filter(features, cnty):

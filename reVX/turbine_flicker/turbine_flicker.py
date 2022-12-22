@@ -231,6 +231,11 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         """np.array: Array representing no exclusions. """
         return np.ones(self.features.shape, dtype=np.uint8)
 
+    @property
+    def exclusion_merge_func(self):
+        """callable: Function to merge overlapping exclusion layers. """
+        return np.minimum
+
     def pre_process_regulations(self):
         """Reduce regulations to correct state and features. """
         self._apply_regulations_mask()
