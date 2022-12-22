@@ -163,6 +163,17 @@ class Rasterizer:
         """
         return self._shape
 
+    @property
+    def inclusions(self):
+        """Flag indicating wether or not the output raster represents
+        inclusion values.
+
+        Returns
+        -------
+        bool
+        """
+        return self._scale_factor > 1
+
     def _no_exclusions_array(self, multiplier=1):
         """Get an array of the correct shape representing no exclusions.
 
@@ -205,7 +216,7 @@ class Rasterizer:
         shapes = shapes or []
         shapes = [(geom, 1) for geom in shapes if geom is not None]
 
-        if self._scale_factor > 1:
+        if self.inclusions:
             return self._rasterize_to_weights(shapes)
 
         return self._rasterize_to_mask(shapes)
@@ -342,6 +353,11 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
     def no_exclusions_array(self):
         """np.array: Array representing no exclusions. """
         return self._rasterizer.rasterize(shapes=None)
+
+    @property
+    def exclusion_merge_func(self):
+        """callable: Function to merge overlapping exclusion layers. """
+        return np.minimum if self._rasterizer.inclusions else np.maximum
 
     def pre_process_regulations(self):
         """Reduce regulations to state corresponding to features.

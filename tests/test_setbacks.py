@@ -308,6 +308,9 @@ def test_local_structures(max_workers, county_wind_regulations_gpkg):
     """
     Test local structures setbacks
     """
+    mask = county_wind_regulations_gpkg.df["FIPS"] == 44005
+    initial_regs_count = county_wind_regulations_gpkg.df[mask].shape[0]
+
     baseline = os.path.join(TESTDATADIR, 'setbacks',
                             'existing_structures.tif')
     with Geotiff(baseline) as tif:
@@ -317,13 +320,15 @@ def test_local_structures(max_workers, county_wind_regulations_gpkg):
                                   'RhodeIsland.geojson')
     setbacks = StructureSetbacks(EXCL_H5, county_wind_regulations_gpkg,
                                  features=structure_path)
-    test = setbacks.compute_exclusions(max_workers=max_workers)
 
-    # baseline was generated when code did not clip to county bounds,
-    # so test should be a subset of baseline
-    assert baseline.sum() > test.sum()
-    assert (baseline[test > 0] == 1).all()
-    assert (test[baseline == 0] == 0).all()
+    mask = setbacks.regulations_table["FIPS"] == 44005
+    final_regs_count = setbacks.regulations_table[mask].shape[0]
+
+    # county 44005 has two non-overlapping geometries
+    assert final_regs_count == 2 * initial_regs_count
+
+    test = setbacks.compute_exclusions(max_workers=max_workers)
+    assert np.allclose(test, baseline)
 
 
 @pytest.mark.parametrize('rail_path',
@@ -361,11 +366,7 @@ def test_local_railroads(max_workers, county_wind_regulations_gpkg):
                             features=rail_path)
     test = setbacks.compute_exclusions(max_workers=max_workers)
 
-    # baseline was generated when code did not clip to county bounds,
-    # so test should be a subset of baseline
-    assert baseline.sum() > test.sum()
-    assert (baseline[test > 0] == 1).all()
-    assert (test[baseline == 0] == 0).all()
+    assert np.allclose(test, baseline)
 
 
 def test_generic_parcels():
@@ -707,10 +708,10 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
      'regulations_fpath', 'generic_sum', 'local_sum', 'setback_distance'),
     [(StructureSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_GPKG, 332_887, 128, [HUB_HEIGHT, ROTOR_DIAMETER]),
+      REGS_GPKG, 332_887, 2_879, [HUB_HEIGHT, ROTOR_DIAMETER]),
      (RailSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_GPKG, 754_082, 9_276, [HUB_HEIGHT, ROTOR_DIAMETER]),
+      REGS_GPKG, 754_082, 14_068, [HUB_HEIGHT, ROTOR_DIAMETER]),
      (ParcelSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 474, 3, [HUB_HEIGHT, ROTOR_DIAMETER]),
@@ -719,7 +720,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
       WATER_REGS_FPATH_VALUE, 1_159_266, 83, [HUB_HEIGHT, ROTOR_DIAMETER]),
      (StructureSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_FPATH, 260_963, 104, [BASE_SETBACK_DIST + 199]),
+      REGS_FPATH, 260_963, 2_306, [BASE_SETBACK_DIST + 199]),
      (RailSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
       REGS_FPATH, 5_355, 163, [BASE_SETBACK_DIST]),
