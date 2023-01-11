@@ -81,7 +81,7 @@ Option 1: Install from PIP or Conda (recommended for analysts):
     ``conda activate revx``
 
 3. Install reVX:
-    1) The best guarantee you will have of a correct installation is by following the same `installation process that we use for our automated test suite <https://github.com/NREL/reVX/blob/main/.github/workflows/pull_request_tests.yml#L31-L36>`_.
+    1) The best guarantee you will have of a correct installation is by following the same `installation process that we use for our automated test suite <https://github.com/NREL/reVX/blob/main/.github/workflows/pull_request_tests.yml#L31-L36>`_. Note that you need to call ``pip install -e .`` from within the cloned repository directory e.g. ``/home/user/reVX/``
 
         - NOTE: If you install using conda and you want to use:
             * `HSDS <https://github.com/NREL/hsds-examples>`_ you will also need to install h5pyd manually: ``pip install h5pyd``
