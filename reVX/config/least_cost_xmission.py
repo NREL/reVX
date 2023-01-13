@@ -167,6 +167,13 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self['features_fpath']
 
     @property
+    def balancing_areas_fpath(self):
+        """
+        Balancing areas config input
+        """
+        return self.get('balancing_areas_fpath', None)
+
+    @property
     def capacity_class(self):
         """
         Capacity class, either {capacity}MW or capacity value in MW
@@ -186,6 +193,13 @@ class LeastCostXmissionConfig(AnalysisConfig):
         Xmission config input
         """
         return self.get('xmission_config', None)
+
+    @property
+    def min_line_length(self):
+        """
+        Minimum Tie-line length config input
+        """
+        return self.get('min_line_length', 0)
 
     @property
     def nn_sinks(self):
@@ -226,6 +240,24 @@ class LeastCostPathsConfig(AnalysisConfig):
         self._default_barrier_mult = 100
 
     @property
+    def name(self):
+        """Get the job name, defaults to the output directory name.
+
+        Returns
+        -------
+        _name : str
+            Job name.
+        """
+        if self._name is None:
+            default_name = os.path.basename(os.path.normpath(self.dirout))
+            self._name = self.get('name', default_name)
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+
+    @property
     def cost_fpath(self):
         """
         .h5 file with cost and required layers
@@ -238,6 +270,20 @@ class LeastCostPathsConfig(AnalysisConfig):
         Tranmission feature .gpkg
         """
         return self['features_fpath']
+
+    @property
+    def network_nodes_fpath(self):
+        """
+        Network nodes config input
+        """
+        return self.get('network_nodes_fpath', None)
+
+    @property
+    def transmission_lines_fpath(self):
+        """
+        Transmission line features  config input
+        """
+        return self.get('transmission_lines_fpath', None)
 
     @property
     def capacity_class(self):
