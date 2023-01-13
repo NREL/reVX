@@ -753,3 +753,167 @@ class LeastCostXmission(LeastCostPaths):
                             (time.time() - ts) / 60))
 
         return least_costs
+
+
+
+class ReinforcedXmission(LeastCostXmission):
+    """
+    Compute Least Cost tie-line paths and full transmission cap cost
+    for all supply curve points to all possible connections (substations
+    within the SC balancing area).
+    """
+
+    def __init__(self, cost_fpath, features_fpath, balancing_areas_fpath,
+                 resolution=128, xmission_config=None, min_line_length=0):
+        """
+        Parameters
+        ----------
+        cost_fpath : str
+            Path to h5 file with cost rasters and other required layers.
+        features_fpath : str
+            Path to GeoPackage with transmission features. All features
+            except substations will be dropped. This table must have a
+            "ba_str" column which matches one of the "ba_str" ID's in
+            the Balancing Areas GeoPackage.
+        balancing_areas_fpath : str
+            Path to GeoPackage with balancing areas. This table must
+            have a "ba_str" column which matches the "ba_str" ID's in
+            the Transmission Features GeoPackage.
+        resolution : int, optional
+            SC point resolution. By default, ``128``.
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects.
+            By default, ``None``.
+        min_line_length : int | float, optional
+            Minimum line length in km. By default, ``0``.
+        """
+        super().__init__(cost_fpath=cost_fpath,
+                         features_fpath=features_fpath,
+                         resolution=resolution,
+                         xmission_config=xmission_config,
+                         min_line_length=min_line_length)
+        self._ba = (gpd.read_file(balancing_areas_fpath)
+                    .to_crs(self.features.crs))
+
+    @staticmethod
+    def _load_trans_feats(features_fpath):
+        """Load existing substations from disk. """
+
+        logger.debug('Loading substations...')
+        substations = gpd.read_file(features_fpath)
+        substations = substations[substations.category == SUBSTATION_CAT]
+        substations = substations.reset_index(drop=True)
+        substations = substations.drop(columns=['bgid', 'egid', 'cap_left'],
+                                       errors='ignore')
+        mapping = {'gid': 'trans_gid', 'trans_gids': 'trans_line_gids'}
+        substations = substations.rename(columns=mapping)
+
+        return substations, None
+
+    def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
+                          clipping_buffer=1.05, radius=None):
+        """Clip features to be substations in the BA of the sc point.  """
+        logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
+
+        point = self.sc_points.loc[sc_point.name:sc_point.name].centroid
+        ba_str = point.apply(self._map_ba).values[0]
+        mask = self.features["ba_str"] == ba_str
+        sc_features = self.features.loc[mask].copy(deep=True)
+
+        mask = self.features['max_volts'] >= tie_line_voltage
+        sc_features = sc_features.loc[mask].copy(deep=True)
+
+        if sc_features.empty:
+            return sc_features, None
+
+        dists = (sc_features[['row', 'col']] - sc_point[['row', 'col']])
+        radius = int(np.ceil(dists.abs().values.max() * clipping_buffer))
+        logger.debug('{} transmission features found in clipped area of '
+                     'radius {} with minimum max voltage of {}'
+                     .format(len(sc_features), radius, tie_line_voltage))
+
+        return sc_features, radius
+
+    def _map_ba(self, point):
+        """Find the balancing area ID for the input point. """
+        index = self._ba.distance(point).sort_values().index[0]
+        return self._ba.loc[index, "ba_str"]
+
+    @classmethod
+    def run(cls, cost_fpath, features_fpath, balancing_areas_fpath,
+            capacity_class, resolution=128, xmission_config=None,
+            min_line_length=0, sc_point_gids=None, clipping_buffer=1.05,
+            barrier_mult=100, max_workers=None, save_paths=False,
+            simplify_geo=None):
+        """
+        Find Least Cost Transmission connections between desired
+        sc_points and substations in their balancing area.
+
+        Parameters
+        ----------
+        cost_fpath : str
+            Path to h5 file with cost rasters and other required layers
+        features_fpath : str
+            Path to GeoPackage with transmission features. All features
+            except substations will be dropped. This table must have a
+            "ba_str" column which matches one of the "ba_str" ID's in
+            the Balancing Areas GeoPackage.
+        balancing_areas_fpath : str
+            Path to GeoPackage with balancing areas. This table must
+            have a "ba_str" column which matches the "ba_str" ID's in
+            the Transmission Features GeoPackage.
+        capacity_class : str | int
+            Capacity class of transmission features to connect supply
+            curve points to.
+        resolution : int, optional
+            SC point resolution. By default, ``128``.
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects.
+            By default, ``None``.
+        min_line_length : int | float, optional
+            Minimum line length in km. By default, ``0``.
+        sc_point_gids : list, optional
+            List of sc_point_gids to connect to. By default, ``None``,
+            which processes all points.
+        clipping_buffer : float, optional
+            Buffer to expand clipping radius by. By default, ``1.05``.
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs.
+            By default, ``100``.
+        max_workers : int, optional
+            Number of workers to use for processing. If 1 run in serial,
+            if ``None`` use all available cores. By default, ``None``.
+        save_paths : bool, optional
+            Flag to save reinforcement line path as a multi-line
+            geometry. By default, ``False``.
+        simplify_geo : float | None, optional
+            If float, simplify geometries using this value.
+
+        Returns
+        -------
+        least_costs : pandas.DataFrame | gpd.DataFrame
+            Least cost connections between all supply curve points and
+            the substations in their balancing area with the given
+            capacity class.
+        """
+        ts = time.time()
+        lcx = cls(cost_fpath, features_fpath, balancing_areas_fpath,
+                  resolution=resolution, xmission_config=xmission_config,
+                  min_line_length=min_line_length)
+        least_costs = lcx.process_sc_points(capacity_class,
+                                            sc_point_gids=sc_point_gids,
+                                            clipping_buffer=clipping_buffer,
+                                            barrier_mult=barrier_mult,
+                                            max_workers=max_workers,
+                                            save_paths=save_paths,
+                                            simplify_geo=simplify_geo)
+
+        logger.info('{} connections were made to {} SC points in {:.4f} '
+                    'minutes'
+                    .format(len(least_costs),
+                            len(least_costs['sc_point_gid'].unique()),
+                            (time.time() - ts) / 60))
+
+        return least_costs
