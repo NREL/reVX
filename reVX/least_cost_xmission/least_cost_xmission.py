@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Module to compute least cost xmission paths, distances, AND costs for one or
-more SC points
+Module to compute least cost transmission paths, distances, AND costs
+for one or more SC points
 """
 import geopandas as gpd
 import json
@@ -33,24 +33,25 @@ class LeastCostXmission(LeastCostPaths):
     """
     Compute Least Cost tie-line paths and full transmission cap cost
     for all possible connections to all supply curve points
-    -
     """
     REQUIRED_LAYRES = ['transmission_barrier', 'ISO_regions']
 
     def __init__(self, cost_fpath, features_fpath, resolution=128,
-                 xmission_config=None):
+                 xmission_config=None, min_line_length=0):
         """
         Parameters
         ----------
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers
         features_fpath : str
-            Path to geopackage with transmission features
+            Path to GeoPackage with transmission features
         resolution : int, optional
             SC point resolution, by default 128
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
+        min_line_length : int | float, optional
+            Minimum line length in km, by default 0.
         """
         self._check_layers(cost_fpath)
         self._config = TransCapCosts._parse_config(
@@ -63,7 +64,7 @@ class LeastCostXmission(LeastCostPaths):
         self._cost_fpath = cost_fpath
         self._tree = None
         self._sink_coords = None
-        self._min_line_len = (resolution * 0.09) / 2
+        self._min_line_len = min_line_length
 
         logger.debug('{} initialized'.format(self))
 
@@ -141,21 +142,21 @@ class LeastCostXmission(LeastCostPaths):
     @staticmethod
     def _load_trans_feats(features_fpath):
         """
-        Load existing transmission features from disk. Substations will be
-        loaded from cache file if it exists
+        Load existing transmission features from disk. Substations will
+        be loaded from cache file if it exists
 
         Parameters
         ----------
         features_fpath : str
-            Path to geopackage with trans features
+            Path to GeoPackage with trans features
 
         Returns
         -------
         features : gpd.GeoDataFrame
             DataFrame of transmission features
         sub_line_map : pandas.Series
-            Mapping of sub-station trans_gid to connected tranmission line
-            trans_gids
+            Mapping of sub-station trans_gid to connected transmission
+            line trans_gids
         """
         logger.debug('Loading transmission features')
         features = gpd.read_file(features_fpath)
@@ -209,8 +210,8 @@ class LeastCostXmission(LeastCostPaths):
     @staticmethod
     def _create_sc_points(cost_fpath, resolution=128):
         """
-        Load SC points, covert row/col to array wide, and determine x/y for
-        reV projection
+        Load SC points, covert row/col to array wide, and determine x/y
+        for reV projection
 
         Parameters
         ----------
@@ -244,7 +245,7 @@ class LeastCostXmission(LeastCostPaths):
     @staticmethod
     def _get_feature_cost_indices(features, crs, transform, shape):
         """
-        Map features to cost row, col indicies using rasterio transform
+        Map features to cost row, col indices using rasterio transform
 
         Parameters
         ----------
@@ -260,11 +261,11 @@ class LeastCostXmission(LeastCostPaths):
         Returns
         -------
         row : ndarray
-            Vector of row indicies for each feature
+            Vector of row indices for each feature
         col : ndarray
-            Vector of col indicies for each features
+            Vector of col indices for each features
         mask : ndarray
-            Boolean mask of features with indicies outside of cost raster
+            Boolean mask of features with indices outside of cost raster
         """
         row, col, mask = super(LeastCostXmission,
                                LeastCostXmission)._get_feature_cost_indices(
@@ -285,27 +286,27 @@ class LeastCostXmission(LeastCostPaths):
     @classmethod
     def _map_to_costs(cls, cost_fpath, features_fpath, resolution=128):
         """
-        Map supply curve points and transmission features to cost array pixel
-        indices
+        Map supply curve points and transmission features to cost array
+        pixel indices
 
         Parameters
         ----------
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers
         features_fpath : str
-            Path to geopackage with transmission features
+            Path to GeoPackage with transmission features
         resolution : int, optional
             SC point resolution, by default 128
 
         Returns
         -------
         sc_point : gpd.GeoDataFrame
-            Table of supply curve points to connect to tranmission
+            Table of supply curve points to connect to transmission
         features : gpd.GeoDataFrame
             Table of transmission features
         sub_lines_map : pandas.Series
-            Series mapping substations  to the transmission lines connected
-            to each substation
+            Series mapping substations  to the transmission lines
+            connected to each substation
         """
         with ExclusionLayers(cost_fpath) as f:
             crs = CRS.from_string(f.crs)
@@ -361,8 +362,8 @@ class LeastCostXmission(LeastCostPaths):
         radius : int
             Clipping radius in cost raster pixels
         x_feats : pd.DataFrame
-            Substatations, load centers, sinks, and nearest points on t-lines
-            to SC point
+            Substations, load centers, sinks, and nearest points on
+            t-lines to SC point
         """
         logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
 
@@ -430,23 +431,24 @@ class LeastCostXmission(LeastCostPaths):
                           max_workers=None, save_paths=False, radius=None,
                           mp_delay=3, simplify_geo=None):
         """
-        Compute Least Cost Tranmission for desired sc_points
+        Compute Least Cost Transmission for desired sc_points
 
         Parameters
         ----------
         capacity_class : str | int
-            Capacity class of transmission features to connect supply curve
-            points to
+            Capacity class of transmission features to connect supply
+            curve points to
         sc_point_gids : list, optional
-            List of sc_point_gids to connect to, by default connect to all
+            List of sc_point_gids to connect to, by default connect to
+            all
         nn_sinks : int, optional
             Number of nearest neighbor sinks to use for clipping radius
             calculation, by default 2
         clipping_buffer : float, optional
             Buffer to expand clipping radius by, by default 1.05
         barrier_mult : int, optional
-            Tranmission barrier multiplier, used when computing the least
-            cost tie-line path, by default 100
+            Transmission barrier multiplier, used when computing the
+            least cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -456,17 +458,17 @@ class LeastCostXmission(LeastCostPaths):
         radius : None | int, optional
             Force clipping radius if set to an int
         mp_delay : float, optional
-            Delay in seconds between starting multiprocess workers. Useful for
-            reducing memory spike at working startup.
+            Delay in seconds between starting multi-process workers.
+            Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
 
         Returns
         -------
         least_costs : pandas.DataFrame | gpd.GeoDataFrame
-            Least cost connections between all supply curve points and the
-            transmission features with the given capacity class that are within
-            "nn_sink" nearest infinite sinks
+            Least cost connections between all supply curve points and
+            the transmission features with the given capacity class that
+            are within "nn_sink" nearest infinite sinks
         """
         max_workers = os.cpu_count() if max_workers is None else max_workers
 
@@ -491,8 +493,8 @@ class LeastCostXmission(LeastCostPaths):
                 simplify_geo=simplify_geo,
                 max_workers=max_workers)
         else:
-            logger.info('Computing Least Cost Transmission for SC points in '
-                        'serial')
+            logger.info('Computing Least Cost Transmission for {:,} SC points '
+                        'in serial'.format(len(sc_point_gids)))
             least_costs = self._process_single_core(
                 capacity_class,
                 tie_line_voltage,
@@ -510,7 +512,7 @@ class LeastCostXmission(LeastCostPaths):
         least_costs['max_cap'] = self._config['power_classes'][capacity_class]
         lcp_frac = (len(least_costs['sc_point_gid'].unique())
                     / len(sc_point_gids) * 100)
-        logger.info('{:.4f}% of requested sc point gids were succesfully '
+        logger.info('{:.4f}% of requested sc point gids were successfully '
                     'mapped to transmission features'.format(lcp_frac))
 
         return least_costs.reset_index(drop=True)
@@ -521,26 +523,27 @@ class LeastCostXmission(LeastCostPaths):
                             max_workers=2, save_paths=False, radius=None,
                             mp_delay=3, simplify_geo=None):
         """
-        Compute Least Cost Tranmission for desired sc_points using multiple
-        cores.
+        Compute Least Cost Transmission for desired sc_points using
+        multiple cores.
 
         Parameters
         ----------
         capacity_class : str | int
-            Capacity class of transmission features to connect supply curve
-            points to
+            Capacity class of transmission features to connect supply
+            curve points to
         tie_line_voltage : int
-            Tie-line volatage (kV)
+            Tie-line voltage (kV)
         sc_point_gids : list | set
-            List of sc_point_gids to connect to, by default connect to all
+            List of sc_point_gids to connect to, by default connect to
+            all
         nn_sinks : int, optional
             Number of nearest neighbor sinks to use for clipping radius
             calculation, by default 2
         clipping_buffer : float, optional
             Buffer to expand clipping radius by, by default 1.05
         barrier_mult : int, optional
-            Tranmission barrier multiplier, used when computing the least
-            cost tie-line path, by default 100
+            Transmission barrier multiplier, used when computing the
+            least cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing
         save_paths : bool, optional
@@ -549,17 +552,17 @@ class LeastCostXmission(LeastCostPaths):
         radius : None | int, optional
             Force clipping radius if set to an int
         mp_delay : float, optional
-            Delay in seconds between starting multiprocess workers. Useful for
-            reducing memory spike at working startup.
+            Delay in seconds between starting multi-process workers.
+            Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
 
         Returns
         -------
         least_costs : pandas.DataFrame | gpd.GeoDataFrame
-            Least cost connections between all supply curve points and the
-            transmission features with the given capacity class that are within
-            "nn_sink" nearest infinite sinks
+            Least cost connections between all supply curve points and
+            the transmission features with the given capacity class that
+            are within "nn_sink" nearest infinite sinks
         """
         least_costs = []
         num_jobs = 0
@@ -572,6 +575,8 @@ class LeastCostXmission(LeastCostPaths):
                     sc_features, radius = self._clip_to_sc_point(
                         sc_point, tie_line_voltage, nn_sinks=nn_sinks,
                         clipping_buffer=clipping_buffer, radius=radius)
+                    if sc_features.empty:
+                        continue
 
                     future = exe.submit(TransCapCosts.run,
                                         self._cost_fpath,
@@ -591,13 +596,13 @@ class LeastCostXmission(LeastCostPaths):
 
             logger.debug('Completed kicking off {} jobs for {} workers.'
                          .format(num_jobs, max_workers))
-            for i, future in enumerate(as_completed(futures)):
+            for i, future in enumerate(as_completed(futures), start=1):
                 sc_costs = future.result()
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
 
-                logger.debug('SC point {} of {} complete!'
-                             .format(i + 1, len(futures)))
+                logger.info('SC point {} of {} complete!'
+                            .format(i, len(futures)))
                 log_mem(logger)
 
         return least_costs
@@ -608,26 +613,27 @@ class LeastCostXmission(LeastCostPaths):
                              save_paths=False, radius=None,
                              simplify_geo=None):
         """
-        Compute Least Cost Tranmission for desired sc_points with a single
-        core.
+        Compute Least Cost Transmission for desired sc_points with a
+        single core.
 
         Parameters
         ----------
         capacity_class : str | int
-            Capacity class of transmission features to connect supply curve
-            points to
+            Capacity class of transmission features to connect supply
+            curve points to
         tie_line_voltage : int
-            Tie-line volatage (kV)
+            Tie-line voltage (kV)
         sc_point_gids : list | set
-            List of sc_point_gids to connect to, by default connect to all
+            List of sc_point_gids to connect to, by default connect to
+            all
         nn_sinks : int, optional
             Number of nearest neighbor sinks to use for clipping radius
             calculation, by default 2
         clipping_buffer : float, optional
             Buffer to expand clipping radius by, by default 1.05
         barrier_mult : int, optional
-            Tranmission barrier multiplier, used when computing the least
-            cost tie-line path, by default 100
+            Transmission barrier multiplier, used when computing the
+            least cost tie-line path, by default 100
         save_paths : bool, optional
             Flag to return least cost paths as a multi-line geometry,
             by default False
@@ -639,18 +645,19 @@ class LeastCostXmission(LeastCostPaths):
         Returns
         -------
         least_costs : pandas.DataFrame | gpd.GeoDataFrame
-            Least cost connections between all supply curve points and the
-            transmission features with the given capacity class that are within
-            "nn_sink" nearest infinite sinks
+            Least cost connections between all supply curve points and
+            the transmission features with the given capacity class that
+            are within "nn_sink" nearest infinite sinks
         """
         least_costs = []
-        i = 1
-        for _, sc_point in self.sc_points.iterrows():
+        for i, (_, sc_point) in enumerate(self.sc_points.iterrows(), start=1):
             gid = sc_point['sc_point_gid']
             if gid in sc_point_gids:
                 sc_features, radius = self._clip_to_sc_point(
                     sc_point, tie_line_voltage, nn_sinks=nn_sinks,
                     clipping_buffer=clipping_buffer, radius=radius)
+                if sc_features.empty:
+                    continue
 
                 sc_costs = TransCapCosts.run(
                     self._cost_fpath,
@@ -666,35 +673,37 @@ class LeastCostXmission(LeastCostPaths):
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
 
-                logger.debug('SC point {} of {} complete!'
-                             .format(i, len(sc_point_gids)))
+                logger.info('SC point {} of {} complete!'
+                            .format(i, len(sc_point_gids)))
                 log_mem(logger)
-                i += 1
         return least_costs
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
-            xmission_config=None, sc_point_gids=None, nn_sinks=2,
-            clipping_buffer=1.05, barrier_mult=100, max_workers=None,
-            save_paths=False, radius=None, simplify_geo=None):
+            xmission_config=None, min_line_length=0, sc_point_gids=None,
+            nn_sinks=2, clipping_buffer=1.05, barrier_mult=100,
+            max_workers=None, save_paths=False, radius=None, simplify_geo=None):
         """
-        Find Least Cost Tranmission connections between desired sc_points to
-        given tranmission features for desired capacity class
+        Find Least Cost Transmission connections between desired
+        sc_points to given transmission features for desired capacity
+        class
 
         Parameters
         ----------
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers
         features_fpath : str
-            Path to geopackage with transmission features
+            Path to GeoPackage with transmission features
         capacity_class : str | int
-            Capacity class of transmission features to connect supply curve
-            points to
+            Capacity class of transmission features to connect supply
+            curve points to
         resolution : int, optional
             SC point resolution, by default 128
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
+        min_line_length : int | float, optional
+            Minimum line length in km, by default 0.
         sc_point_gids : list, optional
             List of sc_point_gids to connect to, by default None
         nn_sinks : int, optional
@@ -703,8 +712,8 @@ class LeastCostXmission(LeastCostPaths):
         clipping_buffer : float, optional
             Buffer to expand clipping radius by, by default 1.05
         barrier_mult : int, optional
-            Tranmission barrier multiplier, used when computing the least
-            cost tie-line path, by default 100
+            Transmission barrier multiplier, used when computing the
+            least cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -719,13 +728,14 @@ class LeastCostXmission(LeastCostPaths):
         Returns
         -------
         least_costs : pandas.DataFrame | gpd.DataFrame
-            Least cost connections between all supply curve points and the
-            transmission features with the given capacity class that are within
-            "nn_sink" nearest infinite sinks
+            Least cost connections between all supply curve points and
+            the transmission features with the given capacity class that
+            are within "nn_sink" nearest infinite sinks
         """
         ts = time.time()
         lcx = cls(cost_fpath, features_fpath, resolution=resolution,
-                  xmission_config=xmission_config)
+                  xmission_config=xmission_config,
+                  min_line_length=min_line_length)
         least_costs = lcx.process_sc_points(capacity_class,
                                             sc_point_gids=sc_point_gids,
                                             nn_sinks=nn_sinks,
