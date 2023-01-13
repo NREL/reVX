@@ -505,6 +505,12 @@ class ReinforcementPaths(LeastCostPaths):
             This table must have a "ba_str" column which matches the
             "ba_str" ID of the network node to the "ba_str" of the
             substations that should connect to it.
+        network_nodes_fpath : str
+            Path to GeoPackage with network node endpoints. There should
+            be exactly one endpoint for each balancing area, and each
+            endpoint should have a "ba_str" column that identifies
+            matches exactly one of the ID's in the balancing area
+            GeoPackage to be used in downstream models.
         capacity_class : str | int
             Transmission feature ``capacity_class`` to use for the
             'base' greenfield costs. 'Base' greenfield costs are only
