@@ -1114,7 +1114,16 @@ class TransCapCosts(TieLineCosts):
 class ReinforcementLineCosts(TieLineCosts):
     """
     Compute Least Cost Reinforcement Line cost from substations to
-    network nodes
+    network nodes.
+
+    The reinforcement line path will attempt to follow existing
+    transmission lines for as long as possible. Costs are calculated
+    using the greenfield costs of the transmission line that is being
+    traced. If the reinforcement path travels along two different
+    line voltages, corresponding costs are used for each portion of the
+    path. In the case that the path must cross a region with no existing
+    transmission lines to reach the destination, the greenfield cost
+    of the input ``capacity_class`` is used.
     """
     def __init__(self, transmission_lines, cost_fpath, start_idx,
                  capacity_class, row_slice, col_slice, xmission_config=None,
@@ -1134,7 +1143,8 @@ class ReinforcementLineCosts(TieLineCosts):
         cost_fpath : str
             Full path of .h5 file with cost arrays.
         start_idx : tuple
-            Tuple of (row_idx, col_idx) to compute least costs to.
+            Tuple of (row_idx, col_idx) to compute reinforcement line
+            path to.
         capacity_class : int | str
             Transmission feature ``capacity_class`` to use for the
             'base' greenfield costs. 'Base' greenfield costs are only
@@ -1144,7 +1154,7 @@ class ReinforcementLineCosts(TieLineCosts):
             costs.
         row_slice, col_slice : slice
             Row and column slices into the cost array representing the
-            window to compute least cost path within.
+            window to compute reinforcement line path within.
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
