@@ -867,7 +867,7 @@ class TransCapCosts(TieLineCosts):
         if save_paths:
             paths = []
 
-        logger.debug('Determining path lengths and costs')
+        # logger.debug('Determining path lengths and costs')
 
         for index, feat in features.iterrows():
             if feat['category'] == TRANS_LINE_CAT:
@@ -890,7 +890,7 @@ class TransCapCosts(TieLineCosts):
                            'voltage of {}kV.'
                            .format(feat['trans_gid'], feat['max_volts'],
                                    tie_voltage))
-                    logger.debug(msg)
+                    # logger.debug(msg)
 
                     cost = 1e12
 
@@ -898,7 +898,7 @@ class TransCapCosts(TieLineCosts):
                     msg = ('Tie-line length {} will be increased to the '
                            'minimum allowed line length: {}.'
                            .format(length, min_line_length))
-                    logger.debug(msg)
+                    # logger.debug(msg)
 
                     min_mult = (1 if np.isclose(length, 0)
                                 else min_line_length / length)
@@ -1109,3 +1109,126 @@ class TransCapCosts(TieLineCosts):
             raise
 
         return features
+
+
+class ReinforcementLineCosts(TieLineCosts):
+    """
+    Compute Least Cost Reinforcement Line cost from substations to
+    network nodes
+    """
+    def __init__(self, transmission_lines, cost_fpath, start_idx,
+                 capacity_class, row_slice, col_slice, xmission_config=None,
+                 barrier_mult=100):
+        """
+
+        Parameters
+        ----------
+        transmission_lines : dict
+            Dictionary where the keys are the names of cost layers in
+            the cost HDF5 file and values are arrays with the
+            corresponding existing transmission lines rastered into
+            them (i.e. array value is 1 at a pixel if there is a
+            transmission line, otherwise 0). These arrays will be used
+            to compute the reinforcement costs along existing
+            transmission lines of differing voltages.
+        cost_fpath : str
+            Full path of .h5 file with cost arrays.
+        start_idx : tuple
+            Tuple of (row_idx, col_idx) to compute least costs to.
+        capacity_class : int | str
+            Transmission feature ``capacity_class`` to use for the
+            'base' greenfield costs. 'Base' greenfield costs are only
+            used if the reinforcement path *must* deviate from existing
+            transmission lines. Typically, a capacity class of 400 MW
+            (230kV transmission line) is used for the base greenfield
+            costs.
+        row_slice, col_slice : slice
+            Row and column slices into the cost array representing the
+            window to compute least cost path within.
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects.
+            By default, ``None``.
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs.
+            By default, ``100``.
+        """
+        super().__init__(cost_fpath=cost_fpath, start_idx=start_idx,
+                         capacity_class=capacity_class, row_slice=row_slice,
+                         col_slice=col_slice, xmission_config=xmission_config,
+                         barrier_mult=barrier_mult)
+
+        with ExclusionLayers(cost_fpath) as f:
+            for cost_layer, lines in transmission_lines.items():
+                t_lines = np.where(lines[row_slice, col_slice])
+                costs = f[cost_layer, row_slice, col_slice][t_lines]
+                self._mcp_cost[t_lines] = costs * 1e-9
+                self._cost[t_lines] = costs
+
+    @classmethod
+    def run(cls, transmission_lines, cost_fpath, start_idx, end_indices,
+            capacity_class, row_slice, col_slice, xmission_config=None,
+            barrier_mult=100, save_paths=False):
+        """
+        Compute reinforcement line path to all features to be connected
+        a single supply curve point.
+
+        Parameters
+        ----------
+        transmission_lines : dict
+            Dictionary where the keys are the names of cost layers in
+            the cost HDF5 file and values are arrays with the
+            corresponding existing transmission lines rastered into
+            them (i.e. array value is 1 at a pixel if there is a
+            transmission line, otherwise 0). These arrays will be used
+            to compute the reinforcement costs along existing
+            transmission lines of differing voltages.
+        cost_fpath : str
+            Full path of .h5 file with cost arrays.
+        start_idx : tuple
+            Tuple of (row_idx, col_idx) to compute reinforcement line
+            path to.
+        end_indices : tuple | list
+            Tuple (row, col) index or list of (row, col) indices of end
+            point(s) to connect and compute reinforcement line path to.
+        capacity_class : int | str
+            Transmission feature ``capacity_class`` to use for the
+            'base' greenfield costs. 'Base' greenfield costs are only
+            used if the reinforcement path *must* deviate from existing
+            transmission lines. Typically, a capacity class of 400 MW
+            (230kV transmission line) is used for the base greenfield
+            costs.
+        row_slice, col_slice : slice
+            Row and column slices into the cost array representing the
+            window to compute reinforcement line path within.
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects.
+            By default, ``None``.
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs.
+            By default, ``100``.
+        save_paths : bool, optional
+            Flag to save reinforcement line path as a multi-line
+            geometry. By default, ``False``.
+
+        Returns
+        -------
+        tie_lines : pandas.DataFrame | gpd.GeoDataFrame
+            DataFrame of lengths and costs for each reinforcement line
+            path or GeoDataFrame of length, cost, and geometry for each
+            reinforcement line path.
+        """
+        ts = time.time()
+        tlc = cls(transmission_lines, cost_fpath, start_idx, capacity_class,
+                  row_slice, col_slice, xmission_config=xmission_config,
+                  barrier_mult=barrier_mult)
+
+        tie_lines = tlc.compute(end_indices, save_paths=save_paths)
+        tie_lines = tie_lines.rename({'length_km': 'reinforcement_dist_km',
+                                      'cost': 'reinforcement_cost'}, axis=1)
+
+        logger.debug('Reinforcement Path Cost computed in {:.4f} min'
+                     .format((time.time() - ts) / 60))
+
+        return tie_lines
