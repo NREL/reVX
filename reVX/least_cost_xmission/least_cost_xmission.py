@@ -682,7 +682,8 @@ class LeastCostXmission(LeastCostPaths):
     def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
             xmission_config=None, min_line_length=0, sc_point_gids=None,
             nn_sinks=2, clipping_buffer=1.05, barrier_mult=100,
-            max_workers=None, save_paths=False, radius=None, simplify_geo=None):
+            max_workers=None, save_paths=False, radius=None,
+            simplify_geo=None):
         """
         Find Least Cost Transmission connections between desired
         sc_points to given transmission features for desired capacity
