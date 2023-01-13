@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Module to compute least cost xmission paths, distances, and costs for a clipped
-area.
+Module to compute least cost transmission paths, distances, and costs
+for a clipped area.
 """
 import geopandas as gpd
 import logging
@@ -41,7 +41,7 @@ class TieLineCosts:
         start_idx : tuple
             row_idx, col_idx to compute least costs to.
         capacity_class : int | str
-            Tranmission feature capacity_class class
+            Transmission feature capacity_class class
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -153,8 +153,8 @@ class TieLineCosts:
     @property
     def mcp(self):
         """
-        MCP_Geometric instance intialized on mcp_cost array with starting point
-        at sc_point
+        MCP_Geometric instance initialized on mcp_cost array with
+        starting point at sc_point
 
         Returns
         -------
@@ -275,8 +275,8 @@ class TieLineCosts:
     @staticmethod
     def _compute_path_length(indices):
         """
-        Compute the total length and cell by cell length of the lease cost path
-        defined by 'indices'
+        Compute the total length and cell by cell length of the lease
+        cost path defined by 'indices'
 
         Parameters
         ----------
@@ -288,7 +288,8 @@ class TieLineCosts:
         length : float
             Total length of path in km
         lens : ndarray
-            Vector of the distance of the least cost path accross each cell
+            Vector of the distance of the least cost path across each
+            cell
         """
         # Use Pythagorean theorem to calculate lengths between cells (km)
         # Use c**2 = a**2 + b**2 to determine length of individual paths
@@ -312,13 +313,14 @@ class TieLineCosts:
 
     def least_cost_path(self, end_idx, save_path=False):
         """
-        Find least cost path, its length, and its total un-barriered cost
+        Find least cost path, its length, and its total un-barriered
+        cost
 
         Parameters
         ----------
         end_idx : tuple
-            (row, col) index of end point to connect and compute least cost
-            path to
+            (row, col) index of end point to connect and compute least
+            cost path to
         save_path : bool
             Flag to save path as a multi-line geometry
 
@@ -376,13 +378,13 @@ class TieLineCosts:
 
     def compute(self, end_indices, save_paths=False):
         """
-        Compute least cost paths to given end indicies
+        Compute least cost paths to given end indices
 
         Parameters
         ----------
-        end_idices : tuple | list
-            (row, col) index or list of (row, col) indices of end point(s) to
-            connect and compute least cost path to
+        end_indices : tuple | list
+            (row, col) index or list of (row, col) indices of end
+            point(s) to connect and compute least cost path to
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
@@ -390,8 +392,8 @@ class TieLineCosts:
         Returns
         -------
         tie_lines : pandas.DataFrame | gpd.GeoDataFrame
-            DataFrame of lenghts and costs for each path or GeoDataFrame of
-            lenght, cost, and geometry for each path
+            DataFrame of lengths and costs for each path or GeoDataFrame
+            of length, cost, and geometry for each path
         """
         if isinstance(end_indices, tuple):
             end_indices = [end_indices]
@@ -420,8 +422,8 @@ class TieLineCosts:
             row_slice, col_slice, xmission_config=None, barrier_mult=100,
             save_paths=False):
         """
-        Compute least cost tie-line path to all features to be connected a
-        single supply curve point.
+        Compute least cost tie-line path to all features to be connected
+        a single supply curve point.
 
         Parameters
         ----------
@@ -429,11 +431,11 @@ class TieLineCosts:
             Full path of .h5 file with cost arrays
         start_idx : tuple
             row_idx, col_idx to compute least costs to.
-        end_idices : tuple | list
-            (row, col) index or list of (row, col) indices of end point(s) to
-            connect and compute least cost path to
+        end_indices : tuple | list
+            (row, col) index or list of (row, col) indices of end
+            point(s) to connect and compute least cost path to
         capacity_class : int | str
-            Tranmission feature capacity_class class
+            Transmission feature capacity_class class
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -448,8 +450,8 @@ class TieLineCosts:
         Returns
         -------
         tie_lines : pandas.DataFrame | gpd.GeoDataFrame
-            DataFrame of lenghts and costs for each path or GeoDataFrame of
-            lenght, cost, and geometry for each path
+            DataFrame of lengths and costs for each path or GeoDataFrame
+            of length, cost, and geometry for each path
         """
         ts = time.time()
         tlc = cls(cost_fpath, start_idx, capacity_class, row_slice, col_slice,
@@ -465,7 +467,7 @@ class TieLineCosts:
 
 class TransCapCosts(TieLineCosts):
     """
-    Compute total tranmission capital cost
+    Compute total transmission capital cost
     (least-cost tie-line cost + connection cost) for all features to be
     connected a single supply curve point
     """
@@ -482,7 +484,7 @@ class TransCapCosts(TieLineCosts):
         features : pandas.DataFrame
             Table of transmission features
         capacity_class : int | str
-            Tranmission feature capacity_class class
+            Transmission feature capacity_class class
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -540,7 +542,8 @@ class TransCapCosts(TieLineCosts):
     @property
     def clip_mask(self):
         """
-        Polygon used to clip transmission lines to the clipped raster bounds
+        Polygon used to clip transmission lines to the clipped raster
+        bounds
 
         Returns
         -------
@@ -580,7 +583,8 @@ class TransCapCosts(TieLineCosts):
     @staticmethod
     def _get_clipping_slices(cost_fpath, sc_point_idx, radius=None):
         """
-        Get array slices for clipped area around SC point (row, col) index
+        Get array slices for clipped area around SC point (row, col)
+        index
 
         Parameters
         ----------
@@ -626,13 +630,14 @@ class TransCapCosts(TieLineCosts):
     @staticmethod
     def _calc_xformer_cost(features, tie_line_voltage, config=None):
         """
-        Compute transformer costs in $/MW for needed features, all others will
-        be 0
+        Compute transformer costs in $/MW for needed features, all
+        others will be 0
 
         Parameters
         ----------
         features : pd.DataFrame
-            Table of transmission features to compute transformer costs for
+            Table of transmission features to compute transformer costs
+            for
         tie_line_voltage : int
             Tie-line voltage in kV
         config : str | dict | XmissionConfig
@@ -676,13 +681,14 @@ class TransCapCosts(TieLineCosts):
     @staticmethod
     def _calc_sub_upgrade_cost(features, tie_line_voltage, config=None):
         """
-        Compute substation upgrade costs for needed features, all others will
-        be 0
+        Compute substation upgrade costs for needed features, all others
+        will be 0
 
         Parameters
         ----------
         features : pd.DataFrame
-            Table of transmission features to compute transformer costs for
+            Table of transmission features to compute transformer costs
+            for
         tie_line_voltage : int
             Tie-line voltage in kV
         config : str | dict | XmissionConfig
@@ -716,12 +722,14 @@ class TransCapCosts(TieLineCosts):
     @staticmethod
     def _calc_new_sub_cost(features, tie_line_voltage, config=None):
         """
-        Compute new substation costs for needed features, all others will be 0
+        Compute new substation costs for needed features, all others
+        will be 0
 
         Parameters
         ----------
         features : pd.DataFrame
-            Table of transmission features to compute transformer costs for
+            Table of transmission features to compute transformer costs
+            for
         tie_line_voltage : int
             Tie-line voltage in kV
         config : str | dict | XmissionConfig
@@ -754,9 +762,9 @@ class TransCapCosts(TieLineCosts):
 
     def _prep_features(self, features):
         """
-        Shift feature row and col indicies of tranmission features from the
-        global domain to the clipped raster, clip tranmission lines to clipped
-        array and find nearest point
+        Shift feature row and col indices of transmission features from
+        the global domain to the clipped raster, clip transmission lines
+        to clipped array and find nearest point
 
         Parameters
         ----------
@@ -770,8 +778,8 @@ class TransCapCosts(TieLineCosts):
         Returns
         -------
         features : pandas.DataFrame
-            Transmission features with row/col indicies shifted to clipped
-            raster
+            Transmission features with row/col indices shifted to
+            clipped raster
         """
         mapping = {'gid': 'trans_gid', 'trans_gids': 'trans_line_gids'}
         features = features.rename(columns=mapping).drop(columns='dist',
@@ -787,22 +795,24 @@ class TransCapCosts(TieLineCosts):
 
     def _get_trans_line_idx(self, trans_line, clip=False):
         """
-        Map the neareset point on each transmission lines to the cost raster
+        Map the nearest point on each transmission lines to the cost
+        raster
 
         Parameters
         ----------
-        trans_lines : geopandas.GeoSeries
-            Transmission lines to be connected to each supply curve point,
-            the nearest point on each line needs to be mapped to the
-            cost raster grid in order to compute the least cost path
+        trans_lines : GeoPandas.GeoSeries
+            Transmission lines to be connected to each supply curve
+            point, the nearest point on each line needs to be mapped to
+            the cost raster grid in order to compute the least cost path
         clip : bool
-            Flag to clip the tranmission lines to the cost raster domain
+            Flag to clip the transmission lines to the cost raster
+            domain
 
         Returns
         -------
         [row, col] : list
-            Row, col index of the nearest point on the transmission line to
-            the supply curve point, used for least cost path
+            Row, col index of the nearest point on the transmission line
+            to the supply curve point, used for least cost path
         """
         if clip:
             logger.debug("Clipping transmission line {} to raster domain"
@@ -833,8 +843,8 @@ class TransCapCosts(TieLineCosts):
     def compute_tie_line_costs(self, min_line_length=5.7,  # noqa: C901
                                save_paths=False):
         """
-        Compute least cost path and distance between supply curve point and
-        every tranmission feature
+        Compute least cost path and distance between supply curve point
+        and every transmission feature
 
         Parameters
         ----------
@@ -847,8 +857,8 @@ class TransCapCosts(TieLineCosts):
         Returns
         -------
         tie_line_costs : pandas.DataFrame
-            Updated table of transmission features with the tie-line cost
-            and distance added
+            Updated table of transmission features with the tie-line
+            cost and distance added
         """
         tie_voltage = self.tie_line_voltage
         features = self.features.copy()
@@ -931,8 +941,8 @@ class TransCapCosts(TieLineCosts):
         Returns
         -------
         features : pd.DataFrame
-            Updated table of transmission features with the connection costs
-            added
+            Updated table of transmission features with the connection
+            costs added
         """
         if features is None:
             features = self.features.copy()
@@ -990,13 +1000,14 @@ class TransCapCosts(TieLineCosts):
             Flag to save least cost path as a multi-line geometry,
             by default False
         simplify_geo : float | None, optional
-            If float, simplify geometres using this value
+            If float, simplify geometries using this value
 
         Returns
         -------
         features : pd.DataFrame | gpd.GeoDataFrame
-            Transmission table with tie-line costs and distances and connection
-            costs added. Includes paths if save_paths == True
+            Transmission table with tie-line costs and distances and
+            connection costs added. Includes paths if
+            ``save_paths == True``
         """
         features = self.compute_tie_line_costs(min_line_length=min_line_length,
                                                save_paths=save_paths)
@@ -1017,8 +1028,8 @@ class TransCapCosts(TieLineCosts):
         drop_cols = ['row', 'col']
         if not save_paths:
             drop_cols.append('geometry')
-        features = features.drop(columns=drop_cols, errors='ignore'
-                                 ).reset_index(drop=True)
+        features = features.drop(columns=drop_cols,
+                                 errors='ignore').reset_index(drop=True)
 
         features['sc_row_ind'] = self.sc_point['sc_row_ind']
         features['sc_col_ind'] = self.sc_point['sc_col_ind']
@@ -1047,7 +1058,7 @@ class TransCapCosts(TieLineCosts):
         features : pandas.DataFrame
             Table of transmission features
         capacity_class : int | str
-            Tranmission feature capacity_class class
+            Transmission feature capacity_class class
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -1061,13 +1072,14 @@ class TransCapCosts(TieLineCosts):
             Flag to save least cost path as a multi-line geometry,
             by default False
         simplify_geo : float | None, optional
-            If float, simplify geometres using this value
+            If float, simplify geometries using this value
 
         Returns
         -------
         features : pd.DataFrame | gpd.GeoDataFrame | None
-            Transmission table with tie-line costs and distances and connection
-            costs added. Will include paths if save_paths == True
+            Transmission table with tie-line costs and distances and
+            connection costs added. Will include paths if
+            ``save_paths == True``
         """
         ts = time.time()
         logger.debug('Processing sc_point {}, {}, save_paths={}'
@@ -1087,11 +1099,11 @@ class TransCapCosts(TieLineCosts):
                          .format(tcc.sc_point_gid, time.time() - ts))
         except InvalidMCPStartValueError as ex:
             features = None
-            msg = ('Could not connect SC point {} to tranmission features: {}'
+            msg = ('Could not connect SC point {} to transmission features: {}'
                    .format(sc_point['sc_point_gid'], ex))
             logger.debug(msg)
         except Exception as ex:
-            msg = ('Failed to connect SC point {} to tranmission features: {}'
+            msg = ('Failed to connect SC point {} to transmission features: {}'
                    .format(sc_point['sc_point_gid'], ex))
             logger.exception(msg)
             raise
