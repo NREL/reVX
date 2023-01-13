@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module to compute least cost xmission paths and distances
+Module to compute least cost transmission paths and distances
 """
 from concurrent.futures import as_completed
 import geopandas as gpd
@@ -36,7 +36,7 @@ class LeastCostPaths:
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers
         features_fpath : str
-            Path to geopackage with transmission features
+            Path to GeoPackage with transmission features
         resolution : int, optional
             SC point resolution, by default 128
         xmission_config : str | dict | XmissionConfig, optional
@@ -97,7 +97,7 @@ class LeastCostPaths:
     @staticmethod
     def _get_feature_cost_indices(features, crs, transform, shape):
         """
-        Map features to cost row, col indicies using rasterio transform
+        Map features to cost row, col indices using rasterio transform
 
         Parameters
         ----------
@@ -113,11 +113,11 @@ class LeastCostPaths:
         Returns
         -------
         row : ndarray
-            Vector of row indicies for each feature
+            Vector of row indices for each feature
         col : ndarray
-            Vector of col indicies for each features
+            Vector of col indices for each features
         mask : ndarray
-            Boolean mask of features with indicies outside of cost raster
+            Boolean mask of features with indices outside of cost raster
         """
         feat_crs = features.crs.to_dict()
         cost_crs = crs.to_dict()
@@ -152,9 +152,9 @@ class LeastCostPaths:
         Parameters
         ----------
         row : ndarray
-            Vector of row indicies
+            Vector of row indices
         col : ndarray
-            Vector of col indicies
+            Vector of col indices
         shape : tuple
             Full cost array shape
 
@@ -228,7 +228,7 @@ class LeastCostPaths:
         Returns
         -------
         start_idx : ndarray
-            (row, col) indicies of start feature
+            (row, col) indices of start feature
         end_features : pandas.DataFrame
             DataFrame of all end features
         """
@@ -242,19 +242,20 @@ class LeastCostPaths:
         return start_idx, end_features.reset_index(drop=False)
 
     def process_least_cost_paths(self, capacity_class, barrier_mult=100,
-                                 max_workers=None, save_paths=False,):
+                                 indices=None, max_workers=None,
+                                 save_paths=False,):
         """
-        Find Least Cost Paths between all pairs of provided features for the
-        given tie-line capacity class
+        Find Least Cost Paths between all pairs of provided features for
+        the given tie-line capacity class
 
         Parameters
         ----------
         capacity_class : str | int
-            Capacity class of transmission features to connect supply curve
-            points to
+            Capacity class of transmission features to connect supply
+            curve points to
         barrier_mult : int, optional
-            Tranmission barrier multiplier, used when computing the least
-            cost tie-line path, by default 100
+            Transmission barrier multiplier, used when computing the
+            least cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -265,11 +266,11 @@ class LeastCostPaths:
         Returns
         -------
         least_cost_paths : pandas.DataFrame | gpd.GeoDataFrame
-            DataFrame of lenghts and costs for each path or GeoDataFrame of
-            lenght, cost, and geometry for each path
+            DataFrame of lengths and costs for each path or GeoDataFrame
+            of length, cost, and geometry for each path
         """
         max_workers = os.cpu_count() if max_workers is None else max_workers
-
+        indices = self.features.index if indices is None else indices
         least_cost_paths = []
         if max_workers > 1:
             logger.info('Computing Least Cost Paths in parallel on {} workers'
@@ -279,7 +280,7 @@ class LeastCostPaths:
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 futures = {}
-                for start in self.features.index:
+                for start in indices:
                     start_idx, end_features = \
                         self._clip_to_feature(start_feature_id=start)
                     end_indices = end_features[['row', 'col']].values
@@ -306,7 +307,7 @@ class LeastCostPaths:
             logger.info('Computing Least Cost Paths in serial')
             log_mem(logger)
             i = 1
-            for start in self.features.index:
+            for start in indices:
                 start_idx, end_features = \
                     self._clip_to_feature(start_feature_id=start)
                 end_indices = end_features[['row', 'col']].values
@@ -333,27 +334,27 @@ class LeastCostPaths:
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class,
-            xmission_config=None, barrier_mult=100, max_workers=None,
-            save_paths=False):
+            xmission_config=None, barrier_mult=100, indices=None,
+            max_workers=None, save_paths=False):
         """
-        Find Least Cost Paths between all pairs of provided features for the
-        given tie-line capacity class
+        Find Least Cost Paths between all pairs of provided features for
+        the given tie-line capacity class
 
         Parameters
         ----------
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers
         features_fpath : str
-            Path to geopackage with transmission features
+            Path to GeoPackage with transmission features
         capacity_class : str | int
-            Capacity class of transmission features to connect supply curve
-            points to
+            Capacity class of transmission features to connect supply
+            curve points to
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
-            Tranmission barrier multiplier, used when computing the least
-            cost tie-line path, by default 100
+            Transmission barrier multiplier, used when computing the
+            least cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -364,14 +365,15 @@ class LeastCostPaths:
         Returns
         -------
         least_cost_paths : pandas.DataFrame | gpd.GeoDataFrame
-            DataFrame of lenghts and costs for each path or GeoDataFrame of
-            lenght, cost, and geometry for each path
+            DataFrame of lengths and costs for each path or GeoDataFrame
+            of length, cost, and geometry for each path
         """
         ts = time.time()
         lcp = cls(cost_fpath, features_fpath, xmission_config=xmission_config)
         least_cost_paths = lcp.process_least_cost_paths(
             capacity_class,
             barrier_mult=barrier_mult,
+            indices=indices,
             save_paths=save_paths,
             max_workers=max_workers)
 
