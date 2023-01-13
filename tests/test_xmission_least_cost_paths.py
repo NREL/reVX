@@ -119,8 +119,7 @@ def test_cli(runner):
         capacity_class = xmission_config._parse_cap_class(capacity)
         cap = xmission_config['power_classes'][capacity_class]
         kv = xmission_config.capacity_to_kv(capacity_class)
-        test = '{}_LeastCostPaths_{}MW_{}kV.csv'.format(os.path.basename(td),
-                                                        cap, kv)
+        test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
         test = os.path.join(td, test)
         test = pd.read_csv(test)
         check(truth, test)

@@ -87,7 +87,8 @@ def test_capacity_class(capacity):
         truth = truth.loc[mask]
 
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
-                                 sc_point_gids=sc_point_gids)
+                                 sc_point_gids=sc_point_gids,
+                                 min_line_length=5.76)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
@@ -116,7 +117,8 @@ def test_parallel(max_workers):
 
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
                                  max_workers=max_workers,
-                                 sc_point_gids=sc_point_gids)
+                                 sc_point_gids=sc_point_gids,
+                                 min_line_length=5.76)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
@@ -148,7 +150,8 @@ def test_resolution(resolution):
         truth = truth.loc[mask]
 
     test = LeastCostXmission.run(COST_H5, FEATURES, 100, resolution=resolution,
-                                 sc_point_gids=sc_point_gids)
+                                 sc_point_gids=sc_point_gids,
+                                 min_line_length=resolution * 0.09 / 2)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
@@ -166,11 +169,6 @@ def test_cli(runner):
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_{capacity}MW.csv')
     truth = pd.read_csv(truth)
-    sc_point_gids = truth['sc_point_gid'].unique()
-    sc_point_gids = np.random.choice(sc_point_gids, size=N_SC_POINTS,
-                                     replace=False)
-    mask = truth['sc_point_gid'].isin(sc_point_gids)
-    truth = truth.loc[mask]
 
     with tempfile.TemporaryDirectory() as td:
         config = {
@@ -181,7 +179,7 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
-            "sc_point_gids": sc_point_gids.tolist(),
+            "min_line_length": 5.76
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
