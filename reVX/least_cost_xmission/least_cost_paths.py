@@ -502,6 +502,9 @@ class ReinforcementPaths(LeastCostPaths):
             Path to GeoPackage with transmission features. The network
             node must be the first row of the GeoPackage - the rest
             should be substations that need to connect to that node.
+            This table must have a "ba_str" column which matches the
+            "ba_str" ID of the network node to the "ba_str" of the
+            substations that should connect to it.
         capacity_class : str | int
             Transmission feature ``capacity_class`` to use for the
             'base' greenfield costs. 'Base' greenfield costs are only
