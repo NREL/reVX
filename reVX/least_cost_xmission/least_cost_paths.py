@@ -17,7 +17,9 @@ from reV.handlers.exclusions import ExclusionLayers
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
-from reVX.least_cost_xmission.trans_cap_costs import TieLineCosts
+from reVX.least_cost_xmission.config import TRANS_LINE_CAT, SUBSTATION_CAT
+from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
+                                                      ReinforcementLineCosts)
 from reVX.utilities import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
@@ -382,3 +384,235 @@ class LeastCostPaths:
                             (time.time() - ts) / 3600))
 
         return least_cost_paths
+
+
+class ReinforcementPaths(LeastCostPaths):
+    """
+    Compute reinforcement line paths between substations and a single
+    balancing area network node.
+    """
+    def __init__(self, cost_fpath, features, transmission_lines,
+                 xmission_config=None):
+        """
+        Parameters
+        ----------
+        cost_fpath : str
+            Path to h5 file with cost rasters and other required layers.
+        features_fpath : str
+            Path to GeoPackage with transmission features. The network
+            node must be the first row of the GeoPackage - the rest
+            should be substations that need to connect to that node.
+        transmission_lines :dict
+            Dictionary where the keys are the names of cost layers in
+            the cost HDF5 file and values are arrays with the
+            corresponding existing transmission lines rastered into
+            them (i.e. array value is 1 at a pixel if there is a
+            transmission line, otherwise 0). These arrays will be used
+            to compute the reinforcement costs along existing
+            transmission lines of differing voltages.
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects.
+            By default, ``None``.
+        """
+        self._check_layers(cost_fpath)
+        self._config = TieLineCosts._parse_config(
+            xmission_config=xmission_config)
+
+        self._features, self._row_slice, self._col_slice, self._shape = \
+            self._map_to_costs(cost_fpath, features)
+        self._features = self._features.drop(columns='geometry')
+        self._cost_fpath = cost_fpath
+
+        network_node = (self._features.iloc[0:1]
+                        .dropna(axis="columns", how="all"))
+        err_msg = "Network node was dropped during clipping!"
+        assert "ba_str" in network_node, err_msg
+        self._start_idx = network_node[['row', 'col']].values[0]
+        self._features = (self._features.iloc[1:]
+                          .dropna(axis="columns", how="all"))
+
+        self._transmission_lines = transmission_lines
+
+    def process_least_cost_paths(self, capacity_class, barrier_mult=100,
+                                 save_paths=False):
+        """
+        Find the reinforcement line paths between the network node and
+        the substations for the given tie-line capacity class
+
+        Parameters
+        ----------
+        capacity_class : str | int
+            Transmission feature ``capacity_class`` to use for the
+            'base' greenfield costs. 'Base' greenfield costs are only
+            used if the reinforcement path *must* deviate from existing
+            transmission lines. Typically, a capacity class of 400 MW
+            (230kV transmission line) is used for the base greenfield
+            costs.
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs.
+            By default, ``100``.
+        max_workers : int, optional
+            Number of workers to use for processing. If 1 run in serial,
+            if ``None`` use all available cores. By default, ``None``.
+        save_paths : bool, optional
+            Flag to save reinforcement line path as a multi-line
+            geometry. By default, ``False``.
+
+        Returns
+        -------
+        least_cost_paths : pandas.DataFrame | gpd.GeoDataFrame
+            DataFrame of lengths and costs for each reinforcement line
+            path or GeoDataFrame of length, cost, and geometry for each
+            reinforcement line path.
+        """
+
+        logger.info('Computing reinforcement path costs for start index {}'
+                    .format(self._start_idx))
+        log_mem(logger)
+
+        end_indices = self._features[['row', 'col']].values
+        self._features = self._features.drop(columns=['row', 'col'])
+
+        lcp = ReinforcementLineCosts.run(self._transmission_lines,
+                                         self._cost_fpath,
+                                         self._start_idx, end_indices,
+                                         capacity_class,
+                                         self._row_slice,
+                                         self._col_slice,
+                                         barrier_mult=barrier_mult,
+                                         save_paths=save_paths)
+        least_cost_paths = pd.concat((self._features, lcp), axis=1)
+
+        return least_cost_paths.drop("index", axis="columns", errors="ignore")
+
+    @classmethod
+    def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
+            transmission_lines_fpath, capacity_class, xmission_config=None,
+            barrier_mult=100, indices=None, save_paths=False):
+        """
+        Find the reinforcement line paths between the network node and
+        the substations for the given tie-line capacity class
+
+        Parameters
+        ----------
+        cost_fpath : str
+            Path to h5 file with cost rasters and other required layers.
+        features_fpath : str
+            Path to GeoPackage with transmission features. The network
+            node must be the first row of the GeoPackage - the rest
+            should be substations that need to connect to that node.
+        capacity_class : str | int
+            Transmission feature ``capacity_class`` to use for the
+            'base' greenfield costs. 'Base' greenfield costs are only
+            used if the reinforcement path *must* deviate from existing
+            transmission lines. Typically, a capacity class of 400 MW
+            (230kV transmission line) is used for the base greenfield
+            costs.
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects.
+            By default, ``None``.
+        barrier_mult : int, optional
+            Multiplier on transmission barrier costs.
+            By default, ``100``.
+        max_workers : int, optional
+            Number of workers to use for processing. If 1 run in serial,
+            if ``None`` use all available cores. By default, ``None``.
+        save_paths : bool, optional
+            Flag to save reinforcement line path as a multi-line
+            geometry. By default, ``False``.
+
+        Returns
+        -------
+        least_cost_paths : pandas.DataFrame | gpd.GeoDataFrame
+            DataFrame of lengths and costs for each reinforcement line
+            path or GeoDataFrame of length, cost, and geometry for each
+            reinforcement line path.
+        """
+        ts = time.time()
+        least_cost_paths = []
+        lcp_kwargs = {"capacity_class": capacity_class,
+                      "barrier_mult": barrier_mult,
+                      "save_paths": save_paths}
+        with ExclusionLayers(cost_fpath) as f:
+            cost_crs = CRS.from_string(f.crs)
+            cost_shape = f.shape
+            cost_transform = rasterio.Affine(*f.profile['transform'])
+
+        features = gpd.read_file(features_fpath).to_crs(cost_crs)
+        substations = (features[features.category == SUBSTATION_CAT]
+                       .reset_index(drop=True)
+                       .dropna(axis="columns", how="all"))
+
+        lines = gpd.read_file(transmission_lines_fpath).to_crs(cost_crs)
+        transmission_lines = (lines[lines.category == TRANS_LINE_CAT]
+                              .reset_index(drop=True))
+
+        transmission_lines = _rasterize_transmission(transmission_lines,
+                                                     xmission_config,
+                                                     cost_shape,
+                                                     cost_transform)
+
+        network_nodes = gpd.read_file(network_nodes_fpath).to_crs(cost_crs)
+        indices = network_nodes.index if indices is None else indices
+        for loop_ind, index in enumerate(indices, start=1):
+            network_node = network_nodes.iloc[index:index+1]
+            ba_str = network_node["ba_str"].values[0]
+            node_substations = substations[substations["ba_str"] == ba_str]
+            node_substations = node_substations.reset_index(drop=False)
+            node_features = pd.concat([network_node, node_substations])
+            rp = cls(cost_fpath, node_features, transmission_lines,
+                     xmission_config=xmission_config)
+            node_least_cost_paths = rp.process_least_cost_paths(**lcp_kwargs)
+            node_least_cost_paths['ba_str'] = ba_str
+            least_cost_paths += [node_least_cost_paths]
+
+            logger.debug('Computed {}/{} reinforcement paths'
+                         .format(loop_ind, len(indices)))
+
+        logger.info('{} paths were computed in {:.4f} hours'
+                    .format(len(least_cost_paths), (time.time() - ts) / 3600))
+
+        return pd.concat(least_cost_paths, ignore_index=True)
+
+
+def _rasterize_transmission(transmission_lines, xmission_config, cost_shape,
+                            cost_transform):
+    """Rasterize transmission lines and assemble them into a dict. """
+
+    transmission_lines_dict = {}
+    capacities = sorted(xmission_config['power_classes'],
+                        key=lambda x: xmission_config['power_classes'][x])
+    v_min = 0
+    for capacity in capacities[:-1]:
+        power_class = str(xmission_config['power_classes'][capacity])
+        cost_layer = 'tie_line_costs_{}MW'.format(power_class)
+        v_max = xmission_config['power_to_voltage'][power_class]
+
+        curr_lines = transmission_lines[
+            (transmission_lines["voltage"] > v_min)
+            & (transmission_lines["voltage"] <= v_max)
+        ]
+        out = _rasterize_transmission_layer(curr_lines, cost_shape,
+                                            cost_transform)
+        transmission_lines_dict[cost_layer] = out
+        v_min = v_max
+
+    curr_lines = transmission_lines[transmission_lines["voltage"] > v_min]
+    cost_layer = 'tie_line_costs_{}'.format(capacities[-1])
+    out = _rasterize_transmission_layer(curr_lines, cost_shape, cost_transform)
+    transmission_lines_dict[cost_layer] = out
+    return transmission_lines_dict
+
+
+def _rasterize_transmission_layer(transmission_lines, cost_shape,
+                                  cost_transform):
+    """Rasterize a single transmission layer. """
+    shapes = [(geom, 1) for geom in transmission_lines["geometry"]
+              if geom is not None]
+    out = np.zeros(cost_shape, dtype='uint8')
+    rasterio.features.rasterize(shapes=shapes, out=out, out_shape=out.shape,
+                                fill=0, transform=cost_transform)
+
+    return out
