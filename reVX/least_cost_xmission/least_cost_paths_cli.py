@@ -243,6 +243,11 @@ def map_ba(ctx, features_fpath, balancing_areas_fpath, out_file):
     """
     Map substation locations to balancing regions.
 
+    **IMPORTANT** This method DOES NOT clip the substations to your
+    balancing area boundary. All substations will be mapped to their
+    closest BA. It is your responsibility to remove any substations
+    outside of the analysis region before calling this method.
+
     Doing the pre-processing step avoids any issues with substations
     being left out or double counted if we just clipped them to the
     balancing area shapes.
