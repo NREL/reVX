@@ -756,7 +756,6 @@ class LeastCostXmission(LeastCostPaths):
         return least_costs
 
 
-
 class ReinforcedXmission(LeastCostXmission):
     """
     Compute Least Cost tie-line paths and full transmission cap cost
