@@ -190,8 +190,8 @@ class Rasterizer:
         Parameters
         ----------
         shapes : list, optional
-            List of shapes to rasterize. If `None` or empty list,
-            returns array of zeros.
+            List of geometries to rasterize (i.e. list(gdf["geometry])).
+            If `None` or empty list, returns array of zeros.
 
         Returns
         -------
