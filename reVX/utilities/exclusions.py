@@ -362,9 +362,10 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 local_exclusions = self.compute_local_exclusions(exclusion,
                                                                  cnty,
                                                                  *args)
-                exclusions = self._combine_exclusions(exclusions,
-                                                      local_exclusions,
-                                                      cnty['FIPS'].unique())
+                if local_exclusions is not None:                                            
+                    exclusions = self._combine_exclusions(exclusions,
+                                                        local_exclusions,
+                                                        cnty['FIPS'].unique())
                 logger.debug('Computed exclusions for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 

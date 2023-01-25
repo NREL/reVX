@@ -53,9 +53,12 @@ class ParcelSetbacks(AbstractBaseSetbacks):
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
         features = feature_filter(features, cnty)
-        negative_buffer = features.buffer(-1 * regulation_value)
-        setbacks = features.buffer(0).difference(negative_buffer)
-        return rasterizer.rasterize(list(setbacks))
+        if len(features) == 0:
+            return None
+        else:
+            negative_buffer = features.buffer(-1 * regulation_value)
+            setbacks = features.buffer(0).difference(negative_buffer)
+            return rasterizer.rasterize(list(setbacks))
 
     def compute_generic_exclusions(self, **__):
         """Compute generic setbacks.

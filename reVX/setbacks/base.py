@@ -415,8 +415,12 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
                      .format(cnty.iloc[0]['FIPS']))
         log_mem(logger)
         features = feature_filter(features, cnty)
-        features = list(features.buffer(regulation_value))
-        return rasterizer.rasterize(features)
+
+        if len(features) == 0:
+            return None
+        else:
+            features = list(features.buffer(regulation_value))
+            return rasterizer.rasterize(features)
 
     # pylint: disable=arguments-differ
     def compute_generic_exclusions(self, **__):
