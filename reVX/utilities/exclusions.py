@@ -391,9 +391,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
     def _collect_futures(self, futures, exclusions):
         """Collect all futures from the input dictionary. """
         for future in as_completed(futures):
-            exclusions = self._combine_exclusions(exclusions,
-                                                  future.result(),
-                                                  futures.pop(future))
+            result = future.result()
+            if result is not None:
+                exclusions = self._combine_exclusions(exclusions,
+                                                    future.result(),
+                                                    futures.pop(future))
             log_mem(logger)
         return exclusions
 
