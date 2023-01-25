@@ -269,6 +269,7 @@ def run_local(ctx, config):
                replace=config.replace,
                hsds=config.hsds,
                out_layers=config.out_layers,
+               log_dir=config.log_directory,
                verbose=config.log_level==logging.DEBUG)
 
 
