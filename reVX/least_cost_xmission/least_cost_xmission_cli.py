@@ -231,7 +231,6 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
     logger.info('Writing output complete')
 
 
-# noqa
 @main.command()
 @click.option('--split-to-geojson', '-s', is_flag=True,
               help='After merging GeoPackages, split into GeoJSON by POI name'
@@ -249,8 +248,8 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
               help='Simplify path geometries by a value before exporting.')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
-def merge_output(ctx, split_to_geojson, out_file, out_dir, drop, simplify_geo,
-                 files):
+def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
+                 simplify_geo,files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON
     """
