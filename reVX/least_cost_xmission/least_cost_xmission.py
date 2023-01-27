@@ -817,7 +817,7 @@ class ReinforcedXmission(LeastCostXmission):
         logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
 
         point = self.sc_points.loc[sc_point.name:sc_point.name].centroid
-        ba_str = point.apply(self._map_ba).values[0]
+        ba_str = point.apply(ba_mapper(self._ba)).values[0]
         mask = self.features["ba_str"] == ba_str
         sc_features = self.features.loc[mask].copy(deep=True)
 
@@ -834,11 +834,6 @@ class ReinforcedXmission(LeastCostXmission):
                      .format(len(sc_features), radius, tie_line_voltage))
 
         return sc_features, radius
-
-    def _map_ba(self, point):
-        """Find the balancing area ID for the input point. """
-        index = self._ba.distance(point).sort_values().index[0]
-        return self._ba.loc[index, "ba_str"]
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, balancing_areas_fpath,
@@ -917,3 +912,22 @@ class ReinforcedXmission(LeastCostXmission):
                             (time.time() - ts) / 60))
 
         return least_costs
+
+
+def ba_mapper(ba):
+    """Generate a function to map points to a BA.
+
+    The returned mapping function maps a point to a unique "ba_str" from
+    the input GeoPackage.
+
+    Parameters
+    ----------
+    ba : gpd.GeoPackage
+        GeoPackage defining the balancing areas. This table must have a
+        "ba_str" column which and a geometry that defines each BA.
+    """
+    def _map_ba(point):
+        """Find the balancing area ID for the input point. """
+        return ba.loc[ba.distance(point).sort_values().index[0], "ba_str"]
+
+    return _map_ba
