@@ -257,9 +257,6 @@ def map_ba(ctx, features_fpath, balancing_areas_fpath, out_file):
     Doing the pre-processing step avoids any issues with substations
     being left out or double counted if we just clipped them to the
     balancing area shapes.
-
-    This routine also adds the min/max vols column required by
-    `LeastCostXmission`.
     """
     log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
     init_logger('reVX', log_level=log_level)
