@@ -92,7 +92,6 @@ def ri_ba():
                             geometry=list(shapes))
 
 
-
 @pytest.mark.parametrize('capacity', [100, 200, 400, 1000])
 def test_capacity_class(capacity):
     """
@@ -237,7 +236,6 @@ def test_reinforcement_cli(runner, ri_ba):
         ri_ba_path = os.path.join(td, 'ri_ba.gpkg')
         ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
 
-
         ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
         result = runner.invoke(lcp_main, ['map-ba', '-feats', ri_feats_path,
                                           '-ba', ri_ba_path,
@@ -245,7 +243,6 @@ def test_reinforcement_cli(runner, ri_ba):
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
-
 
         config = {
             "log_directory": td,
