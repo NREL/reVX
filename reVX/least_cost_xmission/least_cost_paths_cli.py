@@ -20,6 +20,7 @@ from reVX.config.least_cost_xmission import LeastCostPathsConfig
 from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
                                                        ReinforcementPaths)
+from reVX.least_cost_xmission.least_cost_xmission import ba_mapper
 from reVX.least_cost_xmission.config import TRANS_LINE_CAT, SUBSTATION_CAT
 from reVX import __version__
 
@@ -244,7 +245,8 @@ def map_ba(ctx, features_fpath, balancing_areas_fpath, out_file):
     Map substation locations to balancing regions.
 
     This method also removes substations that do not meet the min 69 kV
-    voltage requirement.
+    voltage requirement and adds {'min_volts', 'max_volts'} fields to
+    the remaining substations.
 
     **IMPORTANT** This method DOES NOT clip the substations to your
     balancing area boundary. All substations will be mapped to their
@@ -269,10 +271,7 @@ def map_ba(ctx, features_fpath, balancing_areas_fpath, out_file):
     logger.info("Mapping {:,d} substation locations to {:,d} balancing "
                 "areas".format(substations.shape[0], ba.shape[0]))
 
-    def _map_ba(point):
-        return ba.loc[ba.distance(point).sort_values().index[0], "ba_str"]
-
-    substations["ba_str"] = substations.centroid.apply(_map_ba)
+    substations["ba_str"] = substations.centroid.apply(ba_mapper(ba))
 
     logger.info("Calculating min/max voltage for each substation...")
     bad_subs = np.zeros(len(substations), dtype=bool)
