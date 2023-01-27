@@ -365,14 +365,19 @@ class TieLineCosts:
         # Multiple distance travel through cell by cost and sum it!
         cost = np.sum(cell_costs * lens)
 
+        with ExclusionLayers(self._cost_fpath) as f:
+            poi_lat = f['latitude', self._row_slice, self._col_slice][row, col]
+            poi_lon = (
+                f['longitude', self._row_slice, self._col_slice][row, col])
+
         if save_path:
             row = indices[:, 0] + self.row_offset
             col = indices[:, 1] + self.col_offset
             x, y = rasterio.transform.xy(self.transform, row, col)
             geom = Point if indices.shape[0] == 1 else LineString
-            out = length, cost, geom(list(zip(x, y)))
+            out = length, cost, poi_lat, poi_lon, geom(list(zip(x, y)))
         else:
-            out = length, cost
+            out = length, cost, poi_lat, poi_lon
 
         return out
 
@@ -401,14 +406,19 @@ class TieLineCosts:
         lengths = []
         costs = []
         paths = []
+        poi_lats = []
+        poi_lons = []
         for end_idx in end_indices:
             out = self.least_cost_path(end_idx, save_path=save_paths)
             lengths.append(out[0])
             costs.append(out[1])
+            poi_lats.append(out[2])
+            poi_lons.append(out[3])
             if save_paths:
-                paths.append(out[2])
+                paths.append(out[4])
 
-        tie_lines = pd.DataFrame({'length_km': lengths, 'cost': costs})
+        tie_lines = pd.DataFrame({'length_km': lengths, 'cost': costs,
+                                  'poi_lat': poi_lats, 'poi_lon': poi_lons})
         if save_paths:
             with ExclusionLayers(self._cost_fpath) as f:
                 crs = f.crs
@@ -867,7 +877,7 @@ class TransCapCosts(TieLineCosts):
         if save_paths:
             paths = []
 
-        # logger.debug('Determining path lengths and costs')
+        logger.debug('Determining path lengths and costs')
 
         for index, feat in features.iterrows():
             if feat['category'] == TRANS_LINE_CAT:
@@ -881,16 +891,16 @@ class TransCapCosts(TieLineCosts):
                 # pylint: disable=unbalanced-tuple-unpacking
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
                 if save_paths:
-                    (length, cost, path) = result
+                    (length, cost, poi_lat, poi_lon, path) = result
                 else:
-                    (length, cost) = result
+                    (length, cost, poi_lat, poi_lon) = result
 
                 if t_line and feat['max_volts'] < tie_voltage:
                     msg = ('Tie-line {} voltage of {}kV is less than tie line '
                            'voltage of {}kV.'
                            .format(feat['trans_gid'], feat['max_volts'],
                                    tie_voltage))
-                    # logger.debug(msg)
+                    logger.debug(msg)
 
                     cost = 1e12
 
@@ -898,7 +908,7 @@ class TransCapCosts(TieLineCosts):
                     msg = ('Tie-line length {} will be increased to the '
                            'minimum allowed line length: {}.'
                            .format(length, min_line_length))
-                    # logger.debug(msg)
+                    logger.debug(msg)
 
                     min_mult = (1 if np.isclose(length, 0)
                                 else min_line_length / length)
@@ -907,6 +917,8 @@ class TransCapCosts(TieLineCosts):
 
                 features.loc[index, 'dist_km'] = length
                 features.loc[index, 'raw_line_cost'] = cost
+                features.loc[index, 'poi_lat'] = poi_lat
+                features.loc[index, 'poi_lon'] = poi_lon
                 if save_paths:
                     paths.append(path)
 
@@ -1118,12 +1130,12 @@ class ReinforcementLineCosts(TieLineCosts):
 
     The reinforcement line path will attempt to follow existing
     transmission lines for as long as possible. Costs are calculated
-    using the greenfield costs of the transmission line that is being
-    traced. If the reinforcement path travels along two different
+    using half of the greenfield cost of the transmission line that is
+    being traced. If the reinforcement path travels along two different
     line voltages, corresponding costs are used for each portion of the
     path. In the case that the path must cross a region with no existing
-    transmission lines to reach the destination, the greenfield cost
-    of the input ``capacity_class`` is used.
+    transmission lines to reach the destination, half (50%) of the
+    greenfield cost of the input ``capacity_class`` is used.
     """
     def __init__(self, transmission_lines, cost_fpath, start_idx,
                  capacity_class, row_slice, col_slice, xmission_config=None,
@@ -1235,8 +1247,20 @@ class ReinforcementLineCosts(TieLineCosts):
                   barrier_mult=barrier_mult)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
+        tie_lines['cost'] = tie_lines['cost'] * 0.5
+
+        row, col = start_idx
+        with ExclusionLayers(cost_fpath) as f:
+            tie_lines['poi_lat'] = (
+                f['latitude', row_slice, col_slice][row, col])
+            tie_lines['poi_lon'] = (
+                f['longitude', row_slice, col_slice][row, col])
+
         tie_lines = tie_lines.rename({'length_km': 'reinforcement_dist_km',
-                                      'cost': 'reinforcement_cost'}, axis=1)
+                                      'cost': 'reinforcement_cost',
+                                      'poi_lat': 'reinforcement_poi_lat',
+                                      'poi_lon': 'reinforcement_poi_lon'},
+                                      axis=1)
 
         logger.debug('Reinforcement Path Cost computed in {:.4f} min'
                      .format((time.time() - ts) / 60))
