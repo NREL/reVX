@@ -430,6 +430,7 @@ class ReinforcementPaths(LeastCostPaths):
         assert "ba_str" in network_node, err_msg
         self._start_idx = network_node[['row', 'col']].values[0]
         self._features = (self._features.iloc[1:]
+                          .reset_index(drop=True)
                           .dropna(axis="columns", how="all"))
 
         self._transmission_lines = transmission_lines
@@ -566,10 +567,13 @@ class ReinforcementPaths(LeastCostPaths):
         network_nodes = gpd.read_file(network_nodes_fpath).to_crs(cost_crs)
         indices = network_nodes.index if indices is None else indices
         for loop_ind, index in enumerate(indices, start=1):
-            network_node = network_nodes.iloc[index:index+1]
+            network_node = (network_nodes.iloc[index:index+1]
+                            .reset_index(drop=True))
             ba_str = network_node["ba_str"].values[0]
             node_substations = substations[substations["ba_str"] == ba_str]
-            node_substations = node_substations.reset_index(drop=False)
+            node_substations = node_substations.reset_index(drop=True)
+            logger.debug('Working on {} substations in BA {}'
+                         .format(len(node_substations), ba_str))
             node_features = pd.concat([network_node, node_substations])
             rp = cls(cost_fpath, node_features, transmission_lines,
                      xmission_config=xmission_config)
