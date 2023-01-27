@@ -243,6 +243,9 @@ def map_ba(ctx, features_fpath, balancing_areas_fpath, out_file):
     """
     Map substation locations to balancing regions.
 
+    This method also removes substations that do not meet the min 69 kV
+    voltage requirement.
+
     **IMPORTANT** This method DOES NOT clip the substations to your
     balancing area boundary. All substations will be mapped to their
     closest BA. It is your responsibility to remove any substations
