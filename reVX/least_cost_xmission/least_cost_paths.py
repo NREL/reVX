@@ -567,7 +567,7 @@ class ReinforcementPaths(LeastCostPaths):
         network_nodes = gpd.read_file(network_nodes_fpath).to_crs(cost_crs)
         indices = network_nodes.index if indices is None else indices
         for loop_ind, index in enumerate(indices, start=1):
-            network_node = (network_nodes.iloc[index:index+1]
+            network_node = (network_nodes.iloc[index:index + 1]
                             .reset_index(drop=True))
             ba_str = network_node["ba_str"].values[0]
             node_substations = substations[substations["ba_str"] == ba_str]

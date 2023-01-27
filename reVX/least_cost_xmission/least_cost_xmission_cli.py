@@ -231,6 +231,7 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
     logger.info('Writing output complete')
 
 
+# noqa
 @main.command()
 @click.option('--split-to-geojson', '-s', is_flag=True,
               help='After merging GeoPackages, split into GeoJSON by POI name'
@@ -269,7 +270,7 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop, simplify_geo,
         for cat in drop:
             if cat not in TRANS_CAT_TYPES:
                 logger.info('--drop options must on or more of {}, received {}'
-                           .format(TRANS_CAT_TYPES, drop))
+                            .format(TRANS_CAT_TYPES, drop))
                 return
 
     logger.info('Loading: {}'.format(", ".join(files)))
@@ -281,7 +282,7 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop, simplify_geo,
     if drop:
         mask = df['category'].isin(drop)
         logger.info('Dropping {} of {} total features with category(ies): {}'
-                   .format(mask.sum(), len(df), ", ".join(drop)))
+                    .format(mask.sum(), len(df), ", ".join(drop)))
         df = df[~mask]
 
     df = df.reset_index()

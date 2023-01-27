@@ -1260,7 +1260,7 @@ class ReinforcementLineCosts(TieLineCosts):
                                       'cost': 'reinforcement_cost',
                                       'poi_lat': 'reinforcement_poi_lat',
                                       'poi_lon': 'reinforcement_poi_lon'},
-                                      axis=1)
+                                     axis=1)
 
         logger.debug('Reinforcement Path Cost computed in {:.4f} min'
                      .format((time.time() - ts) / 60))
