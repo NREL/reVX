@@ -122,6 +122,7 @@ def from_config(ctx, config, verbose):
         config.name = '{}_{}'.format(name, str(i).zfill(n_zfill))
         eagle(config, start_index=i)
 
+
 @main.command()
 @click.option('--cost_fpath', '-cost', type=click.Path(exists=True),
               required=True,

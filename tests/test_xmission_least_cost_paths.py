@@ -189,7 +189,6 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes):
         assert (counts.index == ['p4', 'p1', 'p3', 'p2']).all()
         assert (counts == [50, 34, 10, 5]).all()
 
-
         config = {
             "log_directory": td,
             "execution_control": {
