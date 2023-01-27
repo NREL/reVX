@@ -427,7 +427,7 @@ def test_cli_tiff_input(runner):
 
     with tempfile.TemporaryDirectory() as td:
         tiff_fp = os.path.join(td, "temp.tiff")
-        ExclusionsConverter._write_geotiff(tiff_fp, profile, building_layer)
+        ExclusionsConverter.write_geotiff(tiff_fp, profile, building_layer)
 
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)

@@ -5,10 +5,13 @@ reVX command line interface (CLI).
 import click
 import logging
 import os
+import json
+from pathlib import Path
 
 from rex.utilities.cli_dtypes import STR, STRLIST, FLOAT
 from rex.utilities.loggers import init_logger
 from rex.utilities.utilities import safe_json_load
+from reV.supply_curve.exclusions import ExclusionMaskFromDict, ExclusionLayers
 
 from reVX.offshore.dist_to_ports_converter import DistToPortsConverter
 from reVX.utilities import ExclusionsConverter
@@ -220,6 +223,67 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
         ExclusionsConverter.extract_layers(excl_h5, layers, hsds=hsds)
     else:
         ExclusionsConverter.extract_all_layers(excl_h5, out_dir, hsds=hsds)
+
+
+@exclusions.command()
+@click.option('--excl_dict_fpath', '-ed', required=True,
+              type=click.Path(exists=True),
+              help=('Path to JSON file containing the "excl_dict" '
+                    'key which points to the exclusion dictionary defining '
+                    'the mask that should be generated. A typical reV '
+                    'aggregation config satisfied this requirement.'))
+@click.option('--out', '-o', required=True, type=STR,
+              help=('Output name. If this string value ends in ".tif" '
+                    'or ".tiff", this input is assumed to be a path to an '
+                    'output tiff file, and the mask will be written to that '
+                    'destination. Otherwise, this input is assumed to be the '
+                    'name of the layer in the exclusion file to write the '
+                    'mask to.'))
+@click.option('--min_area', '-ma', default=None, type=FLOAT,
+              help=('Minimum required contiguous area in sq-km.'))
+@click.option('--kernel', '-k', type=STR, default='queen',
+              show_default=True,
+              help=('Contiguous filter method to use on final exclusion.'))
+@click.option('--hsds', '-hsds', is_flag=True,
+              help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
+                    'behind HSDS'))
+@click.pass_context
+def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
+    """
+    Compute Setbacks locally
+    """
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reV', log_level=log_level)
+    init_logger('reVX', log_level=log_level)
+
+    excl_fpath = ctx.obj['EXCL_H5']
+
+    logger.info("Calculating exclusion mask from {!r}".format(excl_dict_fpath))
+
+    with open(excl_dict_fpath, 'r') as fh:
+        config = json.load(fh)
+
+    excl_dict = config['excl_dict']
+    logger.debug("Exclusion dictionary: {!r}".format(excl_dict))
+    mask_ = ExclusionMaskFromDict.run(excl_fpath, layers_dict=excl_dict,
+                                      min_area=min_area, kernel=kernel,
+                                      hsds=hsds)
+
+    with ExclusionLayers(excl_fpath, hsds=hsds) as f:
+        profile = f.profile
+
+    if out.endswith(".tif") or out.endswith(".tiff"):
+        out = Path(out).resolve().as_posix()
+        logger.info("Writing mask to {!r}".format(out))
+        ExclusionsConverter.write_geotiff(out, profile, mask_)
+    else:
+        logger.info("Writing mask to layer {!r} in {!r}"
+                    .format(out, excl_fpath))
+        desc = ("Exclusion mask computed from exclusion dictionary: {!r}"
+                .format(excl_dict))
+        # pylint: disable=protected-access
+        ExclusionsConverter._write_layer(excl_fpath, out, profile, mask_,
+                                         description=desc)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# pylint: disable=protected-access
+# pylint: disable=protected-access,unused-argument,redefined-outer-name
 """
 Setbacks tests
 """
@@ -27,6 +27,7 @@ from reVX.setbacks.regulations import (SetbackRegulations,
 from reVX.setbacks import (ParcelSetbacks, RailSetbacks, StructureSetbacks,
                            WaterSetbacks, SETBACKS)
 from reVX.setbacks.setbacks_cli import main
+from reVX.utilities import ExclusionsConverter
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
 HUB_HEIGHT = 135
@@ -82,6 +83,24 @@ def county_wind_regulations_gpkg():
     """Wind regulations with multiplier. """
     return WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
                                   regulations_fpath=REGS_GPKG)
+
+
+@pytest.fixture()
+def return_to_main_test_dir():
+    """Return to the starting dir after running a test.
+
+    This fixture helps avoid issues for downstream pytests if the test
+    code contains any calls to os.chdir().
+    """
+    # Startup
+    previous_dir = os.getcwd()
+
+    try:
+        # test happens here
+        yield
+    finally:
+        # teardown (i.e. return to original dir)
+        os.chdir(previous_dir)
 
 
 def test_setback_regulations_init():
@@ -289,6 +308,9 @@ def test_local_structures(max_workers, county_wind_regulations_gpkg):
     """
     Test local structures setbacks
     """
+    mask = county_wind_regulations_gpkg.df["FIPS"] == 44005
+    initial_regs_count = county_wind_regulations_gpkg.df[mask].shape[0]
+
     baseline = os.path.join(TESTDATADIR, 'setbacks',
                             'existing_structures.tif')
     with Geotiff(baseline) as tif:
@@ -298,13 +320,15 @@ def test_local_structures(max_workers, county_wind_regulations_gpkg):
                                   'RhodeIsland.geojson')
     setbacks = StructureSetbacks(EXCL_H5, county_wind_regulations_gpkg,
                                  features=structure_path)
-    test = setbacks.compute_exclusions(max_workers=max_workers)
 
-    # baseline was generated when code did not clip to county bounds,
-    # so test should be a subset of baseline
-    assert baseline.sum() > test.sum()
-    assert (baseline[test > 0] == 1).all()
-    assert (test[baseline == 0] == 0).all()
+    mask = setbacks.regulations_table["FIPS"] == 44005
+    final_regs_count = setbacks.regulations_table[mask].shape[0]
+
+    # county 44005 has two non-overlapping geometries
+    assert final_regs_count == 2 * initial_regs_count
+
+    test = setbacks.compute_exclusions(max_workers=max_workers)
+    assert np.allclose(test, baseline)
 
 
 @pytest.mark.parametrize('rail_path',
@@ -342,11 +366,7 @@ def test_local_railroads(max_workers, county_wind_regulations_gpkg):
                             features=rail_path)
     test = setbacks.compute_exclusions(max_workers=max_workers)
 
-    # baseline was generated when code did not clip to county bounds,
-    # so test should be a subset of baseline
-    assert baseline.sum() > test.sum()
-    assert (baseline[test > 0] == 1).all()
-    assert (test[baseline == 0] == 0).all()
+    assert np.allclose(test, baseline)
 
 
 def test_generic_parcels():
@@ -688,10 +708,10 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
      'regulations_fpath', 'generic_sum', 'local_sum', 'setback_distance'),
     [(StructureSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_GPKG, 332_887, 128, [HUB_HEIGHT, ROTOR_DIAMETER]),
+      REGS_GPKG, 332_887, 2_879, [HUB_HEIGHT, ROTOR_DIAMETER]),
      (RailSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_GPKG, 754_082, 9_276, [HUB_HEIGHT, ROTOR_DIAMETER]),
+      REGS_GPKG, 754_082, 14_068, [HUB_HEIGHT, ROTOR_DIAMETER]),
      (ParcelSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 474, 3, [HUB_HEIGHT, ROTOR_DIAMETER]),
@@ -700,7 +720,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
       WATER_REGS_FPATH_VALUE, 1_159_266, 83, [HUB_HEIGHT, ROTOR_DIAMETER]),
      (StructureSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg'),
-      REGS_FPATH, 260_963, 104, [BASE_SETBACK_DIST + 199]),
+      REGS_FPATH, 260_963, 2_306, [BASE_SETBACK_DIST + 199]),
      (RailSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
       REGS_FPATH, 5_355, 163, [BASE_SETBACK_DIST]),
@@ -1335,6 +1355,42 @@ def test_cli_saving(runner):
             assert exc["ri_parcel_setbacks"].sum() == 3
 
     LOGGERS.clear()
+
+
+def test_cli_merge_setbacks(runner, return_to_main_test_dir):
+    """Test the setbacks merge CLI command."""
+
+    with ExclusionLayers(EXCL_H5) as excl:
+        shape, profile = excl.shape, excl.profile
+
+    arr1 = np.zeros(shape)
+    arr2 = np.zeros(shape)
+
+    arr1[:shape[0] // 2] = 1
+    arr2[shape[0] // 2:] = 1
+    with tempfile.TemporaryDirectory() as td:
+        tiff_1 = os.path.join(td, 'test1.tif')
+        tiff_2 = os.path.join(td, 'test2.tif')
+        out_fp = os.path.join(td, 'merged.tif')
+
+        result = runner.invoke(main, ['merge', '-td', td, '-o', out_fp])
+        assert result.exit_code == 1
+
+        ExclusionsConverter.write_geotiff(tiff_1, profile, arr1)
+        ExclusionsConverter.write_geotiff(tiff_2, profile, arr2)
+
+        runner.invoke(main, ['merge', '-td', td, '-o', out_fp])
+        with Geotiff(out_fp) as tif:
+            assert np.allclose(tif.values, 1)
+
+        runner.invoke(main, ['merge', '-td', td, '-o', out_fp, '-inclusions'])
+        with Geotiff(out_fp) as tif:
+            assert np.allclose(tif.values, 0)
+
+        os.chdir(td)
+        runner.invoke(main, ['merge', '-td', td, '-o', "m.tif"])
+        with Geotiff(os.path.join(td, "m.tif")) as tif:
+            assert np.allclose(tif.values, 1)
 
 
 def execute_pytest(capture='all', flags='-rapP'):

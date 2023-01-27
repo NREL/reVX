@@ -12,6 +12,7 @@ from warnings import warn
 
 import numpy as np
 import geopandas as gpd
+import pandas as pd
 from pyproj.crs import CRS
 import rasterio
 from rasterio import features as rio_features
@@ -34,6 +35,12 @@ class AbstractExclusionCalculatorInterface(ABC):
     @abstractmethod
     def no_exclusions_array(self):
         """np.array: Array representing no exclusions. """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def exclusion_merge_func(self):
+        """callable: Function to merge overlapping exclusion layers. """
         raise NotImplementedError
 
     @abstractmethod
@@ -231,14 +238,20 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         regulations_df = regulations_df.set_index('FIPS')
 
         logger.info('Merging county geometries w/ local regulations')
-        s = rio_features.shapes(
+        shapes_from_raster = rio_features.shapes(
             self._fips.astype(np.int32),
             transform=cnty_fips_profile['transform']
         )
-        for p, v in s:
-            v = int(v)
-            if v in regulations_df.index:
-                regulations_df.at[v, 'geometry'] = shape(p)
+        county_regs = []
+        for polygon, fips_code in shapes_from_raster:
+            fips_code = int(fips_code)
+            if fips_code in regulations_df.index:
+                local_regs = regulations_df.loc[[fips_code]].copy()
+                local_regs['geometry'] = shape(polygon)
+                county_regs.append(local_regs)
+
+        if county_regs:
+            regulations_df = pd.concat(county_regs)
 
         regulations_df = gpd.GeoDataFrame(
             regulations_df,
@@ -285,7 +298,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         if os.path.exists(geotiff):
             _error_or_warn(geotiff, replace)
 
-        ExclusionsConverter._write_geotiff(geotiff, self.profile, exclusions)
+        ExclusionsConverter.write_geotiff(geotiff, self.profile, exclusions)
 
     def _write_layer(self, out_layer, exclusions, replace=False):
         """Write exclusions to H5, replace if requested
@@ -331,31 +344,19 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         exclusions : ndarray
             Raster array of exclusions.
         """
-        exclusions = None
         max_workers = max_workers or os.cpu_count()
 
         log_mem(logger)
         if max_workers > 1:
             logger.info('Computing local exclusions in parallel using {} '
                         'workers'.format(max_workers))
-            loggers = [__name__, 'reVX']
-            with SpawnProcessPool(max_workers=max_workers,
-                                  loggers=loggers) as exe:
-                futures = {}
-                for exclusion, cnty in self._regulations:
-                    args = self._local_exclusions_arguments(exclusion, cnty)
-                    future = exe.submit(self.compute_local_exclusions,
-                                        exclusion, cnty, *args)
-                    futures[future] = cnty['FIPS'].unique()
-
-                for i, future in enumerate(as_completed(futures)):
-                    exclusions = self._combine_exclusions(exclusions,
-                                                          future.result(),
-                                                          futures[future])
-                    logger.info('Computed exclusions for {} of {} counties'
-                                 .format((i + 1), len(self.regulations_table)))
+            spp_kwargs = {"max_workers": max_workers,
+                          "loggers": [__name__, 'reVX']}
+            with SpawnProcessPool(**spp_kwargs) as exe:
+                exclusions = self._compute_exclusions_spp(exe, max_workers)
         else:
             logger.info('Computing local exclusions in serial')
+            exclusions = None
             for i, (exclusion, cnty) in enumerate(self._regulations):
                 args = self._local_exclusions_arguments(exclusion, cnty)
                 local_exclusions = self.compute_local_exclusions(exclusion,
@@ -367,6 +368,32 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 logger.debug('Computed exclusions for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 
+        return exclusions
+
+    def _compute_exclusions_spp(self, exe, max_submissions):
+        """Compute exclusions in parallel using futures. """
+        futures, exclusions = {}, None
+
+        for ind, regulation_info in enumerate(self._regulations, start=1):
+            exclusion_value, cnty = regulation_info
+            logger.info('Computing exclusions for {}/{} counties'
+                        .format(ind, len(self.regulations_table)))
+            args = self._local_exclusions_arguments(exclusion_value, cnty)
+            future = exe.submit(self.compute_local_exclusions,
+                                exclusion_value, cnty, *args)
+            futures[future] = cnty['FIPS'].unique()
+            if ind % max_submissions == 0:
+                exclusions = self._collect_futures(futures, exclusions)
+        exclusions = self._collect_futures(futures, exclusions)
+        return exclusions
+
+    def _collect_futures(self, futures, exclusions):
+        """Collect all futures from the input dictionary. """
+        for future in as_completed(futures):
+            exclusions = self._combine_exclusions(exclusions,
+                                                  future.result(),
+                                                  futures.pop(future))
+            log_mem(logger)
         return exclusions
 
     def compute_exclusions(self, out_layer=None, out_tiff=None, replace=False,
@@ -435,8 +462,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         if local_exclusions_exist and not generic_exclusions_exist:
             local_excl = self.compute_all_local_exclusions(max_workers=mw)
-            nea = self.no_exclusions_array.astype(local_excl.dtype)
-            return self._merge_exclusions(nea, local_excl)
+            # merge ensures local exclusions are clipped county boundaries
+            return self._merge_exclusions(None, local_excl)
 
         generic_exclusions = self.compute_generic_exclusions(max_workers=mw)
         local_exclusions = self.compute_all_local_exclusions(max_workers=mw)
@@ -449,15 +476,23 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         self.pre_process_regulations()
         local_fips = self.regulations_table["FIPS"].unique()
         return self._combine_exclusions(generic_exclusions, local_exclusions,
-                                        local_fips)
+                                        local_fips, replace_existing=True)
 
-    def _combine_exclusions(self, existing, additional, cnty_fips):
+    def _combine_exclusions(self, existing, additional, cnty_fips,
+                            replace_existing=False):
         """Combine local exclusions using FIPS code"""
         if existing is None:
-            return additional
+            existing = self.no_exclusions_array.astype(additional.dtype)
 
-        local_exclusions_mask = np.isin(self._fips, cnty_fips)
-        existing[local_exclusions_mask] = additional[local_exclusions_mask]
+        local_exclusions = np.isin(self._fips, cnty_fips)
+        if replace_existing:
+            new_local_exclusions = additional[local_exclusions]
+        else:
+            new_local_exclusions = self.exclusion_merge_func(
+                existing[local_exclusions],
+                additional[local_exclusions])
+
+        existing[local_exclusions] = new_local_exclusions
         return existing
 
     @classmethod
@@ -759,8 +794,8 @@ class ExclusionsConverter:
                     raise ExclusionsCheckError(error)
 
     @classmethod
-    def _parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
-                    check_tiff=True, transform_atol=0.01, coord_atol=0.001):
+    def parse_tiff(cls, geotiff, excl_h5=None, chunks=(128, 128),
+                   check_tiff=True, transform_atol=0.01, coord_atol=0.001):
         """
         Extract exclusion layer from given geotiff, compare with excl_h5
         if provided
@@ -892,7 +927,7 @@ class ExclusionsConverter:
         logger.debug('\t- {} being extracted from {} and added to {}'
                      .format(layer, geotiff, os.path.basename(excl_h5)))
 
-        profile, values = cls._parse_tiff(
+        profile, values = cls.parse_tiff(
             geotiff, excl_h5=excl_h5, chunks=chunks, check_tiff=check_tiff,
             transform_atol=transform_atol, coord_atol=coord_atol)
 
@@ -906,7 +941,7 @@ class ExclusionsConverter:
                          scale_factor=scale_factor)
 
     @staticmethod
-    def _write_geotiff(geotiff, profile, values):
+    def write_geotiff(geotiff, profile, values):
         """
         Write values to geotiff with given profile
 
@@ -972,7 +1007,7 @@ class ExclusionsConverter:
 
         if geotiff is not None:
             logger.debug('\t- Writing {} to {}'.format(layer, geotiff))
-            cls._write_geotiff(geotiff, profile, values)
+            cls.write_geotiff(geotiff, profile, values)
 
         return profile, values
 
@@ -1172,8 +1207,7 @@ def _error_or_warn(name, replace):
                .format(name))
         logger.error(msg)
         raise IOError(msg)
-    else:
-        msg = ('{} already exists and will be replaced!'
-               .format(name))
-        logger.warning(msg)
-        warn(msg)
+
+    msg = ('{} already exists and will be replaced!'.format(name))
+    logger.warning(msg)
+    warn(msg)

@@ -6,8 +6,9 @@ import click
 from copy import deepcopy
 import logging
 import os
+from pathlib import Path
 
-from rex.utilities.loggers import init_mult
+from rex.utilities.loggers import init_mult, init_logger
 from rex.utilities.cli_dtypes import STR, FLOAT, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, dict_str_load
@@ -16,6 +17,9 @@ from reVX.config.setbacks import SetbacksConfig
 from reVX.setbacks import SETBACKS
 from reVX.setbacks.regulations import (validate_setback_regulations_input,
                                        select_setback_regulations)
+from reVX.setbacks.setbacks_converter import parse_setbacks
+from reVX.handlers.geotiff import Geotiff
+from reVX.utilities import ExclusionsConverter
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -44,6 +48,50 @@ def valid_config_keys():
     Echo the valid Setbacks config keys
     """
     click.echo(', '.join(get_class_properties(SetbacksConfig)))
+
+
+@main.command()
+@click.option('--tiff_dir', '-td', required=True,
+              type=click.Path(exists=True),
+              help=("Path to directory containing geotiffs to be merged."))
+@click.option('--out_file', '-o', required=True,
+              type=click.Path(),
+              help=("Path to output tiff file."))
+@click.option('--are_partial_inclusions', '-inclusions', is_flag=True,
+              help=('Flag to indicate that the data in the tiff layers '
+                    'represent partial inclusion values (i.e. 0.25 = 25% '
+                    'included), NOT typical exclusion values (i.e. '
+                    '1 = exclude pixel)'))
+@click.pass_context
+def merge(ctx, tiff_dir, out_file, are_partial_inclusions):
+    """
+    Combine setbacks geotiffs into a single exclusion (or inclusion) layer.
+
+    This command assumes the data in separate files is non-overlapping.
+    In other words, a file containing setbacks exclusions for Illinois
+    should not contain any exclusions for Indiana, assuming the setbacks
+    for Indiana are in a separate tif file in the same directory.
+    """
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    logger.info("Merging tiff files in {!r}".format(tiff_dir))
+    setbacks = [path.as_posix() for path in Path(tiff_dir).glob("*.tif*")]
+    if not setbacks:
+        msg = ("Did not find any files ending in '.tif' in directory: {}"
+               .format(tiff_dir))
+        logger.error(msg)
+        raise FileNotFoundError(msg)
+
+    with Geotiff(setbacks[0]) as tif:
+        profile = tif.profile
+
+    out_file = Path(out_file).resolve().as_posix()
+    combined_setbacks = parse_setbacks(
+        setbacks, is_inclusion_layer=are_partial_inclusions)
+
+    logger.info("Writing data to {!r}".format(out_file))
+    ExclusionsConverter.write_geotiff(out_file, profile, combined_setbacks)
 
 
 @main.command()

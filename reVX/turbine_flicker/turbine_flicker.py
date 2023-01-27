@@ -231,6 +231,11 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         """np.array: Array representing no exclusions. """
         return np.ones(self.features.shape, dtype=np.uint8)
 
+    @property
+    def exclusion_merge_func(self):
+        """callable: Function to merge overlapping exclusion layers. """
+        return np.minimum
+
     def pre_process_regulations(self):
         """Reduce regulations to correct state and features. """
         self._apply_regulations_mask()
@@ -737,7 +742,7 @@ def compute_flicker_exclusions(hub_height, rotor_diameter, points, res_fpath,
 
             for i, future in enumerate(as_completed(futures)):
                 flicker_shifts = future.result()
-                point = futures[future]
+                point = futures.pop(future)
                 row_idx, col_idx = _get_building_indices(building_layer,
                                                          point.name,
                                                          resolution=resolution)
