@@ -225,7 +225,7 @@ class Rasterizer:
         """Rasterize features to weights using a high-resolution array."""
 
         if not shapes:
-            return 1 - self._no_exclusions_array()
+            return 1 - self._no_exclusions_array().astype(np.float32)
 
         hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
         new_transform = list(self.profile['transform'])[:6]
