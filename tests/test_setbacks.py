@@ -26,6 +26,7 @@ from reVX.setbacks.regulations import (SetbackRegulations,
                                        select_setback_regulations)
 from reVX.setbacks import (ParcelSetbacks, RailSetbacks, StructureSetbacks,
                            WaterSetbacks, SETBACKS)
+from reVX.setbacks.base import Rasterizer
 from reVX.setbacks.setbacks_cli import main
 from reVX.utilities import ExclusionsConverter
 
@@ -243,6 +244,7 @@ def test_setbacks_no_generic_value(setbacks_class, feature_file):
     regs = SetbackRegulations(0, regulations_fpath=None, multiplier=1)
     setbacks = setbacks_class(EXCL_H5, regs, features=feature_file)
     out = setbacks.compute_exclusions()
+    assert out.dtype == np.uint8
     assert np.isclose(out, 0).all()
 
 
@@ -271,6 +273,15 @@ def test_setbacks_saving_tiff_h5():
         with ExclusionLayers(excl_fpath) as exc:
             assert "ri_parcel_setbacks" in exc.layers
             assert np.isclose(exc["ri_parcel_setbacks"], 0).all()
+
+
+def test_rasterizer_array_dtypes():
+    """Test that rasterizing empty array yields correct array dtypes."""
+    rasterizer = Rasterizer(EXCL_H5, weights_calculation_upscale_factor=1)
+    rasterizer_hr = Rasterizer(EXCL_H5, weights_calculation_upscale_factor=5)
+
+    assert rasterizer.rasterize(shapes=None).dtype == np.uint8
+    assert rasterizer_hr.rasterize(shapes=None).dtype == np.float32
 
 
 def test_generic_structure(generic_wind_regulations):
@@ -632,6 +643,7 @@ def test_high_res_excl_array():
     rasterizer = setbacks._rasterizer
     hr_array = rasterizer._no_exclusions_array(multiplier=mult)
 
+    assert hr_array.dtype == np.uint8
     for ind, shape in enumerate(rasterizer.arr_shape[1:]):
         assert shape != hr_array.shape[ind]
         assert shape * mult == hr_array.shape[ind]
@@ -677,6 +689,8 @@ def test_partial_exclusions():
     exclusion_mask = setbacks.compute_exclusions()
     inclusion_weights = setbacks_hr.compute_exclusions()
 
+    assert exclusion_mask.dtype == np.uint8
+    assert inclusion_weights.dtype == np.float32
     assert exclusion_mask.shape == inclusion_weights.shape
     assert (inclusion_weights < 1).any()
     assert ((0 <= inclusion_weights) & (inclusion_weights <= 1)).all()
