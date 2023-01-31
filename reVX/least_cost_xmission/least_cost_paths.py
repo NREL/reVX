@@ -53,6 +53,7 @@ class LeastCostPaths:
             self._map_to_costs(cost_fpath, gpd.read_file(features_fpath))
         self._features = self._features.drop(columns='geometry')
         self._cost_fpath = cost_fpath
+        self._start_feature_ind = 0
 
         logger.debug('{} initialized'.format(self))
 
@@ -218,30 +219,57 @@ class LeastCostPaths:
 
         return features, row_slice, col_slice, shape
 
-    def _clip_to_feature(self, start_feature_id):
+    @property
+    def start_indices(self):
         """
-        Clip costs raster to AOI around starting feature to given radius
-
-        Parameters
-        ----------
-        start_feature_id : int
-            Index of start features
+        Tuple of (row_idx, col_idx) in the cost array indicating the
+        start position of all paths to compute (typically, this is
+        the centroid of the supply curve cell under consideration).
+        Paths will be computed from this start location to each of the
+        `end_indices`, which are also locations in the cost array
+        (typically transmission feature locations).
 
         Returns
         -------
-        start_idx : ndarray
-            (row, col) indices of start feature
-        end_features : pandas.DataFrame
-            DataFrame of all end features
+        tuple
         """
-        start_idx = \
-            self._features.loc[start_feature_id, ['row', 'col']].values
-        if len(start_idx.shape) == 2:
-            start_idx = start_idx[0]
+        start_indices = (self._features.loc[self._start_feature_ind,
+                                            ['row', 'col']].values)
+        if len(start_indices.shape) == 2:
+            start_indices = start_indices[0]
+        return start_indices
 
-        end_features = self._features.drop(index=start_feature_id)
+    @property
+    def end_features(self):
+        """
+        GeoDataFrame containing the transmission features to compute the
+        least cost paths to, starting from the `start_indices`
+        (typically the centroid of the supply curve cell under
+        consideration).
 
-        return start_idx, end_features.reset_index(drop=False)
+        Returns
+        -------
+        geopandas.GeoDataFrame
+        """
+        end_features = self._features.drop(index=self._start_feature_ind)
+        end_features['start_index'] = self._start_feature_ind
+        return end_features.reset_index(drop=False)
+
+    @property
+    def end_indices(self):
+        """
+        Tuple (row, col) index or list of (row, col) indices in the
+        cost array indicating the end location(s) to compute least
+        cost paths to (typically transmission feature locations).
+        Paths are computed from the `start_indices` (typically the
+        centroid of the supply curve cell under consideration) to each
+        of the individual pairs of `end_indices`.
+
+        Returns
+        -------
+        tuple | list
+        """
+        return self.end_features[['row', 'col']].values
 
     def process_least_cost_paths(self, capacity_class, barrier_mult=100,
                                  indices=None, max_workers=None,
@@ -283,22 +311,19 @@ class LeastCostPaths:
                                   loggers=loggers) as exe:
                 futures = {}
                 for start in indices:
-                    start_idx, end_features = \
-                        self._clip_to_feature(start_feature_id=start)
-                    end_indices = end_features[['row', 'col']].values
-                    end_features['start_index'] = start
-
-                    future = exe.submit(TieLineCosts.run,
-                                        self._cost_fpath,
-                                        start_idx, end_indices,
+                    self._start_feature_ind = start
+                    future = exe.submit(TieLineCosts.run, self._cost_fpath,
+                                        self.start_indices, self.end_indices,
                                         capacity_class,
                                         self._row_slice, self._col_slice,
                                         barrier_mult=barrier_mult,
                                         save_paths=save_paths)
-                    futures[future] = end_features
+                    futures[future] = self.end_features
 
                 for i, future in enumerate(as_completed(futures)):
                     end_features = futures[future]
+                    end_features = end_features.drop(columns=['row', 'col'],
+                                                     errors="ignore")
                     lcp = future.result()
                     lcp = pd.concat((end_features, lcp), axis=1)
                     least_cost_paths.append(lcp)
@@ -310,18 +335,15 @@ class LeastCostPaths:
             log_mem(logger)
             i = 1
             for start in indices:
-                start_idx, end_features = \
-                    self._clip_to_feature(start_feature_id=start)
-                end_indices = end_features[['row', 'col']].values
-                end_features = end_features.drop(columns=['row', 'col'])
-                end_features['start_index'] = start
-
+                self._start_feature_ind = start
                 lcp = TieLineCosts.run(self._cost_fpath,
-                                       start_idx, end_indices,
+                                       self.start_indices, self.end_indices,
                                        capacity_class,
                                        self._row_slice, self._col_slice,
                                        barrier_mult=barrier_mult,
                                        save_paths=save_paths)
+                end_features = self.end_features.drop(columns=['row', 'col'],
+                                                      errors="ignore")
                 lcp = pd.concat((end_features, lcp), axis=1)
                 least_cost_paths.append(lcp)
 
@@ -398,8 +420,8 @@ class ReinforcementPaths(LeastCostPaths):
         ----------
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers.
-        features_fpath : str
-            Path to GeoPackage with transmission features. The network
+        features : geopandas.GeoPackage
+            GeoPackage with transmission features. The network
             node must be the first row of the GeoPackage - the rest
             should be substations that need to connect to that node.
         transmission_lines :dict
@@ -428,12 +450,44 @@ class ReinforcementPaths(LeastCostPaths):
                         .dropna(axis="columns", how="all"))
         err_msg = "Network node was dropped during clipping!"
         assert "ba_str" in network_node, err_msg
-        self._start_idx = network_node[['row', 'col']].values[0]
+        self._start_indices = network_node[['row', 'col']].values[0]
         self._features = (self._features.iloc[1:]
                           .reset_index(drop=True)
                           .dropna(axis="columns", how="all"))
 
         self._transmission_lines = transmission_lines
+
+    @property
+    def start_indices(self):
+        """
+        Tuple of (row_idx, col_idx) in the cost array indicating the
+        start position of all reinforcement line paths to compute
+        (typically, this is the location of the network node in the BA).
+        Paths will be computed from this start location to each of the
+        `end_indices`, which are also locations in the cost array
+        (typically substations within the BA of the network node).
+
+        Returns
+        -------
+        tuple
+        """
+        return self._start_indices
+
+    @property
+    def end_indices(self):
+        """
+        Tuple (row, col) index or list of (row, col) indices in the cost
+        array indicating the end location(s) to compute reinforcement
+        line paths to (typically substations within a single BA). Paths
+        are computed from the `start_indices` (typically the network
+        node of the BA) to each of the individual pairs of
+        `end_indices`.
+
+        Returns
+        -------
+        tuple | list
+        """
+        return self._features[['row', 'col']].values
 
     def process_least_cost_paths(self, capacity_class, barrier_mult=100,
                                  save_paths=False):
@@ -469,21 +523,18 @@ class ReinforcementPaths(LeastCostPaths):
         """
 
         logger.info('Computing reinforcement path costs for start index {}'
-                    .format(self._start_idx))
+                    .format(self._start_indices))
         log_mem(logger)
-
-        end_indices = self._features[['row', 'col']].values
-        self._features = self._features.drop(columns=['row', 'col'])
 
         lcp = ReinforcementLineCosts.run(self._transmission_lines,
                                          self._cost_fpath,
-                                         self._start_idx, end_indices,
+                                         self.start_indices, self.end_indices,
                                          capacity_class,
-                                         self._row_slice,
-                                         self._col_slice,
+                                         self._row_slice, self._col_slice,
                                          barrier_mult=barrier_mult,
                                          save_paths=save_paths)
-        least_cost_paths = pd.concat((self._features, lcp), axis=1)
+        feats = self._features.drop(columns=['row', 'col'])
+        least_cost_paths = pd.concat((feats, lcp), axis=1)
 
         return least_cost_paths.drop("index", axis="columns", errors="ignore")
 

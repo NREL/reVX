@@ -31,15 +31,20 @@ class TieLineCosts:
     Compute Least Cost Tie-line cost from start location to desired end
     locations
     """
-    def __init__(self, cost_fpath, start_idx, capacity_class, row_slice,
+    def __init__(self, cost_fpath, start_indices, capacity_class, row_slice,
                  col_slice, xmission_config=None, barrier_mult=100):
         """
         Parameters
         ----------
         cost_fpath : str
             Full path of .h5 file with cost arrays
-        start_idx : tuple
-            row_idx, col_idx to compute least costs to.
+        start_indices : tuple
+            Tuple of (row_idx, col_idx) in the cost array indicating the
+            start position of all paths to compute (typically, this is
+            the centroid of the supply curve cell). Paths will be
+            computed from this start location to each of the
+            `end_indices`, which are also locations in the cost
+            array (typically transmission feature locations).
         capacity_class : int | str
             Transmission feature capacity_class class
         radius : int, optional
@@ -52,7 +57,7 @@ class TieLineCosts:
         """
         self._cost_fpath = cost_fpath
         self._config = self._parse_config(xmission_config=xmission_config)
-        self._start_idx = start_idx
+        self._start_indices = start_indices
         self._row_slice = row_slice
         self._col_slice = col_slice
         self._capacity_class = self._config._parse_cap_class(capacity_class)
@@ -72,7 +77,7 @@ class TieLineCosts:
 
     def __repr__(self):
         msg = "{} starting at {}".format(self.__class__.__name__,
-                                         self._start_idx)
+                                         self._start_indices)
 
         return msg
 
@@ -115,7 +120,7 @@ class TieLineCosts:
         -------
         int
         """
-        return self._start_idx[0]
+        return self._start_indices[0]
 
     @property
     def col(self):
@@ -126,7 +131,7 @@ class TieLineCosts:
         -------
         int
         """
-        return self._start_idx[1]
+        return self._start_indices[1]
 
     @property
     def cost(self):
@@ -428,7 +433,7 @@ class TieLineCosts:
         return tie_lines
 
     @classmethod
-    def run(cls, cost_fpath, start_idx, end_indices, capacity_class,
+    def run(cls, cost_fpath, start_indices, end_indices, capacity_class,
             row_slice, col_slice, xmission_config=None, barrier_mult=100,
             save_paths=False):
         """
@@ -439,11 +444,20 @@ class TieLineCosts:
         ----------
         cost_fpath : str
             Full path of .h5 file with cost arrays
-        start_idx : tuple
-            row_idx, col_idx to compute least costs to.
+        start_indices : tuple
+            Tuple of (row_idx, col_idx) in the cost array indicating the
+            start position of all paths to compute (typically, this is
+            the centroid of the supply curve cell). Paths will be
+            computed from this start location to each of the
+            `end_indices`, which are also locations in the cost
+            array (typically transmission feature locations).
         end_indices : tuple | list
-            (row, col) index or list of (row, col) indices of end
-            point(s) to connect and compute least cost path to
+            Tuple (row, col) index or list of (row, col) indices in the
+            cost array indicating the end location(s) to compute least
+            cost paths to (typically transmission feature locations).
+            Paths are computed from the `start_indices` (typically the
+            centroid of the supply curve cell) to each of the individual
+            pairs of `end_indices`.
         capacity_class : int | str
             Transmission feature capacity_class class
         radius : int, optional
@@ -464,8 +478,9 @@ class TieLineCosts:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        tlc = cls(cost_fpath, start_idx, capacity_class, row_slice, col_slice,
-                  xmission_config=xmission_config, barrier_mult=barrier_mult)
+        tlc = cls(cost_fpath, start_indices, capacity_class, row_slice,
+                  col_slice, xmission_config=xmission_config,
+                  barrier_mult=barrier_mult)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
 
@@ -504,9 +519,9 @@ class TransCapCosts(TieLineCosts):
             Multiplier on transmission barrier costs, by default 100
         """
         self._sc_point = sc_point
-        start_idx, row_slice, col_slice = self._get_clipping_slices(
+        start_indices, row_slice, col_slice = self._get_clipping_slices(
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
-        super().__init__(cost_fpath, start_idx, capacity_class, row_slice,
+        super().__init__(cost_fpath, start_indices, capacity_class, row_slice,
                          col_slice, xmission_config=xmission_config,
                          barrier_mult=barrier_mult)
         self._features = self._prep_features(features)
@@ -609,7 +624,7 @@ class TransCapCosts(TieLineCosts):
 
         Returns
         -------
-        start_idx : tuple
+        start_indices : tuple
             Start index in clipped raster space
         row_slice : slice
             Row start, stop indices for clipped cost array
@@ -626,16 +641,16 @@ class TransCapCosts(TieLineCosts):
             col_min = max(col - radius, 0)
             col_max = min(col + radius, shape[1])
 
-            start_idx = (row - row_min, col - col_min)
+            start_indices = (row - row_min, col - col_min)
         else:
-            start_idx = sc_point_idx
+            start_indices = sc_point_idx
             row_min, row_max = None, None
             col_min, col_max = None, None
 
         row_slice = slice(row_min, row_max)
         col_slice = slice(col_min, col_max)
 
-        return start_idx, row_slice, col_slice
+        return start_indices, row_slice, col_slice
 
     @staticmethod
     def _calc_xformer_cost(features, tie_line_voltage, config=None):
@@ -1137,7 +1152,7 @@ class ReinforcementLineCosts(TieLineCosts):
     transmission lines to reach the destination, half (50%) of the
     greenfield cost of the input ``capacity_class`` is used.
     """
-    def __init__(self, transmission_lines, cost_fpath, start_idx,
+    def __init__(self, transmission_lines, cost_fpath, start_indices,
                  capacity_class, row_slice, col_slice, xmission_config=None,
                  barrier_mult=100):
         """
@@ -1154,9 +1169,14 @@ class ReinforcementLineCosts(TieLineCosts):
             transmission lines of differing voltages.
         cost_fpath : str
             Full path of .h5 file with cost arrays.
-        start_idx : tuple
-            Tuple of (row_idx, col_idx) to compute reinforcement line
-            path to.
+        start_indices : tuple
+            Tuple of (row_idx, col_idx) in the cost array indicating the
+            start position of all reinforcement line paths to compute
+            (typically, this is the location of the network node in the
+            BA). Paths will be computed from this start location to each
+            of the `end_indices`, which are also locations in the cost
+            array (typically substations within the BA of the network
+            node).
         capacity_class : int | str
             Transmission feature ``capacity_class`` to use for the
             'base' greenfield costs. 'Base' greenfield costs are only
@@ -1175,7 +1195,7 @@ class ReinforcementLineCosts(TieLineCosts):
             Multiplier on transmission barrier costs.
             By default, ``100``.
         """
-        super().__init__(cost_fpath=cost_fpath, start_idx=start_idx,
+        super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
                          capacity_class=capacity_class, row_slice=row_slice,
                          col_slice=col_slice, xmission_config=xmission_config,
                          barrier_mult=barrier_mult)
@@ -1188,7 +1208,7 @@ class ReinforcementLineCosts(TieLineCosts):
                 self._cost[t_lines] = costs
 
     @classmethod
-    def run(cls, transmission_lines, cost_fpath, start_idx, end_indices,
+    def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
             capacity_class, row_slice, col_slice, xmission_config=None,
             barrier_mult=100, save_paths=False):
         """
@@ -1207,12 +1227,21 @@ class ReinforcementLineCosts(TieLineCosts):
             transmission lines of differing voltages.
         cost_fpath : str
             Full path of .h5 file with cost arrays.
-        start_idx : tuple
-            Tuple of (row_idx, col_idx) to compute reinforcement line
-            path to.
+        start_indices : tuple
+            Tuple of (row_idx, col_idx) in the cost array indicating the
+            start position of all reinforcement line paths to compute
+            (typically, this is the location of the network node in the
+            BA). Paths will be computed from this start location to each
+            of the `end_indices`, which are also locations in the cost
+            array (typically substations within the BA of the network
+            node).
         end_indices : tuple | list
-            Tuple (row, col) index or list of (row, col) indices of end
-            point(s) to connect and compute reinforcement line path to.
+            Tuple (row, col) index or list of (row, col) indices in the
+            cost array indicating the end location(s) to compute
+            reinforcement line paths to (typically substations within a
+            single BA). Paths are computed from the `start_indices`
+            (typically the network node of the BA) to each of the
+            individual pairs of `end_indices`.
         capacity_class : int | str
             Transmission feature ``capacity_class`` to use for the
             'base' greenfield costs. 'Base' greenfield costs are only
@@ -1242,14 +1271,14 @@ class ReinforcementLineCosts(TieLineCosts):
             reinforcement line path.
         """
         ts = time.time()
-        tlc = cls(transmission_lines, cost_fpath, start_idx, capacity_class,
-                  row_slice, col_slice, xmission_config=xmission_config,
-                  barrier_mult=barrier_mult)
+        tlc = cls(transmission_lines, cost_fpath, start_indices,
+                  capacity_class, row_slice, col_slice,
+                  xmission_config=xmission_config, barrier_mult=barrier_mult)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
         tie_lines['cost'] = tie_lines['cost'] * 0.5
 
-        row, col = start_idx
+        row, col = start_indices
         with ExclusionLayers(cost_fpath) as f:
             tie_lines['poi_lat'] = (
                 f['latitude', row_slice, col_slice][row, col])
