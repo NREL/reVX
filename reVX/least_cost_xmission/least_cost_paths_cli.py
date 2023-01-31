@@ -6,15 +6,22 @@ Least Cost Xmission Command Line Interface
 import click
 import logging
 import os
+import json
 
-from rex.utilities.loggers import init_mult, create_dirs
+import numpy as np
+import geopandas as gpd
+
+from rex.utilities.loggers import init_logger, init_mult, create_dirs
 from rex.utilities.cli_dtypes import STR, INT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
 from reVX.config.least_cost_xmission import LeastCostPathsConfig
 from reVX.least_cost_xmission.config import XmissionConfig
-from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
+from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
+                                                       ReinforcementPaths)
+from reVX.least_cost_xmission.least_cost_xmission import ba_mapper
+from reVX.least_cost_xmission.config import TRANS_LINE_CAT, SUBSTATION_CAT
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -60,8 +67,11 @@ def run_local(ctx, config):
     ctx.invoke(local,
                cost_fpath=config.cost_fpath,
                features_fpath=config.features_fpath,
+               network_nodes_fpath=config.network_nodes_fpath,
+               transmission_lines_fpath=config.transmission_lines_fpath,
                capacity_class=config.capacity_class,
                xmission_config=config.xmission_config,
+               start_index=0, step_index=1,
                barrier_mult=config.barrier_mult,
                max_workers=config.execution_control.max_workers,
                save_paths=config.save_paths,
@@ -92,9 +102,25 @@ def from_config(ctx, config, verbose):
 
     if config.execution_control.option == 'local':
         run_local(ctx, config)
+        return
 
-    if config.execution_control.option == 'eagle':
+    if config.execution_control.option != 'eagle':
+        click.echo('Option "{}" is not supported'
+                   .format(config.execution_control.option))
+        return
+
+    # No need to add index to file name
+    if config.execution_control.nodes == 1:
         eagle(config)
+        return
+
+    name = config.name
+    num_nodes = config.execution_control.nodes
+    logger.info('Splitting features over {} SLURM jobs'.format(num_nodes))
+    n_zfill = len(str(num_nodes))
+    for i in range(num_nodes):
+        config.name = '{}_{}'.format(name, str(i).zfill(n_zfill))
+        eagle(config, start_index=i)
 
 
 @main.command()
@@ -104,16 +130,34 @@ def from_config(ctx, config, verbose):
                     "layers"))
 @click.option('--features_fpath', '-feats', required=True,
               type=click.Path(exists=True),
-              help="Path to geopackage with transmission features")
+              help="Path to GeoPackage with transmission features")
 @click.option('--capacity_class', '-cap', type=str, required=True,
               help=("Capacity class of transmission features to connect "
                     "supply curve points to"))
+@click.option('--network_nodes_fpath', '-nn', type=STR, show_default=True,
+              default=None,
+              help=("Path to Network Nodes GeoPackage. If given alongside "
+                    "`transmission_lines_fpath`, reinforcement path cost "
+                    "calculation is run."))
+@click.option('--transmission_lines_fpath', '-tl', type=STR, show_default=True,
+              default=None,
+              help=("Path to Transmission lines GeoPackage. This file can "
+                    "contain other features, but transmission lines must "
+                    "be identified by {!r}. If given alongside "
+                    "`network_nodes_fpath`, reinforcement path cost "
+                    "calculation is run.".format(TRANS_LINE_CAT)))
 @click.option('--xmission_config', '-xcfg', type=STR, show_default=True,
               default=None,
-              help=("Path to Xmission config .json"))
+              help=("Path to transmission config .json"))
+@click.option('--start_index', '-start', type=int,
+              show_default=True, default=0,
+              help=("Start index of features to run."))
+@click.option('--step_index', '-step', type=int,
+              show_default=True, default=1,
+              help=("Step index of features to run."))
 @click.option('--barrier_mult', '-bmult', type=float,
               show_default=True, default=100,
-              help=("Tranmission barrier multiplier, used when computing the "
+              help=("Transmission barrier multiplier, used when computing the "
                     "least cost tie-line path"))
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
@@ -130,7 +174,8 @@ def from_config(ctx, config, verbose):
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
-def local(ctx, cost_fpath, features_fpath, capacity_class, xmission_config,
+def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
+          transmission_lines_fpath, xmission_config, start_index, step_index,
           barrier_mult, max_workers, save_paths, out_dir, log_dir, verbose):
     """
     Run Least Cost Paths on local hardware
@@ -143,15 +188,34 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, xmission_config,
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
 
     create_dirs(out_dir)
-    logger.info('Computing Least Cost Paths connections and writing them {}'
+    logger.info('Computing Least Cost Paths connections and writing them to {}'
                 .format(out_dir))
     xmission_config = XmissionConfig(config=xmission_config)
-    least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
-                                     capacity_class,
-                                     xmission_config=xmission_config,
-                                     barrier_mult=barrier_mult,
-                                     max_workers=max_workers,
-                                     save_paths=save_paths)
+    is_reinforcement_run = (network_nodes_fpath is not None
+                            and transmission_lines_fpath is not None)
+    if is_reinforcement_run:
+        features = gpd.read_file(network_nodes_fpath)
+        features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
+        indices = features.index[start_index::step_index]
+        least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
+                                             network_nodes_fpath,
+                                             transmission_lines_fpath,
+                                             capacity_class,
+                                             xmission_config=xmission_config,
+                                             barrier_mult=barrier_mult,
+                                             indices=indices,
+                                             save_paths=save_paths)
+    else:
+        features = gpd.read_file(features_fpath)
+        features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
+        indices = features.index[start_index::step_index]
+        least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
+                                         capacity_class,
+                                         xmission_config=xmission_config,
+                                         barrier_mult=barrier_mult,
+                                         indices=indices,
+                                         max_workers=max_workers,
+                                         save_paths=save_paths)
 
     capacity_class = xmission_config._parse_cap_class(capacity_class)
     cap = xmission_config['power_classes'][capacity_class]
@@ -160,13 +224,81 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, xmission_config,
     fpath_out = os.path.join(out_dir, fn_out)
     if save_paths:
         fpath_out += '.gpkg'
-        least_costs.to_file(fpath_out, layer='paths', driver="GPKG")
+        least_costs.to_file(fpath_out, driver="GPKG", index=False)
     else:
         fpath_out += '.csv'
         least_costs.to_csv(fpath_out, index=False)
 
 
-def get_node_cmd(config):
+@main.command()
+@click.option('--features_fpath', '-feats', required=True,
+              type=click.Path(exists=True),
+              help="Path to GeoPackage with substation and transmission "
+                   "features")
+@click.option('--balancing_areas_fpath', '-ba', required=True,
+              type=click.Path(exists=True),
+              help=("Path to Balancing areas GeoPackage."))
+@click.option('--out_file', '-of', default=None, type=STR,
+              help='Name for output GeoPackage file.')
+@click.pass_context
+def map_ba(ctx, features_fpath, balancing_areas_fpath, out_file):
+    """
+    Map substation locations to balancing regions.
+
+    This method also removes substations that do not meet the min 69 kV
+    voltage requirement and adds {'min_volts', 'max_volts'} fields to
+    the remaining substations.
+
+    **IMPORTANT** This method DOES NOT clip the substations to your
+    balancing area boundary. All substations will be mapped to their
+    closest BA. It is your responsibility to remove any substations
+    outside of the analysis region before calling this method.
+
+    Doing the pre-processing step avoids any issues with substations
+    being left out or double counted if we just clipped them to the
+    balancing area shapes.
+    """
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    features = gpd.read_file(features_fpath)
+    ba = gpd.read_file(balancing_areas_fpath).to_crs(features.crs)
+    substations = (features[features.category == SUBSTATION_CAT]
+                   .reset_index(drop=True).dropna(axis="columns", how="all"))
+
+    logger.info("Mapping {:,d} substation locations to {:,d} balancing "
+                "areas".format(substations.shape[0], ba.shape[0]))
+
+    substations["ba_str"] = substations.centroid.apply(ba_mapper(ba))
+
+    logger.info("Calculating min/max voltage for each substation...")
+    bad_subs = np.zeros(len(substations), dtype=bool)
+    for idx, row in substations.iterrows():
+        lines = row['trans_gids']
+        if isinstance(lines, str):
+            lines = json.loads(lines)
+
+        lines_mask = features['gid'].isin(lines)
+        voltage = features.loc[lines_mask, 'voltage'].values
+
+        if np.max(voltage) >= 69:
+            substations.loc[idx, 'min_volts'] = np.min(voltage)
+            substations.loc[idx, 'max_volts'] = np.max(voltage)
+        else:
+            bad_subs[idx] = True
+
+    if any(bad_subs):
+        msg = ("The following sub-stations do not have the minimum "
+               "required voltage of 69 kV and will be dropped:\n{}"
+               .format(substations.loc[bad_subs, 'gid']))
+        logger.warning(msg)
+        substations = substations.loc[~bad_subs].reset_index(drop=True)
+
+    logger.info("Writing substation output to {!r}".format(out_file))
+    substations.to_file(out_file, driver="GPKG", index=False)
+
+
+def get_node_cmd(config, start_index=0):
     """
     Get the node CLI call for Least Cost Paths
 
@@ -185,7 +317,11 @@ def get_node_cmd(config):
             'local',
             '-cost {}'.format(SLURM.s(config.cost_fpath)),
             '-feats {}'.format(SLURM.s(config.features_fpath)),
+            '-nn {}'.format(SLURM.s(config.network_nodes_fpath)),
+            '-tl {}'.format(SLURM.s(config.transmission_lines_fpath)),
             '-cap {}'.format(SLURM.s(config.capacity_class)),
+            '-start {}'.format(SLURM.s(start_index)),
+            '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
@@ -205,7 +341,7 @@ def get_node_cmd(config):
     return cmd
 
 
-def eagle(config):
+def eagle(config, start_index=0):
     """
     Run Least Cost Paths on Eagle HPC.
 
@@ -215,7 +351,7 @@ def eagle(config):
         Least Cost Paths config object.
     """
 
-    cmd = get_node_cmd(config)
+    cmd = get_node_cmd(config, start_index)
     name = config.name
     log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')

@@ -2,20 +2,26 @@
 """
 Least cost transmission line path tests
 """
-from click.testing import CliRunner
 import json
-import numpy as np
 import os
-import pandas as pd
-import pytest
 import random
 import tempfile
 import traceback
 
+import pytest
+import rasterio
+import numpy as np
+import pandas as pd
+import geopandas as gpd
+from shapely.geometry import shape
+from click.testing import CliRunner
+
 from rex.utilities.loggers import LOGGERS
 from reV.supply_curve.supply_curve import SupplyCurve
 from reVX import TESTDATADIR
+from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.least_cost_xmission_cli import main
+from reVX.least_cost_xmission.least_cost_paths_cli import main as lcp_main
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
@@ -24,6 +30,7 @@ CHECK_COLS = ('raw_line_cost', 'dist_km', 'length_mult', 'tie_line_cost',
               'xformer_cost_per_mw', 'xformer_cost', 'sub_upgrade_cost',
               'new_sub_cost', 'connection_cost', 'trans_cap_cost', 'trans_gid',
               'sc_point_gid')
+ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 N_SC_POINTS = 10  # number of sc_points to run, chosen at random for each test
 
 
@@ -70,6 +77,21 @@ def runner():
     return CliRunner()
 
 
+@pytest.fixture
+def ri_ba():
+    """Generate test BA region. """
+    with Geotiff(ISO_REGIONS_F) as gt:
+        iso_regions = gt.values[0].astype('uint16')
+        profile = gt.profile
+
+    s = rasterio.features.shapes(iso_regions, transform=profile['transform'])
+    ba_str, shapes = zip(*[("p{}".format(int(v)), shape(p))
+                           for p, v in s if int(v) != 0])
+
+    return gpd.GeoDataFrame({"ba_str": ba_str}, crs=profile['crs'],
+                            geometry=list(shapes))
+
+
 @pytest.mark.parametrize('capacity', [100, 200, 400, 1000])
 def test_capacity_class(capacity):
     """
@@ -87,7 +109,8 @@ def test_capacity_class(capacity):
         truth = truth.loc[mask]
 
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
-                                 sc_point_gids=sc_point_gids)
+                                 sc_point_gids=sc_point_gids,
+                                 min_line_length=5.76)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
@@ -116,7 +139,8 @@ def test_parallel(max_workers):
 
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
                                  max_workers=max_workers,
-                                 sc_point_gids=sc_point_gids)
+                                 sc_point_gids=sc_point_gids,
+                                 min_line_length=5.76)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
@@ -148,7 +172,8 @@ def test_resolution(resolution):
         truth = truth.loc[mask]
 
     test = LeastCostXmission.run(COST_H5, FEATURES, 100, resolution=resolution,
-                                 sc_point_gids=sc_point_gids)
+                                 sc_point_gids=sc_point_gids,
+                                 min_line_length=resolution * 0.09 / 2)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
@@ -166,11 +191,6 @@ def test_cli(runner):
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_{capacity}MW.csv')
     truth = pd.read_csv(truth)
-    sc_point_gids = truth['sc_point_gid'].unique()
-    sc_point_gids = np.random.choice(sc_point_gids, size=N_SC_POINTS,
-                                     replace=False)
-    mask = truth['sc_point_gid'].isin(sc_point_gids)
-    truth = truth.loc[mask]
 
     with tempfile.TemporaryDirectory() as td:
         config = {
@@ -181,7 +201,7 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
-            "sc_point_gids": sc_point_gids.tolist(),
+            "min_line_length": 5.76
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -198,6 +218,67 @@ def test_cli(runner):
         test = pd.read_csv(test)
         SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
         check_baseline(truth, test)
+
+    LOGGERS.clear()
+
+
+def test_reinforcement_cli(runner, ri_ba):
+    """
+    Test Reinforcement cost routines and CLI
+    """
+    capacity = 1000
+    ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
+
+    with tempfile.TemporaryDirectory() as td:
+        ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
+        ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
+
+        ri_ba_path = os.path.join(td, 'ri_ba.gpkg')
+        ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
+
+        ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
+        result = runner.invoke(lcp_main, ['map-ba', '-feats', ri_feats_path,
+                                          '-ba', ri_ba_path,
+                                          '-of', ri_substations_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+            },
+            "cost_fpath": COST_H5,
+            "features_fpath": ri_substations_path,
+            "balancing_areas_fpath": ri_ba_path,
+            "capacity_class": f'{capacity}MW',
+            "barrier_mult": 100,
+            "min_line_length": 0
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+
+        assert len(test) == 13
+        assert set(test.trans_gid.unique()) == {69130}
+        assert set(test.ba_str.unique()) == {"p4"}
+
+        assert "poi_lat" in test
+        assert "poi_lon" in test
+
+        assert len(test.poi_lat.unique()) == 1
+        assert len(test.poi_lon.unique()) == 1
 
     LOGGERS.clear()
 
