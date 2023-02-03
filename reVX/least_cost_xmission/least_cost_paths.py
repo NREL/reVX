@@ -646,27 +646,22 @@ def _rasterize_transmission(transmission_lines, xmission_config, cost_shape,
     """Rasterize transmission lines and assemble them into a dict. """
 
     transmission_lines_dict = {}
-    capacities = sorted(xmission_config['power_classes'],
-                        key=lambda x: xmission_config['power_classes'][x])
+    capacities = sorted(xmission_config['power_classes'].values())
     v_min = 0
     for capacity in capacities[:-1]:
-        power_class = str(xmission_config['power_classes'][capacity])
-        cost_layer = 'tie_line_costs_{}MW'.format(power_class)
-        v_max = xmission_config['power_to_voltage'][power_class]
-
+        v_max = xmission_config['power_to_voltage'][str(capacity)]
         curr_lines = transmission_lines[
             (transmission_lines["voltage"] > v_min)
             & (transmission_lines["voltage"] <= v_max)
         ]
         out = _rasterize_transmission_layer(curr_lines, cost_shape,
                                             cost_transform)
-        transmission_lines_dict[cost_layer] = out
+        transmission_lines_dict[int(capacity)] = out
         v_min = v_max
 
     curr_lines = transmission_lines[transmission_lines["voltage"] > v_min]
-    cost_layer = 'tie_line_costs_{}'.format(capacities[-1])
     out = _rasterize_transmission_layer(curr_lines, cost_shape, cost_transform)
-    transmission_lines_dict[cost_layer] = out
+    transmission_lines_dict[int(capacities[-1])] = out
     return transmission_lines_dict
 
 

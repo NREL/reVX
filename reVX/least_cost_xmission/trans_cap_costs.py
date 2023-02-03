@@ -62,8 +62,8 @@ class TieLineCosts:
         self._col_slice = col_slice
         self._capacity_class = self._config._parse_cap_class(capacity_class)
 
-        line_cap = self._config['power_classes'][self.capacity_class]
-        cost_layer = 'tie_line_costs_{}MW'.format(line_cap)
+        self._line_cap_mw = self._config['power_classes'][self.capacity_class]
+        cost_layer = 'tie_line_costs_{}MW'.format(self._line_cap_mw)
         self._cost, self._mcp_cost = self._clip_costs(
             cost_fpath, cost_layer, row_slice, col_slice,
             barrier_mult=barrier_mult)
@@ -1199,13 +1199,14 @@ class ReinforcementLineCosts(TieLineCosts):
                          capacity_class=capacity_class, row_slice=row_slice,
                          col_slice=col_slice, xmission_config=xmission_config,
                          barrier_mult=barrier_mult)
-
+        self._cost = self._cost / self._line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
-            for cost_layer, lines in transmission_lines.items():
+            for capacity_mw, lines in transmission_lines.items():
                 t_lines = np.where(lines[row_slice, col_slice])
+                cost_layer = 'tie_line_costs_{}MW'.format(capacity_mw)
                 costs = f[cost_layer, row_slice, col_slice][t_lines]
                 self._mcp_cost[t_lines] = costs * 1e-9
-                self._cost[t_lines] = costs
+                self._cost[t_lines] = costs / capacity_mw
 
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
@@ -1286,7 +1287,7 @@ class ReinforcementLineCosts(TieLineCosts):
                 f['longitude', row_slice, col_slice][row, col])
 
         tie_lines = tie_lines.rename({'length_km': 'reinforcement_dist_km',
-                                      'cost': 'reinforcement_cost',
+                                      'cost': 'reinforcement_cost_per_mw',
                                       'poi_lat': 'reinforcement_poi_lat',
                                       'poi_lon': 'reinforcement_poi_lon'},
                                      axis=1)
