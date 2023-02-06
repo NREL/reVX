@@ -349,7 +349,7 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
 
     logger.info("Merging reinforcement costs into transmission costs...")
 
-    r_cols = ["reinforcement_dist_km", "reinforcement_cost"]
+    r_cols = ["reinforcement_dist_km", "reinforcement_cost_per_mw"]
     costs[r_cols] = r_costs.loc[costs["trans_gid"], r_cols].values
 
     logger.info("Writing output to {!r}".format(out_file))
