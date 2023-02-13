@@ -155,6 +155,11 @@ class Rasterizer:
         return self._profile
 
     @property
+    def transform(self):
+        """rasterio.Affine: Affine transform for exclusion layer. """
+        return Affine(*self.profile["transform"])
+
+    @property
     def arr_shape(self):
         """Rasterize array shape.
 
@@ -229,14 +234,10 @@ class Rasterizer:
             return 1 - self._no_exclusions_array().astype(np.float32)
 
         hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
-        new_transform = list(self.profile['transform'])[:6]
-        new_transform[0] = new_transform[0] / self._scale_factor
-        new_transform[4] = new_transform[4] / self._scale_factor
+        new_transform = (self.transform
+                         * self.transform.scale(1 / self._scale_factor))
 
-        rio_features.rasterize(shapes=shapes,
-                               out=hr_arr,
-                               out_shape=hr_arr.shape[1:],
-                               fill=0,
+        rio_features.rasterize(shapes=shapes, out=hr_arr, fill=0,
                                transform=new_transform)
 
         arr = self._aggregate_high_res(hr_arr)
@@ -247,11 +248,8 @@ class Rasterizer:
 
         arr = self._no_exclusions_array()
         if shapes:
-            rio_features.rasterize(shapes=shapes,
-                                   out=arr,
-                                   out_shape=arr.shape[1:],
-                                   fill=0,
-                                   transform=self.profile['transform'])
+            rio_features.rasterize(shapes=shapes, out=arr, fill=0,
+                                   transform=self.transform)
 
         return arr
 
