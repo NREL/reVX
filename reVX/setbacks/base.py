@@ -3,6 +3,7 @@
 Compute setbacks exclusions
 """
 import os
+from copy import deepcopy
 from abc import abstractmethod
 from warnings import warn
 from itertools import product
@@ -180,7 +181,7 @@ class Rasterizer:
         """
         return self._scale_factor > 1
 
-    def _no_exclusions_array(self, multiplier=1):
+    def _no_exclusions_array(self, multiplier=1, window=None):
         """Get an array of the correct shape representing no exclusions.
 
         The array contains all zeros, and a new one is created
@@ -192,16 +193,24 @@ class Rasterizer:
             Integer multiplier value used to scale up the dimensions of
             the array exclusions array (e.g. multiplier of 3 turns an
             array of shape (10, 20) into an array of shape (30, 60)).
+        window : :cls:`rasterio.windows.Window`
+            A ``rasterio`` window defining the area of the raster. Can
+            be used to speed up computation and decrease memory
+            requirements if features are localized to a small portion of
+            the raster array.
 
         Returns
         -------
         np.array
             Array of zeros representing no exclusions.
         """
-        high_res_shape = tuple(x * multiplier for x in self.arr_shape[1:])
-        return np.zeros(high_res_shape, dtype='uint8')
+        if window is None:
+            shape = tuple(x * multiplier for x in self.arr_shape[1:])
+        else:
+            shape = (window.height * multiplier, window.width * multiplier)
+        return np.zeros(shape, dtype='uint8')
 
-    def rasterize(self, shapes):
+    def rasterize(self, shapes, window=None):
         """Convert geometries into exclusions array.
 
         Parameters
@@ -209,6 +218,11 @@ class Rasterizer:
         shapes : list, optional
             List of geometries to rasterize (i.e. list(gdf["geometry])).
             If `None` or empty list, returns array of zeros.
+        window : :cls:`rasterio.windows.Window`
+            A ``rasterio`` window defining the area of the raster. Can
+            be used to speed up computation and decrease memory
+            requirements if features are localized to a small portion of
+            the raster array.
 
         Returns
         -------
@@ -223,44 +237,52 @@ class Rasterizer:
         shapes = [(geom, 1) for geom in shapes if geom is not None]
 
         if self.inclusions:
-            return self._rasterize_to_weights(shapes)
+            return self._rasterize_to_weights(shapes, window)
 
-        return self._rasterize_to_mask(shapes)
+        return self._rasterize_to_mask(shapes, window)
 
-    def _rasterize_to_weights(self, shapes):
+    def _rasterize_to_weights(self, shapes, window):
         """Rasterize features to weights using a high-resolution array."""
 
         if not shapes:
-            return 1 - self._no_exclusions_array().astype(np.float32)
+            return ((1 - self._no_exclusions_array(window=window))
+                    .astype(np.float32))
 
         hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
-        new_transform = (self.transform
-                         * self.transform.scale(1 / self._scale_factor))
+        transform = self._window_transform(window)
+        transform *= transform.scale(1 / self._scale_factor)
 
         rio_features.rasterize(shapes=shapes, out=hr_arr, fill=0,
-                               transform=new_transform)
+                               transform=transform)
 
-        arr = self._aggregate_high_res(hr_arr)
+        arr = self._aggregate_high_res(hr_arr, window)
         return 1 - (arr / self._scale_factor ** 2)
 
-    def _rasterize_to_mask(self, shapes):
+    def _rasterize_to_mask(self, shapes, window):
         """Rasterize features with to an exclusion mask."""
 
-        arr = self._no_exclusions_array()
+        arr = self._no_exclusions_array(window=window)
         if shapes:
+            transform = self._window_transform(window)
             rio_features.rasterize(shapes=shapes, out=arr, fill=0,
-                                   transform=self.transform)
+                                   transform=transform)
 
         return arr
 
-    def _aggregate_high_res(self, hr_arr):
+    def _aggregate_high_res(self, hr_arr, window):
         """Aggregate the high resolution exclusions array to output shape. """
 
-        arr = self._no_exclusions_array().astype(np.float32)
+        arr = self._no_exclusions_array(window=window).astype(np.float32)
         for i, j in product(range(self._scale_factor),
                             range(self._scale_factor)):
             arr += hr_arr[i::self._scale_factor, j::self._scale_factor]
         return arr
+
+    def _window_transform(self, window):
+        """Calculate the transform for a given window, if any. """
+        if window is None:
+            return deepcopy(self.transform)
+        return windows.transform(window, self.transform)
 
 
 class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
