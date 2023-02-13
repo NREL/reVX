@@ -320,6 +320,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         self._rasterizer = Rasterizer(excl_fpath,
                                       weights_calculation_upscale_factor, hsds)
         super().__init__(excl_fpath, regulations, features, hsds)
+        self.features = self.parse_features()
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
@@ -496,7 +497,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
 
         Notes
         -----
-        This method is required for `run` classmethods for
+        This method is required for `run` class methods for
         feature setbacks that are spread out over multiple
         files.
         """

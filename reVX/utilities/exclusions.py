@@ -53,19 +53,6 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def parse_features(self):
-        """Parse features used to compute exclusions.
-
-        Warnings
-        --------
-        Use caution when calling this method, especially in multiple
-        processes, as the returned feature files may be quite large.
-        Reading 100 GB feature files in each of 36 sub-processes will
-        quickly overwhelm your RAM.
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def _local_exclusions_arguments(self, regulation_value, cnty):
         """Compile and return arguments to `compute_local_exclusions`.
 
@@ -188,7 +175,6 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         self._fips = self._profile = None
         self._set_profile()
         self._process_regulations(regulations.df)
-        self.features = self.parse_features()
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)

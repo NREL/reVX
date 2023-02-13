@@ -78,6 +78,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         """
         super().__init__(excl_fpath, regulations, features=features,
                          hsds=hsds)
+        self.features = self.parse_features()
         self._res_h5 = res_fpath
         self._res = resolution
         self._grid_cell_size = grid_cell_size
