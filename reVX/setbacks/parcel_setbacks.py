@@ -19,7 +19,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
     """Parcel setbacks - facilitates the use of negative buffers. """
 
     @staticmethod
-    def compute_local_exclusions(regulation_value, cnty, *args):
+    def compute_local_exclusions(regulation_value, county, *args):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -31,12 +31,12 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         ----------
         regulation_value : float | int
             Setback distance in meters.
-        cnty : geopandas.GeoDataFrame
+        county : geopandas.GeoDataFrame
             Regulations for a single county.
         features : geopandas.GeoDataFrame
             Features for the local county.
         feature_filter : callable
-            A callable function that takes `features` and `cnty` as
+            A callable function that takes `features` and `county` as
             inputs and outputs a geopandas.GeoDataFrame with features
             clipped and/or localized to the input county.
         rasterizer : Rasterizer
@@ -50,9 +50,9 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         """
         features, feature_filter, rasterizer = args
         logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(cnty.iloc[0]['FIPS']))
+                     .format(county.iloc[0]['FIPS']))
         log_mem(logger)
-        features = feature_filter(features, cnty)
+        features = feature_filter(features, county)
         negative_buffer = features.buffer(-1 * regulation_value)
         setbacks = features.buffer(0).difference(negative_buffer)
         return rasterizer.rasterize(list(setbacks))
@@ -69,7 +69,7 @@ class ParcelSetbacks(AbstractBaseSetbacks):
             Raster array of setbacks
         """
         logger.info("Computing generic setbacks")
-        if np.isclose(self._regulations.generic, 0):
+        if np.isclose (self._regulations.generic, 0):
             return self._rasterizer.rasterize(shapes=None)
 
         negative_buffer = self.features.buffer(-1 * self._regulations.generic)
