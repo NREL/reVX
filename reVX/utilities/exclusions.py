@@ -53,25 +53,25 @@ class AbstractExclusionCalculatorInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def _local_exclusions_arguments(self, regulation_value, cnty):
+    def _local_exclusions_arguments(self, regulation_value, county):
         """Compile and return arguments to `compute_local_exclusions`.
 
         This method should return a list or tuple of extra args to be
         passed to `compute_local_exclusions`. Do not include the
-        `regulation_value` or `cnty`.
+        `regulation_value` or `county`.
 
         Parameters
         ----------
         regulation_value : float | int
             Regulation value for county.
-        cnty : geopandas.GeoDataFrame
+        county : geopandas.GeoDataFrame
             Regulations for a single county.
         """
         raise NotImplementedError
 
     @staticmethod
     @abstractmethod
-    def compute_local_exclusions(regulation_value, cnty, *args):
+    def compute_local_exclusions(regulation_value, county, *args):
         """Compute local feature exclusions.
 
         This method should compute the exclusions using the information
@@ -81,7 +81,7 @@ class AbstractExclusionCalculatorInterface(ABC):
         ----------
         regulation_value : float | int
             Regulation value for county.
-        cnty : geopandas.GeoDataFrame
+        county : geopandas.GeoDataFrame
             Regulations for a single county.
         *args
             Other arguments required for local exclusion calculation.

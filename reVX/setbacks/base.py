@@ -11,6 +11,7 @@ import pathlib
 import numpy as np
 import geopandas as gpd
 from rasterio import features as rio_features
+from rasterio import windows, Affine
 
 from rex.utilities import log_mem
 from reV.handlers.exclusions import ExclusionLayers
@@ -375,14 +376,14 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         logger.debug('Computing setbacks for regulations in {} counties'
                      .format(len(self.regulations_table)))
 
-    def _local_exclusions_arguments(self, __, cnty):
+    def _local_exclusions_arguments(self, __, county):
         """Compile and return arguments to `compute_local_exclusions`. """
-        idx = self.features.sindex.intersection(cnty.total_bounds)
-        cnty_features = self.features.iloc[list(idx)].copy()
-        return cnty_features, self._feature_filter, self._rasterizer
+        idx = self.features.sindex.intersection(county.total_bounds)
+        county_features = self.features.iloc[list(idx)].copy()
+        return county_features, self._feature_filter, self._rasterizer
 
     @staticmethod
-    def compute_local_exclusions(regulation_value, cnty, *args):
+    def compute_local_exclusions(regulation_value, county, *args):
         """Compute local features setbacks.
 
         This method will compute the setbacks using a county-specific
@@ -394,7 +395,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         ----------
         regulation_value : float | int
             Setback distance in meters.
-        cnty : geopandas.GeoDataFrame
+        county : geopandas.GeoDataFrame
             Regulations for a single county.
         features : geopandas.GeoDataFrame
             Features for the local county.
@@ -413,9 +414,9 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """
         features, feature_filter, rasterizer = args
         logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(cnty.iloc[0]['FIPS']))
+                     .format(county.iloc[0]['FIPS']))
         log_mem(logger)
-        features = feature_filter(features, cnty)
+        features = feature_filter(features, county)
         features = list(features.buffer(regulation_value))
         return rasterizer.rasterize(features)
 

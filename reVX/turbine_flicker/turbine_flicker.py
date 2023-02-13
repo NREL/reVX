@@ -260,7 +260,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                          .format(self._excl_fpath, self._features))
             return f[self._features]
 
-    def _local_exclusions_arguments(self, regulation_value, cnty):
+    def _local_exclusions_arguments(self, regulation_value, county):
         """Compile and return arguments to `compute_local_exclusions`.
 
         This method should return a list or tuple of extra args to be
@@ -270,7 +270,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         ----------
         regulation_value : float | int
             Regulation value for county.
-        cnty : geopandas.GeoDataFrame
+        county : geopandas.GeoDataFrame
             Regulations for a single county.
 
         Returns
@@ -281,7 +281,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         """
         return (self._regulations.hub_height,
                 self._regulations.rotor_diameter,
-                self._points(cnty.iloc[0]['FIPS']),
+                self._points(county.iloc[0]['FIPS']),
                 self._res_h5,
                 self._max_flicker_exclusion_range,
                 self._grid_cell_size,
@@ -290,7 +290,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                 self._res)
 
     @staticmethod
-    def compute_local_exclusions(regulation_value, cnty, *args):
+    def compute_local_exclusions(regulation_value, county, *args):
         """Compute local flicker exclusions.
 
         This method computes a flicker exclusion layer using the
@@ -300,7 +300,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         ----------
         regulation_value : float | int
             Maximum number of allowable flicker hours in county.
-        cnty : geopandas.GeoDataFrame
+        county : geopandas.GeoDataFrame
             Regulations for a single county.
         tf : `TurbineFlicker`
             Instance of `TurbineFlicker` objects used to compute the
@@ -315,7 +315,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
          max_flicker_exclusion_range, grid_cell_size, steps_per_hour,
          building_layer, resolution) = args
         logger.debug('- Computing flicker for county FIPS {}'
-                     .format(cnty.iloc[0]['FIPS']))
+                     .format(county.iloc[0]['FIPS']))
         return compute_flicker_exclusions(hub_height, rotor_diameter, points,
                                           res_fpath, regulation_value,
                                           max_flicker_exclusion_range,
