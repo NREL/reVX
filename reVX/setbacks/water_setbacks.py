@@ -14,9 +14,9 @@ class WaterSetbacks(AbstractBaseSetbacks):
     """Water setbacks. """
 
     @staticmethod
-    def _feature_filter(features, cnty):
+    def _feature_filter(features, county):
         """Filter the features given a county."""
-        return features_clipped_to_county(features, cnty)
+        return features_clipped_to_county(features, county)
 
     def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """
