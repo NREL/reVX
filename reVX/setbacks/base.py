@@ -401,7 +401,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """Compile and return arguments to `compute_local_exclusions`. """
         idx = self.features.sindex.intersection(county.total_bounds)
         county_features = self.features.iloc[list(idx)].copy()
-        return county_features, self._feature_filter, self._rasterizer
+        yield county_features, self._feature_filter, self._rasterizer
 
     @staticmethod
     def compute_local_exclusions(regulation_value, county, *args):

@@ -54,9 +54,9 @@ class AbstractExclusionCalculatorInterface(ABC):
 
     @abstractmethod
     def _local_exclusions_arguments(self, regulation_value, county):
-        """Compile and return arguments to `compute_local_exclusions`.
+        """Compile and yield arguments to `compute_local_exclusions`.
 
-        This method should return a list or tuple of extra args to be
+        This method should yield lists or tuples of extra args to be
         passed to `compute_local_exclusions`. Do not include the
         `regulation_value` or `county`.
 
@@ -347,13 +347,13 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             logger.info('Computing local exclusions in serial')
             exclusions = None
             for i, (exclusion, cnty) in enumerate(self._regulations):
-                args = self._local_exclusions_arguments(exclusion, cnty)
-                out = self.compute_local_exclusions(exclusion, cnty, *args)
-                local_exclusions, slices = out
-                exclusions = self._combine_exclusions(exclusions,
-                                                      local_exclusions,
-                                                      cnty['FIPS'].unique(),
-                                                      slices)
+                for args in self._local_exclusions_arguments(exclusion, cnty):
+                    out = self.compute_local_exclusions(exclusion, cnty, *args)
+                    local_exclusions, slices = out
+                    exclusions = self._combine_exclusions(exclusions,
+                                                        local_exclusions,
+                                                        cnty['FIPS'].unique(),
+                                                        slices)
                 logger.debug('Computed exclusions for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 
@@ -367,12 +367,13 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             exclusion_value, cnty = regulation_info
             logger.info('Computing exclusions for {}/{} counties'
                         .format(ind, len(self.regulations_table)))
-            args = self._local_exclusions_arguments(exclusion_value, cnty)
-            future = exe.submit(self.compute_local_exclusions,
-                                exclusion_value, cnty, *args)
-            futures[future] = cnty['FIPS'].unique()
-            if ind % max_submissions == 0:
-                exclusions = self._collect_futures(futures, exclusions)
+            for args in self._local_exclusions_arguments(exclusion_value,
+                                                         cnty):
+                future = exe.submit(self.compute_local_exclusions,
+                                    exclusion_value, cnty, *args)
+                futures[future] = cnty['FIPS'].unique()
+                if ind % max_submissions == 0:
+                    exclusions = self._collect_futures(futures, exclusions)
         exclusions = self._collect_futures(futures, exclusions)
         return exclusions
 

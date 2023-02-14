@@ -279,15 +279,15 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
             `TurbineFlicker` object used as an extra argument to
             calculate local flicker exclusions.
         """
-        return (self._regulations.hub_height,
-                self._regulations.rotor_diameter,
-                self._points(county.iloc[0]['FIPS']),
-                self._res_h5,
-                self._max_flicker_exclusion_range,
-                self._grid_cell_size,
-                self.STEPS_PER_HOUR,
-                self.features,
-                self._res)
+        yield (self._regulations.hub_height,
+               self._regulations.rotor_diameter,
+               self._points(county.iloc[0]['FIPS']),
+               self._res_h5,
+               self._max_flicker_exclusion_range,
+               self._grid_cell_size,
+               self.STEPS_PER_HOUR,
+               self.features,
+               self._res)
 
     @staticmethod
     def compute_local_exclusions(regulation_value, county, *args):
