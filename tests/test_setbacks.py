@@ -14,6 +14,9 @@ import tempfile
 import traceback
 from itertools import product
 
+import geopandas as gpd
+import rasterio
+
 from reV.handlers.exclusions import ExclusionLayers
 
 from rex.utilities.loggers import LOGGERS
@@ -282,6 +285,34 @@ def test_rasterizer_array_dtypes():
 
     assert rasterizer.rasterize(shapes=None).dtype == np.uint8
     assert rasterizer_hr.rasterize(shapes=None).dtype == np.float32
+
+
+def test_rasterizer_window():
+    """Test rasterizing in a window. """
+    rail_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Railroads',
+                             'RI_Railroads.shp')
+
+    with ExclusionLayers(EXCL_H5) as excl:
+        crs = excl.crs
+        profile = excl.profile
+        shape = excl.shape
+
+    features = gpd.read_file(rail_path).to_crs(crs)
+    features = list(features["geometry"].buffer(500))
+
+    transform = rasterio.Affine(*profile["transform"])
+    window = rasterio.windows.from_bounds(70_000, 30_000, 130_000, 103_900,
+                                          transform)
+    window = window.round_offsets().round_lengths()
+
+    rasterizer = Rasterizer(EXCL_H5, 1)
+
+    raster = rasterizer.rasterize(features)
+    window_raster = rasterizer.rasterize(features, window=window)
+
+    assert raster.shape == shape
+    assert window_raster.shape == (window.height, window.width)
+    assert np.allclose(raster[window.toslices()], window_raster)
 
 
 def test_generic_structure(generic_wind_regulations):
@@ -670,7 +701,7 @@ def test_aggregate_high_res():
     for i, j in product(range(mult), range(mult)):
         hr_array[i::mult, j::mult] += arr_to_rep
 
-    assert np.isclose(rasterizer._aggregate_high_res(hr_array),
+    assert np.isclose(rasterizer._aggregate_high_res(hr_array, window=None),
                       arr_to_rep * mult ** 2).all()
 
 
