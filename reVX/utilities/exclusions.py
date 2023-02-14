@@ -465,7 +465,6 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         """Merge local exclusions onto the generic exclusions."""
         logger.info('Merging local exclusions onto the generic exclusions')
 
-        self.pre_process_regulations()
         local_fips = self.regulations_table["FIPS"].unique()
         return self._combine_exclusions(generic_exclusions, local_exclusions,
                                         local_fips, replace_existing=True)
