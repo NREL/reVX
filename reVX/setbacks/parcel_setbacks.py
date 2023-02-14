@@ -4,11 +4,7 @@ Compute setbacks exclusions
 """
 import logging
 import os
-import numpy as np
 import geopandas as gpd
-from rasterio import windows
-
-from rex.utilities import log_mem
 
 from reVX.setbacks.base import AbstractBaseSetbacks
 
@@ -20,69 +16,10 @@ class ParcelSetbacks(AbstractBaseSetbacks):
     """Parcel setbacks - facilitates the use of negative buffers. """
 
     @staticmethod
-    def compute_local_exclusions(regulation_value, county, *args):
-        """Compute local features setbacks.
-
-        This method will compute the setbacks using a county-specific
-        regulations file that specifies either a static setback or a
-        multiplier value that will be used along with the base setback
-        distance to compute the setback.
-
-        Parameters
-        ----------
-        regulation_value : float | int
-            Setback distance in meters.
-        county : geopandas.GeoDataFrame
-            Regulations for a single county.
-        features : geopandas.GeoDataFrame
-            Features for the local county.
-        feature_filter : callable
-            A callable function that takes `features` and `county` as
-            inputs and outputs a geopandas.GeoDataFrame with features
-            clipped and/or localized to the input county.
-        rasterizer : Rasterizer
-            Instance of `Rasterizer` class used to rasterize the
-            buffered county features.
-
-        Returns
-        -------
-        setbacks : ndarray
-            Raster array of setbacks
-        slices : 2-tuple of `slice`
-            X and Y slice objects defining where in the original array
-            the exclusion data should go.
-        """
-        features, feature_filter, rasterizer = args
-        logger.debug('- Computing setbacks for county FIPS {}'
-                     .format(county.iloc[0]['FIPS']))
-        log_mem(logger)
-        features = feature_filter(features, county)
+    def _buffer(features, regulation_value):
+        """Buffer parcels for county and return as list. """
         negative_buffer = features.buffer(-1 * regulation_value)
-        setbacks = list(features.buffer(0).difference(negative_buffer))
-        county_window = windows.from_bounds(*county.total_bounds,
-                                            rasterizer.transform)
-        county_window = county_window.round_offsets().round_lengths()
-        exclusions = rasterizer.rasterize(setbacks, window=county_window)
-        return exclusions, county_window.toslices()
-
-    def compute_generic_exclusions(self, **__):
-        """Compute generic setbacks.
-
-        This method will compute the setbacks using a generic setback
-        of `base_setback_dist * multiplier`.
-
-        Returns
-        -------
-        setbacks : ndarray
-            Raster array of setbacks
-        """
-        logger.info("Computing generic setbacks")
-        if np.isclose (self._regulations.generic, 0):
-            return self._rasterizer.rasterize(shapes=None)
-
-        negative_buffer = self.features.buffer(-1 * self._regulations.generic)
-        setbacks = self.features.buffer(0).difference(negative_buffer)
-        return self._rasterizer.rasterize(list(setbacks))
+        return list(features.buffer(0).difference(negative_buffer))
 
     def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """

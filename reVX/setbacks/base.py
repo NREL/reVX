@@ -16,19 +16,20 @@ from rasterio import windows, Affine
 
 from rex.utilities import log_mem
 from reV.handlers.exclusions import ExclusionLayers
+from reVX.handlers.geopackage import GPKGMeta
 from reVX.utilities.exclusions import AbstractBaseExclusionsMerger
 
 logger = logging.getLogger(__name__)
 
 
-def features_with_centroid_in_county(features, cnty):
+def features_with_centroid_in_county(features, county):
     """Find features with centroids within the given county.
 
     Parameters
     ----------
     features : geopandas.GeoDataFrame
         Features to setback from.
-    cnty : geopandas.GeoDataFrame
+    county : geopandas.GeoDataFrame
         Regulations for a single county.
 
     Returns
@@ -37,18 +38,18 @@ def features_with_centroid_in_county(features, cnty):
         Features that have centroid in county.
     """
 
-    mask = features.centroid.within(cnty['geometry'].values[0])
+    mask = features.centroid.within(county['geometry'].values[0])
     return features.loc[mask]
 
 
-def features_clipped_to_county(features, cnty):
+def features_clipped_to_county(features, county):
     """Clip features to the given county geometry.
 
     Parameters
     ----------
     features : geopandas.GeoDataFrame
         Features to setback from.
-    cnty : geopandas.GeoDataFrame
+    county : geopandas.GeoDataFrame
         Regulations for a single county.
 
     Returns
@@ -56,42 +57,8 @@ def features_clipped_to_county(features, cnty):
     features : geopandas.GeoDataFrame
         Features clipped to county geometry.
     """
-    tmp = gpd.clip(features, cnty)
+    tmp = gpd.clip(features, county)
     return tmp[~tmp.is_empty]
-
-
-def _parse_excl_properties(excl_fpath, hsds=False):
-    """Parse shape, chunk size, and profile from exclusions file.
-
-    Parameters
-    ----------
-    excl_fpath : str
-        Path to .h5 file containing exclusion layers, will also be
-        the location of any new setback layers
-    hsds : bool, optional
-        Boolean flag to use h5pyd to handle .h5 'files' hosted on
-        AWS behind HSDS. By default `False`.
-
-    Returns
-    -------
-    shape : tuple
-        Shape of exclusions datasets
-    profile : str
-        GeoTiff profile for exclusions datasets
-    """
-    with ExclusionLayers(excl_fpath, hsds=hsds) as exc:
-        dset_shape = exc.shape
-        profile = exc.profile
-
-    if len(dset_shape) < 3:
-        dset_shape = (1, ) + dset_shape
-
-    logger.debug('Exclusions properties:\n'
-                 'shape : {}\n'
-                 'profile : {}\n'
-                 .format(dset_shape, profile))
-
-    return dset_shape, profile
 
 
 class Rasterizer:
@@ -292,7 +259,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
     """
 
     def __init__(self, excl_fpath, regulations, features, hsds=False,
-                 weights_calculation_upscale_factor=None):
+                 weights_calculation_upscale_factor=None,
+                 num_features_per_worker=100):
         """
         Parameters
         ----------
@@ -342,7 +310,8 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         self._rasterizer = Rasterizer(excl_fpath,
                                       weights_calculation_upscale_factor, hsds)
         super().__init__(excl_fpath, regulations, features, hsds)
-        self.features = self.parse_features()
+        self._features_meta = GPKGMeta(self._features)
+        self.num_features_per_worker = num_features_per_worker
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
@@ -383,11 +352,17 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         return np.minimum if self._rasterizer.inclusions else np.maximum
 
     def pre_process_regulations(self):
-        """Reduce regulations to state corresponding to features.
+        """Reduce regulations to state corresponding to features."""
+        feats_crs = self._features_meta.crs
+        xmin, ymin, xmax, ymax = self._features_meta.bbox
+        regulations_df = self.regulations_table.to_crs(feats_crs)
+        regulations_df = regulations_df.cx[xmin:xmax, ymin:ymax]
+        regulations_df = regulations_df.to_crs(crs=self.profile['crs'])
+        self._regulations.df = regulations_df.reset_index(drop=True)
 
-        """
         mask = self._regulation_table_mask()
         if not mask.any():
+        # if  self._regulations.df.empty:
             msg = "Found no local regulations!"
             logger.warning(msg)
             warn(msg)
@@ -399,9 +374,26 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
 
     def _local_exclusions_arguments(self, __, county):
         """Compile and return arguments to `compute_local_exclusions`. """
-        idx = self.features.sindex.intersection(county.total_bounds)
-        county_features = self.features.iloc[list(idx)].copy()
-        yield county_features, self._feature_filter, self._rasterizer
+        logger.debug("Selecting county IDs using bounds {}"
+                     .format(county.total_bounds))
+        county = county.to_crs(self._features_meta.crs)
+        ids = self._features_meta.feat_ids_for_bbox(county.total_bounds)
+        logger.debug("Calculating setbacks for counties with IDs {}"
+                     .format(ids))
+
+        num_splits = len(ids) // self.num_features_per_worker
+        for split in range(num_splits):
+            start = split * self.num_features_per_worker
+            end = (split + 1) * self.num_features_per_worker
+            yield (ids[start:end], self._features,
+                   self._features_meta.primary_key_column,
+                   self.profile['crs'], self._feature_filter, self._buffer,
+                   self._rasterizer)
+        start = num_splits * self.num_features_per_worker
+        yield (ids[start:], self._features,
+               self._features_meta.primary_key_column,
+               self.profile['crs'], self._feature_filter, self._buffer,
+               self._rasterizer)
 
     @staticmethod
     def compute_local_exclusions(regulation_value, county, *args):
@@ -418,12 +410,31 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Setback distance in meters.
         county : geopandas.GeoDataFrame
             Regulations for a single county.
-        features : geopandas.GeoDataFrame
-            Features for the local county.
+        features_ids : iterable of ints
+            List of tuple (or other iterable) of integer values
+            corresponding to the ID of the features in the GeoPackage
+            to load and compute exclusions for. Note that these ID
+            values are the internal SQL table ID's stored with the
+            features, NOT the index of the features when loaded using
+            :func:`geopandas.read_file`.
+        features_fp : path-like
+            Path to the GeoPackage file containing the features to be
+            loaded and used for the exclusion calculation.
+        col : str
+            Namer of the primary key column in the main SQL table of the
+            GeoPackage. This should be the name of the column under
+            which the `features_ids` can be found.
+        crs : str
+            String representation of teh Coordinate Reference System of
+            the output exclusions array.
         feature_filter : callable
-            A callable function that takes `features` and `cnty` as
+            A callable function that takes `features` and `county` as
             inputs and outputs a geopandas.GeoDataFrame with features
             clipped and/or localized to the input county.
+        features_buffer : callable
+            A callable function that takes `features` and
+            `regulation_value` as inputs and outputs a list of shapes
+            that represent buffered exclusions for the input county.
         rasterizer : Rasterizer
             Instance of `Rasterizer` class used to rasterize the
             buffered county features.
@@ -436,24 +447,34 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             X and Y slice objects defining where in the original array
             the exclusion data should go.
         """
-        features, feature_filter, rasterizer = args
+        (features_ids, features_fp, col, crs, features_filter,
+         features_buffer, rasterizer) = args
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(county.iloc[0]['FIPS']))
         log_mem(logger)
-        features = feature_filter(features, county)
-        features = list(features.buffer(regulation_value))
-        county_window = windows.from_bounds(*county.total_bounds,
-                                            rasterizer.transform)
-        county_window = county_window.round_offsets().round_lengths()
-        exclusions = rasterizer.rasterize(features, window=county_window)
-        return exclusions, county_window.toslices()
+        features = _load_features(features_ids, features_fp, col, crs)
+        features = features_filter(features, county)
+        features = features_buffer(features, regulation_value)
+        return _rasterize_within_window(features, county, rasterizer)
 
-    # pylint: disable=arguments-differ
-    def compute_generic_exclusions(self, **__):
+    @staticmethod
+    def _buffer(features, regulation_value):
+        """Buffer features for county and return as list. """
+        return list(features.buffer(regulation_value))
+
+    def compute_generic_exclusions(self, max_workers=None):
         """Compute generic setbacks.
 
         This method will compute the setbacks using a generic setback
         of `base_setback_dist * multiplier`.
+
+        Parameters
+        ----------
+        max_workers : int, optional
+            Number of workers to use for exclusions computation, if 1
+            run in serial, if > 1 run in parallel with that many
+            workers, if `None` run in parallel on all available cores.
+            By default `None`.
 
         Returns
         -------
@@ -461,12 +482,13 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             Raster array of setbacks
         """
         logger.info('Computing generic setbacks')
-        generic_regs_dne = (self._regulations.generic is None
-                            or np.isclose(self._regulations.generic, 0))
-        if generic_regs_dne:
+        generic_regulations_dne = (self._regulations.generic is None
+                                   or np.isclose(self._regulations.generic, 0))
+        if generic_regulations_dne:
             return self.no_exclusions_array
 
-        setbacks = list(self.features.buffer(self._regulations.generic))
+        setbacks = self._buffer(self.parse_features(),
+                                self._regulations.generic)
 
         return self._rasterizer.rasterize(setbacks)
 
@@ -544,11 +566,66 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         return paths
 
     @staticmethod
-    def _feature_filter(features, cnty):
+    def _feature_filter(features, county):
         """Filter the features given a county."""
-        return features_with_centroid_in_county(features, cnty)
+        return features_with_centroid_in_county(features, county)
 
     @abstractmethod
     def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """
         raise NotImplementedError
+
+
+def _parse_excl_properties(excl_fpath, hsds=False):
+    """Parse shape, chunk size, and profile from exclusions file.
+
+    Parameters
+    ----------
+    excl_fpath : str
+        Path to .h5 file containing exclusion layers, will also be
+        the location of any new setback layers
+    hsds : bool, optional
+        Boolean flag to use h5pyd to handle .h5 'files' hosted on
+        AWS behind HSDS. By default `False`.
+
+    Returns
+    -------
+    shape : tuple
+        Shape of exclusions datasets
+    profile : str
+        GeoTiff profile for exclusions datasets
+    """
+    with ExclusionLayers(excl_fpath, hsds=hsds) as exc:
+        dset_shape = exc.shape
+        profile = exc.profile
+
+    if len(dset_shape) < 3:
+        dset_shape = (1, ) + dset_shape
+
+    logger.debug('Exclusions properties:\n'
+                 'shape : {}\n'
+                 'profile : {}\n'
+                 .format(dset_shape, profile))
+
+    return dset_shape, profile
+
+
+def _load_features(features_ids, features_fp, col, crs):
+    """Load the `features_ids` from the `features_fp`. """
+    ids = ",".join(map(str, features_ids))
+    logger.debug("  Loading features from {} using clause {}"
+                    .format(features_fp, "where {} in ({})".format(col, ids)))
+    features = gpd.read_file(features_fp,
+                                where="{} in ({})".format(col, ids))
+    features = features.to_crs(crs=crs)
+    logger.debug("  Loaded {} features".format(len(features)))
+    return features
+
+
+def _rasterize_within_window(features, county, rasterizer):
+    """Rasterize the features using the county as a window. """
+    county_window = windows.from_bounds(*county.total_bounds,
+                                        rasterizer.transform)
+    county_window = county_window.round_offsets().round_lengths()
+    exclusions = rasterizer.rasterize(features, window=county_window)
+    return exclusions, county_window.toslices()

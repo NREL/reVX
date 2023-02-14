@@ -418,10 +418,10 @@ def test_generic_parcels_with_invalid_shape_input():
                                'invalid', 'Rhode_Island.gpkg')
     regulations = SetbackRegulations(BASE_SETBACK_DIST, multiplier=100)
     setbacks = ParcelSetbacks(EXCL_H5, regulations, features=parcel_path)
+    features = gpd.read_file(parcel_path).to_crs(crs=setbacks.profile['crs'])
 
     # Ensure data we are using contains invalid shapes
-    setbacks._features = parcel_path
-    assert not setbacks.features.geometry.is_valid.any()
+    assert not features.geometry.is_valid.any()
 
     # This code would throw an error if invalid shape not handled properly
     test = setbacks.compute_exclusions()
