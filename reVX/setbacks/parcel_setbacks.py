@@ -6,6 +6,7 @@ import logging
 import os
 import numpy as np
 import geopandas as gpd
+from rasterio import windows
 
 from rex.utilities import log_mem
 
@@ -47,6 +48,9 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         -------
         setbacks : ndarray
             Raster array of setbacks
+        slices : 2-tuple of `slice`
+            X and Y slice objects defining where in the original array
+            the exclusion data should go.
         """
         features, feature_filter, rasterizer = args
         logger.debug('- Computing setbacks for county FIPS {}'
@@ -54,8 +58,12 @@ class ParcelSetbacks(AbstractBaseSetbacks):
         log_mem(logger)
         features = feature_filter(features, county)
         negative_buffer = features.buffer(-1 * regulation_value)
-        setbacks = features.buffer(0).difference(negative_buffer)
-        return rasterizer.rasterize(list(setbacks))
+        setbacks = list(features.buffer(0).difference(negative_buffer))
+        county_window = windows.from_bounds(*county.total_bounds,
+                                            rasterizer.transform)
+        county_window = county_window.round_offsets().round_lengths()
+        exclusions = rasterizer.rasterize(setbacks, window=county_window)
+        return exclusions, county_window.toslices()
 
     def compute_generic_exclusions(self, **__):
         """Compute generic setbacks.

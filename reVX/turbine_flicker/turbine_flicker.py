@@ -310,18 +310,23 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         -------
         flicker : ndarray
             Raster array of flicker exclusions
+        slices : 2-tuple of `slice`
+            X and Y slice objects defining where in the original array
+            the exclusion data should go.
         """
         (hub_height, rotor_diameter, points, res_fpath,
          max_flicker_exclusion_range, grid_cell_size, steps_per_hour,
          building_layer, resolution) = args
         logger.debug('- Computing flicker for county FIPS {}'
                      .format(county.iloc[0]['FIPS']))
-        return compute_flicker_exclusions(hub_height, rotor_diameter, points,
-                                          res_fpath, regulation_value,
-                                          max_flicker_exclusion_range,
-                                          grid_cell_size, steps_per_hour,
-                                          building_layer, resolution,
-                                          max_workers=1)
+        flicker = compute_flicker_exclusions(hub_height, rotor_diameter,
+                                             points, res_fpath,
+                                             regulation_value,
+                                             max_flicker_exclusion_range,
+                                             grid_cell_size, steps_per_hour,
+                                             building_layer, resolution,
+                                             max_workers=1)
+        return flicker, (slice(None), slice(None))
 
     def compute_generic_exclusions(self, max_workers=None):
         """Compute generic flicker exclusions.

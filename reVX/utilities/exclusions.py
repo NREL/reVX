@@ -90,6 +90,9 @@ class AbstractExclusionCalculatorInterface(ABC):
         -------
         exclusions : np.ndarray
             Array of exclusions.
+        slices : 2-tuple of `slice`
+            X and Y slice objects defining where in the original array
+            the exclusion data should go.
         """
         raise NotImplementedError
 
@@ -345,12 +348,12 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             exclusions = None
             for i, (exclusion, cnty) in enumerate(self._regulations):
                 args = self._local_exclusions_arguments(exclusion, cnty)
-                local_exclusions = self.compute_local_exclusions(exclusion,
-                                                                 cnty,
-                                                                 *args)
+                out = self.compute_local_exclusions(exclusion, cnty, *args)
+                local_exclusions, slices = out
                 exclusions = self._combine_exclusions(exclusions,
                                                       local_exclusions,
-                                                      cnty['FIPS'].unique())
+                                                      cnty['FIPS'].unique(),
+                                                      slices)
                 logger.debug('Computed exclusions for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 
@@ -376,9 +379,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
     def _collect_futures(self, futures, exclusions):
         """Collect all futures from the input dictionary. """
         for future in as_completed(futures):
+            local_exclusions, slices = future.result()
             exclusions = self._combine_exclusions(exclusions,
-                                                  future.result(),
-                                                  futures.pop(future))
+                                                  local_exclusions,
+                                                  futures.pop(future),
+                                                  slices)
             log_mem(logger)
         return exclusions
 
@@ -464,21 +469,23 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         return self._combine_exclusions(generic_exclusions, local_exclusions,
                                         local_fips, replace_existing=True)
 
-    def _combine_exclusions(self, existing, additional, cnty_fips,
+    def _combine_exclusions(self, existing, additional, cnty_fips, slices=None,
                             replace_existing=False):
         """Combine local exclusions using FIPS code"""
         if existing is None:
             existing = self.no_exclusions_array.astype(additional.dtype)
 
-        local_exclusions = np.isin(self._fips, cnty_fips)
+        if slices is None:
+            slices = tuple([slice(None)] * len(existing.shape))
+
+        local_exclusions = np.isin(self._fips[slices], cnty_fips)
         if replace_existing:
             new_local_exclusions = additional[local_exclusions]
         else:
             new_local_exclusions = self.exclusion_merge_func(
-                existing[local_exclusions],
+                existing[slices][local_exclusions],
                 additional[local_exclusions])
-
-        existing[local_exclusions] = new_local_exclusions
+        existing[slices][local_exclusions] = new_local_exclusions
         return existing
 
     @classmethod

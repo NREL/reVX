@@ -248,7 +248,8 @@ class Rasterizer:
             return ((1 - self._no_exclusions_array(window=window))
                     .astype(np.float32))
 
-        hr_arr = self._no_exclusions_array(multiplier=self._scale_factor)
+        hr_arr = self._no_exclusions_array(multiplier=self._scale_factor,
+                                           window=window)
         transform = self._window_transform(window)
         transform *= transform.scale(1 / self._scale_factor)
 
@@ -431,6 +432,9 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         -------
         setbacks : ndarray
             Raster array of setbacks
+        slices : 2-tuple of `slice`
+            X and Y slice objects defining where in the original array
+            the exclusion data should go.
         """
         features, feature_filter, rasterizer = args
         logger.debug('- Computing setbacks for county FIPS {}'
@@ -438,7 +442,11 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         log_mem(logger)
         features = feature_filter(features, county)
         features = list(features.buffer(regulation_value))
-        return rasterizer.rasterize(features)
+        county_window = windows.from_bounds(*county.total_bounds,
+                                            rasterizer.transform)
+        county_window = county_window.round_offsets().round_lengths()
+        exclusions = rasterizer.rasterize(features, window=county_window)
+        return exclusions, county_window.toslices()
 
     # pylint: disable=arguments-differ
     def compute_generic_exclusions(self, **__):
