@@ -350,10 +350,10 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 for args in self._local_exclusions_arguments(exclusion, cnty):
                     out = self.compute_local_exclusions(exclusion, cnty, *args)
                     local_exclusions, slices = out
+                    fips = cnty['FIPS'].unique()
                     exclusions = self._combine_exclusions(exclusions,
-                                                        local_exclusions,
-                                                        cnty['FIPS'].unique(),
-                                                        slices)
+                                                          local_exclusions,
+                                                          fips, slices)
                 logger.debug('Computed exclusions for {} of {} counties'
                              .format((i + 1), len(self.regulations_table)))
 
@@ -469,8 +469,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         return self._combine_exclusions(generic_exclusions, local_exclusions,
                                         local_fips, replace_existing=True)
 
-    def _combine_exclusions(self, existing, additional, cnty_fips, slices=None,
-                            replace_existing=False):
+    def _combine_exclusions(self, existing, additional, cnty_fips=None,
+                            slices=None, replace_existing=False):
         """Combine local exclusions using FIPS code"""
         if existing is None:
             existing = self.no_exclusions_array.astype(additional.dtype)
@@ -478,7 +478,11 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         if slices is None:
             slices = tuple([slice(None)] * len(existing.shape))
 
-        local_exclusions = np.isin(self._fips[slices], cnty_fips)
+        if cnty_fips is None:
+            local_exclusions = slice(None)
+        else:
+            local_exclusions = np.isin(self._fips[slices], cnty_fips)
+
         if replace_existing:
             new_local_exclusions = additional[local_exclusions]
         else:
