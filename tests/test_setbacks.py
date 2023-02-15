@@ -315,14 +315,15 @@ def test_rasterizer_window():
     assert np.allclose(raster[window.toslices()], window_raster)
 
 
-def test_generic_structure(generic_wind_regulations):
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_generic_structure(generic_wind_regulations, max_workers):
     """
     Test generic structures setbacks
     """
     structure_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
     setbacks = StructureSetbacks(EXCL_H5, generic_wind_regulations,
                                  features=structure_path)
-    test = setbacks.compute_exclusions()
+    test = setbacks.compute_exclusions(max_workers=max_workers)
 
     assert test.sum() == 6830
 
@@ -349,7 +350,8 @@ def test_local_structures(max_workers, county_wind_regulations_gpkg):
     assert test.sum() == 2879
 
 
-def test_generic_railroads(generic_wind_regulations):
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_generic_railroads(generic_wind_regulations, max_workers):
     """
     Test generic rail setbacks
     """
@@ -361,7 +363,7 @@ def test_generic_railroads(generic_wind_regulations):
 
     setbacks = RailSetbacks(EXCL_H5, generic_wind_regulations,
                             features=rail_path)
-    test = setbacks.compute_exclusions()
+    test = setbacks.compute_exclusions(max_workers=max_workers)
 
     assert np.allclose(baseline, test)
 
@@ -384,7 +386,8 @@ def test_local_railroads(max_workers, county_wind_regulations_gpkg):
     assert np.allclose(test, baseline)
 
 
-def test_generic_parcels():
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_generic_parcels(max_workers):
     """Test generic parcel setbacks. """
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
@@ -392,12 +395,12 @@ def test_generic_parcels():
     regulations_x1 = SetbackRegulations(BASE_SETBACK_DIST, multiplier=1)
     setbacks_x1 = ParcelSetbacks(EXCL_H5, regulations_x1,
                                  features=parcel_path)
-    test_x1 = setbacks_x1.compute_exclusions()
+    test_x1 = setbacks_x1.compute_exclusions(max_workers=max_workers)
 
     regulations_x100 = SetbackRegulations(BASE_SETBACK_DIST, multiplier=100)
     setbacks_x100 = ParcelSetbacks(EXCL_H5, regulations_x100,
                                    features=parcel_path)
-    test_x100 = setbacks_x100.compute_exclusions()
+    test_x100 = setbacks_x100.compute_exclusions(max_workers=max_workers)
 
     # when the setbacks are so large that they span the entire parcels,
     # a total of 438 regions should be excluded for this particular
@@ -411,7 +414,8 @@ def test_generic_parcels():
     assert x1_coords <= x100_coords
 
 
-def test_generic_parcels_with_invalid_shape_input():
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_generic_parcels_with_invalid_shape_input(max_workers):
     """Test generic parcel setbacks but with an invalid shape input. """
 
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
@@ -424,7 +428,7 @@ def test_generic_parcels_with_invalid_shape_input():
     assert not features.geometry.is_valid.any()
 
     # This code would throw an error if invalid shape not handled properly
-    test = setbacks.compute_exclusions()
+    test = setbacks.compute_exclusions(max_workers=max_workers)
 
     # add a test for expected output
     assert not test.any()
@@ -519,7 +523,8 @@ def test_local_parcels_wind(max_workers, regulations_fpath):
     assert not counties_with_exclusions_but_not_in_regulations_csv
 
 
-def test_generic_water_setbacks():
+@pytest.mark.parametrize('max_workers', [None, 1])
+def test_generic_water_setbacks(max_workers):
     """Test generic water setbacks. """
 
     water_path = os.path.join(TESTDATADIR, 'setbacks',
@@ -532,7 +537,7 @@ def test_generic_water_setbacks():
     regulations_x100 = SetbackRegulations(BASE_SETBACK_DIST, multiplier=100)
     setbacks_x100 = WaterSetbacks(EXCL_H5, regulations_x100,
                                   features=water_path)
-    test_x100 = setbacks_x100.compute_exclusions()
+    test_x100 = setbacks_x100.compute_exclusions(max_workers=max_workers)
 
     # A total of 88,994 regions should be excluded for this particular
     # Rhode Island subset
