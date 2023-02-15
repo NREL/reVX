@@ -263,7 +263,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
 
     def __init__(self, excl_fpath, regulations, features, hsds=False,
                  weights_calculation_upscale_factor=None,
-                 num_features_per_worker=100):
+                 num_features_per_worker=1000):
         """
         Parameters
         ----------
