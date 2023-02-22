@@ -260,10 +260,12 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
     """
     Create exclusions layers for setbacks
     """
+    DEFAULT_NUM_FEATS_PER_WORKER = 1000
+    """Default number of features each worker processes at one time."""
 
     def __init__(self, excl_fpath, regulations, features, hsds=False,
                  weights_calculation_upscale_factor=None,
-                 num_features_per_worker=1000):
+                 num_features_per_worker=None):
         """
         Parameters
         ----------
@@ -309,12 +311,17 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             by the rest of the process). If `None` (or a value <= 1),
             this process is skipped and the output is a boolean
             exclusion mask. By default `None`.
+        num_features_per_worker : int, optional
+            Number of features each worker process at one time. By
+            default, `None`, which uses the
+            :attr:`DEFAULT_NUM_FEATS_PER_WORKER` value.
         """
         self._rasterizer = Rasterizer(excl_fpath,
                                       weights_calculation_upscale_factor, hsds)
         super().__init__(excl_fpath, regulations, features, hsds)
         self._features_meta = GPKGMeta(self._features)
-        self.num_features_per_worker = num_features_per_worker
+        self.num_features_per_worker = (max(0, num_features_per_worker or 0)
+                                        or self.DEFAULT_NUM_FEATS_PER_WORKER)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
