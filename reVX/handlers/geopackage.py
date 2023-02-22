@@ -101,7 +101,8 @@ class GPKGMeta:
         if self._feat_ids is None:
             with sqlite3.connect(self.filename) as con:
                 cursor = con.cursor()
-                cursor.execute("SELECT distinct id FROM rtree_{table_suffix}"
+                cursor.execute("SELECT distinct id FROM rtree_{table_suffix} "
+                               "ORDER BY miny, minx"
                                .format(table_suffix=self.geom_table_suffix))
                 self._feat_ids = tuple(id_[0] for id_ in cursor.fetchall())
         return self._feat_ids
@@ -128,6 +129,7 @@ class GPKGMeta:
             cursor.execute("SELECT distinct id FROM rtree_{table_suffix} "
                            "WHERE minx<={maxx} and maxx>={minx} "
                            "and miny<={maxy} and maxy>={miny} "
+                           "ORDER BY miny, minx"
                            .format(table_suffix=self.geom_table_suffix,
                                    maxx=maxx, minx=minx, maxy=maxy, miny=miny))
             ids = tuple(id_[0] for id_ in cursor.fetchall())
