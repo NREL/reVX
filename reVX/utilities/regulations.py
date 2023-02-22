@@ -98,7 +98,7 @@ class AbstractBaseRegulations(ABC):
         self._convert_cols_to_title()
         self._check_for_req_missing_cols()
         self._remove_nans_from_req_cols()
-        self._casefold(cols=['Feature Type', 'Value Type'])
+        self._format(cols=['Feature Type', 'Value Type'])
 
     def _convert_cols_to_title(self):
         """Convert column names in regulations DataFrame to str.title(). """
@@ -124,10 +124,11 @@ class AbstractBaseRegulations(ABC):
             na_rows = self._regulations_df[col].isna()
             self._regulations_df = self._regulations_df[~na_rows]
 
-    def _casefold(self, cols):
-        """Casefold column values. """
+    def _format(self, cols):
+        """Casefold column values and remove dashes/underscores. """
         for col in cols:
             vals = self._regulations_df[col].str.strip().str.casefold()
+            vals = vals.str.replace("-", " ").str.replace("_", " ")
             self._regulations_df[col] = vals
 
     @property

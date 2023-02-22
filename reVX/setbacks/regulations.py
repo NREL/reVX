@@ -209,11 +209,11 @@ class WindSetbackRegulations(SetbackRegulations):
         """Retrieve county regulation setback. """
         setback_type = county_regulations["Value Type"]
         setback = float(county_regulations["Value"])
-        if setback_type == "max-tip height multiplier":
+        if setback_type == "max tip height multiplier":
             setback *= self.base_setback_dist
-        elif setback_type == "rotor-diameter multiplier":
+        elif setback_type == "rotor diameter multiplier":
             setback *= self.rotor_diameter
-        elif setback_type == "hub-height multiplier":
+        elif setback_type == "hub height multiplier":
             setback *= self.hub_height
         elif setback_type != "meters":
             msg = ('Cannot create setback for {}, expecting '
