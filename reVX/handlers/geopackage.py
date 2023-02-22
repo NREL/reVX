@@ -73,7 +73,7 @@ class GPKGMeta:
     @property
     def primary_key_column(self):
         """str: Name of the primary key column in the user data table. """
-        if self._primary_key_column:
+        if self._primary_key_column is None:
             with sqlite3.connect(self.filename) as con:
                 cursor = con.cursor()
                 cursor.execute("PRAGMA table_info({})"
