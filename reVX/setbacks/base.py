@@ -649,8 +649,8 @@ def _parse_excl_properties(excl_fpath, hsds=False):
 def _load_features(features_ids, features_fp, col, crs):
     """Load the `features_ids` from the `features_fp`. """
     ids = ",".join(map(str, features_ids))
-    logger.debug("  Loading features from {} using clause {}"
-                 .format(features_fp, "where {} in ({})".format(col, ids)))
+    logger.debug("  Loading {} features from {}".format(len(features_ids),
+                                                        features_fp))
     features = gpd.read_file(features_fp,
                              where="{} in ({})".format(col, ids))
     features = features.to_crs(crs=crs)
