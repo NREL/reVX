@@ -66,8 +66,9 @@ class AbstractBaseRegulations(ABC):
             logger.debug('Found regulations provided in: {}'
                          .format(regulations_fpath))
 
-        if (regulations_fpath is None
-            and self._generic_regulation_value is None):
+        no_local_regulations = regulations_fpath is None
+        no_generic_regulation_value = self._generic_regulation_value is None
+        if (no_local_regulations and no_generic_regulation_value):
             msg = ('Regulations require a local regulation.csv file '
                    'and/or a generic regulation value!')
             logger.error(msg)

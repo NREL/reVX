@@ -329,7 +329,7 @@ def select_setback_regulations(base_setback_dist=None, hub_height=None,
         return WindSetbackRegulations(hub_height=hub_height,
                                       rotor_diameter=rotor_diameter,
                                       regulations_fpath=regulations_fpath,
-                                       multiplier=multiplier)
+                                      multiplier=multiplier)
     else:
         return SetbackRegulations(base_setback_dist=base_setback_dist,
                                   regulations_fpath=regulations_fpath,
