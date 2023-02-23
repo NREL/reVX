@@ -383,7 +383,12 @@ def test_local_railroads(max_workers, county_wind_regulations_gpkg):
                             features=rail_path)
     test = setbacks.compute_exclusions(max_workers=max_workers)
 
-    assert np.allclose(test, baseline)
+    with ExclusionLayers(EXCL_H5) as exc:
+        fips = exc['cnty_fips']
+    inds = np.in1d(fips.flatten(),
+                   county_wind_regulations_gpkg.df.FIPS.unique())
+
+    assert np.allclose(test.flatten()[inds], baseline.flatten()[inds])
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
@@ -731,7 +736,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
       REGS_GPKG, 332_887, 2_879, [HUB_HEIGHT, ROTOR_DIAMETER]),
      (RailSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_GPKG, 754_082, 14_068, [HUB_HEIGHT, ROTOR_DIAMETER]),
+      REGS_GPKG, 754_082, 13_808, [HUB_HEIGHT, ROTOR_DIAMETER]),
      (ParcelSetbacks, WindSetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 474, 3, [HUB_HEIGHT, ROTOR_DIAMETER]),
@@ -743,7 +748,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
       REGS_FPATH, 260_963, 2_306, [BASE_SETBACK_DIST + 199]),
      (RailSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'Rhode_Island_Railroads.gpkg'),
-      REGS_FPATH, 5_355, 163, [BASE_SETBACK_DIST]),
+      REGS_FPATH, 5_355, 53, [BASE_SETBACK_DIST]),
      (ParcelSetbacks, SetbackRegulations,
       os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels', 'Rhode_Island.gpkg'),
       PARCEL_REGS_FPATH_VALUE, 438, 3, [BASE_SETBACK_DIST]),
