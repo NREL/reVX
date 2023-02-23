@@ -41,8 +41,8 @@ class PlexosAggregation(BaseProfileAggregation):
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
                  force_full_build=False, force_shape_map=False,
-                 plant_name_col=None, tech_tag=None, timezone='UTC',
-                 max_workers=None):
+                 plant_name_col=None, tech_tag=None, res_class=None,
+                 timezone='UTC', max_workers=None):
         """
         Parameters
         ----------
@@ -91,6 +91,10 @@ class PlexosAggregation(BaseProfileAggregation):
         tech_tag : str | None
             Optional technology tag to include as a suffix in the plexos output
             csv column headers.
+        res_class : int | None
+            Optional resource class to use to filter supply curve points.
+            For example, if res_class = 3 then only supply curve points with
+            class 3 will be kept in the sc_build table.
         timezone : str
             Timezone for output generation profiles. This is a string that will
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
@@ -114,6 +118,7 @@ class PlexosAggregation(BaseProfileAggregation):
         self._plant_name_col = plant_name_col
         self._tech_tag = tech_tag
         self._timezone = timezone
+        self._res_class = res_class
 
         if plexos_columns is None:
             plexos_columns = tuple()
@@ -121,11 +126,14 @@ class PlexosAggregation(BaseProfileAggregation):
         self._plexos_columns += DataCleaner.PLEXOS_META_COLS
         self._plexos_columns = tuple(set(self._plexos_columns))
 
-        logger.info('Running PLEXOS aggregation for build year: {}'
-                    .format(build_year))
+        logger.info('Running {} for build year: {}'
+                    .format(self.__class__.__name__, build_year))
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build,
                                                build_year=build_year)
+        if res_class is not None:
+            class_mask = self._sc_build['class'] == res_class
+            self._sc_build = self._sc_build[class_mask]
         self._plexos_nodes = self._parse_plexos_nodes(plexos_nodes)
 
         missing = self._check_gids()
@@ -165,6 +173,10 @@ class PlexosAggregation(BaseProfileAggregation):
             self._output_meta['gen_gids'] = None
             self._output_meta['res_built'] = None
 
+        if isinstance(self._output_meta, GeoDataFrame):
+            column_mask = self._output_meta.columns != 'geometry'
+            columns = self._output_meta.columns[column_mask]
+            self._output_meta = pd.DataFrame(self._output_meta[columns])
         return self._output_meta
 
     @property
@@ -317,7 +329,7 @@ class PlexosAggregation(BaseProfileAggregation):
         ----------
         rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, lat/lon,
-            res_gids, gid_counts. Or  path to reV supply curve table.
+            res_gids, gid_counts. Or path to reV supply curve table.
         reeds_build : str | pd.DataFrame
             ReEDS buildout with rows for built capacity (MW) at each reV SC
             point. This should have columns: reeds_year, built_capacity, and
@@ -563,7 +575,7 @@ class PlexosAggregation(BaseProfileAggregation):
             (t, n) array of Plexos node generation profiles where t is the
             timeseries length and n is the number of plexos nodes.
         """
-
+        logger.info('Making profiles for {} nodes'.format(self.n_plexos_nodes))
         if self.max_workers != 1:
             profiles = self._make_profiles_parallel()
         else:
@@ -586,7 +598,7 @@ class PlexosAggregation(BaseProfileAggregation):
         loggers = [__name__, 'reVX']
         with SpawnProcessPool(max_workers=self.max_workers,
                               loggers=loggers) as exe:
-            for i, inode in enumerate(np.unique(self.node_map)):
+            for i, inode in enumerate(self.sc_nodes):
                 mask = (self.node_map == inode)
                 f = exe.submit(PlexosNode.run,
                                self.sc_build[mask], self._cf_fpath,
@@ -606,7 +618,7 @@ class PlexosAggregation(BaseProfileAggregation):
                 current_prog = (n + 1) // (len(futures) / 100)
                 if current_prog > progress:
                     progress = current_prog
-                    logger.info('{} % of plexos node profiles built.'
+                    logger.info('{} % of node profiles built.'
                                 .format(progress))
 
         return profiles
@@ -622,7 +634,7 @@ class PlexosAggregation(BaseProfileAggregation):
         """
         profiles = self._init_output(self.n_plexos_nodes)
         progress = 0
-        for i, inode in enumerate(np.unique(self.node_map)):
+        for i, inode in enumerate(self.sc_nodes):
             mask = (self.node_map == inode)
             p = PlexosNode.run(
                 self.sc_build[mask], self._cf_fpath,
@@ -639,7 +651,7 @@ class PlexosAggregation(BaseProfileAggregation):
                             // (len(np.unique(self.node_map)) / 100))
             if current_prog > progress:
                 progress = current_prog
-                logger.info('{} % of plexos node profiles built.'
+                logger.info('{} % of node profiles built.'
                             .format(progress))
 
         return profiles
@@ -648,8 +660,8 @@ class PlexosAggregation(BaseProfileAggregation):
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
             forecast_fpath=None, build_year=2050, plexos_columns=None,
             force_full_build=False, force_shape_map=False,
-            plant_name_col=None, tech_tag=None, timezone='UTC',
-            out_fpath=None, max_workers=None):
+            plant_name_col=None, tech_tag=None, res_class=None,
+            timezone='UTC', out_fpath=None, max_workers=None):
         """Run plexos aggregation.
 
         Parameters
@@ -701,6 +713,10 @@ class PlexosAggregation(BaseProfileAggregation):
         tech_tag : str | None
             Optional technology tag to include as a suffix in the plexos output
             csv column headers.
+        res_class : int | None
+            Optional resource class to use to filter supply curve points.
+            For example, if res_class = 3 then only supply curve points with
+            class 3 will be kept in the sc_build table.
         timezone : str
             Timezone for output generation profiles. This is a string that will
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
@@ -732,6 +748,7 @@ class PlexosAggregation(BaseProfileAggregation):
                  force_shape_map=force_shape_map,
                  plant_name_col=plant_name_col,
                  tech_tag=tech_tag,
+                 res_class=res_class,
                  timezone=timezone,
                  max_workers=max_workers)
 
@@ -885,16 +902,16 @@ class RevReedsPlexosManager:
         if agg_kwargs is None:
             agg_kwargs = {}
 
-        logger.info('Running PLEXOS aggregation with plexos nodes input: {}'
-                    .format(plexos_nodes))
-        logger.info('Running PLEXOS aggregation with reV SC input: {}'
-                    .format(rev_sc))
-        logger.info('Running PLEXOS aggregation with REEDS input: {}'
-                    .format(reeds_build))
-        logger.info('Running PLEXOS aggregation with reV Gen input: {}'
-                    .format(cf_fpath))
-        logger.info('Running PLEXOS aggregation with forecast filepath: {}'
-                    .format(forecast_fpath))
+        logger.info('Running {} with plant nodes input: {}'
+                    .format(cls.__name__, plexos_nodes))
+        logger.info('Running {} with reV SC input: {}'
+                    .format(cls.__name__, rev_sc))
+        logger.info('Running {} with REEDS input: {}'
+                    .format(cls.__name__, reeds_build))
+        logger.info('Running {} with reV Gen input: {}'
+                    .format(cls.__name__, cf_fpath))
+        logger.info('Running {} with forecast filepath: {}'
+                    .format(cls.__name__, forecast_fpath))
 
         pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  forecast_fpath=forecast_fpath, wait=wait,
@@ -1085,4 +1102,4 @@ class RevReedsPlexosManager:
                                              chunks=(None, 100),
                                              data=profiles)
 
-        logger.info('Plexos aggregation complete!')
+        logger.info('{} complete!'.format(cls.__name__))
