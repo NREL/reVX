@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Compute setbacks exclusions
+Base classes for setback exclusion computation
 """
 import os
 import logging
@@ -21,47 +21,25 @@ from rex.utilities.execution import SpawnProcessPool
 from reV.handlers.exclusions import ExclusionLayers
 from reVX.handlers.geopackage import GPKGMeta
 from reVX.utilities.exclusions import AbstractBaseExclusionsMerger
+from reVX.setbacks.functions import (parcel_buffer, positive_buffer,
+                                     features_clipped_to_county,
+                                     features_with_centroid_in_county)
 
 logger = logging.getLogger(__name__)
 
 
-def features_with_centroid_in_county(features, county):
-    """Find features with centroids within the given county.
-
-    Parameters
-    ----------
-    features : geopandas.GeoDataFrame
-        Features to setback from.
-    county : geopandas.GeoDataFrame
-        Regulations for a single county.
-
-    Returns
-    -------
-    features : geopandas.GeoDataFrame
-        Features that have centroid in county.
-    """
-
-    mask = features.centroid.within(county['geometry'].values[0])
-    return features.loc[mask]
+BUFFERS = {
+    "default": positive_buffer,
+    "parcel": parcel_buffer,
+}
+"""Types of buffers available for setback calculations. """
 
 
-def features_clipped_to_county(features, county):
-    """Clip features to the given county geometry.
-
-    Parameters
-    ----------
-    features : geopandas.GeoDataFrame
-        Features to setback from.
-    county : geopandas.GeoDataFrame
-        Regulations for a single county.
-
-    Returns
-    -------
-    features : geopandas.GeoDataFrame
-        Features clipped to county geometry.
-    """
-    tmp = gpd.clip(features, county)
-    return tmp[~tmp.is_empty]
+FEATURE_FILTERS = {
+    "centroid": features_with_centroid_in_county,
+    "clip": features_clipped_to_county,
+}
+"""Types of feature filters available for setback calculations. """
 
 
 class Rasterizer:
@@ -96,19 +74,9 @@ class Rasterizer:
             sub-grid, the area of the non-excluded sub-cells is totaled
             and divided by the area of the original cell to obtain the
             final inclusion percentage. Therefore, a larger upscale
-            factor results in more accurate percentage values. However,
-            this process is memory intensive and scales quadratically
-            with the upscale factor. A good way to estimate your minimum
-            memory requirement is to use the following formula:
-
-            .. math:: memory (GB) = s_0 * s_1 * (sf^2 * 2 + 4) / 1073741824,
-
-            where :math:`s_0` and :math:`s_1` are the dimensions (shape)
-            of your exclusion layer and :math:`sf` is the scale factor
-            (be sure to add several GB for any other overhead required
-            by the rest of the process). If `None` (or a value <= 1),
-            this process is skipped and the output is a boolean
-            exclusion mask. By default `None`.
+            factor results in more accurate percentage values. If `None`
+            (or a value <= 1), this process is skipped and the output is
+            a boolean exclusion mask. By default `None`.
         """
         props = _parse_excl_properties(excl_fpath, hsds=hsds)
         self._shape, self._profile = props
@@ -257,15 +225,10 @@ class Rasterizer:
 
 
 class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
-    """
-    Create exclusions layers for setbacks
-    """
-    DEFAULT_NUM_FEATS_PER_WORKER = 1000
-    """Default number of features each worker processes at one time."""
+    """Base class for Setbacks Calculators"""
 
     def __init__(self, excl_fpath, regulations, features, hsds=False,
-                 weights_calculation_upscale_factor=None,
-                 num_features_per_worker=None):
+                 weights_calculation_upscale_factor=None):
         """
         Parameters
         ----------
@@ -298,47 +261,18 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             sub-grid, the area of the non-excluded sub-cells is totaled
             and divided by the area of the original cell to obtain the
             final inclusion percentage. Therefore, a larger upscale
-            factor results in more accurate percentage values. However,
-            this process is memory intensive and scales quadratically
-            with the upscale factor. A good way to estimate your minimum
-            memory requirement is to use the following formula:
-
-            .. math:: memory (GB) = s_0 * s_1 * (sf^2 * 2 + 4) / 1073741824,
-
-            where :math:`s_0` and :math:`s_1` are the dimensions (shape)
-            of your exclusion layer and :math:`sf` is the scale factor
-            (be sure to add several GB for any other overhead required
-            by the rest of the process). If `None` (or a value <= 1),
-            this process is skipped and the output is a boolean
-            exclusion mask. By default `None`.
-        num_features_per_worker : int, optional
-            Number of features each worker process at one time. By
-            default, `None`, which uses the
-            :attr:`DEFAULT_NUM_FEATS_PER_WORKER` value.
+            factor results in more accurate percentage values. If `None`
+            (or a value <= 1), this process is skipped and the output is
+            a boolean exclusion mask. By default `None`.
         """
         self._rasterizer = Rasterizer(excl_fpath,
                                       weights_calculation_upscale_factor, hsds)
         super().__init__(excl_fpath, regulations, features, hsds)
         self._features_meta = GPKGMeta(self._features)
-        self.num_features_per_worker = (max(0, num_features_per_worker or 0)
-                                        or self.DEFAULT_NUM_FEATS_PER_WORKER)
 
     def __repr__(self):
         msg = "{} for {}".format(self.__class__.__name__, self._excl_fpath)
         return msg
-
-    def parse_features(self):
-        """Method to parse features.
-
-        Returns
-        -------
-        `geopandas.GeoDataFrame`
-            Geometries of features to setback from in exclusion
-            coordinate system.
-        """
-        logger.debug("Loading features from {}".format(self._features))
-        return (gpd.read_file(self._features)
-                .to_crs(crs=self.profile['crs']))
 
     @property
     def description(self):
@@ -392,11 +326,11 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         logger.debug("Calculating setbacks for counties with IDs {}"
                      .format(ids))
 
-        for start in range(0, len(ids), self.num_features_per_worker):
-            end = start + self.num_features_per_worker
+        for start in range(0, len(ids), self.NUM_FEATURES_PER_WORKER):
+            end = start + self.NUM_FEATURES_PER_WORKER
             yield (ids[start:end], self._features,
-                   self._features_meta.primary_key_column,
-                   self.profile['crs'], self._feature_filter, self._buffer,
+                   self._features_meta.primary_key_column, self.profile['crs'],
+                   self.FEATURE_FILTER_TYPE, self.BUFFER_TYPE,
                    self._rasterizer)
 
     @staticmethod
@@ -429,16 +363,16 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             GeoPackage. This should be the name of the column under
             which the `features_ids` can be found.
         crs : str
-            String representation of teh Coordinate Reference System of
+            String representation of the Coordinate Reference System of
             the output exclusions array.
-        feature_filter : callable
-            A callable function that takes `features` and `county` as
-            inputs and outputs a geopandas.GeoDataFrame with features
-            clipped and/or localized to the input county.
-        features_buffer : callable
-            A callable function that takes `features` and
-            `regulation_value` as inputs and outputs a list of shapes
-            that represent buffered exclusions for the input county.
+        features_filter_type : str
+            Key from the :attr:`FEATURE_FILTERS` dictionary that points
+            to the feature filter function to use. This feature filter
+            function filters the loaded features such that they are
+            localized to the county bounds.
+        buffer_type : str
+            Key from the :attr:`BUFFERS` dictionary that points to the
+            feature buffer function to use.
         rasterizer : Rasterizer
             Instance of `Rasterizer` class used to rasterize the
             buffered county features.
@@ -451,20 +385,15 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             X and Y slice objects defining where in the original array
             the exclusion data should go.
         """
-        (features_ids, features_fp, col, crs, features_filter,
-         features_buffer, rasterizer) = args
+        (features_ids, features_fp, col, crs, features_filter_type,
+         buffer_type, rasterizer) = args
         logger.debug('- Computing setbacks for county FIPS {}'
                      .format(county.iloc[0]['FIPS']))
         log_mem(logger)
         features = _load_features(features_ids, features_fp, col, crs)
-        features = features_filter(features, county)
-        features = features_buffer(features, regulation_value)
+        features = FEATURE_FILTERS[features_filter_type](features, county)
+        features = BUFFERS[buffer_type](features, regulation_value)
         return _rasterize_within_window(features, county, rasterizer)
-
-    @staticmethod
-    def _buffer(features, regulation_value):
-        """Buffer features for county and return as list. """
-        return list(features.buffer(regulation_value))
 
     def compute_generic_exclusions(self, max_workers=None):
         """Compute generic setbacks.
@@ -504,10 +433,11 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
             spp_kwargs = {"max_workers": max_workers, "loggers": loggers}
             with SpawnProcessPool(**spp_kwargs) as exe:
                 futures = []
-                for start in range(0, len(ids), self.num_features_per_worker):
-                    end = start + self.num_features_per_worker
+                for start in range(0, len(ids), self.NUM_FEATURES_PER_WORKER):
+                    end = start + self.NUM_FEATURES_PER_WORKER
                     future = exe.submit(_compute_exclusions, ids[start:end],
-                                        self._features, pk, crs, self._buffer,
+                                        self._features, pk, crs,
+                                        self.BUFFER_TYPE,
                                         self._regulations.generic,
                                         self._rasterizer)
                     futures.append(future)
@@ -522,10 +452,10 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         else:
             logger.info("Computing generic setbacks from {} features in "
                         "serial.".format(len(ids)))
-            for start in range(0, len(ids), self.num_features_per_worker):
-                end = start + self.num_features_per_worker
+            for start in range(0, len(ids), self.NUM_FEATURES_PER_WORKER):
+                end = start + self.NUM_FEATURES_PER_WORKER
                 out = _compute_exclusions(ids[start:end], self._features, pk,
-                                          crs, self._buffer,
+                                          crs, self.BUFFER_TYPE,
                                           self._regulations.generic,
                                           self._rasterizer)
                 new_exclusions, slices = out
@@ -599,23 +529,52 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         if glob_path.is_dir():
             glob_path = glob_path / '*'
 
-        paths = [str(f) for f in glob_path.parent.glob(glob_path.name)]
+        paths = [str(f) for f in glob_path.parent.glob(glob_path.name)
+                 if f.name.endswith("gpkg")]
         if not paths:
-            msg = 'No files found matching the input {!r}!'
+            msg = 'No GeoPackage files found matching the input {!r}!'
             msg = msg.format(features_fpath)
             logger.error(msg)
             raise FileNotFoundError(msg)
 
         return paths
 
-    @staticmethod
-    def _feature_filter(features, county):
-        """Filter the features given a county."""
-        return features_with_centroid_in_county(features, county)
-
-    @abstractmethod
     def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """
+        features = (self.regulations_table['Feature Type']
+                    .isin(self.FEATURE_TYPES))
+        exclude = ~(self.regulations_table['Comment']
+                    .isin(self.FEATURE_SUBTYPES_TO_EXCLUDE))
+        return features & exclude
+
+    @property
+    @abstractmethod
+    def FEATURE_TYPES(self):
+        """set: Feature type names using in the regulations file. """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def FEATURE_SUBTYPES_TO_EXCLUDE(self):
+        """set: Feature subtype names to exclude from regulations file. """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def BUFFER_TYPE(self):
+        """str: Key in `BUFFERS` pointing to buffer to use. """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def FEATURE_FILTER_TYPE(self):
+        """str: Key in `FEATURE_FILTERS` pointing to feature filter to use. """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def NUM_FEATURES_PER_WORKER(self):
+        """int: Number of features each worker processes at one time. """
         raise NotImplementedError
 
 
@@ -665,11 +624,11 @@ def _load_features(features_ids, features_fp, col, crs):
     return features
 
 
-def _compute_exclusions(features_ids, features_fp, col, crs, features_buffer,
+def _compute_exclusions(features_ids, features_fp, col, crs, buffer_type,
                         setback, rasterizer):
     """Compute exclusions by loading features, buffering, and rasterizing. """
     features = _load_features(features_ids, features_fp, col, crs)
-    setbacks = features_buffer(features, setback)
+    setbacks = BUFFERS[buffer_type](features, setback)
     return _rasterize_within_window(setbacks, features.buffer(setback * 2),
                                     rasterizer)
 
