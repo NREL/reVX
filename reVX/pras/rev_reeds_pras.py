@@ -10,6 +10,7 @@ import numpy as np
 import os
 import shutil
 from warnings import warn
+import re
 
 from reVX.plexos.rev_reeds_plexos import PlexosAggregation
 from rex import Outputs
@@ -66,7 +67,8 @@ class PrasAggregation(PlexosAggregation):
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
                  force_full_build=False, force_shape_map=False,
                  plant_name_col=None, tech_tag=None, res_class=None,
-                 tech_type=None, timezone='UTC', max_workers=None):
+                 tech_type=None, timezone='UTC', dset_tag=None,
+                 max_workers=None):
         """
         Parameters
         ----------
@@ -131,10 +133,19 @@ class PrasAggregation(PlexosAggregation):
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
             US/Central, US/Eastern, or UTC. For a list of all available
             timezones, see pytz.all_timezones
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
         """
+        self._tech_type = tech_type
+        self._region_type = 'rb' if 'upv' in tech_type else 'rs'
+        self._pras_file = pras_file
+        self._pras_meta = None
         super().__init__(plexos_nodes, rev_sc, reeds_build, cf_fpath,
                          forecast_fpath=forecast_fpath,
                          build_year=build_year,
@@ -143,18 +154,19 @@ class PrasAggregation(PlexosAggregation):
                          force_shape_map=force_shape_map,
                          plant_name_col=plant_name_col,
                          tech_tag=tech_tag, res_class=res_class,
-                         timezone=timezone, max_workers=max_workers)
-        self._tech_type = tech_type
-        self._pras_file = pras_file
-        self._pras_meta = None
+                         timezone=timezone, dset_tag=dset_tag,
+                         max_workers=max_workers)
         logger.info('Running aggregation for tech_type={}, res_class={}, '
-                    'rev_sc={}, reeds_build={}, cf_fpath={}.'
+                    'rev_sc={}, reeds_build={}, cf_fpath={}, dset_tag={}.'
                     .format(self._tech_type, self._res_class, rev_sc,
-                            reeds_build, cf_fpath))
+                            reeds_build, cf_fpath, dset_tag))
         self._pras_meta = self.get_pras_meta(self._pras_file)
         self._pras_meta = self.enforce_tech_constraint()
+        logger.info('Found {} pras_nodes and {} sc_build_nodes'
+                    .format(len(self.pras_nodes), len(self.sc_build_nodes)))
         self.missing_nodes = self.get_missing_nodes()
-        self.found_nodes = list(set(self.pras_nodes) - set(self.missing_nodes))
+        self.found_nodes = list(set(self.pras_nodes)
+                                - set(self.missing_nodes.values()))
 
     @classmethod
     def get_pras_meta(cls, pras_file):
@@ -208,8 +220,9 @@ class PrasAggregation(PlexosAggregation):
         Get the map between node index and region label. i.e. node_index=1,
         region_label=p10
         """
-        region_node_map = dict(zip(self._plexos_nodes['rb'].values,
-                                   self._plexos_nodes['plexos_id'].values))
+        region_node_map = dict(
+            zip(self._plexos_nodes[self._region_type].values,
+                self._plexos_nodes['plexos_id'].values))
         return region_node_map
 
     @property
@@ -220,7 +233,8 @@ class PrasAggregation(PlexosAggregation):
         label of p10.
         """
         indices = np.unique(self.node_map)
-        build_nodes = self._plexos_nodes['rb'].iloc[indices].values
+        build_nodes = self._plexos_nodes[self._region_type].iloc[indices]
+        build_nodes = build_nodes.values
         return build_nodes
 
     @property
@@ -237,13 +251,21 @@ class PrasAggregation(PlexosAggregation):
     @property
     def pras_nodes(self):
         """
-        Get list of available nodes in pras output file
+        Get list of available nodes in pras output file. For upv and dupv
+        regions are labeled p1, p2, etc. For wind and csp regions are labeled
+        s1, s2, etc.
 
         Returns
         -------
         List
         """
-        pras_nodes = [x.decode('utf-8') for x in self.pras_meta['region']]
+        def node_filter(x):
+            out = re.search(r'p\d+', x.decode('utf-8'))
+            if out is None:
+                out = re.search(r's\d+', x.decode('utf-8'))
+            return out[0]
+
+        pras_nodes = self.pras_meta['name'].apply(node_filter).values
         return pras_nodes
 
     @property
@@ -363,12 +385,33 @@ class PrasAggregation(PlexosAggregation):
 
         logger.info('Wrote pras formatted profiles to: {}'.format(csv_fp))
 
+    def _make_node_map(self):
+        """Map built rev SC points to pras nodes.
+
+        Returns
+        -------
+        pras_node_index : np.ndarray
+            (n, 1) array of pras node indices mapped to the SC builds where n
+            is the number of SC points built.  Each value in this array gives
+            the pras node index that the sc point is mapped to. So
+            self.node_map[10] yields the pras node index for
+            self.sc_build[10].
+        """
+        pras_node_index = self.sc_build['region'].values
+        pras_node_index = [self.region_node_map[k] for k in pras_node_index]
+        pras_node_index = np.array(pras_node_index)
+
+        if len(pras_node_index.shape) == 1:
+            pras_node_index = pras_node_index.reshape(
+                (len(pras_node_index), 1))
+        return pras_node_index
+
     @classmethod
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath, pras_file,
             forecast_fpath=None, build_year=2050, plexos_columns=None,
             force_full_build=False, force_shape_map=False,
             plant_name_col=None, tech_tag=None, res_class=None, tech_type=None,
-            timezone='UTC', max_workers=None):
+            timezone='UTC', dset_tag=None, max_workers=None):
         """Run pras aggregation and output for the requested tech type. This
         will aggregate the generation profiles over region specific supply
         curve points found in rev_sc, after filtering rev_sc for the requested
@@ -444,6 +487,11 @@ class PrasAggregation(PlexosAggregation):
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
             US/Central, US/Eastern, or UTC. For a list of all available
             timezones, see pytz.all_timezones
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -479,6 +527,7 @@ class PrasAggregation(PlexosAggregation):
                          tech_type=tech,
                          res_class=res_class,
                          timezone=timezone,
+                         dset_tag=dset_tag,
                          max_workers=max_workers)
                 missing_nodes += pa.missing_nodes
                 profiles = pa.make_profiles()

@@ -42,7 +42,7 @@ class PlexosAggregation(BaseProfileAggregation):
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
                  force_full_build=False, force_shape_map=False,
                  plant_name_col=None, tech_tag=None, res_class=None,
-                 timezone='UTC', max_workers=None):
+                 timezone='UTC', dset_tag=None, max_workers=None):
         """
         Parameters
         ----------
@@ -100,6 +100,11 @@ class PlexosAggregation(BaseProfileAggregation):
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
             US/Central, US/Eastern, or UTC. For a list of all available
             timezones, see pytz.all_timezones
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -119,6 +124,7 @@ class PlexosAggregation(BaseProfileAggregation):
         self._tech_tag = tech_tag
         self._timezone = timezone
         self._res_class = res_class
+        self._dset_tag = dset_tag
 
         if plexos_columns is None:
             plexos_columns = tuple()
@@ -564,7 +570,6 @@ class PlexosAggregation(BaseProfileAggregation):
 
         if len(plx_node_index.shape) == 1:
             plx_node_index = plx_node_index.reshape((len(plx_node_index), 1))
-
         return plx_node_index
 
     def make_profiles(self):
@@ -606,7 +611,8 @@ class PlexosAggregation(BaseProfileAggregation):
                                res_gids=self.available_res_gids,
                                forecast_fpath=self._forecast_fpath,
                                forecast_map=self._forecast_map,
-                               force_full_build=self._force_full_build)
+                               force_full_build=self._force_full_build,
+                               dset_tag=self._dset_tag)
                 futures[f] = i
 
             for n, f in enumerate(as_completed(futures)):
@@ -642,7 +648,8 @@ class PlexosAggregation(BaseProfileAggregation):
                 res_gids=self.available_res_gids,
                 forecast_fpath=self._forecast_fpath,
                 forecast_map=self._forecast_map,
-                force_full_build=self._force_full_build)
+                force_full_build=self._force_full_build,
+                dset_tag=self._dset_tag)
 
             profile, sc_gids, res_gids, gen_gids, res_built = p
             profiles[:, i] = profile
@@ -662,7 +669,7 @@ class PlexosAggregation(BaseProfileAggregation):
             forecast_fpath=None, build_year=2050, plexos_columns=None,
             force_full_build=False, force_shape_map=False,
             plant_name_col=None, tech_tag=None, res_class=None,
-            timezone='UTC', out_fpath=None, max_workers=None):
+            timezone='UTC', dset_tag=None, out_fpath=None, max_workers=None):
         """Run plexos aggregation.
 
         Parameters
@@ -723,6 +730,11 @@ class PlexosAggregation(BaseProfileAggregation):
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
             US/Central, US/Eastern, or UTC. For a list of all available
             timezones, see pytz.all_timezones
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
         out_fpath : str, optional
             Path to .h5 file into which plant buildout should be saved. A
             plexos-formatted csv will also be written in the same directory.
@@ -751,6 +763,7 @@ class PlexosAggregation(BaseProfileAggregation):
                  tech_tag=tech_tag,
                  res_class=res_class,
                  timezone=timezone,
+                 dset_tag=dset_tag,
                  max_workers=max_workers)
 
         profiles = pa.make_profiles()

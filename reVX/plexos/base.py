@@ -41,7 +41,7 @@ class PlexosNode:
 
     def __init__(self, sc_build, cf_fpath, res_gids=None,
                  force_full_build=False, forecast_fpath=None,
-                 forecast_map=None):
+                 forecast_map=None, dset_tag=None):
         """
         Parameters
         ----------
@@ -69,6 +69,11 @@ class PlexosNode:
             (n, 1) array of forecast meta data indices mapped to the generation
             meta indices where n is the number of generation points. None if no
             forecast data being considered, by default None
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
         """
         self._sc_build = \
             DataCleaner.rename_cols(sc_build,
@@ -81,6 +86,7 @@ class PlexosNode:
         self._forecast_fpath = forecast_fpath
         self._forecast_map = forecast_map
         self._force_full_build = force_full_build
+        self._dset_tag = dset_tag or ''
 
     @staticmethod
     def _get_res_gids(cf_fpath):
@@ -142,10 +148,12 @@ class PlexosNode:
         with Outputs(self._cf_fpath, mode='r') as cf_outs:
             gen_gids = list(sc_meta['gen_gid'].values)
             gen_gids = [a for b in gen_gids for a in b]
-            cf_mean = cf_outs['cf_mean', list(sc_meta['gen_gid'].values)]
+            cf_mean = cf_outs['cf_mean' + self._dset_tag,
+                              list(sc_meta['gen_gid'].values)]
 
-        sc_meta['cf_mean'] = cf_mean
-        sc_meta = sc_meta.sort_values(by='cf_mean', ascending=False)
+        sc_meta['cf_mean' + self._dset_tag] = cf_mean
+        sc_meta = sc_meta.sort_values(by='cf_mean' + self._dset_tag,
+                                      ascending=False)
         sc_meta = sc_meta.reset_index(drop=True)
 
         # infinite capacity in the last gid to make sure full buildout is done
@@ -271,11 +279,13 @@ class PlexosNode:
                 gen_gid = int(row['gen_gid'])
                 if self._forecast_map is None:
                     with Outputs(self._cf_fpath, mode='r') as cf_outs:
-                        cf_profile = cf_outs['cf_profile', :, gen_gid]
+                        cf_profile = cf_outs['cf_profile' + self._dset_tag, :,
+                                             gen_gid]
                 else:
                     gen_gid = int(self._forecast_map[gen_gid])
                     with Outputs(self._forecast_fpath, mode='r') as cf_outs:
-                        cf_profile = cf_outs['cf_profile', :, gen_gid]
+                        cf_profile = cf_outs['cf_profile' + self._dset_tag, :,
+                                             gen_gid]
 
                 res_gids.append(row['res_gid'])
                 gen_gids.append(gen_gid)
@@ -344,7 +354,7 @@ class PlexosNode:
 
     @classmethod
     def run(cls, sc_build, cf_fpath, res_gids=None, force_full_build=False,
-            forecast_fpath=None, forecast_map=None):
+            forecast_fpath=None, forecast_map=None, dset_tag=None):
         """Make an aggregated generation profile for a single plexos node.
 
         Parameters
@@ -374,6 +384,11 @@ class PlexosNode:
             meta indices where n is the number of generation points. None if
             no forecast data being considered,
             by default None
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
 
         Returns
         -------
@@ -392,7 +407,8 @@ class PlexosNode:
         n = cls(sc_build, cf_fpath, res_gids=res_gids,
                 force_full_build=force_full_build,
                 forecast_fpath=forecast_fpath,
-                forecast_map=forecast_map)
+                forecast_map=forecast_map,
+                dset_tag=dset_tag)
 
         profile, sc_gids, res_gids, gen_gids, res_built = n.make_node_profile()
 
@@ -417,6 +433,7 @@ class BaseProfileAggregation(ABC):
         self._timezone = None
         self._plant_name_col = None
         self._tech_tag = None
+        self._dset_tag = None
 
     @property
     def time_index(self):
@@ -430,7 +447,7 @@ class BaseProfileAggregation(ABC):
 
         if self._time_index is None:
             with Outputs(self._cf_fpath, mode='r') as cf_outs:
-                self._time_index = cf_outs.time_index
+                self._time_index = cf_outs['time_index' + self._dset_tag]
 
         return self._time_index
 
@@ -546,10 +563,10 @@ class BaseProfileAggregation(ABC):
 
         if self._forecast_fpath is None:
             with Outputs(self._cf_fpath, mode='r') as out:
-                t = out.shape[0]
+                t = len(out['time_index' + self._dset_tag])
         else:
             with Outputs(self._forecast_fpath, mode='r') as out:
-                t = out.shape[0]
+                t = len(out['time_index' + self._dset_tag])
 
         shape = (t, n_profiles)
         output = np.zeros(shape, dtype=np.float32)
