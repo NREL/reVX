@@ -306,7 +306,6 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
 
         mask = self._regulation_table_mask()
         if not mask.any():
-        # if  self._regulations.df.empty:
             msg = "Found no local regulations!"
             logger.warning(msg)
             warn(msg)
