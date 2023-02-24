@@ -476,18 +476,6 @@ class BaseProfileAggregation(ABC):
         return self._node_map
 
     @property
-    def sc_nodes(self):
-        """List of available supply curve nodes. The maximum possible number
-        of nodes is 134. For this case this list would start at 0 and end
-        at 133
-
-        Returns
-        -------
-        np.ndarray
-        """
-        return np.unique(self.node_map)
-
-    @property
     def forecast_map(self):
         """An array mapping the reV "actuals" generation data to forecast data
         of a different resolution (if input). This is an (n, 1) array where n

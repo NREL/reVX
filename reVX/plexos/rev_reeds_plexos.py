@@ -497,6 +497,7 @@ class PlexosAggregation(BaseProfileAggregation):
             temp = RegionClassifier.run(self.sc_build, self._plexos_nodes,
                                         regions_label='plexos_id',
                                         force=self._force_shape_map)
+
             plx_node_index = temp['plexos_id'].values.astype(int)
             if any(plx_node_index < 0):
                 msg = ('Could not find a matching shape for {} supply curve '
@@ -598,7 +599,7 @@ class PlexosAggregation(BaseProfileAggregation):
         loggers = [__name__, 'reVX']
         with SpawnProcessPool(max_workers=self.max_workers,
                               loggers=loggers) as exe:
-            for i, inode in enumerate(self.sc_nodes):
+            for i, inode in enumerate(np.unique(self.node_map)):
                 mask = (self.node_map == inode)
                 f = exe.submit(PlexosNode.run,
                                self.sc_build[mask], self._cf_fpath,
@@ -634,7 +635,7 @@ class PlexosAggregation(BaseProfileAggregation):
         """
         profiles = self._init_output(self.n_plexos_nodes)
         progress = 0
-        for i, inode in enumerate(self.sc_nodes):
+        for i, inode in enumerate(np.unique(self.node_map)):
             mask = (self.node_map == inode)
             p = PlexosNode.run(
                 self.sc_build[mask], self._cf_fpath,
