@@ -221,7 +221,9 @@ def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
 
     regulations = FlickerRegulations(hub_height, rotor_diameter,
                                      flicker_threshold, regs_fpath)
-    TurbineFlicker.run(excl_fpath, building_layer, out_dir,
+    fn = flicker_fn_out(regulations.hub_height, regulations.rotor_diameter)
+    out_fn = os.path.join(out_dir, fn)
+    TurbineFlicker.run(excl_fpath, building_layer, out_fn,
                        res_fpath=res_fpath,
                        regulations=regulations,
                        building_threshold=building_threshold,
@@ -230,6 +232,24 @@ def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
                        max_flicker_exclusion_range=max_flicker_exclusion_range,
                        tm_dset=tm_dset, max_workers=max_workers,
                        replace=replace, hsds=hsds, out_layers=out_layers)
+
+
+def flicker_fn_out(hub_height, rotor_diameter):
+    """Generate flicker tiff outfile name.
+
+    Parameters
+    ----------
+    hub_height : int
+        Turbine hub-height (m).
+    rotor_diameter : int
+        Turbine rotor diameter (m).
+
+    Returns
+    -------
+    str
+        Name of flicker outfile.
+    """
+    return "flicker_{}hh_{}rd.tif".format(hub_height, rotor_diameter)
 
 
 def get_node_cmd(config):

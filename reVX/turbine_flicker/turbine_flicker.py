@@ -362,32 +362,6 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                                           self.features, self._res,
                                           max_workers=max_workers)
 
-    @classmethod
-    def input_output_filenames(cls, out_dir, features_fpath, kwargs):
-        """Generate pairs of input/output file names.
-
-        Parameters
-        ----------
-        out_dir : str
-            Path to output file directory.
-        features_fpath : str
-            This input should either be the name of an exclusion layer
-            in `excl_fpath` or a file path to a GeoTIFF file containing
-            buildings data from which turbine flicker exclusions should
-            be computed.
-        kwargs : dict
-            Dictionary of extra keyword-argument pairs used to
-            instantiate the `exclusion_class`.
-
-        Yields
-        ------
-        tuple
-            An input-output filename pair.
-        """
-        regulations = kwargs['regulations']
-        fn = flicker_fn_out(regulations.hub_height, regulations.rotor_diameter)
-        yield features_fpath, os.path.join(out_dir, fn)
-
 
 def _get_building_indices(building_layer, gid, resolution=640):
     """Find buildings exclusion indices
@@ -786,21 +760,3 @@ def compute_flicker_exclusions(hub_height, rotor_diameter, points, res_fpath,
             log_mem(logger)
 
     return flicker_arr
-
-
-def flicker_fn_out(hub_height, rotor_diameter):
-    """Generate flicker tiff outfile name.
-
-    Parameters
-    ----------
-    hub_height : int
-        Turbine hub-height (m).
-    rotor_diameter : int
-        Turbine rotor diameter (m).
-
-    Returns
-    -------
-    str
-        Name of flicker outfile.
-    """
-    return "flicker_{}hh_{}rd.tif".format(hub_height, rotor_diameter)

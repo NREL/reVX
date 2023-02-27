@@ -18,14 +18,13 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.turbine_flicker.turbine_flicker import (
     TurbineFlicker,
-    flicker_fn_out,
     _create_excl_indices,
     _compute_shadow_flicker,
     _get_flicker_excl_shifts,
     _invert_shadow_flicker_arr
 )
 from reVX.turbine_flicker.regulations import FlickerRegulations
-from reVX.turbine_flicker.turbine_flicker_cli import main
+from reVX.turbine_flicker.turbine_flicker_cli import main, flicker_fn_out
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities import ExclusionsConverter
 

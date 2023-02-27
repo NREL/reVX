@@ -118,36 +118,6 @@ class AbstractExclusionCalculatorInterface(ABC):
         """
         raise NotImplementedError
 
-    @classmethod
-    @abstractmethod
-    def input_output_filenames(cls, out_dir, features_fpath, kwargs):
-        """Generate pairs of input/output file names.
-
-        Parameters
-        ----------
-        out_dir : str
-            Path to output file directory.
-        features_fpath : str
-            Path to features file. This path can contain
-            any pattern that can be used in the glob function.
-            For example, `/path/to/features/[A]*` would match
-            with all the features in the directory
-            `/path/to/features/` that start with "A". This input
-            can also be a directory, but that directory must ONLY
-            contain feature files. If your feature files are mixed
-            with other files or directories, use something like
-            `/path/to/features/*.geojson`.
-        kwargs : dict
-            Dictionary of extra keyword-argument pairs used to
-            instantiate the `exclusion_class`.
-
-        Yields
-        ------
-        tuple
-            An input-output filename pair.
-        """
-        raise NotImplementedError
-
 
 class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
     """
@@ -317,6 +287,15 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                                          self.profile, exclusions,
                                          description=description)
 
+    def _county_exclusions(self):
+        """Yield county exclusion arguments. """
+        for ind, regulation_info in enumerate(self._regulations, start=1):
+            exclusion, cnty = regulation_info
+            logger.info('Computing exclusions for {}/{} counties'
+                        .format(ind, len(self.regulations_table)))
+            for args in self._local_exclusions_arguments(exclusion, cnty):
+                yield exclusion, cnty, args
+
     def compute_all_local_exclusions(self, max_workers=None):
         """Compute local exclusions for all counties either.
 
@@ -336,56 +315,38 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         max_workers = max_workers or os.cpu_count()
 
         log_mem(logger)
+        exclusions = None
         if max_workers > 1:
+            futures = {}
             logger.info('Computing local exclusions in parallel using {} '
                         'workers'.format(max_workers))
             spp_kwargs = {"max_workers": max_workers,
                           "loggers": [__name__, 'reVX']}
             with SpawnProcessPool(**spp_kwargs) as exe:
-                exclusions = self._compute_exclusions_spp(exe, max_workers)
+                for exclusion_value, cnty, args in self._county_exclusions():
+                    future = exe.submit(self.compute_local_exclusions,
+                                        exclusion_value, cnty, *args)
+                    futures[future] = cnty['FIPS'].unique()
+
+                for future in as_completed(futures):
+                    local_exclusions, slices = future.result()
+                    exclusions = self._combine_exclusions(exclusions,
+                                                         local_exclusions,
+                                                         futures.pop(future),
+                                                         slices)
+                    log_mem(logger)
+
         else:
             logger.info('Computing local exclusions in serial')
-            exclusions = None
-            for i, (exclusion, cnty) in enumerate(self._regulations):
-                for args in self._local_exclusions_arguments(exclusion, cnty):
-                    out = self.compute_local_exclusions(exclusion, cnty, *args)
-                    local_exclusions, slices = out
-                    fips = cnty['FIPS'].unique()
-                    exclusions = self._combine_exclusions(exclusions,
-                                                          local_exclusions,
-                                                          fips, slices)
-                logger.debug('Computed exclusions for {} of {} counties'
-                             .format((i + 1), len(self.regulations_table)))
+            for exclusion_value, cnty, args in self._county_exclusions():
+                out = self.compute_local_exclusions(exclusion_value, cnty,
+                                                    *args)
+                local_exclusions, slices = out
+                fips = cnty['FIPS'].unique()
+                exclusions = self._combine_exclusions(exclusions,
+                                                      local_exclusions,
+                                                      fips, slices)
 
-        return exclusions
-
-    def _compute_exclusions_spp(self, exe, max_submissions):
-        """Compute exclusions in parallel using futures. """
-        futures, exclusions = {}, None
-
-        for ind, regulation_info in enumerate(self._regulations, start=1):
-            exclusion_value, cnty = regulation_info
-            logger.info('Computing exclusions for {}/{} counties'
-                        .format(ind, len(self.regulations_table)))
-            for args in self._local_exclusions_arguments(exclusion_value,
-                                                         cnty):
-                future = exe.submit(self.compute_local_exclusions,
-                                    exclusion_value, cnty, *args)
-                futures[future] = cnty['FIPS'].unique()
-                if ind % max_submissions == 0:
-                    exclusions = self._collect_futures(futures, exclusions)
-        exclusions = self._collect_futures(futures, exclusions)
-        return exclusions
-
-    def _collect_futures(self, futures, exclusions):
-        """Collect all futures from the input dictionary. """
-        for future in as_completed(futures):
-            local_exclusions, slices = future.result()
-            exclusions = self._combine_exclusions(exclusions,
-                                                  local_exclusions,
-                                                  futures.pop(future),
-                                                  slices)
-            log_mem(logger)
         return exclusions
 
     def compute_exclusions(self, out_layer=None, out_tiff=None, replace=False,
@@ -493,7 +454,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         return existing
 
     @classmethod
-    def run(cls, excl_fpath, features_path, out_dir, regulations,
+    def run(cls, excl_fpath, features_path, out_fn, regulations,
             max_workers=None, replace=False, out_layers=None, hsds=False,
             **kwargs):
         """
@@ -518,8 +479,9 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             contain feature files. If your feature files are mixed
             with other files or directories, use something like
             `/path/to/features/*.geojson`.
-        out_dir : str
-            Directory to save exclusion geotiff(s) into
+        out_fn : str
+            Path to output geotiff where exclusion data should be
+            stored.
         regulations : `~reVX.utilities.AbstractBaseRegulations` subclass
             A regulations object used to extract exclusion regulation
             distances.
@@ -547,24 +509,20 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         cls_init_kwargs = {"excl_fpath": excl_fpath,
                            "regulations": regulations}
         cls_init_kwargs.update(kwargs)
-        files = cls.input_output_filenames(out_dir, features_path,
-                                           cls_init_kwargs)
-        for f_in, f_out in files:
-            if os.path.exists(f_out) and not replace:
-                msg = ('{} already exists, exclusions will not be re-computed '
-                       'unless replace=True'.format(f_out))
-                logger.error(msg)
-            else:
-                logger.info("Computing exclusions from {} and saving "
-                            "to {}".format(f_in, f_out))
-                out_layer = out_layers.get(os.path.basename(f_in))
-                exclusions = cls(excl_fpath=excl_fpath,
-                                 regulations=regulations, features=f_in,
-                                 hsds=hsds, **kwargs)
-                exclusions.compute_exclusions(out_tiff=f_out,
-                                              out_layer=out_layer,
-                                              max_workers=max_workers,
-                                              replace=replace)
+
+        if os.path.exists(out_fn) and not replace:
+            msg = ('{} already exists, exclusions will not be re-computed '
+                    'unless replace=True'.format(out_fn))
+            logger.error(msg)
+        else:
+            logger.info("Computing exclusions from {} and saving "
+                        "to {}".format(features_path, out_fn))
+            out_layer = out_layers.get(os.path.basename(features_path))
+            exclusions = cls(excl_fpath=excl_fpath, regulations=regulations,
+                             features=features_path, hsds=hsds, **kwargs)
+            exclusions.compute_exclusions(out_tiff=out_fn, out_layer=out_layer,
+                                          max_workers=max_workers,
+                                          replace=replace)
 
 
 class ExclusionsConverter:

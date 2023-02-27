@@ -4,7 +4,6 @@ Base classes for setback exclusion computation
 """
 import os
 import logging
-import pathlib
 from copy import deepcopy
 from warnings import warn
 from math import floor, ceil
@@ -463,80 +462,6 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
                                                       slices=slices)
 
         return exclusions
-
-    @classmethod
-    def input_output_filenames(cls, out_dir, features_fpath, *__, **___):
-        """Generate pairs of input/output file names.
-
-        Parameters
-        ----------
-        out_dir : str
-            Path to output file directory.
-        features_fpath : str
-            Path to features file. This path can contain
-            any pattern that can be used in the glob function.
-            For example, `/path/to/features/[A]*` would match
-            with all the features in the directory
-            `/path/to/features/` that start with "A". This input
-            can also be a directory, but that directory must ONLY
-            contain feature files. If your feature files are mixed
-            with other files or directories, use something like
-            `/path/to/features/*.geojson`.
-        kwargs : dict
-            Dictionary of extra keyword-argument pairs used to
-            instantiate the `exclusion_class`.
-
-        Yields
-        ------
-        tuple
-            An input-output filename pair.
-        """
-        for fpath in cls.get_feature_paths(features_fpath):
-            fn = os.path.basename(fpath)
-            geotiff = ".".join(fn.split('.')[:-1] + ['tif'])
-            yield fpath, os.path.join(out_dir, geotiff)
-
-    @staticmethod
-    def get_feature_paths(features_fpath):
-        """Ensure features path exists and return as list.
-
-        Parameters
-        ----------
-        features_fpath : str
-            Path to features file. This path can contain
-            any pattern that can be used in the glob function.
-            For example, `/path/to/features/[A]*` would match
-            with all the features in the directory
-            `/path/to/features/` that start with "A". This input
-            can also be a directory, but that directory must ONLY
-            contain feature files. If your feature files are mixed
-            with other files or directories, use something like
-            `/path/to/features/*.geojson`.
-
-        Returns
-        -------
-        features_fpath : list
-            Features path as a list of strings.
-
-        Notes
-        -----
-        This method is required for `run` class methods for
-        feature setbacks that are spread out over multiple
-        files.
-        """
-        glob_path = pathlib.Path(features_fpath)
-        if glob_path.is_dir():
-            glob_path = glob_path / '*'
-
-        paths = [str(f) for f in glob_path.parent.glob(glob_path.name)
-                 if f.name.endswith("gpkg")]
-        if not paths:
-            msg = 'No GeoPackage files found matching the input {!r}!'
-            msg = msg.format(features_fpath)
-            logger.error(msg)
-            raise FileNotFoundError(msg)
-
-        return paths
 
     def _regulation_table_mask(self):
         """Return the regulation table mask for setback feature. """
