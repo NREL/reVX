@@ -124,7 +124,7 @@ class PlexosAggregation(BaseProfileAggregation):
         self._tech_tag = tech_tag
         self._timezone = timezone
         self._res_class = res_class
-        self._dset_tag = dset_tag
+        self._dset_tag = dset_tag if dset_tag is not None else ""
 
         if plexos_columns is None:
             plexos_columns = tuple()
@@ -179,10 +179,6 @@ class PlexosAggregation(BaseProfileAggregation):
             self._output_meta['gen_gids'] = None
             self._output_meta['res_built'] = None
 
-        if isinstance(self._output_meta, GeoDataFrame):
-            column_mask = self._output_meta.columns != 'geometry'
-            columns = self._output_meta.columns[column_mask]
-            self._output_meta = pd.DataFrame(self._output_meta[columns])
         return self._output_meta
 
     @property
@@ -304,7 +300,7 @@ class PlexosAggregation(BaseProfileAggregation):
         rev_mask = rev_sc[join_on].isin(reeds_sc_gids)
         if not rev_mask.any():
             msg = ("There are no overlapping sc_gids between the provided reV "
-                   "supply curve table the ReEDS buildout!")
+                   "supply curve table and the ReEDS buildout!")
             logger.error(msg)
             raise RuntimeError(msg)
 

@@ -13,7 +13,7 @@ from warnings import warn
 import re
 
 from reVX.plexos.rev_reeds_plexos import PlexosAggregation
-from rex import Outputs
+from rex import Outputs, Resource
 
 
 logger = logging.getLogger(__name__)
@@ -64,11 +64,11 @@ class PrasAggregation(PlexosAggregation):
     the tech type in the tech_types list.
     """
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath, pras_file,
-                 forecast_fpath=None, build_year=2050, plexos_columns=None,
-                 force_full_build=False, force_shape_map=False,
-                 plant_name_col=None, tech_tag=None, res_class=None,
-                 tech_type=None, timezone='UTC', dset_tag=None,
-                 max_workers=None):
+                 load_path=None, forecast_fpath=None, build_year=2050,
+                 plexos_columns=None, force_full_build=False,
+                 force_shape_map=False, plant_name_col=None, tech_tag=None,
+                 res_class=None, tech_type=None, timezone='UTC',
+                 dset_tag=None, max_workers=None):
         """
         Parameters
         ----------
@@ -101,6 +101,9 @@ class PrasAggregation(PlexosAggregation):
             cf_fpath, then the coordinates from cf_fpath are mapped to the
             nearest neighbor sites in the forecast_fpath, where the final
             generation profiles are retrieved from.
+        load_path : str | None
+            Optional path to load data used to overwrite the 'regions/load'
+            dataset in the pras_file.
         build_year : int, optional
             REEDS year of interest, by default 2050
         plexos_columns : list | None
@@ -142,10 +145,12 @@ class PrasAggregation(PlexosAggregation):
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
         """
+        self._dset_tag = dset_tag if dset_tag is not None else ""
         self._tech_type = tech_type
         self._region_type = 'rb' if 'upv' in tech_type else 'rs'
         self._pras_file = pras_file
         self._pras_meta = None
+        self._load_path = load_path
         super().__init__(plexos_nodes, rev_sc, reeds_build, cf_fpath,
                          forecast_fpath=forecast_fpath,
                          build_year=build_year,
@@ -154,19 +159,16 @@ class PrasAggregation(PlexosAggregation):
                          force_shape_map=force_shape_map,
                          plant_name_col=plant_name_col,
                          tech_tag=tech_tag, res_class=res_class,
-                         timezone=timezone, dset_tag=dset_tag,
+                         timezone=timezone, dset_tag=self._dset_tag,
                          max_workers=max_workers)
         logger.info('Running aggregation for tech_type={}, res_class={}, '
                     'rev_sc={}, reeds_build={}, cf_fpath={}, dset_tag={}.'
                     .format(self._tech_type, self._res_class, rev_sc,
                             reeds_build, cf_fpath, dset_tag))
-        self._pras_meta = self.get_pras_meta(self._pras_file)
-        self._pras_meta = self.enforce_tech_constraint()
         logger.info('Found {} pras_nodes and {} sc_build_nodes'
                     .format(len(self.pras_nodes), len(self.sc_build_nodes)))
         self.missing_nodes = self.get_missing_nodes()
-        self.found_nodes = list(set(self.pras_nodes)
-                                - set(self.missing_nodes.values()))
+        self.found_nodes = list(set(self.pras_nodes) - set(self.missing_nodes))
 
     @classmethod
     def get_pras_meta(cls, pras_file):
@@ -185,6 +187,9 @@ class PrasAggregation(PlexosAggregation):
         """
         with Outputs(pras_file, mode='r') as out:
             pras_meta = pd.DataFrame(out['generators/_core'])
+            for col in pras_meta.columns:
+                pras_meta[col] = pras_meta[col].apply(
+                    lambda x: x.decode('utf-8'))
         return pras_meta
 
     @classmethod
@@ -206,8 +211,7 @@ class PrasAggregation(PlexosAggregation):
         List
         """
         pras_meta = cls.get_pras_meta(pras_file)
-        class_list = [x.decode('utf-8') for x in pras_meta['category']]
-        class_list = [int(x.split('_')[-1]) for x in class_list
+        class_list = [int(x.split('_')[-1]) for x in pras_meta['category']
                       if x.startswith(tech_type)]
         class_list = np.unique(class_list)
         logger.info('Found classes {} for tech_type {}'
@@ -246,6 +250,9 @@ class PrasAggregation(PlexosAggregation):
         -------
         pd.DataFrame
         """
+        if self._pras_meta is None:
+            self._pras_meta = self.get_pras_meta(self._pras_file)
+            self._pras_meta = self.enforce_tech_constraint()
         return self._pras_meta
 
     @property
@@ -260,9 +267,9 @@ class PrasAggregation(PlexosAggregation):
         List
         """
         def node_filter(x):
-            out = re.search(r'p\d+', x.decode('utf-8'))
+            out = re.search(r'p\d+', x)
             if out is None:
-                out = re.search(r's\d+', x.decode('utf-8'))
+                out = re.search(r's\d+', x)
             return out[0]
 
         pras_nodes = self.pras_meta['name'].apply(node_filter).values
@@ -279,22 +286,22 @@ class PrasAggregation(PlexosAggregation):
         np.ndarray
         """
         node_mask = np.isin(self.pras_nodes, self.sc_build_nodes)
-        pras_indices = self.pras_meta.index[node_mask]
+        pras_indices = list(self.pras_meta.index[node_mask])
         return pras_indices
 
     @property
-    def profile_indices(self):
+    def sc_build_indices(self):
         """
-        Get the list of generation profile indices used to write the new
-        profiles to the pras output.
+        Get the list of profile indices corresponding to the sc_build_nodes -
+        used to write the new profiles to the pras output.
 
         Returns
         -------
         List
         """
-        profile_indices = [i for i, x in enumerate(self.sc_build_nodes)
-                           if x in self.pras_nodes]
-        return profile_indices
+        sc_build_indices = [i for i, x in enumerate(self.sc_build_nodes)
+                            if x in self.pras_nodes]
+        return sc_build_indices
 
     def enforce_tech_constraint(self):
         """
@@ -308,9 +315,14 @@ class PrasAggregation(PlexosAggregation):
         tech_key = '{}_'.format(self._tech_type)
         if self._res_class is not None:
             tech_key += '{}'.format(self._res_class)
-        category_mask = [x.decode('utf-8').startswith(tech_key)
+        category_mask = [x.startswith(tech_key)
                          for x in self._pras_meta['category']]
         self._pras_meta = self._pras_meta[category_mask]
+        if self._pras_meta.empty:
+            msg = ('Found zero pras nodes with requested tech_key {}.'
+                   .format(tech_key))
+            logger.error(msg)
+            raise RuntimeError(msg)
         return self._pras_meta
 
     def get_missing_nodes(self):
@@ -321,9 +333,8 @@ class PrasAggregation(PlexosAggregation):
         node_mask = np.isin(self.pras_nodes, self.sc_build_nodes)
         missing_nodes = sorted([x for x in np.unique(self.pras_nodes)
                                 if x not in self.sc_build_nodes])
-        missing_nodes = {self.region_node_map[k]: k for k in missing_nodes}
         msg = ('{} / {} pras nodes not found in sc_build_nodes, for '
-               'tech type {}_{}. Missing nodes: {}.').format(
+               'tech_key {}_{}. Missing nodes: {}.').format(
                    len(missing_nodes), len(self.pras_nodes), self._tech_type,
                    self._res_class, missing_nodes)
         if not all(node_mask):
@@ -357,7 +368,7 @@ class PrasAggregation(PlexosAggregation):
                "previous ReEDS2PRAS run").format(out_fpath)
         assert os.path.exists(out_fpath), msg
 
-        new_out_file = out_fpath.replace('.h5', f'_{self.tz_alias}.h5')
+        new_out_file = out_fpath.replace('.h5', '_updated.h5')
         if not os.path.exists(new_out_file):
             shutil.copy(out_fpath, new_out_file)
         out_fpath = new_out_file
@@ -369,7 +380,7 @@ class PrasAggregation(PlexosAggregation):
 
         with Outputs(out_fpath, mode='a') as out:
             out['generators/capacity'][:, self.pras_indices] = \
-                profiles[:, self.profile_indices]
+                profiles[:, self.sc_build_indices]
 
         names = np.arange(profiles.shape[1])
         if self._plant_name_col is not None:
@@ -385,6 +396,37 @@ class PrasAggregation(PlexosAggregation):
 
         logger.info('Wrote pras formatted profiles to: {}'.format(csv_fp))
 
+    @classmethod
+    def write_load_data(cls, load_path, out_fpath):
+        """Export load data to pras file
+
+        Parameters
+        ----------
+        load_path : str
+            Path to load data to use for overwriting 'regions/load' dataset
+            in out_fpath.
+        out_fpath : str
+            Path to .h5 file into which plant buildout should be saved. A
+            pras-formatted csv will also be written in the same directory.
+        """
+        if not out_fpath.endswith('.h5'):
+            out_fpath = out_fpath + '.h5'
+
+        msg = ("out_fpath={} does not exist. This file must come from a "
+               "previous ReEDS2PRAS run").format(out_fpath)
+        assert os.path.exists(out_fpath), msg
+
+        new_out_file = out_fpath.replace('.h5', '_updated.h5')
+        if not os.path.exists(new_out_file):
+            shutil.copy(out_fpath, new_out_file)
+        out_fpath = new_out_file
+
+        logger.info('Saving load from {} to {}'.format(load_path, out_fpath))
+
+        with Outputs(out_fpath, mode='a') as out:
+            with Resource(load_path) as res:
+                out['regions/load'] = res['load']
+
     def _make_node_map(self):
         """Map built rev SC points to pras nodes.
 
@@ -397,22 +439,28 @@ class PrasAggregation(PlexosAggregation):
             self.node_map[10] yields the pras node index for
             self.sc_build[10].
         """
-        pras_node_index = self.sc_build['region'].values
-        pras_node_index = [self.region_node_map[k] for k in pras_node_index]
-        pras_node_index = np.array(pras_node_index)
+        if 'region' in self.sc_build:
+            pras_node_index = self.sc_build['region'].values
+            pras_node_index = [self.region_node_map[k] for k
+                               in pras_node_index]
+            pras_node_index = np.array(pras_node_index)
 
-        if len(pras_node_index.shape) == 1:
-            pras_node_index = pras_node_index.reshape(
-                (len(pras_node_index), 1))
+            if len(pras_node_index.shape) == 1:
+                pras_node_index = pras_node_index.reshape(
+                    (len(pras_node_index), 1))
+        else:
+            msg = '"region" column not found in sc_build.'
+            logger.error(msg)
+            raise RuntimeError(msg)
         return pras_node_index
 
     @classmethod
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath, pras_file,
-            forecast_fpath=None, build_year=2050, plexos_columns=None,
-            force_full_build=False, force_shape_map=False,
+            load_path=None, forecast_fpath=None, build_year=2050,
+            plexos_columns=None, force_full_build=False, force_shape_map=False,
             plant_name_col=None, tech_tag=None, res_class=None, tech_type=None,
             timezone='UTC', dset_tag=None, max_workers=None):
-        """Run pras aggregation and output for the requested tech type. This
+        """Run pras aggregation and output for the requested tech types. This
         will aggregate the generation profiles over region specific supply
         curve points found in rev_sc, after filtering rev_sc for the requested
         tech type, and resource class. These aggregated generation profiles
@@ -446,6 +494,9 @@ class PrasAggregation(PlexosAggregation):
         pras_file : str
             File path to existing PRAS file which will be amended to include
             generation data from given resource data.
+        load_path : str | None
+            Optional path to load data used to overwrite the 'regions/load'
+            dataset in the pras_file.
         forecast_fpath : str | None
             Forecasted capacity factor .h5 file path (reV results). If not
             None, the supply curve res_gids are mapped to sites in the
@@ -507,32 +558,133 @@ class PrasAggregation(PlexosAggregation):
             tech_type = [tech_type]
         missing_nodes = []
 
+        if load_path is not None:
+            cls.write_load_data(load_path, pras_file)
+
         for i, tech in enumerate(tech_type):
             reeds_build_fp = reeds_build[i]
             cf_fp = cf_fpath[i]
             rev_sc_fp = rev_sc[i]
-            if res_class is None:
-                res_classes = cls.get_pras_classes(pras_file, tech)
-            else:
-                res_classes = [res_class]
-            for res_class in res_classes:
-                pa = cls(plexos_nodes, rev_sc_fp, reeds_build_fp, cf_fp,
-                         pras_file, forecast_fpath=forecast_fpath,
-                         build_year=build_year,
-                         plexos_columns=plexos_columns,
-                         force_full_build=force_full_build,
-                         force_shape_map=force_shape_map,
-                         plant_name_col=plant_name_col,
-                         tech_tag=tech_tag,
-                         tech_type=tech,
-                         res_class=res_class,
-                         timezone=timezone,
-                         dset_tag=dset_tag,
-                         max_workers=max_workers)
-                missing_nodes += pa.missing_nodes
-                profiles = pa.make_profiles()
-
-                pa.export(pa.plexos_meta, pa.time_index, profiles, pras_file)
+            cls._run_single(tech, plexos_nodes, rev_sc_fp, reeds_build_fp,
+                            cf_fp, pras_file, forecast_fpath, build_year,
+                            plexos_columns, force_full_build, force_shape_map,
+                            plant_name_col, tech_tag, res_class, timezone,
+                            dset_tag, max_workers, missing_nodes)
 
         logger.info('Missing {} nodes across all classes: {}'
                     .format(len(set(missing_nodes)), set(missing_nodes)))
+
+    @classmethod
+    def _run_single(cls, tech, plexos_nodes, rev_sc_fp, reeds_build_fp, cf_fp,
+                    pras_file, forecast_fpath, build_year, plexos_columns,
+                    force_full_build, force_shape_map, plant_name_col,
+                    tech_tag, res_class, timezone, dset_tag, max_workers,
+                    missing_nodes):
+        """Run pras aggregation and output for a single requested tech type.
+        This will aggregate the generation profiles over region specific supply
+        curve points found in rev_sc, after filtering rev_sc for the requested
+        tech type, and resource class. These aggregated generation profiles
+        will then be written to the pras output file in the location
+        corresponding to the region, tech type, and class.
+
+        Parameters
+        ----------
+        tech : str
+            Tech type for which to overwrite the generation profiles in the
+            pras output file. Pras files will have the tech type in the
+            ['generation/_core']['name'] entry, which is used to select the
+            correct output index
+        plexos_nodes : str | pd.DataFrame
+            Plexos node meta data including gid, latitude, longitude, voltage.
+            Or file path to .csv containing plexos node meta data, or a file
+            path to a .shp file that contains plexos nodes defined as shapes.
+        rev_sc_fp : str | pd.DataFrame
+            reV supply curve results table including SC gid, latitude,
+            longitude, res_gids, gid_counts. Or file path to reV supply
+            curve table.
+        reeds_build_fp : str | pd.DataFrame
+            ReEDS buildout with rows for built capacity (MW) at each reV SC
+            point. This should have columns: reeds_year, built_capacity, and
+            sc_gid (corresponding to the reV supply curve point gid). Some
+            cleaning of the column names will be performed for legacy tables
+            but these are the column headers that are desired. This input can
+            also include "plexos_node_gid" which will explicitly assign a
+            supply curve point buildout to a single plexos node. If included,
+            all points must be assigned to plexos nodes.
+        cf_fp : str
+            File path to capacity factor file (reV gen output) to
+            get profiles from.
+        pras_file : str
+            File path to existing PRAS file which will be amended to include
+            generation data from given resource data.
+        load_path : str | None
+            Optional path to load data used to overwrite the 'regions/load'
+            dataset in the pras_file.
+        forecast_fpath : str | None
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
+        build_year : int, optional
+            REEDS year of interest, by default 2050
+        plexos_columns : list | None
+            Additional columns from the plexos_nodes input to pass through
+            to the output meta data.
+        force_full_build : bool
+            Flag to ensure the full requested buildout is built at each SC
+            point. If True, the remainder of the requested build will always
+            be built at the last resource gid in the sc point.
+        force_shape_map : bool
+            Flag to force the mapping of supply curve points to the plexos
+            node shape file input (if a shape file is input) via nearest
+            neighbor to shape centroid.
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
+        res_class : int | None
+            Optional resource class to use to filter supply curve points.
+            For example, if res_class = 3 then only supply curve points with
+            class 3 will be kept in the sc_build table. If None then the
+            aggregation will be run for each class found in the pras output
+            file
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
+        max_workers : int | None
+            Max workers for parallel profile aggregation. None uses all
+            available workers. 1 will run in serial.
+        """
+
+        if res_class is None:
+            res_classes = cls.get_pras_classes(pras_file, tech)
+        else:
+            res_classes = [res_class]
+        for res_class in res_classes:
+            pa = cls(plexos_nodes, rev_sc_fp, reeds_build_fp, cf_fp,
+                     pras_file, forecast_fpath=forecast_fpath,
+                     build_year=build_year,
+                     plexos_columns=plexos_columns,
+                     force_full_build=force_full_build,
+                     force_shape_map=force_shape_map,
+                     plant_name_col=plant_name_col,
+                     tech_tag=tech_tag,
+                     tech_type=tech,
+                     res_class=res_class,
+                     timezone=timezone,
+                     dset_tag=dset_tag,
+                     max_workers=max_workers)
+            missing_nodes += pa.missing_nodes
+            profiles = pa.make_profiles()
+
+            pa.export(pa.plexos_meta, pa.time_index, profiles, pras_file)

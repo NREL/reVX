@@ -86,7 +86,7 @@ class PlexosNode:
         self._forecast_fpath = forecast_fpath
         self._forecast_map = forecast_map
         self._force_full_build = force_full_build
-        self._dset_tag = dset_tag or ''
+        self._dset_tag = dset_tag if dset_tag is not None else ""
 
     @staticmethod
     def _get_res_gids(cf_fpath):
@@ -433,7 +433,7 @@ class BaseProfileAggregation(ABC):
         self._timezone = None
         self._plant_name_col = None
         self._tech_tag = None
-        self._dset_tag = None
+        self._dset_tag = ""
 
     @property
     def time_index(self):
