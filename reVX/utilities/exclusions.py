@@ -331,9 +331,9 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 for future in as_completed(futures):
                     local_exclusions, slices = future.result()
                     exclusions = self._combine_exclusions(exclusions,
-                                                         local_exclusions,
-                                                         futures.pop(future),
-                                                         slices)
+                                                          local_exclusions,
+                                                          futures.pop(future),
+                                                          slices)
                     log_mem(logger)
 
         else:
@@ -512,7 +512,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         if os.path.exists(out_fn) and not replace:
             msg = ('{} already exists, exclusions will not be re-computed '
-                    'unless replace=True'.format(out_fn))
+                   'unless replace=True'.format(out_fn))
             logger.error(msg)
         else:
             logger.info("Computing exclusions from {} and saving "
