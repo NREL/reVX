@@ -94,7 +94,8 @@ class PlexosAggregation(BaseProfileAggregation):
         res_class : int | None
             Optional resource class to use to filter supply curve points.
             For example, if res_class = 3 then only supply curve points with
-            class 3 will be kept in the sc_build table.
+            class 3 will be kept in the sc_build table. This filters the on the
+            'class' column in the reeds_build table.
         timezone : str
             Timezone for output generation profiles. This is a string that will
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
@@ -140,6 +141,10 @@ class PlexosAggregation(BaseProfileAggregation):
         if res_class is not None:
             class_mask = self._sc_build['class'] == res_class
             self._sc_build = self._sc_build[class_mask]
+        if self._sc_build.empty:
+            msg = 'res_class={} not found in reeds build out'.format(res_class)
+            logger.error(msg)
+            raise RuntimeError(msg)
         self._plexos_nodes = self._parse_plexos_nodes(plexos_nodes)
 
         missing = self._check_gids()

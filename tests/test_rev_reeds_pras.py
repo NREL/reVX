@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """reVX PLEXOS unit test module
 """
-from click.testing import CliRunner
 import numpy as np
 import os
 import pandas as pd
@@ -10,7 +9,7 @@ import pytest
 import tempfile
 import h5py
 
-from rex import Resource
+from rex import Resource, init_logger
 
 from reVX.pras.rev_reeds_pras import PrasAggregation
 from reVX import TESTDATADIR
@@ -18,15 +17,6 @@ from reVX import TESTDATADIR
 REV_SC = os.path.join(TESTDATADIR, 'reV_sc/sc_upv.csv')
 SC_BUILD = os.path.join(TESTDATADIR, 'pras/sc_build.csv')
 CF_FPATH = os.path.join(TESTDATADIR, 'reV_gen/gen_upv_2008.h5')
-PRAS_NODES = os.path.join(TESTDATADIR, 'pras/p_regions.csv')
-
-
-@pytest.fixture(scope="module")
-def runner():
-    """
-    cli runner
-    """
-    return CliRunner()
 
 
 def df_to_sarray(df):
@@ -68,7 +58,8 @@ def create_pras_test_file(outdir):
         df = pd.DataFrame({'name': names, 'category': categories,
                            'region': regions})
         g1.create_dataset('_core', data=df_to_sarray(df))
-        g1.create_dataset('capacity', data=np.zeros((8760, 10)))
+        g1.create_dataset('capacity',
+                          data=np.zeros((8760, 10), dtype='float32'))
     return outfile
 
 
@@ -80,12 +71,12 @@ def test_pras_agg_indexing():
         pras_file = create_pras_test_file(tmpdir)
         build_year = 2050
         pa = PrasAggregation(
-            PRAS_NODES, REV_SC, SC_BUILD, CF_FPATH, pras_file,
+            REV_SC, SC_BUILD, CF_FPATH, pras_file,
             build_year=build_year, tech_type='upv', res_class=resource_class,
             max_workers=1)
-        found_pras_nodes = pa.pras_meta['region'][pa.pras_indices].values
-        assert np.array_equal(found_pras_nodes,
-                              pa.sc_build_nodes[pa.sc_build_indices])
+        found_pras_zones = pa.pras_meta['region'][pa.pras_indices].values
+        assert np.array_equal(found_pras_zones,
+                              pa.sc_build_zones[pa.sc_build_indices])
         with Resource(pras_file) as pras_res:
             df = pd.DataFrame(pras_res['generators/_core'])
             for col in df.columns:
@@ -93,28 +84,32 @@ def test_pras_agg_indexing():
             assert_frame_equal(pa.pras_meta,
                                df[df['category'] == f'upv_{resource_class}'])
             for i, pi in enumerate(pa.pras_indices):
-                node = pa.pras_meta['region'].loc[pi]
-                assert df['region'].loc[pi] == node
-                assert pa.sc_build_nodes[pa.sc_build_indices[i]] == node
+                zone = pa.pras_meta['region'].loc[pi]
+                assert df['region'].loc[pi] == zone
+                assert pa.sc_build_zones[pa.sc_build_indices[i]] == zone
 
 
-def test_pras_agg_output():
+def test_pras_agg_output(log=True):
     """Test that pras aggregation write profiles to pras output file correctly
     """
+    if log:
+        init_logger(__name__, log_level='DEBUG')
+        init_logger('reVX', log_level='DEBUG')
+
     with tempfile.TemporaryDirectory() as tmpdir:
         pras_file = create_pras_test_file(tmpdir)
         build_year = 2050
         pa = PrasAggregation(
-            PRAS_NODES, REV_SC, SC_BUILD, CF_FPATH, pras_file,
+            REV_SC, SC_BUILD, CF_FPATH, pras_file,
             build_year=build_year, tech_type='upv', res_class=3,
-            max_workers=1)
+            max_workers=1, timezone='UTC')
         profiles = pa.make_profiles()
-        pa.export(pa.plexos_meta, pa.time_index, profiles, pras_file)
-
-        with Resource(pras_file) as pras_res:
+        pa.export(pa.time_index, profiles)
+        with Resource(pa._output_file) as pras_res:
             for i, pi in enumerate(pa.pras_indices):
-                assert np.array_equal(pras_res['generators/capacity'][:, pi],
-                                      profiles[:, pa.sc_build_indices[i]])
+                pras_saved = pras_res['generators/capacity'][:, pi]
+                prof_out = profiles[:, pa.sc_build_indices[i]]
+                assert np.array_equal(pras_saved, prof_out)
 
 
 def execute_pytest(capture='all', flags='-rapP'):
