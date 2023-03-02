@@ -23,14 +23,12 @@ class PrasAggregation(PlexosAggregation):
     """
     Framework to aggregate reV gen profiles to PRAS zone power profiles and
     overwrite exisiting pras file with new generation profiles. This class
-    takes as input the plexos zones meta data (lat/lon or shape files), rev
-    supply curve table, and reeds buildout table (specifying which rev sc
-    points were built and at what capacity). The class will build power
-    profiles for each supply curve point and then aggregate the sc point
-    profiles to the nearest neighbor pras zone (if pras zones are defined by
-    lat/lon) or the shape intersect pras zone (if pras zones are defined by
-    shape file). The corresponding zone power profiles in the pras output file
-    will be overwritten with these new aggregated generation profiles.
+    takes as input rev supply curve table, and reeds buildout table (specifying
+    which rev sc points were built and at what capacity). The class will build
+    power profiles for each supply curve point and then aggregate the sc point
+    profiles to the nearest neighbor pras zone. The corresponding zone power
+    profiles in the pras output file will be overwritten with these new
+    aggregated generation profiles.
 
     Examples
     --------
@@ -62,9 +60,9 @@ class PrasAggregation(PlexosAggregation):
     the tech type in the tech_types list.
     """
     def __init__(self, rev_sc, reeds_build, cf_fpath, pras_file,
-                 forecast_fpath=None, build_year=2050, tech_tag=None,
-                 res_class=None, tech_type=None, timezone='US/Central',
-                 dset_tag=None, max_workers=None):
+                 forecast_fpath=None, build_year=2050, res_class=None,
+                 tech_type=None, timezone='US/Central', dset_tag=None,
+                 max_workers=None):
         """
         Parameters
         ----------
@@ -74,10 +72,10 @@ class PrasAggregation(PlexosAggregation):
             curve table.
         reeds_build : str | pd.DataFrame
             ReEDS buildout with rows for built capacity (MW) at each reV SC
-            point. This should have columns: reeds_year, built_capacity, and
-            sc_gid (corresponding to the reV supply curve point gid). Some
-            cleaning of the column names will be performed for legacy tables
-            but these are the column headers that are desired.
+            point. This should have columns: year, region, class,
+            built_capacity, and sc_gid (corresponding to the reV supply curve
+            point gid). Some cleaning of the column names will be performed for
+            legacy tables but these are the column headers that are desired.
         cf_fpath : str
             File path to .h5 capacity factor file (reV gen output) to get
             profiles from.
@@ -94,13 +92,11 @@ class PrasAggregation(PlexosAggregation):
             generation profiles are retrieved from.
         build_year : int, optional
             REEDS year of interest, by default 2050
-        tech_tag : str | None
-            Optional technology tag to include as a suffix in the plexos output
-            csv column headers.
         res_class : int | None
             Optional resource class to use to filter supply curve points.
             For example, if res_class = 3 then only supply curve points with
-            class 3 will be kept in the sc_build table.
+            class 3 will be kept in the sc_build table. The corresponds to the
+            'class' column in the reeds_build file.
         tech_type : str | None
             Pras files will have the tech type in the
             ['generation/_core']['name'] entry, which is used to select the
@@ -136,8 +132,9 @@ class PrasAggregation(PlexosAggregation):
                          reeds_build, cf_fpath,
                          forecast_fpath=forecast_fpath,
                          build_year=build_year,
-                         tech_tag=tech_tag, res_class=res_class,
-                         timezone=timezone, dset_tag=self._dset_tag,
+                         res_class=res_class,
+                         timezone=timezone,
+                         dset_tag=self._dset_tag,
                          max_workers=max_workers)
         self._init_output_files(pras_file)
         logger.info('Running aggregation for tech_type={}, res_class={}, '
@@ -403,6 +400,21 @@ class PrasAggregation(PlexosAggregation):
                                       in self.found_pras_zones]
         return self._sc_build_indices
 
+    @property
+    def built_capacity(self):
+        """
+        Get the built capacity for all zones found in the pras output file and
+        the reeds build file.
+
+        Returns
+        -------
+        np.ndarray
+        """
+        indices = [np.where(self._pras_build_zones['region'] == x)[0][0]
+                   for x in self.found_pras_zones]
+        cap = self._pras_build_zones['built_capacity'].iloc[indices].values
+        return cap
+
     def enforce_tech_constraint(self, meta):
         """
         Filter the pras generator meta for the requested technology type and
@@ -480,16 +492,13 @@ class PrasAggregation(PlexosAggregation):
         with Outputs(self._pras_file, mode='r') as out:
             old_cap = out['generators/capacity', :, self.pras_indices]
             new_cap = profiles[:, self.sc_build_indices].astype(old_cap.dtype)
-            df['region'] = self.pras_meta['region'].loc[self.pras_indices]
+            df['region'] = self.found_pras_zones
             df['name'] = self.pras_meta['name'].loc[self.pras_indices]
             df['old_mean'] = np.mean(old_cap, axis=0)
             df['new_mean'] = np.mean(new_cap, axis=0)
             df['old_max'] = np.max(old_cap, axis=0)
             df['new_max'] = np.max(new_cap, axis=0)
-            indices = [np.where(self._pras_build_zones['region'] == x)[0][0]
-                       for x in df['region']]
-            cap = self._pras_build_zones['built_capacity'].iloc[indices]
-            df['built_capacity'] = cap.values
+            df['built_capacity'] = self.built_capacity
             logger.info('The old and new mean/max capacity (MW) for the {}_{} '
                         'zones:\n{}.'.format(self._tech_type,
                                              self._res_class, df))
@@ -554,9 +563,9 @@ class PrasAggregation(PlexosAggregation):
 
     @classmethod
     def run(cls, rev_sc, reeds_build, cf_fpath, pras_file,
-            forecast_fpath=None, build_year=2050, tech_tag=None,
-            res_class=None, tech_type=None, timezone='US/Central',
-            dset_tag=None, max_workers=None):
+            forecast_fpath=None, build_year=2050, res_class=None,
+            tech_type=None, timezone='US/Central', dset_tag=None,
+            max_workers=None):
         """Run pras aggregation and output for the requested tech types. This
         will aggregate the generation profiles over region specific supply
         curve points found in rev_sc, after filtering rev_sc for the requested
@@ -595,9 +604,6 @@ class PrasAggregation(PlexosAggregation):
             generation profiles are retrieved from.
         build_year : int, optional
             REEDS year of interest, by default 2050
-        tech_tag : str | None
-            Optional technology tag to include as a suffix in the plexos output
-            csv column headers.
         res_class : int | None
             Optional resource class to use to filter supply curve points.
             For example, if res_class = 3 then only supply curve points with
@@ -638,19 +644,22 @@ class PrasAggregation(PlexosAggregation):
             reeds_build_fp = reeds_build[i]
             cf_fp = cf_fpath[i]
             rev_sc_fp = rev_sc[i]
-            cls._run_single(tech, rev_sc_fp, reeds_build_fp,
-                            cf_fp, pras_file, forecast_fpath, build_year,
-                            tech_tag, res_class, timezone, dset_tag,
-                            max_workers, missing_zones)
+            missing_zones += cls._run_single(tech, rev_sc_fp, reeds_build_fp,
+                                             cf_fp, pras_file,
+                                             forecast_path=forecast_fpath,
+                                             build_year=build_year,
+                                             res_class=res_class,
+                                             timezone=timezone,
+                                             dset_tag=dset_tag,
+                                             max_workers=max_workers)
 
         logger.info('Missing {} zones across all classes: {}'
                     .format(len(set(missing_zones)), set(missing_zones)))
 
     @classmethod
     def _run_single(cls, tech, rev_sc_fp, reeds_build_fp, cf_fp, pras_file,
-                    forecast_fpath=None, build_year=2050, tech_tag=None,
-                    res_class=None, timezone='US/Central', dset_tag=None,
-                    max_workers=None):
+                    forecast_fpath=None, build_year=2050, res_class=None,
+                    timezone='US/Central', dset_tag=None, max_workers=None):
         """Run pras aggregation and output for a single requested tech type.
         This will aggregate the generation profiles over region specific supply
         curve points found in rev_sc, after filtering rev_sc for the requested
@@ -692,9 +701,6 @@ class PrasAggregation(PlexosAggregation):
             generation profiles are retrieved from.
         build_year : int, optional
             REEDS year of interest, by default 2050
-        tech_tag : str | None
-            Optional technology tag to include as a suffix in the plexos output
-            csv column headers.
         res_class : int | None
             Optional resource class to use to filter supply curve points.
             For example, if res_class = 3 then only supply curve points with
@@ -716,6 +722,7 @@ class PrasAggregation(PlexosAggregation):
             available workers. 1 will run in serial.
         """
 
+        missing_zones = []
         if res_class is None:
             res_classes = cls.get_pras_classes(pras_file, tech)
         else:
@@ -724,13 +731,12 @@ class PrasAggregation(PlexosAggregation):
             pa = cls(rev_sc_fp, reeds_build_fp, cf_fp, pras_file,
                      forecast_fpath=forecast_fpath,
                      build_year=build_year,
-                     tech_tag=tech_tag,
                      tech_type=tech,
                      res_class=res_class,
                      timezone=timezone,
                      dset_tag=dset_tag,
                      max_workers=max_workers)
-            missing_zones += pa.missing_zones
             profiles = pa.make_profiles()
-
             pa.export(pa.time_index, profiles)
+            missing_zones += pa.missing_zones
+        return missing_zones

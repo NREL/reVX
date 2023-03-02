@@ -110,6 +110,8 @@ def test_pras_agg_output(log=True):
                 pras_saved = pras_res['generators/capacity'][:, pi]
                 prof_out = profiles[:, pa.sc_build_indices[i]]
                 assert np.array_equal(pras_saved, prof_out)
+                built_cap = pa.built_capacity[i]
+                assert np.max(pras_saved) <= built_cap
 
 
 def execute_pytest(capture='all', flags='-rapP'):
