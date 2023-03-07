@@ -6,7 +6,6 @@ from __future__ import print_function, division, absolute_import
 import os
 
 import reVX.plexos as reV_plexos
-import reVX.reeds as reV_reeds
 import reVX.rpm as reV_rpm
 from reVX.version import __version__
 
