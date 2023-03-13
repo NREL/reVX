@@ -80,7 +80,6 @@ def features_with_centroid_in_county(features, county):
     features : geopandas.GeoDataFrame
         Features that have centroid in county.
     """
-
     mask = features.centroid.within(county['geometry'].values[0])
     return features.loc[mask]
 
