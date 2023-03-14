@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=protected-access,unused-argument,redefined-outer-name
+# pylint: disable=too-many-arguments,too-many-locals
 """
 Setbacks tests
 """
@@ -29,8 +30,9 @@ from reVX.setbacks.regulations import (SetbackRegulations,
                                        select_setback_regulations)
 from reVX.setbacks import SETBACKS
 from reVX.setbacks.base import Rasterizer
-from reVX.setbacks.setbacks_cli import main
+from reVX.setbacks.setbacks_cli import cli
 from reVX.utilities import ExclusionsConverter
+
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
 HUB_HEIGHT = 135
@@ -104,6 +106,15 @@ def return_to_main_test_dir():
     finally:
         # teardown (i.e. return to original dir)
         os.chdir(previous_dir)
+
+
+def _find_out_tiff_file(directory):
+    """Find the (single) tiff output file in the directory. """
+
+    out_file = [fp for fp in os.listdir(directory) if fp.endswith("tiff")]
+    assert any(out_file)
+    out_file = os.path.join(directory, out_file[0])
+    return out_file
 
 
 def test_setback_regulations_init():
@@ -230,8 +241,9 @@ def test_setbacks_no_computation(setbacks_class):
         regs.to_csv(regs_fpath, index=False)
         regs = SetbackRegulations(10, regulations_fpath=regs_fpath)
         setbacks = setbacks_class(EXCL_H5, regs, features=feature_file)
-        with pytest.raises(ValueError):
-            setbacks.compute_exclusions()
+        with pytest.warns(UserWarning):
+            test = setbacks.compute_exclusions()
+        assert np.allclose(test, setbacks.no_exclusions_array)
 
 
 @pytest.mark.parametrize(
@@ -256,7 +268,8 @@ def test_setbacks_saving_tiff_h5():
                                 'Rhode_Island.gpkg')
     regs = SetbackRegulations(0, regulations_fpath=None, multiplier=1)
     with tempfile.TemporaryDirectory() as td:
-        assert not os.path.exists(os.path.join(td, "Rhode_Island.tif"))
+        out_fn = os.path.join(td, "Rhode_Island.tif")
+        assert not os.path.exists(out_fn)
 
         excl_fpath = os.path.basename(EXCL_H5)
         excl_fpath = os.path.join(td, excl_fpath)
@@ -264,12 +277,12 @@ def test_setbacks_saving_tiff_h5():
         with ExclusionLayers(excl_fpath) as exc:
             assert "ri_parcel_setbacks" not in exc.layers
 
-        SETBACKS["parcel"].run(excl_fpath, feature_file, td, regs,
+        SETBACKS["parcel"].run(excl_fpath, feature_file, out_fn, regs,
                                out_layers={'Rhode_Island.gpkg':
                                            "ri_parcel_setbacks"})
 
-        assert os.path.exists(os.path.join(td, "Rhode_Island.tif"))
-        with Geotiff(os.path.join(td, "Rhode_Island.tif")) as tif:
+        assert os.path.exists(out_fn)
+        with Geotiff(out_fn) as tif:
             assert np.isclose(tif.values, 0).all()
 
         with ExclusionLayers(excl_fpath) as exc:
@@ -875,8 +888,10 @@ def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
                                         multiplier=None)
         local_setbacks = setbacks_class(EXCL_H5, regulations,
                                         features=features_path)
-        with pytest.raises(ValueError):
-            local_setbacks.compute_exclusions(max_workers=1)
+        with pytest.warns(UserWarning):
+            test = local_setbacks.compute_exclusions(max_workers=1)
+
+        assert np.allclose(test, local_setbacks.no_exclusions_array)
 
         regulations = regulations_class(*setback_distance,
                                         regulations_fpath=regs_fpath,
@@ -901,30 +916,23 @@ def test_cli_structures(runner, config_input):
     """
     structures_path = os.path.join(TESTDATADIR, 'setbacks', 'RhodeIsland.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        config = {
-            "log_directory": td,
-            "execution_control": {
-                "option": "local"
-            },
-            "excl_fpath": EXCL_H5,
-            "feature_type": "structure",
-            "features_path": structures_path,
-            "log_level": "INFO",
-            "multiplier": MULTIPLIER,
-            "replace": True,
-        }
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"structure": structures_path},
+                  "log_level": "INFO",
+                  "generic_setback_multiplier": MULTIPLIER,
+                  "replace": True}
         config.update(config_input)
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(cli, ['compute', '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
-
-        test_fp = os.path.join(td, 'RhodeIsland.tif')
+        test_fp = _find_out_tiff_file(td)
 
         with Geotiff(test_fp) as tif:
             test = tif.values
@@ -957,25 +965,19 @@ def test_cli_railroads(runner, config_input):
             regs.to_csv(regs_fpath, index=False)
         else:
             shutil.copy(REGS_FPATH, regs_fpath)
-        config = {
-            "log_directory": td,
-            "execution_control": {
-                "option": "local"
-            },
-            "excl_fpath": EXCL_H5,
-            "feature_type": "rail",
-            "features_path": rail_path,
-            "log_level": "INFO",
-            "regs_fpath": regs_fpath,
-            "replace": True,
-        }
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"rail": rail_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True}
         config.update(config_input)
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(cli, ['compute', '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
@@ -983,9 +985,7 @@ def test_cli_railroads(runner, config_input):
         baseline_fp = os.path.join(TESTDATADIR, 'setbacks',
                                    'existing_rails.tif')
 
-        test_fp = os.path.basename(rail_path)
-        test_fp = ".".join(test_fp.split('.')[:-1] + ['tif'])
-        test_fp = os.path.join(td, test_fp)
+        test_fp = _find_out_tiff_file(td)
 
         with Geotiff(baseline_fp) as tif:
             baseline = tif.values
@@ -1017,30 +1017,24 @@ def test_cli_parcels(runner, config_input, regs):
         regs_fpath = os.path.basename(regs)
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(regs, regs_fpath)
-        config = {
-            "log_directory": td,
-            "execution_control": {
-                "option": "local"
-            },
-            "excl_fpath": EXCL_H5,
-            "feature_type": "parcel",
-            "features_path": parcel_path,
-            "log_level": "INFO",
-            "regs_fpath": regs_fpath,
-            "replace": True,
-        }
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"parcel": parcel_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True}
         config.update(config_input)
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(cli, ['compute', '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test_fp = os.path.join(td, 'Rhode_Island.tif')
+        test_fp = _find_out_tiff_file(td)
 
         with Geotiff(test_fp) as tif:
             test = tif.values
@@ -1070,32 +1064,24 @@ def test_cli_water(runner, config_input, regs):
         regs_fpath = os.path.basename(regs)
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(regs, regs_fpath)
-        config = {
-            "log_directory": td,
-            "execution_control": {
-                "option": "local"
-            },
-            "excl_fpath": EXCL_H5,
-            "feature_type": "water",
-            "features_path": water_path,
-            "log_level": "INFO",
-            "regs_fpath": regs_fpath,
-            "replace": True,
-        }
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"water": water_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True}
         config.update(config_input)
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(cli, ['compute', '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test_fp = os.path.basename(water_path)
-        test_fp = ".".join(test_fp.split('.')[:-1] + ['tif'])
-        test_fp = os.path.join(td, test_fp)
+        test_fp = _find_out_tiff_file(td)
 
         with Geotiff(test_fp) as tif:
             test = tif.values
@@ -1115,31 +1101,25 @@ def test_cli_partial_setbacks(runner):
         regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
-        config = {
-            "log_directory": td,
-            "execution_control": {
-                "option": "local"
-            },
-            "excl_fpath": EXCL_H5,
-            "feature_type": "parcel",
-            "features_path": parcel_path,
-            "log_level": "INFO",
-            "regs_fpath": regs_fpath,
-            "replace": True,
-            "base_setback_dist": BASE_SETBACK_DIST,
-            "weights_calculation_upscale_factor": 10
-        }
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"parcel": parcel_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "base_setback_dist": BASE_SETBACK_DIST,
+                  "weights_calculation_upscale_factor": 10}
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(cli, ['compute', '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test_fp = os.path.join(td, 'Rhode_Island.tif')
+        test_fp = _find_out_tiff_file(td)
 
         with Geotiff(test_fp) as tif:
             test = tif.values
@@ -1148,6 +1128,79 @@ def test_cli_partial_setbacks(runner):
         assert (0 <= test).all()
         assert (test <= 1).all()
         assert (test < 1).any()
+
+    LOGGERS.clear()
+
+
+@pytest.mark.parametrize("as_file", [True, False])
+def test_cli_multiple_generic_multipliers(runner, as_file):
+    """
+    Test CLI with partial setbacks.
+    """
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    water_path = os.path.join(TESTDATADIR, 'setbacks',
+                              'Rhode_Island_Water.gpkg')
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        mults = {"parcel": 2, "water": 10}
+        if as_file:
+            fp = os.path.join(td, "mults.json")
+            with open(fp, "w") as fh:
+                json.dump(mults, fh)
+            mults = fp
+
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"parcel": parcel_path, "water": water_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "base_setback_dist": BASE_SETBACK_DIST,
+                  "generic_setback_multiplier": mults}
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(cli, ['compute', '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        parcel_out_file = [fp for fp in os.listdir(td)
+                           if fp.endswith("tiff") and "parcel" in fp]
+        assert any(parcel_out_file)
+        parcel_out_file = os.path.join(td, parcel_out_file[0])
+
+        with Geotiff(parcel_out_file) as tif:
+            test = tif.values
+
+        regulations = SetbackRegulations(BASE_SETBACK_DIST,
+                                         regulations_fpath=regs_fpath,
+                                         multiplier=2)
+        setbacks = SETBACKS["parcel"](EXCL_H5, regulations,
+                                      features=parcel_path)
+        truth = setbacks.compute_exclusions(max_workers=1)
+        assert np.allclose(test, truth)
+
+        water_out_file = [fp for fp in os.listdir(td)
+                          if fp.endswith("tiff") and "water" in fp]
+        assert any(water_out_file)
+        water_out_file = os.path.join(td, water_out_file[0])
+
+        with Geotiff(water_out_file) as tif:
+            test = tif.values
+
+        regulations = SetbackRegulations(BASE_SETBACK_DIST,
+                                         regulations_fpath=regs_fpath,
+                                         multiplier=10)
+        setbacks = SETBACKS["water"](EXCL_H5, regulations,
+                                     features=water_path)
+        truth = setbacks.compute_exclusions(max_workers=1)
+        assert np.allclose(test, truth)
 
     LOGGERS.clear()
 
@@ -1173,11 +1226,10 @@ def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
     Test CLI for merging layers.
     """
     out = {}
-    config_run_inputs = {
-        "generic": {"multiplier": 100},
-        "local": {"regs_fpath": None},
-        "merged": {"multiplier": 100, "regs_fpath": None}
-    }
+    config_run_inputs = {"generic": {"generic_setback_multiplier": 100},
+                         "local": {"regs_fpath": None},
+                         "merged": {"generic_setback_multiplier": 100,
+                                    "regs_fpath": None}}
 
     for run_type, c_in in config_run_inputs.items():
         with tempfile.TemporaryDirectory() as td:
@@ -1188,17 +1240,12 @@ def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
             if "regs_fpath" in c_in:
                 c_in["regs_fpath"] = regs_fpath
 
-            config = {
-                "log_directory": td,
-                "execution_control": {
-                    "option": "local"
-                },
-                "excl_fpath": EXCL_H5,
-                "feature_type": setbacks_type,
-                "features_path": features_path,
-                "log_level": "INFO",
-                "replace": True,
-            }
+            config = {"log_directory": td,
+                      "execution_control": {"option": "local"},
+                      "excl_fpath": EXCL_H5,
+                      "features": {setbacks_type: features_path},
+                      "log_level": "INFO",
+                      "replace": True}
 
             config.update(c_in)
             config.update(config_input)
@@ -1206,12 +1253,12 @@ def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
             with open(config_path, 'w') as f:
                 json.dump(config, f)
 
-            result = runner.invoke(main, ['from-config', '-c', config_path])
+            result = runner.invoke(cli, ['compute', '-c', config_path])
             msg = ('Failed with error {}'
                    .format(traceback.print_exception(*result.exc_info)))
             assert result.exit_code == 0, msg
 
-            test_fp = os.path.join(td, out_fn)
+            test_fp = _find_out_tiff_file(td)
 
             with Geotiff(test_fp) as tif:
                 out[run_type] = tif.values
@@ -1235,24 +1282,18 @@ def test_cli_invalid_config_missing_height(runner):
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(REGS_FPATH, regs_fpath)
         for ft in ["rail", "parcel"]:
-            config = {
-                "log_directory": td,
-                "execution_control": {
-                    "option": "local"
-                },
-                "excl_fpath": EXCL_H5,
-                "feature_type": ft,
-                "features_path": rail_path,
-                "log_level": "INFO",
-                "regs_fpath": regs_fpath,
-                "replace": True
-            }
+            config = {"log_directory": td,
+                      "execution_control": {"option": "local"},
+                      "excl_fpath": EXCL_H5,
+                      "features": {ft: rail_path},
+                      "log_level": "INFO",
+                      "regs_fpath": regs_fpath,
+                      "replace": True}
             config_path = os.path.join(td, 'config.json')
             with open(config_path, 'w') as f:
                 json.dump(config, f)
 
-            result = runner.invoke(main, ['from-config',
-                                          '-c', config_path])
+            result = runner.invoke(cli, ['compute', '-c', config_path])
 
             assert result.exit_code == 1
 
@@ -1269,52 +1310,25 @@ def test_cli_invalid_config_tmi(runner):
         regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
-        config = {
-            "log_directory": td,
-            "execution_control": {
-                "option": "local"
-            },
-            "excl_fpath": EXCL_H5,
-            "feature_type": "parcel",
-            "features_path": parcel_path,
-            "log_level": "INFO",
-            "regs_fpath": regs_fpath,
-            "replace": True,
-            "base_setback_dist": 1,
-            "rotor_diameter": 1,
-            "hub_height": 1
-        }
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"parcel": parcel_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "base_setback_dist": 1,
+                  "rotor_diameter": 1,
+                  "hub_height": 1}
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(cli, ['compute', '-c', config_path])
         assert result.exit_code == 1
         assert result.exc_info
         assert result.exc_info[0] == RuntimeError
         assert "Must provide either" in str(result.exception)
-
-    LOGGERS.clear()
-
-
-def test_cli_invalid_inputs(runner):
-    """
-    Test CLI with invalid inputs to main function.
-    """
-    rail_path = os.path.join(TESTDATADIR, 'setbacks',
-                             'Rhode_Island_Railroads.gpkg')
-    result = runner.invoke(
-        main,
-        ['local',
-         '-excl', EXCL_H5,
-         '-ft', "rail",
-         '-feats', rail_path,
-         '-o', TESTDATADIR]
-    )
-
-    assert result.exit_code == 1
-    assert isinstance(result.exception, RuntimeError)
 
     LOGGERS.clear()
 
@@ -1326,9 +1340,6 @@ def test_cli_saving(runner):
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        test_fp = os.path.join(td, 'Rhode_Island.tif')
-        assert not os.path.exists(test_fp)
-
         regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
         regs_fpath = os.path.join(td, regs_fpath)
         shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
@@ -1339,33 +1350,25 @@ def test_cli_saving(runner):
         with ExclusionLayers(excl_fpath) as exc:
             assert "ri_parcel_setbacks" not in exc.layers
 
-        config = {
-            "log_directory": td,
-            "execution_control": {
-                "option": "local"
-            },
-            "excl_fpath": excl_fpath,
-            "feature_type": "parcel",
-            "features_path": parcel_path,
-            "log_level": "INFO",
-            "regs_fpath": regs_fpath,
-            "replace": True,
-            "base_setback_dist": BASE_SETBACK_DIST,
-            "out_layers": {
-                "Rhode_Island.gpkg": "ri_parcel_setbacks"
-            }
-        }
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": excl_fpath,
+                  "features": {"parcel": parcel_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "base_setback_dist": BASE_SETBACK_DIST,
+                  "out_layers": {"Rhode_Island.gpkg": "ri_parcel_setbacks"}}
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path])
+        result = runner.invoke(cli, ['compute', '-c', config_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        assert os.path.exists(test_fp)
+        test_fp = _find_out_tiff_file(td)
         with Geotiff(test_fp) as tif:
             assert tif.values.sum() == 3
 
@@ -1376,7 +1379,8 @@ def test_cli_saving(runner):
     LOGGERS.clear()
 
 
-def test_cli_merge_setbacks(runner, return_to_main_test_dir):
+@pytest.mark.parametrize("inclusions", [True, False])
+def test_cli_merge_setbacks(runner, return_to_main_test_dir, inclusions):
     """Test the setbacks merge CLI command."""
 
     with ExclusionLayers(EXCL_H5) as excl:
@@ -1390,26 +1394,25 @@ def test_cli_merge_setbacks(runner, return_to_main_test_dir):
     with tempfile.TemporaryDirectory() as td:
         tiff_1 = os.path.join(td, 'test1.tif')
         tiff_2 = os.path.join(td, 'test2.tif')
-        out_fp = os.path.join(td, 'merged.tif')
+        out_fp = 'merged.tif'
 
-        result = runner.invoke(main, ['merge', '-td', td, '-o', out_fp])
+        os.chdir(td)
+        config = {"execution_control": {"option": "local"},
+                  "merge_file_pattern": {out_fp: 'test*.tif'},
+                  "are_partial_inclusions": inclusions}
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(cli, ['merge', '-c', config_path])
         assert result.exit_code == 1
 
         ExclusionsConverter.write_geotiff(tiff_1, profile, arr1)
         ExclusionsConverter.write_geotiff(tiff_2, profile, arr2)
 
-        runner.invoke(main, ['merge', '-td', td, '-o', out_fp])
+        runner.invoke(cli, ['merge', '-c', config_path])
         with Geotiff(out_fp) as tif:
-            assert np.allclose(tif.values, 1)
-
-        runner.invoke(main, ['merge', '-td', td, '-o', out_fp, '-inclusions'])
-        with Geotiff(out_fp) as tif:
-            assert np.allclose(tif.values, 0)
-
-        os.chdir(td)
-        runner.invoke(main, ['merge', '-td', td, '-o', "m.tif"])
-        with Geotiff(os.path.join(td, "m.tif")) as tif:
-            assert np.allclose(tif.values, 1)
+            assert np.allclose(tif.values, 0 if inclusions else 1)
 
 
 def execute_pytest(capture='all', flags='-rapP'):
