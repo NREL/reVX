@@ -25,6 +25,7 @@ class GPKGMeta:
         self._bbox = None
         self._primary_key_column = None
         self._geom_table_suffix = None
+        self._num_feats = None
         self._feat_ids = None
 
     @property
@@ -96,11 +97,24 @@ class GPKGMeta:
         return self._geom_table_suffix
 
     @property
+    def num_feats(self):
+        """int: Number of feature rows."""
+        if self._num_feats is None:
+            with sqlite3.connect(self.filename) as con:
+                cursor = con.cursor()
+                cursor.execute("SELECT COUNT(distinct id) FROM "
+                               "rtree_{table_suffix};"
+                               .format(table_suffix=self.geom_table_suffix))
+                self._num_feats = cursor.fetchall()[0][0]
+        return self._num_feats
+
+    @property
     def feat_ids(self):
         """tuple: All the feature ID's in the GeoPackage. """
         if self._feat_ids is None:
             with sqlite3.connect(self.filename) as con:
                 cursor = con.cursor()
+                cursor.execute("PRAGMA temp_store=2")
                 cursor.execute("SELECT distinct id FROM rtree_{table_suffix} "
                                "ORDER BY miny, minx"
                                .format(table_suffix=self.geom_table_suffix))
