@@ -441,11 +441,6 @@ def merge_setbacks(_out_path, _pattern, are_partial_inclusions=None,
                    purge_chunks=False):
     """Combine many input setback GeoTIFFs into a single layer.
 
-    This command assumes the data in separate files is non-overlapping.
-    In other words, a file containing setbacks exclusions for Illinois
-    should not contain any exclusions for Indiana, assuming the setbacks
-    for Indiana are in a separate tiff file in the same directory.
-
     Parameters
     ----------
     _out_path : str
