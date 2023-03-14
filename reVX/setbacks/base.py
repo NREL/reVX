@@ -13,7 +13,10 @@ from concurrent.futures import as_completed
 
 import numpy as np
 import geopandas as gpd
-from rasterio import windows, transform, Affine, features as rio_features
+from shapely.ops import unary_union
+from shapely.validation import make_valid
+from rasterio import (windows, transform, Affine, coords,
+                      features as rio_features)
 
 from rex.utilities import log_mem
 from rex.utilities.execution import SpawnProcessPool
@@ -166,9 +169,6 @@ class Rasterizer:
         arr : ndarray
             Rasterized array of shapes.
         """
-        logger.debug('Generating exclusion array of shape {}'
-                     .format(self.arr_shape))
-        log_mem(logger)
 
         shapes = shapes or []
         shapes = [(geom, 1) for geom in shapes if geom is not None]
@@ -311,7 +311,7 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
 
         self._regulations.df = (self.regulations_table[mask]
                                 .reset_index(drop=True))
-        logger.debug('Computing setbacks for regulations in {} counties'
+        logger.debug('Loaded and processed setback regulations for {} counties'
                      .format(len(self.regulations_table)))
 
     def _local_exclusions_arguments(self, regulation_value, county):
@@ -389,9 +389,13 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
                      .format(county.iloc[0]['FIPS']))
         log_mem(logger)
         features = _load_features(features_ids, features_fp, col, crs)
+        feature_bounds = _buffered_feature_bounds(features, rasterizer,
+                                                  regulation_value)
+
         features = FEATURE_FILTERS[features_filter_type](features, county)
         features = BUFFERS[buffer_type](features, regulation_value)
-        return _rasterize_within_window(features, county, rasterizer)
+
+        return _rasterize_within_window(features, feature_bounds, rasterizer)
 
     def compute_generic_exclusions(self, max_workers=None):
         """Compute generic setbacks.
@@ -419,37 +423,23 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
 
         max_workers = max_workers or os.cpu_count()
         ids = self._features_meta.feat_ids
+        num_feats = self._features_meta.num_feats
         pk = self._features_meta.primary_key_column
         crs = self.profile['crs']
         exclusions = None
         if max_workers > 1:
-            msg = ("Computing generic setbacks from {} features using {} "
-                   "workers".format(len(ids), max_workers))
-            logger.info(msg)
+            msg = ("Computing generic setbacks from {:,} features using {} "
+                   "workers".format(num_feats, max_workers))
+            logger.debug(msg)
 
             loggers = [__name__, 'reVX', 'rex']
             spp_kwargs = {"max_workers": max_workers, "loggers": loggers}
             with SpawnProcessPool(**spp_kwargs) as exe:
-                futures = []
-                for start in range(0, len(ids), self.NUM_FEATURES_PER_WORKER):
-                    end = start + self.NUM_FEATURES_PER_WORKER
-                    future = exe.submit(_compute_exclusions, ids[start:end],
-                                        self._features, pk, crs,
-                                        self.BUFFER_TYPE,
-                                        self._regulations.generic,
-                                        self._rasterizer)
-                    futures.append(future)
-
-                for future in as_completed(futures):
-                    new_exclusions, slices = future.result()
-                    futures.remove(future)
-                    exclusions = self._combine_exclusions(exclusions,
-                                                          new_exclusions,
-                                                          slices=slices)
-
+                exclusions = self._compute_generic_exclusions_in_chunks(
+                    exe, max_workers, ids, pk, crs)
         else:
             logger.info("Computing generic setbacks from {} features in "
-                        "serial.".format(len(ids)))
+                        "serial.".format(num_feats))
             for start in range(0, len(ids), self.NUM_FEATURES_PER_WORKER):
                 end = start + self.NUM_FEATURES_PER_WORKER
                 out = _compute_exclusions(ids[start:end], self._features, pk,
@@ -460,7 +450,51 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
                 exclusions = self._combine_exclusions(exclusions,
                                                       new_exclusions,
                                                       slices=slices)
+                msg = ("Computed generic setbacks for {:,}/{:,} features"
+                       .format(end, num_feats))
+                logger.info(msg)
 
+        if exclusions is None:
+            exclusions = self.no_exclusions_array
+
+        return exclusions
+
+    def _compute_generic_exclusions_in_chunks(self, exe, max_submissions,
+                                              ids, pk, crs):
+        """Compute exclusions in parallel using futures. """
+        futures, exclusions = {}, None
+
+        futures = []
+        start_inds = range(0, len(ids), self.NUM_FEATURES_PER_WORKER)
+        for ind, start in enumerate(start_inds, start=1):
+            end = start + self.NUM_FEATURES_PER_WORKER
+            future = exe.submit(_compute_exclusions, ids[start:end],
+                                self._features, pk, crs,
+                                self.BUFFER_TYPE,
+                                self._regulations.generic,
+                                self._rasterizer)
+            futures.append(future)
+            if ind % max_submissions == 0:
+                exclusions = self._collect_ge_futures(futures, exclusions)
+                msg = ("Computed generic setbacks for {:,}/{:,} features"
+                       .format(end, len(ids)))
+                logger.info(msg)
+
+        exclusions = self._collect_ge_futures(futures, exclusions)
+        return exclusions
+
+    def _collect_ge_futures(self, futures, exclusions):
+        """Collect all futures from the input dictionary. """
+        logger.debug(f"Collecting {len(futures)} futures...")
+        log_mem(logger)
+        for future in as_completed(futures):
+            new_exclusions, slices = future.result()
+            exclusions = self._combine_exclusions(exclusions,
+                                                  new_exclusions,
+                                                  slices=slices)
+        futures.clear()
+        logger.debug("Finished collecting futures chunk!")
+        log_mem(logger)
         return exclusions
 
     def _regulation_table_mask(self):
@@ -544,31 +578,73 @@ def _load_features(features_ids, features_fp, col, crs):
     features = gpd.read_file(features_fp,
                              where="{} in ({})".format(col, ids))
     features = features.to_crs(crs=crs)
-    logger.debug("  Loaded {} features".format(len(features)))
+    features["geometry"] = features.apply(_make_row_shape_valid, axis=1)
+
+    logger.debug("Loaded {} features".format(len(features)))
+    logger.debug("Features total bounds: {}".format(features.total_bounds))
+    log_mem(logger)
+
     return features
+
+
+def _make_row_shape_valid(row):
+    """Make a row shape valid using shapely `make_valid`"""
+    return unary_union(make_valid(row["geometry"]))
 
 
 def _compute_exclusions(features_ids, features_fp, col, crs, buffer_type,
                         setback, rasterizer):
     """Compute exclusions by loading features, buffering, and rasterizing. """
+    setbacks, feature_bounds = _load_and_buffer(features_ids, features_fp,
+                                                col, crs, buffer_type,
+                                                setback, rasterizer)
+    if setbacks is None:
+        return None, None
+
+    return _rasterize_within_window(setbacks, feature_bounds, rasterizer)
+
+
+def _load_and_buffer(features_ids, features_fp, col, crs, buffer_type,
+                     setback, rasterizer):
+    """Load features and immediately buffer them.
+
+    The intention is to keep loading and buffering in one function so
+    that large sets of features get dropped immediately instead of
+    hanging in memory during rasterization.
+    """
     features = _load_features(features_ids, features_fp, col, crs)
+    excl_array_bbox = transform.array_bounds(*rasterizer.arr_shape[1:],
+                                             rasterizer.transform)
+    if coords.disjoint_bounds(excl_array_bbox, features.total_bounds):
+        return None, None
+
+    logger.debug(f"Buffering {len(features)} features...")
     setbacks = BUFFERS[buffer_type](features, setback)
-    return _rasterize_within_window(setbacks, features.buffer(setback * 2),
-                                    rasterizer)
+    feature_bounds = _buffered_feature_bounds(features, rasterizer, setback)
+    return setbacks, feature_bounds
 
 
-def _rasterize_within_window(features, geoseries, rasterizer):
+def _buffered_feature_bounds(features, rasterizer, regulation_value):
+    """Calculate the buffered feature bounds"""
+    buffer_len = max(abs(rasterizer.transform.a), abs(rasterizer.transform.e))
+    bound_buffer = regulation_value * 2 + buffer_len
+    return features.buffer(bound_buffer).total_bounds
+
+
+def _rasterize_within_window(features, bounds, rasterizer):
     """Rasterize the features using the geoseries bounding box as a window. """
-    window = _cropped_window(geoseries, rasterizer.transform,
+    window = _cropped_window(bounds, rasterizer.transform,
                              rasterizer.arr_shape[1:])
+    logger.debug(f"Rasterizing {len(features)} features using {window!r}")
     exclusions = rasterizer.rasterize(features, window=window)
+    log_mem(logger)
+    logger.debug(f"Exclusion mem size: {exclusions.nbytes / 1048576:.2f}MB")
     return exclusions, window.toslices()
 
 
-def _cropped_window(geoseries, raster_transform, shape):
+def _cropped_window(bounds, raster_transform, shape):
     """Calculate the raster array window corresponding to the bounding box."""
-    buffer_len = max(abs(raster_transform.a), abs(raster_transform.e))
-    left, bottom, right, top = geoseries.buffer(buffer_len).total_bounds
+    left, bottom, right, top = bounds
 
     rows, cols = transform.rowcol(raster_transform,
                                   [left, right, right, left],
@@ -580,5 +656,5 @@ def _cropped_window(geoseries, raster_transform, shape):
     row_stop = min(ceil(max(rows)), shape[0])
     col_stop = min(ceil(max(cols)), shape[1])
     return windows.Window(col_off=col_start, row_off=row_start,
-                          width=max(col_stop - col_start, 0.0),
-                          height=max(row_stop - row_start, 0.0))
+                          width=max(col_stop - col_start, 0),
+                          height=max(row_stop - row_start, 0))
