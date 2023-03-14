@@ -156,7 +156,7 @@ class Rasterizer:
         Parameters
         ----------
         shapes : list, optional
-            List of geometries to rasterize (i.e. list(gdf["geometry])).
+            List of geometries to rasterize (i.e. list(gdf["geometry"])).
             If `None` or empty list, returns array of zeros.
         window : :cls:`rasterio.windows.Window`
             A ``rasterio`` window defining the area of the raster. Can
