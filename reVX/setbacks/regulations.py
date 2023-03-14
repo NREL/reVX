@@ -69,11 +69,11 @@ class SetbackRegulations(AbstractBaseRegulations):
         """
         super()._preflight_check(regulations_fpath)
 
-        if self._multi:
+        if self._multi is not None:
             logger.debug('Computing setbacks using base setback distance '
                          'multiplier of {}'.format(self._multi))
 
-        if not regulations_fpath and not self._multi:
+        if not regulations_fpath and self._multi is None:
             msg = ('Computing setbacks requires a regulations '
                    '.csv file and/or a generic multiplier!')
             logger.error(msg)
@@ -120,6 +120,7 @@ class WindSetbackRegulations(SetbackRegulations):
     """Wind setback regulation setback values. """
 
     MULTIPLIERS = {'high': 3, 'moderate': 1.1}
+    """Named generic multipliers. """
 
     def __init__(self, hub_height, rotor_diameter, regulations_fpath=None,
                  multiplier=None):
@@ -157,7 +158,8 @@ class WindSetbackRegulations(SetbackRegulations):
             to calculate the setback. If supplied along with
             ``regulations_fpath``, this input will be used to apply a
             setback to all counties not listed in the regulations file.
-            By default `None`.
+            If this input is a string, it must be a key in
+            :attr:`MULTIPLIERS`. By default `None`.
         """
         self._hub_height = hub_height
         self._rotor_diameter = rotor_diameter

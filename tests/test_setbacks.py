@@ -992,7 +992,7 @@ def test_cli_railroads(runner, config_input):
         with Geotiff(test_fp) as tif:
             test = tif.values
 
-        np.allclose(baseline, test)
+        assert np.allclose(baseline, test)
 
     LOGGERS.clear()
 
@@ -1415,9 +1415,9 @@ def test_cli_merge_setbacks(runner, return_to_main_test_dir, inclusions):
             assert np.allclose(tif.values, 0 if inclusions else 1)
 
 
-def test_features_can_be_list(runner):
+def test_features_can_be_list_and_relative(runner):
     """
-    Test that input features can be a list of files.
+    Test that input features can be a list of files with relative fp's.
     """
     rail_path = os.path.join(TESTDATADIR, 'setbacks',
                              'Rhode_Island_Railroads.gpkg')
@@ -1463,7 +1463,59 @@ def test_features_can_be_list(runner):
         with Geotiff(test_fp) as tif:
             test = tif.values
 
-        np.allclose(baseline, test)
+        assert np.allclose(baseline, test)
+
+    LOGGERS.clear()
+
+
+@pytest.mark.parametrize("setback_input", [(0, 1), (1, 0)])
+def test_custom_features_0_setback(runner, setback_input):
+    """
+    Test custom features specs input and 0 setback distance.
+    """
+    base_setback_dist, generic_setback_multiplier = setback_input
+    rail_path = os.path.join(TESTDATADIR, 'setbacks',
+                             'Rhode_Island_Railroads.gpkg')
+    railroads = gpd.read_file(rail_path)
+    with tempfile.TemporaryDirectory() as td:
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"rail-new": [rail_path]},
+                  "log_level": "INFO",
+                  "regs_fpath": None,
+                  "replace": True,
+                  "base_setback_dist": base_setback_dist,
+                  "generic_setback_multiplier": generic_setback_multiplier}
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(cli, ['compute', '-c', config_path])
+        assert result.exit_code == 1
+
+        rail_specs = {"feature_type": "railroads",
+                      "buffer_type": "default",
+                      "feature_filter_type": "clip",
+                      "feature_subtypes_to_exclude": None,
+                      "num_features_per_worker": 10_000}
+        config["feature_specs"] = {"rail-new": rail_specs}
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(cli, ['compute', '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        rasterizer = Rasterizer(EXCL_H5, weights_calculation_upscale_factor=1)
+        truth = rasterizer.rasterize(list(railroads["geometry"]))
+
+        test_fp = _find_out_tiff_file(td)
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert np.allclose(truth, test)
 
     LOGGERS.clear()
 
