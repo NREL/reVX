@@ -291,8 +291,8 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         """Yield county exclusion arguments. """
         for ind, regulation_info in enumerate(self._regulations, start=1):
             exclusion, cnty = regulation_info
-            logger.info('Computing exclusions for {}/{} counties'
-                        .format(ind, len(self.regulations_table)))
+            logger.debug('Computing exclusions for {}/{} counties'
+                         .format(ind, len(self.regulations_table)))
             for args in self._local_exclusions_arguments(exclusion, cnty):
                 yield exclusion, cnty, args
 
@@ -312,33 +312,21 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         exclusions : ndarray
             Raster array of exclusions.
         """
-        max_workers = max_workers or os.cpu_count()
+        mw = max_workers or os.cpu_count()
 
         log_mem(logger)
         exclusions = None
-        if max_workers > 1:
-            futures = {}
+        if mw > 1:
             logger.info('Computing local exclusions in parallel using {} '
-                        'workers'.format(max_workers))
-            spp_kwargs = {"max_workers": max_workers,
-                          "loggers": [__name__, 'reVX']}
+                        'workers'.format(mw))
+            spp_kwargs = {"max_workers": mw, "loggers": [__name__, 'reVX']}
             with SpawnProcessPool(**spp_kwargs) as exe:
-                for exclusion_value, cnty, args in self._county_exclusions():
-                    future = exe.submit(self.compute_local_exclusions,
-                                        exclusion_value, cnty, *args)
-                    futures[future] = cnty['FIPS'].unique()
-
-                for future in as_completed(futures):
-                    local_exclusions, slices = future.result()
-                    exclusions = self._combine_exclusions(exclusions,
-                                                          local_exclusions,
-                                                          futures.pop(future),
-                                                          slices)
-                    log_mem(logger)
+                exclusions = self._compute_local_exclusions_in_chunks(exe, mw)
 
         else:
             logger.info('Computing local exclusions in serial')
-            for exclusion_value, cnty, args in self._county_exclusions():
+            for ind, cnty_inf in enumerate(self._county_exclusions(), start=1):
+                exclusion_value, cnty, args = cnty_inf
                 out = self.compute_local_exclusions(exclusion_value, cnty,
                                                     *args)
                 local_exclusions, slices = out
@@ -346,7 +334,36 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
                 exclusions = self._combine_exclusions(exclusions,
                                                       local_exclusions,
                                                       fips, slices)
+                logger.debug("Computed exclusions for {:,} counties"
+                             .format(ind))
+        if exclusions is None:
+            exclusions = self.no_exclusions_array
 
+        return exclusions
+
+    def _compute_local_exclusions_in_chunks(self, exe, max_submissions):
+        """Compute exclusions in parallel using futures. """
+        futures, exclusions = {}, None
+
+        for ind, reg in enumerate(self._county_exclusions(), start=1):
+            exclusion_value, cnty, args = reg
+            future = exe.submit(self.compute_local_exclusions,
+                                exclusion_value, cnty, *args)
+            futures[future] = cnty['FIPS'].unique()
+            if ind % max_submissions == 0:
+                exclusions = self._collect_local_futures(futures, exclusions)
+        exclusions = self._collect_local_futures(futures, exclusions)
+        return exclusions
+
+    def _collect_local_futures(self, futures, exclusions):
+        """Collect all futures from the input dictionary. """
+        for future in as_completed(futures):
+            new_exclusions, slices = future.result()
+            exclusions = self._combine_exclusions(exclusions,
+                                                  new_exclusions,
+                                                  futures.pop(future),
+                                                  slices=slices)
+            log_mem(logger)
         return exclusions
 
     def compute_exclusions(self, out_layer=None, out_tiff=None, replace=False,
@@ -407,8 +424,9 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         if not generic_exclusions_exist and not local_exclusions_exist:
             msg = ("Found no exclusions to compute: No regulations detected, "
                    "and generic multiplier not set.")
-            logger.error(msg)
-            raise ValueError(msg)
+            logger.warning(msg)
+            warn(msg)
+            return self.no_exclusions_array
 
         if generic_exclusions_exist and not local_exclusions_exist:
             return self.compute_generic_exclusions(max_workers=mw)
@@ -430,9 +448,12 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         return self._combine_exclusions(generic_exclusions, local_exclusions,
                                         local_fips, replace_existing=True)
 
-    def _combine_exclusions(self, existing, additional, cnty_fips=None,
+    def _combine_exclusions(self, existing, additional=None, cnty_fips=None,
                             slices=None, replace_existing=False):
         """Combine local exclusions using FIPS code"""
+        if additional is None:
+            return existing
+
         if existing is None:
             existing = self.no_exclusions_array.astype(additional.dtype)
 
