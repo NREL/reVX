@@ -34,7 +34,8 @@ class SetbackRegulations(AbstractBaseRegulations):
             numeric value of the setback or multiplier, and `FIPS`,
             which specifies a unique 5-digit code for each county (this
             can be an integer - no leading zeros required). Valid
-            options for the `Value Type` are:
+            options for the `Value Type` are (case-insensitive; dashes,
+            underscores, and spaces are interchangeable):
                 - "Structure Height Multiplier"
                 - "Meters"
             If this input is `None`, a generic setback of
@@ -142,7 +143,8 @@ class WindSetbackRegulations(SetbackRegulations):
             numeric value of the setback or multiplier, and `FIPS`,
             which specifies a unique 5-digit code for each county (this
             can be an integer - no leading zeros required). Valid
-            options for the `Value Type` are:
+            options for the `Value Type` are (case-insensitive; dashes,
+            underscores, and spaces are interchangeable:
                 - "Max-tip Height Multiplier"
                 - "Rotor-Diameter Multiplier"
                 - "Hub-height Multiplier"
