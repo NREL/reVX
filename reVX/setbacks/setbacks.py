@@ -131,7 +131,7 @@ SETBACK_SPECS = {
         "buffer_type": "default",
         "feature_filter_type": "clip",
         "feature_subtypes_to_exclude": None,
-        "num_features_per_worker": 10_000,
+        "num_features_per_worker": 700,
     },
 }
 """Default Setback Calculator Specifications.
