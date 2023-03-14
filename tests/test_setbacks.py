@@ -1415,6 +1415,59 @@ def test_cli_merge_setbacks(runner, return_to_main_test_dir, inclusions):
             assert np.allclose(tif.values, 0 if inclusions else 1)
 
 
+def test_features_can_be_list(runner):
+    """
+    Test that input features can be a list of files.
+    """
+    rail_path = os.path.join(TESTDATADIR, 'setbacks',
+                             'Rhode_Island_Railroads.gpkg')
+    railroads = gpd.read_file(rail_path)
+    third = len(railroads) // 3
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(REGS_FPATH, regs_fpath)
+
+        fp1 = os.path.join(td, "rail_0.gpkg")
+        fp2 = os.path.join(td, "rails_10.gpkg")
+        fp3 = os.path.join(td, "rails_2.gpkg")
+        railroads.iloc[0:third].to_file(fp1, driver="GPKG")
+        railroads.iloc[third:2 * third].to_file(fp2, driver="GPKG")
+        railroads.iloc[2 * third:].to_file(fp3, driver="GPKG")
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"rail": ["./rail_0.gpkg",
+                                        os.path.join(td, "./rails*.gpkg")]},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "hub_height": HUB_HEIGHT,
+                  "rotor_diameter": ROTOR_DIAMETER}
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(cli, ['compute', '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        baseline_fp = os.path.join(TESTDATADIR, 'setbacks',
+                                   'existing_rails.tif')
+
+        test_fp = _find_out_tiff_file(td)
+
+        with Geotiff(baseline_fp) as tif:
+            baseline = tif.values
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        np.allclose(baseline, test)
+
+    LOGGERS.clear()
+
+
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 
