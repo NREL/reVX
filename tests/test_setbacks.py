@@ -1538,7 +1538,6 @@ def test_integrated_setbacks_run(runner, county_wind_regulations):
             _assert_matches_railroad_baseline(tif.values,
                                               county_wind_regulations)
 
-
     LOGGERS.clear()
 
 
