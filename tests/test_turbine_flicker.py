@@ -264,7 +264,7 @@ def test_local_flicker_empty_regs():
         tf = TurbineFlicker(excl_h5, RES_H5, BLD_LAYER, regulations,
                             resolution=64, tm_dset=TM,
                             max_flicker_exclusion_range=4540)
-        with pytest.raises(ValueError):
+        with pytest.warns(UserWarning):
             tf.compute_exclusions(max_workers=1)
 
 
