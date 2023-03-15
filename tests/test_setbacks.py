@@ -117,6 +117,19 @@ def _find_out_tiff_file(directory):
     return out_file
 
 
+def _assert_matches_railroad_baseline(test, regs):
+    baseline_fp = os.path.join(TESTDATADIR, 'setbacks', 'existing_rails.tif')
+
+    with Geotiff(baseline_fp) as tif:
+        baseline = tif.values
+
+    with ExclusionLayers(EXCL_H5) as exc:
+        fips = exc['cnty_fips']
+
+    inds = np.in1d(fips.flatten(), regs.df.FIPS.unique())
+    assert np.allclose(test.flatten()[inds], baseline.flatten()[inds])
+
+
 def test_setback_regulations_init():
     """Test initializing a normal regulations file. """
     regs = SetbackRegulations(10, regulations_fpath=REGS_FPATH, multiplier=1.1)
@@ -259,7 +272,7 @@ def test_setbacks_no_generic_value(setbacks_class, feature_file):
     setbacks = setbacks_class(EXCL_H5, regs, features=feature_file)
     out = setbacks.compute_exclusions()
     assert out.dtype == np.uint8
-    assert np.isclose(out, 0).all()
+    assert np.allclose(out, 0)
 
 
 def test_setbacks_saving_tiff_h5():
@@ -283,11 +296,11 @@ def test_setbacks_saving_tiff_h5():
 
         assert os.path.exists(out_fn)
         with Geotiff(out_fn) as tif:
-            assert np.isclose(tif.values, 0).all()
+            assert np.allclose(tif.values, 0)
 
         with ExclusionLayers(excl_fpath) as exc:
             assert "ri_parcel_setbacks" in exc.layers
-            assert np.isclose(exc["ri_parcel_setbacks"], 0).all()
+            assert np.allclose(exc["ri_parcel_setbacks"], 0)
 
 
 def test_rasterizer_array_dtypes():
@@ -395,12 +408,7 @@ def test_local_railroads(max_workers, county_wind_regulations_gpkg):
                                 features=rail_path)
     test = setbacks.compute_exclusions(max_workers=max_workers)
 
-    with ExclusionLayers(EXCL_H5) as exc:
-        fips = exc['cnty_fips']
-    inds = np.in1d(fips.flatten(),
-                   county_wind_regulations_gpkg.df.FIPS.unique())
-
-    assert np.allclose(test.flatten()[inds], baseline.flatten()[inds])
+    _assert_matches_railroad_baseline(test, county_wind_regulations_gpkg)
 
 
 @pytest.mark.parametrize('max_workers', [None, 1])
@@ -693,8 +701,8 @@ def test_aggregate_high_res():
     for i, j in product(range(mult), range(mult)):
         hr_array[i::mult, j::mult] += arr_to_rep
 
-    assert np.isclose(rasterizer._aggregate_high_res(hr_array, window=None),
-                      arr_to_rep * mult ** 2).all()
+    assert np.allclose(rasterizer._aggregate_high_res(hr_array, window=None),
+                       arr_to_rep * mult ** 2)
 
 
 def test_partial_exclusions():
@@ -739,7 +747,7 @@ def test_partial_exclusions_upscale_factor_less_than_1(mult):
     exclusion_mask = setbacks.compute_exclusions()
     inclusion_weights = setbacks_hr.compute_exclusions()
 
-    assert np.isclose(exclusion_mask, inclusion_weights).all()
+    assert np.allclose(exclusion_mask, inclusion_weights)
 
 
 @pytest.mark.parametrize(
@@ -816,9 +824,9 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
         for layer in (generic_layer, local_layer, merged_layer):
             assert (layer[layer > 0] < 1).any()
 
-    assert not np.isclose(generic_layer, local_layer).all()
-    assert not np.isclose(generic_layer, merged_layer).all()
-    assert not np.isclose(local_layer, merged_layer).all()
+    assert not np.allclose(generic_layer, local_layer)
+    assert not np.allclose(generic_layer, merged_layer)
+    assert not np.allclose(local_layer, merged_layer)
 
     # Make sure counties in the regulations csv
     # have correct exclusions applied
@@ -828,15 +836,15 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
     counties_should_have_exclusions = feats.FIPS.unique()
     local_setbacks_mask = np.isin(fips, counties_should_have_exclusions)
 
-    assert not np.isclose(generic_layer[local_setbacks_mask],
-                          merged_layer[local_setbacks_mask]).all()
-    assert np.isclose(local_layer[local_setbacks_mask],
-                      merged_layer[local_setbacks_mask]).all()
+    assert not np.allclose(generic_layer[local_setbacks_mask],
+                           merged_layer[local_setbacks_mask])
+    assert np.allclose(local_layer[local_setbacks_mask],
+                       merged_layer[local_setbacks_mask])
 
-    assert not np.isclose(local_layer[~local_setbacks_mask],
-                          merged_layer[~local_setbacks_mask]).all()
-    assert np.isclose(generic_layer[~local_setbacks_mask],
-                      merged_layer[~local_setbacks_mask]).all()
+    assert not np.allclose(local_layer[~local_setbacks_mask],
+                           merged_layer[~local_setbacks_mask])
+    assert np.allclose(generic_layer[~local_setbacks_mask],
+                       merged_layer[~local_setbacks_mask])
 
 
 @pytest.mark.parametrize(
@@ -903,7 +911,7 @@ def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
     # make sure the comparison layers match what we expect
     assert generic_layer.sum() == generic_sum
     assert generic_layer.sum() == merged_layer.sum()
-    assert np.isclose(generic_layer, merged_layer).all()
+    assert np.allclose(generic_layer, merged_layer)
 
 
 @pytest.mark.parametrize(
@@ -963,8 +971,12 @@ def test_cli_railroads(runner, config_input):
                     & (regs['Value Type'] == "Max-tip Height Multiplier"))
             regs.loc[mask, 'Value Type'] = "Structure Height Multiplier"
             regs.to_csv(regs_fpath, index=False)
+            regs = SetbackRegulations(HUB_HEIGHT + ROTOR_DIAMETER / 2,
+                                      regulations_fpath=regs_fpath)
         else:
             shutil.copy(REGS_FPATH, regs_fpath)
+            regs = WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
+                                          regulations_fpath=regs_fpath)
         config = {"log_directory": td,
                   "execution_control": {"option": "local"},
                   "excl_fpath": EXCL_H5,
@@ -982,17 +994,9 @@ def test_cli_railroads(runner, config_input):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        baseline_fp = os.path.join(TESTDATADIR, 'setbacks',
-                                   'existing_rails.tif')
-
         test_fp = _find_out_tiff_file(td)
-
-        with Geotiff(baseline_fp) as tif:
-            baseline = tif.values
         with Geotiff(test_fp) as tif:
-            test = tif.values
-
-        assert np.allclose(baseline, test)
+            _assert_matches_railroad_baseline(tif.values, regs)
 
     LOGGERS.clear()
 
@@ -1128,6 +1132,7 @@ def test_cli_partial_setbacks(runner):
         assert (0 <= test).all()
         assert (test <= 1).all()
         assert (test < 1).any()
+        assert test.sum() > 0.9 * test.shape[1] * test.shape[2]
 
     LOGGERS.clear()
 
@@ -1259,15 +1264,14 @@ def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
             assert result.exit_code == 0, msg
 
             test_fp = _find_out_tiff_file(td)
-
             with Geotiff(test_fp) as tif:
                 out[run_type] = tif.values
 
     LOGGERS.clear()
 
-    assert not np.isclose(out["generic"], out["local"]).all()
-    assert not np.isclose(out["generic"], out["merged"]).all()
-    assert not np.isclose(out["local"], out["merged"]).all()
+    assert not np.allclose(out["generic"], out["local"])
+    assert not np.allclose(out["generic"], out["merged"])
+    assert not np.allclose(out["local"], out["merged"])
     assert out["generic"].sum() > out["merged"].sum() > out["local"].sum()
 
 
@@ -1415,59 +1419,6 @@ def test_cli_merge_setbacks(runner, return_to_main_test_dir, inclusions):
             assert np.allclose(tif.values, 0 if inclusions else 1)
 
 
-def test_features_can_be_list_and_relative(runner):
-    """
-    Test that input features can be a list of files with relative fp's.
-    """
-    rail_path = os.path.join(TESTDATADIR, 'setbacks',
-                             'Rhode_Island_Railroads.gpkg')
-    railroads = gpd.read_file(rail_path)
-    third = len(railroads) // 3
-    with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(REGS_FPATH)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(REGS_FPATH, regs_fpath)
-
-        fp1 = os.path.join(td, "rail_0.gpkg")
-        fp2 = os.path.join(td, "rails_10.gpkg")
-        fp3 = os.path.join(td, "rails_2.gpkg")
-        railroads.iloc[0:third].to_file(fp1, driver="GPKG")
-        railroads.iloc[third:2 * third].to_file(fp2, driver="GPKG")
-        railroads.iloc[2 * third:].to_file(fp3, driver="GPKG")
-        config = {"log_directory": td,
-                  "execution_control": {"option": "local"},
-                  "excl_fpath": EXCL_H5,
-                  "features": {"rail": ["./rail_0.gpkg",
-                                        os.path.join(td, "./rails*.gpkg")]},
-                  "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
-                  "replace": True,
-                  "hub_height": HUB_HEIGHT,
-                  "rotor_diameter": ROTOR_DIAMETER}
-        config_path = os.path.join(td, 'config.json')
-        with open(config_path, 'w') as f:
-            json.dump(config, f)
-
-        result = runner.invoke(cli, ['compute', '-c', config_path])
-        msg = ('Failed with error {}'
-               .format(traceback.print_exception(*result.exc_info)))
-        assert result.exit_code == 0, msg
-
-        baseline_fp = os.path.join(TESTDATADIR, 'setbacks',
-                                   'existing_rails.tif')
-
-        test_fp = _find_out_tiff_file(td)
-
-        with Geotiff(baseline_fp) as tif:
-            baseline = tif.values
-        with Geotiff(test_fp) as tif:
-            test = tif.values
-
-        assert np.allclose(baseline, test)
-
-    LOGGERS.clear()
-
-
 @pytest.mark.parametrize("setback_input", [(0, 1), (1, 0)])
 def test_custom_features_0_setback(runner, setback_input):
     """
@@ -1516,6 +1467,155 @@ def test_custom_features_0_setback(runner, setback_input):
             test = tif.values
 
         assert np.allclose(truth, test)
+
+    LOGGERS.clear()
+
+
+def test_integrated_setbacks_run(runner, county_wind_regulations):
+    """
+    Test a setbacks integrated pipeline.
+    """
+    rail_path = os.path.join(TESTDATADIR, 'setbacks',
+                             'Rhode_Island_Railroads.gpkg')
+    railroads = gpd.read_file(rail_path)
+    third = len(railroads) // 3
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(REGS_FPATH)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(REGS_FPATH, regs_fpath)
+
+        fp1 = os.path.join(td, "rail_0.gpkg")
+        fp2 = os.path.join(td, "rails_10.gpkg")
+        fp3 = os.path.join(td, "rails_2.gpkg")
+        railroads.iloc[0:third].to_file(fp1, driver="GPKG")
+        railroads.iloc[third:2 * third].to_file(fp2, driver="GPKG")
+        railroads.iloc[2 * third:].to_file(fp3, driver="GPKG")
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"rail": ["./rail_0.gpkg",
+                                        os.path.join(td, "./rails*.gpkg")]},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "hub_height": HUB_HEIGHT,
+                  "rotor_diameter": ROTOR_DIAMETER}
+        config_path = os.path.join(td, 'config_compute.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        merge_config = {"execution_control": {"option": "local"},
+                        "merge_file_pattern": "PIPELINE"}
+        merge_config_path = os.path.join(td, 'config_merge.json')
+        with open(merge_config_path, 'w') as f:
+            json.dump(merge_config, f)
+
+        pipe_config = {"pipeline": [{"compute": "./config_compute.json"},
+                                    {"merge": "./config_merge.json"}]}
+        pipe_config_path = os.path.join(td, 'config_pipeline.json')
+        with open(pipe_config_path, 'w') as f:
+            json.dump(pipe_config, f)
+
+        result = runner.invoke(cli, ['pipeline', '-c', pipe_config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        out_file = [fp for fp in os.listdir(td) if fp.endswith("tiff")]
+        assert len(out_file) == 3
+
+        result = runner.invoke(cli, ['pipeline', '-c', pipe_config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        out_file = [fp for fp in os.listdir(td) if fp.endswith("tiff")]
+        assert len(out_file) == 1
+        assert "chunk_files" in os.listdir(td), ", ".join(os.listdir(td))
+
+        test_fp = _find_out_tiff_file(td)
+        with Geotiff(test_fp) as tif:
+            _assert_matches_railroad_baseline(tif.values,
+                                              county_wind_regulations)
+
+
+    LOGGERS.clear()
+
+
+def test_integrated_partial_setbacks_run(runner):
+    """
+    Test CLI with partial setbacks.
+    """
+    with ExclusionLayers(EXCL_H5) as exc:
+        crs = exc.crs
+
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    parcels = gpd.read_file(parcel_path).to_crs(crs)
+    third = len(parcels) // 3
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+
+        fp1 = os.path.join(td, "parcels_0.gpkg")
+        fp2 = os.path.join(td, "parcels_1.gpkg")
+        fp3 = os.path.join(td, "parcels_2.gpkg")
+        parcels.iloc[0:third].to_file(fp1, driver="GPKG")
+        parcels.iloc[third:2 * third].to_file(fp2, driver="GPKG")
+        parcels.iloc[2 * third:].to_file(fp3, driver="GPKG")
+
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"parcel": "./parcels*.gpkg"},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "base_setback_dist": BASE_SETBACK_DIST,
+                  "weights_calculation_upscale_factor": 10}
+        config_path = os.path.join(td, 'config_compute.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        merge_config = {"execution_control": {"option": "local"},
+                        "merge_file_pattern": "PIPELINE"}
+        merge_config_path = os.path.join(td, 'config_merge.json')
+        with open(merge_config_path, 'w') as f:
+            json.dump(merge_config, f)
+
+        pipe_config = {"pipeline": [{"compute": "./config_compute.json"},
+                                    {"merge": "./config_merge.json"}]}
+        pipe_config_path = os.path.join(td, 'config_pipeline.json')
+        with open(pipe_config_path, 'w') as f:
+            json.dump(pipe_config, f)
+
+        result = runner.invoke(cli, ['pipeline', '-c', pipe_config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        out_file = [fp for fp in os.listdir(td) if fp.endswith("tiff")]
+        assert len(out_file) == 3
+
+        result = runner.invoke(cli, ['pipeline', '-c', pipe_config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        out_file = [fp for fp in os.listdir(td) if fp.endswith("tiff")]
+        assert len(out_file) == 1
+        assert "chunk_files" in os.listdir(td), ", ".join(os.listdir(td))
+
+        test_fp = _find_out_tiff_file(td)
+        with Geotiff(test_fp) as tif:
+            test = tif.values
+
+        assert 0 < (1 - test).sum() < 4
+        assert (0 <= test).all()
+        assert (test <= 1).all()
+        assert (test < 1).any()
+        assert test.sum() > 0.9 * test.shape[1] * test.shape[2]
 
     LOGGERS.clear()
 
