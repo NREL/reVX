@@ -470,18 +470,12 @@ def test_local_parcels_solar(max_workers, regulations_fpath):
     Test local parcel setbacks
     """
 
-    with tempfile.TemporaryDirectory() as td:
-        # fn = os.path.basename(regulations_fpath)
-        # temp_regulations_fpath = os.path.join(td, fn)
-        # shutil.copy(regulations_fpath, temp_regulations_fpath)
-
-        regulations = SetbackRegulations(BASE_SETBACK_DIST,
-                                         regulations_fpath=regulations_fpath)
-        parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-                                   'Rhode_Island.gpkg')
-        setbacks = SETBACKS["parcel"](EXCL_H5, regulations,
-                                      features=parcel_path)
-        test = setbacks.compute_exclusions(max_workers=max_workers)
+    regulations = SetbackRegulations(BASE_SETBACK_DIST,
+                                     regulations_fpath=regulations_fpath)
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    setbacks = SETBACKS["parcel"](EXCL_H5, regulations, features=parcel_path)
+    test = setbacks.compute_exclusions(max_workers=max_workers)
 
     assert test.sum() == 3
 
@@ -514,19 +508,12 @@ def test_local_parcels_wind(max_workers, regulations_fpath):
     Test local parcel setbacks
     """
 
-    with tempfile.TemporaryDirectory() as td:
-        # regs_fpath = os.path.basename(regulations_fpath)
-        # regs_fpath = os.path.join(td, regs_fpath)
-        # shutil.copy(regulations_fpath, regs_fpath)
-
-        regulations = WindSetbackRegulations(
-            hub_height=1.75, rotor_diameter=0.5,
-            regulations_fpath=regulations_fpath)
-        parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
-                                   'Rhode_Island.gpkg')
-        setbacks = SETBACKS["parcel"](EXCL_H5, regulations,
-                                      features=parcel_path)
-        test = setbacks.compute_exclusions(max_workers=max_workers)
+    regulations = WindSetbackRegulations(hub_height=1.75, rotor_diameter=0.5,
+                                         regulations_fpath=regulations_fpath)
+    parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
+                               'Rhode_Island.gpkg')
+    setbacks = SETBACKS["parcel"](EXCL_H5, regulations, features=parcel_path)
+    test = setbacks.compute_exclusions(max_workers=max_workers)
 
     assert test.sum() == 3
 
@@ -584,18 +571,12 @@ def test_local_water_solar(max_workers, regulations_fpath):
     Test local water setbacks for solar
     """
 
-    with tempfile.TemporaryDirectory() as td:
-        # regulations_fpath = os.path.basename(regulations_fpath)
-        # regulations_fpath = os.path.join(td, regulations_fpath)
-        # shutil.copy(regulations_fpath, regulations_fpath)
-
-        regulations = SetbackRegulations(BASE_SETBACK_DIST,
-                                         regulations_fpath=regulations_fpath)
-        water_path = os.path.join(TESTDATADIR, 'setbacks',
-                                  'Rhode_Island_Water.gpkg')
-        setbacks = SETBACKS["water"](EXCL_H5, regulations,
-                                     features=water_path)
-        test = setbacks.compute_exclusions(max_workers=max_workers)
+    regulations = SetbackRegulations(BASE_SETBACK_DIST,
+                                     regulations_fpath=regulations_fpath)
+    water_path = os.path.join(TESTDATADIR, 'setbacks',
+                              'Rhode_Island_Water.gpkg')
+    setbacks = SETBACKS["water"](EXCL_H5, regulations, features=water_path)
+    test = setbacks.compute_exclusions(max_workers=max_workers)
 
     assert test.sum() == 83
 
@@ -623,20 +604,12 @@ def test_local_water_wind(max_workers, regulations_fpath):
     """
     Test local water setbacks for wind
     """
-
-    with tempfile.TemporaryDirectory() as td:
-        # regs_fpath = os.path.basename(regulations_fpath)
-        # regs_fpath = os.path.join(td, regs_fpath)
-        # shutil.copy(regulations_fpath, regs_fpath)
-
-        regulations = WindSetbackRegulations(
-            hub_height=4, rotor_diameter=2,
-            regulations_fpath=regulations_fpath)
-        water_path = os.path.join(TESTDATADIR, 'setbacks',
-                                  'Rhode_Island_Water.gpkg')
-        setbacks = SETBACKS["water"](EXCL_H5, regulations,
-                                     features=water_path)
-        test = setbacks.compute_exclusions(max_workers=max_workers)
+    regulations = WindSetbackRegulations(hub_height=4, rotor_diameter=2,
+                                         regulations_fpath=regulations_fpath)
+    water_path = os.path.join(TESTDATADIR, 'setbacks',
+                              'Rhode_Island_Water.gpkg')
+    setbacks = SETBACKS["water"](EXCL_H5, regulations, features=water_path)
+    test = setbacks.compute_exclusions(max_workers=max_workers)
 
     assert test.sum() == 83
 
@@ -791,30 +764,25 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
                                       weights_calculation_upscale_factor=sf)
     generic_layer = generic_setbacks.compute_exclusions(max_workers=1)
 
-    with tempfile.TemporaryDirectory() as td:
-        # regulations_fpath = os.path.basename(regulations_fpath)
-        # regulations_fpath = os.path.join(td, regulations_fpath)
-        # shutil.copy(regulations_fpath, regulations_fpath)
+    regulations = regulations_class(*setback_distance,
+                                    regulations_fpath=regulations_fpath,
+                                    multiplier=None)
+    local_setbacks = setbacks_class(EXCL_H5, regulations,
+                                    features=features_path,
+                                    weights_calculation_upscale_factor=sf)
 
-        regulations = regulations_class(*setback_distance,
-                                        regulations_fpath=regulations_fpath,
-                                        multiplier=None)
-        local_setbacks = setbacks_class(EXCL_H5, regulations,
-                                        features=features_path,
-                                        weights_calculation_upscale_factor=sf)
+    local_layer = local_setbacks.compute_exclusions(max_workers=1)
 
-        local_layer = local_setbacks.compute_exclusions(max_workers=1)
+    regulations = regulations_class(*setback_distance,
+                                    regulations_fpath=regulations_fpath,
+                                    multiplier=100)
+    merged_setbacks = setbacks_class(EXCL_H5, regulations,
+                                     features=features_path,
+                                     weights_calculation_upscale_factor=sf)
+    merged_layer = merged_setbacks.compute_exclusions(max_workers=1)
 
-        regulations = regulations_class(*setback_distance,
-                                        regulations_fpath=regulations_fpath,
-                                        multiplier=100)
-        merged_setbacks = setbacks_class(EXCL_H5, regulations,
-                                         features=features_path,
-                                         weights_calculation_upscale_factor=sf)
-        merged_layer = merged_setbacks.compute_exclusions(max_workers=1)
-
-        local_setbacks.pre_process_regulations()
-        feats = local_setbacks.regulations_table
+    local_setbacks.pre_process_regulations()
+    feats = local_setbacks.regulations_table
 
     # make sure the comparison layers match what we expect
     if sf is None:
@@ -1239,9 +1207,6 @@ def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
 
     for run_type, c_in in config_run_inputs.items():
         with tempfile.TemporaryDirectory() as td:
-            # regulations_fpath = os.path.basename(regulations_fpath)
-            # regulations_fpath = os.path.join(td, regulations_fpath)
-            # shutil.copy(regulations_fpath, regulations_fpath)
 
             if "regulations_fpath" in c_in:
                 c_in["regulations_fpath"] = regulations_fpath
