@@ -1,4 +1,4 @@
-Command Line Interphases (CLIs)
+Command Line Interfaces (CLIs)
 ===============================
 
 .. toctree::
@@ -14,6 +14,7 @@ Command Line Interphases (CLIs)
    reV-plexos
    reV-rpm
    reVX
+   setbacks
    simple-plant-builder
    turbine-flicker
    wind-setbacks
