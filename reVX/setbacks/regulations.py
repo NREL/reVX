@@ -22,31 +22,35 @@ class SetbackRegulations(AbstractBaseRegulations):
         base_setback_dist : float | int
             Base setback distance (m). This value will be used to
             calculate the setback distance when a multiplier is provided
-            either via the `regulations_fpath`csv or the `multiplier`
-            input. In these cases, the setbacks will be calculated using
-            `base_setback_dist * multiplier`.
+            either via the ``regulations_fpath`` csv or the
+            ``multiplier`` input. In these cases, the setbacks will be
+            calculated using ``base_setback_dist * multiplier``.
         regulations_fpath : str | None, optional
-            Path to regulations .csv or .gpkg file. At a minimum, this
-            file must contain the following columns: `Feature Type`
-            which labels the type of setback that each row represents,
-            `Value Type`, which specifies wether the value is a
-            multiplier or static height, `Value`, which specifies the
-            numeric value of the setback or multiplier, and `FIPS`,
-            which specifies a unique 5-digit code for each county (this
-            can be an integer - no leading zeros required). Valid
-            options for the `Value Type` are (case-insensitive; dashes,
-            underscores, and spaces are interchangeable):
+            Path to regulations ``.csv`` or ``.gpkg`` file. At a
+            minimum, this file must contain the following columns:
+            ``Feature Type``, which contains labels for the type of
+            setback that each row represents, ``Value Type``, which
+            specifies wether the value is a multiplier or static height,
+            ``Value``, which specifies the numeric value of the setback
+            or multiplier, and ``FIPS``, which specifies a unique
+            5-digit code for each county (this can be an integer - no
+            leading zeros required). Valid options for the
+            ``Value Type`` are (case-insensitive; dashes, underscores,
+            and spaces are interchangeable):
+
                 - "Structure Height Multiplier"
                 - "Meters"
-            If this input is `None`, a generic setback of
-            `base_setback_dist * multiplier` is used. By default `None`.
+
+            If this input is ``None``, a generic setback of
+            ``base_setback_dist * multiplier`` is used.
+            By default ``None``.
         multiplier : int | float | str | None, optional
             A setback multiplier to use if regulations are not supplied.
             This multiplier will be applied to the ``base_setback_dist``
             to calculate the setback. If supplied along with
             ``regulations_fpath``, this input will be used to apply a
             setback to all counties not listed in the regulations file.
-            By default `None`.
+            By default ``None``.
         """
         self._multi = multiplier
         super().__init__(generic_regulation_value=base_setback_dist,
@@ -136,22 +140,26 @@ class WindSetbackRegulations(SetbackRegulations):
             compute blade tip height which is used to determine setback
             distance.
         regulations_fpath : str | None, optional
-            Path to regulations .csv or .gpkg file. At a minimum, this
-            file must contain the following columns: `Feature Type`
-            which labels the type of setback that each row represents,
-            `Value Type`, which specifies wether the value is a
-            multiplier or static height, `Value`, which specifies the
-            numeric value of the setback or multiplier, and `FIPS`,
-            which specifies a unique 5-digit code for each county (this
-            can be an integer - no leading zeros required). Valid
-            options for the `Value Type` are (case-insensitive; dashes,
-            underscores, and spaces are interchangeable:
+            Path to regulations ``.csv`` or ``.gpkg`` file. At a
+            minimum, this file must contain the following columns:
+            ``Feature Type``, which contains labels for the type of
+            setback that each row represents, ``Value Type``, which
+            specifies wether the value is a multiplier or static height,
+            ``Value``, which specifies the numeric value of the setback
+            or multiplier, and ``FIPS``, which specifies a unique
+            5-digit code for each county (this can be an integer - no
+            leading zeros required). Valid options for the
+            ``Value Type`` are (case-insensitive; dashes, underscores,
+            and spaces are interchangeable):
+
                 - "Max-tip Height Multiplier"
                 - "Rotor-Diameter Multiplier"
                 - "Hub-height Multiplier"
                 - "Meters"
-            If this input is `None`, a generic setback of
-            `max_tip_height * multiplier` is used. By default `None`.
+
+            If this input is ``None``, a generic setback of
+            ``max_tip_height * multiplier`` is used.
+            By default ``None``.
         multiplier : int | float | str | None, optional
             A setback multiplier to use if regulations are not supplied.
             This multiplier will be applied to the ``base_setback_dist``
@@ -190,7 +198,7 @@ class WindSetbackRegulations(SetbackRegulations):
     @property
     def hub_height(self):
         """
-        Turbine hub-height in meters
+        Turbine hub height in meters
 
         Returns
         -------
@@ -238,31 +246,33 @@ def validate_setback_regulations_input(base_setback_dist=None, hub_height=None,
 
     Specifically, this function raises an error unless exactly one of
     the following combinations of inputs are provided:
+
         - base_setback_dist
         - hub_height and rotor_diameter
+
 
     Parameters
     ----------
     base_setback_dist : float | int
         Base setback distance (m). This value will be used to calculate
         the setback distance when a multiplier is provided either via
-        the `regulations_fpath` csv or the `multiplier` input. In these
-        cases, the setbacks will be calculated using
-        `base_setback_dist * multiplier`. By default, `None`.
+        the ``regulations_fpath`` csv or the ``multiplier`` input. In
+        these cases, the setbacks will be calculated using
+        ``base_setback_dist * multiplier``. By default, `None`.
     hub_height : float | int
         Turbine hub height (m), used along with rotor diameter to
-        compute blade tip height which is used to determine setback
-        distance.  By default, `None`.
+        compute blade tip-height which is used as the base setback
+        distance.  By default, ``None``.
     rotor_diameter : float | int
         Turbine rotor diameter (m), used along with hub height to
-        compute blade tip height which is used to determine setback
-        distance. By default, `None`.
+        compute blade tip-height which is used as the base setback
+        distance. By default, ``None``.
 
     Raises
     ------
     RuntimeError
-        If not enough info is provided (all inputs are `None`), or too
-        much info is given (all inputs are not `None`).
+        If not enough info is provided (all inputs are ``None``), or too
+        much info is given (all inputs are not ``None``).
     """
     no_base_setback = base_setback_dist is None
     invalid_turbine_specs = rotor_diameter is None or hub_height is None
@@ -285,38 +295,41 @@ def select_setback_regulations(base_setback_dist=None, hub_height=None,
     base_setback_dist : float | int
         Base setback distance (m). This value will be used to calculate
         the setback distance when a multiplier is provided either via
-        the `regulations_fpath` csv or the `multiplier` input. In these
-        cases, the setbacks will be calculated using
-        `base_setback_dist * multiplier`. By default, `None`.
+        the ``regulations_fpath`` csv or the ``multiplier`` input. In
+        these cases, the setbacks will be calculated using
+        ``base_setback_dist * multiplier``. By default, `None`.
     hub_height : float | int
         Turbine hub height (m), used along with rotor diameter to
-        compute blade tip height which is used to determine setback
-        distance. By default, `None`.
+        compute blade tip-height which is used as the base setback
+        distance.  By default, ``None``.
     rotor_diameter : float | int
         Turbine rotor diameter (m), used along with hub height to
-        compute blade tip height which is used to determine setback
-        distance. By default, `None`.
+        compute blade tip-height which is used as the base setback
+        distance. By default, ``None``.
     regulations_fpath : str | None, optional
-        Path to regulations .csv file. At a minimum, this csv must
-        contain the following columns: `Feature Type` which labels
-        the type of setback that each row represents, `Value Type`,
-        which specifies wether the value is a multiplier or static
-        height, `Value`, which specifies the numeric value of the
-        setback or multiplier, and `FIPS`, which specifies a unique
-        5-digit code for each county (this can be an integer - no
-        leading zeros required). Valid options for the `Value Type`
-        are:
+        Path to regulations ``.csv`` or ``.gpkg`` file. At a minimum,
+        this file must contain the following columns: ``Feature Type``,
+        which contains labels for the type of setback that each row
+        represents, ``Value Type``, which specifies wether the value is
+        a multiplier or static height, ``Value``, which specifies the
+        numeric value of the setback or multiplier, and ``FIPS``, which
+        specifies a unique 5-digit code for each county (this can be an
+        integer - no leading zeros required). Valid options for the
+        ``Value Type`` are (case-insensitive; dashes, underscores,
+        and spaces are interchangeable):
+
             - "Structure Height Multiplier"
             - "Meters"
-        If this input is `None`, a generic setback of
-        `base_setback_dist * multiplier` is used. By default `None`.
+
+        If this input is ``None``, a generic setback of
+        ``base_setback_dist * multiplier`` is used. By default ``None``.
     multiplier : int | float | str | None, optional
         A setback multiplier to use if regulations are not supplied.
         This multiplier will be applied to the ``base_setback_dist``
         to calculate the setback. If supplied along with
         ``regulations_fpath``, this input will be used to apply a
         setback to all counties not listed in the regulations file.
-        By default `None`.
+        By default ``None``.
 
     Returns
     -------

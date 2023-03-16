@@ -6,6 +6,7 @@ import logging
 
 from reVX.setbacks.base import AbstractBaseSetbacks, BUFFERS, FEATURE_FILTERS
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,19 +27,20 @@ def setbacks_calculator(feature_type, buffer_type="default",
         String or list of strings that represent how this feature is
         distinguished in the local regulations file. In particular,
         this string (or list of strings) should match the values under
-        the "Feature Type" column of the setback regulations file
+        the ``Feature Type`` column of the setback regulations file
         corresponding to this feature. For example, specifying
         ``feature_type="property line"`` would mean that this setback
-        calculator looks for "property line" regulations (i.e. parcel
-        setbacks) in the input regulations file. This input is case
-        insensitive (i.e. "ROADS", "Roads", "roads", and "rOAds" are all
-        equivalent), and spaces, dashes, and underscores are
+        calculator looks for ``"property line"`` regulations (i.e.
+        parcel setbacks) in the input regulations file. This input is
+        case insensitive (i.e. "ROADS", "Roads", "roads", and "rOAds"
+        are all equivalent), and spaces, dashes, and underscores are
         interchangeable (i.e. "property line", "property_line", and
         "property-line" are all equivalent).
     buffer_type : str, optional
-        Name of the buffer type to use for this setback calculation. In
-        most cases, the default positive buffer is suitable. This value
-        must be a key in the :attr:`BUFFERS` dictionary.
+        Name of the buffer type to use for this setback calculation. See
+        :attr:`~reVX.setbacks.base.BUFFERS` for all available options -
+        this input must be a key from that dictionary. In most cases,
+        the default positive buffer is suitable.
         By default, ``"default"``.
     feature_filter_type : str, optional
         Name of the feature filter type to use for this setback
@@ -49,14 +51,15 @@ def setbacks_calculator(feature_type, buffer_type="default",
         railroads transmission lines, etc., are filtered using "clip",
         which clips the feature to the county boundaries before applying
         a setback. This value must be a key in the
-        :attr:`FEATURE_FILTERS` dictionary. By default, ``"centroid"``.
+        :attr:`~reVX.setbacks.base.FEATURE_FILTERS` dictionary.
+        By default, ``"centroid"``.
     feature_subtypes_to_exclude : list | set, optional
         A list of strings specifying the feature subtypes that should be
         excluded from the local regulations calculation.
         By default, ``None``.
     num_features_per_worker : int, optional
         Number of features each worker (CPU processor) on a node
-        processes. By default, ``10_000``.
+        processes. By default, ``10,000``.
     """
     if isinstance(feature_type, str):
         feature_type = [feature_type]

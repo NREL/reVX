@@ -81,7 +81,7 @@ class AbstractBaseRegulations(ABC):
 
     @property
     def df(self):
-        """geopandas.GeoDataFrame | None: Regulations table. """
+        """`geopandas.GeoDataFrame` | None: Regulations table. """
         return self._regulations_df
 
     @df.setter

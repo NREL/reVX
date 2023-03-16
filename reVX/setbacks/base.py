@@ -70,15 +70,15 @@ class Rasterizer:
             by upscaling the output array using this input value,
             rasterizing the exclusion features onto it, and counting the
             number of resulting sub-cells excluded by the feature. For
-            example, setting the value to `3` would split each output
+            example, setting the value to 3 would split each output
             cell into nine sub-cells - 3 divisions in each dimension.
             After the feature is rasterized on this high-resolution
             sub-grid, the area of the non-excluded sub-cells is totaled
             and divided by the area of the original cell to obtain the
             final inclusion percentage. Therefore, a larger upscale
-            factor results in more accurate percentage values. If `None`
-            (or a value <= 1), this process is skipped and the output is
-            a boolean exclusion mask. By default `None`.
+            factor results in more accurate percentage values. If
+            ``None`` (or a value <= 1), this process is skipped and the
+            output is a boolean exclusion mask. By default ``None``.
         """
         props = _parse_excl_properties(excl_fpath, hsds=hsds)
         self._shape, self._profile = props
@@ -158,7 +158,7 @@ class Rasterizer:
         shapes : list, optional
             List of geometries to rasterize (i.e. list(gdf["geometry"])).
             If `None` or empty list, returns array of zeros.
-        window : :cls:`rasterio.windows.Window`
+        window : :obj:`rasterio.windows.Window`
             A ``rasterio`` window defining the area of the raster. Can
             be used to speed up computation and decrease memory
             requirements if features are localized to a small portion of

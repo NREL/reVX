@@ -56,20 +56,18 @@ def preprocess_setbacks_config(config, features,
     Parameters
     ----------
     config : dict
-        Collection config. This config will be updated to include a
-        "collect_pattern" key if it doesn't already have one. If the
-        "collect_pattern" key exists, it can be a string, a collection,
-        or a mapping with a `.items()` method.
+        Setbacks compute config. This config will be updated to include
+        a the "_ft", "_fp", and "_mult" keys based on user input.
     features : dict
         Dictionary specifying which features/data to process. The keys
         of this dictionary must be the a key from the
-        :attr:`SETBACK_SPECS` dictionary or the ``feature_specs`` input
-        dictionary specifying the feature type to run setbacks for.
-        The value of each key must be a path or a list of paths to
-        calculate that particular setback for. The path(s) can contain
-        unix-style file-pattern matching syntax to point to multiple
-        files. The paths may be specified relative to the config file.
-        For example::
+        :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS` dictionary or the
+        ``feature_specs`` input dictionary specifying the feature type
+        to run setbacks for. The value of each key must be a path or a
+        list of paths to calculate that particular setback for.
+        The path(s) can contain unix-style file-pattern matching syntax
+        to point to multiple files. The paths may be specified relative
+        to the config file. For example::
 
             features: {
                 "parcel": "../relative/path/to/parcel_colorado.gpkg",
@@ -81,7 +79,7 @@ def preprocess_setbacks_config(config, features,
 
         With this input, parcel setbacks would be computed for the
         data in ``../relative/path/to/parcel_colorado.gpkg``, and road
-        setbacks would be calculated for _all_ GeoPackage data files in
+        setbacks would be calculated for *all* GeoPackage data files in
         ``/full/path/to/road/data/`` and for the files
         ``../../relative/path/to/data_il.gpkg`` and
         ``../../relative/path/to/data_in.gpkg``.
@@ -172,10 +170,10 @@ def preprocess_merge_config(config, project_dir, command_name,
         pipeline status for output files if
         ``"merge_file_pattern": "PIPELINE"`` in the input `config`.
     merge_file_pattern : str | list | dict, optional
-        Unix-style /filepath/pattern*.h5 representing the files to be
-        merged into a single output GeoTIFF file. If no output file path
-        is specified (i.e. this input is a single pattern or a list of
-        patterns), the output file path will be inferred from the
+        Unix-style ``/filepath/pattern*.h5`` representing the files to
+        be merged into a single output GeoTIFF file. If no output file
+        path is specified (i.e. this input is a single pattern or a list
+        of patterns), the output file path will be inferred from the
         pattern itself (specifically, the wildcard will be removed
         and the result will be the output file path). If a list of
         patterns is provided, each pattern will be merged into a
@@ -184,9 +182,9 @@ def preprocess_merge_config(config, project_dir, command_name,
         output file (relative paths are allowed) and the values are
         patterns representing the input files that should be merged into
         the output tiff. If running a merge job as part of a pipeline,
-        this input can be set to "PIPELINE", which will parse the output
-        of the previous step (``compute``) and generate the input file
-        pattern and output file name automatically.
+        this input can be set to ``"PIPELINE"``, which will parse the
+        output of the previous step (``compute``) and generate the input
+        file pattern and output file name automatically.
         By default, ``"PIPELINE"``.
 
     Returns
@@ -215,28 +213,28 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
                      feature_specs=None, max_workers=None):
     """Compute Setbacks.
 
-    Setbacks can be computed for a specific turbine (hub-height and
-    rotor diameter) or more generally using a base setback distance
-    assumption.
+    Setbacks can be computed for a specific turbine (hub height and
+    rotor diameter) or more generally using a base setback distance.
 
     Setbacks can be computed either locally (on a per-county basis with
-    given distances/ multipliers) or everywhere under a generic setback
-    multiplier assumption applied to the max tip-height or the base
-    setback distance. These two methods can also be applied
-    simultaneously - local setbacks computed where given and a generic
-    multiplier applied to the max tip-height or the base setback
-    distance everywhere else.
+    given distances/multipliers) or everywhere under a generic setback
+    multiplier assumption applied to either the turbine tip-height or
+    the base setback distance. These two methods can also be applied
+    simultaneously - local setbacks are computed where given (via a the
+    regulation file input) and a generic multiplier applied to the
+    turbine tip-height or the base setback distance everywhere else.
 
     Partial inclusions can be computed instead of boolean exclusions,
-    both of which can be fed directly into reV.
+    both of which can be fed directly into ``reV``.
 
     Parameters
     ----------
     excl_fpath : str
-        Path to HDF5 file containing the county FIPS layer used to match
-        existing regulations to counties on the grid. No data will be
-        written to this file unless explicitly requested via the
-        ``out_layers`` input.
+        Path to HDF5 file containing the county FIPS layer (should be
+        called ``cnty_fips``) used to match local regulations in
+        ``regs_fpath`` to counties on the grid. No data will be written
+        to this file unless explicitly requested via the ``out_layers``
+        input.
     _feature_type : str
         Name of the feature type being run. Must be a key of the
         :attr:`SETBACKS` dictionary.
@@ -250,103 +248,106 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
         with output files from other nodes).
     hub_height : int | float, optional
         Turbine hub height (m), used along with rotor diameter to
-        compute the blade tip height, which in turn is used to determine
-        the base setback distance for generic/local regulations. If this
-        input is specified, ``rotor_diameter`` must also be given, and
-        ``base_setback_dist`` *must be set to ``None``*, otherwise an
+        compute the blade tip-height which is used as the base setback
+        distance for generic/local regulations. If this input is
+        specified, ``rotor_diameter`` must also be given, and
+        ``base_setback_dist`` *must be set to None*, otherwise an
         error in thrown. The base setback distance is scaled by
         generic/local multipliers (provided either via the
-        ``regulations_fpath`` csv or the ``generic_setback_multiplier``
-        input) before setbacks are computed. By default, ``None``.
+        ``regulations_fpath`` csv, or the ``generic_setback_multiplier``
+        input, or both) before setbacks are computed.
+        By default, ``None``.
     rotor_diameter : int | float, optional
         Turbine rotor diameter (m), used along with hub height to
-        compute the blade tip height, which in turn is used to determine
-        the base setback distance for generic/local regulations. If this
-        input is specified, ``hub_height`` must also be given, and
-        ``base_setback_dist`` *must be set to ``None``*, otherwise an
+        compute the blade tip-height, which is used as the base setback
+        distance for generic/local regulations. If this input is
+        specified, ``hub_height`` must also be given, and
+        ``base_setback_dist`` *must be set to None*, otherwise an
         error in thrown. The base setback distance is scaled by
         generic/local multipliers (provided either via the
-        ``regulations_fpath`` csv or the ``generic_setback_multiplier``
-        input) before setbacks are computed. By default, ``None``.
+        ``regs_fpath`` csv, or the ``generic_setback_multiplier``
+        input, or both) before setbacks are computed.
+        By default, ``None``.
     base_setback_dist : int | float, optional
         Base setback distance (m). This value is used as the base
-        setback distance for generic/local regulations. It is scaled by
-        generic/local multipliers (provided either via the
-        ``regulations_fpath`` csv or the ``generic_setback_multiplier``
-        input) before setbacks are computed. By default, ``None``.
+        setback distance for generic/local regulations. If this input is
+        specified, both ``hub_height``and ``rotor_diameter`` *must be
+        set to None*, otherwise an error in thrown. The base setback
+        distance is scaled by generic/local multipliers (provided either
+        via the ``regs_fpath`` csv, or the
+        ``generic_setback_multiplier`` input, or both) before setbacks
+        are computed. By default, ``None``.
     regs_fpath : str, optional
-        Path to regulations .csv or .gpkg file. At a minimum, this file
-        must contain the following columns: `Feature Type` which labels
-        the type of setback that each row represents, `Value Type`,
-        which specifies wether the value is a multiplier or static
-        height, `Value`, which specifies the numeric value of the
-        setback or multiplier, and `FIPS`, which specifies a unique
-        5-digit code for each county (this can be an integer - no
-        leading zeros required). Valid options for the `Value Type` are
-        (case-insensitive; dashes, underscores, and spaces are
-        interchangeable):
-
-            - "Structure Height Multiplier" (only with
-               ``base_setback_dist`` input)
-            - "Max-tip Height Multiplier" (only with ``hub_height`` +
-               ``rotor_diameter`` input)
-            - "Rotor-Diameter Multiplier" (only with ``hub_height`` +
-               ``rotor_diameter`` input)
-            - "Hub-height Multiplier" (only with ``hub_height`` +
-               ``rotor_diameter`` input)
-            - "Meters"
-
+        Path to regulations ``.csv`` or ``.gpkg`` file. At a minimum,
+        this file must contain the following columns: ``Feature Type``,
+        which contains labels for the type of setback that each row
+        represents, ``Value Type``, which specifies wether the value is
+        a multiplier or static height, ``Value``, which specifies the
+        numeric value of the setback or multiplier, and ``FIPS``, which
+        specifies a unique 5-digit code for each county (this can be an
+        integer - no leading zeros required). See
+        :obj:`~reVX.setbacks.regulations.SetbackRegulations` (if using
+        only ``base_setback_dist`` input) or
+        :obj:`~reVX.setbacks.regulations.WindSetbackRegulations` (if
+        using ``hub_height`` + ``rotor_diameter`` input) for more info.
         This option overrides the ``generic_setback_multiplier`` input,
         but only for counties that are listed in the input CSV file.
         This means both ``regs_fpath`` and
         ``generic_setback_multiplier`` can be specified
-        simultaneously to simulate the case of a generic multiplier
-        applied everywhere a local ordinance is NOT given. By default,
-        ``None``, which does not compute any local setbacks.
+        simultaneously in order to compute setbacks driven by local
+        ordinance where given + a generic multiplier applied everywhere
+        else. By default, ``None``, which does not compute any
+        local setbacks.
     weights_calculation_upscale_factor : int, optional
+        Optional input to specify *partial* setback calculations.
         If this value is an int > 1, the output will be a layer with
-        **inclusion** weight values instead of exclusion booleans.
-        For example, a cell that was previously excluded with a boolean
-        mask (value of 1) may instead be converted to an inclusion
-        weight value of 0.75, meaning that 75% of the area corresponding
-        to that point should be included (i.e. the exclusion feature
-        only intersected a small portion - 25% - of the cell). This
-        percentage inclusion value is calculated by upscaling the output
-        array using this input value, rasterizing the exclusion features
-        onto it, and counting the number of resulting sub-cells excluded
-        by the feature. For example, setting the value to `3` would
-        split each output cell into nine sub-cells - 3 divisions in each
-        dimension. After the feature is rasterized on this
-        high-resolution sub-grid, the area of the non-excluded sub-cells
-        is totaled and divided by the area of the original cell to
-        obtain the final inclusion percentage. Therefore, a larger
-        upscale factor results in more accurate percentage values.
-        If `None` (or a value <= 1), this process is skipped and the
-        output is a boolean exclusion mask. By default, ``None``.
+        **inclusion** weight values (floats ranging from 0 to 1). Note
+        that this is backwards w.r.t the typical output of exclusion
+        integer values (1 for excluded, 0 otherwise). Values <= 1 will
+        still return a standard exclusion mask. For example, a cell that
+        was previously excluded with a boolean mask (value of 1) may
+        instead be converted to an inclusion weight value of 0.75,
+        meaning that 75% of the area corresponding to that point should
+        be included (i.e. the exclusion feature only intersected a small
+        portion - 25% - of the cell). This percentage inclusion value is
+        calculated by upscaling the output array using this input value,
+        rasterizing the exclusion features onto it, and counting the
+        number of resulting sub-cells excluded by the feature. For
+        example, setting the value to ``3`` would split each output cell
+        into nine sub-cells - 3 divisions in each dimension. After the
+        feature is rasterized on this high-resolution sub-grid, the area
+        of the non-excluded sub-cells is totaled and divided by the area
+        of the original cell to obtain the final inclusion percentage.
+        Therefore, a larger upscale factor results in more accurate
+        percentage values. If ``None`` (or a value <= 1), this process
+        is skipped and the output is a boolean exclusion mask.
+        By default ``None``.
     replace : bool, optional
-        Flag to replace output GeoTIFF if it already exists.
+        Flag to replace the output GeoTIFF if it already exists.
         By default, ``False``.
     hsds : bool, optional
-        Boolean flag to use h5pyd to handle HDF5 "files" hosted on AWS
-        behind HSDS. By default, ``False``.
+        Boolean flag to use ``h5pyd`` to handle HDF5 "files" hosted on
+        AWS behind HSDS. By default, ``False``.
     out_layers : dict, optional
         Dictionary mapping feature file names (with extension) to names
         of layers under which exclusions should be saved in the
         ``excl_fpath`` HDF5 file. If ``None`` or empty dictionary,
         no layers are saved to the HDF5 file. By default, ``None``.
     feature_specs : dict, optional
-        Optional dictionary specifying new feature setback calculations
+        Optional dictionary specifying new feature setback calculators
         or updates to existing ones. The keys of this dictionary should
         be names of the features for which a specification is being
-        provided. If the name is already a key in :attr:SETBACK_SPECS,
-        the corresponding specifications wil be updated for that
-        feature. Otherwise, the name will represent a new feature type,
-        which can be used as a key in the ``features`` input. The values
-        of the feature-type keys should be dictionaries, where the keys
-        are parameters of the :func:`setbacks_calculator` function.
-        Required parameters in that function are required keys of these
-        dictionaries. Values should be the updated value. For example,
-        the input::
+        provided. If the name is already a key in
+        :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS`, the corresponding
+        specifications wil be updated for that feature. Otherwise, the
+        name will represent a new feature type, which can be used as a
+        key in the ``features`` input. The values of the feature-type
+        keys should be dictionaries, where the keys are parameters of
+        the :func:`~reVX.setbacks.setbacks.setbacks_calculator`
+        function. Required parameters in that function are required keys
+        of these dictionaries. Values should be the updated value.
+        For example, the input
+        ::
 
             feature_specs: {
                 "water": {
@@ -359,14 +360,16 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
             }
 
         would update the existing ``"water"`` setbacks calculator to
-        compute 500 features per worker and create a new
+        compute 500 features per worker at a time and create a new
         ``"oil_and_gas_pipelines"`` feature that looks for the string
         ``"oil and gas"`` in the regulations file and clips the feature
         to a county before calculating a setback. Note that even though
         ``"oil_and_gas_pipelines"`` is not a default feature supported
         by ``reVX``, you can now use it in the ``features`` input.
         This can also be helpful if you need to compute the same type of
-        setback for multiple different input datasets. For example::
+        setback for multiple different input datasets. For example, the
+        input
+        ::
 
             feature_specs: {
                 "water-nwi": {
@@ -390,13 +393,16 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
                 "water-nhd": "/path/to/nhd/*.gpkg",
             }
 
-        By default, ``None``.
+        By default, ``None``, which does not add any new setback
+        calculators (the default ones defined in
+        :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS` are still
+        available).
     max_workers : int, optional
         Number of workers to use for setback exclusion computation. If
-        `1`, the computation runs in serial. If > `1`, the computation
-        runs in parallel with that many workers. If ``None``, the
-        computation runs in parallel on all available cores.
-        By default, ``None``.
+        this value is 1, the computation runs in serial. If this value
+        is > 1, the computation runs in parallel with that many workers.
+        If ``None``, the computation runs in parallel on all available
+        cores. By default, ``None``.
 
     Returns
     -------
@@ -451,7 +457,7 @@ def merge_setbacks(_out_path, _pattern, are_partial_inclusions=None,
         Flag indicating wether the inputs are partial inclusion values
         or boolean exclusions. If ``None``, will try to infer
         automatically from the input file's GeoTIFF profile
-        ("dtype" != "uint8"). By default, ``None``.
+        (``dtype != uint8``). By default, ``None``.
     purge_chunks : bool, optional
         Flag indicating wether individual "chunk" files should be
         deleted after a successful merge (``True``), or if they should
