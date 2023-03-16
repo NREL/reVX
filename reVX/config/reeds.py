@@ -112,7 +112,6 @@ class ProfilesConfigGroup(BaseConfig):
         """
         super().__init__(config)
         self._default_n_profiles = 1
-        self._default_gid_col = 'gen_gids'
         self._default_profiles_dset = 'cf_profile'
         self._default_rep_method = 'meanoid'
         self._default_err_method = 'rmse'
@@ -133,12 +132,6 @@ class ProfilesConfigGroup(BaseConfig):
     def n_profiles(self):
         """Get the number of profiles to get."""
         return self.get('n_profiles', self._default_n_profiles)
-
-    @property
-    def gid_col(self):
-        """Column label in rev_summary that contains the generation gids
-        (data index in gen_fpath)."""
-        return self.get('gid_col', self._default_gid_col)
 
     @property
     def profiles_dset(self):
