@@ -14,4 +14,3 @@ scikit-image>=0.18
 scikit-learn>=0.22
 shapely<2.0.0
 toolz>=0.7.3
-xarray>=0.12

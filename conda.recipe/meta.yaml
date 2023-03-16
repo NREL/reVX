@@ -28,7 +28,6 @@ requirements:
     - scikit-learn
     - shapely
     - toolz
-    - xarray
   run:
     - python
     - pip
@@ -45,7 +44,6 @@ requirements:
     - scikit-learn
     - shapely
     - toolz
-    - xarray
   run-constrained:
     - h5pyd
     - psycopg2-binary
