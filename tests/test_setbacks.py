@@ -1337,6 +1337,77 @@ def test_cli_invalid_config_tmi(runner):
     LOGGERS.clear()
 
 
+def test_cli_invalid_input_gpkg_dne(runner):
+    """
+    Test CLI with invalid config (GPKG input missing).
+    """
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+
+        parcel_path = os.path.join(td, 'Rhode_Island.gpkg')
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"parcel": parcel_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "base_setback_dist": 1,
+                  "rotor_diameter": 1,
+                  "hub_height": 1}
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(cli, ['compute', '-c', config_path])
+        assert result.exit_code == 1
+        assert result.exc_info
+        assert result.exc_info[0] == FileNotFoundError
+        assert ("No unprocessed GeoPackage files found!"
+                in str(result.exception))
+
+    LOGGERS.clear()
+
+
+def test_cli_invalid_input_not_gpkg(runner):
+    """
+    Test CLI with invalid config (input is not GPKG).
+    """
+    rail_path = os.path.join(TESTDATADIR, 'setbacks',
+                             'Rhode_Island_Railroads.gpkg')
+    railroads = gpd.read_file(rail_path)
+    with tempfile.TemporaryDirectory() as td:
+        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regs_fpath = os.path.join(td, regs_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        rail_path = os.path.join(td, 'railroads.shp')
+        railroads.to_file(rail_path)
+        config = {"log_directory": td,
+                  "execution_control": {"option": "local"},
+                  "excl_fpath": EXCL_H5,
+                  "features": {"rail": rail_path},
+                  "log_level": "INFO",
+                  "regs_fpath": regs_fpath,
+                  "replace": True,
+                  "base_setback_dist": 1,
+                  "rotor_diameter": 1,
+                  "hub_height": 1}
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(cli, ['compute', '-c', config_path])
+        assert result.exit_code == 1
+        assert result.exc_info
+        assert result.exc_info[0] == FileNotFoundError
+        assert ("No unprocessed GeoPackage files found!"
+                in str(result.exception))
+
+    LOGGERS.clear()
+
+
 def test_cli_saving(runner):
     """
     Test CLI saving files.
