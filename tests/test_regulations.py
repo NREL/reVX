@@ -125,11 +125,11 @@ def test_regulations_locals_exist():
 
     with tempfile.TemporaryDirectory() as td:
         regs = pd.read_csv(REGS_FPATH).iloc[0:0]
-        regs_fpath = os.path.basename(REGS_FPATH)
-        regs_fpath = os.path.join(td, regs_fpath)
-        regs.to_csv(regs_fpath, index=False)
+        regulations_fpath = os.path.basename(REGS_FPATH)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        regs.to_csv(regulations_fpath, index=False)
         regs = TestRegulations(generic_regulation_value=GENERIC_REG_VAL,
-                               regulations_fpath=regs_fpath)
+                               regulations_fpath=regulations_fpath)
         assert not regs.locals_exist
 
 

@@ -214,10 +214,10 @@ def test_local_turbine_flicker():
     """
     Test Turbine Flicker for local regulations
     """
-    regs_fpath = os.path.join(TESTDATADIR, 'turbine_flicker',
-                              'blue_creek_regs_value.csv')
+    regulations_fpath = os.path.join(TESTDATADIR, 'turbine_flicker',
+                                     'blue_creek_regs_value.csv')
     regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
-                                     regulations_fpath=regs_fpath)
+                                     regulations_fpath=regulations_fpath)
     with tempfile.TemporaryDirectory() as td:
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)
@@ -244,15 +244,15 @@ def test_local_flicker_empty_regs():
     """
     Test Turbine Flicker for empty local regulations
     """
-    regs_fpath = os.path.join(TESTDATADIR, 'turbine_flicker',
-                              'blue_creek_regs_value.csv')
+    regulations_fpath = os.path.join(TESTDATADIR, 'turbine_flicker',
+                                     'blue_creek_regs_value.csv')
     with tempfile.TemporaryDirectory() as td:
-        regs = pd.read_csv(regs_fpath).iloc[0:0]
-        regs_fpath = os.path.basename(regs_fpath)
-        regs_fpath = os.path.join(td, regs_fpath)
-        regs.to_csv(regs_fpath, index=False)
+        regs = pd.read_csv(regulations_fpath).iloc[0:0]
+        regulations_fpath = os.path.basename(regulations_fpath)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        regs.to_csv(regulations_fpath, index=False)
         regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
-                                         regulations_fpath=regs_fpath)
+                                         regulations_fpath=regulations_fpath)
 
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)
@@ -272,11 +272,11 @@ def test_local_and_generic_turbine_flicker():
     """
     Test Turbine Flicker for local + generic regulations
     """
-    regs_fpath = os.path.join(TESTDATADIR, 'turbine_flicker',
-                              'blue_creek_regs_value.csv')
+    regulations_fpath = os.path.join(TESTDATADIR, 'turbine_flicker',
+                                     'blue_creek_regs_value.csv')
     regulations = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
                                      flicker_threshold=100,
-                                     regulations_fpath=regs_fpath)
+                                     regulations_fpath=regulations_fpath)
     regulations_generic_only = FlickerRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
                                                   flicker_threshold=100,
                                                   regulations_fpath=None)

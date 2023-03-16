@@ -179,13 +179,13 @@ def test_setback_regulations_locals_exist():
 
     with tempfile.TemporaryDirectory() as td:
         regs = pd.read_csv(REGS_FPATH).iloc[0:0]
-        regs_fpath = os.path.basename(REGS_FPATH)
-        regs_fpath = os.path.join(td, regs_fpath)
-        regs.to_csv(regs_fpath, index=False)
-        regs = SetbackRegulations(10, regulations_fpath=regs_fpath,
+        regulations_fpath = os.path.basename(REGS_FPATH)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        regs.to_csv(regulations_fpath, index=False)
+        regs = SetbackRegulations(10, regulations_fpath=regulations_fpath,
                                   multiplier=1.1)
         assert not regs.locals_exist
-        regs = SetbackRegulations(10, regulations_fpath=regs_fpath,
+        regs = SetbackRegulations(10, regulations_fpath=regulations_fpath,
                                   multiplier=None)
         assert not regs.locals_exist
 
@@ -249,10 +249,10 @@ def test_setbacks_no_computation(setbacks_class):
                                 'Rhode_Island_Water.gpkg')
     with tempfile.TemporaryDirectory() as td:
         regs = pd.read_csv(REGS_FPATH).iloc[0:0]
-        regs_fpath = os.path.basename(REGS_FPATH)
-        regs_fpath = os.path.join(td, regs_fpath)
-        regs.to_csv(regs_fpath, index=False)
-        regs = SetbackRegulations(10, regulations_fpath=regs_fpath)
+        regulations_fpath = os.path.basename(REGS_FPATH)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        regs.to_csv(regulations_fpath, index=False)
+        regs = SetbackRegulations(10, regulations_fpath=regulations_fpath)
         setbacks = setbacks_class(EXCL_H5, regs, features=feature_file)
         with pytest.warns(UserWarning):
             test = setbacks.compute_exclusions()
@@ -471,12 +471,12 @@ def test_local_parcels_solar(max_workers, regulations_fpath):
     """
 
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(regulations_fpath)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(regulations_fpath, regs_fpath)
+        # fn = os.path.basename(regulations_fpath)
+        # temp_regulations_fpath = os.path.join(td, fn)
+        # shutil.copy(regulations_fpath, temp_regulations_fpath)
 
         regulations = SetbackRegulations(BASE_SETBACK_DIST,
-                                         regulations_fpath=regs_fpath)
+                                         regulations_fpath=regulations_fpath)
         parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                    'Rhode_Island.gpkg')
         setbacks = SETBACKS["parcel"](EXCL_H5, regulations,
@@ -515,13 +515,13 @@ def test_local_parcels_wind(max_workers, regulations_fpath):
     """
 
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(regulations_fpath)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(regulations_fpath, regs_fpath)
+        # regs_fpath = os.path.basename(regulations_fpath)
+        # regs_fpath = os.path.join(td, regs_fpath)
+        # shutil.copy(regulations_fpath, regs_fpath)
 
-        regulations = WindSetbackRegulations(hub_height=1.75,
-                                             rotor_diameter=0.5,
-                                             regulations_fpath=regs_fpath)
+        regulations = WindSetbackRegulations(
+            hub_height=1.75, rotor_diameter=0.5,
+            regulations_fpath=regulations_fpath)
         parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                    'Rhode_Island.gpkg')
         setbacks = SETBACKS["parcel"](EXCL_H5, regulations,
@@ -585,12 +585,12 @@ def test_local_water_solar(max_workers, regulations_fpath):
     """
 
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(regulations_fpath)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(regulations_fpath, regs_fpath)
+        # regulations_fpath = os.path.basename(regulations_fpath)
+        # regulations_fpath = os.path.join(td, regulations_fpath)
+        # shutil.copy(regulations_fpath, regulations_fpath)
 
         regulations = SetbackRegulations(BASE_SETBACK_DIST,
-                                         regulations_fpath=regs_fpath)
+                                         regulations_fpath=regulations_fpath)
         water_path = os.path.join(TESTDATADIR, 'setbacks',
                                   'Rhode_Island_Water.gpkg')
         setbacks = SETBACKS["water"](EXCL_H5, regulations,
@@ -625,12 +625,13 @@ def test_local_water_wind(max_workers, regulations_fpath):
     """
 
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(regulations_fpath)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(regulations_fpath, regs_fpath)
+        # regs_fpath = os.path.basename(regulations_fpath)
+        # regs_fpath = os.path.join(td, regs_fpath)
+        # shutil.copy(regulations_fpath, regs_fpath)
 
-        regulations = WindSetbackRegulations(hub_height=4, rotor_diameter=2,
-                                             regulations_fpath=regs_fpath)
+        regulations = WindSetbackRegulations(
+            hub_height=4, rotor_diameter=2,
+            regulations_fpath=regulations_fpath)
         water_path = os.path.join(TESTDATADIR, 'setbacks',
                                   'Rhode_Island_Water.gpkg')
         setbacks = SETBACKS["water"](EXCL_H5, regulations,
@@ -791,12 +792,12 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
     generic_layer = generic_setbacks.compute_exclusions(max_workers=1)
 
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(regulations_fpath)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(regulations_fpath, regs_fpath)
+        # regulations_fpath = os.path.basename(regulations_fpath)
+        # regulations_fpath = os.path.join(td, regulations_fpath)
+        # shutil.copy(regulations_fpath, regulations_fpath)
 
         regulations = regulations_class(*setback_distance,
-                                        regulations_fpath=regs_fpath,
+                                        regulations_fpath=regulations_fpath,
                                         multiplier=None)
         local_setbacks = setbacks_class(EXCL_H5, regulations,
                                         features=features_path,
@@ -805,7 +806,7 @@ def test_merged_setbacks(setbacks_class, regulations_class, features_path,
         local_layer = local_setbacks.compute_exclusions(max_workers=1)
 
         regulations = regulations_class(*setback_distance,
-                                        regulations_fpath=regs_fpath,
+                                        regulations_fpath=regulations_fpath,
                                         multiplier=100)
         merged_setbacks = setbacks_class(EXCL_H5, regulations,
                                          features=features_path,
@@ -887,12 +888,12 @@ def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
 
     with tempfile.TemporaryDirectory() as td:
         regs = pd.read_csv(regulations_fpath).iloc[0:0]
-        regs_fpath = os.path.basename(regulations_fpath)
-        regs_fpath = os.path.join(td, regs_fpath)
-        regs.to_csv(regs_fpath, index=False)
+        regulations_fpath = os.path.basename(regulations_fpath)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        regs.to_csv(regulations_fpath, index=False)
 
         regulations = regulations_class(*setback_distance,
-                                        regulations_fpath=regs_fpath,
+                                        regulations_fpath=regulations_fpath,
                                         multiplier=None)
         local_setbacks = setbacks_class(EXCL_H5, regulations,
                                         features=features_path)
@@ -902,7 +903,7 @@ def test_merged_setbacks_missing_local(setbacks_class, regulations_class,
         assert np.allclose(test, local_setbacks.no_exclusions_array)
 
         regulations = regulations_class(*setback_distance,
-                                        regulations_fpath=regs_fpath,
+                                        regulations_fpath=regulations_fpath,
                                         multiplier=100)
         merged_setbacks = setbacks_class(EXCL_H5, regulations,
                                          features=features_path)
@@ -962,27 +963,27 @@ def test_cli_railroads(runner, config_input):
     rail_path = os.path.join(TESTDATADIR, 'setbacks',
                              'Rhode_Island_Railroads.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(REGS_FPATH)
-        regs_fpath = os.path.join(td, regs_fpath)
+        regulations_fpath = os.path.basename(REGS_FPATH)
+        regulations_fpath = os.path.join(td, regulations_fpath)
         if "base_setback_dist" in config_input:
             regs = pd.read_csv(REGS_FPATH)
             regs = regs.iloc[:-2]
             mask = ((regs['Feature Type'] == "Railroads")
                     & (regs['Value Type'] == "Max-tip Height Multiplier"))
             regs.loc[mask, 'Value Type'] = "Structure Height Multiplier"
-            regs.to_csv(regs_fpath, index=False)
+            regs.to_csv(regulations_fpath, index=False)
             regs = SetbackRegulations(HUB_HEIGHT + ROTOR_DIAMETER / 2,
-                                      regulations_fpath=regs_fpath)
+                                      regulations_fpath=regulations_fpath)
         else:
-            shutil.copy(REGS_FPATH, regs_fpath)
+            shutil.copy(REGS_FPATH, regulations_fpath)
             regs = WindSetbackRegulations(HUB_HEIGHT, ROTOR_DIAMETER,
-                                          regulations_fpath=regs_fpath)
+                                          regulations_fpath=regulations_fpath)
         config = {"log_directory": td,
                   "execution_control": {"option": "local"},
                   "excl_fpath": EXCL_H5,
                   "features": {"rail": rail_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True}
         config.update(config_input)
         config_path = os.path.join(td, 'config.json')
@@ -1018,15 +1019,15 @@ def test_cli_parcels(runner, config_input, regs):
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(regs)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(regs, regs_fpath)
+        regulations_fpath = os.path.basename(regs)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(regs, regulations_fpath)
         config = {"log_directory": td,
                   "execution_control": {"option": "local"},
                   "excl_fpath": EXCL_H5,
                   "features": {"parcel": parcel_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True}
         config.update(config_input)
         config_path = os.path.join(td, 'config.json')
@@ -1065,15 +1066,15 @@ def test_cli_water(runner, config_input, regs):
     water_path = os.path.join(TESTDATADIR, 'setbacks',
                               'Rhode_Island_Water.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(regs)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(regs, regs_fpath)
+        regulations_fpath = os.path.basename(regs)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(regs, regulations_fpath)
         config = {"log_directory": td,
                   "execution_control": {"option": "local"},
                   "excl_fpath": EXCL_H5,
                   "features": {"water": water_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True}
         config.update(config_input)
         config_path = os.path.join(td, 'config.json')
@@ -1102,15 +1103,15 @@ def test_cli_partial_setbacks(runner):
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        regulations_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regulations_fpath)
         config = {"log_directory": td,
                   "execution_control": {"option": "local"},
                   "excl_fpath": EXCL_H5,
                   "features": {"parcel": parcel_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True,
                   "base_setback_dist": BASE_SETBACK_DIST,
                   "weights_calculation_upscale_factor": 10}
@@ -1147,9 +1148,9 @@ def test_cli_multiple_generic_multipliers(runner, as_file):
     water_path = os.path.join(TESTDATADIR, 'setbacks',
                               'Rhode_Island_Water.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        regulations_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regulations_fpath)
         mults = {"parcel": 2, "water": 10}
         if as_file:
             fp = os.path.join(td, "mults.json")
@@ -1162,7 +1163,7 @@ def test_cli_multiple_generic_multipliers(runner, as_file):
                   "excl_fpath": EXCL_H5,
                   "features": {"parcel": parcel_path, "water": water_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True,
                   "base_setback_dist": BASE_SETBACK_DIST,
                   "generic_setback_multiplier": mults}
@@ -1184,7 +1185,7 @@ def test_cli_multiple_generic_multipliers(runner, as_file):
             test = tif.values
 
         regulations = SetbackRegulations(BASE_SETBACK_DIST,
-                                         regulations_fpath=regs_fpath,
+                                         regulations_fpath=regulations_fpath,
                                          multiplier=2)
         setbacks = SETBACKS["parcel"](EXCL_H5, regulations,
                                       features=parcel_path)
@@ -1200,7 +1201,7 @@ def test_cli_multiple_generic_multipliers(runner, as_file):
             test = tif.values
 
         regulations = SetbackRegulations(BASE_SETBACK_DIST,
-                                         regulations_fpath=regs_fpath,
+                                         regulations_fpath=regulations_fpath,
                                          multiplier=10)
         setbacks = SETBACKS["water"](EXCL_H5, regulations,
                                      features=water_path)
@@ -1232,18 +1233,18 @@ def test_cli_merged_layers(runner, setbacks_type, out_fn, features_path,
     """
     out = {}
     config_run_inputs = {"generic": {"generic_setback_multiplier": 100},
-                         "local": {"regs_fpath": None},
+                         "local": {"regulations_fpath": None},
                          "merged": {"generic_setback_multiplier": 100,
-                                    "regs_fpath": None}}
+                                    "regulations_fpath": None}}
 
     for run_type, c_in in config_run_inputs.items():
         with tempfile.TemporaryDirectory() as td:
-            regs_fpath = os.path.basename(regulations_fpath)
-            regs_fpath = os.path.join(td, regs_fpath)
-            shutil.copy(regulations_fpath, regs_fpath)
+            # regulations_fpath = os.path.basename(regulations_fpath)
+            # regulations_fpath = os.path.join(td, regulations_fpath)
+            # shutil.copy(regulations_fpath, regulations_fpath)
 
-            if "regs_fpath" in c_in:
-                c_in["regs_fpath"] = regs_fpath
+            if "regulations_fpath" in c_in:
+                c_in["regulations_fpath"] = regulations_fpath
 
             config = {"log_directory": td,
                       "execution_control": {"option": "local"},
@@ -1282,16 +1283,16 @@ def test_cli_invalid_config_missing_height(runner):
     rail_path = os.path.join(TESTDATADIR, 'setbacks',
                              'Rhode_Island_Railroads.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(REGS_FPATH)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(REGS_FPATH, regs_fpath)
+        regulations_fpath = os.path.basename(REGS_FPATH)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(REGS_FPATH, regulations_fpath)
         for ft in ["rail", "parcel"]:
             config = {"log_directory": td,
                       "execution_control": {"option": "local"},
                       "excl_fpath": EXCL_H5,
                       "features": {ft: rail_path},
                       "log_level": "INFO",
-                      "regs_fpath": regs_fpath,
+                      "regulations_fpath": regulations_fpath,
                       "replace": True}
             config_path = os.path.join(td, 'config.json')
             with open(config_path, 'w') as f:
@@ -1311,15 +1312,15 @@ def test_cli_invalid_config_tmi(runner):
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        regulations_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regulations_fpath)
         config = {"log_directory": td,
                   "execution_control": {"option": "local"},
                   "excl_fpath": EXCL_H5,
                   "features": {"parcel": parcel_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True,
                   "base_setback_dist": 1,
                   "rotor_diameter": 1,
@@ -1342,9 +1343,9 @@ def test_cli_invalid_input_gpkg_dne(runner):
     Test CLI with invalid config (GPKG input missing).
     """
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        regulations_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regulations_fpath)
 
         parcel_path = os.path.join(td, 'Rhode_Island.gpkg')
         config = {"log_directory": td,
@@ -1352,7 +1353,7 @@ def test_cli_invalid_input_gpkg_dne(runner):
                   "excl_fpath": EXCL_H5,
                   "features": {"parcel": parcel_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True,
                   "base_setback_dist": 1,
                   "rotor_diameter": 1,
@@ -1379,9 +1380,9 @@ def test_cli_invalid_input_not_gpkg(runner):
                              'Rhode_Island_Railroads.gpkg')
     railroads = gpd.read_file(rail_path)
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        regulations_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regulations_fpath)
         rail_path = os.path.join(td, 'railroads.shp')
         railroads.to_file(rail_path)
         config = {"log_directory": td,
@@ -1389,7 +1390,7 @@ def test_cli_invalid_input_not_gpkg(runner):
                   "excl_fpath": EXCL_H5,
                   "features": {"rail": rail_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True,
                   "base_setback_dist": 1,
                   "rotor_diameter": 1,
@@ -1415,9 +1416,9 @@ def test_cli_saving(runner):
     parcel_path = os.path.join(TESTDATADIR, 'setbacks', 'RI_Parcels',
                                'Rhode_Island.gpkg')
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        regulations_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regulations_fpath)
 
         excl_fpath = os.path.basename(EXCL_H5)
         excl_fpath = os.path.join(td, excl_fpath)
@@ -1430,7 +1431,7 @@ def test_cli_saving(runner):
                   "excl_fpath": excl_fpath,
                   "features": {"parcel": parcel_path},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True,
                   "base_setback_dist": BASE_SETBACK_DIST,
                   "out_layers": {"Rhode_Island.gpkg": "ri_parcel_setbacks"}}
@@ -1505,7 +1506,7 @@ def test_custom_features_0_setback(runner, setback_input):
                   "excl_fpath": EXCL_H5,
                   "features": {"rail-new": [rail_path]},
                   "log_level": "INFO",
-                  "regs_fpath": None,
+                  "regulations_fpath": None,
                   "replace": True,
                   "base_setback_dist": base_setback_dist,
                   "generic_setback_multiplier": generic_setback_multiplier}
@@ -1551,9 +1552,9 @@ def test_integrated_setbacks_run(runner, county_wind_regulations):
     railroads = gpd.read_file(rail_path)
     third = len(railroads) // 3
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(REGS_FPATH)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(REGS_FPATH, regs_fpath)
+        regulations_fpath = os.path.basename(REGS_FPATH)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(REGS_FPATH, regulations_fpath)
 
         fp1 = os.path.join(td, "rail_0.gpkg")
         fp2 = os.path.join(td, "rails_10.gpkg")
@@ -1567,7 +1568,7 @@ def test_integrated_setbacks_run(runner, county_wind_regulations):
                   "features": {"rail": ["./rail_0.gpkg",
                                         os.path.join(td, "./rails*.gpkg")]},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True,
                   "hub_height": HUB_HEIGHT,
                   "rotor_diameter": ROTOR_DIAMETER}
@@ -1624,9 +1625,9 @@ def test_integrated_partial_setbacks_run(runner):
     parcels = gpd.read_file(parcel_path).to_crs(crs)
     third = len(parcels) // 3
     with tempfile.TemporaryDirectory() as td:
-        regs_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
-        regs_fpath = os.path.join(td, regs_fpath)
-        shutil.copy(PARCEL_REGS_FPATH_VALUE, regs_fpath)
+        regulations_fpath = os.path.basename(PARCEL_REGS_FPATH_VALUE)
+        regulations_fpath = os.path.join(td, regulations_fpath)
+        shutil.copy(PARCEL_REGS_FPATH_VALUE, regulations_fpath)
 
         fp1 = os.path.join(td, "parcels_0.gpkg")
         fp2 = os.path.join(td, "parcels_1.gpkg")
@@ -1640,7 +1641,7 @@ def test_integrated_partial_setbacks_run(runner):
                   "excl_fpath": EXCL_H5,
                   "features": {"parcel": "./parcels*.gpkg"},
                   "log_level": "INFO",
-                  "regs_fpath": regs_fpath,
+                  "regulations_fpath": regulations_fpath,
                   "replace": True,
                   "base_setback_dist": BASE_SETBACK_DIST,
                   "weights_calculation_upscale_factor": 10}

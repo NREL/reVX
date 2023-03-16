@@ -87,7 +87,7 @@ def preprocess_setbacks_config(config, features,
         Optional setback multiplier to use where local regulations are
         not supplied. This multiplier will be applied to the
         ``base_setback_dist`` (or the turbine tip-height) to calculate
-        the setback. If supplied along with ``regs_fpath``, this
+        the setback. If supplied along with ``regulations_fpath``, this
         input will be used to apply a setback to all counties not listed
         in the regulations file. If ``None``, no generic setback
         computation is performed. By default, ``None``.
@@ -207,7 +207,7 @@ def _update_setbacks_calculators(feature_specs=None):
 
 def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
                      hub_height=None, rotor_diameter=None,
-                     base_setback_dist=None, regs_fpath=None,
+                     base_setback_dist=None, regulations_fpath=None,
                      weights_calculation_upscale_factor=None,
                      replace=False, hsds=False, out_layers=None,
                      feature_specs=None, max_workers=None):
@@ -232,9 +232,9 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
     excl_fpath : str
         Path to HDF5 file containing the county FIPS layer (should be
         called ``cnty_fips``) used to match local regulations in
-        ``regs_fpath`` to counties on the grid. No data will be written
-        to this file unless explicitly requested via the ``out_layers``
-        input.
+        ``regulations_fpath`` to counties on the grid. No data will be
+        written to this file unless explicitly requested via the
+        ``out_layers`` input.
     _feature_type : str
         Name of the feature type being run. Must be a key of the
         :attr:`SETBACKS` dictionary.
@@ -265,7 +265,7 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
         ``base_setback_dist`` *must be set to None*, otherwise an
         error in thrown. The base setback distance is scaled by
         generic/local multipliers (provided either via the
-        ``regs_fpath`` csv, or the ``generic_setback_multiplier``
+        ``regulations_fpath`` csv, or the ``generic_setback_multiplier``
         input, or both) before setbacks are computed.
         By default, ``None``.
     base_setback_dist : int | float, optional
@@ -274,10 +274,10 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
         specified, both ``hub_height``and ``rotor_diameter`` *must be
         set to None*, otherwise an error in thrown. The base setback
         distance is scaled by generic/local multipliers (provided either
-        via the ``regs_fpath`` csv, or the
+        via the ``regulations_fpath`` csv, or the
         ``generic_setback_multiplier`` input, or both) before setbacks
         are computed. By default, ``None``.
-    regs_fpath : str, optional
+    regulations_fpath : str, optional
         Path to regulations ``.csv`` or ``.gpkg`` file. At a minimum,
         this file must contain the following columns: ``Feature Type``,
         which contains labels for the type of setback that each row
@@ -292,7 +292,7 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
         using ``hub_height`` + ``rotor_diameter`` input) for more info.
         This option overrides the ``generic_setback_multiplier`` input,
         but only for counties that are listed in the input CSV file.
-        This means both ``regs_fpath`` and
+        This means both ``regulations_fpath`` and
         ``generic_setback_multiplier`` can be specified
         simultaneously in order to compute setbacks driven by local
         ordinance where given + a generic multiplier applied everywhere
@@ -417,18 +417,18 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
                  '- base_setback_dist = {}\n'
                  '- hub_height = {}\n'
                  '- rotor_diameter = {}\n'
-                 '- regs_fpath = {}\n'
+                 '- regulations_fpath = {}\n'
                  '- generic_setback_multiplier = {}\n'
                  '- using max_workers = {}\n'
                  '- replace layer if needed = {}\n'
                  '- weights calculation upscale factor = {}\n'
                  '- out_layers = {}\n'
                  .format(base_setback_dist, hub_height, rotor_diameter,
-                         regs_fpath, _mult, max_workers, replace,
+                         regulations_fpath, _mult, max_workers, replace,
                          weights_calculation_upscale_factor, out_layers))
 
     regulations = select_setback_regulations(base_setback_dist, hub_height,
-                                             rotor_diameter, regs_fpath,
+                                             rotor_diameter, regulations_fpath,
                                              _mult)
     setbacks_class = SETBACKS[_ft]
     wcuf = weights_calculation_upscale_factor

@@ -70,7 +70,7 @@ def run_local(ctx, config):
                resolution=config.resolution,
                grid_cell_size=config.grid_cell_size,
                max_flicker_exclusion_range=config.max_flicker_exclusion_range,
-               regs_fpath=config.regs_fpath,
+               regulations_fpath=config.regulations_fpath,
                max_workers=config.execution_control.max_workers,
                replace=config.replace,
                hsds=config.hsds,
@@ -156,7 +156,7 @@ def from_config(ctx, config, verbose):
                     "this value can lead to drastically instead memory "
                     "requirements. This value may be increased slightly in "
                     "order to yield odd exclusion array shapes."))
-@click.option('--regs_fpath', '-regs', default=None, type=STR,
+@click.option('--regulations_fpath', '-regs', default=None, type=STR,
               show_default=True,
               help=('Path to regulations .csv file, if None create '
                     'generic setbacks using max - tip height * "multiplier", '
@@ -180,8 +180,8 @@ def from_config(ctx, config, verbose):
 def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
           rotor_diameter, out_layer, out_dir, tm_dset, building_threshold,
           flicker_threshold, resolution, grid_cell_size,
-          max_flicker_exclusion_range, regs_fpath, max_workers, replace, hsds,
-          log_dir, verbose):
+          max_flicker_exclusion_range, regulations_fpath, max_workers,
+          replace, hsds, log_dir, verbose):
     """
     Compute turbine flicker on local hardware
     """
@@ -209,18 +209,18 @@ def local(ctx, excl_fpath, res_fpath, building_layer, hub_height,
                  '- resolution = {}\n'
                  '- grid_cell_size = {}\n'
                  '- max_flicker_exclusion_range = {}\n'
-                 '- regs_fpath = {}\n'
+                 '- regulations_fpath = {}\n'
                  '- using max_workers = {}\n'
                  '- replace layer if needed = {}\n'
                  '- out_layer = {}\n'
                  .format(building_layer, hub_height, rotor_diameter,
                          tm_dset, building_threshold, flicker_threshold,
                          resolution, grid_cell_size,
-                         max_flicker_exclusion_range, regs_fpath, max_workers,
-                         replace, out_layer))
+                         max_flicker_exclusion_range, regulations_fpath,
+                         max_workers, replace, out_layer))
 
     regulations = FlickerRegulations(hub_height, rotor_diameter,
-                                     flicker_threshold, regs_fpath)
+                                     flicker_threshold, regulations_fpath)
     fn = flicker_fn_out(regulations.hub_height, regulations.rotor_diameter)
     out_fn = os.path.join(out_dir, fn)
     TurbineFlicker.run(excl_fpath, building_layer, out_fn,
@@ -282,7 +282,7 @@ def get_node_cmd(config):
             '-gcs {}'.format(SLURM.s(config.grid_cell_size)),
             '-mfer {}'.format(SLURM.s(config.max_flicker_exclusion_range)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
-            '-regs {}'.format(SLURM.s(config.regs_fpath)),
+            '-regs {}'.format(SLURM.s(config.regulations_fpath)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
