@@ -236,7 +236,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
                         sc_point['capacity'] = sum(cap_build)
                         sc_point['built_capacity'] = sum(cap_build)
                         sc_point['gid_capacity'] = cap_build
-                        single_plant_sc = single_plant_sc.append(sc_point)
+                        single_plant_sc = pd.concat([single_plant_sc,
+                                                     sc_point.to_frame().T],
+                                                    axis=0)
 
                         self._sc_table.at[sc_loc, 'capacity'] -= sum(cap_build)
                         self._sc_table.at[sc_loc, 'gid_capacity'] = cap_remain
