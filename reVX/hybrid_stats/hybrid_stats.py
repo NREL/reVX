@@ -536,6 +536,8 @@ class HybridStats:
                                  dtype=np.float32)
         for grp_name, solar_grp in solar_data:
 
+            print(grp_name, wind_data)
+            grp_name = grp_name[0] if len(grp_name) == 1 else grp_name
             wind_grp = wind_data.get_group(grp_name)
             msg = ('solar and wind data shapes do not match! {} != {}'
                    .format(solar_grp.shape, wind_grp.shape))
