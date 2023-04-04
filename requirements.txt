@@ -2,8 +2,8 @@ dask>=2.8
 dask[array]>=2.8
 geopandas>=0.8
 google-auth-oauthlib==0.5.3
-NREL-reV>=0.6.0
-NREL-rex>=0.2.69
+NREL-reV>=0.7.3
+NREL-rex>=0.2.80
 psycopg2-binary>=2.8
 pyproj>=3.0.1
 pywavelets>=1.0
