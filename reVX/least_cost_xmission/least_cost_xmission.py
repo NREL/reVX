@@ -422,7 +422,7 @@ class LeastCostXmission(LeastCostPaths):
             logger.debug('Adding all {} transmission lines connected to '
                          'substations with minimum max voltage of {}'
                          .format(len(trans_lines), tie_line_voltage))
-            sc_features = sc_features.append(trans_lines)
+            sc_features = pd.concat([sc_features, trans_lines])
 
         return sc_features, radius
 
