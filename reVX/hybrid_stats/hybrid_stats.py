@@ -440,6 +440,7 @@ class HybridStats:
                      11: 'Nov', 12: 'Dec'}
 
         # pylint: disable=unnecessary-lambda
+        # pylint: disable=unnecessary-lambda-assignment
         year = lambda s: "{}".format(s)
         month = lambda s: "{}".format(month_map[s])
         hour = lambda s: "{:02d}:00UTC".format(s)
@@ -1495,6 +1496,7 @@ class HybridStabilityCoefficient(HybridStats):
                                         ['stability'])
         out_stats = {}
         for grp_name, mix_grp in mix:
+            grp_name = grp_name[0] if len(grp_name) == 1 else grp_name
             col = cols_map['stability'][grp_name]
             ref_grp = ref.get_group(grp_name)
             msg = ('mixed and reference data shapes do not match! {} != {}'
