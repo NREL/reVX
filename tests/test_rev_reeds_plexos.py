@@ -133,7 +133,7 @@ def test_missing_gids():
                                  'capacity_reV': [10] * n})
 
     reeds = pd.read_csv(REEDS_1)
-    reeds = reeds.append(missing_test, ignore_index=False)
+    reeds = pd.concat([reeds, missing_test])
     icap = reeds['capacity_reV'].sum()
 
     pa = PlexosAggregation(PLEXOS_NODES, rev_sc, reeds, CF_FPATH.format(2007),
