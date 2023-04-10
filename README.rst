@@ -54,13 +54,11 @@ on your machine and are using `conda <https://docs.conda.io/en/latest/index.html
 as your package/environment manager.
 
 #. Create a new environment:
-    ``conda create --name revx python=3.7``
-
-        - NOTE: reVX currently only supports python versions 3.7, 3.8, and 3.9. Python 3.10+ conflicts with the reV dependency.
+    ``conda create --name revx python=3.8``
 
 #. Activate your new environment:
     ``conda activate revx``
-    
+
 #. Clone the repo:
     From your home directory ``/home/{user}/`` or another directory that you have permissions in, run the command ``git clone git@github.com:NREL/reVX.git`` and then go into your cloned repository: ``cd reVX``
 
