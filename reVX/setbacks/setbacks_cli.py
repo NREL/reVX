@@ -144,7 +144,7 @@ def preprocess_setbacks_config(config, features,
         logger.error(msg)
         raise FileNotFoundError(msg)
 
-    config["_ft"], config["_fp"], config["_mult"] = zip(*combos_to_run)
+    config["_ft"], config["_fp"], config["_mult"] = zip(*sorted(combos_to_run))
     validate_setback_regulations_input(config.get("base_setback_dist"),
                                        config.get("hub_height"),
                                        config.get("rotor_diameter"))
