@@ -1,4 +1,4 @@
-# ``reVX`` Setbacks
+# reVX Setbacks
 The ``reVX`` setbacks module allows modeling of both local and national-level wind and solar siting ordinances as exclusions (for [``reV``](https://github.com/NREL/reV) and beyond).
 
 This guide is supplemental to the [setbacks documentation](https://nrel.github.io/reVX/_cli/setbacks.html#setbacks) - please consult the latter for detailed explanations of all inputs.
@@ -6,24 +6,24 @@ This guide is supplemental to the [setbacks documentation](https://nrel.github.i
 
 <br>
 
-# Computing setbacks for CONUS
-## Ordinance database
+## Computing setbacks for CONUS
+### Ordinance database
 The first step to computing setbacks is to obtain an up-to-date copy of the wind and/or solar local ordinance database
 (csv file) from [``reVXOrdinances``](https://github.com/NREL/reVXOrdinances) (see the
 [usage guide](https://github.com/NREL/reVXOrdinances/blob/main/docs/USAGE.md) for instructions).
 You can skip this step if you only care about generic setbacks applied across the entire nation.
 
-## Config file setup
+### Config file setup
 Each reVX setbacks project should be run from a new directory. The execution logic assumes exactly one set of setbacks
 configuration per directory. To begin, create a new directory for your project. The name should be descriptive since it
 will show up in all output file names. A good naming convention for wind, for example, is ``"wind_XXXhh_XXXrd"``
 (i.e. "wind_116hh_163rd"). After you have created your directory, ``cd`` into it, and run the following
 command (make sure your ``reVX`` environment has been activated):
-```cmd
+```console
 $ setbacks template-configs
 ```
 This will create some template configuration files for you to use:
-```cmd
+```console
 $ ls
 config_compute.json  config_merge.json  config_pipeline.json
 ```
@@ -96,15 +96,14 @@ key should always be another dictionary. The keys in the new dictionary are the 
 (see the keys of [``SETBACK_SPECS``](setbacks.py) for all possible options - you may have to scroll down after
 clicking the link), and the values should point to the data on disk. There are several ways to point to a data file
 (though all files must be ``GeoPackages``):
-
-- If the features for a particular setback calculation are contained within a single file, just set the value to the path
-to the file (relative paths are allowed)
-- If the features for a particular setback calculation are spread across several files (this is common practice to speed
-  up execution; ``reVX`` will process each input fil eon a separate node in parallel), you have a few options:
-    - You can provide a single unix-style wildcard path to specify the files (e.g. ``../my_data/*/*.gpkg``)
-    - If you would like to run only particular files, or they are spread across multiple directories, or they do not fit
-      within a wildcard pattern, you can specify a list of input paths. The paths in the list can be relative to the
-      project directory, and they can also contain unix-style wildcards
+* If the features for a particular setback calculation are contained within a single file, just set the value to the path
+  to the file (relative paths are allowed)
+* If the features for a particular setback calculation are spread across several files (this is common practice to speed
+  up execution; ``reVX`` will process each input file on a separate node in parallel), you have a few options:
+  * You can provide a single unix-style wildcard path to specify the files (e.g. ``../my_data/*/*.gpkg``)
+  * If you would like to run only particular files, or they are spread across multiple directories, or they do not fit
+    within a wildcard pattern, you can specify a list of input paths. The paths in the list can be relative to the project
+    directory, and they can also contain unix-style wildcards
 
 Finally, you can specify a value for ``generic_setback_multiplier``. This is a multiplier value that will be applied to
 ``base_setback_dist`` to compute setback exclusions wherever a local ordinance is not given.
@@ -138,13 +137,13 @@ This config would calculate setbacks using a ``base_setback_dist`` of 197.5m (ma
 vial the ``cnty_fips`` layer in ``"/path/to/Exclusions.h5"``. The local regulations would be pulled from
 ``"./wind_regulations.csv"``, and a generic multiplier of 1.1 would be applied to the max tip-height value everywhere
 else. Three types of setbacks would be computed:
-
-- Rail setbacks would be computed from all features in the file ``"/absolute/path/to/rail_data.gpkg"``
-- Transmission line setbacks would be computed from all features in all files in the directory
-``"../../relative/path/to/transmission/data"``
-- Road setbacks would be computed from all features in the file ``"../relative/path/to/first/road/data/file.gpkg"`` as well
-  as the features in all files matching the pattern ``"multiple_files*.gpkg"`` in the directory
+* Rail setbacks would be computed from all features in the file ``"/absolute/path/to/rail_data.gpkg"``
+* Transmission line setbacks would be computed from all features in all files in the directory
+  ``"../../relative/path/to/transmission/data"``
+* Road setbacks would be computed from all features in the file ``"../relative/path/to/first/road/data/file.gpkg"``
+  as well as the features in all files matching the pattern ``"multiple_files*.gpkg"`` in the directory
   ``"/path/to/another/road/data/directory"``
+
 
 Note that we have added an extra ``log_level`` key that was not given in the template (future version of GAPs, the
 framework behind the HPC execution logic, may provide this key in the auto-generated templates). This key controls the
@@ -153,9 +152,9 @@ verbosity of the output log files. Suitable options are ``DEBUG`` (most verbose)
 
 Once your setbacks run has been configured, you are ready to kick it off on the HPC.
 
-## Execution
+### Execution
 When you are ready to run setbacks computation, run the following command **from the project directory**:
-```cmd
+```console
 $ setbacks pipeline
 ```
 
@@ -164,7 +163,7 @@ This command runs the first step in the setbacks pipeline (which was configured 
 the current step is done running. It can also be used to re-run a failed or partially-successful step.
 
 Although it is not recommended, you can also run
-```cmd
+```console
 $ setbacks pipeline --background
 ```
 to execute all steps in the pipeline, one after another, without any other user intervention. Be aware, however, that
@@ -173,7 +172,7 @@ times.
 
 If your first step executes successfully, you should see one or more output tiff files in your project directory
 (specifically, one output file per input file):
-```cmd
+```console
 $ ls *.tiff
 
 setbacks_rail_wind_116m_163m_j00.tiff
@@ -191,7 +190,7 @@ setbacks_road_wind_116m_163m_j35.tiff
 Typically the next step is to merge the setbacks computed separately across all the input files into a single file per
 setback type.
 
-## Merging
+### Merging
 The next (and final) step in the auto-generated pipeline will merge all the setback files for a particular setback type
 into a single ``TIFF`` file (the underlying assumption here is that the input files for each feature type do not overlap
 spatially). If you do not wish to merge the files, simply skip this step.
@@ -199,14 +198,14 @@ spatially). If you do not wish to merge the files, simply skip this step.
 Before submitting the merge step to the HPC, open the ``config_merge.json`` file and update the ``execution_control``
 block like you did before. The rest of the default inputs can be left as-is. Once the ``execution_control`` has been
 updated, run the following command **from the project directory**:
-```cmd
+```console
 $ setbacks pipeline
 ```
 
 This will submit the "merge" step. Once this step has finished running, you should see a single ``TIFF`` file per
 setback type in your directory (along with a ``chunk_files`` folder containing the individual ``TIFF`` files from teh
 previous step):
-```cmd
+```console
 $ ls
 chunk_files
 ...
@@ -224,10 +223,10 @@ to be as ``reV`` exclusion layers, you can use the
 
 <br>
 
-# Advanced Topics
+## Advanced Topics
 In this section, we explore some more complex use-patterns that ``reVX`` supports for setbacks exclusion calculations.
 
-## Partial Setbacks
+### Partial Setbacks
 The size of some types of features you may want to calculate setbacks for may be on the order of (or even smaller!)
 than your exclusion your grid size (e.g. parcels). In these cases, it's useful to calculate *partial* setback
 exclusions, where pixels in your grid are not simply a binary flag, but indicate partially exclusions (e.g. 25%).
@@ -241,7 +240,7 @@ the fractional inclusion weight. In other words, a value of 1 = 100% *inclusion*
 exclusions outputs, where the output values are bools with ``1 == exclusion`` and ``0 == inclusion``. The reason for this
 discrepancy is for direct coupling with ``reV``, which expects all partial exclusions to be input as an *inclusion* mask.
 
-## Writing directly to HDF5 files
+### Writing directly to HDF5 files
 ``reVX`` supports writing the output setback data directly to the ``excl_fpath`` exclusions h5 file in addition to
 an output ``TIFF`` file. This is rarely useful for setbacks, since the input features are often broken out over may files
 and thus the output needs to be merged before writing to an exclusion layer. Nevertheless, if your features come in a
@@ -257,7 +256,7 @@ stored directly in the ``excl_fpath`` file by including the ``out_layers`` key i
 ```
 Note that you are mapping the input data files directly to the layer where the output setback data should be stored.
 
-## Feature-specific generic multipliers
+### Feature-specific generic multipliers
 Often, you may wish to model a different generic multiplier for each type of setback feature. Instead of setting up many
 different configuration files with one feature type each, ``reVX`` lets you specify feature-specific generic multipliers
 in a separate config file. For example, suppose you create a file ``generic_multipliers.json`` with the following contents:
@@ -278,7 +277,7 @@ With this configuration, reVX will use a multiplier of 1.5 for all generic road 
 generic parcel setbacks, and a multiplier of 5 for all generic structure setbacks. Note that you **must** provide a
 multiplier for each feature type you specify in the ``features`` input of your ``config_compute.json`` config file.
 
-## Custom setbacks computations
+### Custom setbacks computations
 Sometimes a user may want to compute setbacks from a feature type that is not explicitly supported in ``reVX``.
 A historical example of this are setbacks from oil and natural gas pipelines. As of April 14, 2023, ``reVX`` still
 does not provide explicit support for calculating setbacks from pipelines, even though setbacks from roads and transmission lines are conceptually and computationally similar to pipeline setbacks.
@@ -346,7 +345,7 @@ Of course, you would have to point ``"water-nwi"`` and ``"water-nhd"`` to separa
 ``features`` input.
 
 
-## Batched execution
+### Batched execution
 Although ``reVX`` provides a lot of flexibility when it comes to calculating different setbacks for a single turbine
 (or other technology specification), the setup can still become cumbersome when working with even a handful of technology/
 siting scenarios. To facilitate setup in these cases, users are encouraged to use the ``batch`` functionality (provided by
@@ -428,7 +427,7 @@ python script should resemble string representation of a Python list.
 
 Once this config CSV file is generated, generate the rest of the config files and fill them out, as outlined above.
 Your directory should look like this:
-```cmd
+```console
 $ ls
 config_batch.csv
 config_compute.json
@@ -440,14 +439,14 @@ reference_access_generic_mults.json
 ```
 
 At this point, you can run
-```cmd
+```console
 $ setbacks batch -c config_batch.csv
 ```
 
 This command will create 15 subdirectories (with ``set_tag`` for names), copy over all relevant config files, and
 kickoff the pipeline job in each directory:
 
-```cmd
+```console
 $ ls
 ...
 limited_100hh_150rd
@@ -471,8 +470,21 @@ reference_90hh_120rd
 ```
 
 After the first step of the pipeline completes for all of teh sub-directories, you will have to run
-```cmd
+```console
 $ setbacks batch -c config_batch.csv
 ```
 again to kickoff the "merge" step. Once the "merge" step completes, you have computed setbacks for 15 different
 turbine/siting combinations!
+
+
+### Job Status
+You can check the status of a project directory by running
+```console
+$ setbacks status
+```
+This command will print a table of submitted/running/completed jobs for a particular project directory.
+The jobs will be identified using a tag. In order to see the input file being processed by each job run the
+following command:
+```console
+$ setbacks status -i _fp
+```
