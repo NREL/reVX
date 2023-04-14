@@ -17,5 +17,4 @@ Command Line Interfaces (CLIs)
    setbacks
    simple-plant-builder
    turbine-flicker
-   wind-setbacks
    xmission-cost-creator
