@@ -247,7 +247,7 @@ an output ``TIFF`` file. This is rarely useful for setbacks, since the input fea
 and thus the output needs to be merged before writing to an exclusion layer. Nevertheless, if your features come in a
 single input file (or you really like having hundreds of layers in your h5 files), you can request to have the output data
 stored directly in the ``excl_fpath`` file by including the ``out_layers`` key in your config file:
-```json
+```
 "out_layers": {
     "rail_data.gpkg": "rail_setbacks_116hh_163rd",
     "transmission_az.gpkg": "transmission_setbacks_116hh_167rd_az",
@@ -307,7 +307,7 @@ feature type, please see the documentation for the [``setbacks_calculator``](htt
 
 After adding the above input to the ``config_compute.json`` config file, you can use ``"oil_and_gas"`` just like any of
 the "standard" feature types. In particular, you can specify this feature in the ``features`` input:
-```json
+```
 "features": {
     ...
     "oil_and_gas": "/path/to/oil_gas/pipelines.gpkg",
