@@ -83,14 +83,26 @@ def preprocess_setbacks_config(config, features,
         ``/full/path/to/road/data/`` and for the files
         ``../../relative/path/to/data_il.gpkg`` and
         ``../../relative/path/to/data_in.gpkg``.
-    generic_setback_multiplier : int | float, optional
+    generic_setback_multiplier : int | float | str, optional
         Optional setback multiplier to use where local regulations are
         not supplied. This multiplier will be applied to the
         ``base_setback_dist`` (or the turbine tip-height) to calculate
         the setback. If supplied along with ``regulations_fpath``, this
         input will be used to apply a setback to all counties not listed
-        in the regulations file. If ``None``, no generic setback
-        computation is performed. By default, ``None``.
+        in the regulations file. This input can also be a path to a
+        config file containing feature types as keys and
+        feature-specific generic multipliers as values. For example::
+
+            {
+                "parcel": 1.1,
+                "road": 2,
+                "structure": 3.5
+            }
+
+        If specified this way, every key in the ``features`` inputs
+        must also be given in the generic multipliers config. If
+        ``None``, no  generic setback computation is performed.
+        By default, ``None``.
 
 
     Returns
@@ -329,8 +341,8 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
         Boolean flag to use ``h5pyd`` to handle HDF5 "files" hosted on
         AWS behind HSDS. By default, ``False``.
     out_layers : dict, optional
-        Dictionary mapping feature file names (with extension) to names
-        of layers under which exclusions should be saved in the
+        Dictionary mapping the input feature file names (with extension)
+        to names of layers under which exclusions should be saved in the
         ``excl_fpath`` HDF5 file. If ``None`` or empty dictionary,
         no layers are saved to the HDF5 file. By default, ``None``.
     feature_specs : dict, optional
