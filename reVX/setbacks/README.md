@@ -227,15 +227,16 @@ to be as ``reV`` exclusion layers, you can use the
 In this section, we explore some more complex use-patterns that ``reVX`` supports for setbacks exclusion calculations.
 
 ### Partial Setbacks
-The size of some types of features you may want to calculate setbacks for may be on the order of (or even smaller!)
-than your exclusion your grid size (e.g. parcels). In these cases, it's useful to calculate *partial* setback
-exclusions, where pixels in your grid are not simply a binary flag, but indicate partially exclusions (e.g. 25%).
+The size of some features you may want to calculate setbacks for may be on the order of (or even smaller!)
+than your exclusion grid size (e.g. parcels). In these cases, it's useful to calculate *partial* setback
+exclusions, where pixels in your grid are not simply a binary flag but rather partial exclusion values.
 ``reVX`` supports this type of calculation - all you have to do is specify the ``weights_calculation_upscale_factor`` in
 your ``config_compute.json`` to be a value larger than 1. Under the hood, this upscales your exclusion grid by that factor during the setback calculation and uses the higher-resolution grid to calculate the partial area that should be excluded.
 
-**VERY IMPORTANT**: If you set ``weights_calculation_upscale_factor`` > 1 in your ``config_compute.json``, your output
+> **Warning** <br>
+If you set ``weights_calculation_upscale_factor`` > 1 in your ``config_compute.json``, your output
 data will now be an *inclusion* mask (as opposed to an *exclusion* layer), where each pixel will contain a float indicating
-the fractional inclusion weight. In other words, a value of 1 = 100% *inclusion*, a value of 0.75 represents a 75%
+the fractional inclusion weight. In other words, a value of 1 represents 100% *inclusion*, a value of 0.75 represents a 75%
 *inclusion*, and a value of 0 represents 0%  *inclusion*, or full exclusion. This is **the opposite** of normal setback
 exclusions outputs, where the output values are bools with ``1 == exclusion`` and ``0 == inclusion``. The reason for this
 discrepancy is for direct coupling with ``reV``, which expects all partial exclusions to be input as an *inclusion* mask.
@@ -349,10 +350,10 @@ Of course, you would have to point ``"water-nwi"`` and ``"water-nhd"`` to separa
 Although ``reVX`` provides a lot of flexibility when it comes to calculating different setbacks for a single turbine
 (or other technology specification), the setup can still become cumbersome when working with even a handful of technology/
 siting scenarios. To facilitate setup in these cases, users are encouraged to use the ``batch`` functionality (provided by
-the underlying GAPs framework). There are several ways to set up ``batch``ed setbacks runs. Here will will focus on the
+the underlying GAPs framework). There are several ways to set up batched setbacks runs. Here will will focus on the
 CSV input method.
 
-First, we need to generate a csv config file that tells ``batch`` how we want to paremeterize our runs.
+First, we need to generate a csv config file that tells ``batch`` how we want to parameterize our runs.
 Let's suppose that we want to compute setbacks for five different turbines, each with three different siting (setback)
 scenarios. Here is a short python script to generate the CSV config file:
 
@@ -418,12 +419,12 @@ Running this script, we get the following table as output:
 |reference_160hh_190rd|190|160|./reference_access_generic_mults.json|./config_pipeline.json|['./config_compute.json']
 |limited_160hh_190rd|190|160|./limited_access_generic_mults.json|./config_pipeline.json|['./config_compute.json']
 
-This table essentially tells ``batch`` to create 15 different run folders (one for each ``set_tag``) and update the
-``rotor_diameter``, ``hub_height``, and ``generic_setback_multiplier`` inputs appropriately for each run. The two extra
-things ``batch`` needs to know is the path to the pipeline file to run for each folder (``pipeline_config`` column) and
-the config files that ``batch`` should look in for our inputs (``rotor_diameter``, ``hub_height``, and
-``generic_setback_multiplier``). The latter is given in the ``files`` column, and the syntax to fill this value using the
-python script should resemble string representation of a Python list.
+This table tells ``batch`` to create 15 different run folders (one for each ``set_tag``) and update the
+``rotor_diameter``, ``hub_height``, and ``generic_setback_multiplier`` input keys appropriately for each run. The two extra
+things ``batch`` needs to know are the path to the pipeline file to run for each folder (``pipeline_config`` column) and
+the config files that ``batch`` should look in for our input keys (``rotor_diameter``, ``hub_height``, and
+``generic_setback_multiplier``). The latter is given in the ``files`` column (note that the syntax to fill this
+value using the python script above resembles a string representation of a Python list).
 
 Once this config CSV file is generated, generate the rest of the config files and fill them out, as outlined above.
 Your directory should look like this:
