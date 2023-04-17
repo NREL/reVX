@@ -16,7 +16,7 @@ You can skip this step if you only care about generic setbacks applied across th
 ### Config file setup
 Each reVX setbacks project should be run from a new directory. The execution logic assumes exactly one set of setbacks
 configuration per directory. To begin, create a new directory for your project. The name should be descriptive since it
-will show up in all output file names. A good naming convention for wind, for example, is ``"wind_XXXhh_XXXrd"``
+will show up in all output filenames. A good naming convention for wind, for example, is ``"wind_XXXhh_XXXrd"``
 (i.e. "wind_116hh_163rd"). After you have created your directory, ``cd`` into it, and run the following
 command (make sure your ``reVX`` environment has been activated):
 ```console
