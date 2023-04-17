@@ -88,7 +88,7 @@ Basic execution of ``reVX`` setbacks will not require ``weights_calculation_upsc
 are okay to remove from the configuration file entirely.
 
 ``replace`` and ``hsds`` can be left with their default values, unless you would like ``reVX`` to replace any existing
-setbacks tiffs in your project directory (``replace: true``) or your ``excl_fpath`` points to a file on AWS and you are
+setbacks TIFFs in your project directory (``replace: true``) or your ``excl_fpath`` points to a file on AWS and you are
 using HSDS to access it (``hsds: true``).
 
 The ``features`` inputs points ``reVX`` to the feature data from which setbacks should be computed. The value for this
@@ -170,20 +170,20 @@ to execute all steps in the pipeline, one after another, without any other user 
 this execution will be interrupted if any job fails for any reason, so you may still have to submit this call multiple
 times.
 
-If your first step executes successfully, you should see one or more output tiff files in your project directory
+If your first step executes successfully, you should see one or more output TIFF files in your project directory
 (specifically, one output file per input file):
 ```console
-$ ls *.tiff
+$ ls *.tif
 
-setbacks_rail_wind_116m_163m_j00.tiff
-setbacks_transmission_wind_116m_163m_j01.tiff
-setbacks_transmission_wind_116m_163m_j02.tiff
-setbacks_transmission_wind_116m_163m_j03.tiff
+setbacks_rail_wind_116m_163m_j00.tif
+setbacks_transmission_wind_116m_163m_j01.tif
+setbacks_transmission_wind_116m_163m_j02.tif
+setbacks_transmission_wind_116m_163m_j03.tif
 ...
-setbacks_transmission_wind_116m_163m_j32.tiff
-setbacks_road_wind_116m_163m_j33.tiff
-setbacks_road_wind_116m_163m_j34.tiff
-setbacks_road_wind_116m_163m_j35.tiff
+setbacks_transmission_wind_116m_163m_j32.tif
+setbacks_road_wind_116m_163m_j33.tif
+setbacks_road_wind_116m_163m_j34.tif
+setbacks_road_wind_116m_163m_j35.tif
 ...
 ```
 
@@ -192,7 +192,7 @@ setback type.
 
 ### Merging
 The next (and final) step in the auto-generated pipeline will merge all the setback files for a particular setback type
-into a single ``TIFF`` file (the underlying assumption here is that the input files for each feature type do not overlap
+into a single TIFF file (the underlying assumption here is that the input files for each feature type do not overlap
 spatially). If you do not wish to merge the files, simply skip this step.
 
 Before submitting the merge step to the HPC, open the ``config_merge.json`` file and update the ``execution_control``
@@ -202,16 +202,16 @@ updated, run the following command **from the project directory**:
 $ setbacks pipeline
 ```
 
-This will submit the "merge" step. Once this step has finished running, you should see a single ``TIFF`` file per
-setback type in your directory (along with a ``chunk_files`` folder containing the individual ``TIFF`` files from teh
+This will submit the "merge" step. Once this step has finished running, you should see a single TIFF file per
+setback type in your directory (along with a ``chunk_files`` folder containing the individual TIFF files from the
 previous step):
 ```console
 $ ls
 chunk_files
 ...
-setbacks_rail_wind_116m_163m.tiff
-setbacks_transmission_wind_116m_163m.tiff
-setbacks_road_wind_116m_163m.tiff
+setbacks_rail_wind_116m_163m.tif
+setbacks_transmission_wind_116m_163m.tif
+setbacks_road_wind_116m_163m.tif
 ...
 ```
 
@@ -242,7 +242,7 @@ discrepancy is for direct coupling with ``reV``, which expects all partial exclu
 
 ### Writing directly to HDF5 files
 ``reVX`` supports writing the output setback data directly to the ``excl_fpath`` exclusions h5 file in addition to
-an output ``TIFF`` file. This is rarely useful for setbacks, since the input features are often broken out over may files
+an output TIFF file. This is rarely useful for setbacks, since the input features are often broken out over may files
 and thus the output needs to be merged before writing to an exclusion layer. Nevertheless, if your features come in a
 single input file (or you really like having hundreds of layers in your h5 files), you can request to have the output data
 stored directly in the ``excl_fpath`` file by including the ``out_layers`` key in your config file:
@@ -469,7 +469,7 @@ reference_90hh_120rd
 ...
 ```
 
-After the first step of the pipeline completes for all of teh sub-directories, you will have to run
+After the first step of the pipeline completes for all of the sub-directories, you will have to run
 ```console
 $ setbacks batch -c config_batch.csv
 ```
