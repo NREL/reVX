@@ -111,7 +111,7 @@ def return_to_main_test_dir():
 def _find_out_tiff_file(directory):
     """Find the (single) tiff output file in the directory. """
 
-    out_file = [fp for fp in os.listdir(directory) if fp.endswith("tiff")]
+    out_file = [fp for fp in os.listdir(directory) if fp.endswith("tif")]
     assert any(out_file)
     out_file = os.path.join(directory, out_file[0])
     return out_file
@@ -1145,7 +1145,7 @@ def test_cli_multiple_generic_multipliers(runner, as_file):
         assert result.exit_code == 0, msg
 
         parcel_out_file = [fp for fp in os.listdir(td)
-                           if fp.endswith("tiff") and "parcel" in fp]
+                           if fp.endswith("tif") and "parcel" in fp]
         assert any(parcel_out_file)
         parcel_out_file = os.path.join(td, parcel_out_file[0])
 
@@ -1161,7 +1161,7 @@ def test_cli_multiple_generic_multipliers(runner, as_file):
         assert np.allclose(test, truth)
 
         water_out_file = [fp for fp in os.listdir(td)
-                          if fp.endswith("tiff") and "water" in fp]
+                          if fp.endswith("tif") and "water" in fp]
         assert any(water_out_file)
         water_out_file = os.path.join(td, water_out_file[0])
 
@@ -1558,7 +1558,7 @@ def test_integrated_setbacks_run(runner, county_wind_regulations):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        out_file = [fp for fp in os.listdir(td) if fp.endswith("tiff")]
+        out_file = [fp for fp in os.listdir(td) if fp.endswith("tif")]
         assert len(out_file) == 3
 
         result = runner.invoke(cli, ['pipeline', '-c', pipe_config_path])
@@ -1566,7 +1566,7 @@ def test_integrated_setbacks_run(runner, county_wind_regulations):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        out_file = [fp for fp in os.listdir(td) if fp.endswith("tiff")]
+        out_file = [fp for fp in os.listdir(td) if fp.endswith("tif")]
         assert len(out_file) == 1
         assert "chunk_files" in os.listdir(td), ", ".join(os.listdir(td))
 
@@ -1631,7 +1631,7 @@ def test_integrated_partial_setbacks_run(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        out_file = [fp for fp in os.listdir(td) if fp.endswith("tiff")]
+        out_file = [fp for fp in os.listdir(td) if fp.endswith("tif")]
         assert len(out_file) == 3
 
         result = runner.invoke(cli, ['pipeline', '-c', pipe_config_path])
@@ -1639,7 +1639,7 @@ def test_integrated_partial_setbacks_run(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        out_file = [fp for fp in os.listdir(td) if fp.endswith("tiff")]
+        out_file = [fp for fp in os.listdir(td) if fp.endswith("tif")]
         assert len(out_file) == 1
         assert "chunk_files" in os.listdir(td), ", ".join(os.listdir(td))
 

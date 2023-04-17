@@ -193,7 +193,7 @@ def preprocess_merge_config(config, project_dir, command_name,
         set this input to a dictionary whose keys are paths to the
         output file (relative paths are allowed) and the values are
         patterns representing the input files that should be merged into
-        the output tiff. If running a merge job as part of a pipeline,
+        the output TIFF. If running a merge job as part of a pipeline,
         this input can be set to ``"PIPELINE"``, which will parse the
         output of the previous step (``compute``) and generate the input
         file pattern and output file name automatically.
@@ -444,7 +444,7 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
                                              _mult)
     setbacks_class = SETBACKS[_ft]
     wcuf = weights_calculation_upscale_factor
-    fn = ("setbacks_{}_{}{}.tiff"
+    fn = ("setbacks_{}_{}{}.tif"
           .format(_ft, os.path.basename(out_dir), tag))
     out_fn = os.path.join(out_dir, fn)
     setbacks_class.run(excl_fpath, _fp, out_fn, regulations,
@@ -486,7 +486,7 @@ def merge_setbacks(_out_path, _pattern, are_partial_inclusions=None,
     """
     out_file = Path(_out_path).resolve()
 
-    logger.info("Merging tiff files in {!r} and writing to {!r}"
+    logger.info("Merging TIFF files in {!r} and writing to {!r}"
                 .format(out_file.parent.as_posix(), out_file))
     input_setback_files = list(glob.glob(_pattern))
     if not input_setback_files:
