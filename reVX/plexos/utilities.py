@@ -145,6 +145,9 @@ class DataCleaner:
         if name_map is None:
             name_map = {'lat': 'latitude', 'lon': 'longitude'}
 
+        # Only apply map if columns do not exist
+        name_map = {key: value for key, value in name_map.items() if value not in df.columns}
+
         df = df.rename(columns=name_map)
         return df
 
