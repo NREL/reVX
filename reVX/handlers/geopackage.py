@@ -43,7 +43,7 @@ class GPKGMeta:
         with sqlite3.connect(self.filename) as con:
             cursor = con.cursor()
             cursor.execute("SELECT definition FROM gpkg_spatial_ref_sys "
-                            "WHERE srs_id={}".format(self.srs_id))
+                           "WHERE srs_id={}".format(self.srs_id))
             proj = cursor.fetchall()[0][0]
             return pyproj.Proj(proj).crs
 
@@ -53,7 +53,7 @@ class GPKGMeta:
         with sqlite3.connect(self.filename) as con:
             cursor = con.cursor()
             cursor.execute("SELECT min_x, min_y, max_x, max_y "
-                            "FROM gpkg_contents;")
+                           "FROM gpkg_contents;")
             return cursor.fetchall()[0]
 
     @cached_property
@@ -62,7 +62,7 @@ class GPKGMeta:
         with sqlite3.connect(self.filename) as con:
             cursor = con.cursor()
             cursor.execute("PRAGMA table_info({})"
-                            .format(self.primary_table))
+                           .format(self.primary_table))
             pragma = cursor.fetchall()
             pk_name = [info[1] for info in pragma if info[-1]]
             assert len(pk_name) == 1, "Found multiple Primary Key columns"
@@ -74,7 +74,7 @@ class GPKGMeta:
         with sqlite3.connect(self.filename) as con:
             cursor = con.cursor()
             cursor.execute("SELECT table_name, column_name FROM "
-                            "gpkg_geometry_columns;")
+                           "gpkg_geometry_columns;")
             return "_".join(cursor.fetchall()[0])
 
     @cached_property
@@ -83,8 +83,8 @@ class GPKGMeta:
         with sqlite3.connect(self.filename) as con:
             cursor = con.cursor()
             cursor.execute("SELECT COUNT(distinct id) FROM "
-                            "rtree_{table_suffix};"
-                            .format(table_suffix=self.geom_table_suffix))
+                           "rtree_{table_suffix};"
+                           .format(table_suffix=self.geom_table_suffix))
             return cursor.fetchall()[0][0]
 
     @cached_property
@@ -94,8 +94,10 @@ class GPKGMeta:
             cursor = con.cursor()
             cursor.execute("PRAGMA temp_store=2")
             cursor.execute("SELECT distinct id FROM rtree_{table_suffix} "
-                            "ORDER BY miny, minx"
-                            .format(table_suffix=self.geom_table_suffix))
+                           "ORDER BY miny, minx"
+                           .format(table_suffix=self.geom_table_suffix))
+            return tuple(id_[0] for id_ in cursor.fetchall())
+
 
     def feat_ids_for_bbox(self, bbox):
         """Find the ID's of the features within the input bounding box.
