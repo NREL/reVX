@@ -10,7 +10,7 @@ from pathlib import Path
 from warnings import warn
 
 from gaps.config import load_config
-from gaps.cli import CLICommandConfiguration, make_cli
+from gaps.cli import CLICommandFromFunction, make_cli
 from gaps.cli.preprocessing import preprocess_collect_config
 from reVX.setbacks import SETBACKS
 from reVX.setbacks.regulations import (validate_setback_regulations_input,
@@ -530,13 +530,13 @@ def merge_setbacks(_out_path, _pattern, are_partial_inclusions=None,
 
 
 commands = [
-    CLICommandConfiguration(
-        name="compute", function=compute_setbacks,
+    CLICommandFromFunction(
+        function=compute_setbacks, name="compute",
         split_keys=[("_ft", "_fp", "_mult")],
         config_preprocessor=preprocess_setbacks_config,
     ),
-    CLICommandConfiguration(
-        name="merge", function=merge_setbacks,
+    CLICommandFromFunction(
+        function=merge_setbacks, name="merge",
         split_keys=[("_out_path", "_pattern")],
         config_preprocessor=preprocess_merge_config,
     ),
