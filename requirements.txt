@@ -3,7 +3,7 @@ dask[array]>=2.8
 fiona>=1.9.0
 geopandas>=0.8
 google-auth-oauthlib==0.5.3
-NREL-gaps>=0.2.0
+NREL-gaps>=0.3.1
 NREL-reV>=0.7.3
 NREL-rex>=0.2.80
 psycopg2-binary>=2.8

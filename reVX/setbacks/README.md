@@ -37,6 +37,7 @@ Open the ``config_compute.json`` template file. It should look something like th
         "option": "local",
         "allocation": "[REQUIRED IF ON HPC]",
         "walltime": "[REQUIRED IF ON HPC]",
+        "qos": "normal",
         "memory": null,
         "queue": null,
         "feature": null,
@@ -45,6 +46,8 @@ Open the ``config_compute.json`` template file. It should look something like th
         "sh_script": null,
         "max_workers": null
     },
+    "log_directory": "./logs",
+    "log_level": "INFO",
     "excl_fpath": "[REQUIRED]",
     "hub_height": null,
     "rotor_diameter": null,
@@ -64,6 +67,10 @@ are filled in with suitable default values, typically ``None`` (or ``null`` for 
 
 Begin by filling out the ``execution_control`` block. Typically, it is enough to simply update ``"option": "eagle"``
 and just fill in the ``allocation`` and ``walltime`` parameters. The rest can be removed if unused.
+
+The ``log_directory`` and ``log_level`` keys give you control over the location of output log files and their verbosity,
+respectively.  Suitable options for ``log_level`` are ``DEBUG`` (most verbose), ``INFO`` (default),
+``WARNING`` (only log warnings and errors), and ``ERROR`` (only log errors).
 
 The next important parameter is ``excl_fpath``. This key must be a path that points to a template exclusions file
 (path relative to the project directory are allowed). This file defines the raster grid - it must contain a county
@@ -143,12 +150,6 @@ else. Three types of setbacks would be computed:
 * Road setbacks would be computed from all features in the file ``"../relative/path/to/first/road/data/file.gpkg"``
   as well as the features in all files matching the pattern ``"multiple_files*.gpkg"`` in the directory
   ``"/path/to/another/road/data/directory"``
-
-
-Note that we have added an extra ``log_level`` key that was not given in the template (future version of GAPs, the
-framework behind the HPC execution logic, may provide this key in the auto-generated templates). This key controls the
-verbosity of the output log files. Suitable options are ``DEBUG`` (most verbose), ``INFO`` (default),
-``WARNING`` (only log warnings and errors), and ``ERROR`` (only log errors).
 
 Once your setbacks run has been configured, you are ready to kick it off on the HPC.
 
