@@ -1,4 +1,4 @@
-County,State,STATE_FIPS,CNTY_FIPS,FIPS,Feature Type,Value Type,Value,Comment
-Bristol,Rhode Island,44,1,44001, wAter  ,Meters,10,
-Bristol,Rhode Island,44,1,44001,Property Line  ,Meters,4.1,
-Bristol,Rhode Island,44,1,44001, Highway,Meters,23,
+County,State,STATE_FIPS,CNTY_FIPS,FIPS,Feature Type,Feature Subtype,Value Type,Value,Comment
+Bristol,Rhode Island,44,1,44001, wAter  ,,Meters,10,
+Bristol,Rhode Island,44,1,44001,Property Line  ,,Meters,4.1,
+Bristol,Rhode Island,44,1,44001, Highway,,Meters,23,

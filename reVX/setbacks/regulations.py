@@ -29,7 +29,8 @@ class SetbackRegulations(AbstractBaseRegulations):
             Path to regulations ``.csv`` or ``.gpkg`` file. At a
             minimum, this file must contain the following columns:
             ``Feature Type``, which contains labels for the type of
-            setback that each row represents, ``Value Type``, which
+            setback that each row represents, ``Feature Subtype``, which
+            contains labels for feature subtypes, ``Value Type``, which
             specifies wether the value is a multiplier or static height,
             ``Value``, which specifies the numeric value of the setback
             or multiplier, and ``FIPS``, which specifies a unique
@@ -143,7 +144,8 @@ class WindSetbackRegulations(SetbackRegulations):
             Path to regulations ``.csv`` or ``.gpkg`` file. At a
             minimum, this file must contain the following columns:
             ``Feature Type``, which contains labels for the type of
-            setback that each row represents, ``Value Type``, which
+            setback that each row represents, ``Feature Subtype``, which
+            contains labels for feature subtypes, ``Value Type``, which
             specifies wether the value is a multiplier or static height,
             ``Value``, which specifies the numeric value of the setback
             or multiplier, and ``FIPS``, which specifies a unique

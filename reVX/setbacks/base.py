@@ -501,9 +501,9 @@ class AbstractBaseSetbacks(AbstractBaseExclusionsMerger):
         """Return the regulation table mask for setback feature. """
         features = (self.regulations_table['Feature Type']
                     .isin(self.FEATURE_TYPES))
-        exclude = ~(self.regulations_table['Comment']
-                    .isin(self.FEATURE_SUBTYPES_TO_EXCLUDE))
-        return features & exclude
+        not_excluded = ~(self.regulations_table['Feature Subtype']
+                         .isin(self.FEATURE_SUBTYPES_TO_EXCLUDE))
+        return features & not_excluded
 
     @property
     @abstractmethod

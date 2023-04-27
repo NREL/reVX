@@ -293,11 +293,12 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
         Path to regulations ``.csv`` or ``.gpkg`` file. At a minimum,
         this file must contain the following columns: ``Feature Type``,
         which contains labels for the type of setback that each row
-        represents, ``Value Type``, which specifies wether the value is
-        a multiplier or static height, ``Value``, which specifies the
-        numeric value of the setback or multiplier, and ``FIPS``, which
-        specifies a unique 5-digit code for each county (this can be an
-        integer - no leading zeros required). See
+        represents, ``Feature Subtype``, which contains labels for
+        feature subtypes, ``Value Type``, which specifies wether the
+        value is a multiplier or static height, ``Value``, which
+        specifies the numeric value of the setback or multiplier, and
+        ``FIPS``, which specifies a unique 5-digit code for each county
+        (this can be an integer - no leading zeros required). See
         :obj:`~reVX.setbacks.regulations.SetbackRegulations` (if using
         only ``base_setback_dist`` input) or
         :obj:`~reVX.setbacks.regulations.WindSetbackRegulations` (if
