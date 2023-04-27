@@ -98,7 +98,6 @@ class GPKGMeta:
                            .format(table_suffix=self.geom_table_suffix))
             return tuple(id_[0] for id_ in cursor.fetchall())
 
-
     def feat_ids_for_bbox(self, bbox):
         """Find the ID's of the features within the input bounding box.
 
