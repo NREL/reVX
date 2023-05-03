@@ -3,7 +3,6 @@
 .*/
 # non-package directories
 bin/
-conda.recipe/
 docs/
 examples/
 tests/
