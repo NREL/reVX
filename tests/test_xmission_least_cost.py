@@ -203,7 +203,7 @@ def test_cli(runner, save_paths):
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
             "min_line_length": 5.76,
-            "save_paths": save_paths
+            "save_paths": save_paths,
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -230,7 +230,8 @@ def test_cli(runner, save_paths):
     LOGGERS.clear()
 
 
-def test_reinforcement_cli(runner, ri_ba):
+@pytest.mark.parametrize("save_paths", [False, True])
+def test_reinforcement_cli(runner, ri_ba, save_paths):
     """
     Test Reinforcement cost routines and CLI
     """
@@ -262,8 +263,10 @@ def test_reinforcement_cli(runner, ri_ba):
             "balancing_areas_fpath": ri_ba_path,
             "capacity_class": f'{capacity}MW',
             "barrier_mult": 100,
-            "min_line_length": 0
+            "min_line_length": 0,
+            "save_paths": save_paths,
         }
+
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
@@ -274,9 +277,15 @@ def test_reinforcement_cli(runner, ri_ba):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
-        test = os.path.join(td, test)
-        test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
 
         assert len(test) == 13
         assert set(test.trans_gid.unique()) == {69130}
@@ -284,6 +293,7 @@ def test_reinforcement_cli(runner, ri_ba):
 
         assert "poi_lat" in test
         assert "poi_lon" in test
+        assert "ba_str" in test
 
         assert len(test.poi_lat.unique()) == 1
         assert len(test.poi_lon.unique()) == 1

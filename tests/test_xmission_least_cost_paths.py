@@ -130,7 +130,7 @@ def test_cli(runner, save_paths):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
-            "save_paths": save_paths
+            "save_paths": save_paths,
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -161,7 +161,8 @@ def test_cli(runner, save_paths):
     LOGGERS.clear()
 
 
-def test_reinforcement_cli(runner, ba_regions_and_network_nodes):
+@pytest.mark.parametrize("save_paths", [False, True])
+def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
     """
     Test Reinforcement cost routines and CLI
     """
@@ -208,6 +209,7 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes):
             "transmission_lines_fpath": ALLCONNS_FEATURES,
             "capacity_class": f"{capacity}MW",
             "barrier_mult": 100,
+            "save_paths": save_paths,
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -223,9 +225,15 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes):
         capacity_class = xmission_config._parse_cap_class(capacity)
         cap = xmission_config['power_classes'][capacity_class]
         kv = xmission_config.capacity_to_kv(capacity_class)
-        test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
-        test = os.path.join(td, test)
-        test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_{}MW_{}kV.gpkg'.format(os.path.basename(td), cap, kv)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
 
         assert "reinforcement_poi_lat" in test
         assert "reinforcement_poi_lon" in test
@@ -233,6 +241,7 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes):
         assert "poi_lon" not in test
         assert len(test["reinforcement_poi_lat"].unique()) == 4
         assert len(test["reinforcement_poi_lon"].unique()) == 4
+        assert "ba_str" in test
 
         assert len(test) == 69
         assert np.isclose(test.reinforcement_cost_per_mw.min(), 3332.695,
