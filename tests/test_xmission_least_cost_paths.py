@@ -111,7 +111,8 @@ def test_parallel(max_workers):
     check(truth, test)
 
 
-def test_cli(runner):
+@pytest.mark.parametrize("save_paths", [False, True])
+def test_cli(runner, save_paths):
     """
     Test CostCreator CLI
     """
@@ -129,6 +130,7 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
+            "save_paths": save_paths
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -145,9 +147,15 @@ def test_cli(runner):
         capacity_class = xmission_config._parse_cap_class(capacity)
         cap = xmission_config['power_classes'][capacity_class]
         kv = xmission_config.capacity_to_kv(capacity_class)
-        test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
-        test = os.path.join(td, test)
-        test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_{}MW_{}kV.gpkg'.format(os.path.basename(td), cap, kv)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
         check(truth, test)
 
     LOGGERS.clear()

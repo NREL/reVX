@@ -249,7 +249,7 @@ class LeastCostPaths:
 
         Returns
         -------
-        geopandas.GeoDataFrame
+        pandas.DataFrame
         """
         end_features = self._features.drop(index=self._start_feature_ind)
         end_features['start_index'] = self._start_feature_ind
@@ -325,7 +325,7 @@ class LeastCostPaths:
                     end_features = end_features.drop(columns=['row', 'col'],
                                                      errors="ignore")
                     lcp = future.result()
-                    lcp = pd.concat((end_features, lcp), axis=1)
+                    lcp = pd.concat((lcp, end_features), axis=1)
                     least_cost_paths.append(lcp)
                     logger.debug('Least cost path {} of {} complete!'
                                  .format(i + 1, len(futures)))
@@ -344,7 +344,7 @@ class LeastCostPaths:
                                        save_paths=save_paths)
                 end_features = self.end_features.drop(columns=['row', 'col'],
                                                       errors="ignore")
-                lcp = pd.concat((end_features, lcp), axis=1)
+                lcp = pd.concat((lcp, end_features), axis=1)
                 least_cost_paths.append(lcp)
 
                 logger.debug('Least cost path {} of {} complete!'

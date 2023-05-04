@@ -183,7 +183,8 @@ def test_resolution(resolution):
     check_baseline(truth, test)
 
 
-def test_cli(runner):
+@pytest.mark.parametrize("save_paths", [False, True])
+def test_cli(runner, save_paths):
     """
     Test CostCreator CLI
     """
@@ -201,7 +202,8 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
-            "min_line_length": 5.76
+            "min_line_length": 5.76,
+            "save_paths": save_paths
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -213,9 +215,15 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
-        test = os.path.join(td, test)
-        test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
         SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
         check_baseline(truth, test)
 
