@@ -534,7 +534,7 @@ class ReinforcementPaths(LeastCostPaths):
                                          barrier_mult=barrier_mult,
                                          save_paths=save_paths)
         feats = self._features.drop(columns=['row', 'col'])
-        least_cost_paths = pd.concat((feats, lcp), axis=1)
+        least_cost_paths = pd.concat((lcp, feats), axis=1)
 
         return least_cost_paths.drop("index", axis="columns", errors="ignore")
 
