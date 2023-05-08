@@ -163,6 +163,9 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
                     "serial, if None use all available cores"))
+@click.option('--state_connections', '-acws', is_flag=True,
+              help='Flag to allow substations ot connect to any endpoints '
+                   'within their state. Default is not verbose.')
 @click.option('--save_paths', '-paths', is_flag=True,
               help="Flag to save least cost path as a multi-line geometry")
 @click.option('--out_dir', '-o', type=STR, default='./',
@@ -176,7 +179,8 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, start_index, step_index,
-          barrier_mult, max_workers, save_paths, out_dir, log_dir, verbose):
+          barrier_mult, max_workers, state_connections, save_paths, out_dir,
+          log_dir, verbose):
     """
     Run Least Cost Paths on local hardware
     """
@@ -197,14 +201,16 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
         features = gpd.read_file(network_nodes_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
         indices = features.index[start_index::step_index]
+        kwargs = {"xmission_config": xmission_config,
+                  "barrier_mult": barrier_mult,
+                  "indices": indices,
+                  "allow_connections_within_states": state_connections,
+                  "save_paths": save_paths}
         least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
                                              network_nodes_fpath,
                                              transmission_lines_fpath,
                                              capacity_class,
-                                             xmission_config=xmission_config,
-                                             barrier_mult=barrier_mult,
-                                             indices=indices,
-                                             save_paths=save_paths)
+                                             **kwargs)
     else:
         features = gpd.read_file(features_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
@@ -327,6 +333,9 @@ def get_node_cmd(config, start_index=0):
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
+
+    if config.allow_connections_within_states:
+        args.append('-acws')
 
     if config.save_paths:
         args.append('-paths')
