@@ -307,6 +307,14 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self.get('barrier_mult', self._default_barrier_mult)
 
     @property
+    def allow_connections_within_states(self):
+        """
+        Boolean flag to allow substations to connect to endpoints
+        outside their BA but within their own state.
+        """
+        return self.get("allow_connections_within_states", False)
+
+    @property
     def save_paths(self):
         """
         Boolean flag to save the least cost paths along with the costs and
