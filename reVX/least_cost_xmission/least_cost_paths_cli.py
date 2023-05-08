@@ -74,6 +74,7 @@ def run_local(ctx, config):
                start_index=0, step_index=1,
                barrier_mult=config.barrier_mult,
                max_workers=config.execution_control.max_workers,
+               state_connections=config.allow_connections_within_states,
                save_paths=config.save_paths,
                out_dir=config.dirout,
                log_dir=config.log_directory,
