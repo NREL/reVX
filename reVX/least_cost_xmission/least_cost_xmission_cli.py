@@ -26,6 +26,7 @@ from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
                                                           ReinforcedXmission)
 from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
                                              SINK_CAT, SUBSTATION_CAT)
+from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
 
 TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
 
@@ -294,6 +295,9 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
         logger.info('Simplifying geometries by {}'.format(simplify_geo))
         df.geometry = df.geometry.simplify(simplify_geo)
 
+    if all(col in df for col in ["gid", "reinforcement_cost_per_mw"]):
+        df = min_reinforcement_costs(df)
+
     if not split_to_geojson:
         out_file = ('combo_{}'.format(files[0])
                     if out_file is None else out_file)
@@ -349,7 +353,8 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
 
     logger.info("Merging reinforcement costs into transmission costs...")
 
-    r_cols = ["reinforcement_dist_km", "reinforcement_cost_per_mw"]
+    r_cols = ["ba_str", "reinforcement_poi_lat", "reinforcement_poi_lon",
+              "reinforcement_dist_km", "reinforcement_cost_per_mw"]
     costs[r_cols] = r_costs.loc[costs["trans_gid"], r_cols].values
 
     logger.info("Writing output to {!r}".format(out_file))
