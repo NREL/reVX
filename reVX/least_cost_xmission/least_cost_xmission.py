@@ -782,7 +782,8 @@ class ReinforcedXmission(LeastCostXmission):
     """
 
     def __init__(self, cost_fpath, features_fpath, balancing_areas_fpath,
-                 resolution=128, xmission_config=None, min_line_length=0):
+                 resolution=128, xmission_config=None, min_line_length=0,
+                 allow_connections_within_states=False):
         """
         Parameters
         ----------
@@ -805,6 +806,10 @@ class ReinforcedXmission(LeastCostXmission):
             By default, ``None``.
         min_line_length : int | float, optional
             Minimum line length in km. By default, ``0``.
+        allow_connections_within_states : bool, optional
+            Allow supply curve points to connect to substations outside
+            of their own BA, as long as all connections stay within the
+            same state. By default, ``False``.
         """
         super().__init__(cost_fpath=cost_fpath,
                          features_fpath=features_fpath,
@@ -813,6 +818,7 @@ class ReinforcedXmission(LeastCostXmission):
                          min_line_length=min_line_length)
         self._ba = (gpd.read_file(balancing_areas_fpath)
                     .to_crs(self.features.crs))
+        self.allow_connections_within_states = allow_connections_within_states
 
     @staticmethod
     def _load_trans_feats(features_fpath):
@@ -836,8 +842,23 @@ class ReinforcedXmission(LeastCostXmission):
 
         point = self.sc_points.loc[sc_point.name:sc_point.name].centroid
         ba_str = point.apply(ba_mapper(self._ba)).values[0]
-        mask = self.features["ba_str"] == ba_str
+        if self.allow_connections_within_states:
+            state = self._ba[self._ba["ba_str"] == ba_str]["state"].values[0]
+            logger.debug('  - Clipping features to {!r}'.format(state))
+            state_nodes = self._ba[self._ba["state"]== state]
+            allowed_bas = set(state_nodes["ba_str"])
+        else:
+            allowed_bas = {ba_str}
+        logger.debug("  - Clipping features to allowed ba's: {}"
+                     .format(allowed_bas))
+        mask = self.features["ba_str"].isin(allowed_bas)
         sc_features = self.features.loc[mask].copy(deep=True)
+        logger.debug('{} transmission features found in clipped area '
+                     .format(len(sc_features)))
+
+        if radius is not None:
+            sc_features = self._clip_to_radius(sc_point, radius, sc_features,
+                                               clipping_buffer)
 
         mask = self.features['max_volts'] >= tie_line_voltage
         sc_features = sc_features.loc[mask].copy(deep=True)
@@ -857,8 +878,9 @@ class ReinforcedXmission(LeastCostXmission):
     def run(cls, cost_fpath, features_fpath, balancing_areas_fpath,
             capacity_class, resolution=128, xmission_config=None,
             min_line_length=0, sc_point_gids=None, clipping_buffer=1.05,
-            barrier_mult=100, max_workers=None, save_paths=False,
-            simplify_geo=None):
+            barrier_mult=100, max_workers=None, simplify_geo=None,
+            allow_connections_within_states=False, save_paths=False,
+            radius=None):
         """
         Find Least Cost Transmission connections between desired
         sc_points and substations in their balancing area.
@@ -898,14 +920,20 @@ class ReinforcedXmission(LeastCostXmission):
         max_workers : int, optional
             Number of workers to use for processing. If 1 run in serial,
             if ``None`` use all available cores. By default, ``None``.
+        simplify_geo : float | None, optional
+            If float, simplify geometries using this value.
+        allow_connections_within_states : bool, optional
+            Allow supply curve points to connect to substations outside
+            of their own BA, as long as all connections stay within the
+            same state. By default, ``False``.
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
         radius : None | int, optional
             Force clipping radius. Substations beyond this radius will
             not be considered for connection with supply curve point.
-            Radius will be expanded to include at least one connection 
-            feature. This value must be given in units of pixels 
+            Radius will be expanded to include at least one connection
+            feature. This value must be given in units of pixels
             corresponding to the cost raster.
 
         Returns
@@ -917,14 +945,15 @@ class ReinforcedXmission(LeastCostXmission):
         """
         ts = time.time()
         lcx = cls(cost_fpath, features_fpath, balancing_areas_fpath,
-                  resolution=resolution, xmission_config=xmission_config,
-                  min_line_length=min_line_length)
+                  resolution, xmission_config, min_line_length,
+                  allow_connections_within_states)
         least_costs = lcx.process_sc_points(capacity_class,
                                             sc_point_gids=sc_point_gids,
                                             clipping_buffer=clipping_buffer,
                                             barrier_mult=barrier_mult,
                                             max_workers=max_workers,
                                             save_paths=save_paths,
+                                            radius=radius,
                                             simplify_geo=simplify_geo)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
