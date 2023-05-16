@@ -88,7 +88,8 @@ def ri_ba():
     ba_str, shapes = zip(*[("p{}".format(int(v)), shape(p))
                            for p, v in s if int(v) != 0])
 
-    return gpd.GeoDataFrame({"ba_str": ba_str}, crs=profile['crs'],
+    return gpd.GeoDataFrame({"ba_str": ba_str, "state": "Rhode Island"},
+                            crs=profile['crs'],
                             geometry=list(shapes))
 
 
@@ -231,7 +232,8 @@ def test_cli(runner, save_paths):
 
 
 @pytest.mark.parametrize("save_paths", [False, True])
-def test_reinforcement_cli(runner, ri_ba, save_paths):
+@pytest.mark.parametrize("state_connections", [False, True])
+def test_reinforcement_cli(runner, ri_ba, save_paths, state_connections):
     """
     Test Reinforcement cost routines and CLI
     """
@@ -265,6 +267,7 @@ def test_reinforcement_cli(runner, ri_ba, save_paths):
             "barrier_mult": 100,
             "min_line_length": 0,
             "save_paths": save_paths,
+            "allow_connections_within_states": state_connections,
         }
 
         config_path = os.path.join(td, 'config.json')
@@ -287,7 +290,7 @@ def test_reinforcement_cli(runner, ri_ba, save_paths):
             test = os.path.join(td, test)
             test = pd.read_csv(test)
 
-        assert len(test) == 13
+        assert len(test) == 71 if state_connections else 13
         assert set(test.trans_gid.unique()) == {69130}
         assert set(test.ba_str.unique()) == {"p4"}
 
