@@ -488,5 +488,5 @@ This command will print a table of submitted/running/completed jobs for a partic
 The jobs will be identified using a tag. In order to see the input file being processed by each job run the
 following command:
 ```console
-$ setbacks status -i _fp
+$ setbacks status -i node_file_path
 ```

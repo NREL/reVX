@@ -57,7 +57,8 @@ def preprocess_setbacks_config(config, features,
     ----------
     config : dict
         Setbacks compute config. This config will be updated to include
-        a the "_ft", "_fp", and "_mult" keys based on user input.
+        a the ``node_feature_type``, ``node_file_path``, and
+        ``node_multiplier`` keys based on user input.
     features : dict
         Dictionary specifying which features/data to process. The keys
         of this dictionary must be the a key from the
@@ -156,7 +157,10 @@ def preprocess_setbacks_config(config, features,
         logger.error(msg)
         raise FileNotFoundError(msg)
 
-    config["_ft"], config["_fp"], config["_mult"] = zip(*sorted(combos_to_run))
+    feature_type, file_path, multiplier = zip(*sorted(combos_to_run))
+    config["node_feature_type"] = feature_type
+    config["node_file_path"] = file_path
+    config["node_multiplier"] = multiplier
     validate_setback_regulations_input(config.get("base_setback_dist"),
                                        config.get("hub_height"),
                                        config.get("rotor_diameter"))
@@ -172,8 +176,8 @@ def preprocess_merge_config(config, project_dir, command_name,
     ----------
     config : dict
         Collection config. This config will be updated to include the
-        keys "_out_path" and "_pattern" representing the output file
-        path and the input file pattern, respectively.
+        keys ``node_out_path`` and ``node_pattern`` representing the
+        output file path and the input file pattern, respectively.
     project_dir : path-like
         Path to project directory. This path is used to resolve the
         output filepath.
@@ -217,9 +221,10 @@ def _update_setbacks_calculators(feature_specs=None):
         SETBACKS[feature_name] = setbacks_calculator(**spec)
 
 
-def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
-                     hub_height=None, rotor_diameter=None,
-                     base_setback_dist=None, regulations_fpath=None,
+def compute_setbacks(excl_fpath, node_feature_type, node_file_path,
+                     node_multiplier, out_dir, tag, hub_height=None,
+                     rotor_diameter=None, base_setback_dist=None,
+                     regulations_fpath=None,
                      weights_calculation_upscale_factor=None,
                      replace=False, hsds=False, out_layers=None,
                      feature_specs=None, max_workers=None):
@@ -247,12 +252,18 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
         ``regulations_fpath`` to counties on the grid. No data will be
         written to this file unless explicitly requested via the
         ``out_layers`` input.
-    _feature_type : str
+    node_feature_type : str
         Name of the feature type being run. Must be a key of the
         :attr:`SETBACKS` dictionary.
-    _features_path : str
+    node_file_path : str
         Path to input feature file. This file MUST be a GeoPackage (and
         have the ".gpkg" extension).
+    node_multiplier : int | float | str | None, optional
+        A setback multiplier to use if regulations are not supplied.
+        This multiplier will be applied to the ``base_setback_dist``
+        to calculate the setback. If supplied along with
+        ``regulations_fpath``, this input will be used to apply a
+        setback to all counties not listed in the regulations file.
     out_dir : str
         Path to output directory where output file should be written.
     tag : str
@@ -425,7 +436,7 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
 
     _update_setbacks_calculators(feature_specs)
     logger.info('Computing setbacks from {} in {}'
-                .format(_ft, _fp))
+                .format(node_feature_type, node_file_path))
     logger.debug('Setbacks to be computed with:\n'
                  '- base_setback_dist = {}\n'
                  '- hub_height = {}\n'
@@ -437,18 +448,19 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
                  '- weights calculation upscale factor = {}\n'
                  '- out_layers = {}\n'
                  .format(base_setback_dist, hub_height, rotor_diameter,
-                         regulations_fpath, _mult, max_workers, replace,
+                         regulations_fpath, node_multiplier, max_workers,
+                         replace,
                          weights_calculation_upscale_factor, out_layers))
 
     regulations = select_setback_regulations(base_setback_dist, hub_height,
                                              rotor_diameter, regulations_fpath,
-                                             _mult)
-    setbacks_class = SETBACKS[_ft]
+                                             node_multiplier)
+    setbacks_class = SETBACKS[node_feature_type]
     wcuf = weights_calculation_upscale_factor
     fn = ("setbacks_{}_{}{}.tif"
-          .format(_ft, os.path.basename(out_dir), tag))
+          .format(node_feature_type, os.path.basename(out_dir), tag))
     out_fn = os.path.join(out_dir, fn)
-    setbacks_class.run(excl_fpath, _fp, out_fn, regulations,
+    setbacks_class.run(excl_fpath, node_file_path, out_fn, regulations,
                        weights_calculation_upscale_factor=wcuf,
                        max_workers=max_workers, replace=replace, hsds=hsds,
                        out_layers=out_layers)
@@ -456,15 +468,15 @@ def compute_setbacks(excl_fpath, _ft, _fp, _mult, out_dir, tag,
     return out_fn
 
 
-def merge_setbacks(_out_path, _pattern, are_partial_inclusions=None,
+def merge_setbacks(node_out_path, node_pattern, are_partial_inclusions=None,
                    purge_chunks=False):
     """Combine many input setback GeoTIFFs into a single layer.
 
     Parameters
     ----------
-    _out_path : str
+    node_out_path : str
         Path to output GeoTIFF file.
-    _pattern : str
+    node_pattern : str
         Input GeoTIFF file pattern.
     are_partial_inclusions : bool, optional
         Flag indicating wether the inputs are partial inclusion values
@@ -485,14 +497,14 @@ def merge_setbacks(_out_path, _pattern, are_partial_inclusions=None,
         If the ``are_partial_inclusions`` cannot be inferred (GeoTIFF
         profile does not have "dtype" field).
     """
-    out_file = Path(_out_path).resolve()
+    out_file = Path(node_out_path).resolve()
 
     logger.info("Merging TIFF files in {!r} and writing to {!r}"
                 .format(out_file.parent.as_posix(), out_file))
-    input_setback_files = list(glob.glob(_pattern))
+    input_setback_files = list(glob.glob(node_pattern))
     if not input_setback_files:
         msg = ("Did not find any files matching pattern {!r} in directory {!r}"
-               .format(_pattern, out_file.parent.as_posix()))
+               .format(node_pattern, out_file.parent.as_posix()))
         logger.error(msg)
         raise FileNotFoundError(msg)
 
@@ -529,16 +541,21 @@ def merge_setbacks(_out_path, _pattern, are_partial_inclusions=None,
                     .format(out_file.parent, chunk_dir))
 
 
+PRIVATE_COMPUTE_KEYS = ("node_feature_type", "node_file_path",
+                        "node_multiplier")
+PRIVATE_MERGE_KEYS = ("node_out_path", "node_pattern")
 commands = [
     CLICommandFromFunction(
         function=compute_setbacks, name="compute",
-        split_keys=[("_ft", "_fp", "_mult")],
+        split_keys=[PRIVATE_COMPUTE_KEYS],
         config_preprocessor=preprocess_setbacks_config,
+        skip_doc_params=PRIVATE_COMPUTE_KEYS,
     ),
     CLICommandFromFunction(
         function=merge_setbacks, name="merge",
-        split_keys=[("_out_path", "_pattern")],
+        split_keys=[PRIVATE_MERGE_KEYS],
         config_preprocessor=preprocess_merge_config,
+        skip_doc_params=PRIVATE_MERGE_KEYS,
     ),
 ]
 
