@@ -15,6 +15,11 @@ def _format_str(in_str):
     return in_str.strip().lower().replace("-", " ").replace("_", " ")
 
 
+def _camel_case_str(in_str):
+    """Format a string into CamelCase"""
+    return _format_str(in_str).title().replace(" ", "")
+
+
 def setbacks_calculator(feature_type, buffer_type="default",
                         feature_filter_type="centroid",
                         feature_subtypes_to_exclude=None,
@@ -66,12 +71,13 @@ def setbacks_calculator(feature_type, buffer_type="default",
     class
         A class object that can be used to instantiate the setbacks
         calculator. The initializer parameters are identical to that of
-        :class:`~reVX.setbacks.baseAbstractBaseSetbacks`.
+        :class:`~reVX.setbacks.base.AbstractBaseSetbacks`.
     """
     if isinstance(feature_type, str):
         feature_type = [feature_type]
 
-    feature_type = {_format_str(name) for name in feature_type}
+    camel_case_feature = "".join(map(_camel_case_str, sorted(feature_type)))
+    feature_type = set(map(_format_str, feature_type))
 
     if buffer_type not in BUFFERS:
         msg = ("Unknown buffer type specified: {!r}. Must be one of {}"
@@ -87,7 +93,7 @@ def setbacks_calculator(feature_type, buffer_type="default",
 
     feature_subtypes_to_exclude = set(feature_subtypes_to_exclude or set())
     num_features_per_worker = int(max(0, num_features_per_worker) or 10_000)
-    class_name = "{}_setbacks".format(feature_type)
+    class_name = "{}Setbacks".format(camel_case_feature)
     class_attrs = {"FEATURE_TYPES": feature_type,
                    "FEATURE_SUBTYPES_TO_EXCLUDE": feature_subtypes_to_exclude,
                    "BUFFER_TYPE": buffer_type,
