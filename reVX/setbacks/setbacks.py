@@ -60,6 +60,13 @@ def setbacks_calculator(feature_type, buffer_type="default",
     num_features_per_worker : int, optional
         Number of features each worker (CPU processor) on a node
         processes. By default, ``10,000``.
+
+    Returns
+    -------
+    class
+        A class object that can be used to instantiate the setbacks
+        calculator. The initializer parameters are identical to that of
+        :class:`~reVX.setbacks.baseAbstractBaseSetbacks`.
     """
     if isinstance(feature_type, str):
         feature_type = [feature_type]
@@ -80,17 +87,14 @@ def setbacks_calculator(feature_type, buffer_type="default",
 
     feature_subtypes_to_exclude = set(feature_subtypes_to_exclude or set())
     num_features_per_worker = int(max(0, num_features_per_worker) or 10_000)
+    class_name = "{}_setbacks".format(feature_type)
+    class_attrs = {"FEATURE_TYPES": feature_type,
+                   "FEATURE_SUBTYPES_TO_EXCLUDE": feature_subtypes_to_exclude,
+                   "BUFFER_TYPE": buffer_type,
+                   "FEATURE_FILTER_TYPE": feature_filter_type,
+                   "NUM_FEATURES_PER_WORKER": num_features_per_worker}
 
-    class Setbacks(AbstractBaseSetbacks):
-        """Setbacks calculator. """
-
-        FEATURE_TYPES = feature_type
-        FEATURE_SUBTYPES_TO_EXCLUDE = feature_subtypes_to_exclude
-        BUFFER_TYPE = buffer_type
-        FEATURE_FILTER_TYPE = feature_filter_type
-        NUM_FEATURES_PER_WORKER = num_features_per_worker
-
-    return Setbacks
+    return type(class_name, (AbstractBaseSetbacks,), class_attrs)
 
 
 SETBACK_SPECS = {
