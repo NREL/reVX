@@ -208,8 +208,11 @@ def preprocess_merge_config(config, project_dir, command_name,
     config : dict
         Updated merge config dictionary.
     """
-    return preprocess_collect_config(config, project_dir, command_name,
-                                     collect_pattern=merge_file_pattern)
+    config = preprocess_collect_config(config, project_dir, command_name,
+                                       collect_pattern=merge_file_pattern)
+    config["node_out_path"] = config.pop("_out_path", None)
+    config["node_pattern"] = config.pop("_pattern", None)
+    return config
 
 
 def _update_setbacks_calculators(feature_specs=None):
