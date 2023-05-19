@@ -418,7 +418,7 @@ class LeastCostXmission(LeastCostPaths):
         expanded (multiplicatively by the clipping buffer) until at
         least one connection feature is found.
         """
-        if radius is None or not len(sc_features):
+        if radius is None or len(sc_features) == 0:
             return sc_features
 
         # Get pixel resolution and calculate buffer
