@@ -49,7 +49,7 @@ class FlickerRegulations(AbstractBaseRegulations):
 
     @property
     def hub_height(self):
-        """float | int: Turbine hub-height in meters. """
+        """float | int: Turbine hub height in meters. """
         return self._hub_height
 
     @property

@@ -5,6 +5,8 @@ pytests for exclusions converter
 import os
 import numpy as np
 import pytest
+import rasterio
+from pyproj import Transformer
 
 from reV.handlers.exclusions import ExclusionLayers
 
@@ -54,11 +56,18 @@ def test_geotiff_properties(layer):
     """
     geotiff = os.path.join(DIR, f'{layer}.tif')
     with Geotiff(geotiff) as f:
-        values = f.values
+        inds_x = [np.random.randint(low=0, high=f.shape[0] // 2),
+                  np.random.randint(low=f.shape[0] // 2, high=f.shape[0])]
+        inds_y = [np.random.randint(low=0, high=f.shape[1] // 2),
+                  np.random.randint(low=f.shape[1] // 2, high=f.shape[1])]
+        slices = [slice(*inds_x), slice(*inds_y)]
+        values = f[0, slices[0], slices[1]]
+        all_values = f.values
 
     true_values, _ = extract_layer(EXCL_H5, layer)
 
-    assert np.allclose(true_values, values)
+    assert np.allclose(true_values[0, slices[0], slices[1]].flatten(), values)
+    assert np.allclose(true_values, all_values)
 
 
 def test_geotiff_getter():
@@ -89,6 +98,45 @@ def test_geotiff_shapes():
         assert f.bands == f.tiff_shape[0]
         assert f.n_rows == f.tiff_shape[1]
         assert f.n_cols == f.tiff_shape[2]
+
+
+def test_geotiff_profile():
+    """Test Geotiff Profile"""
+    geotiff = os.path.join(DIR, 'ri_padus.tif')
+    __, profile = extract_layer(EXCL_H5, 'ri_padus')
+    with Geotiff(geotiff) as f:
+        assert (rasterio.CRS.from_string(f.profile["crs"])
+                == rasterio.CRS.from_string(profile["crs"]))
+        assert np.allclose(f.profile["transform"], profile["transform"])
+        assert f.profile["tiled"] == profile["tiled"]
+        assert f.profile["nodata"] == profile["nodata"]
+        assert f.profile["blockxsize"] == profile["blockxsize"]
+        assert f.profile["blockysize"] == profile["blockysize"]
+        assert f.profile["dtype"] == profile["dtype"]
+        assert f.profile["count"] == profile["count"]
+        assert f.profile["height"] == profile["height"]
+        assert f.profile["width"] == profile["width"]
+
+
+def test_geotiff_lat_lon():
+    """Test Geotiff Lat/Lon"""
+    geotiff = os.path.join(DIR, 'ri_padus.tif')
+    with Geotiff(geotiff) as f:
+        lat, lon = f.lat_lon
+        cols, rows = np.meshgrid(np.arange(f.n_cols), np.arange(f.n_rows))
+        transform = rasterio.transform.Affine(*f.profile["transform"])
+        xs, ys = rasterio.transform.xy(transform, rows, cols)
+        transformer = Transformer.from_crs(f.profile["crs"],
+                                           'epsg:4326', always_xy=True)
+        # pylint: disable=unpacking-non-sequence
+        lon_truth, lat_truth = transformer.transform(np.array(xs),
+                                                     np.array(ys))
+        assert np.allclose(lon, lon_truth)
+        assert np.allclose(lat, lat_truth)
+        assert lon.min() > -71.912
+        assert lon.max() < -70.856
+        assert lat.min() > 40.8558
+        assert lat.max() < 42.0189
 
 
 def execute_pytest(capture='all', flags='-rapP'):

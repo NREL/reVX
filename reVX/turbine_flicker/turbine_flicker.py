@@ -78,6 +78,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         """
         super().__init__(excl_fpath, regulations, features=features,
                          hsds=hsds)
+        self.features = self.parse_features()
         self._res_h5 = res_fpath
         self._res = resolution
         self._grid_cell_size = grid_cell_size
@@ -259,7 +260,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                          .format(self._excl_fpath, self._features))
             return f[self._features]
 
-    def _local_exclusions_arguments(self, regulation_value, cnty):
+    def _local_exclusions_arguments(self, regulation_value, county):
         """Compile and return arguments to `compute_local_exclusions`.
 
         This method should return a list or tuple of extra args to be
@@ -269,7 +270,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         ----------
         regulation_value : float | int
             Regulation value for county.
-        cnty : geopandas.GeoDataFrame
+        county : geopandas.GeoDataFrame
             Regulations for a single county.
 
         Returns
@@ -278,18 +279,18 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
             `TurbineFlicker` object used as an extra argument to
             calculate local flicker exclusions.
         """
-        return (self._regulations.hub_height,
-                self._regulations.rotor_diameter,
-                self._points(cnty.iloc[0]['FIPS']),
-                self._res_h5,
-                self._max_flicker_exclusion_range,
-                self._grid_cell_size,
-                self.STEPS_PER_HOUR,
-                self.features,
-                self._res)
+        yield (self._regulations.hub_height,
+               self._regulations.rotor_diameter,
+               self._points(county.iloc[0]['FIPS']),
+               self._res_h5,
+               self._max_flicker_exclusion_range,
+               self._grid_cell_size,
+               self.STEPS_PER_HOUR,
+               self.features,
+               self._res)
 
     @staticmethod
-    def compute_local_exclusions(regulation_value, cnty, *args):
+    def compute_local_exclusions(regulation_value, county, *args):
         """Compute local flicker exclusions.
 
         This method computes a flicker exclusion layer using the
@@ -299,7 +300,7 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         ----------
         regulation_value : float | int
             Maximum number of allowable flicker hours in county.
-        cnty : geopandas.GeoDataFrame
+        county : geopandas.GeoDataFrame
             Regulations for a single county.
         tf : `TurbineFlicker`
             Instance of `TurbineFlicker` objects used to compute the
@@ -309,18 +310,23 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
         -------
         flicker : ndarray
             Raster array of flicker exclusions
+        slices : 2-tuple of `slice`
+            X and Y slice objects defining where in the original array
+            the exclusion data should go.
         """
         (hub_height, rotor_diameter, points, res_fpath,
          max_flicker_exclusion_range, grid_cell_size, steps_per_hour,
          building_layer, resolution) = args
         logger.debug('- Computing flicker for county FIPS {}'
-                     .format(cnty.iloc[0]['FIPS']))
-        return compute_flicker_exclusions(hub_height, rotor_diameter, points,
-                                          res_fpath, regulation_value,
-                                          max_flicker_exclusion_range,
-                                          grid_cell_size, steps_per_hour,
-                                          building_layer, resolution,
-                                          max_workers=1)
+                     .format(county.iloc[0]['FIPS']))
+        flicker = compute_flicker_exclusions(hub_height, rotor_diameter,
+                                             points, res_fpath,
+                                             regulation_value,
+                                             max_flicker_exclusion_range,
+                                             grid_cell_size, steps_per_hour,
+                                             building_layer, resolution,
+                                             max_workers=1)
+        return flicker, (slice(None), slice(None))
 
     def compute_generic_exclusions(self, max_workers=None):
         """Compute generic flicker exclusions.
@@ -355,32 +361,6 @@ class TurbineFlicker(AbstractBaseExclusionsMerger):
                                           self.STEPS_PER_HOUR,
                                           self.features, self._res,
                                           max_workers=max_workers)
-
-    @classmethod
-    def input_output_filenames(cls, out_dir, features_fpath, kwargs):
-        """Generate pairs of input/output file names.
-
-        Parameters
-        ----------
-        out_dir : str
-            Path to output file directory.
-        features_fpath : str
-            This input should either be the name of an exclusion layer
-            in `excl_fpath` or a file path to a GeoTIFF file containing
-            buildings data from which turbine flicker exclusions should
-            be computed.
-        kwargs : dict
-            Dictionary of extra keyword-argument pairs used to
-            instantiate the `exclusion_class`.
-
-        Yields
-        ------
-        tuple
-            An input-output filename pair.
-        """
-        regulations = kwargs['regulations']
-        fn = flicker_fn_out(regulations.hub_height, regulations.rotor_diameter)
-        yield features_fpath, os.path.join(out_dir, fn)
 
 
 def _get_building_indices(building_layer, gid, resolution=640):
@@ -780,21 +760,3 @@ def compute_flicker_exclusions(hub_height, rotor_diameter, points, res_fpath,
             log_mem(logger)
 
     return flicker_arr
-
-
-def flicker_fn_out(hub_height, rotor_diameter):
-    """Generate flicker tiff outfile name.
-
-    Parameters
-    ----------
-    hub_height : int
-        Turbine hub-height (m).
-    rotor_diameter : int
-        Turbine rotor diameter (m).
-
-    Returns
-    -------
-    str
-        Name of flicker outfile.
-    """
-    return "flicker_{}hh_{}rd.tif".format(hub_height, rotor_diameter)

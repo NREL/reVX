@@ -6,10 +6,10 @@ Created on Thu Jun 20 09:43:34 2019
 
 @author: gbuster
 """
-import pandas as pd
+import rasterio
 import numpy as np
+import pandas as pd
 from pyproj import Transformer
-import xarray as xr
 
 from rex.utilities.parse_keys import parse_keys
 from reVX.utilities.exceptions import GeoTiffKeyError
@@ -17,11 +17,6 @@ from reVX.utilities.exceptions import GeoTiffKeyError
 
 class Geotiff:
     """GeoTIFF handler object."""
-    PROFILE = {'driver': 'GTiff', 'dtype': None, 'nodata': None,
-               'width': None, 'height': None, 'count': 1,
-               'crs': None, 'transform': None, 'blockxsize': 128,
-               'blockysize': 128, 'tiled': True, 'compress': 'lzw',
-               'interleave': 'band'}
 
     def __init__(self, fpath, chunks=(128, 128)):
         """
@@ -34,8 +29,10 @@ class Geotiff:
         """
         self._fpath = fpath
         self._iarr = None
-        self._src = xr.open_rasterio(self._fpath, chunks=chunks)
-        self._profile = self._create_profile(chunks=chunks)
+        self._src = rasterio.open(self._fpath, chunks=chunks)
+        self._profile = dict(self._src.profile)
+        self._profile["transform"] = self._profile["transform"][:6]
+        self._profile["crs"] = self._profile["crs"].to_proj4()
 
     def __enter__(self):
         return self
@@ -79,16 +76,16 @@ class Geotiff:
         return out
 
     @property
-    def attrs(self):
+    def profile(self):
         """
-        Get geospatial attributes
+        GeoTiff geospatial profile
 
         Returns
         -------
-        attrs : OrderedDict
-            Geospatial/GeoTiff attributes
+        _profile : dict
+            Dictionary of geo-spatial attributes needed to create GeoTiff
         """
-        return self._src.attrs
+        return self._profile
 
     @property
     def dtype(self):
@@ -100,19 +97,7 @@ class Geotiff:
         dtype : str
             Dtype of data in GeoTiff
         """
-        return self._src.dtype
-
-    @property
-    def profile(self):
-        """
-        GeoTiff geospatial profile
-
-        Returns
-        -------
-        _profile : dict
-            Dictionary of geo-spatial attributes needed to create GeoTiff
-        """
-        return self._profile
+        return self.profile["dtype"]
 
     @property
     def iarr(self):
@@ -140,7 +125,7 @@ class Geotiff:
         shape : tuple
             (bands, y, x)
         """
-        return self._src.shape
+        return (self.bands, *self.shape)
 
     @property
     def shape(self):
@@ -151,7 +136,7 @@ class Geotiff:
         shape : tuple
             2-entry tuple representing the full GeoTiff shape.
         """
-        return self.tiff_shape[1:]
+        return self._src.shape
 
     @property
     def n_rows(self):
@@ -184,7 +169,7 @@ class Geotiff:
         -------
         bands : int
         """
-        return self.tiff_shape[0]
+        return self._src.count
 
     @property
     def lat_lon(self):
@@ -239,7 +224,7 @@ class Geotiff:
         -------
         ndarray
         """
-        return self._src.values
+        return self._src.read()
 
     @staticmethod
     def _unpack_slices(*yx_slice):
@@ -349,13 +334,14 @@ class Geotiff:
         """
         y_slice, x_slice = self._unpack_slices(*ds_slice)
 
-        lon = self._src.coords['x'].values.astype(np.float32)[x_slice]
-        lat = self._src.coords['y'].values.astype(np.float32)[y_slice]
-
-        lon, lat = np.meshgrid(lon, lat)
-        transformer = Transformer.from_crs(self._src.attrs['crs'],
-                                           'epsg:4326', always_xy=True)
-        lon, lat = transformer.transform(lon, lat)
+        cols, rows = np.meshgrid(np.arange(self.n_cols),
+                                 np.arange(self.n_rows))
+        lon, lat = rasterio.transform.xy(self._src.transform, rows, cols)
+        transformer = Transformer.from_crs(self.profile["crs"], 'epsg:4326',
+                                           always_xy=True)
+        # pylint: disable=unpacking-non-sequence
+        lon, lat = transformer.transform(np.array(lon)[x_slice],
+                                         np.array(lat)[y_slice])
 
         return lat.astype(np.float32), lon.astype(np.float32)
 
@@ -375,46 +361,17 @@ class Geotiff:
             1D array of flattened data corresponding to meta data.
         """
         y_slice, x_slice = self._unpack_slices(*ds_slice)
-        data = self._src.data[ds, y_slice, x_slice].flatten().compute()
+
+        if x_slice.stop is None:
+            x_slice = slice(x_slice.start, self.shape[1], x_slice.step)
+        if y_slice.stop is None:
+            y_slice = slice(y_slice.start, self.shape[0], y_slice.step)
+
+        window = rasterio.windows.Window.from_slices(y_slice, x_slice)
+        data = self._src.read(ds + 1, window=window).flatten()
 
         return data
 
-    def _create_profile(self, chunks=(128, 128)):
-        """
-        Create profile from profile template and GeoTiff data
-
-        Parameters
-        ----------
-        profile_template : dict
-            Template profile
-
-        Returns
-        -------
-        profile : dict
-            GeoTiff specific profile
-        """
-        profile = self.PROFILE.copy()
-        profile['dtype'] = self.dtype.name
-        profile['count'], profile['height'], profile['width'] = self.tiff_shape
-
-        if chunks is not None:
-            profile['blockysize'], profile['blockxsize'] = chunks
-        else:
-            del profile['blockysize']
-            del profile['blockxsize']
-
-        attrs = self.attrs
-        nodata = attrs['nodatavals'][0]
-        if np.isnan(nodata):
-            nodata = None
-
-        profile['nodata'] = nodata
-        profile['tiled'] = bool(attrs['is_tiled'])
-        profile['crs'] = attrs['crs']
-        profile['transform'] = attrs['transform']
-
-        return profile
-
     def close(self):
-        """Close the xarray-rasterio source object"""
+        """Close the rasterio source object"""
         self._src.close()
