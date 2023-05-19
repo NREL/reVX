@@ -255,12 +255,12 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths,
             assert len(test["reinforcement_poi_lat"].unique()) == 3
             assert len(test["reinforcement_poi_lon"].unique()) == 3
             assert np.isclose(test.reinforcement_cost_per_mw.max(), 225129.798,
-                            atol=0.001)
+                              atol=0.001)
         else:
             assert len(test["reinforcement_poi_lat"].unique()) == 4
             assert len(test["reinforcement_poi_lon"].unique()) == 4
             assert np.isclose(test.reinforcement_cost_per_mw.max(), 569757.740,
-                            atol=0.001)
+                              atol=0.001)
 
     LOGGERS.clear()
 

@@ -845,7 +845,7 @@ class ReinforcedXmission(LeastCostXmission):
         if self.allow_connections_within_states:
             state = self._ba[self._ba["ba_str"] == ba_str]["state"].values[0]
             logger.debug('  - Clipping features to {!r}'.format(state))
-            state_nodes = self._ba[self._ba["state"]== state]
+            state_nodes = self._ba[self._ba["state"] == state]
             allowed_bas = set(state_nodes["ba_str"])
         else:
             allowed_bas = {ba_str}
