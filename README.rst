@@ -17,12 +17,6 @@ Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
 .. image:: https://badge.fury.io/py/NREL-reVX.svg
     :target: https://badge.fury.io/py/NREL-reVX
 
-.. image:: https://anaconda.org/nrel/nrel-revx/badges/version.svg
-    :target: https://anaconda.org/nrel/nrel-revx
-
-.. image:: https://anaconda.org/nrel/nrel-revx/badges/license.svg
-    :target: https://anaconda.org/nrel/nrel-revx
-
 .. image:: https://codecov.io/gh/nrel/reVX/branch/main/graph/badge.svg?token=3J5M44VAA9
     :target: https://codecov.io/gh/nrel/reVX
 
@@ -54,22 +48,16 @@ on your machine and are using `conda <https://docs.conda.io/en/latest/index.html
 as your package/environment manager.
 
 #. Create a new environment:
-    ``conda create --name revx python=3.7``
-
-        - NOTE: reVX currently only supports python versions 3.7, 3.8, and 3.9. Python 3.10+ conflicts with the reV dependency.
+    ``conda create --name revx python=3.8``
 
 #. Activate your new environment:
     ``conda activate revx``
-    
+
 #. Clone the repo:
     From your home directory ``/home/{user}/`` or another directory that you have permissions in, run the command ``git clone git@github.com:NREL/reVX.git`` and then go into your cloned repository: ``cd reVX``
 
 #. Install reVX:
     1) Follow the installation commands installation process that we use for our automated test suite `here <https://github.com/NREL/reVX/blob/main/.github/workflows/pull_request_tests.yml#L31-L36>`_. Make sure that you call ``pip install -e .`` from within the cloned repository directory e.g. ``/home/{user}/reVX/``
-
-        - NOTE: If you install using conda and you want to use:
-            * `HSDS <https://github.com/NREL/hsds-examples>`_ you will also need to install h5pyd manually: ``pip install h5pyd``
-            * `Turbine Flicker <https://nrel.github.io/reVX/_cli/reVX.turbine_flicker.turbine_flicker.html>`_ you will need to install `HOPP <https://github.com/nrel/HOPP>`_ manually: ``pip install HOPP``
 
         - NOTE: If you install using pip and want to run `exclusion setbacks <https://nrel.github.io/reVX/_cli/reVX.setbacks.setbacks.html>`_ you will need to install rtree manually:
             * ``conda install rtree``

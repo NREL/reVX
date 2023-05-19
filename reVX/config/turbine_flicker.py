@@ -39,9 +39,9 @@ class TurbineFlickerConfig(AnalysisConfig):
         return self['res_fpath']
 
     @property
-    def regs_fpath(self):
+    def regulations_fpath(self):
         """Get regulations .csv path"""
-        return self.get('regs_fpath', None)
+        return self.get('regulations_fpath', None)
 
     @property
     def building_layer(self):
