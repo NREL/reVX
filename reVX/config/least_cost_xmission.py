@@ -222,6 +222,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
         """
         return self.get('barrier_mult', self._default_barrier_mult)
 
+    @property
+    def allow_connections_within_states(self):
+        """
+        Boolean flag to allow supple curve points to connect to
+        substations outside their BA but within their own state.
+        """
+        return self.get("allow_connections_within_states", False)
+
 
 class LeastCostPathsConfig(AnalysisConfig):
     """Config framework for Least Cost Paths"""
@@ -305,6 +313,14 @@ class LeastCostPathsConfig(AnalysisConfig):
         Transmission barrier multiplier to use for MCP costs
         """
         return self.get('barrier_mult', self._default_barrier_mult)
+
+    @property
+    def allow_connections_within_states(self):
+        """
+        Boolean flag to allow substations to connect to endpoints
+        outside their BA but within their own state.
+        """
+        return self.get("allow_connections_within_states", False)
 
     @property
     def save_paths(self):

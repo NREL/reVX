@@ -26,6 +26,7 @@ from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
                                                           ReinforcedXmission)
 from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
                                              SINK_CAT, SUBSTATION_CAT)
+from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
 
 TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
 
@@ -144,6 +145,9 @@ def from_config(ctx, config, verbose):
               show_default=True, default=100,
               help=("Tranmission barrier multiplier, used when computing the "
                     "least cost tie-line path"))
+@click.option('--state_connections', '-acws', is_flag=True,
+              help='Flag to allow substations ot connect to any endpoints '
+                   'within their state. Default is not verbose.')
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -170,8 +174,8 @@ def from_config(ctx, config, verbose):
 def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
           capacity_class, resolution, xmission_config, min_line_length,
           sc_point_start_index, sc_point_step_index, nn_sinks,
-          clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
-          verbose, save_paths, radius, simplify_geo):
+          clipping_buffer, barrier_mult, state_connections, max_workers,
+          out_dir, log_dir, verbose, save_paths, radius, simplify_geo):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -188,33 +192,25 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
     sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
     sc_point_gids = list(sce.points.index.values)
     sc_point_gids = sc_point_gids[sc_point_start_index::sc_point_step_index]
+    kwargs = {"resolution": resolution,
+              "xmission_config": xmission_config,
+              "min_line_length": min_line_length,
+              "sc_point_gids": sc_point_gids,
+              "clipping_buffer": clipping_buffer,
+              "barrier_mult": barrier_mult,
+              "max_workers": max_workers,
+              "save_paths": save_paths,
+              "simplify_geo": simplify_geo,
+              "radius": radius}
     if balancing_areas_fpath is not None:
+        kwargs["allow_connections_within_states"] = state_connections
         least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
                                              balancing_areas_fpath,
-                                             capacity_class,
-                                             resolution=resolution,
-                                             xmission_config=xmission_config,
-                                             min_line_length=min_line_length,
-                                             sc_point_gids=sc_point_gids,
-                                             clipping_buffer=clipping_buffer,
-                                             barrier_mult=barrier_mult,
-                                             max_workers=max_workers,
-                                             save_paths=save_paths,
-                                             simplify_geo=simplify_geo)
+                                             capacity_class, **kwargs)
     else:
+        kwargs["nn_sinks"] = nn_sinks
         least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
-                                            capacity_class,
-                                            resolution=resolution,
-                                            xmission_config=xmission_config,
-                                            min_line_length=min_line_length,
-                                            sc_point_gids=sc_point_gids,
-                                            nn_sinks=nn_sinks,
-                                            clipping_buffer=clipping_buffer,
-                                            barrier_mult=barrier_mult,
-                                            max_workers=max_workers,
-                                            save_paths=save_paths,
-                                            radius=radius,
-                                            simplify_geo=simplify_geo)
+                                            capacity_class, **kwargs)
     if len(least_costs) == 0:
         logger.error('No paths found.')
         return
@@ -294,6 +290,9 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
         logger.info('Simplifying geometries by {}'.format(simplify_geo))
         df.geometry = df.geometry.simplify(simplify_geo)
 
+    if all(col in df for col in ["gid", "reinforcement_cost_per_mw"]):
+        df = min_reinforcement_costs(df)
+
     if not split_to_geojson:
         out_file = ('combo_{}'.format(files[0])
                     if out_file is None else out_file)
@@ -349,7 +348,8 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
 
     logger.info("Merging reinforcement costs into transmission costs...")
 
-    r_cols = ["reinforcement_dist_km", "reinforcement_cost_per_mw"]
+    r_cols = ["ba_str", "reinforcement_poi_lat", "reinforcement_poi_lon",
+              "reinforcement_dist_km", "reinforcement_cost_per_mw"]
     costs[r_cols] = r_costs.loc[costs["trans_gid"], r_cols].values
 
     logger.info("Writing output to {!r}".format(out_file))
@@ -394,6 +394,8 @@ def get_node_cmd(config, start_index=0):
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
+    if config.allow_connections_within_states:
+        args.append('-acws')
     if config.save_paths:
         args.append('--save_paths')
     if config.radius:
@@ -436,6 +438,7 @@ def run_local(ctx, config):
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
                barrier_mult=config.barrier_mult,
+               state_connections=config.allow_connections_within_states,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
                log_dir=config.log_directory,

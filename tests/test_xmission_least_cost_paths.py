@@ -59,7 +59,9 @@ def ba_regions_and_network_nodes():
     ba_str, shapes = zip(*[("p{}".format(int(v)), shape(p))
                            for p, v in s if int(v) != 0])
 
-    ri_ba = gpd.GeoDataFrame({"ba_str": ba_str}, crs=profile['crs'],
+    state = ["Rhode Island"] * len(ba_str)
+    ri_ba = gpd.GeoDataFrame({"ba_str": ba_str, "state": state},
+                             crs=profile['crs'],
                              geometry=list(shapes))
 
     ri_network_nodes = ri_ba.copy()
@@ -111,7 +113,8 @@ def test_parallel(max_workers):
     check(truth, test)
 
 
-def test_cli(runner):
+@pytest.mark.parametrize("save_paths", [False, True])
+def test_cli(runner, save_paths):
     """
     Test CostCreator CLI
     """
@@ -129,6 +132,7 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
+            "save_paths": save_paths,
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -145,15 +149,24 @@ def test_cli(runner):
         capacity_class = xmission_config._parse_cap_class(capacity)
         cap = xmission_config['power_classes'][capacity_class]
         kv = xmission_config.capacity_to_kv(capacity_class)
-        test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
-        test = os.path.join(td, test)
-        test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_{}MW_{}kV.gpkg'.format(os.path.basename(td), cap, kv)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
         check(truth, test)
 
     LOGGERS.clear()
 
 
-def test_reinforcement_cli(runner, ba_regions_and_network_nodes):
+@pytest.mark.parametrize("save_paths", [False, True])
+@pytest.mark.parametrize("state_conns", [False, True])
+def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths,
+                           state_conns):
     """
     Test Reinforcement cost routines and CLI
     """
@@ -200,6 +213,8 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes):
             "transmission_lines_fpath": ALLCONNS_FEATURES,
             "capacity_class": f"{capacity}MW",
             "barrier_mult": 100,
+            "save_paths": save_paths,
+            "allow_connections_within_states": state_conns
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -215,24 +230,37 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes):
         capacity_class = xmission_config._parse_cap_class(capacity)
         cap = xmission_config['power_classes'][capacity_class]
         kv = xmission_config.capacity_to_kv(capacity_class)
-        test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
-        test = os.path.join(td, test)
-        test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_{}MW_{}kV.gpkg'.format(os.path.basename(td), cap, kv)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
 
         assert "reinforcement_poi_lat" in test
         assert "reinforcement_poi_lon" in test
         assert "poi_lat" not in test
         assert "poi_lon" not in test
-        assert len(test["reinforcement_poi_lat"].unique()) == 4
-        assert len(test["reinforcement_poi_lon"].unique()) == 4
+        assert "ba_str" in test
 
         assert len(test) == 69
         assert np.isclose(test.reinforcement_cost_per_mw.min(), 3332.695,
                           atol=0.001)
-        assert np.isclose(test.reinforcement_cost_per_mw.max(), 569757.740,
-                          atol=0.001)
         assert np.isclose(test.reinforcement_dist_km.min(), 1.918, atol=0.001)
         assert np.isclose(test.reinforcement_dist_km.max(), 80.353, atol=0.001)
+        if state_conns:
+            assert len(test["reinforcement_poi_lat"].unique()) == 3
+            assert len(test["reinforcement_poi_lon"].unique()) == 3
+            assert np.isclose(test.reinforcement_cost_per_mw.max(), 225129.798,
+                              atol=0.001)
+        else:
+            assert len(test["reinforcement_poi_lat"].unique()) == 4
+            assert len(test["reinforcement_poi_lon"].unique()) == 4
+            assert np.isclose(test.reinforcement_cost_per_mw.max(), 569757.740,
+                              atol=0.001)
 
     LOGGERS.clear()
 

@@ -249,7 +249,7 @@ class LeastCostPaths:
 
         Returns
         -------
-        geopandas.GeoDataFrame
+        pandas.DataFrame
         """
         end_features = self._features.drop(index=self._start_feature_ind)
         end_features['start_index'] = self._start_feature_ind
@@ -325,7 +325,7 @@ class LeastCostPaths:
                     end_features = end_features.drop(columns=['row', 'col'],
                                                      errors="ignore")
                     lcp = future.result()
-                    lcp = pd.concat((end_features, lcp), axis=1)
+                    lcp = pd.concat((lcp, end_features), axis=1)
                     least_cost_paths.append(lcp)
                     logger.debug('Least cost path {} of {} complete!'
                                  .format(i + 1, len(futures)))
@@ -344,7 +344,7 @@ class LeastCostPaths:
                                        save_paths=save_paths)
                 end_features = self.end_features.drop(columns=['row', 'col'],
                                                       errors="ignore")
-                lcp = pd.concat((end_features, lcp), axis=1)
+                lcp = pd.concat((lcp, end_features), axis=1)
                 least_cost_paths.append(lcp)
 
                 logger.debug('Least cost path {} of {} complete!'
@@ -534,14 +534,15 @@ class ReinforcementPaths(LeastCostPaths):
                                          barrier_mult=barrier_mult,
                                          save_paths=save_paths)
         feats = self._features.drop(columns=['row', 'col'])
-        least_cost_paths = pd.concat((feats, lcp), axis=1)
+        least_cost_paths = pd.concat((lcp, feats), axis=1)
 
         return least_cost_paths.drop("index", axis="columns", errors="ignore")
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             transmission_lines_fpath, capacity_class, xmission_config=None,
-            barrier_mult=100, indices=None, save_paths=False):
+            barrier_mult=100, indices=None,
+            allow_connections_within_states=False, save_paths=False):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -580,6 +581,10 @@ class ReinforcementPaths(LeastCostPaths):
         max_workers : int, optional
             Number of workers to use for processing. If 1 run in serial,
             if ``None`` use all available cores. By default, ``None``.
+        allow_connections_within_states : bool, optional
+            Allow substations to connect to network nodes outside of
+            their own BA, as long as all connections stay within the
+            same state. By default, ``False``.
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
@@ -621,7 +626,15 @@ class ReinforcementPaths(LeastCostPaths):
             network_node = (network_nodes.iloc[index:index + 1]
                             .reset_index(drop=True))
             ba_str = network_node["ba_str"].values[0]
-            node_substations = substations[substations["ba_str"] == ba_str]
+            if allow_connections_within_states:
+                state_nodes = network_nodes[network_nodes["state"]
+                                            == network_node["state"].values[0]]
+                allowed_bas = set(state_nodes["ba_str"])
+            else:
+                allowed_bas = {ba_str}
+
+            node_substations = substations[substations["ba_str"]
+                                           .isin(allowed_bas)]
             node_substations = node_substations.reset_index(drop=True)
             logger.debug('Working on {} substations in BA {}'
                          .format(len(node_substations), ba_str))
@@ -638,7 +651,8 @@ class ReinforcementPaths(LeastCostPaths):
         logger.info('{} paths were computed in {:.4f} hours'
                     .format(len(least_cost_paths), (time.time() - ts) / 3600))
 
-        return pd.concat(least_cost_paths, ignore_index=True)
+        costs = pd.concat(least_cost_paths, ignore_index=True)
+        return min_reinforcement_costs(costs)
 
 
 def _rasterize_transmission(transmission_lines, xmission_config, cost_shape,
@@ -675,3 +689,26 @@ def _rasterize_transmission_layer(transmission_lines, cost_shape,
                                 fill=0, transform=cost_transform)
 
     return out
+
+
+def min_reinforcement_costs(table):
+    """Filter table down to cheapest reinforcement per substation.
+
+    Parameters
+    ----------
+    table : pd.DataFrame | gpd.GeoDataFrame
+        Table containing costs for reinforced transmission. Must contain
+        a `gid` column identifying each substation with its own unique
+        ID and a `reinforcement_cost_per_mw` column with the
+        reinforcement costs to minimize.
+
+    Returns
+    -------
+    pd.DataFrame | gpd.GeoDataFrame
+        Table with a single entry for each `gid` with the least
+        `reinforcement_cost_per_mw`.
+    """
+
+    grouped = table.groupby('gid')
+    table = table.loc[grouped["reinforcement_cost_per_mw"].idxmin()]
+    return table.reset_index(drop=True)

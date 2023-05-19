@@ -107,6 +107,7 @@ In this methodology, total interconnection costs are comprised of two components
 - Each Balancing Area has exactly one "Network Node" (typically a city or highly populated area)
 - SC points **may only connect to substations**
 - Substations that a SC point connects to **must be in the same Balancing Area as the SC point**
+    - This assumption can be relaxed to allow connections within the same state.
 - Reinforcement costs are calculated based on the distance between the substation a SC point connected to and the Network Node in that Balancing Area
     - The path used to calculate reinforcement costs is traced along existing transmission lines **for as long as possible**.
     - The reinforcement cost is taken to be half (50%) of the total greenfield cost of the transmission line being traced. If a reinforcement path traces along multiple transmission lines, the corresponding greenfield costs are used for each segment. If multiple transmission lines are available in a single raster pixel, the cost for the highest-voltage line is used. Wherever there is no transmission line, a default greenfield cost assumption (specified by the user; typically 230 kV) is used.
@@ -149,7 +150,7 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
 }
 ```
 
-Note that we are specifying ``"capacity_class": "400"``  to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly.
+Note that we are specifying ``"capacity_class": "400"``  to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. If you would like to allow substations to connect to endpoints within the same state, add `"allow_connections_within_states": true` to the file.
 
 After putting together your config file, simply call
 
@@ -183,6 +184,7 @@ You should now have a file containing all of the reinforcement costs for the sub
     "name": "least_cost_transmission_1000MW"
 }
 ```
+If you would like to allow supply curve points to  connect to substations within the same state, add `"allow_connections_within_states": true` to the file.
 
 Kickoff the execution using the following command:
 

@@ -355,7 +355,8 @@ class LeastCostXmission(LeastCostPaths):
         clipping_buffer : float, optional
             Buffer to increase clipping radius by, by default 1.05
         radius : None | int, optional
-            Force clipping radius if set to an int
+            Force clipping radius if set to an int. Radius will be
+            expanded to include at least one connection feature.
 
         Returns
         -------
@@ -375,29 +376,13 @@ class LeastCostXmission(LeastCostPaths):
                 radius = np.abs(self.sink_coords[pos] - np.array([row, col])
                                 ).max()
                 radius = int(np.ceil(radius * clipping_buffer))
-
-            if radius:
-                logger.debug('Using forced radius of {}'.format(radius))
-            else:
                 logger.debug('Radius to {} nearest sink is: {}'
                              .format(nn_sinks, radius))
-            row_min = max(row - radius, 0)
-            row_max = min(row + radius, self._shape[0])
-            col_min = max(col - radius, 0)
-            col_max = min(col + radius, self._shape[1])
-            logger.debug('Extracting all transmission features in the row '
-                         'slice {}:{} and column slice {}:{}'
-                         .format(row_min, row_max, col_min, col_max))
+            else:
+                logger.debug('Using forced radius of {}'.format(radius))
 
-            # Clip transmission features
-            mask = self.features['row'] >= row_min
-            mask &= self.features['row'] < row_max
-            mask &= self.features['col'] >= col_min
-            mask &= self.features['col'] < col_max
-            sc_features = self.features.loc[mask].copy(deep=True)
-            logger.debug('{} transmission features found in clipped area with '
-                         'radius {}'
-                         .format(len(sc_features), radius))
+            sc_features = self._clip_to_radius(sc_point, radius, sc_features,
+                                               clipping_buffer)
         else:
             sc_features = self.features.copy(deep=True)
 
@@ -425,6 +410,35 @@ class LeastCostXmission(LeastCostPaths):
             sc_features = pd.concat([sc_features, trans_lines])
 
         return sc_features, radius
+
+    def _clip_to_radius(self, sc_point, radius, sc_features, clipping_buffer):
+        """Clip features to radius.
+
+        If no features are found within the initial radius, it is
+        expanded (multiplicatively by the clipping buffer) until at
+        least one connection feature is found.
+        """
+        if radius is None or len(sc_features) == 0:
+            return sc_features
+
+        # Get pixel resolution and calculate buffer
+        with ExclusionLayers(self._cost_fpath) as ds:
+            resolution = ds.profile["transform"][0]
+        radius_m = radius * resolution
+        logger.debug('Clipping features to radius {}m'.format(radius_m))
+        buffer = sc_point["geometry"].buffer(radius_m)
+        clipped_sc_features = sc_features.clip(buffer)
+
+        while len(clipped_sc_features) <= 0:
+            radius_m *= clipping_buffer
+            logger.debug('Clipping features to radius {}m'.format(radius_m))
+            buffer = sc_point["geometry"].buffer(radius_m)
+            clipped_sc_features = sc_features.clip(buffer)
+
+        logger.debug('{} transmission features found in clipped area with '
+                     'radius {}'
+                     .format(len(clipped_sc_features), radius))
+        return clipped_sc_features.copy(deep=True)
 
     def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
                           clipping_buffer=1.05, barrier_mult=100,
@@ -456,7 +470,8 @@ class LeastCostXmission(LeastCostPaths):
             Flag to return least cost paths as a multi-line geometry,
             by default False
         radius : None | int, optional
-            Force clipping radius if set to an int
+            Force clipping radius if set to an int. Radius will be
+            expanded to include at least one connection feature.
         mp_delay : float, optional
             Delay in seconds between starting multi-process workers.
             Useful for reducing memory spike at working startup.
@@ -550,7 +565,8 @@ class LeastCostXmission(LeastCostPaths):
             Flag to return least cost paths as a multi-line geometry,
             by default False
         radius : None | int, optional
-            Force clipping radius if set to an int
+            Force clipping radius if set to an int. Radius will be
+            expanded to include at least one connection feature.
         mp_delay : float, optional
             Delay in seconds between starting multi-process workers.
             Useful for reducing memory spike at working startup.
@@ -572,7 +588,7 @@ class LeastCostXmission(LeastCostPaths):
             for _, sc_point in self.sc_points.iterrows():
                 gid = sc_point['sc_point_gid']
                 if gid in sc_point_gids:
-                    sc_features, radius = self._clip_to_sc_point(
+                    sc_features, sc_radius = self._clip_to_sc_point(
                         sc_point, tie_line_voltage, nn_sinks=nn_sinks,
                         clipping_buffer=clipping_buffer, radius=radius)
                     if sc_features.empty:
@@ -582,7 +598,7 @@ class LeastCostXmission(LeastCostPaths):
                                         self._cost_fpath,
                                         sc_point.copy(deep=True),
                                         sc_features, capacity_class,
-                                        radius=radius,
+                                        radius=sc_radius,
                                         xmission_config=self._config,
                                         barrier_mult=barrier_mult,
                                         min_line_length=self._min_line_len,
@@ -638,7 +654,8 @@ class LeastCostXmission(LeastCostPaths):
             Flag to return least cost paths as a multi-line geometry,
             by default False
         radius : None | int, optional
-            Force clipping radius if set to an int
+            Force clipping radius if set to an int. Radius will be
+            expanded to include at least one connection feature.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
 
@@ -653,7 +670,7 @@ class LeastCostXmission(LeastCostPaths):
         for i, (_, sc_point) in enumerate(self.sc_points.iterrows(), start=1):
             gid = sc_point['sc_point_gid']
             if gid in sc_point_gids:
-                sc_features, radius = self._clip_to_sc_point(
+                sc_features, sc_radius = self._clip_to_sc_point(
                     sc_point, tie_line_voltage, nn_sinks=nn_sinks,
                     clipping_buffer=clipping_buffer, radius=radius)
                 if sc_features.empty:
@@ -663,7 +680,7 @@ class LeastCostXmission(LeastCostPaths):
                     self._cost_fpath,
                     sc_point.copy(deep=True),
                     sc_features, capacity_class,
-                    radius=radius,
+                    radius=sc_radius,
                     xmission_config=self._config,
                     barrier_mult=barrier_mult,
                     min_line_length=self._min_line_len,
@@ -722,7 +739,8 @@ class LeastCostXmission(LeastCostPaths):
             Flag to return least costs path as a multi-line geometry,
             by default False
         radius : None | int, optional
-            Force clipping radius if set to an int
+            Force clipping radius if set to an int. Radius will be
+            expanded to include at least one connection feature.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
 
@@ -764,7 +782,8 @@ class ReinforcedXmission(LeastCostXmission):
     """
 
     def __init__(self, cost_fpath, features_fpath, balancing_areas_fpath,
-                 resolution=128, xmission_config=None, min_line_length=0):
+                 resolution=128, xmission_config=None, min_line_length=0,
+                 allow_connections_within_states=False):
         """
         Parameters
         ----------
@@ -787,6 +806,10 @@ class ReinforcedXmission(LeastCostXmission):
             By default, ``None``.
         min_line_length : int | float, optional
             Minimum line length in km. By default, ``0``.
+        allow_connections_within_states : bool, optional
+            Allow supply curve points to connect to substations outside
+            of their own BA, as long as all connections stay within the
+            same state. By default, ``False``.
         """
         super().__init__(cost_fpath=cost_fpath,
                          features_fpath=features_fpath,
@@ -795,6 +818,7 @@ class ReinforcedXmission(LeastCostXmission):
                          min_line_length=min_line_length)
         self._ba = (gpd.read_file(balancing_areas_fpath)
                     .to_crs(self.features.crs))
+        self.allow_connections_within_states = allow_connections_within_states
 
     @staticmethod
     def _load_trans_feats(features_fpath):
@@ -818,8 +842,23 @@ class ReinforcedXmission(LeastCostXmission):
 
         point = self.sc_points.loc[sc_point.name:sc_point.name].centroid
         ba_str = point.apply(ba_mapper(self._ba)).values[0]
-        mask = self.features["ba_str"] == ba_str
+        if self.allow_connections_within_states:
+            state = self._ba[self._ba["ba_str"] == ba_str]["state"].values[0]
+            logger.debug('  - Clipping features to {!r}'.format(state))
+            state_nodes = self._ba[self._ba["state"] == state]
+            allowed_bas = set(state_nodes["ba_str"])
+        else:
+            allowed_bas = {ba_str}
+        logger.debug("  - Clipping features to allowed ba's: {}"
+                     .format(allowed_bas))
+        mask = self.features["ba_str"].isin(allowed_bas)
         sc_features = self.features.loc[mask].copy(deep=True)
+        logger.debug('{} transmission features found in clipped area '
+                     .format(len(sc_features)))
+
+        if radius is not None:
+            sc_features = self._clip_to_radius(sc_point, radius, sc_features,
+                                               clipping_buffer)
 
         mask = self.features['max_volts'] >= tie_line_voltage
         sc_features = sc_features.loc[mask].copy(deep=True)
@@ -839,8 +878,9 @@ class ReinforcedXmission(LeastCostXmission):
     def run(cls, cost_fpath, features_fpath, balancing_areas_fpath,
             capacity_class, resolution=128, xmission_config=None,
             min_line_length=0, sc_point_gids=None, clipping_buffer=1.05,
-            barrier_mult=100, max_workers=None, save_paths=False,
-            simplify_geo=None):
+            barrier_mult=100, max_workers=None, simplify_geo=None,
+            allow_connections_within_states=False, save_paths=False,
+            radius=None):
         """
         Find Least Cost Transmission connections between desired
         sc_points and substations in their balancing area.
@@ -880,11 +920,21 @@ class ReinforcedXmission(LeastCostXmission):
         max_workers : int, optional
             Number of workers to use for processing. If 1 run in serial,
             if ``None`` use all available cores. By default, ``None``.
+        simplify_geo : float | None, optional
+            If float, simplify geometries using this value.
+        allow_connections_within_states : bool, optional
+            Allow supply curve points to connect to substations outside
+            of their own BA, as long as all connections stay within the
+            same state. By default, ``False``.
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
-        simplify_geo : float | None, optional
-            If float, simplify geometries using this value.
+        radius : None | int, optional
+            Force clipping radius. Substations beyond this radius will
+            not be considered for connection with supply curve point.
+            Radius will be expanded to include at least one connection
+            feature. This value must be given in units of pixels
+            corresponding to the cost raster.
 
         Returns
         -------
@@ -895,14 +945,15 @@ class ReinforcedXmission(LeastCostXmission):
         """
         ts = time.time()
         lcx = cls(cost_fpath, features_fpath, balancing_areas_fpath,
-                  resolution=resolution, xmission_config=xmission_config,
-                  min_line_length=min_line_length)
+                  resolution, xmission_config, min_line_length,
+                  allow_connections_within_states)
         least_costs = lcx.process_sc_points(capacity_class,
                                             sc_point_gids=sc_point_gids,
                                             clipping_buffer=clipping_buffer,
                                             barrier_mult=barrier_mult,
                                             max_workers=max_workers,
                                             save_paths=save_paths,
+                                            radius=radius,
                                             simplify_geo=simplify_geo)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '

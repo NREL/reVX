@@ -88,7 +88,8 @@ def ri_ba():
     ba_str, shapes = zip(*[("p{}".format(int(v)), shape(p))
                            for p, v in s if int(v) != 0])
 
-    return gpd.GeoDataFrame({"ba_str": ba_str}, crs=profile['crs'],
+    return gpd.GeoDataFrame({"ba_str": ba_str, "state": "Rhode Island"},
+                            crs=profile['crs'],
                             geometry=list(shapes))
 
 
@@ -183,7 +184,8 @@ def test_resolution(resolution):
     check_baseline(truth, test)
 
 
-def test_cli(runner):
+@pytest.mark.parametrize("save_paths", [False, True])
+def test_cli(runner, save_paths):
     """
     Test CostCreator CLI
     """
@@ -201,7 +203,8 @@ def test_cli(runner):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "capacity_class": f'{capacity}MW',
-            "min_line_length": 5.76
+            "min_line_length": 5.76,
+            "save_paths": save_paths,
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -213,16 +216,24 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
-        test = os.path.join(td, test)
-        test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
         SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
         check_baseline(truth, test)
 
     LOGGERS.clear()
 
 
-def test_reinforcement_cli(runner, ri_ba):
+@pytest.mark.parametrize("save_paths", [False, True])
+@pytest.mark.parametrize("state_connections", [False, True])
+def test_reinforcement_cli(runner, ri_ba, save_paths, state_connections):
     """
     Test Reinforcement cost routines and CLI
     """
@@ -254,8 +265,11 @@ def test_reinforcement_cli(runner, ri_ba):
             "balancing_areas_fpath": ri_ba_path,
             "capacity_class": f'{capacity}MW',
             "barrier_mult": 100,
-            "min_line_length": 0
+            "min_line_length": 0,
+            "save_paths": save_paths,
+            "allow_connections_within_states": state_connections,
         }
+
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
             json.dump(config, f)
@@ -266,16 +280,23 @@ def test_reinforcement_cli(runner, ri_ba):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
-        test = os.path.join(td, test)
-        test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
 
-        assert len(test) == 13
+        assert len(test) == 71 if state_connections else 13
         assert set(test.trans_gid.unique()) == {69130}
         assert set(test.ba_str.unique()) == {"p4"}
 
         assert "poi_lat" in test
         assert "poi_lon" in test
+        assert "ba_str" in test
 
         assert len(test.poi_lat.unique()) == 1
         assert len(test.poi_lon.unique()) == 1
