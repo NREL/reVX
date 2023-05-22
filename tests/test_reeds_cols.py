@@ -11,8 +11,9 @@ import pandas as pd
 import geopandas as gpd
 
 from reVX import TESTDATADIR
-from reVX.utilities.utilities import (to_geo, add_county_info,
-                                      add_nrel_regions, add_extra_data)
+from reVX.utilities.utilities import to_geo
+from reVX.utilities.reeds_cols import (add_county_info, add_nrel_regions,
+                                       add_extra_data, add_reeds_columns)
 
 
 @pytest.mark.parametrize(('lat_col', 'lon_col'),
@@ -81,6 +82,43 @@ def test_add_extra_data():
     assert np.allclose(test_df["a value"], 42)
     assert np.allclose(test_df["hh"], 100)
 
+
+def test_add_reeds_columns():
+    """Test that the `add_reeds_columns` function properly adds reeds cols."""
+    test_df = pd.DataFrame(data={"gid": [90, 99],
+                                 "latitude": [39.7407, 40],
+                                 "longitude": [-105.1686, -100],
+                                 "capacity_ac": [100, 0]})
+    h5_fp = os.path.join(TESTDATADIR, "reV_gen", "gen_pv_2012.h5")
+
+    with tempfile.TemporaryDirectory() as td:
+        sc_fp = os.path.join(td, "sc.csv")
+        test_df.to_csv(sc_fp, index=False)
+        out_json_fp = os.path.join(td, "test.json")
+        with open(out_json_fp, "w") as fh:
+            json.dump({"a value": 42, "hh": 100}, fh)
+
+        extra_data = [{"data_fp": h5_fp, "dsets": ["cf_mean"]},
+                      {"data_fp": out_json_fp, "dsets": ["a value", "hh"]}]
+
+        out_fp = add_reeds_columns(sc_fp, capacity_col="capacity_ac",
+                                   extra_data=extra_data, merge_col="gid")
+        out_data = pd.read_csv(out_fp)
+
+    assert out_fp == sc_fp
+    assert isinstance(out_data, pd.DataFrame)
+    assert len(out_data) == 1
+    expected_cols = [ "cnty_fips", "state", "county", "nrel_region",
+                     "eos_mult", "reg_mult", "cf_mean", "a value", "hh"]
+    assert all(col in out_data for col in expected_cols)
+    assert np.allclose(out_data["cf_mean"], 0.178)
+    assert np.allclose(out_data["a value"], 42)
+    assert np.allclose(out_data["hh"], 100)
+
+    assert out_data.iloc[0]["cnty_fips"] == 8059
+    assert out_data.iloc[0]["state"] == "Colorado"
+    assert out_data.iloc[0]["county"] == "Jefferson"
+    assert out_data.iloc[0]["nrel_region"] == "Mountain"
 
 
 def execute_pytest(capture='all', flags='-rapP'):
