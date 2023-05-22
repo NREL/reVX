@@ -6,7 +6,7 @@ import pytest
 import pandas as pd
 import geopandas as gpd
 
-from reVX.utilities.utilities import to_geo, add_county_info
+from reVX.utilities.utilities import to_geo, add_county_info, add_nrel_regions
 
 
 @pytest.mark.parametrize(('lat_col', 'lon_col'),
@@ -42,6 +42,16 @@ def test_add_county_info():
     assert nrel_loc.iloc[0]["cnty_fips"] == "08059"
     assert nrel_loc.iloc[0]["state"] == "Colorado"
     assert nrel_loc.iloc[0]["county"] == "Jefferson"
+
+
+def test_add_nrel_regions():
+    """Test that the `add_nrel_regions` function properly adds regions."""
+    test_df = pd.DataFrame(data={"state": [" COLORADO!! 122", "ala_bama"]})
+
+    test_df = add_nrel_regions(test_df)
+    assert isinstance(test_df, pd.DataFrame)
+    assert "nrel_region" in test_df
+    assert (test_df["nrel_region"].values == ["Mountain", "Southeast"]).all()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

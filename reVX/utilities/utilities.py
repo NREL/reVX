@@ -71,6 +71,57 @@ STATES_ABBR_MAP = {
     'West Virginia': 'WV',
     'Wyoming': 'WY'
 }
+NREL_REGIONS = {
+    'Oregon': 'Pacific',
+    'Washington': 'Pacific',
+    'Colorado': 'Mountain',
+    'Idaho': 'Mountain',
+    'Montana': 'Mountain',
+    'Wyoming': 'Mountain',
+    'Iowa': 'Great Plains',
+    'Kansas': 'Great Plains',
+    'Missouri': 'Great Plains',
+    'Minnesota': 'Great Plains',
+    'Nebraska': 'Great Plains',
+    'North Dakota': 'Great Plains',
+    'South Dakota': 'Great Plains',
+    'Illinois': 'Great Lakes',
+    'Indiana': 'Great Lakes',
+    'Michigan': 'Great Lakes',
+    'Ohio': 'Great Lakes',
+    'Wisconsin': 'Great Lakes',
+    'Connecticut': 'Northeast',
+    'New Jersey': 'Northeast',
+    'New York': 'Northeast',
+    'Maine': 'Northeast',
+    'New Hampshire': 'Northeast',
+    'Massachusetts': 'Northeast',
+    'Pennsylvania': 'Northeast',
+    'Rhode Island': 'Northeast',
+    'Vermont': 'Northeast',
+    'California': 'California',
+    'Arizona': 'Southwest',
+    'Nevada': 'Southwest',
+    'New Mexico': 'Southwest',
+    'Utah': 'Southwest',
+    'Arkansas': 'South Central',
+    'Louisiana': 'South Central',
+    'Oklahoma': 'South Central',
+    'Texas': 'South Central',
+    'Alabama': 'Southeast',
+    'Delaware': 'Southeast',
+    'District of Columbia': 'Southeast',
+    'Florida': 'Southeast',
+    'Georgia': 'Southeast',
+    'Kentucky': 'Southeast',
+    'Maryland': 'Southeast',
+    'Mississippi': 'Southeast',
+    'North Carolina': 'Southeast',
+    'South Carolina': 'Southeast',
+    'Tennessee': 'Southeast',
+    'Virginia': 'Southeast',
+    'West Virginia': 'Southeast'
+}
 
 
 def coordinate_distance(coords1, coords2):
@@ -132,7 +183,7 @@ def to_geo(data_frame, lat_col="latitude", lon_col="longitude",
 
     Parameters
     ----------
-    df : pandas.core.frame.DataFrame
+    df : pandas.DataFrame
         A pandas data frame with latitude and longitude coordinates.
     lat_col : str, optional
         The name of the latitude column. By default, ``"latitude"``.
@@ -176,10 +227,9 @@ def load_fips_to_state_map():
 
 
 def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
-    """Convert a Pandas DataFrame to a GeoPandas GeoDataFrame.
+    """Add county info to a Pandas DataFrame with coordinates.
 
-    The input DataFrame must have latitude and longitude columns, which
-    get converted to a point geometry in the outputs GeoDataFrame.
+    The input DataFrame must have latitude and longitude columns.
 
     Parameters
     ----------
@@ -189,9 +239,6 @@ def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
         The name of the latitude column. By default, ``"latitude"``.
     lon_col : str, optional
         The name of the longitude column. By default, ``"longitude"``.
-    crs : str, optional
-        The Coordinate Reference System of the output DataFrame
-        represented as a string. By default, ``"epsg:4326"``.
 
     Returns
     -------
@@ -210,3 +257,35 @@ def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
     cmap = load_fips_to_state_map()
     gdf["state"] = gdf["cnty_fips"].apply(lambda code: cmap[code[:2]])
     return pd.DataFrame(gdf)
+
+
+def _lowercase_alpha_only(in_str):
+    """Convert a string to lowercase alphabetic values only (a-z)"""
+    return ''.join(filter(str.isalpha, in_str.casefold()))
+
+
+def add_nrel_regions(data_frame):
+    """Add NREL Regions info to a Pandas DataFrame with coordinates.
+
+    The input DataFrame must have a "state" column containing teh state
+    name for each row.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        A pandas data frame with "state" column.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A pandas data frame with an extra "nrel_region" column.
+    """
+    if "state" not in data_frame:
+        raise KeyError("Input DataFrame missing required column 'state'")
+
+    regions = {_lowercase_alpha_only(key): val
+               for key, val in NREL_REGIONS.items()}
+
+    states = data_frame["state"].apply(_lowercase_alpha_only)
+    data_frame["nrel_region"] = states.map(regions)
+    return data_frame
