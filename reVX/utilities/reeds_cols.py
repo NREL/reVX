@@ -201,12 +201,15 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, lat_col="latitude",
     ----------
     supply_curve_fpath : str
         Path to input supply curve. Should have standard reV supply
-        curve output columns (e.g.)
+        curve output columns (e.g. latitude, longitude, capacity,
+        sc_point_gid, etc.). If running from CLI, this can be a list
+        of supply curve paths.
     out_fp : str, optional
         Path to output file for supply curve with new columns. If
         ``None``, the supply curve will be overwritten (i.e. the data
-        will be written to ``supply_curve_fpath``).
-        By default, ``None``.
+        will be written to ``supply_curve_fpath``). If running from CLI,
+        this can be a list output paths (length *must* match length of
+        ``supply_curve_fpath``). By default, ``None``.
     lat_col, lon_col : str, optional
         Column names for latitude and longitude. These columns are
         required to add county info. By default, ``"latitude"`` and

@@ -289,8 +289,27 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
                                          description=desc)
 
 
-config = CLICommandFromFunction(add_reeds_columns, name="add-reeds-cols")
-main.add_command(as_click_command(config))
+def _reeds_cols_preprocessor(config):
+    """Ensure supply_curve_fpath and out_fpath inputs are lists """
+    for key in ["supply_curve_fpath", "out_fp"]:
+        if isinstance(config.get(key), str):
+            config[key] = [config[key]]
+
+    if config.get("out_fp") is None:
+        config["out_fp"] = config["supply_curve_fpath"]
+
+    if len(config["supply_curve_fpath"]) != len(config["out_fp"]):
+        raise ValueError("Length of 'out_fp' must match length of "
+                         "'supply_curve_fpath'")
+
+    return config
+
+
+command = CLICommandFromFunction(add_reeds_columns,
+                                 name="add-reeds-cols",
+                                 split_keys=[("supply_curve_fpath", "out_fp")],
+                                 config_preprocessor=_reeds_cols_preprocessor)
+main.add_command(as_click_command(command))
 
 
 if __name__ == '__main__':
