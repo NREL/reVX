@@ -1,22 +1,12 @@
 # -*- coding: utf-8 -*-
 """reVX RPM unit test module
 """
-from click.testing import CliRunner
-import json
-import numpy as np
 import os
 import pytest
 import pandas as pd
 import geopandas as gpd
-import tempfile
-import traceback
 
-from rex.utilities.loggers import LOGGERS
-from rex.utilities.utilities import check_tz
-
-from reVX import TESTDATADIR
-from reVX.utilities.utilities import to_geo
-
+from reVX.utilities.utilities import to_geo, add_county_info
 
 
 @pytest.mark.parametrize(('lat_col', 'lon_col'),
@@ -37,6 +27,21 @@ def test_to_geo_missing_cols():
     """Test that the `to_geo` throws error if missing lat/lon cols."""
     with pytest.raises(KeyError):
         to_geo(pd.DataFrame())
+
+
+def test_add_county_info():
+    """Test that the `add_county_info` function for NREL location."""
+    nrel_loc = pd.DataFrame(data={"latitude": [39.7407],
+                                  "longitude": [-105.1686]})
+
+    nrel_loc = add_county_info(nrel_loc)
+
+    assert isinstance(nrel_loc, pd.DataFrame)
+    assert all(col in nrel_loc for col in ["cnty_fips", "state", "county"])
+
+    assert nrel_loc.iloc[0]["cnty_fips"] == "08059"
+    assert nrel_loc.iloc[0]["state"] == "Colorado"
+    assert nrel_loc.iloc[0]["county"] == "Jefferson"
 
 
 def execute_pytest(capture='all', flags='-rapP'):

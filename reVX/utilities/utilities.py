@@ -3,7 +3,9 @@
 """
 reVX Utilities
 """
+import addfips
 import geopandas as gpd
+import pandas as pd
 import numpy as np
 import pyproj
 import rasterio
@@ -15,7 +17,8 @@ from sklearn.metrics.pairwise import haversine_distances
 from reV.utilities import log_versions as reV_log_versions
 from reVX.version import __version__
 
-
+COUNTY_GDF_FP = ("https://www2.census.gov/geo/tiger/TIGER2021/COUNTY/"
+                 "tl_2021_us_county.zip")
 STATES_ABBR_MAP = {
     'Alaska': 'AK',
     'Alabama': 'AL',
@@ -153,3 +156,57 @@ def to_geo(data_frame, lat_col="latitude", lon_col="longitude",
     to_point = lambda x: shapely.geometry.Point((x[lon_col], x[lat_col]))
     data_frame["geometry"] = data_frame.apply(to_point, axis=1)
     return gpd.GeoDataFrame(data_frame, geometry="geometry", crs=crs)
+
+
+def load_fips_to_state_map():
+    """Generate a FIPS to state name mapping.
+
+    The keys of the returned dictionary are two-digit FIPS codes (as
+    strings) and the values are the state names.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping two-digitFIPS codes (as strings) to state
+        names.
+    """
+    cdf = pd.read_csv(addfips.AddFIPS.data / "data" / "states.csv")
+    cdf["fips"] = cdf["fips"].apply(lambda x: f"{x:02d}")
+    return dict(zip(cdf["fips"], cdf["name"]))
+
+
+def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
+    """Convert a Pandas DataFrame to a GeoPandas GeoDataFrame.
+
+    The input DataFrame must have latitude and longitude columns, which
+    get converted to a point geometry in the outputs GeoDataFrame.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        A pandas data frame with latitude and longitude coordinates.
+    lat_col : str, optional
+        The name of the latitude column. By default, ``"latitude"``.
+    lon_col : str, optional
+        The name of the longitude column. By default, ``"longitude"``.
+    crs : str, optional
+        The Coordinate Reference System of the output DataFrame
+        represented as a string. By default, ``"epsg:4326"``.
+
+    Returns
+    -------
+    pandas.DataFrame
+        A pandas data frame with all initial input data plus three new
+        columns: "cnty_fips", "state", and "county". "cnty_fips" is a
+        five-digit county code, while "state" and "county" are the state
+        and county names, respectively.
+    """
+    county_gdf = gpd.read_file(COUNTY_GDF_FP)[["GEOID", "NAME", "geometry"]]
+    gdf = to_geo(data_frame, lat_col=lat_col, lon_col=lon_col,
+                 crs=county_gdf.crs)
+    gdf = gpd.overlay(gdf, county_gdf)
+    gdf = gdf.rename(columns={"GEOID": "cnty_fips", "NAME": "county"})
+
+    cmap = load_fips_to_state_map()
+    gdf["state"] = gdf["cnty_fips"].apply(lambda code: cmap[code[:2]])
+    return pd.DataFrame(gdf)
