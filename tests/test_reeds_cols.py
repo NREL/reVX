@@ -45,6 +45,7 @@ def test_add_county_info():
 
     assert isinstance(nrel_loc, pd.DataFrame)
     assert all(col in nrel_loc for col in ["cnty_fips", "state", "county"])
+    assert "geometry" not in nrel_loc
 
     assert nrel_loc.iloc[0]["cnty_fips"] == "08059"
     assert nrel_loc.iloc[0]["state"] == "Colorado"
@@ -111,6 +112,8 @@ def test_add_reeds_columns():
     expected_cols = [ "cnty_fips", "state", "county", "nrel_region",
                      "eos_mult", "reg_mult", "cf_mean", "a value", "hh"]
     assert all(col in out_data for col in expected_cols)
+    assert "geometry" not in out_data
+
     assert np.allclose(out_data["cf_mean"], 0.178)
     assert np.allclose(out_data["a value"], 42)
     assert np.allclose(out_data["hh"], 100)

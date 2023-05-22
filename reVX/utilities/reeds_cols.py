@@ -97,7 +97,7 @@ def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
 
     cmap = load_fips_to_state_map()
     gdf["state"] = gdf["cnty_fips"].apply(lambda code: cmap[code[:2]])
-    return pd.DataFrame(gdf)
+    return pd.DataFrame(gdf).drop(columns="geometry")
 
 
 def _lowercase_alpha_only(in_str):
