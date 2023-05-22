@@ -3,6 +3,7 @@
 """
 reVX Utilities
 """
+import json
 import addfips
 import geopandas as gpd
 import pandas as pd
@@ -12,8 +13,10 @@ import rasterio
 import shapely
 import skimage
 import sklearn
+from warnings import warn
 from sklearn.metrics.pairwise import haversine_distances
 
+from rex import Resource
 from reV.utilities import log_versions as reV_log_versions
 from reVX.version import __version__
 
@@ -183,7 +186,7 @@ def to_geo(data_frame, lat_col="latitude", lon_col="longitude",
 
     Parameters
     ----------
-    df : pandas.DataFrame
+    data_frame : pandas.DataFrame
         A pandas data frame with latitude and longitude coordinates.
     lat_col : str, optional
         The name of the latitude column. By default, ``"latitude"``.
@@ -233,7 +236,7 @@ def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
 
     Parameters
     ----------
-    df : pandas.DataFrame
+    data_frame : pandas.DataFrame
         A pandas data frame with latitude and longitude coordinates.
     lat_col : str, optional
         The name of the latitude column. By default, ``"latitude"``.
@@ -272,7 +275,7 @@ def add_nrel_regions(data_frame):
 
     Parameters
     ----------
-    df : pandas.DataFrame
+    data_frame : pandas.DataFrame
         A pandas data frame with "state" column.
 
     Returns
@@ -288,4 +291,57 @@ def add_nrel_regions(data_frame):
 
     states = data_frame["state"].apply(_lowercase_alpha_only)
     data_frame["nrel_region"] = states.map(regions)
+    return data_frame
+
+
+def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
+    """Add extra data to a Pandas DataFrame from a list of input files.
+
+    Parameters
+    ----------
+    data_frame : pandas.DataFrame
+        A pandas data frame with initial data. Must have ``merge_col``
+        column if extracting data from HDF5 files.
+    extra_data : list of dicts
+        A list of dictionaries, where each dictionary contains two keys.
+        The first key is "data_fp", and it points to the path where the
+        extra data is being extracted from. This must be an HDF5 or JSON
+        file (i.e. must end in ".h5" or ".json"). The second key is
+        "dsets", and it points to a list of dataset names to extract
+        from the file. For JSON data extraction, the values of the
+        datasets must either be scalars or must match the length of the
+        input ``data_frame``. For HDF5 data, the datasets must be 1D
+        datasets, and they will be merged with the input ``data_frame``
+        on ``merge_col`` (column must be in the HDF5 file meta).
+    merge_col : str, optional
+        Name of column to merge the input ``data_frame`` and the HDF5
+        datasets (using their meta).
+
+    Returns
+    -------
+    pandas.DataFrame
+        A pandas data frame with extra data added from input files.
+    """
+    for data_info in extra_data:
+        dsets = data_info["dsets"]
+        data_fp = data_info["data_fp"]
+
+        if data_fp.endswith(".json"):
+            with open(data_fp, "r") as fh:
+                extra_data = json.load(fh)
+        elif data_fp.endswith(".h5"):
+            with Resource(data_fp) as res:
+                extra_data = res.meta[[merge_col]]
+                for dset in dsets:
+                    extra_data[dset] = res[dset]
+                extra_data = pd.merge(data_frame[[merge_col]], extra_data,
+                                      on=merge_col)
+        else:
+            msg = ("File format not currently supported for file: {}"
+                   .format(data_fp))
+            warn(msg)
+
+        for dset in dsets:
+            data_frame[dset] = extra_data[dset]
+
     return data_frame

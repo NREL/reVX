@@ -2,11 +2,17 @@
 """reVX RPM unit test module
 """
 import os
+import json
+import tempfile
+
 import pytest
+import numpy as np
 import pandas as pd
 import geopandas as gpd
 
-from reVX.utilities.utilities import to_geo, add_county_info, add_nrel_regions
+from reVX import TESTDATADIR
+from reVX.utilities.utilities import (to_geo, add_county_info,
+                                      add_nrel_regions, add_extra_data)
 
 
 @pytest.mark.parametrize(('lat_col', 'lon_col'),
@@ -52,6 +58,29 @@ def test_add_nrel_regions():
     assert isinstance(test_df, pd.DataFrame)
     assert "nrel_region" in test_df
     assert (test_df["nrel_region"].values == ["Mountain", "Southeast"]).all()
+
+
+def test_add_extra_data():
+    """Test that the `add_extra_data` function properly adds extra data."""
+    test_df = pd.DataFrame(data={"gid": [90, 99]})
+    h5_fp = os.path.join(TESTDATADIR, "reV_gen", "gen_pv_2012.h5")
+
+    with tempfile.TemporaryDirectory() as td:
+        out_json_fp = os.path.join(td, "test.json")
+        with open(out_json_fp, "w") as fh:
+            json.dump({"a value": 42, "hh": 100}, fh)
+
+        extra_data = [{"data_fp": h5_fp, "dsets": ["cf_mean"]},
+                      {"data_fp": out_json_fp, "dsets": ["a value", "hh"]}]
+
+        test_df = add_extra_data(test_df, extra_data, merge_col="gid")
+
+    assert isinstance(test_df, pd.DataFrame)
+    assert all(col in test_df for col in ["cf_mean", "a value", "hh"])
+    assert np.allclose(test_df["cf_mean"], [0.178, 0.179])
+    assert np.allclose(test_df["a value"], 42)
+    assert np.allclose(test_df["hh"], 100)
+
 
 
 def execute_pytest(capture='all', flags='-rapP'):
