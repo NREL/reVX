@@ -190,7 +190,7 @@ def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
 def add_reeds_columns(supply_curve_fpath, out_fp=None, lat_col="latitude",
                       lon_col="longitude", capacity_col="capacity",
                       extra_data=None, merge_col="sc_point_gid",
-                      filter_out_zero_capacity=True):
+                      filter_out_zero_capacity=True, rename_mapping=None):
     """Add columns to supply curve required by ReEDS.
 
     This method will add columns like "cnty_fips", "state", "county",
@@ -236,6 +236,11 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, lat_col="latitude",
     filter_out_zero_capacity : bool, optional
         Flag to filter out sites with zero capacity.
         By default, ``True``.
+    rename_mapping : dict, optional
+        Optional mapping of old column names to new column names. This
+        mapping will be used to rename the columns in the supply curve
+        at the end of the procedure after all extra columns have been
+        added. By default, ``None`` (no renaming).
 
     Returns
     -------
@@ -255,6 +260,9 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, lat_col="latitude",
 
     if filter_out_zero_capacity and capacity_col in sc:
         sc = sc[sc[capacity_col] > 0]
+
+    rename_mapping = rename_mapping or {}
+    sc = sc.rename(columns=rename_mapping)
 
     sc = sc.reset_index(drop=True)
 

@@ -103,19 +103,21 @@ def test_add_reeds_columns():
                       {"data_fp": out_json_fp, "dsets": ["a value", "hh"]}]
 
         out_fp = add_reeds_columns(sc_fp, capacity_col="capacity_ac",
-                                   extra_data=extra_data, merge_col="gid")
+                                   extra_data=extra_data, merge_col="gid",
+                                   rename_mapping={"a value": "my_output"})
         out_data = pd.read_csv(out_fp)
 
     assert out_fp == sc_fp
     assert isinstance(out_data, pd.DataFrame)
     assert len(out_data) == 1
     expected_cols = [ "cnty_fips", "state", "county", "nrel_region",
-                     "eos_mult", "reg_mult", "cf_mean", "a value", "hh"]
+                     "eos_mult", "reg_mult", "cf_mean", "my_output", "hh"]
     assert all(col in out_data for col in expected_cols)
+    assert "a value" not in out_data
     assert "geometry" not in out_data
 
     assert np.allclose(out_data["cf_mean"], 0.178)
-    assert np.allclose(out_data["a value"], 42)
+    assert np.allclose(out_data["my_output"], 42)
     assert np.allclose(out_data["hh"], 100)
 
     assert out_data.iloc[0]["cnty_fips"] == 8059
