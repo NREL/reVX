@@ -8,6 +8,8 @@ import os
 import json
 from pathlib import Path
 
+from gaps.cli import CLICommandFromFunction, as_click_command
+
 from rex.utilities.cli_dtypes import STR, STRLIST, FLOAT
 from rex.utilities.loggers import init_logger
 from rex.utilities.utilities import safe_json_load
@@ -18,6 +20,7 @@ from reVX.utilities import ExclusionsConverter
 from reVX.utilities.forecasts import FcstUtils
 from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region_classifier import RegionClassifier
+from reVX.utilities.reeds_cols import add_reeds_columns
 from reVX.setbacks.setbacks_converter import SetbacksConverter
 
 from reVX import __version__
@@ -284,6 +287,10 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
         # pylint: disable=protected-access
         ExclusionsConverter._write_layer(excl_fpath, out, profile, mask_,
                                          description=desc)
+
+
+config = CLICommandFromFunction(add_reeds_columns, name="add-reeds-cols")
+main.add_command(as_click_command(config))
 
 
 if __name__ == '__main__':
