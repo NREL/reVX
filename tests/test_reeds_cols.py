@@ -110,7 +110,7 @@ def test_add_reeds_columns():
     assert out_fp == sc_fp
     assert isinstance(out_data, pd.DataFrame)
     assert len(out_data) == 1
-    expected_cols = [ "cnty_fips", "state", "county", "nrel_region",
+    expected_cols = ["cnty_fips", "state", "county", "nrel_region",
                      "eos_mult", "reg_mult", "cf_mean", "my_output", "hh"]
     assert all(col in out_data for col in expected_cols)
     assert "a value" not in out_data
