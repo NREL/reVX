@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 """
-reVX Utilities
+reVX ReEDS column addition utilities
 """
 import json
 import geopandas as gpd

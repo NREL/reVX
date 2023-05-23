@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""reVX RPM unit test module
+"""reVX ReEDS column addition unit tests
 """
 import os
 import json
