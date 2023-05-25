@@ -3,6 +3,7 @@
 """
 reVX ReEDS column addition utilities
 """
+import os
 import json
 import geopandas as gpd
 import pandas as pd
@@ -13,6 +14,8 @@ from reVX.utilities.utilities import to_geo, load_fips_to_state_map
 from reVX.version import __version__
 
 
+UTILITY_DIR = os.path.dirname(os.path.realpath(__file__))
+CONFIG_DIR = os.path.join(UTILITY_DIR, "config")
 COUNTY_GDF_FP = ("https://www2.census.gov/geo/tiger/TIGER2021/COUNTY/"
                  "tl_2021_us_county.zip")
 
@@ -74,7 +77,7 @@ def add_nrel_regions(data_frame):
     if "state" not in data_frame:
         raise KeyError("Input DataFrame missing required column 'state'")
 
-    with open("./config/nrel_regions.json") as fh:
+    with open(os.path.join(CONFIG_DIR, "nrel_regions.json")) as fh:
         nrel_regions = json.load(fh)
 
     regions = {_lowercase_alpha_only(key): val
