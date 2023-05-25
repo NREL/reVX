@@ -18,60 +18,6 @@ from reV.utilities import log_versions as reV_log_versions
 from reVX.version import __version__
 
 
-STATES_ABBR_MAP = {
-    'Alaska': 'AK',
-    'Alabama': 'AL',
-    'Arkansas': 'AR',
-    'Arizona': 'AZ',
-    'California': 'CA',
-    'Colorado': 'CO',
-    'Connecticut': 'CT',
-    'District Of Columbia': 'DC',
-    'Delaware': 'DE',
-    'Florida': 'FL',
-    'Georgia': 'GA',
-    'Hawaii': 'HI',
-    'Idaho': 'ID',
-    'Illinois': 'IL',
-    'Indiana': 'IN',
-    'Iowa': 'IA',
-    'Kansas': 'KS',
-    'Kentucky': 'KY',
-    'Louisiana': 'LA',
-    'Massachusetts': 'MA',
-    'Maryland': 'MD',
-    'Maine': 'ME',
-    'Michigan': 'MI',
-    'Minnesota': 'MN',
-    'Missouri': 'MO',
-    'Mississippi': 'MS',
-    'Montana': 'MT',
-    'Nebraska': 'NE',
-    'New Hampshire': 'NH',
-    'New Jersey': 'NJ',
-    'Nevada': 'NV',
-    'New Mexico': 'NM',
-    'New York': 'NY',
-    'North Carolina': 'NC',
-    'North Dakota': 'ND',
-    'Ohio': 'OH',
-    'Oklahoma': 'OK',
-    'Oregon': 'OR',
-    'Pennsylvania': 'PA',
-    'Rhode Island': 'RI',
-    'South Carolina': 'SC',
-    'South Dakota': 'SD',
-    'Tennessee': 'TN',
-    'Texas': 'TX',
-    'Utah': 'UT',
-    'Virginia': 'VA',
-    'Washington': 'WA',
-    'Wisconsin': 'WI',
-    'West Virginia': 'WV',
-    'Wyoming': 'WY'
-}
-
-
 def coordinate_distance(coords1, coords2):
     """
     Compute the haversine distance between the two sets of coordinates.

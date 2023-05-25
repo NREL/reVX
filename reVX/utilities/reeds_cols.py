@@ -12,59 +12,9 @@ from rex import Resource
 from reVX.utilities.utilities import to_geo, load_fips_to_state_map
 from reVX.version import __version__
 
+
 COUNTY_GDF_FP = ("https://www2.census.gov/geo/tiger/TIGER2021/COUNTY/"
                  "tl_2021_us_county.zip")
-NREL_REGIONS = {
-    'Oregon': 'Pacific',
-    'Washington': 'Pacific',
-    'Colorado': 'Mountain',
-    'Idaho': 'Mountain',
-    'Montana': 'Mountain',
-    'Wyoming': 'Mountain',
-    'Iowa': 'Great Plains',
-    'Kansas': 'Great Plains',
-    'Missouri': 'Great Plains',
-    'Minnesota': 'Great Plains',
-    'Nebraska': 'Great Plains',
-    'North Dakota': 'Great Plains',
-    'South Dakota': 'Great Plains',
-    'Illinois': 'Great Lakes',
-    'Indiana': 'Great Lakes',
-    'Michigan': 'Great Lakes',
-    'Ohio': 'Great Lakes',
-    'Wisconsin': 'Great Lakes',
-    'Connecticut': 'Northeast',
-    'New Jersey': 'Northeast',
-    'New York': 'Northeast',
-    'Maine': 'Northeast',
-    'New Hampshire': 'Northeast',
-    'Massachusetts': 'Northeast',
-    'Pennsylvania': 'Northeast',
-    'Rhode Island': 'Northeast',
-    'Vermont': 'Northeast',
-    'California': 'California',
-    'Arizona': 'Southwest',
-    'Nevada': 'Southwest',
-    'New Mexico': 'Southwest',
-    'Utah': 'Southwest',
-    'Arkansas': 'South Central',
-    'Louisiana': 'South Central',
-    'Oklahoma': 'South Central',
-    'Texas': 'South Central',
-    'Alabama': 'Southeast',
-    'Delaware': 'Southeast',
-    'District of Columbia': 'Southeast',
-    'Florida': 'Southeast',
-    'Georgia': 'Southeast',
-    'Kentucky': 'Southeast',
-    'Maryland': 'Southeast',
-    'Mississippi': 'Southeast',
-    'North Carolina': 'Southeast',
-    'South Carolina': 'Southeast',
-    'Tennessee': 'Southeast',
-    'Virginia': 'Southeast',
-    'West Virginia': 'Southeast'
-}
 
 
 def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
@@ -124,8 +74,11 @@ def add_nrel_regions(data_frame):
     if "state" not in data_frame:
         raise KeyError("Input DataFrame missing required column 'state'")
 
+    with open("./config/nrel_regions.json") as fh:
+        nrel_regions = json.load(fh)
+
     regions = {_lowercase_alpha_only(key): val
-               for key, val in NREL_REGIONS.items()}
+               for key, val in nrel_regions.items()}
 
     states = data_frame["state"].apply(_lowercase_alpha_only)
     data_frame["nrel_region"] = states.map(regions)
