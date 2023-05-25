@@ -98,6 +98,7 @@ def to_geo(data_frame, lat_col="latitude", lon_col="longitude",
         raise KeyError("Input DataFrame missing the following required keys: "
                        "{}".format(missing))
 
+    # pylint: disable=unnecessary-lambda-assignment
     to_point = lambda x: shapely.geometry.Point((x[lon_col], x[lat_col]))
     data_frame["geometry"] = data_frame.apply(to_point, axis=1)
     return gpd.GeoDataFrame(data_frame, geometry="geometry", crs=crs)
