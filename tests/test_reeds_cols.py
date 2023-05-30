@@ -39,7 +39,8 @@ def test_to_geo_missing_cols():
 def test_add_county_info():
     """Test that the `add_county_info` function for NREL location."""
     nrel_loc = pd.DataFrame(data={"latitude": [39.7407],
-                                  "longitude": [-105.1686]})
+                                  "longitude": [-105.1686],
+                                  "county": ["unknown"]})
 
     nrel_loc = add_county_info(nrel_loc)
 

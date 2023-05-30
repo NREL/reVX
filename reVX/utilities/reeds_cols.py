@@ -46,6 +46,7 @@ def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
     gdf = to_geo(data_frame, lat_col=lat_col, lon_col=lon_col,
                  crs=county_gdf.crs)
     gdf = gpd.overlay(gdf, county_gdf)
+    gdf = gdf.drop(columns=["cnty_fips", "county"], errors="ignore")
     gdf = gdf.rename(columns={"GEOID": "cnty_fips", "NAME": "county"})
 
     cmap = load_fips_to_state_map()
