@@ -5,12 +5,12 @@ reVX ReEDS column addition utilities
 """
 import os
 import json
-import geopandas as gpd
 import pandas as pd
 from warnings import warn
 
 from rex import Resource
-from reVX.utilities.utilities import to_geo, load_fips_to_state_map
+from reVX.utilities.region_classifier import RegionClassifier
+from reVX.utilities.utilities import load_fips_to_state_map
 from reVX.version import __version__
 
 
@@ -20,7 +20,7 @@ COUNTY_GDF_FP = ("https://www2.census.gov/geo/tiger/TIGER2021/COUNTY/"
                  "tl_2021_us_county.zip")
 
 
-def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
+def add_county_info(data_frame):
     """Add county info to a Pandas DataFrame with coordinates.
 
     The input DataFrame must have latitude and longitude columns.
@@ -29,10 +29,6 @@ def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
     ----------
     data_frame : pandas.DataFrame
         A pandas data frame with latitude and longitude coordinates.
-    lat_col : str, optional
-        The name of the latitude column. By default, ``"latitude"``.
-    lon_col : str, optional
-        The name of the longitude column. By default, ``"longitude"``.
 
     Returns
     -------
@@ -42,16 +38,24 @@ def add_county_info(data_frame, lat_col="latitude", lon_col="longitude"):
         five-digit county code, while "state" and "county" are the state
         and county names, respectively.
     """
-    county_gdf = gpd.read_file(COUNTY_GDF_FP)[["GEOID", "NAME", "geometry"]]
-    gdf = to_geo(data_frame, lat_col=lat_col, lon_col=lon_col,
-                 crs=county_gdf.crs)
-    gdf = gpd.overlay(gdf, county_gdf)
-    gdf = gdf.drop(columns=["cnty_fips", "county"], errors="ignore")
-    gdf = gdf.rename(columns={"GEOID": "cnty_fips", "NAME": "county"})
+    data_frame = data_frame.drop(columns=["cnty_fips", "county"],
+                                 errors="ignore")
+    data_frame = _classify(data_frame, "GEOID")
+    data_frame = _classify(data_frame, "NAME")
+    data_frame = data_frame.rename(columns={"GEOID": "cnty_fips",
+                                            "NAME": "county"})
 
     cmap = load_fips_to_state_map()
-    gdf["state"] = gdf["cnty_fips"].apply(lambda code: cmap[code[:2]])
-    return pd.DataFrame(gdf).drop(columns="geometry")
+    data_frame["state"] = data_frame["cnty_fips"].apply(
+        lambda code: cmap[code[:2]])
+    return data_frame
+
+
+def _classify(data_frame, col):
+    """Classify a single county column for the input DataFrame"""
+    classifier = RegionClassifier(data_frame, COUNTY_GDF_FP, col)
+    data_frame = classifier.classify(force=True)
+    return data_frame.drop(columns="geometry", errors="ignore")
 
 
 def _lowercase_alpha_only(in_str):
@@ -128,15 +132,18 @@ def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
                 extra_data = json.load(fh)
         elif data_fp.endswith(".h5"):
             with Resource(data_fp) as res:
-                extra_data = res.meta[[merge_col]]
+                extra_data = res.meta[[merge_col]].copy()
                 for dset in dsets:
                     extra_data[dset] = res[dset]
-                extra_data = pd.merge(data_frame[[merge_col]], extra_data,
-                                      on=merge_col)
+            extra_data = pd.merge(data_frame[[merge_col]], extra_data,
+                                  on=merge_col)
+            extra_data = {dset: extra_data[dset].values
+                          for dset in dsets}
         else:
             msg = ("File format not currently supported for file: {}"
                    .format(data_fp))
             warn(msg)
+            continue
 
         for dset in dsets:
             data_frame[dset] = extra_data[dset]
@@ -144,8 +151,7 @@ def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
     return data_frame
 
 
-def add_reeds_columns(supply_curve_fpath, out_fp=None, lat_col="latitude",
-                      lon_col="longitude", capacity_col="capacity",
+def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
                       extra_data=None, merge_col="sc_point_gid",
                       filter_out_zero_capacity=True, rename_mapping=None):
     """Add columns to supply curve required by ReEDS.
@@ -167,10 +173,6 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, lat_col="latitude",
         will be written to ``supply_curve_fpath``). If running from CLI,
         this can be a list output paths (length *must* match length of
         ``supply_curve_fpath``). By default, ``None``.
-    lat_col, lon_col : str, optional
-        Column names for latitude and longitude. These columns are
-        required to add county info. By default, ``"latitude"`` and
-        ``"longitude"``.
     capacity_col : str, optional
         Name of capacity column. This is used to filter out sites with
         zero capacity, if that option is selected.
@@ -209,7 +211,7 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, lat_col="latitude",
     """
 
     sc = pd.read_csv(supply_curve_fpath)
-    sc = add_county_info(sc, lat_col=lat_col, lon_col=lon_col)
+    sc = add_county_info(sc)
     sc = add_nrel_regions(sc)
     if extra_data:
         sc = add_extra_data(sc, extra_data, merge_col=merge_col)
