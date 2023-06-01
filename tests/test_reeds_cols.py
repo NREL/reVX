@@ -101,7 +101,8 @@ def test_add_reeds_columns():
             json.dump({"a value": 42, "hh": 100}, fh)
 
         extra_data = [{"data_fp": h5_fp, "dsets": ["cf_mean"]},
-                      {"data_fp": out_json_fp, "dsets": ["a value", "hh"]}]
+                      {"data_fp": out_json_fp, "dsets": ["a value", "hh"]},
+                      {"data_fp": "dne.den_ext", "dsets": ["DNE"]}]
 
         out_fp = add_reeds_columns(sc_fp, capacity_col="capacity_ac",
                                    extra_data=extra_data, merge_col="gid",
@@ -116,6 +117,7 @@ def test_add_reeds_columns():
     assert all(col in out_data for col in expected_cols)
     assert "a value" not in out_data
     assert "geometry" not in out_data
+    assert "DNE" not in out_data
 
     assert np.allclose(out_data["cf_mean"], 0.178)
     assert np.allclose(out_data["my_output"], 42)
