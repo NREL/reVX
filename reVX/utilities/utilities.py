@@ -3,7 +3,9 @@
 """
 reVX Utilities
 """
+import addfips
 import geopandas as gpd
+import pandas as pd
 import numpy as np
 import pyproj
 import rasterio
@@ -14,60 +16,6 @@ from sklearn.metrics.pairwise import haversine_distances
 
 from reV.utilities import log_versions as reV_log_versions
 from reVX.version import __version__
-
-
-STATES_ABBR_MAP = {
-    'Alaska': 'AK',
-    'Alabama': 'AL',
-    'Arkansas': 'AR',
-    'Arizona': 'AZ',
-    'California': 'CA',
-    'Colorado': 'CO',
-    'Connecticut': 'CT',
-    'District Of Columbia': 'DC',
-    'Delaware': 'DE',
-    'Florida': 'FL',
-    'Georgia': 'GA',
-    'Hawaii': 'HI',
-    'Idaho': 'ID',
-    'Illinois': 'IL',
-    'Indiana': 'IN',
-    'Iowa': 'IA',
-    'Kansas': 'KS',
-    'Kentucky': 'KY',
-    'Louisiana': 'LA',
-    'Massachusetts': 'MA',
-    'Maryland': 'MD',
-    'Maine': 'ME',
-    'Michigan': 'MI',
-    'Minnesota': 'MN',
-    'Missouri': 'MO',
-    'Mississippi': 'MS',
-    'Montana': 'MT',
-    'Nebraska': 'NE',
-    'New Hampshire': 'NH',
-    'New Jersey': 'NJ',
-    'Nevada': 'NV',
-    'New Mexico': 'NM',
-    'New York': 'NY',
-    'North Carolina': 'NC',
-    'North Dakota': 'ND',
-    'Ohio': 'OH',
-    'Oklahoma': 'OK',
-    'Oregon': 'OR',
-    'Pennsylvania': 'PA',
-    'Rhode Island': 'RI',
-    'South Carolina': 'SC',
-    'South Dakota': 'SD',
-    'Tennessee': 'TN',
-    'Texas': 'TX',
-    'Utah': 'UT',
-    'Virginia': 'VA',
-    'Washington': 'WA',
-    'Wisconsin': 'WI',
-    'West Virginia': 'WV',
-    'Wyoming': 'WY'
-}
 
 
 def coordinate_distance(coords1, coords2):
@@ -118,3 +66,56 @@ def log_versions(logger):
     logger.debug('- shapely version {}'.format(shapely.__version__))
     logger.debug('- scikit-image version {}'.format(skimage.__version__))
     logger.debug('- scikit-learn version {}'.format(sklearn.__version__))
+
+
+def to_geo(data_frame, lat_col="latitude", lon_col="longitude",
+           crs="epsg:4326"):
+    """Convert a Pandas DataFrame to a GeoPandas GeoDataFrame.
+
+    The input DataFrame must have latitude and longitude columns, which
+    get converted to a point geometry in the outputs GeoDataFrame.
+
+    Parameters
+    ----------
+    data_frame : pandas.DataFrame
+        A pandas data frame with latitude and longitude coordinates.
+    lat_col : str, optional
+        The name of the latitude column. By default, ``"latitude"``.
+    lon_col : str, optional
+        The name of the longitude column. By default, ``"longitude"``.
+    crs : str, optional
+        The Coordinate Reference System of the output DataFrame
+        represented as a string. By default, ``"epsg:4326"``.
+
+    Returns
+    -------
+    geopandas.GeoDataFrame
+        A GeoPandas GeoDataFrame object with points representing the
+        lat/lon positions as the geometry.
+    """
+    missing = {col for col in [lat_col, lon_col] if col not in data_frame}
+    if any(missing):
+        raise KeyError("Input DataFrame missing the following required keys: "
+                       "{}".format(missing))
+
+    # pylint: disable=unnecessary-lambda-assignment
+    to_point = lambda x: shapely.geometry.Point((x[lon_col], x[lat_col]))
+    data_frame["geometry"] = data_frame.apply(to_point, axis=1)
+    return gpd.GeoDataFrame(data_frame, geometry="geometry", crs=crs)
+
+
+def load_fips_to_state_map():
+    """Generate a FIPS to state name mapping.
+
+    The keys of the returned dictionary are two-digit FIPS codes (as
+    strings) and the values are the state names.
+
+    Returns
+    -------
+    dict
+        Dictionary mapping two-digitFIPS codes (as strings) to state
+        names.
+    """
+    cdf = pd.read_csv(addfips.AddFIPS.data / "data" / "states.csv")
+    cdf["fips"] = cdf["fips"].apply(lambda x: f"{x:02d}")
+    return dict(zip(cdf["fips"], cdf["name"]))
