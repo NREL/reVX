@@ -201,8 +201,9 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
     rename_mapping : dict, optional
         Optional mapping of old column names to new column names. This
         mapping will be used to rename the columns in the supply curve
-        at the end of the procedure after all extra columns have been
-        added. By default, ``None`` (no renaming).
+        towards the end of the procedure (after all extra columns except
+        ``eos_mult`` and ``reg_mult`` have been added).
+        By default, ``None`` (no renaming).
 
     Returns
     -------
@@ -216,15 +217,15 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
     if extra_data:
         sc = add_extra_data(sc, extra_data, merge_col=merge_col)
 
-    for col in ["eos_mult", "reg_mult"]:
-        if col not in sc:
-            sc[col] = 1
-
     if filter_out_zero_capacity and capacity_col in sc:
         sc = sc[sc[capacity_col] > 0]
 
     rename_mapping = rename_mapping or {}
     sc = sc.rename(columns=rename_mapping)
+
+    for col in ["eos_mult", "reg_mult"]:
+        if col not in sc:
+            sc[col] = 1
 
     sc = sc.reset_index(drop=True)
 
