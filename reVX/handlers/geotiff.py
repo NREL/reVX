@@ -9,6 +9,7 @@ Created on Thu Jun 20 09:43:34 2019
 import rasterio
 import numpy as np
 import pandas as pd
+from affine import Affine
 from pyproj import Transformer
 
 from rex.utilities.parse_keys import parse_keys
@@ -316,6 +317,7 @@ class Geotiff:
                              'row_ind': row_ind, 'col_ind': col_ind})
         return meta
 
+    # pylint: disable=all
     def _get_lat_lon(self, *ds_slice):
         """
         Get the geotiff latitude and longitude coordinates
@@ -336,13 +338,16 @@ class Geotiff:
 
         cols, rows = np.meshgrid(np.arange(self.n_cols),
                                  np.arange(self.n_rows))
-        lon, lat = rasterio.transform.xy(self._src.transform, rows, cols)
-        transformer = Transformer.from_crs(self.profile["crs"], 'epsg:4326',
-                                           always_xy=True)
-        # pylint: disable=unpacking-non-sequence
-        lon, lat = transformer.transform(np.array(lon)[x_slice],
-                                         np.array(lat)[y_slice])
 
+        pixel_center_translation = Affine.translation(0.5, 0.5)
+        adjusted_transform = self._src.transform * pixel_center_translation
+        lon, lat = adjusted_transform * [cols[y_slice, x_slice],
+                                         rows[y_slice, x_slice]]
+
+        transformer = Transformer.from_crs(self._src.profile["crs"],
+                                           'epsg:4326', always_xy=True)
+
+        lon, lat = transformer.transform(lon, lat)
         return lat.astype(np.float32), lon.astype(np.float32)
 
     def _get_data(self, ds, *ds_slice):
