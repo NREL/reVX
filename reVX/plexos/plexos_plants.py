@@ -836,7 +836,7 @@ class PlantProfileAggregation:
         self._plexos_table = self._parse_plexos_table(
             plexos_table, plant_name_col=plant_name_col)
 
-        self._plant_name_col = plant_name_col.lower()
+        self._plant_name_col = plant_name_col
         self._tech_tag = tech_tag
         self._timezone = timezone
         self._mymean_fpath = mymean_fpath
