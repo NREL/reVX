@@ -165,7 +165,8 @@ class CombineRasters:
         print(f'Successfully loaded land mask from {mask_f}')
 
     def build_off_shore_friction(self, friction_files, slope_file=None,
-                                 save_tiff=None):
+                                 bathy_file=None, bathy_depth_cutoff=None,
+                                 bathy_friction=None, save_tiff=None):
         """
         Combine off-shore friction layers.
 
@@ -181,20 +182,39 @@ class CombineRasters:
             is the file name of the raster.
         slope_file : str, optional
             Path to slope friction tiff
+        bathy_file : str, optional
+            Path to bathymetry tiff. Values are assumed to decrease with depth.
+        bathy_depth_cutoff : float, optional
+            Depth below which a friction is applied. This must in the same
+            units as the bathy file.
+        bathy_friction : int, optional
+            Friction value to apply to areas with a depth great than
+            bath_depth_cutoff.
         save_tiff : bool, optional
             Save composite friction to tiff if true
         """
         print('Loading friction layers')
         fr_layers = {}
-        for fr_dict, f in friction_files:
-            d = None
-            for k, val in fr_dict.items():
-                print(f'--- setting raster value {k} to fricton {val} for {f}')
-                tmp_d = self._load_layer(f, k) * val
-                d = tmp_d if d is None else d + tmp_d
 
-            assert d.shape == self._os_shape and d.min() == 0
-            fr_layers[f] = d.astype('uint16')
+        if bathy_file is not None:
+            print('--- calculating bathymetric friction')
+            if bathy_depth_cutoff is None or bathy_friction is None:
+                raise AttributeError('bathy_depth_cutoff and bathy_friction '
+                                     'must be set if bath_file is set')
+
+            print('--- --- bathy_depth_cutoff is', bathy_depth_cutoff)
+            print('--- --- bathy_friction is', bathy_friction)
+
+            if not os.path.exists(bathy_file):
+                bathy_file = os.path.join(self.layer_dir, bathy_file)
+            if not os.path.exists(bathy_file):
+                raise FileNotFoundError(f'Unable to find {bathy_file}')
+
+            d = rio.open(bathy_file).read(1)
+            assert d.shape == self._os_shape
+            d2 = np.where(d >= bathy_depth_cutoff, 0, bathy_friction)
+
+            fr_layers[bathy_file] = d2.astype('uint16')
 
         if slope_file is not None:
             print('--- calculating slope friction')
@@ -216,6 +236,16 @@ class CombineRasters:
             d2 = np.where(d < 10, LOW_FRICTION, d2)
 
             fr_layers[slope_file] = d2.astype('uint16')
+
+        for fr_dict, f in friction_files:
+            d = None
+            for k, val in fr_dict.items():
+                print(f'--- setting raster value {k} to fricton {val} for {f}')
+                tmp_d = self._load_layer(f, k) * val
+                d = tmp_d if d is None else d + tmp_d
+
+            assert d.shape == self._os_shape and d.min() == 0
+            fr_layers[f] = d.astype('uint16')
 
         print('Combining off-shore friction layers')
         self._os_friction = reduce(_sum, fr_layers.values()).astype('uint16')
