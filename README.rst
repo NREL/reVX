@@ -29,9 +29,8 @@ reVX command line tools
 =======================
 
 - `reVX <https://nrel.github.io/reVX/_cli/reVX.html#revx>`_
-- `reV-ReEDS <https://nrel.github.io/reVX/_cli/reV-ReEDS.html#rev-reeds>`_
 - `reV-rpm <https://nrel.github.io/reVX/_cli/reV-rpm.html#rev-rpm>`_
-- `reV-plexos <https://nrel.github.io/reVX/_cli/reVX-plexos.html#rev-plexos>`_
+- `reV-plexos <https://nrel.github.io/reVX/_cli/reV-plexos.html>`_
 - `plexos-plants <https://nrel.github.io/reVX/_cli/plexos-plants.html#plexos-plants>`_
 - `mean-wind-dirs <https://nrel.github.io/reVX/_cli/mean-wind-dirs.html#mean-wind-dirs>`_
 - `prominent-wind-dirs <https://nrel.github.io/reVX/_cli/prominent-wind-dirs.html#prominent-wind-dirs>`_
