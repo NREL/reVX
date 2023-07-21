@@ -1,12 +1,15 @@
 """
 Region Classifier Module
 """
-import pandas as pd
+import logging
+import warnings
+
 import geopandas as gpd
+import pandas as pd
+
+from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from shapely.geometry import shape
-from scipy.spatial import cKDTree
-import logging
 
 from reVX.utilities.utilities import log_versions
 from rex import Resource
@@ -111,7 +114,10 @@ class RegionClassifier():
                 logger.warning('Setting regions label: {}'
                                .format(regions_label))
 
-        centroids = regions.geometry.centroid
+        # Centroids used later to deal with points that fall outside regions
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning)
+            centroids = regions.geometry.centroid
         regions['longitude'] = centroids.x
         regions['latitude'] = centroids.y
 

@@ -20,7 +20,7 @@ COUNTY_GDF_FP = ("https://www2.census.gov/geo/tiger/TIGER2021/COUNTY/"
                  "tl_2021_us_county.zip")
 
 
-def add_county_info(data_frame):
+def add_county_info(data_frame, regions=COUNTY_GDF_FP):
     """Add county info to a Pandas DataFrame with coordinates.
 
     The input DataFrame must have latitude and longitude columns.
@@ -29,6 +29,9 @@ def add_county_info(data_frame):
     ----------
     data_frame : pandas.DataFrame
         A pandas data frame with latitude and longitude coordinates.
+    regions : str | GeoDataFrame
+        Path to regions shapefile containing labeled geometries or
+        a pre-loaded GeoDataFrame.
 
     Returns
     -------
@@ -40,8 +43,8 @@ def add_county_info(data_frame):
     """
     data_frame = data_frame.drop(columns=["cnty_fips", "county"],
                                  errors="ignore")
-    data_frame = _classify(data_frame, "GEOID")
-    data_frame = _classify(data_frame, "NAME")
+    data_frame = _classify(data_frame, "GEOID", regions)
+    data_frame = _classify(data_frame, "NAME", regions)
     data_frame = data_frame.rename(columns={"GEOID": "cnty_fips",
                                             "NAME": "county"})
 
@@ -51,9 +54,9 @@ def add_county_info(data_frame):
     return data_frame
 
 
-def _classify(data_frame, col):
+def _classify(data_frame, col, regions=COUNTY_GDF_FP):
     """Classify a single county column for the input DataFrame"""
-    classifier = RegionClassifier(data_frame, COUNTY_GDF_FP, col)
+    classifier = RegionClassifier(data_frame, regions, col)
     data_frame = classifier.classify(force=True)
     return data_frame.drop(columns="geometry", errors="ignore")
 
@@ -103,15 +106,18 @@ def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
         column if extracting data from HDF5 files.
     extra_data : list of dicts
         A list of dictionaries, where each dictionary contains two keys.
-        The first key is "data_fp", and it points to the path where the
-        extra data is being extracted from. This must be an HDF5 or JSON
-        file (i.e. must end in ".h5" or ".json"). The second key is
-        "dsets", and it points to a list of dataset names to extract
-        from the file. For JSON data extraction, the values of the
-        datasets must either be scalars or must match the length of the
-        input ``data_frame``. For HDF5 data, the datasets must be 1D
+        The first key is "data_fp", and it points either a dictionary of
+        new field/new value pairs or to the path where the extra data is being
+        extracted from. This must be a dictionary, an HDF5, or JSON
+        file (i.e., if not a dictionary, it must end in ".h5" or ".json"). The
+        second key is "dsets", and it points to a list of dataset names to
+        extract from data_fp. For JSON and dictionary data extraction, the
+        values of the datasets must either be scalars or must match the length
+        of the input ``data_frame``. For HDF5 data, the datasets must be 1D
         datasets, and they will be merged with the input ``data_frame``
-        on ``merge_col`` (column must be in the HDF5 file meta).
+        on ``merge_col`` (column must be in the HDF5 file meta). By default,
+        ``None``.
+
     merge_col : str, optional
         Name of column used to merge the data in the input
         ``data_frame`` with the data in the HDF5 file. Note that this
@@ -127,10 +133,12 @@ def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
         dsets = data_info["dsets"]
         data_fp = data_info["data_fp"]
 
-        if data_fp.endswith(".json"):
+        if isinstance(data_fp, dict):
+            extra_data = data_fp
+        elif str(data_fp).endswith(".json"):
             with open(data_fp, "r") as fh:
                 extra_data = json.load(fh)
-        elif data_fp.endswith(".h5"):
+        elif str(data_fp).endswith(".h5"):
             with Resource(data_fp) as res:
                 extra_data = res.meta[[merge_col]].copy()
                 for dset in dsets:
@@ -153,7 +161,8 @@ def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
 
 def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
                       extra_data=None, merge_col="sc_point_gid",
-                      filter_out_zero_capacity=True, rename_mapping=None):
+                      filter_out_zero_capacity=True, rename_mapping=None,
+                      regions=COUNTY_GDF_FP):
     """Add columns to supply curve required by ReEDS.
 
     This method will add columns like "cnty_fips", "state", "county",
@@ -179,16 +188,17 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
         By default, ``"capacity"``.
     extra_data : list of dicts
         A list of dictionaries, where each dictionary contains two keys.
-        The first key is "data_fp", and it points to the path where the
-        extra data is being extracted from. This must be an HDF5 or JSON
-        file (i.e. must end in ".h5" or ".json"). The second key is
-        "dsets", and it points to a list of dataset names to extract
-        from the file. For JSON data extraction, the values of the
-        datasets must either be scalars or must match the length of the
-        input supply curve. For HDF5 data, the datasets must be 1D
-        datasets, and they will be merged with the input supply curve
-        on ``merge_col`` (column must be in the HDF5 file meta).
-        By default, ``None``.
+        The first key is "data_fp", and it points either a dictionary of
+        new field/new value pairs or to the path where the extra data is being
+        extracted from. This must be a dictionary, an HDF5, or JSON
+        file (i.e., if not a dictionary, it must end in ".h5" or ".json"). The
+        second key is "dsets", and it points to a list of dataset names to
+        extract from data_fp. For JSON and dictionary data extraction, the
+        values of the datasets must either be scalars or must match the length
+        of the input ``data_frame``. For HDF5 data, the datasets must be 1D
+        datasets, and they will be merged with the input ``data_frame``
+        on ``merge_col`` (column must be in the HDF5 file meta). By default,
+        ``None``.
     merge_col : str, optional
         Name of column used to merge the data in the input supply curve
         with the data in the HDF5 file if ``extra_data`` is specified.
@@ -212,7 +222,7 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
     """
 
     sc = pd.read_csv(supply_curve_fpath)
-    sc = add_county_info(sc)
+    sc = add_county_info(sc, regions)
     sc = add_nrel_regions(sc)
     if extra_data:
         sc = add_extra_data(sc, extra_data, merge_col=merge_col)
