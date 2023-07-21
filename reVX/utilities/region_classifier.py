@@ -114,7 +114,7 @@ class RegionClassifier():
                 logger.warning('Setting regions label: {}'
                                .format(regions_label))
 
-        # Centroids are used, here, to catch points that fall outside regions
+        # Centroids used later to deal with points that fall outside regions
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning)
             centroids = regions.geometry.centroid
