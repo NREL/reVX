@@ -105,8 +105,8 @@ def test_geotiff_profile():
     geotiff = os.path.join(DIR, 'ri_padus.tif')
     __, profile = extract_layer(EXCL_H5, 'ri_padus')
     with Geotiff(geotiff) as f:
-        assert (rasterio.CRS.from_string(f.profile["crs"])
-                == rasterio.CRS.from_string(profile["crs"]))
+        assert (rasterio.crs.CRS.from_string(f.profile["crs"])
+                == rasterio.crs.CRS.from_string(profile["crs"]))
         assert np.allclose(f.profile["transform"], profile["transform"])
         assert f.profile["tiled"] == profile["tiled"]
         assert f.profile["nodata"] == profile["nodata"]
@@ -137,6 +137,21 @@ def test_geotiff_lat_lon():
         assert lon.max() < -70.856
         assert lat.min() > 40.8558
         assert lat.max() < 42.0189
+
+
+@pytest.mark.parametrize("inds", [([1, 5, 10], [3, 4, 5]),
+                                  (slice(1, 20), slice(None))])
+def test_geotiff_lat_lon_sliced(inds):
+    """Test Geotiff Lat/Lon sliced accessor"""
+    geotiff = os.path.join(DIR, 'ri_padus.tif')
+    x_inds, y_inds = inds
+    with Geotiff(geotiff) as f:
+        lat_truth, lon_truth = f.lat_lon
+        lat = f["latitude", x_inds, y_inds]
+        lon = f["longitude", x_inds, y_inds]
+
+        assert np.allclose(lon, lon_truth[x_inds, y_inds])
+        assert np.allclose(lat, lat_truth[x_inds, y_inds])
 
 
 def execute_pytest(capture='all', flags='-rapP'):

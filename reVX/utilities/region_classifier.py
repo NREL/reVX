@@ -1,12 +1,15 @@
 """
 Region Classifier Module
 """
-import pandas as pd
+import logging
+import warnings
+
 import geopandas as gpd
+import pandas as pd
+
+from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from shapely.geometry import shape
-from scipy.spatial import cKDTree
-import logging
 
 from reVX.utilities.utilities import log_versions
 from rex import Resource
@@ -98,9 +101,9 @@ class RegionClassifier():
         ----------
         regions : str | GeoDataFrame
             Path to regions shapefile containing labeled geometries or
-            a pre-loaded GeoDataFrame
+            a pre-loaded GeoDataFrame.
         regions_label : str
-            Attribute to use as label in the regions shapefile
+            Attribute to use as label in the regions shapefile.
         """
 
         if not isinstance(regions, gpd.GeoDataFrame):
@@ -111,7 +114,11 @@ class RegionClassifier():
                 logger.warning('Setting regions label: {}'
                                .format(regions_label))
 
-        centroids = regions.geometry.centroid
+
+        # Centroids are used, here, to catch points that fall outside regions
+        with warnings.catch_warnings():
+            warnings.filterwarnings('ignore', category=UserWarning)
+            centroids = regions.geometry.centroid
         regions['longitude'] = centroids.x
         regions['latitude'] = centroids.y
 
@@ -258,7 +265,7 @@ class RegionClassifier():
         """ Join the meta points to regions by spatial intersection """
 
         joined = gpd.sjoin(self._meta, self._regions,
-                           how='inner', op='intersects')
+                           how='inner', predicate='intersects')
         if 'index_left' in joined.columns:
             joined = joined.drop_duplicates('index_left', keep='last')
             meta_inds = list(joined['index_left'])
