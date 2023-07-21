@@ -264,7 +264,7 @@ class RegionClassifier():
         """ Join the meta points to regions by spatial intersection """
 
         joined = gpd.sjoin(self._meta, self._regions,
-                           how='inner', op='intersects')
+                           how='inner', predicate='intersects')
         if 'index_left' in joined.columns:
             joined = joined.drop_duplicates('index_left', keep='last')
             meta_inds = list(joined['index_left'])
