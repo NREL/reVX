@@ -17,7 +17,7 @@ from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.cli import main
 from reVX.handlers.geotiff import Geotiff
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 from reVX import TESTDATADIR
 
 DIR = os.path.join(TESTDATADIR, 'ri_exclusions')

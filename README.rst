@@ -17,12 +17,6 @@ Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
 .. image:: https://badge.fury.io/py/NREL-reVX.svg
     :target: https://badge.fury.io/py/NREL-reVX
 
-.. image:: https://anaconda.org/nrel/nrel-revx/badges/version.svg
-    :target: https://anaconda.org/nrel/nrel-revx
-
-.. image:: https://anaconda.org/nrel/nrel-revx/badges/license.svg
-    :target: https://anaconda.org/nrel/nrel-revx
-
 .. image:: https://codecov.io/gh/nrel/reVX/branch/main/graph/badge.svg?token=3J5M44VAA9
     :target: https://codecov.io/gh/nrel/reVX
 
@@ -35,9 +29,8 @@ reVX command line tools
 =======================
 
 - `reVX <https://nrel.github.io/reVX/_cli/reVX.html#revx>`_
-- `reV-ReEDS <https://nrel.github.io/reVX/_cli/reV-ReEDS.html#rev-reeds>`_
 - `reV-rpm <https://nrel.github.io/reVX/_cli/reV-rpm.html#rev-rpm>`_
-- `reV-plexos <https://nrel.github.io/reVX/_cli/reVX-plexos.html#rev-plexos>`_
+- `reV-plexos <https://nrel.github.io/reVX/_cli/reV-plexos.html>`_
 - `plexos-plants <https://nrel.github.io/reVX/_cli/plexos-plants.html#plexos-plants>`_
 - `mean-wind-dirs <https://nrel.github.io/reVX/_cli/mean-wind-dirs.html#mean-wind-dirs>`_
 - `prominent-wind-dirs <https://nrel.github.io/reVX/_cli/prominent-wind-dirs.html#prominent-wind-dirs>`_
@@ -46,22 +39,6 @@ reVX command line tools
 - `offshore-dist-to-ports <https://nrel.github.io/reVX/_cli/offshore-dist-to-ports.html#offshore-dist-to-ports>`_
 - `offshore-inputs <https://nrel.github.io/reVX/_cli/offshore-inputs.html#offshore-inputs>`_
 
-Using Eagle Env
-===============
-
-If you would like to run reVX on Eagle (NREL's HPC) you can use a pre-compiled
-conda env:
-
-.. code-block:: bash
-
-    conda activate /shared-projects/rev/modulefiles/conda/envs/rev/
-
-or
-
-.. code-block:: bash
-
-    source activate /shared-projects/rev/modulefiles/conda/envs/rev/
-
 Installing reVX
 ===============
 
@@ -69,48 +46,21 @@ NOTE: The installation instruction below assume that you have python installed
 on your machine and are using `conda <https://docs.conda.io/en/latest/index.html>`_
 as your package/environment manager.
 
-Option 1: Install from PIP or Conda (recommended for analysts):
----------------------------------------------------------------
+#. Create a new environment:
+    ``conda create --name revx python=3.8``
 
-1. Create a new environment:
-    ``conda create --name revx python=3.7``
-
-2. Activate directory:
+#. Activate your new environment:
     ``conda activate revx``
 
-3. Install reVX:
-    1) ``pip install NREL-reVX`` or
-    2) ``conda install nrel-revx --channel=nrel``
+#. Clone the repo:
+    From your home directory ``/home/{user}/`` or another directory that you have permissions in, run the command ``git clone git@github.com:NREL/reVX.git`` and then go into your cloned repository: ``cd reVX``
 
-        - NOTE: If you install using conda and you want to use:
-            * `HSDS <https://github.com/NREL/hsds-examples>`_ you will also need to install h5pyd manually: ``pip install h5pyd``
-            * `Turbine Flicker <https://nrel.github.io/reVX/_cli/reVX.turbine_flicker.turbine_flicker.html>`_ you will need to install `HOPP <https://github.com/nrel/HOPP>`_ manually: ``pip install HOPP``
+#. Install reVX:
+    1) Follow the installation commands installation process that we use for our automated test suite `here <https://github.com/NREL/reVX/blob/main/.github/workflows/pull_request_tests.yml#L31-L34>`_. Make sure that you call ``pip install -e .`` from within the cloned repository directory e.g. ``/home/{user}/reVX/``
 
         - NOTE: If you install using pip and want to run `exclusion setbacks <https://nrel.github.io/reVX/_cli/reVX.setbacks.setbacks.html>`_ you will need to install rtree manually:
             * ``conda install rtree``
             * `pip installation instructions <https://pypi.org/project/Rtree/#:~:text=Rtree%20is%20a%20ctypes%20Python,Multi%2Ddimensional%20indexes>`_
-
-Option 2: Clone repo (recommended for developers)
--------------------------------------------------
-
-1. from home dir, ``git clone git@github.com:NREL/reVX.git``
-
-2. Create ``reVX`` environment and install package
-    1) Create a conda env: ``conda create -n revx``
-    2) Run the command: ``conda activate revx``
-    3) cd into the repo cloned in 1.
-    4) | prior to running ``pip`` below, make sure the branch is correct (install
-       | from main!)
-    5) | Install ``reVX`` and its dependencies by running:
-       | ``pip install .`` (or ``pip install -e .`` if running a dev branch
-       | or working on the source code)
-
-3. Check that ``reVX`` was installed successfully
-    1) | From any directory, run the following commands. This should return the
-       | help pages for the CLI's.
-
-        - ``reVX``
-
 
 Recommended Citation
 ====================

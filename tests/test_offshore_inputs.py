@@ -49,6 +49,10 @@ def test_extract_inputs():
     test = OffshoreInputs.extract(INPUTS_FPATH, OFFSHORE_SITES,
                                   input_layers=INPUT_LAYERS)
 
+    # pandas v2 has new nan vs. None behavior, simple fill makes them match
+    baseline = baseline.fillna(value="None")
+    test = test.fillna(value="None")
+
     assert_frame_equal(baseline, test, check_dtype=False)
 
 

@@ -259,10 +259,15 @@ def test_cli(runner):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        with Resource(out_fpath) as f:
+        out_f_csv = out_fpath.replace('.h5', '_utc.csv')
+        out_f_h5 = out_fpath.replace('.h5', '_utc.h5')
+        assert os.path.exists(out_f_csv)
+        assert os.path.exists(out_f_h5)
+
+        with Resource(out_f_h5) as f:
             meta = f.meta
             ti = f.time_index
-            profiles = f['plant_profiles']
+            profiles = f['profiles']
 
         for plant_id, plant_build in meta.iterrows():
             res_gids = json.loads(plant_build['res_gids'])

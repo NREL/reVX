@@ -41,7 +41,8 @@ class PlexosAggregation(BaseProfileAggregation):
     def __init__(self, plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
                  force_full_build=False, force_shape_map=False,
-                 max_workers=None):
+                 plant_name_col=None, tech_tag=None, res_class=None,
+                 timezone='UTC', dset_tag=None, max_workers=None):
         """
         Parameters
         ----------
@@ -66,8 +67,11 @@ class PlexosAggregation(BaseProfileAggregation):
             File path to capacity factor file (reV gen output) to
             get profiles from.
         forecast_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file.
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
         build_year : int, optional
             REEDS year of interest, by default 2050
         plexos_columns : list | None
@@ -81,6 +85,27 @@ class PlexosAggregation(BaseProfileAggregation):
             Flag to force the mapping of supply curve points to the plexos
             node shape file input (if a shape file is input) via nearest
             neighbor to shape centroid.
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
+        res_class : int | None
+            Optional resource class to use to filter supply curve points.
+            For example, if res_class = 3 then only supply curve points with
+            class 3 will be kept in the sc_build table. This filters the on the
+            'class' column in the reeds_build table.
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -96,6 +121,11 @@ class PlexosAggregation(BaseProfileAggregation):
         self._force_full_build = force_full_build
         self._force_shape_map = force_shape_map
         self.max_workers = max_workers
+        self._plant_name_col = plant_name_col
+        self._tech_tag = tech_tag
+        self._timezone = timezone
+        self._res_class = res_class
+        self._dset_tag = dset_tag if dset_tag is not None else ""
 
         if plexos_columns is None:
             plexos_columns = tuple()
@@ -103,11 +133,18 @@ class PlexosAggregation(BaseProfileAggregation):
         self._plexos_columns += DataCleaner.PLEXOS_META_COLS
         self._plexos_columns = tuple(set(self._plexos_columns))
 
-        logger.info('Running PLEXOS aggregation for build year: {}'
-                    .format(build_year))
+        logger.info('Running {} for build year: {}'
+                    .format(self.__class__.__name__, build_year))
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build,
                                                build_year=build_year)
+        if res_class is not None:
+            class_mask = self._sc_build['class'] == res_class
+            self._sc_build = self._sc_build[class_mask]
+        if self._sc_build.empty:
+            msg = 'res_class={} not found in reeds build out'.format(res_class)
+            logger.error(msg)
+            raise RuntimeError(msg)
         self._plexos_nodes = self._parse_plexos_nodes(plexos_nodes)
 
         missing = self._check_gids()
@@ -268,7 +305,7 @@ class PlexosAggregation(BaseProfileAggregation):
         rev_mask = rev_sc[join_on].isin(reeds_sc_gids)
         if not rev_mask.any():
             msg = ("There are no overlapping sc_gids between the provided reV "
-                   "supply curve table the ReEDS buildout!")
+                   "supply curve table and the ReEDS buildout!")
             logger.error(msg)
             raise RuntimeError(msg)
 
@@ -299,7 +336,7 @@ class PlexosAggregation(BaseProfileAggregation):
         ----------
         rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, lat/lon,
-            res_gids, gid_counts. Or  path to reV supply curve table.
+            res_gids, gid_counts. Or path to reV supply curve table.
         reeds_build : str | pd.DataFrame
             ReEDS buildout with rows for built capacity (MW) at each reV SC
             point. This should have columns: reeds_year, built_capacity, and
@@ -467,6 +504,7 @@ class PlexosAggregation(BaseProfileAggregation):
             temp = RegionClassifier.run(self.sc_build, self._plexos_nodes,
                                         regions_label='plexos_id',
                                         force=self._force_shape_map)
+
             plx_node_index = temp['plexos_id'].values.astype(int)
             if any(plx_node_index < 0):
                 msg = ('Could not find a matching shape for {} supply curve '
@@ -533,7 +571,6 @@ class PlexosAggregation(BaseProfileAggregation):
 
         if len(plx_node_index.shape) == 1:
             plx_node_index = plx_node_index.reshape((len(plx_node_index), 1))
-
         return plx_node_index
 
     def make_profiles(self):
@@ -545,7 +582,7 @@ class PlexosAggregation(BaseProfileAggregation):
             (t, n) array of Plexos node generation profiles where t is the
             timeseries length and n is the number of plexos nodes.
         """
-
+        logger.info('Making profiles for {} nodes'.format(self.n_plexos_nodes))
         if self.max_workers != 1:
             profiles = self._make_profiles_parallel()
         else:
@@ -575,7 +612,8 @@ class PlexosAggregation(BaseProfileAggregation):
                                res_gids=self.available_res_gids,
                                forecast_fpath=self._forecast_fpath,
                                forecast_map=self._forecast_map,
-                               force_full_build=self._force_full_build)
+                               force_full_build=self._force_full_build,
+                               dset_tag=self._dset_tag)
                 futures[f] = i
 
             for n, f in enumerate(as_completed(futures)):
@@ -588,7 +626,7 @@ class PlexosAggregation(BaseProfileAggregation):
                 current_prog = (n + 1) // (len(futures) / 100)
                 if current_prog > progress:
                     progress = current_prog
-                    logger.info('{} % of plexos node profiles built.'
+                    logger.info('{} % of node profiles built.'
                                 .format(progress))
 
         return profiles
@@ -611,7 +649,8 @@ class PlexosAggregation(BaseProfileAggregation):
                 res_gids=self.available_res_gids,
                 forecast_fpath=self._forecast_fpath,
                 forecast_map=self._forecast_map,
-                force_full_build=self._force_full_build)
+                force_full_build=self._force_full_build,
+                dset_tag=self._dset_tag)
 
             profile, sc_gids, res_gids, gen_gids, res_built = p
             profiles[:, i] = profile
@@ -621,7 +660,7 @@ class PlexosAggregation(BaseProfileAggregation):
                             // (len(np.unique(self.node_map)) / 100))
             if current_prog > progress:
                 progress = current_prog
-                logger.info('{} % of plexos node profiles built.'
+                logger.info('{} % of node profiles built.'
                             .format(progress))
 
         return profiles
@@ -629,7 +668,9 @@ class PlexosAggregation(BaseProfileAggregation):
     @classmethod
     def run(cls, plexos_nodes, rev_sc, reeds_build, cf_fpath,
             forecast_fpath=None, build_year=2050, plexos_columns=None,
-            force_full_build=False, force_shape_map=False, max_workers=None):
+            force_full_build=False, force_shape_map=False,
+            plant_name_col=None, tech_tag=None, res_class=None,
+            timezone='UTC', dset_tag=None, out_fpath=None, max_workers=None):
         """Run plexos aggregation.
 
         Parameters
@@ -641,7 +682,9 @@ class PlexosAggregation(BaseProfileAggregation):
         rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, latitude,
             longitude, res_gids, gid_counts. Or file path to reV supply
-            curve table.
+            curve table. Note that the gen_gids column in the rev_sc is ignored
+            and only the res_gids from rev_sc are mapped to the corresponding
+            "gid" column in the cf_fpath meta data.
         reeds_build : pd.DataFrame
             ReEDS buildout with rows for built capacity (MW) at each reV SC
             point. This should have columns: reeds_year, built_capacity, and
@@ -655,8 +698,11 @@ class PlexosAggregation(BaseProfileAggregation):
             File path to capacity factor file (reV gen output) to
             get profiles from.
         forecast_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file.
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
         build_year : int
             REEDS year of interest.
         plexos_columns : list | None
@@ -670,6 +716,30 @@ class PlexosAggregation(BaseProfileAggregation):
             Flag to force the mapping of supply curve points to the plexos
             node shape file input (if a shape file is input) via nearest
             neighbor to shape centroid.
+        plant_name_col : str | None
+            Column in plexos_table that has the plant name that should be used
+            in the plexos output csv column headers.
+        tech_tag : str | None
+            Optional technology tag to include as a suffix in the plexos output
+            csv column headers.
+        res_class : int | None
+            Optional resource class to use to filter supply curve points.
+            For example, if res_class = 3 then only supply curve points with
+            class 3 will be kept in the sc_build table.
+        timezone : str
+            Timezone for output generation profiles. This is a string that will
+            be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
+            US/Central, US/Eastern, or UTC. For a list of all available
+            timezones, see pytz.all_timezones
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
+        out_fpath : str, optional
+            Path to .h5 file into which plant buildout should be saved. A
+            plexos-formatted csv will also be written in the same directory.
+            By default None.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -690,9 +760,17 @@ class PlexosAggregation(BaseProfileAggregation):
                  plexos_columns=plexos_columns,
                  force_full_build=force_full_build,
                  force_shape_map=force_shape_map,
+                 plant_name_col=plant_name_col,
+                 tech_tag=tech_tag,
+                 res_class=res_class,
+                 timezone=timezone,
+                 dset_tag=dset_tag,
                  max_workers=max_workers)
 
         profiles = pa.make_profiles()
+
+        if out_fpath is not None:
+            pa.export(pa.plexos_meta, pa.time_index, profiles, out_fpath)
 
         return pa.plexos_meta, pa.time_index, profiles
 
@@ -724,8 +802,11 @@ class RevReedsPlexosManager:
             File path to capacity factor file (reV gen output) to
             get profiles from.
         forecast_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file.
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
         wait : int
             Integer seconds to wait for DB connection to become available
             before raising exception.
@@ -800,8 +881,11 @@ class RevReedsPlexosManager:
             File path to capacity factor file (reV gen output) to
             get profiles from.
         forecast_fpath : str | None
-            Forecasted capacity factor .h5 file path (reV results).
-            If not None, the generation profiles are sourced from this file.
+            Forecasted capacity factor .h5 file path (reV results). If not
+            None, the supply curve res_gids are mapped to sites in the
+            cf_fpath, then the coordinates from cf_fpath are mapped to the
+            nearest neighbor sites in the forecast_fpath, where the final
+            generation profiles are retrieved from.
         agg_kwargs : dict
             Optional additional kwargs for the aggregation run.
         wait : int
@@ -833,16 +917,16 @@ class RevReedsPlexosManager:
         if agg_kwargs is None:
             agg_kwargs = {}
 
-        logger.info('Running PLEXOS aggregation with plexos nodes input: {}'
-                    .format(plexos_nodes))
-        logger.info('Running PLEXOS aggregation with reV SC input: {}'
-                    .format(rev_sc))
-        logger.info('Running PLEXOS aggregation with REEDS input: {}'
-                    .format(reeds_build))
-        logger.info('Running PLEXOS aggregation with reV Gen input: {}'
-                    .format(cf_fpath))
-        logger.info('Running PLEXOS aggregation with forecast filepath: {}'
-                    .format(forecast_fpath))
+        logger.info('Running {} with plant nodes input: {}'
+                    .format(cls.__name__, plexos_nodes))
+        logger.info('Running {} with reV SC input: {}'
+                    .format(cls.__name__, rev_sc))
+        logger.info('Running {} with REEDS input: {}'
+                    .format(cls.__name__, reeds_build))
+        logger.info('Running {} with reV Gen input: {}'
+                    .format(cls.__name__, cf_fpath))
+        logger.info('Running {} with forecast filepath: {}'
+                    .format(cls.__name__, forecast_fpath))
 
         pm = cls(plexos_nodes, rev_sc, reeds_build, cf_fpath,
                  forecast_fpath=forecast_fpath, wait=wait,
@@ -1033,4 +1117,4 @@ class RevReedsPlexosManager:
                                              chunks=(None, 100),
                                              data=profiles)
 
-        logger.info('Plexos aggregation complete!')
+        logger.info('{} complete!'.format(cls.__name__))

@@ -11,7 +11,7 @@ from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.handlers.geotiff import Geotiff
 from reVX.handlers.outputs import Outputs
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class DistToPortsConverter(ExclusionsConverter):
         """
         values = None
         for geotiff in dist_to_ports:
-            v = cls._parse_tiff(geotiff, chunks=chunks, check_tiff=False)[1]
+            v = cls.parse_tiff(geotiff, chunks=chunks, check_tiff=False)[1]
             if not np.any(v):
                 msg = ('{} is invalid and only contains zeros and will be '
                        'skipped. It is advised to recreate the file and '

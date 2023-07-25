@@ -40,8 +40,12 @@ def test_region_classification():
                                           force=True)
 
     test_labels = classification[REGIONS_LABEL]
-    valid_labels = pd.read_csv(RESULTS_PATH)[REGIONS_LABEL]
-    assert_series_equal(test_labels, valid_labels)
+    baseline = pd.read_csv(RESULTS_PATH)
+    valid_labels = baseline[REGIONS_LABEL]
+    bad_mask = (test_labels != valid_labels)
+    msg = ('Classification failed on these sites: \n{}\nGot new labels:\n{}'
+           .format(baseline[bad_mask], test_labels[bad_mask]))
+    assert not any(bad_mask), msg
 
 
 def test_cli(runner):

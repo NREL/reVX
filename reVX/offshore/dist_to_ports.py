@@ -14,7 +14,7 @@ import time
 from warnings import warn
 
 from reV.handlers.exclusions import ExclusionLayers
-from reVX.utilities.exclusions_converter import ExclusionsConverter
+from reVX.utilities import ExclusionsConverter
 from reVX.utilities.utilities import log_versions, coordinate_distance
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
@@ -347,7 +347,7 @@ class DistanceToPorts:
                 msg = ('Profile is needed to write least cost distance to '
                        'ports to {}!'.format(geotiff))
                 assert profile is not None, msg
-                ExclusionsConverter._write_geotiff(geotiff, profile, lc_dist)
+                ExclusionsConverter.write_geotiff(geotiff, profile, lc_dist)
             else:
                 return lc_dist
         except Exception:

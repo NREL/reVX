@@ -10,7 +10,7 @@ class TurbineFlickerConfig(AnalysisConfig):
     """Config framework for turbine flicker calculation"""
 
     NAME = 'TurbineFlicker'
-    REQUIREMENTS = ('excl_fpath', 'res_fpath', 'building_layer', 'hub_height')
+    REQUIREMENTS = ('excl_fpath', 'res_fpath', 'hub_height', 'rotor_diameter')
 
     def __init__(self, config):
         """
@@ -22,8 +22,11 @@ class TurbineFlickerConfig(AnalysisConfig):
         super().__init__(config)
         self._default_tm_dset = 'techmap_wtk'
         self._default_resolution = 128
+        self._default_grid_cell_size = 90
+        self._default_max_flicker_exclusion_range = "10x"
         self._default_building_threshold = 0
         self._default_flicker_threshold = 30
+        self._default_hsds_flag = False
 
     @property
     def excl_fpath(self):
@@ -36,9 +39,14 @@ class TurbineFlickerConfig(AnalysisConfig):
         return self['res_fpath']
 
     @property
+    def regulations_fpath(self):
+        """Get regulations .csv path"""
+        return self.get('regulations_fpath', None)
+
+    @property
     def building_layer(self):
         """Get the building layer name."""
-        return self['building_layer']
+        return self.get('building_layer', None)
 
     @property
     def hub_height(self):
@@ -46,6 +54,13 @@ class TurbineFlickerConfig(AnalysisConfig):
         Get the turbine hub-height for which shadow flicker will be computed.
         """
         return self['hub_height']
+
+    @property
+    def rotor_diameter(self):
+        """
+        Get turbine rotor diameter for which shadow flicker will be computed.
+        """
+        return self['rotor_diameter']
 
     @property
     def tm_dset(self):
@@ -56,6 +71,20 @@ class TurbineFlickerConfig(AnalysisConfig):
     def resolution(self):
         """Get the supply curve resolution."""
         return self.get('resolution', self._default_resolution)
+
+    @property
+    def grid_cell_size(self):
+        """Get the length (m) of a side of each grid cell in `excl_fpath`."""
+        return self.get('grid_cell_size', self._default_grid_cell_size)
+
+    @property
+    def max_flicker_exclusion_range(self):
+        """
+        Get the max distance (m) that flicker exclusions will extend in
+        any of the cardinal directions.
+        """
+        return self.get('max_flicker_exclusion_range',
+                        self._default_max_flicker_exclusion_range)
 
     @property
     def building_threshold(self):
@@ -80,3 +109,13 @@ class TurbineFlickerConfig(AnalysisConfig):
         be saved
         """
         return self.get('out_layer', None)
+
+    @property
+    def replace(self):
+        """Get replace flag"""
+        return self.get('replace', False)
+
+    @property
+    def hsds(self):
+        """Get hsds flag"""
+        return self.get('hsds', self._default_hsds_flag)

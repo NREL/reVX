@@ -122,11 +122,8 @@ class LeastCostXmissionConfig(AnalysisConfig):
             Job name.
         """
         if self._name is None:
-            if self.get('name') is not None:
-                self._name = self.get('name')
-            else:
-                # name defaults to base directory name
-                self._name = os.path.basename(os.path.normpath(self.dirout))
+            default_name = os.path.basename(os.path.normpath(self.dirout))
+            self._name = self.get('name', default_name)
         return self._name
 
     @name.setter
@@ -170,6 +167,13 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self['features_fpath']
 
     @property
+    def balancing_areas_fpath(self):
+        """
+        Balancing areas config input
+        """
+        return self.get('balancing_areas_fpath', None)
+
+    @property
     def capacity_class(self):
         """
         Capacity class, either {capacity}MW or capacity value in MW
@@ -191,22 +195,11 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('xmission_config', None)
 
     @property
-    def sc_point_gids(self):
+    def min_line_length(self):
         """
-        List of sc_point_gids to compute Least Cost Xmission for
+        Minimum Tie-line length config input
         """
-        if self._sc_point_gids is None:
-            sc_point_gids = self.get('sc_point_gids', None)
-            if not (isinstance(sc_point_gids, list) or sc_point_gids is None):
-                raise ValueError('sc_point_gids must be a list, got a '
-                                 f'{type(sc_point_gids)} ({sc_point_gids})')
-            self._sc_point_gids = sc_point_gids
-
-        return self._sc_point_gids
-
-    @sc_point_gids.setter
-    def sc_point_gids(self, gids):
-        self._sc_point_gids = gids
+        return self.get('min_line_length', 0)
 
     @property
     def nn_sinks(self):
@@ -229,6 +222,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
         """
         return self.get('barrier_mult', self._default_barrier_mult)
 
+    @property
+    def allow_connections_within_states(self):
+        """
+        Boolean flag to allow supple curve points to connect to
+        substations outside their BA but within their own state.
+        """
+        return self.get("allow_connections_within_states", False)
+
 
 class LeastCostPathsConfig(AnalysisConfig):
     """Config framework for Least Cost Paths"""
@@ -247,6 +248,24 @@ class LeastCostPathsConfig(AnalysisConfig):
         self._default_barrier_mult = 100
 
     @property
+    def name(self):
+        """Get the job name, defaults to the output directory name.
+
+        Returns
+        -------
+        _name : str
+            Job name.
+        """
+        if self._name is None:
+            default_name = os.path.basename(os.path.normpath(self.dirout))
+            self._name = self.get('name', default_name)
+        return self._name
+
+    @name.setter
+    def name(self, name):
+        self._name = name
+
+    @property
     def cost_fpath(self):
         """
         .h5 file with cost and required layers
@@ -259,6 +278,20 @@ class LeastCostPathsConfig(AnalysisConfig):
         Tranmission feature .gpkg
         """
         return self['features_fpath']
+
+    @property
+    def network_nodes_fpath(self):
+        """
+        Network nodes config input
+        """
+        return self.get('network_nodes_fpath', None)
+
+    @property
+    def transmission_lines_fpath(self):
+        """
+        Transmission line features  config input
+        """
+        return self.get('transmission_lines_fpath', None)
 
     @property
     def capacity_class(self):
@@ -280,6 +313,14 @@ class LeastCostPathsConfig(AnalysisConfig):
         Transmission barrier multiplier to use for MCP costs
         """
         return self.get('barrier_mult', self._default_barrier_mult)
+
+    @property
+    def allow_connections_within_states(self):
+        """
+        Boolean flag to allow substations to connect to endpoints
+        outside their BA but within their own state.
+        """
+        return self.get("allow_connections_within_states", False)
 
     @property
     def save_paths(self):

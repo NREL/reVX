@@ -58,11 +58,10 @@ setup(
     package_dir={"reVX": "reVX"},
     entry_points={
         "console_scripts": ["reVX=reVX.cli:main",
-                            "reV-ReEDS=reVX.reeds.reeds_cli:main",
                             "reV-rpm=reVX.rpm.rpm_cli:main",
                             "reV-plexos=reVX.plexos.rev_reeds_plexos_cli:main",
                             "plexos-plants=reVX.plexos.plexos_plants_cli:main",
-                            "setbacks=reVX.setbacks.setbacks_cli:main",
+                            "setbacks=reVX.setbacks.setbacks_cli:cli",
                             ("prominent-wind-dirs=reVX.wind_dirs."
                              "prominent_wind_dirs_cli:main"),
                             ("mean-wind-dirs=reVX.wind_dirs."
@@ -89,14 +88,15 @@ setup(
     license="BSD 3-Clause",
     zip_safe=False,
     keywords="reVX",
-    python_requires='>=3.7,<3.9',
+    python_requires='>=3.8',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Science/Research",
         "License :: OSI Approved :: BSD License",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
     ],
     test_suite="tests",
     install_requires=install_requires,

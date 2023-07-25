@@ -2,8 +2,6 @@
 """
 Module to create wind and solar plants for PLEXOS buses
 """
-import datetime
-import pytz
 import json
 import logging
 import numpy as np
@@ -19,6 +17,7 @@ from rex.utilities.utilities import to_records_array
 from reVX.handlers.outputs import Outputs
 from reVX.handlers.sc_points import SupplyCurvePoints
 from reVX.utilities.utilities import log_versions
+from reVX.plexos.base import BaseProfileAggregation, TZ_ALIASES
 
 logger = logging.getLogger(__name__)
 
@@ -779,7 +778,7 @@ class PlantProfileAggregation:
                  lcoe_col='total_lcoe', lcoe_thresh=1.3,
                  offshore=False, max_workers=None,
                  plants_per_worker=40, points_per_worker=400,
-                 plant_name_col=None, tech_tag=None,
+                 plant_name_col=None, tech_tag=None, dset_tag='',
                  timezone='UTC'):
         """
         Parameters
@@ -825,6 +824,11 @@ class PlantProfileAggregation:
         tech_tag : str | None
             Optional technology tag to include as a suffix in the plexos output
             csv column headers.
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
         timezone : str
             Timezone for output generation profiles. This is a string that will
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
@@ -837,8 +841,9 @@ class PlantProfileAggregation:
         self._plexos_table = self._parse_plexos_table(
             plexos_table, plant_name_col=plant_name_col)
 
-        self._plant_name_col = plant_name_col.lower()
+        self._plant_name_col = plant_name_col
         self._tech_tag = tech_tag
+        self._dset_tag = dset_tag
         self._timezone = timezone
         self._mymean_fpath = mymean_fpath
         self._cf_fpath = cf_fpath
@@ -973,21 +978,10 @@ class PlantProfileAggregation:
         list | None
         """
         names = None
+
         if self._plant_name_col is not None:
-            names = self.plexos_table[self._plant_name_col].values.tolist()
-
-            if self._tech_tag is not None:
-                names = [name + f' {self._tech_tag}' for name in names]
-
-            seen = set()
-            dups = [x for x in names if x in seen or seen.add(x)]
-            if any(dups):
-                for dup in dups:
-                    counter = 1
-                    for i, name in enumerate(names):
-                        if name == dup:
-                            names[i] = name + ' {}'.format(counter)
-                            counter += 1
+            names = BaseProfileAggregation.get_unique_plant_names(
+                self.plexos_table, self._plant_name_col, self._tech_tag)
 
         return names
 
@@ -1000,59 +994,7 @@ class PlantProfileAggregation:
         -------
         str
         """
-        aliases = {'UTC': 'utc',
-                   'Universal': 'utc',
-                   'US/Pacific': 'pst',
-                   'US/Mountain': 'mst',
-                   'US/Central': 'cst',
-                   'US/Eastern': 'est',
-                   }
-        return aliases.get(self._timezone, self._timezone)
-
-    def tz_convert_profiles(self, profiles):
-        """Convert profiles to local time and forward/back fill missing data.
-
-        Parameters
-        ----------
-        profiles : np.ndarray
-            Profiles of shape (time, n_plants) in UTC
-
-        Returns
-        -------
-        profiles : np.ndarray
-            Profiles of shape (time, n_plants) in self._timezone
-        """
-
-        if len(profiles) < 8760:
-            msg = ('Cannot use profiles that are not at least hourly! '
-                   'Received shape {}'.format(profiles.shape))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        steps_per_hour = len(profiles) // 8760
-
-        # use jan 1 to avoid daylight savings
-        date = datetime.datetime(2011, 1, 1)
-        date = pytz.timezone(self._timezone).localize(date)
-        tz_offset = int(date.strftime('%z')[:3])
-        roll_int = steps_per_hour * tz_offset
-
-        profiles = np.roll(profiles, roll_int, axis=0)
-
-        if roll_int < 0:
-            for i in range(roll_int, 0):
-                # don't fill nighttime for solar
-                if not (profiles[i, :] == 0).all():
-                    profiles[i, :] = np.nan
-            profiles = pd.DataFrame(profiles).ffill().values
-        elif roll_int > 0:
-            for i in range(1, roll_int + 1):
-                # don't fill nighttime for solar
-                if not (profiles[i, :] == 0).all():
-                    profiles[i, :] = np.nan
-            profiles = pd.DataFrame(profiles).bfill().values
-
-        return profiles
+        return TZ_ALIASES.get(self._timezone, self._timezone)
 
     def get_gen_gid(self, res_gid):
         """Get a generation gid from a resource gid using cf_gid_map. Accounts
@@ -1254,7 +1196,7 @@ class PlantProfileAggregation:
         return plant_meta
 
     @staticmethod
-    def _make_profile(cf_fpath, plant_build):
+    def _make_profile(cf_fpath, plant_build, dset_tag=''):
         """
         Make generation profiles for given plant buildout
 
@@ -1266,6 +1208,11 @@ class PlantProfileAggregation:
             DataFrame describing plant buildout:
                 - Supply curve gids and the capacity (MW) to build at each
                     - res_gids, gen_gids, gid_counts by sc_gid
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
 
         Returns
         -------
@@ -1277,7 +1224,7 @@ class PlantProfileAggregation:
             for _, row in plant_build.iterrows():
                 gid_capacities = (row['gid_counts'] / np.sum(row['gid_counts'])
                                   * row['build_capacity'])
-                cf_profiles = f['cf_profile', :, row['gen_gids']]
+                cf_profiles = f['cf_profile' + dset_tag, :, row['gen_gids']]
                 for i, cf_profile in enumerate(cf_profiles.T):
                     if profile is None:
                         profile = cf_profile * gid_capacities[i]
@@ -1301,8 +1248,8 @@ class PlantProfileAggregation:
             A companion .csv with be saved at the same location for plexos.
         """
 
-        msg = 'Must be an h5 output: {}'.format(out_fpath)
-        assert out_fpath.endswith('.h5'), msg
+        if not out_fpath.endswith('.h5'):
+            out_fpath = out_fpath + '.h5'
 
         if not os.path.exists(os.path.dirname(out_fpath)):
             os.makedirs(os.path.dirname(out_fpath))
@@ -1313,7 +1260,8 @@ class PlantProfileAggregation:
             f_out.set_version_attr()
             with Resource(self.cf_fpath) as f_in:
                 logger.info('Copying time_index')
-                f_out['time_index'] = f_in.time_index
+                ti = f_in['time_index' + self._dset_tag].tz_convert(None)
+                f_out['time_index'] = ti
 
             logger.info('Writing meta data')
             f_out['meta'] = self.plants_meta()
@@ -1325,8 +1273,9 @@ class PlantProfileAggregation:
                 bus_id, bus_meta = irow
                 logger.debug('Building plant for bus {}'.format(bus_id))
                 plant_meta = self._make_plant_meta(bus_meta)
-                gen_profiles.append(self._make_profile(self.cf_fpath,
-                                                       plant_meta.copy()))
+                prof = self._make_profile(self.cf_fpath, plant_meta.copy(),
+                                          dset_tag=self._dset_tag)
+                gen_profiles.append(prof)
 
                 plant_meta = to_records_array(plant_meta)
                 logger.debug('Writing plant_meta/{} ({} out of {})'
@@ -1339,7 +1288,8 @@ class PlantProfileAggregation:
 
             logger.info('Writing Generation Profiles')
             gen_profiles = np.dstack(gen_profiles)[0].astype('float32')
-            gen_profiles = self.tz_convert_profiles(gen_profiles)
+            gen_profiles = BaseProfileAggregation.tz_convert_profiles(
+                gen_profiles, self._timezone)
             f_out._create_dset('gen_profiles',
                                gen_profiles.shape,
                                gen_profiles.dtype,
@@ -1350,7 +1300,7 @@ class PlantProfileAggregation:
         logger.info('Finished aggregating profiles to: {}'.format(out_fpath))
 
         df_plx = pd.DataFrame(gen_profiles, columns=self.unique_plant_names,
-                              index=f_in.time_index.tz_convert(None))
+                              index=ti)
         df_plx.index.name = 'DATETIME'
         csv_fp = out_fpath.replace('.h5', '.csv')
         df_plx.to_csv(csv_fp)
@@ -1395,7 +1345,7 @@ class PlantProfileAggregation:
             dist_percentile=90, dist_thresh_km=None,
             lcoe_col='total_lcoe', lcoe_thresh=1.3,
             max_workers=None, points_per_worker=400, plants_per_worker=40,
-            offshore=False, plant_name_col=None, tech_tag=None,
+            offshore=False, plant_name_col=None, tech_tag=None, dset_tag='',
             timezone='UTC'):
         """
         Find, fill, and save profiles for Plants associated with given PLEXOS
@@ -1447,6 +1397,11 @@ class PlantProfileAggregation:
         tech_tag : str | None
             Optional technology tag to include as a suffix in the plexos output
             csv column headers.
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
         timezone : str
             Timezone for output generation profiles. This is a string that will
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
@@ -1464,6 +1419,7 @@ class PlantProfileAggregation:
                  plants_per_worker=plants_per_worker,
                  plant_name_col=plant_name_col,
                  tech_tag=tech_tag,
+                 dset_tag=dset_tag,
                  timezone=timezone)
 
         pp.aggregate_profiles(out_fpath)
