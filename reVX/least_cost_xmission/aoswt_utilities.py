@@ -169,6 +169,7 @@ class CombineRasters:
         self._land_mask = l_rast == 1
         logger.info('Successfully loaded land mask from {}'.format(mask_f))
 
+    # flake8: noqa: C901
     def build_off_shore_friction(self, friction_files, slope_file=None,
                                  bathy_file=None, bathy_depth_cutoff=None,
                                  bathy_friction=None, save_tiff=None):
