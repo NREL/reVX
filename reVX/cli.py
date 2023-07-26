@@ -231,10 +231,12 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
 @exclusions.command()
 @click.option('--excl_dict_fpath', '-ed', required=True,
               type=click.Path(exists=True),
-              help=('Path to JSON file containing the "excl_dict" '
+              help=('Path to JSON file containing the ``"excl_dict"`` '
                     'key which points to the exclusion dictionary defining '
                     'the mask that should be generated. A typical reV '
-                    'aggregation config satisfied this requirement.'))
+                    'aggregation config satisfied this requirement. If this'
+                    'file also contains an ``"excl_fpath"` key, the value'
+                    'from the file will override the CLI argument input.'))
 @click.option('--out', '-o', required=True, type=STR,
               help=('Output name. If this string value ends in ".tif" '
                     'or ".tiff", this input is assumed to be a path to an '
@@ -259,12 +261,13 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
     init_logger('reV', log_level=log_level)
     init_logger('reVX', log_level=log_level)
 
-    excl_fpath = ctx.obj['EXCL_H5']
-
     logger.info("Calculating exclusion mask from {!r}".format(excl_dict_fpath))
 
     with open(excl_dict_fpath, 'r') as fh:
         config = json.load(fh)
+
+    excl_fpath = config.get("excl_fpath", ctx.obj['EXCL_H5'])
+    logger.debug("Exclusion filepath(s): {!r}".format(excl_fpath))
 
     excl_dict = config['excl_dict']
     logger.debug("Exclusion dictionary: {!r}".format(excl_dict))
@@ -280,6 +283,8 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
         logger.info("Writing mask to {!r}".format(out))
         ExclusionsConverter.write_geotiff(out, profile, mask_)
     else:
+        if isinstance(excl_fpath, list):
+            excl_fpath = excl_fpath[0]
         logger.info("Writing mask to layer {!r} in {!r}"
                     .format(out, excl_fpath))
         desc = ("Exclusion mask computed from exclusion dictionary: {!r}"
