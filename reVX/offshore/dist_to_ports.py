@@ -278,7 +278,7 @@ class DistanceToPorts:
         # remove ports that are outside pixel bounds
         mask = cls._check_ports_coords(port_coords, pixel_coords)
         port_coords = port_coords[mask]
-        ports = ports.loc[mask]
+        ports = ports.loc[mask].values
         _, idx = tree.query(port_coords)
 
         pixels = pixels.iloc[idx]

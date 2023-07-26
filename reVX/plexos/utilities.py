@@ -291,8 +291,9 @@ class DataCleaner:
                         'nodes.'.format(len(self._plexos_meta), len(meta)))
 
             labels = get_coord_labels(self._plexos_meta)
-            tree = cKDTree(meta[labels])  # pylint: disable=not-callable
-            _, nn_ind = tree.query(self._plexos_meta[labels], k=len(meta))
+            tree = cKDTree(meta[labels].values)  # pylint: disable=not-callable
+            _, nn_ind = tree.query(self._plexos_meta[labels].values,
+                                   k=len(meta))
 
             for i in range(len(self._plexos_meta)):
                 if small.values[i]:

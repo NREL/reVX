@@ -454,8 +454,8 @@ class PlexosAggregation(BaseProfileAggregation):
 
             clabels = get_coord_labels(self.sc_build)
             # pylint: disable=not-callable
-            good_tree = cKDTree(self.sc_build.loc[good_bool, clabels])
-            _, i = good_tree.query(self.sc_build.loc[bad_bool, clabels])
+            good_tree = cKDTree(self.sc_build.loc[good_bool, clabels].values)
+            _, i = good_tree.query(self.sc_build.loc[bad_bool, clabels].values)
 
             ilen = len(self.sc_build)
             icap = self.sc_build['built_capacity'].sum()
@@ -561,8 +561,9 @@ class PlexosAggregation(BaseProfileAggregation):
             plexos_coord_labels = get_coord_labels(self._plexos_nodes)
             sc_coord_labels = get_coord_labels(self.sc_build)
             # pylint: disable=not-callable
-            tree = cKDTree(self._plexos_nodes[plexos_coord_labels])
-            d, plx_node_index = tree.query(self.sc_build[sc_coord_labels], k=1)
+            tree = cKDTree(self._plexos_nodes[plexos_coord_labels].values)
+            out = tree.query(self.sc_build[sc_coord_labels].values, k=1)
+            d, plx_node_index = out
             logger.info('Plexos Node KDTree distance min / mean / max: '
                         '{} / {} / {}'
                         .format(np.round(d.min(), decimals=3),

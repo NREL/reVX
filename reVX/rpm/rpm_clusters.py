@@ -311,7 +311,7 @@ class RPMClusters:
         """
         Generate cluster polygons as a geopandas dataframe
         """
-        lookup = gdf_points[['latitude', 'longitude']]
+        lookup = gdf_points[['latitude', 'longitude']].values
         tree = cKDTree(lookup)  # pylint: disable=not-callable
         dists, _ = tree.query(lookup, k=2)
         mean_dist = dists.T[1].mean()
@@ -387,8 +387,8 @@ class RPMClusters:
         assigned = intersected[~mask].reset_index()
         unassigned = intersected[mask]
 
-        lookup = assigned[['latitude_left', 'longitude_left']]
-        target = unassigned[['latitude_left', 'longitude_left']]
+        lookup = assigned[['latitude_left', 'longitude_left']].values
+        target = unassigned[['latitude_left', 'longitude_left']].values
         tree = cKDTree(lookup)  # pylint: disable=not-callable
         _, inds = tree.query(target, k=1)
 
