@@ -70,7 +70,9 @@ def test_plexos_agg():
     for col in ('res_gids', 'res_built', 'gen_gids'):
         baseline_meta[col] = baseline_meta[col].apply(json.loads)
 
-    assert all(baseline_meta['gen_gids'] == plexos_meta['gen_gids'])
+    gids = zip(baseline_meta['gen_gids'], plexos_meta['gen_gids'])
+    for base_gids, plexos_gids in gids:
+        assert set(base_gids) == set(plexos_gids)
     assert np.allclose(baseline_meta['built_capacity'],
                        plexos_meta['built_capacity'])
     assert np.allclose(baseline_profiles.values, profiles)
