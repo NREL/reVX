@@ -199,7 +199,9 @@ class DataCleaner:
         # Several plexos nodes share the same location. As of 8/2019
         # Josh Novacheck suggests that the duplicate locations can be dropped.
         if 'voltage' in plexos_meta:
-            plexos_meta = plexos_meta.sort_values(by='voltage',
+            sort_by = ['voltage', 'latitude', 'longitude', 'gid', 'plexos_id']
+            sort_by = [c for c in sort_by if c in plexos_meta]
+            plexos_meta = plexos_meta.sort_values(by=sort_by,
                                                   ascending=False)
 
         plexos_meta = plexos_meta.drop_duplicates(

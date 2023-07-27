@@ -152,7 +152,8 @@ class PlexosNode:
                               list(sc_meta['gen_gid'].values)]
 
         sc_meta['cf_mean' + self._dset_tag] = cf_mean
-        sc_meta = sc_meta.sort_values(by='cf_mean' + self._dset_tag,
+        sort_by = ['cf_mean' + self._dset_tag, 'gid_capacity', 'res_gid']
+        sc_meta = sc_meta.sort_values(by=sort_by,
                                       ascending=False)
         sc_meta = sc_meta.reset_index(drop=True)
 
