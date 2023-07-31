@@ -121,9 +121,12 @@ class CombineRasters:
         self._os_friction = None  # (float32) off-shore friction raster
         self._land_mask = None  # (bool) land mask raster, true indicates land
 
-    def create_land_mask(self, mask_shp_f, save_tiff=False):
+    def create_land_mask(self, mask_shp_f, save_tiff=False, filename=None,
+                         buffer_dist=None):
         """
-        Create the land mask layer from a vector file
+        Create the land mask layer from a vector file. Optionally, buffer all
+        features by a distance before rasterizing, e.g., to create a near-shore
+        friction layer.
 
         Parameters
         ----------
@@ -131,8 +134,16 @@ class CombineRasters:
             Full path to mask gpgk or shp file
         save_tiff : bool
             Save mask as tiff if true
+        filename : str, optional
+            Name of file to save rasterized mask to
+        buffer_dist : int, optional
+            Distance to buffer features in mask_shp_f by. Same units as the
+            template raster.
         """
         ldf = gpd.read_file(mask_shp_f)
+        if buffer_dist is not None:
+            ldf.geometry = ldf.geometry.buffer(buffer_dist)
+
         logger.info('Rasterizing {}'.format(mask_shp_f))
         l_geom = list(ldf.geometry)
         l_rast = features.rasterize(l_geom, out_shape=self._os_shape, fill=0,
@@ -140,10 +151,11 @@ class CombineRasters:
                                     transform=self.profile()['transform'],
                                     all_touched=False, default_value=1,
                                     dtype=None)
-
         if save_tiff:
-            logger.info('Saving land mask to {}'.format(self.LAND_MASK_FNAME))
-            self._save_tiff(l_rast, self.LAND_MASK_FNAME)
+            if filename is None:
+                filename = self.LAND_MASK_FNAME
+            logger.info('Saving land mask to {}'.format(filename))
+            self._save_tiff(l_rast, filename)
 
         self._land_mask = l_rast == 1
         logger.info('Rasterizing complete')
@@ -216,10 +228,13 @@ class CombineRasters:
             if not os.path.exists(bathy_file):
                 raise FileNotFoundError(f'Unable to find {bathy_file}')
 
+            print('opening bathy')
             d = rio.open(bathy_file).read(1)
             assert d.shape == self._os_shape
+            print('doing the where')
             d2 = np.where(d >= bathy_depth_cutoff, 0, bathy_friction)
 
+            print('as typing')
             fr_layers[bathy_file] = d2.astype('uint16')
 
         if slope_file is not None:
