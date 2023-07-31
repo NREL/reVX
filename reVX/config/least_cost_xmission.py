@@ -113,6 +113,24 @@ class LeastCostXmissionConfig(AnalysisConfig):
         self._sc_point_gids = None
 
     @property
+    def sc_point_gids(self):
+        """
+        List of sc_point_gids to compute Least Cost Xmission for
+        """
+        if self._sc_point_gids is None:
+            sc_point_gids = self.get('sc_point_gids', None)
+            if not (isinstance(sc_point_gids, list) or sc_point_gids is None):
+                raise ValueError('sc_point_gids must be a list, got a '
+                                f'{type(sc_point_gids)} ({sc_point_gids})')
+            self._sc_point_gids = sc_point_gids
+
+        return self._sc_point_gids
+
+    @sc_point_gids.setter
+    def sc_point_gids(self, gids):
+        self._sc_point_gids = gids
+
+    @property
     def name(self):
         """Get the job name, defaults to the output directory name.
 
