@@ -312,8 +312,9 @@ class DpvPlexosAggregation:
             KDtree build from the reV CF meta data coordinates.
         """
         if self._kdtree is None:
+            cols = ['latitude', 'longitude']
             # pylint: disable=not-callable
-            self._kdtree = cKDTree(self.cf_meta[['latitude', 'longitude']])
+            self._kdtree = cKDTree(self.cf_meta[cols].values)
         return self._kdtree
 
     def _run_nn(self, query):
@@ -348,7 +349,7 @@ class DpvPlexosAggregation:
         """
         with Outputs(self._cf_fpath) as out:
             arr = out[dset]
-        i = self._run_nn(self._node_buildout[['latitude', 'longitude']])
+        i = self._run_nn(self._node_buildout[['latitude', 'longitude']].values)
         node_arr = arr[:, i]
         return node_arr
 
