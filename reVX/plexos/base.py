@@ -152,7 +152,8 @@ class PlexosNode:
                               list(sc_meta['gen_gid'].values)]
 
         sc_meta['cf_mean' + self._dset_tag] = cf_mean
-        sc_meta = sc_meta.sort_values(by='cf_mean' + self._dset_tag,
+        sort_by = ['cf_mean' + self._dset_tag, 'gid_capacity', 'res_gid']
+        sc_meta = sc_meta.sort_values(by=sort_by,
                                       ascending=False)
         sc_meta = sc_meta.reset_index(drop=True)
 
@@ -538,8 +539,9 @@ class BaseProfileAggregation(ABC):
                 meta_fo = out.meta
 
             clabels = get_coord_labels(meta_cf)
-            tree = cKDTree(meta_fo[clabels])  # pylint: disable=not-callable
-            d, fmap = tree.query(meta_cf[clabels])
+            # pylint: disable=not-callable
+            tree = cKDTree(meta_fo[clabels].values)
+            d, fmap = tree.query(meta_cf[clabels].values)
             logger.info('Distance (min / mean / max) from generation pixels '
                         'to forecast pixels is: {} / {} / {}'
                         .format(d.min(), d.mean(), d.max()))

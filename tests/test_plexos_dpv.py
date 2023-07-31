@@ -69,7 +69,6 @@ def test_dpv_agg():
     profiles = pa.get_node_gen_profiles()
     truth *= cap[0:2]
     assert np.allclose(profiles, truth)
-    return profiles, truth
 
 
 def execute_pytest(capture='all', flags='-rapP'):

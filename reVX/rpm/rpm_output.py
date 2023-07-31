@@ -88,8 +88,9 @@ class RepresentativeProfiles:
             1D array of forecast gid's with length equal to meta_cf.
         """
         labels = ['latitude', 'longitude']
-        tree = cKDTree(meta_forecast[labels])  # pylint: disable=not-callable
-        d, i, = tree.query(meta_cf[labels], k=1)
+        # pylint: disable=not-callable
+        tree = cKDTree(meta_forecast[labels].values)
+        d, i, = tree.query(meta_cf[labels].values, k=1)
         logger.info('Mapping reV gen file to forecast gen file, '
                     'nearest neighbor min / mean / max: {} / {} / {}'
                     .format(d.min(), d.mean(), d.max()))
