@@ -135,7 +135,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
 
         # pylint: disable=not-callable
         sc_coords = np.radians(self._sc_table[sc_coord_labels].values)
-        plant_coords = np.radians(self._plant_meta[plant_coord_labels])
+        plant_coords = np.radians(self._plant_meta[plant_coord_labels].values)
         tree = BallTree(sc_coords, metric='haversine')
         ind = tree.query(plant_coords, return_distance=False,
                          k=len(self._sc_table))

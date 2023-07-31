@@ -250,8 +250,8 @@ class RegionClassifier():
             logger.warning('The following points are outliers:')
             logger.warning(outlier_inds)
             cols = self._get_lat_lon_labels(self._meta)
-            lookup = self._regions[['latitude', 'longitude']]
-            target = self._meta.loc[outlier_inds][cols]
+            lookup = self._regions[['latitude', 'longitude']].values
+            target = self._meta.loc[outlier_inds][cols].values
             out_inds = list(self._nearest(target, lookup))
 
             regions = self._regions.loc[out_inds, self._regions_label]
