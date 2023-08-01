@@ -88,7 +88,7 @@ def from_config(ctx, config, verbose):
         return
 
     if config.execution_control.nodes == 1:
-        eagle(config)
+        eagle(config, config.sc_point_gids)
         return
 
     # Split gids over mulitple SLURM jobs
@@ -97,7 +97,7 @@ def from_config(ctx, config, verbose):
                 .format(config.execution_control.nodes))
     for i in range(config.execution_control.nodes):
         config.name = '{}_{}'.format(name, i)
-        eagle(config, start_index=i)
+        eagle(config, config.sc_point_gids[i::config.execution_control.nodes])
 
 
 @main.command()
@@ -128,12 +128,8 @@ def from_config(ctx, config, verbose):
 @click.option('--min_line_length', '-mll', type=int,
               show_default=True, default=0,
               help=("Minimum Tie-line length."))
-@click.option('--sc_point_start_index', '-start', type=int,
-              show_default=True, default=0,
-              help=("Start index of supply curve points to run."))
-@click.option('--sc_point_step_index', '-step', type=int,
-              show_default=True, default=1,
-              help=("Step index of supply curve points to run."))
+@click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
+              default=None, help=("List of sc_point_gids to connect to"))
 @click.option('--nn_sinks', '-nn', type=int,
               show_default=True, default=2,
               help=("Number of nearest neighbor sinks to use for clipping "
@@ -173,9 +169,9 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
           capacity_class, resolution, xmission_config, min_line_length,
-          sc_point_start_index, sc_point_step_index, nn_sinks,
-          clipping_buffer, barrier_mult, state_connections, max_workers,
-          out_dir, log_dir, verbose, save_paths, radius, simplify_geo):
+          sc_point_gids, nn_sinks, clipping_buffer, barrier_mult,
+          state_connections, max_workers, out_dir, log_dir, verbose,
+          save_paths, radius, simplify_geo):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -189,9 +185,6 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
     create_dirs(out_dir)
     logger.info('Computing Least Cost Xmission connections and writing them {}'
                 .format(out_dir))
-    sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
-    sc_point_gids = list(sce.points.index.values)
-    sc_point_gids = sc_point_gids[sc_point_start_index::sc_point_step_index]
     kwargs = {"resolution": resolution,
               "xmission_config": xmission_config,
               "min_line_length": min_line_length,
@@ -360,7 +353,7 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
         costs.to_csv(out_file, index=False)
 
 
-def get_node_cmd(config, start_index=0):
+def get_node_cmd(config, gids):
     """
     Get the node CLI call for Least Cost Xmission
 
@@ -368,6 +361,8 @@ def get_node_cmd(config, start_index=0):
     ----------
     config : reVX.config.least_cost_xmission.LeastCostXmissionConfig
         Least Cost Xmission config object.
+    gids : list
+        List of SC point GID values to submit to local command.
 
     Returns
     -------
@@ -384,8 +379,7 @@ def get_node_cmd(config, start_index=0):
             '-res {}'.format(SLURM.s(config.resolution)),
             '-xcfg {}'.format(SLURM.s(config.xmission_config)),
             '-mll {}'.format(SLURM.s(config.min_line_length)),
-            '-start {}'.format(SLURM.s(start_index)),
-            '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
+            '-gids {}'.format(SLURM.s(gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
@@ -433,8 +427,7 @@ def run_local(ctx, config):
                resolution=config.resolution,
                xmission_config=config.xmission_config,
                min_line_length=config.min_line_length,
-               sc_point_start_index=0,
-               sc_point_step_index=1,
+               sc_point_gids=config.sc_point_gids,
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
                barrier_mult=config.barrier_mult,
@@ -449,7 +442,7 @@ def run_local(ctx, config):
                )
 
 
-def eagle(config, start_index=0):
+def eagle(config, gids):
     """
     Run Least Cost Xmission on Eagle HPC.
 
@@ -460,7 +453,7 @@ def eagle(config, start_index=0):
     """
     init_logger('rex', log_level='DEBUG')
 
-    cmd = get_node_cmd(config, start_index)
+    cmd = get_node_cmd(config, gids)
     name = config.name
     log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
