@@ -548,6 +548,9 @@ class LeastCostXmission(LeastCostPaths):
                 expand_radius=expand_radius,
                 simplify_geo=simplify_geo)
 
+        if not least_costs:
+            return pd.DataFrame(columns=['sc_point_gid'])
+
         least_costs = pd.concat(least_costs).sort_values(['sc_point_gid',
                                                           'trans_gid'])
         capacity_class = self._config._parse_cap_class(capacity_class)
