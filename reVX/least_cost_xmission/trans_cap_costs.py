@@ -37,23 +37,41 @@ class TieLineCosts:
         Parameters
         ----------
         cost_fpath : str
-            Full path of .h5 file with cost arrays
+            Full path to HDF5 file containing cost arrays. The cost data
+            layers should be named ``"tie_line_costs_{capacity}MW"``,
+            where ``capacity`` is an integer value representing the
+            capacity of the line (the integer values must matches at
+            least one of the integer capacity values represented by the
+            keys in the ``power_classes`` portion of the transmission
+            config).
         start_indices : tuple
-            Tuple of (row_idx, col_idx) in the cost array indicating the
-            start position of all paths to compute (typically, this is
-            the centroid of the supply curve cell). Paths will be
-            computed from this start location to each of the
-            `end_indices`, which are also locations in the cost
+            Tuple of (row_idx, col_idx) in the **clipped** cost array
+            (see `row_slice` and `col_slice` definitions below)
+            indicating the start position of all paths to compute
+            (typically, this is the centroid of the supply curve cell).
+            Paths will be computed from this start location to each of
+            the ``end_indices``, which are also locations in the cost
             array (typically transmission feature locations).
-        capacity_class : int | str
-            Transmission feature capacity_class class
-        radius : int, optional
-            Radius around sc_point to clip cost to, by default None
+        capacity_class : : int | str
+            Integer value representing the transmission feature
+            capacity. The integer values must matches at least one of
+            the integer capacity values represented by the keys in the
+            ``power_classes`` portion of the transmission config.
+        row_slice, col_slice : slice
+            Slices into the cost raster array used to clip the area that
+            should be considered when computing a least cost path. This
+            can be used to limit the consideration space and speed up
+            computation. Note that the start and end indices must
+            be given w.r.t. the cost raster that is "clipped" using
+            these slices.
         xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
+            Path to transmission config JSON files, dictionary of
+            transmission config JSONs, or preloaded XmissionConfig
+            objects. If ``None``, the default config is used.
+            By default, ``None``.
         barrier_mult : int, optional
-            Multiplier on transmission barrier costs, by default 100
+            Multiplier applied to the cost data to create transmission
+            barrier costs. By default, ``100``.
         """
         self._cost_fpath = cost_fpath
         self._config = self._parse_config(xmission_config=xmission_config)
@@ -448,33 +466,44 @@ class TieLineCosts:
         Parameters
         ----------
         cost_fpath : str
-            Full path of .h5 file with cost arrays
+            Full path to HDF5 file containing cost arrays. The cost data
+            layers should be named ``"tie_line_costs_{capacity}MW"``,
+            where ``capacity`` is an integer value representing the
+            capacity of the line (the integer values must matches at
+            least one of the integer capacity values represented by the
+            keys in the ``power_classes`` portion of the transmission
+            config).
         start_indices : tuple
-            Tuple of (row_idx, col_idx) in the cost array indicating the
-            start position of all paths to compute (typically, this is
-            the centroid of the supply curve cell). Paths will be
-            computed from this start location to each of the
-            `end_indices`, which are also locations in the cost
+            Tuple of (row_idx, col_idx) in the **clipped** cost array
+            (see `row_slice` and `col_slice` definitions below)
+            indicating the start position of all paths to compute
+            (typically, this is the centroid of the supply curve cell).
+            Paths will be computed from this start location to each of
+            the ``end_indices``, which are also locations in the cost
             array (typically transmission feature locations).
-        end_indices : tuple | list
-            Tuple (row, col) index or list of (row, col) indices in the
-            cost array indicating the end location(s) to compute least
-            cost paths to (typically transmission feature locations).
-            Paths are computed from the `start_indices` (typically the
-            centroid of the supply curve cell) to each of the individual
-            pairs of `end_indices`.
-        capacity_class : int | str
-            Transmission feature capacity_class class
-        radius : int, optional
-            Radius around sc_point to clip cost to, by default None
+        capacity_class : : int | str
+            Integer value representing the transmission feature
+            capacity. The integer values must matches at least one of
+            the integer capacity values represented by the keys in the
+            ``power_classes`` portion of the transmission config.
+        row_slice, col_slice : slice
+            Slices into the cost raster array used to clip the area that
+            should be considered when computing a least cost path. This
+            can be used to limit the consideration space and speed up
+            computation. Note that the start and end indices must
+            be given w.r.t. the cost raster that is "clipped" using
+            these slices.
         xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
+            Path to transmission config JSON files, dictionary of
+            transmission config JSONs, or preloaded XmissionConfig
+            objects. If ``None``, the default config is used.
+            By default, ``None``.
         barrier_mult : int, optional
-            Multiplier on transmission barrier costs, by default 100
+            Multiplier applied to the cost data to create transmission
+            barrier costs. By default, ``100``.
         save_paths : bool, optional
-            Flag to save least cost path as a multi-line geometry,
-            by default False
+            Flag to save least cost path as a multi-line geometry.
+            By default, ``False``.
 
         Returns
         -------
