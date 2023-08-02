@@ -335,29 +335,31 @@ class TieLineCosts:
 
     def least_cost_path(self, end_idx, save_path=False):
         """
-        Find least cost path, its length, and its total un-barriered
+        Find least cost path, its length, and its total (un-barriered)
         cost
 
         Parameters
         ----------
         end_idx : Tuple[int, int]
             (row, col) index of end point to connect and compute least
-            cost path to
+            cost path to.
         save_path : bool
-            Flag to save path as a multi-line geometry
+            Flag to save least cost path as a multi-line geometry.
+            By default, ``False``.
 
         Returns
         -------
         length : float
-            Length of path (km)
+            Length of path (km).
         cost : float
-            Cost of path including terrain and land use multipliers
-        poi_lat : numpy.float64
-            TODO
-        poi_lon : numpy.float64
-            TODO
+            Cost of path including terrain and land use multipliers, but
+            not barrier costs.
+        poi_lat, poi_lon : numpy.float64
+            Latitude and longitude of the `end_idx` of the least cost
+            path (i.e. the POI/transmission feature that was connected
+            to).
         path : shapely.geometry.linestring, optional
-            Path as a LineString
+            Path as a LineString, if `save_path` was set to ``True``.
         """
         row, col = end_idx
 
