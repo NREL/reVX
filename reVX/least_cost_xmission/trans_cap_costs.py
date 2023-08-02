@@ -352,10 +352,10 @@ class TieLineCosts:
             Length of path (km)
         cost : float
             Cost of path including terrain and land use multipliers
-        poi_lat : TODO
-
-        poi_lon: TODO
-
+        poi_lat : numpy.float64
+            TODO
+        poi_lon : numpy.float64
+            TODO
         path : shapely.geometry.linestring, optional
             Path as a LineString
         """
@@ -395,8 +395,6 @@ class TieLineCosts:
             poi_lat = f['latitude', self._row_slice, self._col_slice][row, col]
             poi_lon = (
                 f['longitude', self._row_slice, self._col_slice][row, col])
-        print(type(poi_lat), type(poi_lon),)
-        breakpoint()
 
         if save_path:
             row = indices[:, 0] + self.row_offset
