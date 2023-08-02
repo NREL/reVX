@@ -390,8 +390,8 @@ class LeastCostXmission(LeastCostPaths):
         dists = (sc_features[['row', 'col']] - sc_point[['row', 'col']])
         radius = int(np.ceil(dists.abs().values.max() * clipping_buffer))
         logger.debug('{} transmission features found in clipped area with '
-                     'minimum max voltage of {}'
-                     .format(len(sc_features), tie_line_voltage))
+                     'radius {} and minimum max voltage of {}'
+                     .format(len(sc_features), radius, tie_line_voltage))
 
         if sc_features.empty:
             return sc_features, None
@@ -441,7 +441,7 @@ class LeastCostXmission(LeastCostPaths):
 
         logger.debug('{} transmission features found in clipped area with '
                      'radius {}'
-                     .format(len(clipped_sc_features), radius))
+                     .format(len(clipped_sc_features), radius_m))
         return clipped_sc_features.copy(deep=True)
 
     def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
@@ -671,7 +671,8 @@ class LeastCostXmission(LeastCostPaths):
             are within "nn_sink" nearest infinite sinks
         """
         least_costs = []
-        for i, (_, sc_point) in enumerate(self.sc_points.iterrows(), start=1):
+        count = 0
+        for _, sc_point in self.sc_points.iterrows():
             gid = sc_point['sc_point_gid']
             if gid in sc_point_gids:
                 sc_features, sc_radius = self._clip_to_sc_point(
@@ -694,8 +695,9 @@ class LeastCostXmission(LeastCostPaths):
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
 
+                count += 1
                 logger.info('SC point {} of {} complete!'
-                            .format(i, len(sc_point_gids)))
+                            .format(count, len(sc_point_gids)))
                 log_mem(logger)
         return least_costs
 
