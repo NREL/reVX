@@ -430,8 +430,8 @@ class LeastCostXmission(LeastCostPaths):
         """Clip features to radius.
 
         If no features are found within the initial radius, it is
-        expanded (multiplicatively by the clipping buffer) until at
-        least one connection feature is found.
+        expanded (linearly by incrementally increasing the clipping
+        buffer) until at least one connection feature is found.
         """
         if radius is None or len(sc_features) == 0:
             return sc_features
@@ -444,8 +444,10 @@ class LeastCostXmission(LeastCostPaths):
         buffer = sc_point["geometry"].buffer(radius_m)
         clipped_sc_features = sc_features.clip(buffer)
 
+        clipping_buffer -= 0.05
         while expand_radius and len(clipped_sc_features) <= 0:
-            radius_m *= clipping_buffer
+            clipping_buffer += 0.05
+            radius_m = radius * resolution * clipping_buffer
             logger.debug('Clipping features to radius {}m'.format(radius_m))
             buffer = sc_point["geometry"].buffer(radius_m)
             clipped_sc_features = sc_features.clip(buffer)
