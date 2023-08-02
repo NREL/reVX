@@ -387,9 +387,14 @@ class LeastCostXmission(LeastCostPaths):
 
         mask = self.features['max_volts'] >= tie_line_voltage
         sc_features = sc_features.loc[mask].copy(deep=True)
+        dists = (sc_features[['row', 'col']] - sc_point[['row', 'col']])
+        radius = int(np.ceil(dists.abs().values.max() * clipping_buffer))
         logger.debug('{} transmission features found in clipped area with '
                      'minimum max voltage of {}'
                      .format(len(sc_features), tie_line_voltage))
+
+        if sc_features.empty:
+            return sc_features, None
 
         # Find t-lines connected to substations within clip
         logger.debug('Collecting transmission lines connected to substations')
