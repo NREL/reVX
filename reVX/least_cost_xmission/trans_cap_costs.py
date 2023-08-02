@@ -38,7 +38,7 @@ class TieLineCosts:
         ----------
         cost_fpath : str
             Full path to HDF5 file containing cost arrays. The cost data
-            layers should be named ``"tie_line_costs_{capacity}MW``,
+            layers should be named ``"tie_line_costs_{capacity}MW"``,
             where ``capacity`` is an integer value representing the
             capacity of the line (the integer values must matches at
             least one of the integer capacity values represented by the
@@ -462,7 +462,7 @@ class TieLineCosts:
         ----------
         cost_fpath : str
             Full path to HDF5 file containing cost arrays. The cost data
-            layers should be named ``"tie_line_costs_{capacity}MW``,
+            layers should be named ``"tie_line_costs_{capacity}MW"``,
             where ``capacity`` is an integer value representing the
             capacity of the line (the integer values must matches at
             least one of the integer capacity values represented by the
