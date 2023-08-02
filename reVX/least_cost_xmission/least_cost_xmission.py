@@ -300,13 +300,15 @@ class LeastCostXmission(LeastCostPaths):
 
         Returns
         -------
-        sc_point : gpd.GeoDataFrame
+        sc_points : gpd.GeoDataFrame
             Table of supply curve points to connect to transmission
         features : gpd.GeoDataFrame
             Table of transmission features
         sub_lines_map : pandas.Series
             Series mapping substations  to the transmission lines
             connected to each substation
+        shape: Tuple[int, int]
+            Shape of h5 costs raster
         """
         with ExclusionLayers(cost_fpath) as f:
             crs = CRS.from_string(f.crs)
@@ -381,7 +383,7 @@ class LeastCostXmission(LeastCostPaths):
             else:
                 logger.debug('Using forced radius of {}'.format(radius))
 
-            sc_features = self._clip_to_radius(sc_point, radius, sc_features,
+            sc_features = self._clip_to_radius(sc_point, radius, self.features,
                                                clipping_buffer)
         else:
             sc_features = self.features.copy(deep=True)

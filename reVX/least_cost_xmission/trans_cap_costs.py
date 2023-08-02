@@ -271,7 +271,6 @@ class TieLineCosts:
         with ExclusionLayers(cost_fpath) as f:
             cost = f[cost_layer, row_slice, col_slice]
             barrier = f['transmission_barrier', row_slice, col_slice]
-
         mcp_cost = cost + cost * barrier * barrier_mult
         mcp_cost = np.where(mcp_cost < 0, -1, mcp_cost)
 
@@ -323,7 +322,7 @@ class TieLineCosts:
 
         Parameters
         ----------
-        end_idx : tuple
+        end_idx : Tuple[int, int]
             (row, col) index of end point to connect and compute least
             cost path to
         save_path : bool
@@ -335,6 +334,10 @@ class TieLineCosts:
             Length of path (km)
         cost : float
             Cost of path including terrain and land use multipliers
+        poi_lat : TODO
+
+        poi_lon: TODO
+
         path : shapely.geometry.linestring, optional
             Path as a LineString
         """
@@ -374,6 +377,8 @@ class TieLineCosts:
             poi_lat = f['latitude', self._row_slice, self._col_slice][row, col]
             poi_lon = (
                 f['longitude', self._row_slice, self._col_slice][row, col])
+        print(type(poi_lat), type(poi_lon),)
+        breakpoint()
 
         if save_path:
             row = indices[:, 0] + self.row_offset
@@ -881,7 +886,7 @@ class TransCapCosts(TieLineCosts):
 
         Returns
         -------
-        tie_line_costs : pandas.DataFrame
+        tie_line_costs : gpd.GeoDataFrame
             Updated table of transmission features with the tie-line
             cost and distance added
         """
