@@ -139,6 +139,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('radius', None)
 
     @property
+    def expand_radius(self):
+        """
+        Optional flag to expand radius until at least one transmission
+        feature is available for connection.
+        """
+        return self.get('expand_radius', True)
+
+    @property
     def simplify_geo(self):
         """
         Optional float to use to simplify path geometries before saving to

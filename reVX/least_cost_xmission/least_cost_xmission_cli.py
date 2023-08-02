@@ -162,6 +162,10 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Radius to clip costs raster to in pixels This overrides "
                     "--nn_sinks if set."))
+@click.option('--expand_radius', '-er', is_flag=True,
+              help='Flag to expand radius until at least one transmission '
+                   'feature is included for connection. Has no effect if '
+                   'radius input is ``None``.')
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help=("Simplify path geometries by a value before writing to "
@@ -171,7 +175,7 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
           capacity_class, resolution, xmission_config, min_line_length,
           sc_point_gids, nn_sinks, clipping_buffer, barrier_mult,
           state_connections, max_workers, out_dir, log_dir, verbose,
-          save_paths, radius, simplify_geo):
+          save_paths, radius, expand_radius, simplify_geo):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -194,7 +198,8 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
               "max_workers": max_workers,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
-              "radius": radius}
+              "radius": radius,
+              "expand_radius": expand_radius}
     if balancing_areas_fpath is not None:
         kwargs["allow_connections_within_states"] = state_connections
         least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
@@ -394,6 +399,8 @@ def get_node_cmd(config, gids):
         args.append('--save_paths')
     if config.radius:
         args.append('-rad {}'.format(config.radius))
+    if config.expand_radius:
+        args.append('-er')
     if config.simplify_geo:
         args.append('--simplify-geo {}'.format(config.simplify_geo))
 
@@ -437,6 +444,7 @@ def run_local(ctx, config):
                log_dir=config.log_directory,
                verbose=config.log_level,
                radius=config.radius,
+               expand_radius=config.expand_radius,
                save_paths=config.save_paths,
                simplify_geo=config.simplify_geo,
                )
