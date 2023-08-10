@@ -124,6 +124,11 @@ class DataCleaner:
             raise ValueError('Plexos profiles shape does not match meta.')
 
         self._plexos_meta = self.rename_cols(plexos_meta, name_map=name_map)
+
+        if 'plexos_id' not in self._plexos_meta:
+            pids = [f'plexos_node_gid_{g}' for g in self._plexos_meta['gid']]
+            self._plexos_meta['plexos_id'] = pids
+
         self._profiles = profiles
 
     @staticmethod
@@ -191,7 +196,13 @@ class DataCleaner:
         plexos_meta : pd.DataFrame
             Filtered plexos meta data.
         """
+
         plexos_meta = cls.rename_cols(plexos_meta, name_map=name_map)
+
+        if 'plexos_id' not in plexos_meta:
+            pids = [f'plexos_node_gid_{g}' for g in plexos_meta['gid']]
+            plexos_meta['plexos_id'] = pids
+
         # as of 8/2019 there were two erroneous plexos nodes with bad names
         mask = (plexos_meta['plexos_id'] != '#NAME?')
         plexos_meta = plexos_meta[mask]
