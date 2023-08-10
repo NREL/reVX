@@ -100,15 +100,15 @@ class CombineRasters:
     LAND_MASK_FNAME = 'land_mask.tif'
 
     # Slope cutoffs (degrees)
-    slope_barrier_cutoff = 15  # slopes >= this value are for barriers & high
+    SLOPE_BARRIER_CUTOFF = 15  # slopes >= this value are for barriers & high
                                # friction
-    low_slope_cutoff = 10  # slopes < this value are minimal friction
+    LOW_SLOPE_CUTOFF = 10  # slopes < this value are minimal friction
 
     # Slope frictions
-    high_slope_friction = 10  # Used for >= slope_barrier_cutoff
-    medium_slope_friction = 5  # Used for < slope_barrier_cutoff,
+    HIGH_SLOPE_FRICTION = 10  # Used for >= slope_barrier_cutoff
+    MEDIUM_SLOPE_FRICTION = 5  # Used for < slope_barrier_cutoff,
                                # but > low_slope_cutoff
-    low_slope_friction = 1  # Used for < low_slope_cutoff
+    LOW_SLOPE_FRICTION = 1  # Used for < low_slope_cutoff
 
     def __init__(self, template_f, layer_dir=''):
         """
@@ -259,11 +259,11 @@ class CombineRasters:
             d[d < 0] = 0
             assert d.shape == self._os_shape and d.min() == 0
             # Slope >= slope_barrier_cutoff is also included in barriers
-            d2 = np.where(d >= self.slope_barrier_cutoff,
-                          self.high_slope_friction, d)
-            d2 = np.where(d < self.slope_barrier_cutoff,
-                          self.medium_slope_friction, d2)
-            d2 = np.where(d < self.low_slope_cutoff, self.low_slope_friction,
+            d2 = np.where(d >= self.SLOPE_BARRIER_CUTOFF,
+                          self.HIGH_SLOPE_FRICTION, d)
+            d2 = np.where(d < self.SLOPE_BARRIER_CUTOFF,
+                          self.MEDIUM_SLOPE_FRICTION, d2)
+            d2 = np.where(d < self.LOW_SLOPE_CUTOFF, self.LOW_SLOPE_FRICTION,
                           d2)
             fr_layers[slope_file] = d2.astype('uint16')
 
