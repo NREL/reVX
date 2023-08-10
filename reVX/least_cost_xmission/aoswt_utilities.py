@@ -225,26 +225,26 @@ class CombineRasters:
         fr_layers = {}
 
         if bathy_file is not None:
-            print('--- calculating bathymetric friction')
+            logger.info('--- calculating bathymetric friction')
             if bathy_depth_cutoff is None or bathy_friction is None:
                 raise AttributeError('bathy_depth_cutoff and bathy_friction '
                                      'must be set if bath_file is set')
 
-            print('--- --- bathy_depth_cutoff is', bathy_depth_cutoff)
-            print('--- --- bathy_friction is', bathy_friction)
+            logger.debug('--- --- bathy_depth_cutoff is', bathy_depth_cutoff)
+            logger.debug('--- --- bathy_friction is', bathy_friction)
 
             if not os.path.exists(bathy_file):
                 bathy_file = os.path.join(self.layer_dir, bathy_file)
             if not os.path.exists(bathy_file):
                 raise FileNotFoundError(f'Unable to find {bathy_file}')
 
-            print('opening bathy')
+            logger.debug('opening bathy')
             d = rio.open(bathy_file).read(1)
             assert d.shape == self._os_shape
-            print('doing the where')
+            logger.debug('doing the where')
             d2 = np.where(d >= bathy_depth_cutoff, 0, bathy_friction)
 
-            print('as typing')
+            logger.debug('as typing')
             fr_layers[bathy_file] = d2.astype('uint16')
 
         if slope_file is not None:
