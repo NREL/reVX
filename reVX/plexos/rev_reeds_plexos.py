@@ -42,14 +42,16 @@ class PlexosAggregation(BaseProfileAggregation):
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
                  force_full_build=False, force_shape_map=False,
                  plant_name_col=None, tech_tag=None, res_class=None,
-                 timezone='UTC', dset_tag=None, max_workers=None):
+                 timezone='UTC', dset_tag=None, bespoke=False,
+                 max_workers=None):
         """
         Parameters
         ----------
         plexos_nodes : str | pd.DataFrame
-            Plexos node meta data including gid, latitude, longitude, voltage.
-            Or file path to .csv containing plexos node meta data, or a file
-            path to a .shp file that contains plexos nodes defined as shapes.
+            Plexos node meta data including gid, latitude, longitude, voltage
+            (optional). Or file path to .csv containing plexos node meta data,
+            or a file path to a .shp file that contains plexos nodes defined as
+            shapes.
         rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, latitude,
             longitude, res_gids, gid_counts. Or file path to reV supply
@@ -106,6 +108,12 @@ class PlexosAggregation(BaseProfileAggregation):
             the cf profile file is a multi year file using dset_tag="-2008"
             will enable us to select the corresponding datasets
             (cf_mean-2008, cf_profile-2008, etc)
+        bespoke : bool
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -126,6 +134,7 @@ class PlexosAggregation(BaseProfileAggregation):
         self._timezone = timezone
         self._res_class = res_class
         self._dset_tag = dset_tag if dset_tag is not None else ""
+        self._bespoke = bespoke
 
         if plexos_columns is None:
             plexos_columns = tuple()
@@ -137,7 +146,8 @@ class PlexosAggregation(BaseProfileAggregation):
                     .format(self.__class__.__name__, build_year))
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build,
-                                               build_year=build_year)
+                                               build_year=build_year,
+                                               bespoke=bespoke)
         if res_class is not None:
             class_mask = self._sc_build['class'] == res_class
             self._sc_build = self._sc_build[class_mask]
@@ -238,14 +248,16 @@ class PlexosAggregation(BaseProfileAggregation):
         Parameters
         ----------
         plexos_nodes : str | pd.DataFrame
-            Plexos node meta data including gid, latitude, longitude, voltage.
-            Or file path to .csv containing plexos node meta data, or a file
-            path to a .shp file that contains plexos nodes defined as shapes.
+            Plexos node meta data including gid, latitude, longitude, voltage
+            (optional). Or file path to .csv containing plexos node meta data,
+            or a file path to a .shp file that contains plexos nodes defined as
+            shapes.
 
         Returns
         -------
         plexos_nodes : pd.DataFrame
             Plexos node meta data including gid, latitude, longitude, voltage
+            (optional)
         """
 
         if (isinstance(plexos_nodes, str)
@@ -329,7 +341,8 @@ class PlexosAggregation(BaseProfileAggregation):
         return rev_sc, reeds_build
 
     @classmethod
-    def _parse_rev_reeds(cls, rev_sc, reeds_build, build_year=2050):
+    def _parse_rev_reeds(cls, rev_sc, reeds_build, build_year=2050,
+                         bespoke=False):
         """Parse and combine reV SC and REEDS buildout tables into single table
 
         Parameters
@@ -348,6 +361,12 @@ class PlexosAggregation(BaseProfileAggregation):
             all points must be assigned to plexos nodes.
         build_year : int, optional
             REEDS year of interest, by default 2050
+        bespoke : bool
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
 
         Returns
         -------
@@ -395,6 +414,9 @@ class PlexosAggregation(BaseProfileAggregation):
 
         table = pd.merge(rev_sc, reeds_build, how='inner', left_on=join_on,
                          right_on=join_on)
+
+        if bespoke:
+            table = cls.convert_bespoke_sc(table)
 
         return table
 
@@ -671,15 +693,17 @@ class PlexosAggregation(BaseProfileAggregation):
             forecast_fpath=None, build_year=2050, plexos_columns=None,
             force_full_build=False, force_shape_map=False,
             plant_name_col=None, tech_tag=None, res_class=None,
-            timezone='UTC', dset_tag=None, out_fpath=None, max_workers=None):
+            timezone='UTC', dset_tag=None, bespoke=False,
+            out_fpath=None, max_workers=None):
         """Run plexos aggregation.
 
         Parameters
         ----------
         plexos_nodes : str | pd.DataFrame
-            Plexos node meta data including gid, latitude, longitude, voltage.
-            Or file path to .csv containing plexos node meta data, or a file
-            path to a .shp file that contains plexos nodes defined as shapes.
+            Plexos node meta data including gid, latitude, longitude, voltage
+            (optional). Or file path to .csv containing plexos node meta data,
+            or a file path to a .shp file that contains plexos nodes defined as
+            shapes.
         rev_sc : str | pd.DataFrame
             reV supply curve results table including SC gid, latitude,
             longitude, res_gids, gid_counts. Or file path to reV supply
@@ -737,6 +761,12 @@ class PlexosAggregation(BaseProfileAggregation):
             the cf profile file is a multi year file using dset_tag="-2008"
             will enable us to select the corresponding datasets
             (cf_mean-2008, cf_profile-2008, etc)
+        bespoke : bool
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
         out_fpath : str, optional
             Path to .h5 file into which plant buildout should be saved. A
             plexos-formatted csv will also be written in the same directory.
@@ -766,6 +796,7 @@ class PlexosAggregation(BaseProfileAggregation):
                  res_class=res_class,
                  timezone=timezone,
                  dset_tag=dset_tag,
+                 bespoke=bespoke,
                  max_workers=max_workers)
 
         profiles = pa.make_profiles()

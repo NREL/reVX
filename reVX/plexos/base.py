@@ -222,7 +222,7 @@ class PlexosNode:
 
         gen_gids = [np.where(all_res_gids == g)[0] for g in res_gids]
 
-        if not any(gen_gids):
+        if len(gen_gids) == 0:
             msg = ('Could not find the following resource gids in the '
                    'cf file input: {}'.format(res_gids))
             logger.error(msg)
@@ -704,6 +704,36 @@ class BaseProfileAggregation(ABC):
                         names[names.index(name)] = dup_name
 
         return names
+
+    @staticmethod
+    def convert_bespoke_sc(df):
+        """Convert a bespoke supply curve table to reference resource gids
+        (res_gids) based on the bespoke generation outputs that are on the
+        supply curve grid not the resource grid
+
+        Parameters
+        ----------
+        table : pd.DataFrame
+            rev_sc and reeds_build inner joined on supply curve gid.
+
+        Returns
+        -------
+        table : pd.DataFrame
+            Modified so that the "res_gids" points to the supply curve gids in
+            the bespoke file so that the resource generation profiles will be
+            taken based on the bespoke indexing.
+        """
+
+        df['res_gids'] = [[g] for g in df['sc_gid']]
+
+        if 'gid_counts' in df:
+            if isinstance(df['gid_counts'].values[0], str):
+                df['gid_counts'] = df['gid_counts'].apply(json.loads)
+
+            df['gid_counts'] = [[np.sum(n)] for n in df['gid_counts']]
+            df['n_gids'] = df['gid_counts'].copy()
+
+        return df
 
     def export(self, meta, time_index, profiles, out_fpath):
         """Export generation profiles to h5 and plexos-formatted csv
