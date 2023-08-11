@@ -148,7 +148,7 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
                     "serial, if None use all available cores"))
-@click.option('--out_dir', '-o', type=STR, default='./',
+@click.option('--out_dir', '-o', type=STR, default='./out',
               show_default=True,
               help='Directory to save least cost xmission values to.')
 @click.option('--log_dir', '-log', default=None, type=STR,
