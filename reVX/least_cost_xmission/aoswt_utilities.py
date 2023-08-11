@@ -230,8 +230,8 @@ class CombineRasters:
                 raise AttributeError('bathy_depth_cutoff and bathy_friction '
                                      'must be set if bath_file is set')
 
-            logger.debug('--- --- bathy_depth_cutoff is', bathy_depth_cutoff)
-            logger.debug('--- --- bathy_friction is', bathy_friction)
+            logger.debug('--- --- bathy_depth_cutoff is %s', bathy_depth_cutoff)
+            logger.debug('--- --- bathy_friction is %s', bathy_friction)
 
             if not os.path.exists(bathy_file):
                 bathy_file = os.path.join(self.layer_dir, bathy_file)
@@ -328,8 +328,8 @@ class CombineRasters:
 
             d = rio.open(slope_file).read(1)
             assert d.shape == self._os_shape
-            d2 = np.where(d < self.slope_barrier_cutoff, 0, d)
-            d2 = np.where(d >= self.slope_barrier_cutoff, 1, d2)
+            d2 = np.where(d < self.SLOPE_BARRIER_CUTOFF, 0, d)
+            d2 = np.where(d >= self.SLOPE_BARRIER_CUTOFF, 1, d2)
 
             barrier_layers[slope_file] = d2.astype('uint8')
 
