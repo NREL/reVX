@@ -230,7 +230,8 @@ class CombineRasters:
                 raise AttributeError('bathy_depth_cutoff and bathy_friction '
                                      'must be set if bath_file is set')
 
-            logger.debug('--- --- bathy_depth_cutoff is %s', bathy_depth_cutoff)
+            logger.debug('--- --- bathy_depth_cutoff is %s',
+                         bathy_depth_cutoff)
             logger.debug('--- --- bathy_friction is %s', bathy_friction)
 
             if not os.path.exists(bathy_file):
