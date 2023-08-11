@@ -100,15 +100,15 @@ class CombineRasters:
     LAND_MASK_FNAME = 'land_mask.tif'
 
     # Slope cutoffs (degrees)
-    slope_barrier_cutoff = 15  # slopes >= this value are for barriers & high
+    SLOPE_BARRIER_CUTOFF = 15  # slopes >= this value are for barriers & high
                                # friction
-    low_slope_cutoff = 10  # slopes < this value are minimal friction
+    LOW_SLOPE_CUTOFF = 10  # slopes < this value are minimal friction
 
     # Slope frictions
-    high_slope_friction = 10  # Used for >= slope_barrier_cutoff
-    medium_slope_friction = 5  # Used for < slope_barrier_cutoff,
+    HIGH_SLOPE_FRICTION = 10  # Used for >= slope_barrier_cutoff
+    MEDIUM_SLOPE_FRICTION = 5  # Used for < slope_barrier_cutoff,
                                # but > low_slope_cutoff
-    low_slope_friction = 1  # Used for < low_slope_cutoff
+    LOW_SLOPE_FRICTION = 1  # Used for < low_slope_cutoff
 
     def __init__(self, template_f, layer_dir=''):
         """
@@ -225,26 +225,26 @@ class CombineRasters:
         fr_layers = {}
 
         if bathy_file is not None:
-            print('--- calculating bathymetric friction')
+            logger.info('--- calculating bathymetric friction')
             if bathy_depth_cutoff is None or bathy_friction is None:
                 raise AttributeError('bathy_depth_cutoff and bathy_friction '
                                      'must be set if bath_file is set')
 
-            print('--- --- bathy_depth_cutoff is', bathy_depth_cutoff)
-            print('--- --- bathy_friction is', bathy_friction)
+            logger.debug('--- --- bathy_depth_cutoff is', bathy_depth_cutoff)
+            logger.debug('--- --- bathy_friction is', bathy_friction)
 
             if not os.path.exists(bathy_file):
                 bathy_file = os.path.join(self.layer_dir, bathy_file)
             if not os.path.exists(bathy_file):
                 raise FileNotFoundError(f'Unable to find {bathy_file}')
 
-            print('opening bathy')
+            logger.debug('opening bathy')
             d = rio.open(bathy_file).read(1)
             assert d.shape == self._os_shape
-            print('doing the where')
+            logger.debug('doing the where')
             d2 = np.where(d >= bathy_depth_cutoff, 0, bathy_friction)
 
-            print('as typing')
+            logger.debug('as typing')
             fr_layers[bathy_file] = d2.astype('uint16')
 
         if slope_file is not None:
@@ -259,11 +259,11 @@ class CombineRasters:
             d[d < 0] = 0
             assert d.shape == self._os_shape and d.min() == 0
             # Slope >= slope_barrier_cutoff is also included in barriers
-            d2 = np.where(d >= self.slope_barrier_cutoff,
-                          self.high_slope_friction, d)
-            d2 = np.where(d < self.slope_barrier_cutoff,
-                          self.medium_slope_friction, d2)
-            d2 = np.where(d < self.low_slope_cutoff, self.low_slope_friction,
+            d2 = np.where(d >= self.SLOPE_BARRIER_CUTOFF,
+                          self.HIGH_SLOPE_FRICTION, d)
+            d2 = np.where(d < self.SLOPE_BARRIER_CUTOFF,
+                          self.MEDIUM_SLOPE_FRICTION, d2)
+            d2 = np.where(d < self.LOW_SLOPE_CUTOFF, self.LOW_SLOPE_FRICTION,
                           d2)
             fr_layers[slope_file] = d2.astype('uint16')
 
