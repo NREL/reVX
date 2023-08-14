@@ -305,13 +305,14 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file, # noqa
 
     # Split out put in to GeoJSON by POI name
     if split_to_geojson:
-        for poi in set(df['POI Name']):
+        pois = set(df['POI Name'])
+        for i, poi in enumerate(pois, start=1):
             out_file = os.path.join(out_dir,
                                     "{}_paths.geojson"
                                     .format(poi.replace(' ', '_')))
             paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
-            logger.info('Writing {} paths for {} to {}'
-                        .format(len(paths), poi, out_file))
+            logger.info('Writing {} paths for {} to {} ({}/{})'
+                        .format(len(paths), poi, out_file, i, len(pois)))
             paths.to_file(out_file, driver="GeoJSON")
 
 
