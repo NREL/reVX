@@ -243,7 +243,7 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
               help='Simplify path geometries by a value before exporting.')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
-def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
+def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file, # noqa
                  out_dir, drop, simplify_geo, files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON
@@ -264,7 +264,7 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
 
     warnings.filterwarnings('ignore', category=RuntimeWarning)
     dfs = []
-    for i, file in enumerate(files):
+    for i, file in enumerate(files, start=1):
         logger.info('Loading %s (%i/%i)', file, i, len(files))
         df_tmp = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
         dfs.append(df_tmp)
@@ -302,7 +302,6 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
             df.to_file(out_file, driver="GPKG")
         else:
             df.to_csv(out_file, index=False)
-
 
     # Split out put in to GeoJSON by POI name
     if split_to_geojson:
