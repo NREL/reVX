@@ -21,15 +21,13 @@ class MeanWindDirections(Aggregation):
     Then convert to equivalent sc_point_gid
     """
 
-    def __init__(self, res_h5_fpath, excl_fpath, wdir_dsets,
+    def __init__(self, excl_fpath, wdir_dsets,
                  tm_dset='techmap_wtk', excl_dict=None,
                  area_filter_kernel='queen', min_area=None,
                  resolution=128, excl_area=None):
         """
         Parameters
         ----------
-        res_h5_fpath : str
-            Filepath to .h5 file containing wind direction data
         excl_fpath : str
             Filepath to exclusions h5 with techmap dataset.
         wdir_dsets : str | list
@@ -65,7 +63,7 @@ class MeanWindDirections(Aggregation):
                 logger.error(msg)
                 raise ValueError(msg)
 
-        super().__init__(excl_fpath, res_h5_fpath, tm_dset, *wdir_dsets,
+        super().__init__(excl_fpath, tm_dset, *wdir_dsets,
                          excl_dict=excl_dict,
                          area_filter_kernel=area_filter_kernel,
                          min_area=min_area,
@@ -180,12 +178,14 @@ class MeanWindDirections(Aggregation):
 
         return agg_out
 
-    def aggregate(self, max_workers=None, sites_per_worker=1000):
+    def aggregate(self, res_h5_fpath, max_workers=None, sites_per_worker=1000):
         """
         Average wind directions to sc_points
 
         Parameters
         ----------
+        res_h5_fpath : str
+            Filepath to .h5 file containing wind direction data
         max_workers : int | None
             Number of cores to run summary on. None is all
             available cpus.
@@ -198,7 +198,7 @@ class MeanWindDirections(Aggregation):
         agg : dict
             Aggregated values for each aggregation dataset
         """
-        agg = super().aggregate(max_workers=max_workers,
+        agg = super().aggregate(res_h5_fpath, max_workers=max_workers,
                                 sites_per_worker=sites_per_worker)
 
         return agg
@@ -254,15 +254,15 @@ class MeanWindDirections(Aggregation):
         agg : dict
             Aggregated values for each aggregation dataset
         """
-        wdir = cls(res_h5_fpath, excl_fpath, wdir_dsets, tm_dset=tm_dset,
+        wdir = cls(excl_fpath, wdir_dsets, tm_dset=tm_dset,
                    excl_dict=excl_dict, area_filter_kernel=area_filter_kernel,
                    min_area=min_area, resolution=resolution,
                    excl_area=excl_area)
 
-        agg = wdir.aggregate(max_workers=max_workers,
+        agg = wdir.aggregate(res_h5_fpath, max_workers=max_workers,
                              sites_per_worker=sites_per_worker)
 
         if out_fpath is not None:
-            wdir.save_agg_to_h5(out_fpath, agg)
+            wdir.save_agg_to_h5(res_h5_fpath, out_fpath, agg)
 
         return agg
