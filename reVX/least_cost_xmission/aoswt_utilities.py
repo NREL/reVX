@@ -99,18 +99,9 @@ class CombineRasters:
     COMBO_LAYER_FNAME = 'combo_{}.tif'
     LAND_MASK_FNAME = 'land_mask.tif'
 
-    # Slope cutoffs (degrees)
-    SLOPE_BARRIER_CUTOFF = 15  # slopes >= this value are for barriers & high
-                               # friction
-    LOW_SLOPE_CUTOFF = 10  # slopes < this value are minimal friction
-
-    # Slope frictions
-    HIGH_SLOPE_FRICTION = 10  # Used for >= slope_barrier_cutoff
-    MEDIUM_SLOPE_FRICTION = 5  # Used for < slope_barrier_cutoff,
-                               # but > low_slope_cutoff
-    LOW_SLOPE_FRICTION = 1  # Used for < low_slope_cutoff
-
-    def __init__(self, template_f, layer_dir=''):
+    def __init__(self, template_f, layer_dir='', slope_barrier_cutoff=15,
+                 low_slope_cutoff=10, high_slope_friction=10,
+                 medium_slope_friction=5, low_slope_friction=1):
         """
         Parameters
         ----------
@@ -118,8 +109,25 @@ class CombineRasters:
             Path to template raster with CRS to use for geopackage
         layer_dir : str, optional
             Directory to prepend to barrier and friction layer filenames
+        slope_barrier_cutoff : float
+            Slopes >= this value are set to high_slope_friction and used as
+            barriers.
+        low_slope_cutoff : float
+            Slope < this value are assigned low_slope_friciton.
+        high_slope_friction : int
+            Used for >= slope_barrier_cutoff
+        medium_slope_friction : int
+            Used for < slope_barrier_cutoff and > low_slope_cutoff
+        low_slope_friction : int
+            Used for < low_slope_cutoff
         """
         self.layer_dir = layer_dir
+
+        self._slope_barrier_cutoff = slope_barrier_cutoff
+        self._low_slope_cutoff = low_slope_cutoff
+        self._high_slope_friction = high_slope_friction
+        self._medium_slope_friction = medium_slope_friction
+        self._low_slope_friction = low_slope_friction
 
         self._os_profile = self._extract_profile(template_f)
         self._os_profile['dtype'] = ('MUST SET in {}.profile()!'
@@ -260,11 +268,11 @@ class CombineRasters:
             d[d < 0] = 0
             assert d.shape == self._os_shape and d.min() == 0
             # Slope >= slope_barrier_cutoff is also included in barriers
-            d2 = np.where(d >= self.SLOPE_BARRIER_CUTOFF,
-                          self.HIGH_SLOPE_FRICTION, d)
-            d2 = np.where(d < self.SLOPE_BARRIER_CUTOFF,
-                          self.MEDIUM_SLOPE_FRICTION, d2)
-            d2 = np.where(d < self.LOW_SLOPE_CUTOFF, self.LOW_SLOPE_FRICTION,
+            d2 = np.where(d >= self._slope_barrier_cutoff,
+                          self._high_slope_friction, d)
+            d2 = np.where(d < self._slope_barrier_cutoff,
+                          self._medium_slope_friction, d2)
+            d2 = np.where(d < self._low_slope_cutoff, self._low_slope_friction,
                           d2)
             fr_layers[slope_file] = d2.astype('uint16')
 
@@ -329,8 +337,8 @@ class CombineRasters:
 
             d = rio.open(slope_file).read(1)
             assert d.shape == self._os_shape
-            d2 = np.where(d < self.SLOPE_BARRIER_CUTOFF, 0, d)
-            d2 = np.where(d >= self.SLOPE_BARRIER_CUTOFF, 1, d2)
+            d2 = np.where(d < self._slope_barrier_cutoff, 0, d)
+            d2 = np.where(d >= self._slope_barrier_cutoff, 1, d2)
 
             barrier_layers[slope_file] = d2.astype('uint8')
 
