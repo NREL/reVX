@@ -229,8 +229,8 @@ class CombineRasters:
             bath_depth_cutoff.
         minimum_friction_files : list of tuples
             Same format as friction_files. Specified layers will be used to
-            ensure a minimum friction is uesd. This is performed after all other
-            friction layers have been combined.
+            ensure a minimum friction is uesd. This is performed after all
+            other friction layers have been combined.
         save_tiff : bool, optional
             Save composite friction to tiff if true
         """
