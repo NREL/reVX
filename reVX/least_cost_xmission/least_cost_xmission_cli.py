@@ -243,7 +243,8 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
               help='Simplify path geometries by a value before exporting.')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
-def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file, # noqa
+# flake8: noqa: C901
+def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
                  out_dir, drop, simplify_geo, files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON

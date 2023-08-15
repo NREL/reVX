@@ -202,7 +202,8 @@ class CombineRasters:
     # flake8: noqa: C901
     def build_off_shore_friction(self, friction_files, slope_file=None,
                                  bathy_file=None, bathy_depth_cutoff=None,
-                                 bathy_friction=None, save_tiff=None):
+                                 bathy_friction=None,
+                                 minimum_friction_files=None, save_tiff=None):
         """
         Combine off-shore friction layers.
 
@@ -226,12 +227,17 @@ class CombineRasters:
         bathy_friction : int, optional
             Friction value to apply to areas with a depth great than
             bath_depth_cutoff.
+        minimum_friction_files : list of tuples
+            Same format as friction_files. Specified layers will be used to
+            ensure a minimum friction is uesd. This is performed after all other
+            friction layers have been combined.
         save_tiff : bool, optional
             Save composite friction to tiff if true
         """
         logger.info('Loading friction layers')
         fr_layers = {}
 
+        # Add bathymetry to friction dict
         if bathy_file is not None:
             logger.info('--- calculating bathymetric friction')
             if bathy_depth_cutoff is None or bathy_friction is None:
@@ -256,6 +262,7 @@ class CombineRasters:
             logger.debug('as typing')
             fr_layers[bathy_file] = d2.astype('uint16')
 
+        # Add slope to friction dict
         if slope_file is not None:
             logger.info('--- calculating slope friction')
 
@@ -276,6 +283,7 @@ class CombineRasters:
                           d2)
             fr_layers[slope_file] = d2.astype('uint16')
 
+        # Add all other friction files to friction dict
         for fr_dict, f in friction_files:
             d = None
             for k, val in fr_dict.items():
@@ -289,6 +297,21 @@ class CombineRasters:
 
         logger.info('Combining off-shore friction layers')
         self._os_friction = reduce(_sum, fr_layers.values()).astype('uint16')
+
+        # Set minimum friction if used
+        if minimum_friction_files is not None:
+            for fr_dict, f in minimum_friction_files:
+                d = None
+                for k, val in fr_dict.items():
+                    logger.info('--- setting raster value {} to friction '
+                                '{} for {}'.format(k, val, f))
+                    tmp_d = self._load_layer(f, k) * val
+                    d = tmp_d if d is None else np.maximum(d, tmp_d)
+
+                assert d.shape == self._os_shape and d.min() >= 0
+
+                self._os_friction = np.maximum(d.astype('uint16'),
+                                            self._os_friction)
 
         if save_tiff:
             logger.info('Saving combined friction to tiff')
