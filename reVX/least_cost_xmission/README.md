@@ -1,5 +1,5 @@
-# Least cost transmission paths
-Determine least cost transmission paths from possible wind and solar farms (supply curve (SC) points) to the electrical grid. Available components of the electical grid are substations, transmission lines, load centers and infinite sinks. The code only attempts to connect to a point on the transmission line closest to the SC point. This was initially used for land-based analyses, but has been modified for offshore transmission as well.
+# Least Cost Transmission Paths
+Determine least cost transmission paths from possible wind and solar farms (supply curve (SC) points) to the electrical grid. Available components of the electrical grid are substations, transmission lines, load centers and infinite sinks. The code only attempts to connect to a point on the transmission line closest to the SC point. This was initially used for land-based analyses, but has been modified for offshore transmission as well.
 
 <br>
 
@@ -15,11 +15,11 @@ Determine least cost transmission paths from possible wind and solar farms (supp
 	* `TransCapCosts` - Determine total transmission cost including line cost and any substation construction or improvements.
 * [`least_cost_xmission.py`](least_cost_xmission.py) - Calculate costs from SC points to transmission features. By default, all SC points are used or a subset may be specified by GID.
 * [`least_cost_paths.py`](least_cost_paths.py) - Parent class for `least_cost_xmission.py`.
-* [`aoswt_utilities.py`](aoswt_utilities.py) - Utilitiy functions and classes for preparing friction, barrier, and transmission features for the AOSWT analysis. Example Jupyter notebooks for these functions can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
+* [`aoswt_utilities.py`](aoswt_utilities.py) - Utility functions and classes for preparing friction, barrier, and transmission features for the AOSWT analysis. Example Jupyter notebooks for these functions can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
 
 <br>
 
-# CONUS (onshore) Examples
+# CONUS (Onshore) Examples
 ## Costs
 The below file can be used as a template to compute the costs to be used in a Least Cost Path analysis described in more detail below.
 ```
@@ -206,13 +206,13 @@ The resulting tables can be passed directly to `reV`, which will automatically d
 <br>
 
 
-# Offshore LCP
+# Offshore Least Cost Paths
 
 ## Atlantic Offshore Wind Transmission (AOSWT) Workflow
 General steps to run the AOSWT analysis:
 
-1. Convert points-of-interconnection (grid connections on land) to transmission feature lines. Example notebook is at `reVX/examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`. The input CSV requires the following fields: 'POI Name', 'State', 'Voltage (kV)', 'Lat', 'Long'.
-2. Create offshore friction and barrier (exclusion) layers and merge with CONUS costa nd barrier layers. Example notbook is at `reVX/examples/least_cost_paths/combine_layers_and_add_to_h5.ipynb`.
+1. Convert points-of-interconnection (POI) (grid connections on land) to transmission feature lines. Example notebook is at `reVX/examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`. The input CSV requires the following fields: 'POI Name', 'State', 'Voltage (kV)', 'Lat', 'Long'.
+2. Create offshore friction and barrier (exclusion) layers and merge with CONUS costs and barrier layers. Example notebook is at `reVX/examples/least_cost_paths/combine_layers_and_add_to_h5.ipynb`.
 3. Determine desired sc\_point_gids to process.
 4. Select appropriate clipping radius. Unlike the CONUS analysis, which clips the cost raster by proximity to infinite sinks, the AOSWT uses a fixed search radius. 5000 is a good starting point. Note that memory usage increases with the square of radius.
 5. Run analysis. See examples below.
@@ -221,12 +221,21 @@ General steps to run the AOSWT analysis:
 
 ## Atlantic Offshore Wind Transmission (AOSWT) Examples
 ### Creating POI transmission features from points
-The onshore point of interconnections (POIs) have typically been provided in a CSV file. These must be converted to short lines in a GeoPackage to work with the LCP code. Note that the POIs must also be connected to a transmission line. The `convert_pois_to_lines()` function in `aoswt_utilities.py` will perform all necessary operations to convert the CSV file to a properly configured GeoPackage. An example notebook is in this repository at `examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`. Paths from POIs to the fake transmission line can be removed in post processing using the `--drop TransLine` optoin.
+The onshore point of interconnections (POIs) have typically been provided in a
+CSV file. These must be converted to short lines in a GeoPackage to work with
+the LCP code. Note that the POIs must also be connected to a transmission line.
+The `convert_pois_to_lines()` function in `aoswt_utilities.py` will perform all
+necessary operations to convert the CSV file to a properly configured
+GeoPackage. An example notebook is in this repository at
+`examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`.
+Paths from POIs to the fake transmission line can be removed in post processing
+using the `--drop TransLine` option with the `least-cost-xmission merge-output`
+command.
 
 ### Build friction and barriers layer
 An example Jupyter notebook for building the friction and barrier layers can be found in the `examples/least_cost_paths` directory of this repository.
 
-### Locally run a AOSWT analysis for a single SC point, plot the results, and save to a geopackage
+### Locally run a AOSWT analysis for a single SC point, plot the results, and save to a GeoPackage
 This example uses `contextily` to add a base map to the plot, but is not required. AOSWT needs an aggregation "resolution" of 118.
 
 ```
@@ -252,7 +261,7 @@ paths = paths.to_crs(epsg=3857)
 ax = paths.plot(figsize=(20,20), alpha=0.5, edgecolor='red')
 cx.add_basemap(ax, source=cx.providers.Stamen.TonerLite)
 
-# Save to a geopackage
+# Save to a GeoPackage
 paths.to_file('example.gpkg', driver='GPKG')
 ```
 
@@ -277,7 +286,7 @@ python least_cost_xmission_cli.py local -v \
 ```
 
 ### Run AOSWT from a config file
-Using a config file is the prefered method of running an analysis. The below file processes a single SC point (gid=40139) on a debug node. Note that SLURM high quality of service on a standard node can be requested with `"feature": "--qos=high"`. This file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a geopackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Memory usage increases with the square of radius. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The `simplify_geo` key is set to `100`. Be default, the saved paths will have vertices for each raster cell, resulting in very large output files. Using `simplify_geo` simplifies the geometry, greatly reduces output file sizes, and improves run times. Large number will result in less vertices and smaller files sizes.
+Using a config file is the preferred method of running an analysis. The below file processes a single SC point (sc_point_gid = 40139) on a debug node. Note that SLURM high quality of service on a standard node can be requested with `"feature": "--qos=high"`. This file also uses the optional `save_paths` and `radius` options to save the least coasts paths to a GeoPackage and force a cost raster clipping radius of 5000 pixels, versus determining the radius from the nearest sinks. Memory usage increases with the square of radius. Since this is an offshore analysis, the resolution SC point resolution is set to 118. The `simplify_geo` key is set to `100`. Be default, the saved paths will have vertices for each raster cell, resulting in very large output files. Using `simplify_geo` simplifies the geometry, greatly reduces output file sizes, and improves run times. Large number will result in less vertices and smaller files sizes.
 
 
 The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
@@ -316,7 +325,7 @@ python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
 ```
 
 ### Post processing
-Running an analysis on multiple nodes will result in multiple output files. These can be collected via several means. The below command will combine all output files into a single geopackage, assuming `save_paths` was enabled. If paths are not saved, the output will consist of multiple CSV files that must be merged manually.
+Running an analysis on multiple nodes will result in multiple output files. These can be collected via several means. The below command will combine all output files into a single GeoPackage, assuming `save_paths` was enabled. If paths are not saved, the output will consist of multiple CSV files that must be merged manually.
 
 ```
 python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
