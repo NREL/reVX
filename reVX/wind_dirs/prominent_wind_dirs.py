@@ -47,8 +47,9 @@ class ProminentWindDirections(Aggregation):
             from the profile transform attribute in excl_fpath.
         """
         log_versions(logger)
-        super().__init__(excl_fpath, power_rose_h5_fpath, tm_dset, agg_dset,
-                         resolution=resolution, excl_area=excl_area)
+        self.power_rose_h5_fpath = power_rose_h5_fpath
+        super().__init__(excl_fpath, tm_dset, agg_dset, resolution=resolution,
+                         excl_area=excl_area)
 
     @classmethod
     def _map_direction_pos(cls, power_rose_h5_fpath):
@@ -168,7 +169,8 @@ class ProminentWindDirections(Aggregation):
             Update meta data table with neighboring supply curve point gids
             and power-rose value at each cardinal direction
         """
-        agg_out = self.aggregate(max_workers=max_workers,
+        agg_out = self.aggregate(self.power_rose_h5_fpath,
+                                 max_workers=max_workers,
                                  sites_per_worker=sites_per_worker)
 
         meta = agg_out.pop('meta')
@@ -176,7 +178,7 @@ class ProminentWindDirections(Aggregation):
                                             meta['sc_point_gid'].values,
                                             resolution=self._resolution)
 
-        dir_pos = self._map_direction_pos(self._h5_fpath)
+        dir_pos = self._map_direction_pos(self.power_rose_h5_fpath)
         sc_pr = agg_out.pop('powerrose_100m')[dir_pos].T
 
         columns = ['{}_pr'.format(d)

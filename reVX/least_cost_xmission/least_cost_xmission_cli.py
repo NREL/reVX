@@ -19,7 +19,6 @@ from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reV.supply_curve.extent import SupplyCurveExtent
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
@@ -148,7 +147,7 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
                     "serial, if None use all available cores"))
-@click.option('--out_dir', '-o', type=STR, default='./',
+@click.option('--out_dir', '-o', type=STR, default='./out',
               show_default=True,
               help='Directory to save least cost xmission values to.')
 @click.option('--log_dir', '-log', default=None, type=STR,
@@ -229,21 +228,24 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
 @click.option('--split-to-geojson', '-s', is_flag=True,
               help='After merging GeoPackages, split into GeoJSON by POI name'
               '.')
+@click.option('--suppress-combined-file', is_flag=True,
+              help='Don\'t create combined layer.')
 @click.option('--out-file', '-of', default=None, type=STR,
-              help='Name for output GeoPackage file.')
+              help='Name for output GeoPackage/CSV file.')
 @click.option('--drop', '-d', default=None, type=STR, multiple=True,
               help=('Transmission feature category types to drop from '
                     'results. Options: {}'.format(", ".join(TRANS_CAT_TYPES))))
 @click.option('--out-dir', '-od', type=click.Path(exists=True),
-              default='.', show_default=True,
+              default='./out', show_default=True,
               help='Output directory for output files. Path must exist.')
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help='Simplify path geometries by a value before exporting.')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
-def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
-                 simplify_geo, files):
+# flake8: noqa: C901
+def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
+                 out_dir, drop, simplify_geo, files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON
     """
@@ -251,13 +253,8 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
     init_logger('reVX', log_level=log_level)
 
     if len(files) == 0:
-        logger.info('No files passed to be merged')
+        logger.error('No files passed to be merged')
         return
-
-    if len(files) == 1:
-        files = sorted(Path(out_dir).glob(files[0]))
-
-    logger.debug('Merging {}'.format(files))
 
     if drop:
         for cat in drop:
@@ -266,10 +263,13 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
                             .format(TRANS_CAT_TYPES, drop))
                 return
 
-    logger.info('Loading: {}'.format(", ".join(files)))
     warnings.filterwarnings('ignore', category=RuntimeWarning)
-    df = pd.concat([gpd.read_file(f) if "gpkg" in f else pd.read_csv(f)
-                    for f in files])
+    dfs = []
+    for i, file in enumerate(files, start=1):
+        logger.info('Loading %s (%i/%i)', file, i, len(files))
+        df_tmp = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
+        dfs.append(df_tmp)
+    df = pd.concat(dfs)
     warnings.filterwarnings('default', category=RuntimeWarning)
 
     if drop:
@@ -291,26 +291,30 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
     if all(col in df for col in ["gid", "reinforcement_cost_per_mw"]):
         df = min_reinforcement_costs(df)
 
-    if not split_to_geojson:
+    create_dirs(out_dir)
+
+    # Create combined output file
+    if not suppress_combined_file:
         out_file = ('combo_{}'.format(files[0])
                     if out_file is None else out_file)
         out_file = os.path.join(out_dir, out_file)
-        logger.info('Saving to {}'.format(out_file))
+        logger.info('Saving all combined paths to %s', out_file)
         if "gpkg" in out_file:
             df.to_file(out_file, driver="GPKG")
         else:
             df.to_csv(out_file, index=False)
-        return
 
     # Split out put in to GeoJSON by POI name
-    for poi in set(df['POI Name']):
-        out_file = os.path.join(out_dir,
-                                "{}_paths.geojson"
-                                .format(poi.replace(' ', '_')))
-        paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
-        logger.info('Writing {} paths for {} to {}'
-                    .format(len(paths), poi, out_file))
-        paths.to_file(out_file, driver="GeoJSON")
+    if split_to_geojson:
+        pois = set(df['POI Name'])
+        for i, poi in enumerate(pois, start=1):
+            out_file = os.path.join(out_dir,
+                                    "{}_paths.geojson"
+                                    .format(poi.replace(' ', '_')))
+            paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
+            logger.info('Writing {} paths for {} to {} ({}/{})'
+                        .format(len(paths), poi, out_file, i, len(pois)))
+            paths.to_file(out_file, driver="GeoJSON")
 
 
 @main.command()

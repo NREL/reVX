@@ -82,7 +82,7 @@ def convert_pois_to_lines(poi_csv_f, template_f, out_f):
     geo = LineString([Point(0, 0), Point(100000, 100000)])
     trans_line = trans_line.set_geometry([geo], crs=crs)
 
-    pois = lines.append(trans_line)
+    pois = pd.concat([lines, trans_line])
     pois['gid'] = pois.index
 
     pois.to_file(out_f, driver="GPKG")
@@ -98,9 +98,10 @@ class CombineRasters:
     OFFSHORE_BARRIERS_FNAME = 'offshore_barriers.tif'
     COMBO_LAYER_FNAME = 'combo_{}.tif'
     LAND_MASK_FNAME = 'land_mask.tif'
-    SLOPE_CUTOFF = 15  # slopes >= this value are barriers
 
-    def __init__(self, template_f, layer_dir=''):
+    def __init__(self, template_f, layer_dir='', slope_barrier_cutoff=15,
+                 low_slope_cutoff=10, high_slope_friction=10,
+                 medium_slope_friction=5, low_slope_friction=1):
         """
         Parameters
         ----------
@@ -108,8 +109,25 @@ class CombineRasters:
             Path to template raster with CRS to use for geopackage
         layer_dir : str, optional
             Directory to prepend to barrier and friction layer filenames
+        slope_barrier_cutoff : float
+            Slopes >= this value are set to high_slope_friction and used as
+            barriers.
+        low_slope_cutoff : float
+            Slope < this value are assigned low_slope_friciton.
+        high_slope_friction : int
+            Used for >= slope_barrier_cutoff
+        medium_slope_friction : int
+            Used for < slope_barrier_cutoff and > low_slope_cutoff
+        low_slope_friction : int
+            Used for < low_slope_cutoff
         """
         self.layer_dir = layer_dir
+
+        self._slope_barrier_cutoff = slope_barrier_cutoff
+        self._low_slope_cutoff = low_slope_cutoff
+        self._high_slope_friction = high_slope_friction
+        self._medium_slope_friction = medium_slope_friction
+        self._low_slope_friction = low_slope_friction
 
         self._os_profile = self._extract_profile(template_f)
         self._os_profile['dtype'] = ('MUST SET in {}.profile()!'
@@ -184,7 +202,8 @@ class CombineRasters:
     # flake8: noqa: C901
     def build_off_shore_friction(self, friction_files, slope_file=None,
                                  bathy_file=None, bathy_depth_cutoff=None,
-                                 bathy_friction=None, save_tiff=None):
+                                 bathy_friction=None,
+                                 minimum_friction_files=None, save_tiff=None):
         """
         Combine off-shore friction layers.
 
@@ -208,40 +227,44 @@ class CombineRasters:
         bathy_friction : int, optional
             Friction value to apply to areas with a depth great than
             bath_depth_cutoff.
+        minimum_friction_files : list of tuples
+            Same format as friction_files. Specified layers will be used to
+            ensure a minimum friction is uesd. This is performed after all
+            other friction layers have been combined.
         save_tiff : bool, optional
             Save composite friction to tiff if true
         """
         logger.info('Loading friction layers')
         fr_layers = {}
 
+        # Add bathymetry to friction dict
         if bathy_file is not None:
-            print('--- calculating bathymetric friction')
+            logger.info('--- calculating bathymetric friction')
             if bathy_depth_cutoff is None or bathy_friction is None:
                 raise AttributeError('bathy_depth_cutoff and bathy_friction '
                                      'must be set if bath_file is set')
 
-            print('--- --- bathy_depth_cutoff is', bathy_depth_cutoff)
-            print('--- --- bathy_friction is', bathy_friction)
+            logger.debug('--- --- bathy_depth_cutoff is %s',
+                         bathy_depth_cutoff)
+            logger.debug('--- --- bathy_friction is %s', bathy_friction)
 
             if not os.path.exists(bathy_file):
                 bathy_file = os.path.join(self.layer_dir, bathy_file)
             if not os.path.exists(bathy_file):
                 raise FileNotFoundError(f'Unable to find {bathy_file}')
 
-            print('opening bathy')
+            logger.debug('opening bathy')
             d = rio.open(bathy_file).read(1)
             assert d.shape == self._os_shape
-            print('doing the where')
+            logger.debug('doing the where')
             d2 = np.where(d >= bathy_depth_cutoff, 0, bathy_friction)
 
-            print('as typing')
+            logger.debug('as typing')
             fr_layers[bathy_file] = d2.astype('uint16')
 
+        # Add slope to friction dict
         if slope_file is not None:
             logger.info('--- calculating slope friction')
-            HIGH_FRICTION = 10
-            MEDIUM_FRICTION = 5
-            LOW_FRICTION = 1
 
             if not os.path.exists(slope_file):
                 slope_file = os.path.join(self.layer_dir, slope_file)
@@ -251,13 +274,16 @@ class CombineRasters:
             d = rio.open(slope_file).read(1)
             d[d < 0] = 0
             assert d.shape == self._os_shape and d.min() == 0
-            # Slope >= SLOPE_CUTOFF is also included in barriers
-            d2 = np.where(d >= self.SLOPE_CUTOFF, HIGH_FRICTION, d)
-            d2 = np.where(d < self.SLOPE_CUTOFF, MEDIUM_FRICTION, d2)
-            d2 = np.where(d < 10, LOW_FRICTION, d2)
-
+            # Slope >= slope_barrier_cutoff is also included in barriers
+            d2 = np.where(d >= self._slope_barrier_cutoff,
+                          self._high_slope_friction, d)
+            d2 = np.where(d < self._slope_barrier_cutoff,
+                          self._medium_slope_friction, d2)
+            d2 = np.where(d < self._low_slope_cutoff, self._low_slope_friction,
+                          d2)
             fr_layers[slope_file] = d2.astype('uint16')
 
+        # Add all other friction files to friction dict
         for fr_dict, f in friction_files:
             d = None
             for k, val in fr_dict.items():
@@ -271,6 +297,21 @@ class CombineRasters:
 
         logger.info('Combining off-shore friction layers')
         self._os_friction = reduce(_sum, fr_layers.values()).astype('uint16')
+
+        # Set minimum friction if used
+        if minimum_friction_files is not None:
+            for fr_dict, f in minimum_friction_files:
+                d = None
+                for k, val in fr_dict.items():
+                    logger.info('--- setting raster value {} to friction '
+                                '{} for {}'.format(k, val, f))
+                    tmp_d = self._load_layer(f, k) * val
+                    d = tmp_d if d is None else np.maximum(d, tmp_d)
+
+                assert d.shape == self._os_shape and d.min() >= 0
+
+                self._os_friction = np.maximum(d.astype('uint16'),
+                                            self._os_friction)
 
         if save_tiff:
             logger.info('Saving combined friction to tiff')
@@ -319,8 +360,8 @@ class CombineRasters:
 
             d = rio.open(slope_file).read(1)
             assert d.shape == self._os_shape
-            d2 = np.where(d < self.SLOPE_CUTOFF, 0, d)
-            d2 = np.where(d >= self.SLOPE_CUTOFF, 1, d2)
+            d2 = np.where(d < self._slope_barrier_cutoff, 0, d)
+            d2 = np.where(d >= self._slope_barrier_cutoff, 1, d2)
 
             barrier_layers[slope_file] = d2.astype('uint8')
 

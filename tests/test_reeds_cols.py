@@ -73,8 +73,8 @@ def test_add_extra_data():
         with open(out_json_fp, "w") as fh:
             json.dump({"a value": 42, "hh": 100}, fh)
 
-        extra_data = [{"data_fp": h5_fp, "dsets": ["cf_mean"]},
-                      {"data_fp": out_json_fp, "dsets": ["a value", "hh"]}]
+        extra_data = [{"source": h5_fp, "dsets": ["cf_mean"]},
+                      {"source": out_json_fp, "dsets": ["a value", "hh"]}]
 
         test_df = add_extra_data(test_df, extra_data, merge_col="gid")
 
@@ -100,9 +100,9 @@ def test_add_reeds_columns():
         with open(out_json_fp, "w") as fh:
             json.dump({"a value": 42, "hh": 100}, fh)
 
-        extra_data = [{"data_fp": h5_fp, "dsets": ["cf_mean"]},
-                      {"data_fp": out_json_fp, "dsets": ["a value", "hh"]},
-                      {"data_fp": "dne.den_ext", "dsets": ["DNE"]}]
+        extra_data = [{"source": h5_fp, "dsets": ["cf_mean"]},
+                      {"source": out_json_fp, "dsets": ["a value", "hh"]},
+                      {"source": "dne.den_ext", "dsets": ["DNE"]}]
 
         out_fp = add_reeds_columns(sc_fp, capacity_col="capacity_ac",
                                    extra_data=extra_data, merge_col="gid",

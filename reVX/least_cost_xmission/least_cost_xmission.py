@@ -34,7 +34,7 @@ class LeastCostXmission(LeastCostPaths):
     Compute Least Cost tie-line paths and full transmission cap cost
     for all possible connections to all supply curve points
     """
-    REQUIRED_LAYRES = ['transmission_barrier', 'ISO_regions']
+    REQUIRED_LAYERS = ['transmission_barrier', 'ISO_regions']
 
     def __init__(self, cost_fpath, features_fpath, resolution=128,
                  xmission_config=None, min_line_length=0):
