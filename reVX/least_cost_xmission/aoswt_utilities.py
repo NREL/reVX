@@ -303,8 +303,8 @@ class CombineRasters:
             for fr_dict, f in minimum_friction_files:
                 d = None
                 for k, val in fr_dict.items():
-                    logger.info('--- setting raster value {} to friction '
-                                '{} for {}'.format(k, val, f))
+                    logger.info('--- setting raster value {} to minimum '
++                                'friction {} for {}'.format(k, val, f))
                     tmp_d = self._load_layer(f, k) * val
                     d = tmp_d if d is None else np.maximum(d, tmp_d)
 
