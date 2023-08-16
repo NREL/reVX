@@ -235,9 +235,9 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
 @click.option('--drop', '-d', default=None, type=STR, multiple=True,
               help=('Transmission feature category types to drop from '
                     'results. Options: {}'.format(", ".join(TRANS_CAT_TYPES))))
-@click.option('--out-dir', '-od', type=click.Path(exists=True),
+@click.option('--out-dir', '-od', type=click.Path(),
               default='./out', show_default=True,
-              help='Output directory for output files. Path must exist.')
+              help='Output directory for output files.')
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help='Simplify path geometries by a value before exporting.')
