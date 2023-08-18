@@ -19,7 +19,6 @@ from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties
 
-from reV.supply_curve.extent import SupplyCurveExtent
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
@@ -88,7 +87,7 @@ def from_config(ctx, config, verbose):
         return
 
     if config.execution_control.nodes == 1:
-        eagle(config)
+        eagle(config, config.sc_point_gids)
         return
 
     # Split gids over mulitple SLURM jobs
@@ -97,7 +96,7 @@ def from_config(ctx, config, verbose):
                 .format(config.execution_control.nodes))
     for i in range(config.execution_control.nodes):
         config.name = '{}_{}'.format(name, i)
-        eagle(config, start_index=i)
+        eagle(config, config.sc_point_gids[i::config.execution_control.nodes])
 
 
 @main.command()
@@ -128,12 +127,8 @@ def from_config(ctx, config, verbose):
 @click.option('--min_line_length', '-mll', type=int,
               show_default=True, default=0,
               help=("Minimum Tie-line length."))
-@click.option('--sc_point_start_index', '-start', type=int,
-              show_default=True, default=0,
-              help=("Start index of supply curve points to run."))
-@click.option('--sc_point_step_index', '-step', type=int,
-              show_default=True, default=1,
-              help=("Step index of supply curve points to run."))
+@click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
+              default=None, help=("List of sc_point_gids to connect to"))
 @click.option('--nn_sinks', '-nn', type=int,
               show_default=True, default=2,
               help=("Number of nearest neighbor sinks to use for clipping "
@@ -152,7 +147,7 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
                     "serial, if None use all available cores"))
-@click.option('--out_dir', '-o', type=STR, default='./',
+@click.option('--out_dir', '-o', type=STR, default='./out',
               show_default=True,
               help='Directory to save least cost xmission values to.')
 @click.option('--log_dir', '-log', default=None, type=STR,
@@ -166,6 +161,10 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Radius to clip costs raster to in pixels This overrides "
                     "--nn_sinks if set."))
+@click.option('--expand_radius', '-er', is_flag=True,
+              help='Flag to expand radius until at least one transmission '
+                   'feature is included for connection. Has no effect if '
+                   'radius input is ``None``.')
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help=("Simplify path geometries by a value before writing to "
@@ -173,9 +172,9 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
           capacity_class, resolution, xmission_config, min_line_length,
-          sc_point_start_index, sc_point_step_index, nn_sinks,
-          clipping_buffer, barrier_mult, state_connections, max_workers,
-          out_dir, log_dir, verbose, save_paths, radius, simplify_geo):
+          sc_point_gids, nn_sinks, clipping_buffer, barrier_mult,
+          state_connections, max_workers, out_dir, log_dir, verbose,
+          save_paths, radius, expand_radius, simplify_geo):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -189,9 +188,6 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
     create_dirs(out_dir)
     logger.info('Computing Least Cost Xmission connections and writing them {}'
                 .format(out_dir))
-    sce = SupplyCurveExtent(cost_fpath, resolution=resolution)
-    sc_point_gids = list(sce.points.index.values)
-    sc_point_gids = sc_point_gids[sc_point_start_index::sc_point_step_index]
     kwargs = {"resolution": resolution,
               "xmission_config": xmission_config,
               "min_line_length": min_line_length,
@@ -201,7 +197,8 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
               "max_workers": max_workers,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
-              "radius": radius}
+              "radius": radius,
+              "expand_radius": expand_radius}
     if balancing_areas_fpath is not None:
         kwargs["allow_connections_within_states"] = state_connections
         least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
@@ -231,21 +228,24 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
 @click.option('--split-to-geojson', '-s', is_flag=True,
               help='After merging GeoPackages, split into GeoJSON by POI name'
               '.')
+@click.option('--suppress-combined-file', is_flag=True,
+              help='Don\'t create combined layer.')
 @click.option('--out-file', '-of', default=None, type=STR,
-              help='Name for output GeoPackage file.')
+              help='Name for output GeoPackage/CSV file.')
 @click.option('--drop', '-d', default=None, type=STR, multiple=True,
               help=('Transmission feature category types to drop from '
                     'results. Options: {}'.format(", ".join(TRANS_CAT_TYPES))))
-@click.option('--out-dir', '-od', type=click.Path(exists=True),
-              default='.', show_default=True,
-              help='Output directory for output files. Path must exist.')
+@click.option('--out-dir', '-od', type=click.Path(),
+              default='./out', show_default=True,
+              help='Output directory for output files.')
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help='Simplify path geometries by a value before exporting.')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
-def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
-                 simplify_geo, files):
+# flake8: noqa: C901
+def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
+                 out_dir, drop, simplify_geo, files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON
     """
@@ -253,13 +253,8 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
     init_logger('reVX', log_level=log_level)
 
     if len(files) == 0:
-        logger.info('No files passed to be merged')
+        logger.error('No files passed to be merged')
         return
-
-    if len(files) == 1:
-        files = sorted(Path(out_dir).glob(files[0]))
-
-    logger.debug('Merging {}'.format(files))
 
     if drop:
         for cat in drop:
@@ -268,10 +263,13 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
                             .format(TRANS_CAT_TYPES, drop))
                 return
 
-    logger.info('Loading: {}'.format(", ".join(files)))
     warnings.filterwarnings('ignore', category=RuntimeWarning)
-    df = pd.concat([gpd.read_file(f) if "gpkg" in f else pd.read_csv(f)
-                    for f in files])
+    dfs = []
+    for i, file in enumerate(files, start=1):
+        logger.info('Loading %s (%i/%i)', file, i, len(files))
+        df_tmp = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
+        dfs.append(df_tmp)
+    df = pd.concat(dfs)
     warnings.filterwarnings('default', category=RuntimeWarning)
 
     if drop:
@@ -293,26 +291,30 @@ def merge_output(ctx, split_to_geojson, out_file, out_dir, drop,  # noqa
     if all(col in df for col in ["gid", "reinforcement_cost_per_mw"]):
         df = min_reinforcement_costs(df)
 
-    if not split_to_geojson:
+    create_dirs(out_dir)
+
+    # Create combined output file
+    if not suppress_combined_file:
         out_file = ('combo_{}'.format(files[0])
                     if out_file is None else out_file)
         out_file = os.path.join(out_dir, out_file)
-        logger.info('Saving to {}'.format(out_file))
+        logger.info('Saving all combined paths to %s', out_file)
         if "gpkg" in out_file:
             df.to_file(out_file, driver="GPKG")
         else:
             df.to_csv(out_file, index=False)
-        return
 
     # Split out put in to GeoJSON by POI name
-    for poi in set(df['POI Name']):
-        out_file = os.path.join(out_dir,
-                                "{}_paths.geojson"
-                                .format(poi.replace(' ', '_')))
-        paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
-        logger.info('Writing {} paths for {} to {}'
-                    .format(len(paths), poi, out_file))
-        paths.to_file(out_file, driver="GeoJSON")
+    if split_to_geojson:
+        pois = set(df['POI Name'])
+        for i, poi in enumerate(pois, start=1):
+            out_file = os.path.join(out_dir,
+                                    "{}_paths.geojson"
+                                    .format(poi.replace(' ', '_')))
+            paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
+            logger.info('Writing {} paths for {} to {} ({}/{})'
+                        .format(len(paths), poi, out_file, i, len(pois)))
+            paths.to_file(out_file, driver="GeoJSON")
 
 
 @main.command()
@@ -360,7 +362,7 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
         costs.to_csv(out_file, index=False)
 
 
-def get_node_cmd(config, start_index=0):
+def get_node_cmd(config, gids):
     """
     Get the node CLI call for Least Cost Xmission
 
@@ -368,6 +370,8 @@ def get_node_cmd(config, start_index=0):
     ----------
     config : reVX.config.least_cost_xmission.LeastCostXmissionConfig
         Least Cost Xmission config object.
+    gids : list
+        List of SC point GID values to submit to local command.
 
     Returns
     -------
@@ -384,8 +388,7 @@ def get_node_cmd(config, start_index=0):
             '-res {}'.format(SLURM.s(config.resolution)),
             '-xcfg {}'.format(SLURM.s(config.xmission_config)),
             '-mll {}'.format(SLURM.s(config.min_line_length)),
-            '-start {}'.format(SLURM.s(start_index)),
-            '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
+            '-gids {}'.format(SLURM.s(gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
@@ -400,6 +403,8 @@ def get_node_cmd(config, start_index=0):
         args.append('--save_paths')
     if config.radius:
         args.append('-rad {}'.format(config.radius))
+    if config.expand_radius:
+        args.append('-er')
     if config.simplify_geo:
         args.append('--simplify-geo {}'.format(config.simplify_geo))
 
@@ -433,8 +438,7 @@ def run_local(ctx, config):
                resolution=config.resolution,
                xmission_config=config.xmission_config,
                min_line_length=config.min_line_length,
-               sc_point_start_index=0,
-               sc_point_step_index=1,
+               sc_point_gids=config.sc_point_gids,
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
                barrier_mult=config.barrier_mult,
@@ -444,12 +448,13 @@ def run_local(ctx, config):
                log_dir=config.log_directory,
                verbose=config.log_level,
                radius=config.radius,
+               expand_radius=config.expand_radius,
                save_paths=config.save_paths,
                simplify_geo=config.simplify_geo,
                )
 
 
-def eagle(config, start_index=0):
+def eagle(config, gids):
     """
     Run Least Cost Xmission on Eagle HPC.
 
@@ -460,7 +465,7 @@ def eagle(config, start_index=0):
     """
     init_logger('rex', log_level='DEBUG')
 
-    cmd = get_node_cmd(config, start_index)
+    cmd = get_node_cmd(config, gids)
     name = config.name
     log_dir = config.log_directory
     stdout_path = os.path.join(log_dir, 'stdout/')
