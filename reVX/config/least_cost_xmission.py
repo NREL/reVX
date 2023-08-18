@@ -4,6 +4,7 @@ reVX Least Cost Xmission Configurations
 """
 import os
 
+from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig
 
 
@@ -138,6 +139,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('radius', None)
 
     @property
+    def expand_radius(self):
+        """
+        Optional flag to expand radius until at least one transmission
+        feature is available for connection.
+        """
+        return self.get('expand_radius', True)
+
+    @property
     def simplify_geo(self):
         """
         Optional float to use to simplify path geometries before saving to
@@ -229,6 +238,26 @@ class LeastCostXmissionConfig(AnalysisConfig):
         substations outside their BA but within their own state.
         """
         return self.get("allow_connections_within_states", False)
+
+    @property
+    def sc_point_gids(self):
+        """
+        List of sc_point_gids to compute Least Cost Xmission for
+        """
+        if self._sc_point_gids is None:
+            sc_point_gids = self.get('sc_point_gids')
+            if sc_point_gids is None:
+                sce = SupplyCurveExtent(self.cost_fpath,
+                                        resolution=self.resolution)
+                sc_point_gids = list(sce.points.index.values)
+
+            if not isinstance(sc_point_gids, list):
+                raise ValueError('sc_point_gids must be a list, got a '
+                                 '{} ({})'
+                                 .format(type(sc_point_gids), sc_point_gids))
+            self._sc_point_gids = sc_point_gids
+
+        return self._sc_point_gids
 
 
 class LeastCostPathsConfig(AnalysisConfig):
