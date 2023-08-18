@@ -15,7 +15,7 @@ Determine least cost transmission paths from possible wind and solar farms (supp
 	* `TransCapCosts` - Determine total transmission cost including line cost and any substation construction or improvements.
 * [`least_cost_xmission.py`](least_cost_xmission.py) - Calculate costs from SC points to transmission features. By default, all SC points are used or a subset may be specified by GID.
 * [`least_cost_paths.py`](least_cost_paths.py) - Parent class for `least_cost_xmission.py`.
-* [`offshore_utilities.py`](offshore_utilities.py) - Utility functions and classes for preparing friction, barrier, and transmission features for offshore analyses. Example Jupyter notebooks for these functions can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
+* [`aoswt_utilities.py`](aoswt_utilities.py) - Utility functions and classes for preparing friction, barrier, and transmission features for the AOSWT analysis. Example Jupyter notebooks for these functions can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
 
 <br>
 
@@ -207,8 +207,6 @@ The resulting tables can be passed directly to `reV`, which will automatically d
 
 
 # Offshore Least Cost Paths
-## Nomenclature Note
-The offshore least cost paths analysis was initially performed for the Atlantic OffShore Wind Transmission (AOSWT). Some references to the AOSWT acronym still remain.
 
 ## Offshore Workflow
 General steps to run an offshore analysis:
@@ -226,7 +224,7 @@ General steps to run an offshore analysis:
 The onshore point of interconnections (POIs) have typically been provided in a
 CSV file. These must be converted to short lines in a GeoPackage to work with
 the LCP code. Note that the POIs must also be connected to a transmission line.
-The `convert_pois_to_lines()` function in `offshore_utilities.py` will perform all
+The `convert_pois_to_lines()` function in `aoswt_utilities.py` will perform all
 necessary operations to convert the CSV file to a properly configured
 GeoPackage. An example notebook is in this repository at
 `examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`.
@@ -237,8 +235,8 @@ command.
 ### Build friction and barriers layer
 An example Jupyter notebook for building the friction and barrier layers can be found in the `examples/least_cost_paths` directory of this repository.
 
-### Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage
-This example uses `contextily` to add a base map to the plot, but is not required. Offshore needs an aggregation "resolution" of 118.
+### Locally run a AOSWT analysis for a single SC point, plot the results, and save to a GeoPackage
+This example uses `contextily` to add a base map to the plot, but is not required. AOSWT needs an aggregation "resolution" of 118.
 
 ```
 import contextily as cx

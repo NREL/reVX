@@ -82,7 +82,7 @@ def convert_pois_to_lines(poi_csv_f: str, template_f: str, out_f: str):
     geo = LineString([Point(0, 0), Point(100000, 100000)])
     trans_line = trans_line.set_geometry([geo], crs=crs)
 
-    pois: gpd.GeoDataFrame = pd.concat([lines, trans_line])
+    pois = pd.concat([lines, trans_line])
     pois['gid'] = pois.index
 
     pois.to_file(out_f, driver="GPKG")
@@ -253,12 +253,13 @@ class CombineRasters:
             if not os.path.exists(bathy_file):
                 raise FileNotFoundError(f'Unable to find {bathy_file}')
 
-            logger.debug('--- --- opening bathy data')
+            logger.debug('opening bathy')
             d = rio.open(bathy_file).read(1)
             assert d.shape == self._os_shape
-            logger.debug('--- --- assigning bathy friction')
+            logger.debug('doing the where')
             d2 = np.where(d >= bathy_depth_cutoff, 0, bathy_friction)
 
+            logger.debug('as typing')
             fr_layers[bathy_file] = d2.astype('uint16')
 
         # Add slope to friction dict
@@ -294,7 +295,7 @@ class CombineRasters:
             assert d.shape == self._os_shape and d.min() == 0
             fr_layers[f] = d.astype('uint16')
 
-        logger.info('--- combining all offshore friction layers')
+        logger.info('Combining off-shore friction layers')
         self._os_friction = reduce(_sum, fr_layers.values()).astype('uint16')
 
         # Set minimum friction if used
