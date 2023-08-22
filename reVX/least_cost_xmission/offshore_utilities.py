@@ -1,5 +1,5 @@
 """
-Various utility functions to prep data for AOSWT processing.
+Various utility functions to prep data for offshore least-cost paths analysis.
 
 Mike Bannister 5/2022
 """
@@ -400,7 +400,7 @@ class CombineRasters:
         logger.info('Done building barrier layers')
 
     def merge_os_and_land_friction(self, land_h5, land_cost_layer,
-                                   aoswt_h5, os_friction_layer=None,
+                                   offshore_h5, os_friction_layer=None,
                                    os_friction_f=None, land_cost_mult=1,
                                    save_tiff=False):
         """
@@ -414,8 +414,8 @@ class CombineRasters:
             Path to h5 file w/ land barrier
         land_cost_layer : str
             Name of land barrier layer in h5 to use
-        aoswt_h5 : str
-            Path to h5 file to save combined barriers in
+        offshore_h5 : str
+            Path to h5 file to save combined friction in
         os_friction_layer : str | None, optional
             Name for friction layer in off-shore h5. Use land_cost_layer
             if None.
@@ -450,14 +450,14 @@ class CombineRasters:
             os_friction_layer = land_cost_layer
 
         self._merge_os_and_land_layers(os_friction, land_h5, land_cost_layer,
-                                       aoswt_h5, os_friction_layer,
+                                       offshore_h5, os_friction_layer,
                                        layer_name='friction',
                                        land_mult=land_cost_mult,
                                        save_tiff=save_tiff,
                                        dtype='float32')
 
     def merge_os_and_land_barriers(self, land_h5, land_barrier_layer,
-                                   aoswt_h5, os_barrier_layer=None,
+                                   offshore_h5, os_barrier_layer=None,
                                    os_barriers_f=None, save_tiff=False):
         """
         Combine off-shore and land barrier layers and save to h5
@@ -468,7 +468,7 @@ class CombineRasters:
             Path to h5 file w/ land barrier
         land_barrier_layer : str
             Name of land barrier layer in h5 to use
-        aoswt_h5 : str
+        offshore_h5 : str
             Path to h5 file to save combined barriers in
         os_barrier_layer : str | None
             Name for barrier layer in off-shore h5. Use land_barrier_layer
@@ -502,11 +502,11 @@ class CombineRasters:
             os_barrier_layer = land_barrier_layer
 
         self._merge_os_and_land_layers(os_barriers, land_h5,
-                                       land_barrier_layer, aoswt_h5,
+                                       land_barrier_layer, offshore_h5,
                                        os_barrier_layer, layer_name='barriers',
                                        save_tiff=save_tiff)
 
-    def _merge_os_and_land_layers(self, os_data, land_h5, land_layer, aoswt_h5,
+    def _merge_os_and_land_layers(self, os_data, land_h5, land_layer, offshore_h5,
                                   os_layer, layer_name='data', land_mult=1,
                                   dtype='uint8', save_tiff=False,
                                   init_dest=-1):
@@ -521,7 +521,7 @@ class CombineRasters:
             Path to h5 file w/ land layer
         land_layer : str
             Name of land layer in h5 to use
-        aoswt_h5 : str
+        offshore_h5 : str
             Path to h5 file to save combined layer in
         os_layer : str
             Name for layer in off-shore h5.
@@ -576,33 +576,33 @@ class CombineRasters:
         setattr(self, '_combo_{}'.format(layer_name), combo_data)
 
         logger.info('Writing combined data to "{}" in {}'
-                    .format(os_layer, aoswt_h5))
+                    .format(os_layer, offshore_h5))
         combo_data = combo_data[np.newaxis, ...]
-        with h5py.File(aoswt_h5, 'a') as f:
+        with h5py.File(offshore_h5, 'a') as f:
             if os_layer in f.keys():
                 dset = f[os_layer]
                 dset[...] = combo_data
             else:
                 f.create_dataset(os_layer, data=combo_data)
 
-    def create_aoswt_h5(self, aoswt_ex_h5, aoswt_h5, overwrite=False):
+    def create_offshore_h5(self, ex_h5, offshore_h5, overwrite=False):
         """
-        Create a new h5 file to save AOSWT data in.
+        Create a new h5 file to save offshore data in.
 
         Parameters
         ----------
-        aoswt_ex_h5 : str
+        ex_h5 : str
             Path to existing h5 file w/ off-shore shape
-        aoswt_h5 : str
+        offshore_h5 : str
             Path for new h5 file to create
         overwrite : bool, optional
             Overwrite existing h5 file if True
 
         """
-        if os.path.exists(aoswt_h5) and not overwrite:
-            raise AttributeError('File {} exits'.format(aoswt_h5))
+        if os.path.exists(offshore_h5) and not overwrite:
+            raise AttributeError('File {} exits'.format(offshore_h5))
 
-        with rex.Resource(aoswt_ex_h5) as res:
+        with rex.Resource(ex_h5) as res:
             lats = res['latitude']
             lngs = res['longitude']
             global_attrs = res.global_attrs
@@ -610,7 +610,7 @@ class CombineRasters:
         assert lats.shape == self._os_shape
         regions = np.ones(self._os_shape, dtype='uint8')
 
-        with h5py.File(aoswt_h5, 'w') as f:
+        with h5py.File(offshore_h5, 'w') as f:
             f.create_dataset('longitude', data=lngs)
             f.create_dataset('latitude', data=lats)
             f.create_dataset('ISO_regions', data=regions[np.newaxis, ...],
