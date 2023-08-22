@@ -10,9 +10,12 @@ To generate the docs yourself, you'll need the appropriate package:
 ```
 conda install sphinx
 conda install sphinx_rtd_theme
+```
 
-pip install ghp-import
-pip install sphinx-click
+Also install the documentation specific Python packages:
+
+```
+pip install -r requirements.txt
 ```
 
 ## Add any new CLI docs
