@@ -135,8 +135,8 @@ class CombineRasters:
         self._os_shape = (self.profile()['height'],
                           self.profile()['width'])
 
-        self._os_barriers = None  # (uint8) off-shore barrier raster
-        self._os_friction = None  # (float32) off-shore friction raster
+        self._os_barriers = None  # (uint8) offshore barrier raster
+        self._os_friction = None  # (float32) offshore friction raster
         self._land_mask = None  # (bool) land mask raster, true indicates land
 
     def create_land_mask(self, mask_shp_f, save_tiff=False, filename=None,
@@ -205,7 +205,7 @@ class CombineRasters:
                                  bathy_friction=None,
                                  minimum_friction_files=None, save_tiff=None):
         """
-        Combine off-shore friction layers.
+        Combine offshore friction layers.
 
         friction_files : list of tuples
             Friction layers to combine and raster value to friction dict.
@@ -295,7 +295,7 @@ class CombineRasters:
             assert d.shape == self._os_shape and d.min() == 0
             fr_layers[f] = d.astype('uint16')
 
-        logger.info('Combining off-shore friction layers')
+        logger.info('Combining offshore friction layers')
         self._os_friction = reduce(_sum, fr_layers.values()).astype('uint16')
 
         # Set minimum friction if used
@@ -322,7 +322,7 @@ class CombineRasters:
     def build_off_shore_barriers(self, barrier_files, fi_files,
                                  slope_file=None, save_tiff=False):
         """
-        Combine off-shore barrier layers
+        Combine offshore barrier layers
 
         Parameters
         ----------
@@ -366,7 +366,7 @@ class CombineRasters:
             barrier_layers[slope_file] = d2.astype('uint8')
 
         # Add all the exclusion layers together and normalize
-        logger.info('Building composite off-shore barrier layers')
+        logger.info('Building composite offshore barrier layers')
         comp_bar = reduce(_sum, barrier_layers.values())
         comp_bar[comp_bar >= 1] = 1
 
@@ -404,8 +404,8 @@ class CombineRasters:
                                    os_friction_f=None, land_cost_mult=1,
                                    save_tiff=False):
         """
-        Combine off-shore friction and land cost layers and save to h5. For
-        land it's called cost for legacy reasons, and for off-shore it's called
+        Combine offshore friction and land cost layers and save to h5. For
+        land it's called cost for legacy reasons, and for offshore it's called
         friction, but it's really the same thing.
 
         Parameters
@@ -417,7 +417,7 @@ class CombineRasters:
         offshore_h5 : str
             Path to h5 file to save combined friction in
         os_friction_layer : str | None, optional
-            Name for friction layer in off-shore h5. Use land_cost_layer
+            Name for friction layer in offshore h5. Use land_cost_layer
             if None.
         os_friction_f : str | None, optional
             Path to cached offshore friction raster. If None, will try to pull
@@ -434,14 +434,14 @@ class CombineRasters:
             if os_friction_f is None:
                 os_friction_f = self.OFFSHORE_FRICTION_FNAME
             if not os.path.exists(os_friction_f):
-                msg = ('Off-shore friction has not been calculated and cached'
+                msg = ('Offshore friction has not been calculated and cached'
                        ' friction was not found at {}. Please run {}.'
                        'build_off_shore_friction() first or pass a valid '
                        'filename to os_friction_f'
                        .format(os_friction_f, self.__class__.__name__))
                 raise AttributeError(msg)
 
-            logger.info('Loading off-shore friction from {}'
+            logger.info('Loading offshore friction from {}'
                         .format(os_friction_f))
             with rio.open(os_friction_f) as ras:
                 os_friction = ras.read(1)
@@ -460,7 +460,7 @@ class CombineRasters:
                                    offshore_h5, os_barrier_layer=None,
                                    os_barriers_f=None, save_tiff=False):
         """
-        Combine off-shore and land barrier layers and save to h5
+        Combine offshore and land barrier layers and save to h5
 
         Parameters
         ----------
@@ -471,7 +471,7 @@ class CombineRasters:
         offshore_h5 : str
             Path to h5 file to save combined barriers in
         os_barrier_layer : str | None
-            Name for barrier layer in off-shore h5. Use land_barrier_layer
+            Name for barrier layer in offshore h5. Use land_barrier_layer
             if None.
         os_barriers_f : str | None, optional
             Path to offshore barrier raster. If None, will try to pull data
@@ -486,14 +486,14 @@ class CombineRasters:
             if os_barriers_f is None:
                 os_barriers_f = self.OFFSHORE_BARRIERS_FNAME
             if not os.path.exists(os_barriers_f):
-                msg = ('Off-shore barriers have not been calculated and cached'
+                msg = ('Offshore barriers have not been calculated and cached'
                        ' barriers were not found at {}. Please run {}.'
                        'build_off_shore_barriers() first or pass a valid '
                        'filename to os_barriers_f'
                        .format(os_barriers_f, self.__class__.__name__))
                 raise AttributeError(msg)
 
-            logger.info('Loading off-shore barriers from {}'
+            logger.info('Loading offshore barriers from {}'
                         .format(os_barriers_f))
             with rio.open(os_barriers_f) as ras:
                 os_barriers = ras.read(1)
@@ -506,17 +506,17 @@ class CombineRasters:
                                        os_barrier_layer, layer_name='barriers',
                                        save_tiff=save_tiff)
 
-    def _merge_os_and_land_layers(self, os_data, land_h5, land_layer, offshore_h5,
-                                  os_layer, layer_name='data', land_mult=1,
-                                  dtype='uint8', save_tiff=False,
+    def _merge_os_and_land_layers(self, os_data, land_h5, land_layer,
+                                  offshore_h5, os_layer, layer_name='data',
+                                  land_mult=1, dtype='uint8', save_tiff=False,
                                   init_dest=-1):
         """
-        Combine off-shore and land layers and save to h5
+        Combine offshore and land layers and save to h5
 
         Parameters
         ----------
         os_data : np.ndarray
-            Off-shore data to merge with land data and save to h5
+            Offshore data to merge with land data and save to h5
         land_h5 : str
             Path to h5 file w/ land layer
         land_layer : str
@@ -524,7 +524,7 @@ class CombineRasters:
         offshore_h5 : str
             Path to h5 file to save combined layer in
         os_layer : str
-            Name for layer in off-shore h5.
+            Name for layer in offshore h5.
         layer_name : str, optional
             Layer name for printing status, saving to tiff, and storing
             combined data on self
@@ -545,7 +545,7 @@ class CombineRasters:
             old_land_profile = json.loads(profile_json)
             old_land_data = res[land_layer][0]
 
-        # Reproject land barriers to new off-shore projection
+        # Reproject land barriers to new offshore projection
         logger.info('Reprojecting land {}'.format(layer_name))
         land_data = np.ones(self._os_shape, dtype=dtype)
         reproject(old_land_data,
@@ -561,8 +561,8 @@ class CombineRasters:
         assert os_data.shape == land_data.shape
         setattr(self, '_land_{}'.format(layer_name), land_data)
 
-        # Combine the land and off-shore data
-        logger.info('Combining land and off-shore {}'.format(layer_name))
+        # Combine the land and offshore data
+        logger.info('Combining land and offshore {}'.format(layer_name))
         combo_data = land_data * land_mult
         # pylint: disable=invalid-unary-operand-type
         combo_data[~self.land_mask] = os_data[~self.land_mask]
@@ -592,7 +592,7 @@ class CombineRasters:
         Parameters
         ----------
         ex_h5 : str
-            Path to existing h5 file w/ off-shore shape
+            Path to existing h5 file w/ offshore shape
         offshore_h5 : str
             Path for new h5 file to create
         overwrite : bool, optional
