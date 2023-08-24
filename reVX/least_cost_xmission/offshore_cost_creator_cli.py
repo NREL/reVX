@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=all
 """
-Xmission Cost Creator Command Line Interface
+Offshore Xmission Friction and Barrier Creator Command Line Interface
 """
-import os
 import sys
 import click
 import logging
@@ -11,13 +10,8 @@ from typing import Dict, Union
 
 from rex.utilities.loggers import init_logger
 
-from reVX import __version__
 from reVX.least_cost_xmission.offshore_utilities import CombineRasters
-from reVX.config.least_cost_xmission import OffshoreCreatorConfig,\
-      BarrierFiles, FrictionFiles
-
-KwargsDict = Dict[str,
-                  Union[str, int, float, bool, BarrierFiles, FrictionFiles]]
+from reVX.config.least_cost_xmission import OffshoreCreatorConfig
 
 logger = logging.getLogger(__name__)
 init_logger('reVX', log_level="DEBUG")
@@ -40,7 +34,7 @@ def from_config(config_fpath: str, create_h5: bool):
                    'disabled with --dont-create-h5', err=True)
         sys.exit(1)
 
-    kwargs: KwargsDict= {}
+    kwargs: Dict[str, Union[str, int, float]] = {}
     if config.layer_dir is not None:
         kwargs['layer_dir'] = config.layer_dir
     if config.slope_barrier_cutoff is not None:
@@ -55,28 +49,19 @@ def from_config(config_fpath: str, create_h5: bool):
         kwargs['low_slope_friction'] = config.low_slope_friction
     cr = CombineRasters(config.template_raster_fpath, **kwargs)
 
-    kwargs = {}
-    if config.slope_fpath is not None:
-        kwargs['slope_file'] = config.slope_fpath
-    if config.save_tiff is not None:
-        kwargs['save_tiff'] = config.save_tiff
     cr.build_off_shore_barriers(config.barrier_files,
-                                config.forced_inclusion_files, **kwargs)
+                                config.forced_inclusion_files,
+                                slope_file=config.slope_fpath,
+                                save_tiff=config.save_tiff)
 
-    kwargs = {}
-    if config.slope_fpath is not None:
-        kwargs['slope_file'] = config.slope_fpath
-    if config.save_tiff is not None:
-        kwargs['save_tiff'] = config.save_tiff
-    if config.bathy_fpath is not None:
-        kwargs['bathy_file'] = config.bathy_fpath
-    if config.bathy_depth_cutoff is not None:
-        kwargs['bathy_depth_cutoff'] = config.bathy_depth_cutoff
-    if config.bathy_friction is not None:
-        kwargs['bathy_friction'] = config.bathy_friction
-    if config.minimum_friction_files is not None:
-        kwargs['minimum_friction_files'] = config.minimum_friction_files
-    cr.build_off_shore_friction(config.friction_files, **kwargs)
+    cr.build_off_shore_friction(config.friction_files,
+                                slope_file=config.slope_fpath,
+                                save_tiff=config.save_tiff,
+                                bathy_file=config.bathy_fpath,
+                                bathy_depth_cutoff=config.bathy_depth_cutoff,
+                                bathy_friction=config.bathy_friction,
+                                minimum_friction_files=\
+                                    config.minimum_friction_files)
 
     if create_h5:
         cr.create_offshore_h5(config.ex_offshore_h5_fpath,
@@ -85,21 +70,18 @@ def from_config(config_fpath: str, create_h5: bool):
 
     cr.load_land_mask(mask_f=config.land_mask_fpath)
 
-    kwargs = {}
-    if config.save_tiff is not None:
-        kwargs['save_tiff'] = config.save_tiff
     cr.merge_os_and_land_barriers(config.land_h5_fpath,
                                   config.land_barrier_layer,
-                                  config.offshore_h5_fpath, **kwargs)
+                                  config.offshore_h5_fpath,
+                                  save_tiff=config.save_tiff)
 
     kwargs = {}
-    if config.save_tiff is not None:
-        kwargs['save_tiff'] = config.save_tiff
     if config.land_cost_mult is not None:
         kwargs['land_cost_mult'] = config.land_cost_mult
     cr.merge_os_and_land_friction(config.land_h5_fpath,
                                   config.land_costs_layer,
                                   config.offshore_h5_fpath,
+                                  save_tiff=config.save_tiff,
                                   **kwargs)
 
 if __name__ == '__main__':
