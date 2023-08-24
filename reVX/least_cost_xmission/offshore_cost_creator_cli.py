@@ -8,26 +8,59 @@ import click
 import logging
 from typing import Dict, Union
 
-from rex.utilities.loggers import init_logger
+from rex.utilities.loggers import init_logger, LOG_LEVEL
 
+from reVX import __version__
 from reVX.least_cost_xmission.offshore_utilities import CombineRasters
 from reVX.config.least_cost_xmission import OffshoreCreatorConfig
 
 logger = logging.getLogger(__name__)
-init_logger('reVX', log_level="DEBUG")
-
-# TODO - create land mask command
 
 
-@click.command
+@click.group()
+@click.version_option(version=__version__)
+@click.option('--log-level', type=click.Choice(LOG_LEVEL.keys()),
+              default='INFO', help='Logging level.')
+def main(log_level):
+    """
+    Offshore Cost Creator Command Line Interface
+    """
+    init_logger('reVX', log_level=log_level)
+
+
+@main.command
+@click.option('--vector', '-v', required=True, type=click.Path(exists=True),
+              help='Vector land mask to rasterize.')
+@click.option('--template-raster', '-t', required=True,
+              type=click.Path(exists=True),
+              help='Raster to use as a template for rasterizing the land mask')
+@click.option('--out-file', '-o', type=click.Path(),
+              help='Filename to use for rasterized land mask.' )
+@click.option('--buffer', '-b', type=int,
+              help='Buffer vector features before rasterizing.' )
+def rasterize_land_mask(vector: str, template_raster: str,
+                        out_file: Union[str, None],
+                        buffer: Union[int, None]):
+    """
+    Convert a vector land mask to a raster based on a template. Any features in
+    the vector layer will be assigned a 1 value in the raster, all other cells
+    will have a value of 0.
+    """
+    cr = CombineRasters(template_raster)
+    cr.create_land_mask(vector, save_tiff=True, filename=out_file,
+                        buffer_dist=buffer)
+
+
+@main.command
 @click.option('-c', '--config', 'config_fpath', type=click.Path(exists=True),
               required=True, help='Configuration JSON.')
-@click.option('--create-h5/--dont-create-h5', default=True,
-              help='Create a new offshore H5 data file.')
+@click.option('--create-h5/--use-existing-h5', default=True, show_default=True,
+              help='Create a new offshore H5 data file or use an existing H5.')
 def from_config(config_fpath: str, create_h5: bool):
     """
     Create offshore barriers and frictions from a config file.
     """
+    print(f'create_h5 {create_h5}')
     config = OffshoreCreatorConfig(config_fpath)
     if create_h5 and config.ex_offshore_h5_fpath is None:
         click.echo('ex_offshore_h5_fpath must be set unless H5 creation is '
@@ -84,5 +117,10 @@ def from_config(config_fpath: str, create_h5: bool):
                                   save_tiff=config.save_tiff,
                                   **kwargs)
 
+
 if __name__ == '__main__':
-    from_config()  # pylint: disable=no-value-for-parameter
+    try:
+        main() # pylint: disable=no-value-for-parameter
+    except Exception:
+        logger.exception('Error running Offshore Cost CLI')
+        raise
