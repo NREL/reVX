@@ -26,18 +26,18 @@ def _sum(a, b):
     return a + b
 
 
-def convert_pois_to_lines(poi_csv_f, template_f, out_f):
+def convert_pois_to_lines(poi_csv_f: str, template_f: str, out_f: str):
     """
     Convert POIs in CSV to lines and save in a geopackage as substations. Also
     create a fake transmission line to connect to the substations.
 
     Parameters
     ----------
-    poi_csv_f : str
+    poi_csv_f
         Path to CSV file with POIs in it
-    template_f : str
+    template_f
         Path to template raster with CRS to use for geopackage
-    out_f : str
+    out_f
         Path and file name for geopackage
     """
     logger.info('Converting POIs in {} to lines in {}'
