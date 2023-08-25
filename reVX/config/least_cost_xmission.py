@@ -109,9 +109,9 @@ class OffshoreCreatorConfig(BaseConfig):
     @property
     def land_costs_layer(self) -> str:
         """
-        Name of land barrier layer in land_h5_fpath. (required)
+        Name of land costs layer in land_h5_fpath. (required)
         """
-        return self['land_barrier_layer']
+        return self['land_costs_layer']
 
     @property
     def layer_dir(self) -> str:

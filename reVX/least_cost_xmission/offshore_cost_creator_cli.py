@@ -60,7 +60,6 @@ def from_config(config_fpath: str, create_h5: bool):
     """
     Create offshore barriers and frictions from a config file.
     """
-    print(f'create_h5 {create_h5}')
     config = OffshoreCreatorConfig(config_fpath)
     if create_h5 and config.ex_offshore_h5_fpath is None:
         click.echo('ex_offshore_h5_fpath must be set unless H5 creation is '

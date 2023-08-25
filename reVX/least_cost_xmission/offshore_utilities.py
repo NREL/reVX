@@ -447,7 +447,6 @@ class CombineRasters:
 
         if os_friction_layer is None:
             os_friction_layer = land_cost_layer
-
         self._merge_os_and_land_layers(os_friction, land_h5, land_cost_layer,
                                        offshore_h5, os_friction_layer,
                                        layer_name='friction',
@@ -506,7 +505,8 @@ class CombineRasters:
                                        save_tiff=save_tiff)
 
     def _merge_os_and_land_layers(self, os_data, land_h5, land_layer,
-                                  offshore_h5, os_layer, layer_name='data',
+                                  offshore_h5, os_layer,
+                                  layer_name='data',
                                   land_mult=1, dtype='uint8', save_tiff=False,
                                   init_dest=-1):
         """
@@ -569,13 +569,14 @@ class CombineRasters:
 
         if save_tiff:
             fname = self.COMBO_LAYER_FNAME.format(layer_name)
-            logger.info('Saving combined {} to {}'.format(layer_name, fname))
+            logger.info('Saving offshore %s combined with %s combined %s to '
+                        '%s', layer_name, land_layer, layer_name, fname)
             self._save_tiff(combo_data, fname)
 
         setattr(self, '_combo_{}'.format(layer_name), combo_data)
 
-        logger.info('Writing combined data to "{}" in {}'
-                    .format(os_layer, offshore_h5))
+        logger.info('Writing offshore %s combined with land "%s" to "%s" in '
+                    '%s', layer_name, land_layer, os_layer, offshore_h5)
         combo_data = combo_data[np.newaxis, ...]
         with h5py.File(offshore_h5, 'a') as f:
             if os_layer in f.keys():
