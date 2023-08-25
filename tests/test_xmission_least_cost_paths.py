@@ -164,9 +164,7 @@ def test_cli(runner, save_paths):
 
 
 @pytest.mark.parametrize("save_paths", [False, True])
-@pytest.mark.parametrize("state_conns", [False, True])
-def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths,
-                           state_conns):
+def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
     """
     Test Reinforcement cost routines and CLI
     """
@@ -186,9 +184,12 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths,
                                  index=False)
 
         ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
-        result = runner.invoke(main, ['map-ba', '-feats', ri_feats_path,
-                                      '-ba', ri_ba_path,
-                                      '-of', ri_substations_path])
+        result = runner.invoke(main,
+                               ['map-substations-to-reinforcement-regions',
+                                '-feats', ri_feats_path,
+                                '-regs', ri_ba_path,
+                                '-rid', "ba_str",
+                                '-of', ri_substations_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
@@ -211,10 +212,10 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths,
             "features_fpath": ri_substations_path,
             "network_nodes_fpath": ri_network_nodes_path,
             "transmission_lines_fpath": ALLCONNS_FEATURES,
+            "region_identifier_column": "ba_str",
             "capacity_class": f"{capacity}MW",
             "barrier_mult": 100,
-            "save_paths": save_paths,
-            "allow_connections_within_states": state_conns
+            "save_paths": save_paths
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -251,16 +252,10 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths,
                           atol=0.001)
         assert np.isclose(test.reinforcement_dist_km.min(), 1.918, atol=0.001)
         assert np.isclose(test.reinforcement_dist_km.max(), 80.353, atol=0.001)
-        if state_conns:
-            assert len(test["reinforcement_poi_lat"].unique()) == 3
-            assert len(test["reinforcement_poi_lon"].unique()) == 3
-            assert np.isclose(test.reinforcement_cost_per_mw.max(), 225129.798,
-                              atol=0.001)
-        else:
-            assert len(test["reinforcement_poi_lat"].unique()) == 4
-            assert len(test["reinforcement_poi_lon"].unique()) == 4
-            assert np.isclose(test.reinforcement_cost_per_mw.max(), 569757.740,
-                              atol=0.001)
+        assert len(test["reinforcement_poi_lat"].unique()) == 4
+        assert len(test["reinforcement_poi_lon"].unique()) == 4
+        assert np.isclose(test.reinforcement_cost_per_mw.max(), 569757.740,
+                          atol=0.001)
 
     LOGGERS.clear()
 
