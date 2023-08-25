@@ -305,6 +305,7 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
             df.to_csv(out_file, index=False)
 
     # Split out put in to GeoJSON by POI name
+    # TODO - add sanity checking to ensure DF is a GDF
     if split_to_geojson:
         pois = set(df['POI Name'])
         for i, poi in enumerate(pois, start=1):

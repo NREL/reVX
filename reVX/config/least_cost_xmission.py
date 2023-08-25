@@ -3,10 +3,13 @@
 reVX Least Cost Xmission Configurations
 """
 import os
+import logging
 from typing import Tuple, Union, List, Dict
 
 from reV.supply_curve.extent import SupplyCurveExtent
-from reV.config.base_analysis_config import AnalysisConfig
+from reV.config.base_analysis_config import AnalysisConfig, BaseConfig
+
+logger = logging.getLogger(__name__)
 
 # Transmission barriers format. Also used for forced inclusion. Example:
 # barrier_files = [
@@ -25,8 +28,12 @@ BarrierFiles = List[_BarrierFile]
 _FrictionFile = Tuple[Dict[int, int], str]
 FrictionFiles = List[_FrictionFile]
 
+# JSON requires dict keys to be str. Also allow values to be str.
+_JsonFrictionFile = Tuple[Dict[str, Union[int, str]], str]
+JsonFrictionFiles = List[_JsonFrictionFile]
 
-class OffshoreCreatorConfig(AnalysisConfig):
+
+class OffshoreCreatorConfig(BaseConfig):
     """
     Config framework for creating offshore friction and barrier layers.
     """
@@ -68,7 +75,7 @@ class OffshoreCreatorConfig(AnalysisConfig):
         """
         List of friction files with desired frictions. (required)
         """
-        return self['friction_files']
+        return self._friction_keys_to_int(self['friction_files'])
 
     @property
     def barrier_files(self) -> BarrierFiles:
@@ -180,7 +187,10 @@ class OffshoreCreatorConfig(AnalysisConfig):
         Layers used to assign minimum friction. Minimum friction is applied
         after all other frictions have been combined.
         """
-        return self.get('minimum_friction_files', None)
+        mff = self.get('minimum_friction_files', None)
+        if mff is None:
+            return mff
+        return self._friction_keys_to_int(mff)
 
     @property
     def land_cost_mult(self) -> Union[float, None]:
@@ -227,6 +237,35 @@ class OffshoreCreatorConfig(AnalysisConfig):
         Frictions for slopes less than low_slope_cutoff.
         """
         return self.get('low_slope_friction', None)
+
+    @staticmethod
+    def _friction_keys_to_int(files: JsonFrictionFiles) -> FrictionFiles:
+        """
+        Convert keys in friction dict to ints. JSON requires keys to be
+        strings, but we want ints. Also check values just in case.
+        """
+        ff: FrictionFiles = []
+        for friction_map, file in files:
+            clean_map: Dict[int, int] = {}
+            for raw_key, raw_val in friction_map.items():
+                try:
+                    key = int(raw_key)
+                except ValueError as exc:
+                    msg = f'Unable to convert friction key {raw_key} to int.'
+                    logger.exception(msg)
+                    raise ValueError(msg) from exc
+
+                try:
+                    val = int(raw_val)
+                except ValueError as exc:
+                    msg = f'Unable to convert friction value {raw_val} to int.'
+                    logger.exception(msg)
+                    raise ValueError(msg) from exc
+
+                clean_map[key] = val
+
+            ff.append((clean_map, file))
+        return ff
 
 
 class CostCreatorConfig(AnalysisConfig):
