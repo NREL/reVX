@@ -234,7 +234,7 @@ class CombineRasters:
         save_tiff : bool, optional
             Save composite friction to tiff if true
         """
-        logger.info('Loading friction layers')
+        logger.info('Processing friction layers')
         fr_layers = {}
 
         # Add bathymetry to friction dict
@@ -253,13 +253,12 @@ class CombineRasters:
             if not os.path.exists(bathy_file):
                 raise FileNotFoundError(f'Unable to find {bathy_file}')
 
-            logger.debug('opening bathy')
+            logger.debug('--- --- opening bathy data')
             d = rio.open(bathy_file).read(1)
             assert d.shape == self._os_shape
-            logger.debug('doing the where')
+            logger.debug('--- --- assigning bathy friction')
             d2 = np.where(d >= bathy_depth_cutoff, 0, bathy_friction)
 
-            logger.debug('as typing')
             fr_layers[bathy_file] = d2.astype('uint16')
 
         # Add slope to friction dict
@@ -295,7 +294,7 @@ class CombineRasters:
             assert d.shape == self._os_shape and d.min() == 0
             fr_layers[f] = d.astype('uint16')
 
-        logger.info('Combining offshore friction layers')
+        logger.info('--- combining all offshore friction layers')
         self._os_friction = reduce(_sum, fr_layers.values()).astype('uint16')
 
         # Set minimum friction if used
