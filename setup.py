@@ -81,7 +81,9 @@ setup(
                             ("least-cost-xmission=reVX.least_cost_xmission."
                              "least_cost_xmission_cli:main"),
                             ("least-cost-paths=reVX.least_cost_xmission."
-                             "least_cost_paths_cli:main")
+                             "least_cost_paths_cli:main"),
+                            ("offshore-cost-creator=reVX.least_cost_xmission."
+                             "offshore_cost_creator_cli:main")
                             ],
     },
     include_package_data=True,
