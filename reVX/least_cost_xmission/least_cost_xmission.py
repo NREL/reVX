@@ -834,11 +834,12 @@ class ReinforcedXmission(LeastCostXmission):
     """
     Compute Least Cost tie-line paths and full transmission cap cost
     for all supply curve points to all possible connections (substations
-    within the SC balancing area).
+    within the SC reinforcement region).
     """
 
-    def __init__(self, cost_fpath, features_fpath, balancing_areas_fpath,
-                 resolution=128, xmission_config=None, min_line_length=0,
+    def __init__(self, cost_fpath, features_fpath, regions_fpath,
+                 region_identifier_column, resolution=128,
+                 xmission_config=None, min_line_length=0,
                  allow_connections_within_states=False):
         """
         Parameters
@@ -848,12 +849,17 @@ class ReinforcedXmission(LeastCostXmission):
         features_fpath : str
             Path to GeoPackage with transmission features. All features
             except substations will be dropped. This table must have a
-            "ba_str" column which matches one of the "ba_str" ID's in
-            the Balancing Areas GeoPackage.
-        balancing_areas_fpath : str
-            Path to GeoPackage with balancing areas. This table must
-            have a "ba_str" column which matches the "ba_str" ID's in
-            the Transmission Features GeoPackage.
+            `region_identifier` column which matches one of the
+            `region_identifier` ID's in the reinforcement regions
+            GeoPackage.
+        regions_fpath : str
+            Path to GeoPackage with reinforcement regions. This table
+            must have the specified `region_identifier` column which
+            matches the `region_identifier` column ID's in the
+            `features_fpath` GeoPackage.
+        region_identifier_column : str
+            Name of column in reinforcement regions GeoPackage
+            containing a unique identifier for each region.
         resolution : int, optional
             SC point resolution. By default, ``128``.
         xmission_config : str | dict | XmissionConfig, optional
@@ -862,18 +868,15 @@ class ReinforcedXmission(LeastCostXmission):
             By default, ``None``.
         min_line_length : int | float, optional
             Minimum line length in km. By default, ``0``.
-        allow_connections_within_states : bool, optional
-            Allow supply curve points to connect to substations outside
-            of their own BA, as long as all connections stay within the
-            same state. By default, ``False``.
         """
         super().__init__(cost_fpath=cost_fpath,
                          features_fpath=features_fpath,
                          resolution=resolution,
                          xmission_config=xmission_config,
                          min_line_length=min_line_length)
-        self._ba = (gpd.read_file(balancing_areas_fpath)
-                    .to_crs(self.features.crs))
+        self._regions = (gpd.read_file(regions_fpath)
+                         .to_crs(self.features.crs))
+        self._rid_column = region_identifier_column
         self.allow_connections_within_states = allow_connections_within_states
 
     @staticmethod
@@ -894,21 +897,15 @@ class ReinforcedXmission(LeastCostXmission):
     def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
                           clipping_buffer=1.05, radius=None,
                           expand_radius=True):
-        """Clip features to be substations in the BA of the sc point.  """
+        """Clip features to be substations in the region of the sc point.  """
         logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
 
         point = self.sc_points.loc[sc_point.name:sc_point.name].centroid
-        ba_str = point.apply(ba_mapper(self._ba)).values[0]
-        if self.allow_connections_within_states:
-            state = self._ba[self._ba["ba_str"] == ba_str]["state"].values[0]
-            logger.debug('  - Clipping features to {!r}'.format(state))
-            state_nodes = self._ba[self._ba["state"] == state]
-            allowed_bas = set(state_nodes["ba_str"])
-        else:
-            allowed_bas = {ba_str}
-        logger.debug("  - Clipping features to allowed ba's: {}"
-                     .format(allowed_bas))
-        mask = self.features["ba_str"].isin(allowed_bas)
+        map_func = reinforcement_region_mapper(self._regions, self._rid_column)
+        rid = point.apply(map_func).values[0]
+        logger.debug("  - Clipping features to reinforcement region: {}"
+                     .format(rid))
+        mask = self.features[self._rid_column] == rid
         sc_features = self.features.loc[mask].copy(deep=True)
         logger.debug('{} transmission features found in clipped area '
                      .format(len(sc_features)))
@@ -932,15 +929,15 @@ class ReinforcedXmission(LeastCostXmission):
         return sc_features, radius
 
     @classmethod
-    def run(cls, cost_fpath, features_fpath, balancing_areas_fpath,
-            capacity_class, resolution=128, xmission_config=None,
-            min_line_length=0, sc_point_gids=None, clipping_buffer=1.05,
-            barrier_mult=100, max_workers=None, simplify_geo=None,
-            allow_connections_within_states=False, save_paths=False,
-            radius=None, expand_radius=True):
+    def run(cls, cost_fpath, features_fpath, regions_fpath,
+            region_identifier_column, capacity_class, resolution=128,
+            xmission_config=None, min_line_length=0, sc_point_gids=None,
+            clipping_buffer=1.05, barrier_mult=100, max_workers=None,
+            simplify_geo=None, save_paths=False, radius=None,
+            expand_radius=True):
         """
         Find Least Cost Transmission connections between desired
-        sc_points and substations in their balancing area.
+        sc_points and substations in their reinforcement region.
 
         Parameters
         ----------
@@ -949,12 +946,17 @@ class ReinforcedXmission(LeastCostXmission):
         features_fpath : str
             Path to GeoPackage with transmission features. All features
             except substations will be dropped. This table must have a
-            "ba_str" column which matches one of the "ba_str" ID's in
-            the Balancing Areas GeoPackage.
-        balancing_areas_fpath : str
-            Path to GeoPackage with balancing areas. This table must
-            have a "ba_str" column which matches the "ba_str" ID's in
-            the Transmission Features GeoPackage.
+            `region_identifier` column which matches one of the
+            `region_identifier` ID's in the reinforcement regions
+            GeoPackage.
+        regions_fpath : str
+            Path to GeoPackage with reinforcement regions. This table
+            must have the specified `region_identifier` column which
+            matches the `region_identifier` column ID's in the
+            `features_fpath` GeoPackage.
+        region_identifier_column : str
+            Name of column in reinforcement regions GeoPackage
+            containing a unique identifier for each region.
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to.
@@ -979,10 +981,6 @@ class ReinforcedXmission(LeastCostXmission):
             if ``None`` use all available cores. By default, ``None``.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value.
-        allow_connections_within_states : bool, optional
-            Allow supply curve points to connect to substations outside
-            of their own BA, as long as all connections stay within the
-            same state. By default, ``False``.
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
@@ -1001,13 +999,13 @@ class ReinforcedXmission(LeastCostXmission):
         -------
         least_costs : pandas.DataFrame | gpd.DataFrame
             Least cost connections between all supply curve points and
-            the substations in their balancing area with the given
+            the substations in their reinforcement region with the given
             capacity class.
         """
         ts = time.time()
-        lcx = cls(cost_fpath, features_fpath, balancing_areas_fpath,
-                  resolution, xmission_config, min_line_length,
-                  allow_connections_within_states)
+        lcx = cls(cost_fpath, features_fpath, regions_fpath,
+                  region_identifier_column, resolution, xmission_config,
+                  min_line_length)
         least_costs = lcx.process_sc_points(capacity_class,
                                             sc_point_gids=sc_point_gids,
                                             clipping_buffer=clipping_buffer,
@@ -1027,20 +1025,22 @@ class ReinforcedXmission(LeastCostXmission):
         return least_costs
 
 
-def ba_mapper(ba):
-    """Generate a function to map points to a BA.
+def reinforcement_region_mapper(regions, region_identifier_column):
+    """Generate a function to map points to a reinforcement region.
 
-    The returned mapping function maps a point to a unique "ba_str" from
-    the input GeoPackage.
+    The returned mapping function maps a point to a unique value from
+    the `region_identifier_column` column in the input GeoPackage.
 
     Parameters
     ----------
-    ba : gpd.GeoPackage
-        GeoPackage defining the balancing areas. This table must have a
-        "ba_str" column which and a geometry that defines each BA.
+    regions : gpd.GeoPackage
+        GeoPackage defining the reinforcement regions. This table must
+        have a `region_identifier_column` column which uniquely
+        identifies the region, as well as a geometry for each region.
     """
-    def _map_ba(point):
-        """Find the balancing area ID for the input point. """
-        return ba.loc[ba.distance(point).sort_values().index[0], "ba_str"]
+    def _map_reinforcement_region(point):
+        """Find the reinforcement region ID for the input point. """
+        idx = regions.distance(point).sort_values().index[0]
+        return regions.loc[idx, region_identifier_column]
 
-    return _map_ba
+    return _map_reinforcement_region
