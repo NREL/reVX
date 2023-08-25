@@ -248,7 +248,7 @@ def test_reinforcement_cli(runner, ri_ba, save_paths):
 
         ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
         result = runner.invoke(lcp_main,
-                               ['map-substations-to-reinforcement-regions',
+                               ['map-ss-to-rr',
                                 '-feats', ri_feats_path,
                                 '-regs', ri_ba_path,
                                 '-rid', "ba_str",

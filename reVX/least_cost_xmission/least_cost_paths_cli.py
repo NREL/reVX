@@ -259,11 +259,8 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
 @click.option('--out_file', '-of', default=None, type=STR,
               help='Name for output GeoPackage file.')
 @click.pass_context
-def map_substations_to_reinforcement_regions(ctx, features_fpath,
-                                             regions_fpath,
-                                             region_identifier_column,
-                                             network_nodes_fpath,
-                                             out_file):
+def map_ss_to_rr(ctx, features_fpath, regions_fpath, region_identifier_column,
+                 network_nodes_fpath, out_file):
     """
     Map substation locations to reinforcement regions.
 
