@@ -331,9 +331,9 @@ def map_ss_to_rr(ctx, features_fpath, regions_fpath, region_identifier_column,
     network_nodes = gpd.read_file(network_nodes_fpath).to_crs(features.crs)
     if region_identifier_column in network_nodes:
         logger.warning("Network nodes file {!r} was specified but it "
-                        "already contains the {!r} column. No data modified!"
-                        .format(str(network_nodes_fpath),
-                                region_identifier_column))
+                       "already contains the {!r} column. No data modified!"
+                       .format(str(network_nodes_fpath),
+                               region_identifier_column))
         return
 
     centroids = network_nodes.centroid
