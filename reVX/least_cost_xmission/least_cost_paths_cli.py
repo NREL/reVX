@@ -7,6 +7,7 @@ import click
 import logging
 import os
 import json
+from pathlib import Path
 
 import numpy as np
 import geopandas as gpd
@@ -20,7 +21,9 @@ from reVX.config.least_cost_xmission import LeastCostPathsConfig
 from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
                                                        ReinforcementPaths)
-from reVX.least_cost_xmission.least_cost_xmission import ba_mapper
+from reVX.least_cost_xmission.least_cost_xmission import (
+    reinforcement_region_mapper
+)
 from reVX.least_cost_xmission.config import TRANS_LINE_CAT, SUBSTATION_CAT
 from reVX import __version__
 
@@ -74,7 +77,7 @@ def run_local(ctx, config):
                start_index=0, step_index=1,
                barrier_mult=config.barrier_mult,
                max_workers=config.execution_control.max_workers,
-               state_connections=config.allow_connections_within_states,
+               region_identifier_column=config.region_identifier_column,
                save_paths=config.save_paths,
                out_dir=config.dirout,
                log_dir=config.log_directory,
@@ -164,9 +167,9 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
                     "serial, if None use all available cores"))
-@click.option('--state_connections', '-acws', is_flag=True,
-              help='Flag to allow substations ot connect to any endpoints '
-                   'within their state. Default is not verbose.')
+@click.option('--region_identifier_column', '-rid', type=STR, default=None,
+              help=("Name of column in reinforcement regions GeoPackage"
+                    "containing a unique identifier for each region."))
 @click.option('--save_paths', '-paths', is_flag=True,
               help="Flag to save least cost path as a multi-line geometry")
 @click.option('--out_dir', '-o', type=STR, default='./',
@@ -180,8 +183,8 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, start_index, step_index,
-          barrier_mult, max_workers, state_connections, save_paths, out_dir,
-          log_dir, verbose):
+          barrier_mult, max_workers, region_identifier_column, save_paths,
+          out_dir, log_dir, verbose):
     """
     Run Least Cost Paths on local hardware
     """
@@ -205,10 +208,10 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
         kwargs = {"xmission_config": xmission_config,
                   "barrier_mult": barrier_mult,
                   "indices": indices,
-                  "allow_connections_within_states": state_connections,
                   "save_paths": save_paths}
         least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
                                              network_nodes_fpath,
+                                             region_identifier_column,
                                              transmission_lines_fpath,
                                              capacity_class,
                                              **kwargs)
@@ -242,41 +245,61 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
               type=click.Path(exists=True),
               help="Path to GeoPackage with substation and transmission "
                    "features")
-@click.option('--balancing_areas_fpath', '-ba', required=True,
+@click.option('--regions_fpath', '-regs', required=True,
               type=click.Path(exists=True),
-              help=("Path to Balancing areas GeoPackage."))
+              help=("Path to reinforcement regions GeoPackage."))
+@click.option('--region_identifier_column', '-rid', required=True,
+              type=STR,
+              help=("Name of column in reinforcement regions GeoPackage"
+                    "containing a unique identifier for each region."))
+@click.option('--network_nodes_fpath', '-nodes', default=None, type=STR,
+              help=("Path to network nodes GeoPackage. If this input is "
+                    "included, the `region_identifier_column` is added if "
+                    "it is missing."))
 @click.option('--out_file', '-of', default=None, type=STR,
               help='Name for output GeoPackage file.')
 @click.pass_context
-def map_ba(ctx, features_fpath, balancing_areas_fpath, out_file):
+def map_substations_to_reinforcement_regions(ctx, features_fpath,
+                                             regions_fpath,
+                                             region_identifier_column,
+                                             network_nodes_fpath,
+                                             out_file):
     """
-    Map substation locations to balancing regions.
+    Map substation locations to reinforcement regions.
+
+    Reinforcement regions are user-defined. Typical regions are
+    Balancing Areas, States, or Counties, though custom regions are also
+    allowed. Each region must be supplied with a unique identifier in
+    the input file.
 
     This method also removes substations that do not meet the min 69 kV
     voltage requirement and adds {'min_volts', 'max_volts'} fields to
     the remaining substations.
 
-    **IMPORTANT** This method DOES NOT clip the substations to your
-    balancing area boundary. All substations will be mapped to their
-    closest BA. It is your responsibility to remove any substations
-    outside of the analysis region before calling this method.
+    .. Important:: This method DOES NOT clip the substations to the
+      reinforcement regions boundary. All substations will be mapped to
+      their closest region. It is your responsibility to remove any
+      substations outside of the analysis region before calling this
+      method.
 
     Doing the pre-processing step avoids any issues with substations
-    being left out or double counted if we just clipped them to the
-    balancing area shapes.
+    being left out or double counted if they were simply clipped to the
+    reinforcement region shapes.
     """
     log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
     init_logger('reVX', log_level=log_level)
 
     features = gpd.read_file(features_fpath)
-    ba = gpd.read_file(balancing_areas_fpath).to_crs(features.crs)
+    regions = gpd.read_file(regions_fpath).to_crs(features.crs)
     substations = (features[features.category == SUBSTATION_CAT]
                    .reset_index(drop=True).dropna(axis="columns", how="all"))
 
-    logger.info("Mapping {:,d} substation locations to {:,d} balancing "
-                "areas".format(substations.shape[0], ba.shape[0]))
+    logger.info("Mapping {:,d} substation locations to {:,d} reinforcement "
+                "regions".format(substations.shape[0], regions.shape[0]))
 
-    substations["ba_str"] = substations.centroid.apply(ba_mapper(ba))
+    map_func = reinforcement_region_mapper(regions, region_identifier_column)
+    centroids = substations.centroid
+    substations[region_identifier_column] = centroids.apply(map_func)
 
     logger.info("Calculating min/max voltage for each substation...")
     bad_subs = np.zeros(len(substations), dtype=bool)
@@ -304,6 +327,26 @@ def map_ba(ctx, features_fpath, balancing_areas_fpath, out_file):
     logger.info("Writing substation output to {!r}".format(out_file))
     substations.to_file(out_file, driver="GPKG", index=False)
 
+    if network_nodes_fpath is None:
+        return
+
+    network_nodes_fpath = Path(network_nodes_fpath)
+    network_nodes = gpd.read_file(network_nodes_fpath).to_crs(features.crs)
+    if region_identifier_column in network_nodes:
+        logger.warning("Network nodes file {!r} was specified but it "
+                        "already contains the {!r} column. No data modified!"
+                        .format(str(network_nodes_fpath),
+                                region_identifier_column))
+        return
+
+    centroids = network_nodes.centroid
+    network_nodes[region_identifier_column] = centroids.apply(map_func)
+    out_fn = "{}.gpkg".format(network_nodes_fpath.stem)
+    out_fp = network_nodes_fpath.parent / out_fn
+    logger.info("Writing updated network node data to {!r}"
+                .format(str(out_fp)))
+    network_nodes.to_file(out_fp, driver="GPKG")
+
 
 def get_node_cmd(config, start_index=0):
     """
@@ -326,6 +369,7 @@ def get_node_cmd(config, start_index=0):
             '-feats {}'.format(SLURM.s(config.features_fpath)),
             '-nn {}'.format(SLURM.s(config.network_nodes_fpath)),
             '-tl {}'.format(SLURM.s(config.transmission_lines_fpath)),
+            '-rid {}'.format(SLURM.s(config.region_identifier_column)),
             '-cap {}'.format(SLURM.s(config.capacity_class)),
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
@@ -334,9 +378,6 @@ def get_node_cmd(config, start_index=0):
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
-
-    if config.allow_connections_within_states:
-        args.append('-acws')
 
     if config.save_paths:
         args.append('-paths')
