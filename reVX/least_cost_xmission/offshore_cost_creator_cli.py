@@ -12,6 +12,7 @@ from rex.utilities.loggers import init_logger, LOG_LEVEL
 
 from reVX import __version__
 from reVX.least_cost_xmission.offshore_utilities import CombineRasters
+from reVX.least_cost_xmission.offshore_utilities import convert_pois_to_lines
 from reVX.config.least_cost_xmission import OffshoreCreatorConfig
 
 logger = logging.getLogger(__name__)
@@ -49,6 +50,27 @@ def rasterize_land_mask(vector: str, template_raster: str,
     cr = CombineRasters(template_raster)
     cr.create_land_mask(vector, save_tiff=True, filename=out_file,
                         buffer_dist=buffer)
+
+
+@main.command
+@click.option('--poi-file', '-p', required=True, type=click.Path(exists=True),
+              help='File of POIs in CSV format. Each POI must have the '
+              'following fields: "POI Name", "State", "Voltage (kV)", "Lat", '
+              'and "Long". "State" may be blank. Other fields are ignored.')
+@click.option('--template-raster', '-t', required=True,
+              type=click.Path(exists=True),
+              help='Raster to extract CRS from.')
+@click.option('--out-file', '-o', type=click.Path(), required=True,
+              help='Filename to use for POI lines GeoPackage file.')
+def convert_pois(poi_file: str, template_raster: str, out_file: str):
+    """
+    Convert points of interconnection (POI) to short lines. The least cost
+    processing code requires all transmission elemnts to be lines. The POIs
+    defined in the CSV will be converted to lines and labeled as substations.
+    As all substations must be link to a transmission line, a synthetic
+    transmission line is created that is linked to the POIs.
+    """
+    convert_pois_to_lines(poi_file, template_raster, out_file)
 
 
 @main.command
