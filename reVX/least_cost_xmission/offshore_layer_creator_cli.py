@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
               default='INFO', help='Logging level.')
 def main(log_level):
     """
-    Offshore Cost Creator Command Line Interface
+    Offshore Layer Creator Command Line Interface
     """
     init_logger('reVX', log_level=log_level)
 
@@ -64,8 +64,8 @@ def rasterize_land_mask(vector: str, template_raster: str,
               help='Filename to use for POI lines GeoPackage file.')
 def convert_pois(poi_file: str, template_raster: str, out_file: str):
     """
-    Convert points of interconnection (POI) to short lines. The least cost
-    processing code requires all transmission elemnts to be lines. The POIs
+    Convert points of interconnection (POI) to short lines. The transmission
+    routing code requires all transmission elemnts to be lines. The POIs
     defined in the CSV will be converted to lines and labeled as substations.
     As all substations must be link to a transmission line, a synthetic
     transmission line is created that is linked to the POIs.
@@ -143,5 +143,5 @@ if __name__ == '__main__':
     try:
         main()  # pylint: disable=no-value-for-parameter
     except Exception:
-        logger.exception('Error running Offshore Cost CLI')
+        logger.exception('Error running Offshore Layer Creator CLI')
         raise
