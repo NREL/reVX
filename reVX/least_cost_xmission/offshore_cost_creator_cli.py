@@ -35,9 +35,9 @@ def main(log_level):
               type=click.Path(exists=True),
               help='Raster to use as a template for rasterizing the land mask')
 @click.option('--out-file', '-o', type=click.Path(),
-              help='Filename to use for rasterized land mask.' )
+              help='Filename to use for rasterized land mask.')
 @click.option('--buffer', '-b', type=int,
-              help='Buffer vector features before rasterizing.' )
+              help='Buffer vector features before rasterizing.')
 def rasterize_land_mask(vector: str, template_raster: str,
                         out_file: Union[str, None],
                         buffer: Union[int, None]):
@@ -86,14 +86,14 @@ def from_config(config_fpath: str, create_h5: bool):
                                 slope_file=config.slope_fpath,
                                 save_tiff=config.save_tiff)
 
+    min_fric_files = config.minimum_friction_files
     cr.build_off_shore_friction(config.friction_files,
                                 slope_file=config.slope_fpath,
                                 save_tiff=config.save_tiff,
                                 bathy_file=config.bathy_fpath,
                                 bathy_depth_cutoff=config.bathy_depth_cutoff,
                                 bathy_friction=config.bathy_friction,
-                                minimum_friction_files=\
-                                    config.minimum_friction_files)
+                                minimum_friction_files=min_fric_files)
 
     if create_h5:
         cr.create_offshore_h5(config.ex_offshore_h5_fpath,
@@ -119,7 +119,7 @@ def from_config(config_fpath: str, create_h5: bool):
 
 if __name__ == '__main__':
     try:
-        main() # pylint: disable=no-value-for-parameter
+        main()  # pylint: disable=no-value-for-parameter
     except Exception:
         logger.exception('Error running Offshore Cost CLI')
         raise
