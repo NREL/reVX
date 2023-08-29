@@ -517,6 +517,8 @@ class LeastCostXmission(LeastCostPaths):
 
         tie_line_voltage = self._config.capacity_to_kv(capacity_class)
 
+        logger.debug('Using a barrier multiplier of %s', barrier_mult)
+
         if max_workers > 1:
             logger.info('Computing Least Cost Transmission for SC points in '
                         'parallel on {} workers'.format(max_workers))
