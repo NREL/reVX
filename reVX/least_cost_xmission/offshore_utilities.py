@@ -82,7 +82,7 @@ def convert_pois_to_lines(poi_csv_f: str, template_f: str, out_f: str):
     geo = LineString([Point(0, 0), Point(100000, 100000)])
     trans_line = trans_line.set_geometry([geo], crs=crs)
 
-    pois = pd.concat([lines, trans_line])
+    pois: gpd.GeoDataFrame = pd.concat([lines, trans_line])
     pois['gid'] = pois.index
 
     pois.to_file(out_f, driver="GPKG")

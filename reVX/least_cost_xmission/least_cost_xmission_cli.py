@@ -7,6 +7,7 @@ TODO - add cmd line doc
 
 """
 import os
+import sys
 import click
 import logging
 import warnings
@@ -305,8 +306,11 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
             df.to_csv(out_file, index=False)
 
     # Split out put in to GeoJSON by POI name
-    # TODO - add sanity checking to ensure DF is a GDF
     if split_to_geojson:
+        if not isinstance(df, gpd.GeoDataFrame):
+            click.echo('Geo-spatial aware input files must be provided to split'
+                       ' to Geo-JSON.')
+            sys.exit(1)
         pois = set(df['POI Name'])
         for i, poi in enumerate(pois, start=1):
             out_file = os.path.join(out_dir,
