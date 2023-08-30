@@ -2,4 +2,7 @@ ghp-import
 sphinx
 sphinx-click
 sphinx_rtd_theme
-myst-parser
+chardet
+sphinx_tabs
+sphinx_copybutton
+myst_parser

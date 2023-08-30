@@ -15,7 +15,7 @@ Determine least cost transmission paths from possible wind and solar farms (supp
 	* `TransCapCosts` - Determine total transmission cost including line cost and any substation construction or improvements.
 * [`least_cost_xmission.py`](least_cost_xmission.py) - Calculate costs from SC points to transmission features. By default, all SC points are used or a subset may be specified by GID.
 * [`least_cost_paths.py`](least_cost_paths.py) - Parent class for `least_cost_xmission.py`.
-* [`aoswt_utilities.py`](aoswt_utilities.py) - Utility functions and classes for preparing friction, barrier, and transmission features for the AOSWT analysis. Example Jupyter notebooks for these functions can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
+* [`offshore_utilities.py`](offshore_utilities.py) - Utility functions and classes for preparing friction, barrier, and transmission features for offshore analyses. Example Jupyter notebooks for these functions can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
 
 <br>
 
@@ -207,24 +207,26 @@ The resulting tables can be passed directly to `reV`, which will automatically d
 
 
 # Offshore Least Cost Paths
+## Nomenclature Note
+The offshore least cost paths analysis was initially performed for the Atlantic OffShore Wind Transmission (AOSWT). Some references to the AOSWT acronym still remain.
 
-## Atlantic Offshore Wind Transmission (AOSWT) Workflow
-General steps to run the AOSWT analysis:
+## Offshore Workflow
+General steps to run an offshore analysis:
 
 1. Convert points-of-interconnection (POI) (grid connections on land) to transmission feature lines. Example notebook is at `reVX/examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`. The input CSV requires the following fields: 'POI Name', 'State', 'Voltage (kV)', 'Lat', 'Long'.
 2. Create offshore friction and barrier (exclusion) layers and merge with CONUS costs and barrier layers. Example notebook is at `reVX/examples/least_cost_paths/combine_layers_and_add_to_h5.ipynb`.
 3. Determine desired sc\_point_gids to process.
-4. Select appropriate clipping radius. Unlike the CONUS analysis, which clips the cost raster by proximity to infinite sinks, the AOSWT uses a fixed search radius. 5000 is a good starting point. Note that memory usage increases with the square of radius.
+4. Select appropriate clipping radius. Unlike the CONUS analysis, which clips the cost raster by proximity to infinite sinks, an offshore analysis uses a fixed search radius. 5000 is a good starting point. Note that memory usage increases with the square of radius.
 5. Run analysis. See examples below.
 6. Convert the output to GeoJSON (optional). See post processing below.
 
 
-## Atlantic Offshore Wind Transmission (AOSWT) Examples
+## Offshore Examples
 ### Creating POI transmission features from points
 The onshore point of interconnections (POIs) have typically been provided in a
 CSV file. These must be converted to short lines in a GeoPackage to work with
 the LCP code. Note that the POIs must also be connected to a transmission line.
-The `convert_pois_to_lines()` function in `aoswt_utilities.py` will perform all
+The `convert_pois_to_lines()` function in `offshore_utilities.py` will perform all
 necessary operations to convert the CSV file to a properly configured
 GeoPackage. An example notebook is in this repository at
 `examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`.
@@ -235,8 +237,8 @@ command.
 ### Build friction and barriers layer
 An example Jupyter notebook for building the friction and barrier layers can be found in the `examples/least_cost_paths` directory of this repository.
 
-### Locally run a AOSWT analysis for a single SC point, plot the results, and save to a GeoPackage
-This example uses `contextily` to add a base map to the plot, but is not required. AOSWT needs an aggregation "resolution" of 118.
+### Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage
+This example uses `contextily` to add a base map to the plot, but is not required. Offshore needs an aggregation "resolution" of 118.
 
 ```
 import contextily as cx
@@ -265,7 +267,7 @@ cx.add_basemap(ax, source=cx.providers.Stamen.TonerLite)
 paths.to_file('example.gpkg', driver='GPKG')
 ```
 
-### Find AOSWT least cost paths on a local eagle node
+### Find offshore least cost paths on a local eagle node
 Find least cost paths, costs, and connection costs on eagle login node for 100MW capacity, saving results in current directory. These examples will overload the login nodes and should be run on a debug node.
 
 ```
