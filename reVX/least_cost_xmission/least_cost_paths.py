@@ -627,6 +627,8 @@ class ReinforcementPaths(LeastCostPaths):
             rid = network_node[region_identifier_column].values[0]
             mask = substations[region_identifier_column] == rid
             node_substations = substations[mask].reset_index(drop=True)
+            if len(node_substations) == 0:
+                continue
             logger.info('Working on {} substations in region {}'
                         .format(len(node_substations), rid))
             node_features = pd.concat([network_node, node_substations])
