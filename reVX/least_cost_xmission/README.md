@@ -131,7 +131,6 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
 {
     "execution_control": {
       "allocation": "YOUR_SLURM_ALLOCATION",
-      "feature": "--qos=normal",
       "memory": 178,
       "option": "eagle",
       "max_workers": 1,
@@ -168,7 +167,6 @@ You should now have a file containing all of the reinforcement costs for the sub
 {
     "execution_control": {
       "allocation": "YOUR_SLURM_ALLOCATION",
-      "feature": "--qos=normal",
       "memory": 500,
       "nodes": 100,
       "option": "eagle",
