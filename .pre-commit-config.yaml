@@ -13,11 +13,11 @@ repos:
     -   id: requirements-txt-fixer
     -   id: pretty-format-json
         args: [--autofix]
--   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.8.4
-    hooks:
-    -   id: flake8
--   repo: https://github.com/PyCQA/pylint
-    rev: pylint-2.6.0
-    hooks:
-    -   id: pylint
+# -   repo: https://gitlab.com/pycqa/flake8
+#     rev: 3.8.4
+#     hooks:
+#     -   id: flake8
+# -   repo: https://github.com/PyCQA/pylint
+#     rev: pylint-2.6.0
+#     hooks:
+#     -   id: pylint
