@@ -99,7 +99,8 @@ class DataCleaner:
 
     REV_NAME_MAP = {'gid': 'sc_gid',
                     'sq_km': 'area_sq_km',
-                    'capacity': 'potential_capacity',
+                    'capacity_ac_mw': 'potential_capacity',
+                    'capacity_ac': 'potential_capacity',
                     'resource_ids': 'res_gids',
                     'resource_ids_cnts': 'gid_counts'}
 
