@@ -119,6 +119,10 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._node_map = self._make_node_map()
         self._forecast_map = self._make_forecast_map(self._cf_fpath,
                                                      self._forecast_fpath)
+
+        if bespoke:
+            self._sc_table = self.convert_bespoke_sc(self._sc_table)
+
         self._compute_gid_capacities()
         self._sc_table['potential_capacity'] = self._sc_table[self.sc_cap_col]
 
