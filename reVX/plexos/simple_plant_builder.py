@@ -87,7 +87,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
 
         required = ('sc_gid', 'latitude', 'longitude', 'res_gids',
                     'gid_counts', 'mean_cf')
-        missing = [r not in self._sc_table for r in required]
+        missing = [r for r in required if r not in self._sc_table]
         if any(missing):
             msg = ('SimplePlantBuilder needs the following missing columns '
                    'in the rev_sc input: {}'.format(missing))
