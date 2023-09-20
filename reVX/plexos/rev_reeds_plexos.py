@@ -311,7 +311,7 @@ class PlexosAggregation(BaseProfileAggregation):
         reeds_build : pd.DataFrame
             Same as input but without lat/lon columns if matched.
         """
-        join_on = 'sc_gid'
+        join_on = 'sc_point_gid'
         reeds_build = reeds_build.sort_values(join_on)
         reeds_sc_gids = reeds_build[join_on].values
         rev_mask = rev_sc[join_on].isin(reeds_sc_gids)
@@ -391,8 +391,8 @@ class PlexosAggregation(BaseProfileAggregation):
 
         reeds_build = reeds_build[year_mask]
 
-        join_on = 'sc_gid'
-        if 'sc_gid' not in rev_sc or 'sc_gid' not in reeds_build:
+        join_on = 'sc_point_gid'
+        if 'sc_point_gid' not in rev_sc or 'sc_point_gid' not in reeds_build:
             raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
 
         rev_sc, reeds_build = cls._check_rev_reeds_coordinates(rev_sc,
@@ -444,9 +444,9 @@ class PlexosAggregation(BaseProfileAggregation):
             else:
                 gid_col = list(gid_col)
 
-            for i, sc_gids in enumerate(gid_col):
-                if any(m in sc_gids for m in missing):
-                    bad_sc_points.append(self.sc_build.iloc[i]['sc_gid'])
+            for i, sc_point_gid in enumerate(gid_col):
+                if any(m in sc_point_gid for m in missing):
+                    bad_sc_points.append(self.sc_build.iloc[i]['sc_point_gid'])
 
             wmsg = ('There are {} SC points with missing gids: {}'
                     .format(len(bad_sc_points), bad_sc_points))
@@ -465,7 +465,7 @@ class PlexosAggregation(BaseProfileAggregation):
             (in reeds but not in reV resource).
         """
         if any(bad_sc_points):
-            bad_bool = self.sc_build['sc_gid'].isin(bad_sc_points)
+            bad_bool = self.sc_build['sc_point_gid'].isin(bad_sc_points)
             bad_cap_arr = self.sc_build.loc[bad_bool, 'built_capacity'].values
             good_bool = ~bad_bool
             bad_cap = bad_cap_arr.sum()
