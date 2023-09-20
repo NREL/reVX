@@ -42,7 +42,7 @@ class PlexosAggregation(BaseProfileAggregation):
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
                  force_full_build=False, force_shape_map=False,
                  plant_name_col=None, tech_tag=None, res_class=None,
-                 timezone='UTC', dset_tag=None, bespoke=False,
+                 timezone='UTC', dset_tag=None, bespoke=False, gid_column='sc_gid',
                  max_workers=None):
         """
         Parameters
@@ -114,6 +114,9 @@ class PlexosAggregation(BaseProfileAggregation):
             profiles at the supply curve grid resolution which is different
             than traditional reV generation outputs that are on the resource
             grid resolution.
+        gid_column: str, optional
+            Reference column to use for supply curve gid. Valid options are sc_gid 
+            and sc_point_gid.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -135,6 +138,7 @@ class PlexosAggregation(BaseProfileAggregation):
         self._res_class = res_class
         self._dset_tag = dset_tag if dset_tag is not None else ""
         self._bespoke = bespoke
+        self._gid_column = gid_column
 
         if plexos_columns is None:
             plexos_columns = tuple()
@@ -284,7 +288,7 @@ class PlexosAggregation(BaseProfileAggregation):
         return plexos_nodes
 
     @staticmethod
-    def _check_rev_reeds_coordinates(rev_sc, reeds_build, atol=0.5):
+    def _check_rev_reeds_coordinates(rev_sc, reeds_build, atol=0.5, gid_column='sc_gid'):
         """Check that the coordinates are the same in rev and reeds buildouts.
 
         Parameters
@@ -301,6 +305,9 @@ class PlexosAggregation(BaseProfileAggregation):
             also include "plexos_node_gid" which will explicitly assign a
             supply curve point buildout to a single plexos node. If included,
             all points must be assigned to plexos nodes.
+        gid_column: str, optional
+            Reference column to use for supply curve gid. Valid options are sc_gid 
+            and sc_point_gid.
         atol : float
             Maximum difference in coord matching.
 
@@ -311,7 +318,7 @@ class PlexosAggregation(BaseProfileAggregation):
         reeds_build : pd.DataFrame
             Same as input but without lat/lon columns if matched.
         """
-        join_on = 'sc_point_gid'
+        join_on = gid_column
         reeds_build = reeds_build.sort_values(join_on)
         reeds_sc_gids = reeds_build[join_on].values
         rev_mask = rev_sc[join_on].isin(reeds_sc_gids)
@@ -342,7 +349,7 @@ class PlexosAggregation(BaseProfileAggregation):
 
     @classmethod
     def _parse_rev_reeds(cls, rev_sc, reeds_build, build_year=2050,
-                         bespoke=False):
+                         bespoke=False, gid_column="sc_gid"):
         """Parse and combine reV SC and REEDS buildout tables into single table
 
         Parameters
@@ -391,8 +398,8 @@ class PlexosAggregation(BaseProfileAggregation):
 
         reeds_build = reeds_build[year_mask]
 
-        join_on = 'sc_point_gid'
-        if 'sc_point_gid' not in rev_sc or 'sc_point_gid' not in reeds_build:
+        join_on = gid_column
+        if gid_column not in rev_sc or gid_column not in reeds_build:
             raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
 
         rev_sc, reeds_build = cls._check_rev_reeds_coordinates(rev_sc,
@@ -446,7 +453,7 @@ class PlexosAggregation(BaseProfileAggregation):
 
             for i, sc_point_gid in enumerate(gid_col):
                 if any(m in sc_point_gid for m in missing):
-                    bad_sc_points.append(self.sc_build.iloc[i]['sc_point_gid'])
+                    bad_sc_points.append(self.sc_build.iloc[i][self._gid_column])
 
             wmsg = ('There are {} SC points with missing gids: {}'
                     .format(len(bad_sc_points), bad_sc_points))
@@ -465,7 +472,7 @@ class PlexosAggregation(BaseProfileAggregation):
             (in reeds but not in reV resource).
         """
         if any(bad_sc_points):
-            bad_bool = self.sc_build['sc_point_gid'].isin(bad_sc_points)
+            bad_bool = self.sc_build[self._gid_column].isin(bad_sc_points)
             bad_cap_arr = self.sc_build.loc[bad_bool, 'built_capacity'].values
             good_bool = ~bad_bool
             bad_cap = bad_cap_arr.sum()
