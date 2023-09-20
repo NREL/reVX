@@ -318,17 +318,16 @@ class PlexosAggregation(BaseProfileAggregation):
         reeds_build : pd.DataFrame
             Same as input but without lat/lon columns if matched.
         """
-        join_on = gid_column
-        reeds_build = reeds_build.sort_values(join_on)
-        reeds_sc_gids = reeds_build[join_on].values
-        rev_mask = rev_sc[join_on].isin(reeds_sc_gids)
+        reeds_build = reeds_build.sort_values(gid_column)
+        reeds_sc_gids = reeds_build[gid_column].values
+        rev_mask = rev_sc[gid_column].isin(reeds_sc_gids)
         if not rev_mask.any():
             msg = ("There are no overlapping sc_gids between the provided reV "
                    "supply curve table and the ReEDS buildout!")
             logger.error(msg)
             raise RuntimeError(msg)
 
-        rev_sc = rev_sc.sort_values(join_on)
+        rev_sc = rev_sc.sort_values(gid_column)
 
         rev_coord_labels = get_coord_labels(rev_sc)
         reeds_coord_labels = get_coord_labels(reeds_build)
@@ -398,15 +397,14 @@ class PlexosAggregation(BaseProfileAggregation):
 
         reeds_build = reeds_build[year_mask]
 
-        join_on = gid_column
         if gid_column not in rev_sc or gid_column not in reeds_build:
             raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
 
         rev_sc, reeds_build = cls._check_rev_reeds_coordinates(rev_sc,
                                                                reeds_build)
 
-        check_isin = np.isin(reeds_build[join_on].values,
-                             rev_sc[join_on].values)
+        check_isin = np.isin(reeds_build[gid_column].values,
+                             rev_sc[gid_column].values)
         if not all(check_isin):
             missing_cap = reeds_build.loc[check_isin, 'built_capacity']
             missing_cap = missing_cap.values.sum()
@@ -419,11 +417,11 @@ class PlexosAggregation(BaseProfileAggregation):
             warn(wmsg)
             logger.warning(wmsg)
 
-        table = pd.merge(rev_sc, reeds_build, how='inner', left_on=join_on,
-                         right_on=join_on)
+        table = pd.merge(rev_sc, reeds_build, how='inner', left_on=gid_column,
+                         right_on=gid_column)
 
         if bespoke:
-            table = cls.convert_bespoke_sc(table)
+            table = cls.convert_bespoke_sc(table, gid_column)
 
         return table
 
@@ -451,8 +449,8 @@ class PlexosAggregation(BaseProfileAggregation):
             else:
                 gid_col = list(gid_col)
 
-            for i, sc_point_gid in enumerate(gid_col):
-                if any(m in sc_point_gid for m in missing):
+            for i, sc_gid in enumerate(gid_col):
+                if any(m in sc_gid for m in missing):
                     bad_sc_points.append(self.sc_build.iloc[i][self._gid_column])
 
             wmsg = ('There are {} SC points with missing gids: {}'
