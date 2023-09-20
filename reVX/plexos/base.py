@@ -200,7 +200,7 @@ class PlexosNode:
             Total Supply Curve Point Capacity
         """
 
-        sc_gid = int(sc_point['sc_gid'])
+        sc_gid = int(sc_point['sc_point_gid'])
         buildout = float(sc_point['built_capacity'])
         capacity = float(sc_point['potential_capacity'])
 
@@ -724,7 +724,7 @@ class BaseProfileAggregation(ABC):
             taken based on the bespoke indexing.
         """
 
-        df['res_gids'] = [[g] for g in df['sc_gid']]
+        df['res_gids'] = [[g] for g in df['sc_point_gid']]
 
         if 'gid_counts' in df:
             if isinstance(df['gid_counts'].values[0], str):
