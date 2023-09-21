@@ -39,7 +39,7 @@ class PlexosNode:
     node. Resource within each supply curve point is built in order of cf_mean.
     """
 
-    def __init__(self, sc_build, cf_fpath, res_gids=None,
+    def __init__(self, sc_build, cf_fpath, gid_column="sc_gid", res_gids=None,
                  force_full_build=False, forecast_fpath=None,
                  forecast_map=None, dset_tag=None):
         """
@@ -54,6 +54,9 @@ class PlexosNode:
         cf_fpath : str
             File path to capacity factor file (reV gen output) to
             get profiles from.
+        gid_column: str, optional
+            Reference column to use for supply curve gid. Valid options are sc_gid 
+            and sc_point_gid.
         res_gids : list | np.ndarray, optional
             Resource GID's available in cf_fpath, if None pull from cf_fpath,
             by default None
@@ -82,6 +85,7 @@ class PlexosNode:
         if res_gids is None:
             res_gids = self._get_res_gids(cf_fpath)
 
+        self._gid_column = gid_column
         self._res_gids = res_gids
         self._forecast_fpath = forecast_fpath
         self._forecast_map = forecast_map
@@ -136,7 +140,7 @@ class PlexosNode:
 
         sc_point = self._sc_build.loc[row_idx]
         sc_gid, res_gids, gen_gids, gid_counts, gid_capacity, buildout, _ = \
-            self._parse_sc_point(sc_point, self._res_gids)
+            self._parse_sc_point(sc_point, self._res_gids, self._gid_column)
 
         sc_meta = pd.DataFrame({'gen_gid': gen_gids,
                                 'res_gid': res_gids,
@@ -164,7 +168,7 @@ class PlexosNode:
         return sc_gid, sc_meta, buildout
 
     @staticmethod
-    def _parse_sc_point(sc_point, all_res_gids):
+    def _parse_sc_point(sc_point, all_res_gids, gid_column):
         """Parse data from sc point.
 
         Parameters
@@ -177,6 +181,8 @@ class PlexosNode:
             column in the cf_fpath meta data.
         all_res_gids : list | np.ndarray
             ALL resource GID's available in cf_fpath
+        gid_column : str
+            String to use for sc_gid.
 
         Returns
         -------
@@ -200,7 +206,7 @@ class PlexosNode:
             Total Supply Curve Point Capacity
         """
 
-        sc_gid = int(sc_point['sc_gid'])
+        sc_gid = int(sc_point[gid_column])
         buildout = float(sc_point['built_capacity'])
         capacity = float(sc_point['potential_capacity'])
 
@@ -706,7 +712,7 @@ class BaseProfileAggregation(ABC):
         return names
 
     @staticmethod
-    def convert_bespoke_sc(df):
+    def convert_bespoke_sc(df, gid_column):
         """Convert a bespoke supply curve table to reference resource gids
         (res_gids) based on the bespoke generation outputs that are on the
         supply curve grid not the resource grid
@@ -715,6 +721,8 @@ class BaseProfileAggregation(ABC):
         ----------
         table : pd.DataFrame
             rev_sc and reeds_build inner joined on supply curve gid.
+        gid_column : str
+            String to use for sc_gid.
 
         Returns
         -------
@@ -724,7 +732,7 @@ class BaseProfileAggregation(ABC):
             taken based on the bespoke indexing.
         """
 
-        df['res_gids'] = [[g] for g in df['sc_gid']]
+        df['res_gids'] = [[g] for g in df[gid_column]]
 
         if 'gid_counts' in df:
             if isinstance(df['gid_counts'].values[0], str):
