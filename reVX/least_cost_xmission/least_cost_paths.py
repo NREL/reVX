@@ -309,32 +309,14 @@ class LeastCostPaths:
             loggers = [__name__, 'reV', 'reVX']
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
-                futures = {}
-                for start in indices:
-                    self._start_feature_ind = start
-                    future = exe.submit(TieLineCosts.run, self._cost_fpath,
-                                        self.start_indices, self.end_indices,
-                                        capacity_class,
-                                        self._row_slice, self._col_slice,
-                                        barrier_mult=barrier_mult,
-                                        save_paths=save_paths)
-                    futures[future] = self.end_features
-
-                for i, future in enumerate(as_completed(futures)):
-                    end_features = futures[future]
-                    end_features = end_features.drop(columns=['row', 'col'],
-                                                     errors="ignore")
-                    lcp = future.result()
-                    lcp = pd.concat((lcp, end_features), axis=1)
-                    least_cost_paths.append(lcp)
-                    logger.debug('Least cost path {} of {} complete!'
-                                 .format(i + 1, len(futures)))
-                    log_mem(logger)
+                least_cost_paths = self._compute_paths_in_chunks(
+                    exe, max_workers, indices, capacity_class, barrier_mult,
+                    save_paths)
         else:
+            least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
             log_mem(logger)
-            i = 1
-            for start in indices:
+            for ind, start in enumerate(indices, start=1):
                 self._start_feature_ind = start
                 lcp = TieLineCosts.run(self._cost_fpath,
                                        self.start_indices, self.end_indices,
@@ -348,13 +330,31 @@ class LeastCostPaths:
                 least_cost_paths.append(lcp)
 
                 logger.debug('Least cost path {} of {} complete!'
-                             .format(i, len(self.features)))
+                             .format(ind, len(self.features)))
                 log_mem(logger)
-                i += 1
 
         least_cost_paths = pd.concat(least_cost_paths, ignore_index=True)
 
         return least_cost_paths
+
+    def _compute_paths_in_chunks(self, exe, max_submissions, indices,
+                                 capacity_class, barrier_mult, save_paths):
+        """Compute LCP's in parallel using futures. """
+        futures, paths = {}, []
+
+        for ind, start in enumerate(indices, start=1):
+            self._start_feature_ind = start
+            future = exe.submit(TieLineCosts.run, self._cost_fpath,
+                                self.start_indices, self.end_indices,
+                                capacity_class,
+                                self._row_slice, self._col_slice,
+                                barrier_mult=barrier_mult,
+                                save_paths=save_paths)
+            futures[future] = self.end_features
+            if ind % max_submissions == 0:
+                paths = _collect_future_chunks(futures, paths)
+        paths = _collect_future_chunks(futures, paths)
+        return paths
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class,
@@ -712,3 +712,20 @@ def min_reinforcement_costs(table):
     grouped = table.groupby('gid')
     table = table.loc[grouped["reinforcement_cost_per_mw"].idxmin()]
     return table.reset_index(drop=True)
+
+
+def _collect_future_chunks(futures, least_cost_paths):
+    """Collect all futures from the input dictionary. """
+
+    for i, future in enumerate(as_completed(futures)):
+        end_features = futures[future]
+        end_features = end_features.drop(columns=['row', 'col'],
+                                            errors="ignore")
+        lcp = future.result()
+        lcp = pd.concat((lcp, end_features), axis=1)
+        least_cost_paths.append(lcp)
+        logger.debug('Least cost path {} of {} complete!'
+                        .format(i + 1, len(futures)))
+        log_mem(logger)
+
+    return least_cost_paths
