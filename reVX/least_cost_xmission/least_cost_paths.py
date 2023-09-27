@@ -742,15 +742,16 @@ def min_reinforcement_costs(table):
 def _collect_future_chunks(futures, least_cost_paths):
     """Collect all futures from the input dictionary. """
 
+    num_to_collect = len(futures)
     for i, future in enumerate(as_completed(futures)):
-        end_features = futures[future]
+        end_features = futures.pop(future)
         end_features = end_features.drop(columns=['row', 'col'],
                                          errors="ignore")
         lcp = future.result()
         lcp = pd.concat((lcp, end_features), axis=1)
         least_cost_paths.append(lcp)
-        logger.debug('Least cost path {} of {} complete!'
-                     .format(i + 1, len(futures)))
+        logger.debug('Collected {} of {} futures!'
+                     .format(i + 1, num_to_collect))
         log_mem(logger)
 
     return least_cost_paths
