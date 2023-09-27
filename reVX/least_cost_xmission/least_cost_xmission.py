@@ -637,7 +637,7 @@ class LeastCostXmission(LeastCostPaths):
         futures, paths = {}, []
 
         num_jobs = 1
-        for sc_point in self.sc_points.iterrows():
+        for __, sc_point in self.sc_points.iterrows():
             gid = sc_point['sc_point_gid']
             if gid not in sc_point_gids:
                 continue
