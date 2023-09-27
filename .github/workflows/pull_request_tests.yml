@@ -31,7 +31,7 @@ jobs:
         conda install rtree pip pytest
         pip install pytest-cov
         pip install -e .
-        pip install HOPP
+        pip install HOPP==0.1.0.dev3
     - name: Run pytest and Generate coverage report
       shell: bash -l {0}
       run: |
