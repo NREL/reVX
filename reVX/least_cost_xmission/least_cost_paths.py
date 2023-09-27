@@ -62,9 +62,8 @@ class LeastCostPaths:
         logger.debug('{} initialized'.format(self))
 
     def __repr__(self):
-        msg = ("{} to be computed for "
-               .format(self.__class__.__name__))
-
+        msg = ("{} to be computed for {:,d} features"
+               .format(self.__class__.__name__, len(self._features)))
         return msg
 
     @property
