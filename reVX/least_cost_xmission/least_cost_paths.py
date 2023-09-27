@@ -364,6 +364,9 @@ class LeastCostPaths:
                                 barrier_mult=barrier_mult,
                                 save_paths=save_paths)
             futures[future] = self.end_features
+            logger.debug('Submitted {} of {} futures'
+                         .format(ind, len(indices)))
+            log_mem(logger)
             if ind % max_submissions == 0:
                 paths = _collect_future_chunks(futures, paths)
         paths = _collect_future_chunks(futures, paths)
@@ -743,12 +746,12 @@ def _collect_future_chunks(futures, least_cost_paths):
     for i, future in enumerate(as_completed(futures)):
         end_features = futures[future]
         end_features = end_features.drop(columns=['row', 'col'],
-                                            errors="ignore")
+                                         errors="ignore")
         lcp = future.result()
         lcp = pd.concat((lcp, end_features), axis=1)
         least_cost_paths.append(lcp)
         logger.debug('Least cost path {} of {} complete!'
-                        .format(i + 1, len(futures)))
+                     .format(i + 1, len(futures)))
         log_mem(logger)
 
     return least_cost_paths
