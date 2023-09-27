@@ -597,6 +597,13 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self.get('xmission_config', None)
 
     @property
+    def clip_buffer(self):
+        """
+        Number of array elements to buffer clip area by.
+        """
+        return self.get('clip_buffer', 0)
+
+    @property
     def barrier_mult(self):
         """
         Transmission barrier multiplier to use for MCP costs

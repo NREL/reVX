@@ -71,6 +71,7 @@ def run_local(ctx, config):
                transmission_lines_fpath=config.transmission_lines_fpath,
                capacity_class=config.capacity_class,
                xmission_config=config.xmission_config,
+               clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
                barrier_mult=config.barrier_mult,
                max_workers=config.execution_control.max_workers,
@@ -150,6 +151,9 @@ def from_config(ctx, config, verbose):
 @click.option('--xmission_config', '-xcfg', type=STR, show_default=True,
               default=None,
               help=("Path to transmission config .json"))
+@click.option('--clip_buffer', '-cb', type=int,
+              show_default=True, default=0,
+              help="Optional number of array elements to buffer clip area by.")
 @click.option('--start_index', '-start', type=int,
               show_default=True, default=0,
               help=("Start index of features to run."))
@@ -179,9 +183,9 @@ def from_config(ctx, config, verbose):
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
-          transmission_lines_fpath, xmission_config, start_index, step_index,
-          barrier_mult, max_workers, state_connections, save_paths, out_dir,
-          log_dir, verbose):
+          transmission_lines_fpath, xmission_config, clip_buffer, start_index,
+          step_index, barrier_mult, max_workers, state_connections,
+          save_paths, out_dir, log_dir, verbose):
     """
     Run Least Cost Paths on local hardware
     """
@@ -203,6 +207,7 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
         indices = features.index[start_index::step_index]
         kwargs = {"xmission_config": xmission_config,
+                  "clip_buffer": clip_buffer,
                   "barrier_mult": barrier_mult,
                   "indices": indices,
                   "allow_connections_within_states": state_connections,
@@ -219,6 +224,7 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
         least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
                                          capacity_class,
                                          xmission_config=xmission_config,
+                                         clip_buffer=clip_buffer,
                                          barrier_mult=barrier_mult,
                                          indices=indices,
                                          max_workers=max_workers,
@@ -327,6 +333,7 @@ def get_node_cmd(config, start_index=0):
             '-nn {}'.format(SLURM.s(config.network_nodes_fpath)),
             '-tl {}'.format(SLURM.s(config.transmission_lines_fpath)),
             '-cap {}'.format(SLURM.s(config.capacity_class)),
+            '-cb {}'.format(SLURM.s(config.clip_buffer)),
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),

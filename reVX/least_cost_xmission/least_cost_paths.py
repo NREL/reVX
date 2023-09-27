@@ -31,7 +31,8 @@ class LeastCostPaths:
     """
     REQUIRED_LAYERS = ['transmission_barrier']
 
-    def __init__(self, cost_fpath, features_fpath, xmission_config=None):
+    def __init__(self, cost_fpath, features_fpath, xmission_config=None,
+                 clip_buffer=0):
         """
         Parameters
         ----------
@@ -44,13 +45,16 @@ class LeastCostPaths:
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         """
         self._check_layers(cost_fpath)
         self._config = TieLineCosts._parse_config(
             xmission_config=xmission_config)
-
-        self._features, self._row_slice, self._col_slice, self._shape = \
-            self._map_to_costs(cost_fpath, gpd.read_file(features_fpath))
+        out = self._map_to_costs(cost_fpath, gpd.read_file(features_fpath),
+                                 clip_buffer=clip_buffer)
+        self._features, self._row_slice, self._col_slice, self._shape = out
         self._features = self._features.drop(columns='geometry')
         self._cost_fpath = cost_fpath
         self._start_feature_ind = 0
@@ -148,7 +152,7 @@ class LeastCostPaths:
         return row, col, mask
 
     @staticmethod
-    def _get_clip_slice(row, col, shape):
+    def _get_clip_slice(row, col, shape, clip_buffer=0):
         """
         Clip cost raster to bounds of features
 
@@ -160,6 +164,9 @@ class LeastCostPaths:
             Vector of col indices
         shape : tuple
             Full cost array shape
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
 
         Returns
         -------
@@ -168,13 +175,15 @@ class LeastCostPaths:
         col_slice : slice
             Col slice to clip too
         """
-        row_slice = slice(max(row.min() - 1, 0), min(row.max() + 1, shape[0]))
-        col_slice = slice(max(col.min() - 1, 0), min(col.max() + 1, shape[1]))
+        row_slice = slice(max(row.min() - 1 - clip_buffer, 0),
+                          min(row.max() + 1 + clip_buffer, shape[0]))
+        col_slice = slice(max(col.min() - 1 - clip_buffer, 0),
+                          min(col.max() + 1 + clip_buffer, shape[1]))
 
         return row_slice, col_slice
 
     @classmethod
-    def _map_to_costs(cls, cost_fpath, features):
+    def _map_to_costs(cls, cost_fpath, features, clip_buffer=0):
         """
         Map features to cost arrays
 
@@ -195,6 +204,9 @@ class LeastCostPaths:
             Clipping slice along axis-1 (cols)
         shape : tuple
             Full cost raster shape
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         """
         with ExclusionLayers(cost_fpath) as f:
             crs = CRS.from_string(f.crs)
@@ -212,7 +224,8 @@ class LeastCostPaths:
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)
 
-        row_slice, col_slice = cls._get_clip_slice(row, col, shape)
+        row_slice, col_slice = cls._get_clip_slice(row, col, shape,
+                                                   clip_buffer=clip_buffer)
 
         features['row'] = row - row_slice.start
         features['col'] = col - col_slice.start
@@ -358,8 +371,8 @@ class LeastCostPaths:
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class,
-            xmission_config=None, barrier_mult=100, indices=None,
-            max_workers=None, save_paths=False):
+            xmission_config=None, clip_buffer=0, barrier_mult=100,
+            indices=None, max_workers=None, save_paths=False):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -376,6 +389,9 @@ class LeastCostPaths:
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
@@ -393,7 +409,8 @@ class LeastCostPaths:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        lcp = cls(cost_fpath, features_fpath, xmission_config=xmission_config)
+        lcp = cls(cost_fpath, features_fpath, xmission_config=xmission_config,
+                  clip_buffer=clip_buffer)
         least_cost_paths = lcp.process_least_cost_paths(
             capacity_class,
             barrier_mult=barrier_mult,
@@ -414,7 +431,7 @@ class ReinforcementPaths(LeastCostPaths):
     balancing area network node.
     """
     def __init__(self, cost_fpath, features, transmission_lines,
-                 xmission_config=None):
+                 xmission_config=None, clip_buffer=0):
         """
         Parameters
         ----------
@@ -436,13 +453,16 @@ class ReinforcementPaths(LeastCostPaths):
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
             By default, ``None``.
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         """
         self._check_layers(cost_fpath)
         self._config = TieLineCosts._parse_config(
             xmission_config=xmission_config)
 
         self._features, self._row_slice, self._col_slice, self._shape = \
-            self._map_to_costs(cost_fpath, features)
+            self._map_to_costs(cost_fpath, features, clip_buffer)
         self._features = self._features.drop(columns='geometry')
         self._cost_fpath = cost_fpath
 
@@ -541,7 +561,7 @@ class ReinforcementPaths(LeastCostPaths):
     @classmethod
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             transmission_lines_fpath, capacity_class, xmission_config=None,
-            barrier_mult=100, indices=None,
+            clip_buffer=0, barrier_mult=100, indices=None,
             allow_connections_within_states=False, save_paths=False):
         """
         Find the reinforcement line paths between the network node and
@@ -575,6 +595,9 @@ class ReinforcementPaths(LeastCostPaths):
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
             By default, ``None``.
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -640,7 +663,7 @@ class ReinforcementPaths(LeastCostPaths):
                          .format(len(node_substations), ba_str))
             node_features = pd.concat([network_node, node_substations])
             rp = cls(cost_fpath, node_features, transmission_lines,
-                     xmission_config=xmission_config)
+                     xmission_config=xmission_config, clip_buffer=clip_buffer)
             node_least_cost_paths = rp.process_least_cost_paths(**lcp_kwargs)
             node_least_cost_paths['ba_str'] = ba_str
             least_cost_paths += [node_least_cost_paths]
