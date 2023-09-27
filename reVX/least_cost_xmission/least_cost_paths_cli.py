@@ -221,7 +221,6 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
         indices = features.index[start_index::step_index]
         least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
                                          capacity_class,
-                                         xmission_config=xmission_config,
                                          barrier_mult=barrier_mult,
                                          indices=indices,
                                          max_workers=max_workers,

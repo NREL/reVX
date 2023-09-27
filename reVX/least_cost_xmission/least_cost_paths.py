@@ -31,7 +31,7 @@ class LeastCostPaths:
     """
     REQUIRED_LAYERS = ['transmission_barrier']
 
-    def __init__(self, cost_fpath, features_fpath, xmission_config=None):
+    def __init__(self, cost_fpath, features_fpath):
         """
         Parameters
         ----------
@@ -41,13 +41,8 @@ class LeastCostPaths:
             Path to GeoPackage with transmission features
         resolution : int, optional
             SC point resolution, by default 128
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
         """
         self._check_layers(cost_fpath)
-        self._config = TieLineCosts._parse_config(
-            xmission_config=xmission_config)
 
         self._features, self._row_slice, self._col_slice, self._shape = \
             self._map_to_costs(cost_fpath, gpd.read_file(features_fpath))
@@ -357,9 +352,8 @@ class LeastCostPaths:
         return least_cost_paths
 
     @classmethod
-    def run(cls, cost_fpath, features_fpath, capacity_class,
-            xmission_config=None, barrier_mult=100, indices=None,
-            max_workers=None, save_paths=False):
+    def run(cls, cost_fpath, features_fpath, capacity_class, barrier_mult=100,
+            indices=None, max_workers=None, save_paths=False):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -373,9 +367,6 @@ class LeastCostPaths:
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
@@ -393,7 +384,7 @@ class LeastCostPaths:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        lcp = cls(cost_fpath, features_fpath, xmission_config=xmission_config)
+        lcp = cls(cost_fpath, features_fpath)
         least_cost_paths = lcp.process_least_cost_paths(
             capacity_class,
             barrier_mult=barrier_mult,
@@ -413,8 +404,7 @@ class ReinforcementPaths(LeastCostPaths):
     Compute reinforcement line paths between substations and a single
     balancing area network node.
     """
-    def __init__(self, cost_fpath, features, transmission_lines,
-                 xmission_config=None):
+    def __init__(self, cost_fpath, features, transmission_lines):
         """
         Parameters
         ----------
@@ -432,14 +422,8 @@ class ReinforcementPaths(LeastCostPaths):
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
             transmission lines of differing voltages.
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects.
-            By default, ``None``.
         """
         self._check_layers(cost_fpath)
-        self._config = TieLineCosts._parse_config(
-            xmission_config=xmission_config)
 
         self._features, self._row_slice, self._col_slice, self._shape = \
             self._map_to_costs(cost_fpath, features)
@@ -632,8 +616,7 @@ class ReinforcementPaths(LeastCostPaths):
             logger.info('Working on {} substations in region {}'
                         .format(len(node_substations), rid))
             node_features = pd.concat([network_node, node_substations])
-            rp = cls(cost_fpath, node_features, transmission_lines,
-                     xmission_config=xmission_config)
+            rp = cls(cost_fpath, node_features, transmission_lines)
             node_least_cost_paths = rp.process_least_cost_paths(**lcp_kwargs)
             node_least_cost_paths[region_identifier_column] = rid
             least_cost_paths += [node_least_cost_paths]
