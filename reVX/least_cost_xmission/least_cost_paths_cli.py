@@ -200,6 +200,7 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
     logger.info('Computing Least Cost Paths connections and writing them to {}'
                 .format(out_dir))
     xmission_config = XmissionConfig(config=xmission_config)
+    logger.debug('Xmission Config: {}'.format(xmission_config))
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
     if is_reinforcement_run:
