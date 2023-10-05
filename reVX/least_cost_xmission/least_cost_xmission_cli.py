@@ -313,9 +313,8 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
             sys.exit(1)
         pois = set(df['POI Name'])
         for i, poi in enumerate(pois, start=1):
-            out_file = os.path.join(out_dir,
-                                    "{}_paths.geojson"
-                                    .format(poi.replace(' ', '_')))
+            safe_poi_name = poi.replace(' ', '_').replace('/', '_')
+            out_file = os.path.join(out_dir, f"{safe_poi_name}_paths.geojson")
             paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
             logger.info('Writing {} paths for {} to {} ({}/{})'
                         .format(len(paths), poi, out_file, i, len(pois)))
