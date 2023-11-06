@@ -6,6 +6,8 @@ import os
 import logging
 from typing import Tuple, Union, List, Dict
 
+import pandas as pd
+
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig, BaseConfig
 
@@ -510,10 +512,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
                 sce = SupplyCurveExtent(self.cost_fpath,
                                         resolution=self.resolution)
                 sc_point_gids = list(sce.points.index.values)
+            elif (isinstance(sc_point_gids, str)
+                  and sc_point_gids.endswith(".csv")):
+                points = pd.read_csv(sc_point_gids)
+                sc_point_gids = list(points.sc_point_gids.values)
 
             if not isinstance(sc_point_gids, list):
-                raise ValueError('sc_point_gids must be a list, got a '
-                                 '{} ({})'
+                raise ValueError('sc_point_gids must be a list or path to a '
+                                 'csv file, got a {} ({})'
                                  .format(type(sc_point_gids), sc_point_gids))
             self._sc_point_gids = sc_point_gids
 
