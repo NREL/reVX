@@ -61,7 +61,7 @@ def valid_config_keys():
 @main.command()
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
-              help='Filepath to AssemblyAreas config json file.')
+              help='Filepath to Least Cost Xmission config json file.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.pass_context
@@ -129,7 +129,10 @@ def from_config(ctx, config, verbose):
               show_default=True, default=0,
               help=("Minimum Tie-line length."))
 @click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
-              default=None, help=("List of sc_point_gids to connect to"))
+              default=None, help=("List of sc_point_gids to connect to. If "
+                                  "running `from_config`, this can also be a "
+                                  "path to a CSV file with a 'sc_point_gids' "
+                                  "column containing the GID's to run."))
 @click.option('--nn_sinks', '-nn', type=int,
               show_default=True, default=2,
               help=("Number of nearest neighbor sinks to use for clipping "

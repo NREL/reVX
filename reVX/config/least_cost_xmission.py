@@ -6,6 +6,8 @@ import os
 import logging
 from typing import Tuple, Union, List, Dict
 
+import pandas as pd
+
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig, BaseConfig
 
@@ -45,6 +47,7 @@ class OffshoreCreatorConfig(BaseConfig):
         'land_barrier_layer', 'land_costs_layer',
     )
 
+    # pylint: disable=useless-parent-delegation
     def __init__(self, config: Union[str, dict]):
         """
         Parameters
@@ -510,10 +513,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
                 sce = SupplyCurveExtent(self.cost_fpath,
                                         resolution=self.resolution)
                 sc_point_gids = list(sce.points.index.values)
+            elif (isinstance(sc_point_gids, str)
+                  and sc_point_gids.endswith(".csv")):
+                points = pd.read_csv(sc_point_gids)
+                sc_point_gids = list(points.sc_point_gids.values)
 
             if not isinstance(sc_point_gids, list):
-                raise ValueError('sc_point_gids must be a list, got a '
-                                 '{} ({})'
+                raise ValueError('sc_point_gids must be a list or path to a '
+                                 'csv file, got a {} ({})'
                                  .format(type(sc_point_gids), sc_point_gids))
             self._sc_point_gids = sc_point_gids
 
@@ -595,6 +602,13 @@ class LeastCostPathsConfig(AnalysisConfig):
         Xmission config input
         """
         return self.get('xmission_config', None)
+
+    @property
+    def clip_buffer(self):
+        """
+        Number of array elements to buffer clip area by.
+        """
+        return self.get('clip_buffer', 0)
 
     @property
     def barrier_mult(self):
