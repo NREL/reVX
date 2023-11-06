@@ -47,6 +47,7 @@ class OffshoreCreatorConfig(BaseConfig):
         'land_barrier_layer', 'land_costs_layer',
     )
 
+    # pylint: disable=useless-parent-delegation
     def __init__(self, config: Union[str, dict]):
         """
         Parameters
