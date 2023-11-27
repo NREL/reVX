@@ -361,7 +361,8 @@ class PlexosNode:
 
     @classmethod
     def run(cls, sc_build, cf_fpath, res_gids=None, force_full_build=False,
-            forecast_fpath=None, forecast_map=None, dset_tag=None):
+            forecast_fpath=None, forecast_map=None, dset_tag=None, 
+            gid_column="sc_gid"):
         """Make an aggregated generation profile for a single plexos node.
 
         Parameters
@@ -396,6 +397,9 @@ class PlexosNode:
             the cf profile file is a multi year file using dset_tag="-2008"
             will enable us to select the corresponding datasets
             (cf_mean-2008, cf_profile-2008, etc)
+        gid_column: str, optional
+            Reference column to use for supply curve gid. Valid options are sc_gid 
+            and sc_point_gid.
 
         Returns
         -------
@@ -415,7 +419,8 @@ class PlexosNode:
                 force_full_build=force_full_build,
                 forecast_fpath=forecast_fpath,
                 forecast_map=forecast_map,
-                dset_tag=dset_tag)
+                dset_tag=dset_tag,
+                gid_column=gid_column)
 
         profile, sc_gids, res_gids, gen_gids, res_built = n.make_node_profile()
 

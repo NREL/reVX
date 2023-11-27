@@ -151,7 +151,8 @@ class PlexosAggregation(BaseProfileAggregation):
 
         self._sc_build = self._parse_rev_reeds(rev_sc, reeds_build,
                                                build_year=build_year,
-                                               bespoke=bespoke)
+                                               bespoke=bespoke,
+                                               gid_column=gid_column)
         if res_class is not None:
             class_mask = self._sc_build['class'] == res_class
             self._sc_build = self._sc_build[class_mask]
@@ -401,7 +402,8 @@ class PlexosAggregation(BaseProfileAggregation):
             raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
 
         rev_sc, reeds_build = cls._check_rev_reeds_coordinates(rev_sc,
-                                                               reeds_build)
+                                                               reeds_build,
+                                                               gid_column=gid_column)
 
         check_isin = np.isin(reeds_build[gid_column].values,
                              rev_sc[gid_column].values)
@@ -641,7 +643,8 @@ class PlexosAggregation(BaseProfileAggregation):
                                forecast_fpath=self._forecast_fpath,
                                forecast_map=self._forecast_map,
                                force_full_build=self._force_full_build,
-                               dset_tag=self._dset_tag)
+                               dset_tag=self._dset_tag,
+                               gid_column=self._gid_column)
                 futures[f] = i
 
             for n, f in enumerate(as_completed(futures)):
@@ -678,7 +681,8 @@ class PlexosAggregation(BaseProfileAggregation):
                 forecast_fpath=self._forecast_fpath,
                 forecast_map=self._forecast_map,
                 force_full_build=self._force_full_build,
-                dset_tag=self._dset_tag)
+                dset_tag=self._dset_tag,
+                gid_column=self._gid_column)
 
             profile, sc_gids, res_gids, gen_gids, res_built = p
             profiles[:, i] = profile
@@ -698,7 +702,7 @@ class PlexosAggregation(BaseProfileAggregation):
             forecast_fpath=None, build_year=2050, plexos_columns=None,
             force_full_build=False, force_shape_map=False,
             plant_name_col=None, tech_tag=None, res_class=None,
-            timezone='UTC', dset_tag=None, bespoke=False,
+            timezone='UTC', dset_tag=None, bespoke=False, gid_column="sc_gid",
             out_fpath=None, max_workers=None):
         """Run plexos aggregation.
 
@@ -772,6 +776,9 @@ class PlexosAggregation(BaseProfileAggregation):
             profiles at the supply curve grid resolution which is different
             than traditional reV generation outputs that are on the resource
             grid resolution.
+        gid_column: str, optional
+            Reference column to use for supply curve gid. Valid options are sc_gid 
+            and sc_point_gid.
         out_fpath : str, optional
             Path to .h5 file into which plant buildout should be saved. A
             plexos-formatted csv will also be written in the same directory.
@@ -802,6 +809,7 @@ class PlexosAggregation(BaseProfileAggregation):
                  timezone=timezone,
                  dset_tag=dset_tag,
                  bespoke=bespoke,
+                 gid_column=gid_column,
                  max_workers=max_workers)
 
         profiles = pa.make_profiles()

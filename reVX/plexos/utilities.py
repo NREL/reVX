@@ -158,6 +158,10 @@ class DataCleaner:
                     if value not in df.columns}
 
         df = df.rename(columns=name_map)
+
+        # Removing duplicated columns. We assume they have the exact same values.
+        df = df.loc[:, ~df.columns.duplicated()].copy()
+
         return df
 
     @classmethod
