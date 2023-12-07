@@ -5,6 +5,7 @@ Least cost transmission line path tests
 """
 import json
 import os
+import shutil
 import random
 import tempfile
 import traceback
@@ -14,15 +15,18 @@ import rasterio
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from shapely.geometry import shape
+from shapely.geometry import shape, Point
 from click.testing import CliRunner
 
+from rex import Outputs
 from rex.utilities.loggers import LOGGERS
+from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.least_cost_paths_cli import main
 from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
+from reVX.utilities.exceptions import LeastCostPathNotFoundError
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_county_centroids.gpkg')
@@ -111,6 +115,38 @@ def test_parallel(max_workers):
     truth = pd.read_csv(truth)
 
     check(truth, test)
+
+
+def test_clip_buffer():
+    """Test using clip buffer for points that would otherwise be cut off. """
+    with tempfile.TemporaryDirectory() as td:
+        out_cost_fp = os.path.join(td, "costs.h5")
+        out_features_fp = os.path.join(td, "feats.gpkg")
+        shutil.copy(COST_H5, out_cost_fp)
+        gpd.GeoDataFrame(data={"index": [0, 1]},
+                         geometry=[Point(-70.868065, 40.85588),
+                                   Point(-71.9096, 42.016506)],
+                         crs="EPSG:4326").to_file(out_features_fp,
+                                                  driver="GPKG")
+
+        costs = np.ones(shape=(1434, 972))
+        costs[0, 3] = costs[1, 3] = costs[2, 3] = costs[3, 3] = -1
+        costs[3, 1] = costs[3, 2] = -1
+
+        with Outputs(out_cost_fp, "a") as out:
+            out['tie_line_costs_102MW'] = costs
+
+        with ExclusionLayers(out_cost_fp) as excl:
+            assert np.allclose(excl['tie_line_costs_102MW'], costs)
+
+        with pytest.raises(LeastCostPathNotFoundError):
+            LeastCostPaths.run(out_cost_fp, out_features_fp,
+                               capacity_class=100, max_workers=1)
+
+        out = LeastCostPaths.run(out_cost_fp, out_features_fp,
+                                 capacity_class=100, max_workers=1,
+                                 clip_buffer=10)
+        assert (out["length_km"] > 193).all()
 
 
 @pytest.mark.parametrize("save_paths", [False, True])

@@ -619,49 +619,56 @@ class LeastCostXmission(LeastCostPaths):
             the transmission features with the given capacity class that
             are within "nn_sink" nearest infinite sinks
         """
-        least_costs = []
-        num_jobs = 0
         loggers = [__name__, 'reV', 'reVX']
         with SpawnProcessPool(max_workers=max_workers, loggers=loggers) as exe:
-            futures = []
-            for _, sc_point in self.sc_points.iterrows():
-                gid = sc_point['sc_point_gid']
-                if gid in sc_point_gids:
-                    sc_features, sc_radius = self._clip_to_sc_point(
-                        sc_point, tie_line_voltage, nn_sinks=nn_sinks,
-                        clipping_buffer=clipping_buffer, radius=radius,
-                        expand_radius=expand_radius)
-                    if sc_features.empty:
-                        continue
-
-                    future = exe.submit(TransCapCosts.run,
-                                        self._cost_fpath,
-                                        sc_point.copy(deep=True),
-                                        sc_features, capacity_class,
-                                        radius=sc_radius,
-                                        xmission_config=self._config,
-                                        barrier_mult=barrier_mult,
-                                        min_line_length=self._min_line_len,
-                                        save_paths=save_paths,
-                                        simplify_geo=simplify_geo)
-                    futures.append(future)
-
-                    num_jobs += 1
-                    if num_jobs <= max_workers:
-                        time.sleep(mp_delay)
-
-            logger.debug('Completed kicking off {} jobs for {} workers.'
-                         .format(num_jobs, max_workers))
-            for i, future in enumerate(as_completed(futures), start=1):
-                sc_costs = future.result()
-                if sc_costs is not None:
-                    least_costs.append(sc_costs)
-
-                logger.info('SC point {} of {} complete!'
-                            .format(i, len(futures)))
-                log_mem(logger)
+            least_costs = self. _compute_paths_in_chunks(
+                exe, max_workers, sc_point_gids, tie_line_voltage,
+                nn_sinks, clipping_buffer, radius, expand_radius, mp_delay,
+                capacity_class, barrier_mult, save_paths, simplify_geo)
 
         return least_costs
+
+    def _compute_paths_in_chunks(self, exe, max_submissions, sc_point_gids,
+                                 tie_line_voltage, nn_sinks, clipping_buffer,
+                                 radius, expand_radius, mp_delay,
+                                 capacity_class, barrier_mult, save_paths,
+                                 simplify_geo):
+        """Compute LCP's in parallel using futures. """
+        futures, paths = {}, []
+
+        num_jobs = 1
+        for __, sc_point in self.sc_points.iterrows():
+            gid = sc_point['sc_point_gid']
+            if gid not in sc_point_gids:
+                continue
+
+            sc_features, sc_radius = self._clip_to_sc_point(
+                sc_point, tie_line_voltage, nn_sinks=nn_sinks,
+                clipping_buffer=clipping_buffer, radius=radius,
+                expand_radius=expand_radius)
+            if sc_features.empty:
+                continue
+            future = exe.submit(TransCapCosts.run,
+                                self._cost_fpath,
+                                sc_point.copy(deep=True),
+                                sc_features, capacity_class,
+                                radius=sc_radius,
+                                xmission_config=self._config,
+                                barrier_mult=barrier_mult,
+                                min_line_length=self._min_line_len,
+                                save_paths=save_paths,
+                                simplify_geo=simplify_geo)
+            futures[future] = None
+            num_jobs += 1
+            if num_jobs <= max_submissions:
+                time.sleep(mp_delay)
+            logger.debug('Submitted {} of {} futures'
+                         .format(num_jobs, len(sc_point_gids)))
+            log_mem(logger)
+            if num_jobs % max_submissions == 0:
+                paths = _collect_future_chunks(futures, paths)
+        paths = _collect_future_chunks(futures, paths)
+        return paths
 
     def _process_single_core(self, capacity_class, tie_line_voltage,
                              sc_point_gids, nn_sinks=2,
@@ -1046,3 +1053,18 @@ def reinforcement_region_mapper(regions, region_identifier_column):
         return regions.loc[idx, region_identifier_column]
 
     return _map_reinforcement_region
+
+
+def _collect_future_chunks(futures, least_cost_paths):
+    """Collect all futures from the input dictionary. """
+
+    num_to_collect = len(futures)
+    for i, future in enumerate(as_completed(futures), start=1):
+        futures.pop(future)
+        sc_costs = future.result()
+        if sc_costs is not None:
+            least_cost_paths.append(sc_costs)
+        logger.debug('Collected {} of {} futures!'.format(i, num_to_collect))
+        log_mem(logger)
+
+    return least_cost_paths

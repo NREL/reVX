@@ -31,7 +31,8 @@ class LeastCostPaths:
     """
     REQUIRED_LAYERS = ['transmission_barrier']
 
-    def __init__(self, cost_fpath, features_fpath):
+
+    def __init__(self, cost_fpath, features_fpath, clip_buffer=0):
         """
         Parameters
         ----------
@@ -41,11 +42,14 @@ class LeastCostPaths:
             Path to GeoPackage with transmission features
         resolution : int, optional
             SC point resolution, by default 128
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         """
         self._check_layers(cost_fpath)
-
-        self._features, self._row_slice, self._col_slice, self._shape = \
-            self._map_to_costs(cost_fpath, gpd.read_file(features_fpath))
+        out = self._map_to_costs(cost_fpath, gpd.read_file(features_fpath),
+                                 clip_buffer=clip_buffer)
+        self._features, self._row_slice, self._col_slice, self._shape = out
         self._features = self._features.drop(columns='geometry')
         self._cost_fpath = cost_fpath
         self._start_feature_ind = 0
@@ -53,9 +57,8 @@ class LeastCostPaths:
         logger.debug('{} initialized'.format(self))
 
     def __repr__(self):
-        msg = ("{} to be computed for "
-               .format(self.__class__.__name__))
-
+        msg = ("{} to be computed for {:,d} features"
+               .format(self.__class__.__name__, len(self._features)))
         return msg
 
     @property
@@ -143,7 +146,7 @@ class LeastCostPaths:
         return row, col, mask
 
     @staticmethod
-    def _get_clip_slice(row, col, shape):
+    def _get_clip_slice(row, col, shape, clip_buffer=0):
         """
         Clip cost raster to bounds of features
 
@@ -155,6 +158,9 @@ class LeastCostPaths:
             Vector of col indices
         shape : tuple
             Full cost array shape
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
 
         Returns
         -------
@@ -163,13 +169,15 @@ class LeastCostPaths:
         col_slice : slice
             Col slice to clip too
         """
-        row_slice = slice(max(row.min() - 1, 0), min(row.max() + 1, shape[0]))
-        col_slice = slice(max(col.min() - 1, 0), min(col.max() + 1, shape[1]))
+        row_slice = slice(max(row.min() - 1 - clip_buffer, 0),
+                          min(row.max() + 1 + clip_buffer, shape[0]))
+        col_slice = slice(max(col.min() - 1 - clip_buffer, 0),
+                          min(col.max() + 1 + clip_buffer, shape[1]))
 
         return row_slice, col_slice
 
     @classmethod
-    def _map_to_costs(cls, cost_fpath, features):
+    def _map_to_costs(cls, cost_fpath, features, clip_buffer=0):
         """
         Map features to cost arrays
 
@@ -190,6 +198,9 @@ class LeastCostPaths:
             Clipping slice along axis-1 (cols)
         shape : tuple
             Full cost raster shape
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         """
         with ExclusionLayers(cost_fpath) as f:
             crs = CRS.from_string(f.crs)
@@ -207,7 +218,8 @@ class LeastCostPaths:
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)
 
-        row_slice, col_slice = cls._get_clip_slice(row, col, shape)
+        row_slice, col_slice = cls._get_clip_slice(row, col, shape,
+                                                   clip_buffer=clip_buffer)
 
         features['row'] = row - row_slice.start
         features['col'] = col - col_slice.start
@@ -304,32 +316,14 @@ class LeastCostPaths:
             loggers = [__name__, 'reV', 'reVX']
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
-                futures = {}
-                for start in indices:
-                    self._start_feature_ind = start
-                    future = exe.submit(TieLineCosts.run, self._cost_fpath,
-                                        self.start_indices, self.end_indices,
-                                        capacity_class,
-                                        self._row_slice, self._col_slice,
-                                        barrier_mult=barrier_mult,
-                                        save_paths=save_paths)
-                    futures[future] = self.end_features
-
-                for i, future in enumerate(as_completed(futures)):
-                    end_features = futures[future]
-                    end_features = end_features.drop(columns=['row', 'col'],
-                                                     errors="ignore")
-                    lcp = future.result()
-                    lcp = pd.concat((lcp, end_features), axis=1)
-                    least_cost_paths.append(lcp)
-                    logger.debug('Least cost path {} of {} complete!'
-                                 .format(i + 1, len(futures)))
-                    log_mem(logger)
+                least_cost_paths = self._compute_paths_in_chunks(
+                    exe, max_workers, indices, capacity_class, barrier_mult,
+                    save_paths)
         else:
+            least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
             log_mem(logger)
-            i = 1
-            for start in indices:
+            for ind, start in enumerate(indices, start=1):
                 self._start_feature_ind = start
                 lcp = TieLineCosts.run(self._cost_fpath,
                                        self.start_indices, self.end_indices,
@@ -343,17 +337,39 @@ class LeastCostPaths:
                 least_cost_paths.append(lcp)
 
                 logger.debug('Least cost path {} of {} complete!'
-                             .format(i, len(self.features)))
+                             .format(ind, len(self.features)))
                 log_mem(logger)
-                i += 1
 
         least_cost_paths = pd.concat(least_cost_paths, ignore_index=True)
 
         return least_cost_paths
 
+    def _compute_paths_in_chunks(self, exe, max_submissions, indices,
+                                 capacity_class, barrier_mult, save_paths):
+        """Compute LCP's in parallel using futures. """
+        futures, paths = {}, []
+
+        for ind, start in enumerate(indices, start=1):
+            self._start_feature_ind = start
+            future = exe.submit(TieLineCosts.run, self._cost_fpath,
+                                self.start_indices, self.end_indices,
+                                capacity_class,
+                                self._row_slice, self._col_slice,
+                                barrier_mult=barrier_mult,
+                                save_paths=save_paths)
+            futures[future] = self.end_features
+            logger.debug('Submitted {} of {} futures'
+                         .format(ind, len(indices)))
+            log_mem(logger)
+            if ind % max_submissions == 0:
+                paths = _collect_future_chunks(futures, paths)
+        paths = _collect_future_chunks(futures, paths)
+        return paths
+
     @classmethod
-    def run(cls, cost_fpath, features_fpath, capacity_class, barrier_mult=100,
-            indices=None, max_workers=None, save_paths=False):
+    def run(cls, cost_fpath, features_fpath, capacity_class,
+            clip_buffer=0, barrier_mult=100, indices=None, max_workers=None,
+            save_paths=False):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -367,6 +383,9 @@ class LeastCostPaths:
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
@@ -384,7 +403,7 @@ class LeastCostPaths:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        lcp = cls(cost_fpath, features_fpath)
+        lcp = cls(cost_fpath, features_fpath, clip_buffer=clip_buffer)
         least_cost_paths = lcp.process_least_cost_paths(
             capacity_class,
             barrier_mult=barrier_mult,
@@ -404,7 +423,8 @@ class ReinforcementPaths(LeastCostPaths):
     Compute reinforcement line paths between substations and a single
     balancing area network node.
     """
-    def __init__(self, cost_fpath, features, transmission_lines):
+    def __init__(self, cost_fpath, features, transmission_lines,
+                 clip_buffer=0):
         """
         Parameters
         ----------
@@ -422,11 +442,14 @@ class ReinforcementPaths(LeastCostPaths):
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
             transmission lines of differing voltages.
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         """
         self._check_layers(cost_fpath)
 
         self._features, self._row_slice, self._col_slice, self._shape = \
-            self._map_to_costs(cost_fpath, features)
+            self._map_to_costs(cost_fpath, features, clip_buffer)
         self._features = self._features.drop(columns='geometry')
         self._cost_fpath = cost_fpath
 
@@ -524,8 +547,8 @@ class ReinforcementPaths(LeastCostPaths):
     @classmethod
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
-            capacity_class, xmission_config=None, barrier_mult=100,
-            indices=None, save_paths=False):
+            capacity_class, xmission_config=None, clip_buffer=0,
+            barrier_mult=100, indices=None, save_paths=False):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -562,6 +585,9 @@ class ReinforcementPaths(LeastCostPaths):
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
             By default, ``None``.
+        clip_buffer : int, optional
+            Optional number of array elements to buffer clip area by.
+            By default, ``0``.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -616,7 +642,8 @@ class ReinforcementPaths(LeastCostPaths):
             logger.info('Working on {} substations in region {}'
                         .format(len(node_substations), rid))
             node_features = pd.concat([network_node, node_substations])
-            rp = cls(cost_fpath, node_features, transmission_lines)
+            rp = cls(cost_fpath, node_features, transmission_lines,
+                     clip_buffer=clip_buffer)
             node_least_cost_paths = rp.process_least_cost_paths(**lcp_kwargs)
             node_least_cost_paths[region_identifier_column] = rid
             least_cost_paths += [node_least_cost_paths]
@@ -688,3 +715,20 @@ def min_reinforcement_costs(table):
     grouped = table.groupby('gid')
     table = table.loc[grouped["reinforcement_cost_per_mw"].idxmin()]
     return table.reset_index(drop=True)
+
+
+def _collect_future_chunks(futures, least_cost_paths):
+    """Collect all futures from the input dictionary. """
+
+    num_to_collect = len(futures)
+    for i, future in enumerate(as_completed(futures), start=1):
+        end_features = futures.pop(future)
+        end_features = end_features.drop(columns=['row', 'col'],
+                                         errors="ignore")
+        lcp = future.result()
+        lcp = pd.concat((lcp, end_features), axis=1)
+        least_cost_paths.append(lcp)
+        logger.debug('Collected {} of {} futures!'.format(i, num_to_collect))
+        log_mem(logger)
+
+    return least_cost_paths
