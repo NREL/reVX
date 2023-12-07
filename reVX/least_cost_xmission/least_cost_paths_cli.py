@@ -109,7 +109,7 @@ def from_config(ctx, config, verbose):
         run_local(ctx, config)
         return
 
-    if config.execution_control.option != 'eagle':
+    if config.execution_control.option not in {'eagle', 'kestrel'}:
         click.echo('Option "{}" is not supported'
                    .format(config.execution_control.option))
         return
