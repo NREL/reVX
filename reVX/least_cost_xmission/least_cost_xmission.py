@@ -648,6 +648,20 @@ class LeastCostXmission(LeastCostPaths):
                 expand_radius=expand_radius)
             if sc_features.empty:
                 continue
+
+            start_cost = _starting_cost(self._cost_fpath,
+                                        sc_point.copy(deep=True),
+                                        sc_features,
+                                        capacity_class,
+                                        radius=sc_radius,
+                                        xmission_config=self._config,
+                                        barrier_mult=barrier_mult)
+
+            if start_cost < 0:
+                logger.debug("Could not connect SC point {} to "
+                             "transmission features: Invalid start cost!"
+                             .format(gid))
+                continue
             future = exe.submit(TransCapCosts.run,
                                 self._cost_fpath,
                                 sc_point.copy(deep=True),
@@ -662,8 +676,7 @@ class LeastCostXmission(LeastCostPaths):
             num_jobs += 1
             if num_jobs <= max_submissions:
                 time.sleep(mp_delay)
-            logger.debug('Submitted {} of {} futures'
-                         .format(num_jobs, len(sc_point_gids)))
+            logger.debug('Submitted {} futures'.format(num_jobs))
             log_mem(logger)
             if num_jobs % max_submissions == 0:
                 paths = _collect_future_chunks(futures, paths)
@@ -1068,3 +1081,10 @@ def _collect_future_chunks(futures, least_cost_paths):
         log_mem(logger)
 
     return least_cost_paths
+
+
+def _starting_cost(cost_fpath, point, sc_features, capacity_class, **kwargs):
+    """Extract the starting point cost"""
+    cost_calculator = TransCapCosts(cost_fpath, point, sc_features,
+                                    capacity_class, **kwargs)
+    return cost_calculator.mcp_cost[cost_calculator.row, cost_calculator.col]
