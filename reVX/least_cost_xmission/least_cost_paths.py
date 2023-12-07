@@ -31,7 +31,6 @@ class LeastCostPaths:
     """
     REQUIRED_LAYERS = ['transmission_barrier']
 
-
     def __init__(self, cost_fpath, features_fpath, clip_buffer=0):
         """
         Parameters
