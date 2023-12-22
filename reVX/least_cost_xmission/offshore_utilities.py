@@ -7,6 +7,7 @@ import os
 import json
 import logging
 from functools import reduce
+from typing import Optional, Union
 
 import h5py
 import numpy as np
@@ -80,7 +81,7 @@ def convert_pois_to_lines(poi_csv_f: str, template_f: str, out_f: str):
 
     trans_line = gpd.GeoDataFrame(trans_line)
     geo = LineString([Point(0, 0), Point(100000, 100000)])
-    trans_line = trans_line.set_geometry([geo], crs=crs)
+    trans_line = trans_line.set_geometry([geo], crs=crs)  # type: ignore
 
     pois: gpd.GeoDataFrame = pd.concat([lines, trans_line])
     pois['gid'] = pois.index
@@ -140,7 +141,8 @@ class CombineRasters:
         self._land_mask = None  # (bool) land mask raster, true indicates land
 
     def create_land_mask(self, mask_shp_f, save_tiff=False, filename=None,
-                         buffer_dist=None):
+                         buffer_dist=None, all_touched=False,
+                         reproject_vector=True):
         """
         Create the land mask layer from a vector file. Optionally, buffer all
         features by a distance before rasterizing, e.g., to create a near-shore
@@ -157,26 +159,79 @@ class CombineRasters:
         buffer_dist : int, optional
             Distance to buffer features in mask_shp_f by. Same units as the
             template raster.
+        all_touched : bool, optional
+            Set all cells touched by vector to 1. False results in less cells
+            being set to 1.
+        reproject_vector: bool, optional
+            Reproject CRS of vector to match template raster if True.
         """
-        ldf = gpd.read_file(mask_shp_f)
-        if buffer_dist is not None:
-            ldf.geometry = ldf.geometry.buffer(buffer_dist)
-
-        logger.info('Rasterizing {}'.format(mask_shp_f))
-        l_geom = list(ldf.geometry)
-        l_rast = features.rasterize(l_geom, out_shape=self._os_shape, fill=0,
-                                    out=None,
-                                    transform=self.profile()['transform'],
-                                    all_touched=False, default_value=1,
-                                    dtype=None)
         if save_tiff:
             if filename is None:
                 filename = self.LAND_MASK_FNAME
-            logger.info('Saving land mask to {}'.format(filename))
-            self._save_tiff(l_rast, filename)
+            l_rast = self.rasterize(mask_shp_f, filename=filename,
+                                    buffer_dist=buffer_dist,
+                                    all_touched=all_touched,
+                                    reproject_vector=reproject_vector)
+        else:
+            l_rast = self.rasterize(mask_shp_f, buffer_dist=buffer_dist,
+                                    all_touched=all_touched,
+                                    reproject_vector=reproject_vector)
 
         self._land_mask = l_rast == 1
+
+    def rasterize(self, mask_shp_f: str, filename: Optional[bool] = None,
+                  buffer_dist: Optional[bool] = None,
+                  all_touched: bool = False, reproject_vector: bool = True,
+                  burn_value: Union[int, float] = 1
+                  ) -> np.ndarray:
+        """
+        Create the land mask layer from a vector file. Optionally, buffer all
+        features by a distance before rasterizing, e.g., to create a near-shore
+        friction layer.
+
+        Parameters
+        ----------
+        mask_shp_f : str
+            Full path to mask gpgk or shp file
+        filename : str, optional
+            Name of file to save rasterized mask to
+        buffer_dist : int, optional
+            Distance to buffer features in mask_shp_f by. Same units as the
+            template raster.
+        all_touched : bool, optional
+            Set all cells touched by vector to 1. False results in less cells
+            being set to 1.
+        reproject_vector: bool, optional
+            Reproject CRS of vector to match template raster if True.
+        burn_value: float|int, optional
+            Value used to burn vectors into raster
+
+        Returns
+        -------
+        numpy.nd_array
+            Rasterized vector data
+        """
+        gdf = gpd.read_file(mask_shp_f)
+
+        if reproject_vector:
+            gdf = gdf.to_crs(crs=self.profile()['crs'])
+
+        if buffer_dist is not None:
+            gdf.geometry = gdf.geometry.buffer(buffer_dist)
+
+        logger.info('Rasterizing {}'.format(mask_shp_f))
+        l_geom = list(gdf.geometry)
+        rasterized = features.rasterize(l_geom, out_shape=self._os_shape,
+                                        fill=0, out=None,
+                                        transform=self.profile()['transform'],
+                                        all_touched=all_touched,
+                                        default_value=burn_value, dtype=None)
+        if filename is not None:
+            logger.info('Saving rasterized data to {}'.format(filename))
+            self._save_tiff(rasterized, filename)
+
         logger.info('Rasterizing complete')
+        return rasterized
 
     def load_land_mask(self, mask_f=None):
         """
@@ -310,7 +365,7 @@ class CombineRasters:
                 assert d.shape == self._os_shape and d.min() >= 0
 
                 self._os_friction = np.maximum(d.astype('uint16'),
-                                            self._os_friction)
+                                               self._os_friction)
 
         if save_tiff:
             logger.info('Saving combined friction to tiff')
