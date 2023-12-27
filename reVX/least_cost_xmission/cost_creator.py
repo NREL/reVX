@@ -175,10 +175,10 @@ class XmissionCostCreator(ExclusionsConverter):
             'usa_mrlc_nlcd2011'
         land_use_classes : dict, optional
             NCLD land use codes corresponding to use classes for multipliers.
-            if None us NLCD_LAND_USE_CLASSES. by default None
+            If None, use NLCD_LAND_USE_CLASSES. By default None
         default_mults : dict, optional
             Multipliers for regions not specified in iso_mults_fpath.
-            by default None
+            By default None
 
         Returns
         -------

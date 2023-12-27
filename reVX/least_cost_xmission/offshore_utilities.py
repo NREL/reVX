@@ -7,7 +7,7 @@ import os
 import json
 import logging
 from functools import reduce
-from typing import Optional, Union
+from typing import Optional, Union, TypedDict, List
 
 import h5py
 import numpy as np
@@ -21,6 +21,20 @@ from shapely.geometry import Point, LineString
 import rex
 
 logger = logging.getLogger(__name__)
+
+
+"""
+Config for assigning cost based on bins. Cells with values >= than 'min' and <
+'max' will be assigned 'cost'. One or both of 'min' and 'max' can be specified.
+'cost' must be specified.
+"""
+BinConfig = TypedDict('BinConfig', {
+        'min': float,
+        'max': float,
+        'cost': float,  # mandatory
+    },
+    total=False
+)
 
 
 def _sum(a, b):
@@ -253,6 +267,94 @@ class CombineRasters:
 
         self._land_mask = l_rast == 1
         logger.info('Successfully loaded land mask from {}'.format(mask_f))
+
+    def assign_cost_by_bins(self, in_filename: str, bins: List[BinConfig],
+                            out_filename: str):
+        """
+        Assign costs based on binned raster values. Cells with values >= than
+        'min' and < 'max' will be assigned 'cost'. One or both of 'min' and
+        'max' can be specified. 'cost' must be specified.
+
+        Parameters
+        ----------
+        in_filename
+            Input raster to assign costs based upon.
+        bins
+            List of bins to use for assigning costs.
+        out_filename
+            Output raster with binned costs.
+        """
+        with rio.open(in_filename) as ras:
+            input = ras.read(1)
+
+        output = self._assign_values_by_bins(input, bins)
+        self._save_tiff(output, out_filename)
+
+    @staticmethod
+    def _assign_values_by_bins(input: np.ndarray, bins: List[BinConfig]
+                               ) -> np.ndarray:
+        """
+        Assign values based on binned raster values. Cells with values >= than
+        'min' and < 'max' will be assigned 'cost'. One or both of 'min' and
+        'max' can be specified. 'cost' must be specified.
+
+        Parameters
+        ----------
+        input
+            Input raster to assign values based upon.
+        bins
+            List of bins to use for assigning costs.
+
+        Returns
+        -------
+            Binned costs
+        """
+        for bin in bins:
+            if 'cost' not in bin:
+                raise AttributeError(f'Bin config {bin} is missing "cost".')
+            if ('min' not in bin) and ('max' not in bin):
+                raise AttributeError(f'Bin config {bin} requires "min", "max",'
+                                     ' or both.')
+            if ('min' in bin) and ('max' in bin) and (bin['min'] > bin['max']):
+                raise AttributeError('Min is greater than max for bin config '
+                                     f'{bin}.')
+
+        # Warn user of potential oversights in bin config. Look for gaps
+        # between bin mins and maxes and overlapping bins.
+        sorted_bins = sorted(bins, key=lambda x: x.get('min', float('-inf')))
+        last_max = float('-inf')
+        for i, bin in enumerate(sorted_bins):
+            if bin.get('min', float('-inf')) < last_max:
+                last_bin = sorted_bins[i-1] if i > 0 else '-infinity'
+                msg = (f'Overlapping bins detected between bin {last_bin} '
+                       f'and {bin}')
+                logger.warning(msg)
+            if bin.get('min', float('-inf')) > last_max:
+                last_bin = sorted_bins[i-1] if i > 0 else '-infinity'
+                msg = f'Gap detected between bin {last_bin} and {bin}'
+                logger.warning(msg)
+
+            if i + 1 == len(sorted_bins):
+                if bin.get('max', float('inf')) < float('inf'):
+                    msg = f'Gap detected between bin {bin} and infinity'
+                    logger.warning(msg)
+
+            last_max = bin.get('max', float('inf'))
+
+        # Past guard clauses, perform binning
+        output = np.zeros(input.shape)
+
+        for i, bin in enumerate(bins):
+            logger.debug(f'Calculating costs for bin {i+1}/{len(bins)}: {bin}')
+            if ('min' in bin) and ('max' not in bin):
+                output = np.where(input >= bin['min'], bin['cost'], output)
+            elif ('min' not in bin) and ('max' in bin):
+                output = np.where(input < bin['max'], bin['cost'], output)
+            elif ('min' in bin) and ('max' in bin):
+                mask = np.logical_and(input >= bin['min'], input < bin['max'])
+                output = np.where(mask, bin['cost'], output)
+
+        return output
 
     # flake8: noqa: C901
     def build_off_shore_friction(self, friction_files, slope_file=None,
