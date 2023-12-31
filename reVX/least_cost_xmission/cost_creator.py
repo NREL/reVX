@@ -22,6 +22,8 @@ NLCD_LAND_USE_CLASSES = {
     'urban': [24],
 }
 
+METERS_PER_MILE = 1609.344
+
 
 class XmissionCostCreator(ExclusionsConverter):
     """
@@ -31,7 +33,7 @@ class XmissionCostCreator(ExclusionsConverter):
     - multiplier_*mw
     - xmission_barrier
     """
-    PIXEL_SIZE = 90
+    PIXEL_SIZE_M = 90  # raster cell width/height in meters
 
     def __init__(self, h5_fpath, iso_regions_fpath, iso_lookup=None):
         """
@@ -277,7 +279,7 @@ class XmissionCostCreator(ExclusionsConverter):
                         .format(iso, capacity))
             iso_code = self._iso_lookup[iso]
             cost_per_mile = base_line_costs[iso][str(capacity)]
-            cost_per_cell = cost_per_mile / 1609.344 * self.PIXEL_SIZE
+            cost_per_cell = cost_per_mile / METERS_PER_MILE * self.PIXEL_SIZE_M
             logger.debug('$/mile is {}, $/cell is {}'
                          .format(cost_per_mile, cost_per_cell))
             mask = self._iso_regions == iso_code

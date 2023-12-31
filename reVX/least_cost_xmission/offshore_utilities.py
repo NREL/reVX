@@ -11,6 +11,7 @@ from typing import Optional, Union, TypedDict, List
 
 import h5py
 import numpy as np
+from numpy.typing import DTypeLike
 import pandas as pd
 import geopandas as gpd
 import rasterio as rio
@@ -356,6 +357,39 @@ class CombineRasters:
 
         return output
 
+    def combine_off_shore_costs(self, cost_files: List[str],
+                                save_tiff: bool = True,
+                                dtype: DTypeLike = 'float32'):
+        """
+        Additively combine off shore costs and use as friction. This is an
+        alternative method to build_off_shore_friction() to creating offshore
+        costs.
+
+        Parameters
+        ----------
+        cost_files
+            List of raster files to combine. All must have the same CRS and
+            transform.
+        save_tiff, optional
+            Save combined cost raster to tiff if True, by default True
+        dtype
+            Numpy data type for combined data
+        """
+        layers: List[np.ndarray] = []
+
+        for file in cost_files:
+            data: np.ndarray = rio.open(file).read(1)
+            assert data.shape == self._os_shape
+            if data.min() < 0:
+                raise ValueError(f'Cost layer {file} has values less than 0')
+            layers.append(data)
+
+        self._os_friction = reduce(_sum, layers).astype(dtype)
+
+        if save_tiff:
+            logger.info('Saving combined friction to tiff')
+            self._save_tiff(self._os_friction, self.OFFSHORE_FRICTION_FNAME)
+
     # flake8: noqa: C901
     def build_off_shore_friction(self, friction_files, slope_file=None,
                                  bathy_file=None, bathy_depth_cutoff=None,
@@ -476,7 +510,8 @@ class CombineRasters:
         logger.info('Done processing friction layers')
 
     def build_off_shore_barriers(self, barrier_files, fi_files,
-                                 slope_file=None, save_tiff=False):
+                                 slope_file=None, save_tiff=False,
+                                 normalize_barriers=True):
         """
         Combine offshore barrier layers
 
@@ -489,7 +524,7 @@ class CombineRasters:
             Where 'fname.tif' is the raster file, and X is the raster value
             to use as the barrier. Alternatively, a list of multiple values can
             be used as barriers. Any other values in the raster are assumed
-            to be open to tranmission.
+            to be open to transmission.
         fi_files : list of tuples (int, str)
             Force include layers. These will override the barrier layers.
             Tuple format is the same as for barrier_files, however the specifed
@@ -497,7 +532,9 @@ class CombineRasters:
         slope_file : str, optional
             Path to slope tiff
         save_tiff : bool, options
-            Save composite layer to geotiff if true
+            Save composite layer to geotiff if True
+        normalize_barriers : bool
+            Set all barrier cells > 1 to 1 if True
         """
         logger.info('Loading barrier layers')
         barrier_layers = {}
@@ -524,10 +561,15 @@ class CombineRasters:
         # Add all the exclusion layers together and normalize
         logger.info('Building composite offshore barrier layers')
         comp_bar = reduce(_sum, barrier_layers.values())
-        comp_bar[comp_bar >= 1] = 1
+        if normalize_barriers:
+            comp_bar[comp_bar >= 1] = 1
 
         if len(fi_files) > 0:
             logger.info('Loading forced inclusion layers')
+            if not normalize_barriers:
+                raise NotImplementedError('Forced inclusion layers are not '
+                                          'supported if normalize_barriers is '
+                                          'False.')
             fi_layers = {}
             for val, f in fi_files:
                 logger.info('--- {}'.format(f))
@@ -544,7 +586,8 @@ class CombineRasters:
             comp_bar = comp_bar.astype('int8') - comp_fi.astype('int8')
             comp_bar[comp_bar < 0] = 0
 
-        assert comp_bar.max() == 1
+        if normalize_barriers:
+            assert comp_bar.max() == 1
         assert comp_bar.min() == 0
 
         if save_tiff:
