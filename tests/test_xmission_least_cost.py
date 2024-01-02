@@ -232,8 +232,7 @@ def test_cli(runner, save_paths):
 
 
 @pytest.mark.parametrize("save_paths", [False, True])
-@pytest.mark.parametrize("state_connections", [False, True])
-def test_reinforcement_cli(runner, ri_ba, save_paths, state_connections):
+def test_reinforcement_cli(runner, ri_ba, save_paths):
     """
     Test Reinforcement cost routines and CLI
     """
@@ -248,9 +247,12 @@ def test_reinforcement_cli(runner, ri_ba, save_paths, state_connections):
         ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
 
         ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
-        result = runner.invoke(lcp_main, ['map-ba', '-feats', ri_feats_path,
-                                          '-ba', ri_ba_path,
-                                          '-of', ri_substations_path])
+        result = runner.invoke(lcp_main,
+                               ['map-ss-to-rr',
+                                '-feats', ri_feats_path,
+                                '-regs', ri_ba_path,
+                                '-rid', "ba_str",
+                                '-of', ri_substations_path])
         msg = ('Failed with error {}'
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
@@ -262,12 +264,12 @@ def test_reinforcement_cli(runner, ri_ba, save_paths, state_connections):
             },
             "cost_fpath": COST_H5,
             "features_fpath": ri_substations_path,
-            "balancing_areas_fpath": ri_ba_path,
+            "regions_fpath": ri_ba_path,
+            "region_identifier_column": "ba_str",
             "capacity_class": f'{capacity}MW',
             "barrier_mult": 100,
             "min_line_length": 0,
             "save_paths": save_paths,
-            "allow_connections_within_states": state_connections,
         }
 
         config_path = os.path.join(td, 'config.json')
@@ -290,7 +292,7 @@ def test_reinforcement_cli(runner, ri_ba, save_paths, state_connections):
             test = os.path.join(td, test)
             test = pd.read_csv(test)
 
-        assert len(test) == 71 if state_connections else 13
+        assert len(test) == 13
         assert set(test.trans_gid.unique()) == {69130}
         assert set(test.ba_str.unique()) == {"p4"}
 

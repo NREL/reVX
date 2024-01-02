@@ -31,8 +31,7 @@ class LeastCostPaths:
     """
     REQUIRED_LAYERS = ['transmission_barrier']
 
-    def __init__(self, cost_fpath, features_fpath, xmission_config=None,
-                 clip_buffer=0):
+    def __init__(self, cost_fpath, features_fpath, clip_buffer=0):
         """
         Parameters
         ----------
@@ -42,16 +41,11 @@ class LeastCostPaths:
             Path to GeoPackage with transmission features
         resolution : int, optional
             SC point resolution, by default 128
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
         """
         self._check_layers(cost_fpath)
-        self._config = TieLineCosts._parse_config(
-            xmission_config=xmission_config)
         out = self._map_to_costs(cost_fpath, gpd.read_file(features_fpath),
                                  clip_buffer=clip_buffer)
         self._features, self._row_slice, self._col_slice, self._shape = out
@@ -373,8 +367,8 @@ class LeastCostPaths:
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class,
-            xmission_config=None, clip_buffer=0, barrier_mult=100,
-            indices=None, max_workers=None, save_paths=False):
+            clip_buffer=0, barrier_mult=100, indices=None, max_workers=None,
+            save_paths=False):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -388,9 +382,6 @@ class LeastCostPaths:
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
@@ -411,8 +402,7 @@ class LeastCostPaths:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        lcp = cls(cost_fpath, features_fpath, xmission_config=xmission_config,
-                  clip_buffer=clip_buffer)
+        lcp = cls(cost_fpath, features_fpath, clip_buffer=clip_buffer)
         least_cost_paths = lcp.process_least_cost_paths(
             capacity_class,
             barrier_mult=barrier_mult,
@@ -433,7 +423,7 @@ class ReinforcementPaths(LeastCostPaths):
     balancing area network node.
     """
     def __init__(self, cost_fpath, features, transmission_lines,
-                 xmission_config=None, clip_buffer=0):
+                 clip_buffer=0):
         """
         Parameters
         ----------
@@ -451,17 +441,11 @@ class ReinforcementPaths(LeastCostPaths):
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
             transmission lines of differing voltages.
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects.
-            By default, ``None``.
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
         """
         self._check_layers(cost_fpath)
-        self._config = TieLineCosts._parse_config(
-            xmission_config=xmission_config)
 
         self._features, self._row_slice, self._col_slice, self._shape = \
             self._map_to_costs(cost_fpath, features, clip_buffer)
@@ -470,8 +454,6 @@ class ReinforcementPaths(LeastCostPaths):
 
         network_node = (self._features.iloc[0:1]
                         .dropna(axis="columns", how="all"))
-        err_msg = "Network node was dropped during clipping!"
-        assert "ba_str" in network_node, err_msg
         self._start_indices = network_node[['row', 'col']].values[0]
         self._features = (self._features.iloc[1:]
                           .reset_index(drop=True)
@@ -484,10 +466,11 @@ class ReinforcementPaths(LeastCostPaths):
         """
         Tuple of (row_idx, col_idx) in the cost array indicating the
         start position of all reinforcement line paths to compute
-        (typically, this is the location of the network node in the BA).
-        Paths will be computed from this start location to each of the
-        `end_indices`, which are also locations in the cost array
-        (typically substations within the BA of the network node).
+        (typically, this is the location of the network node in the
+        reinforcement region). Paths will be computed from this start
+        location to each of the `end_indices`, which are also locations
+        in the cost array (typically substations within the
+        reinforcement region of the network node).
 
         Returns
         -------
@@ -500,10 +483,10 @@ class ReinforcementPaths(LeastCostPaths):
         """
         Tuple (row, col) index or list of (row, col) indices in the cost
         array indicating the end location(s) to compute reinforcement
-        line paths to (typically substations within a single BA). Paths
-        are computed from the `start_indices` (typically the network
-        node of the BA) to each of the individual pairs of
-        `end_indices`.
+        line paths to (typically substations within a single
+        reinforcement region). Paths are computed from the
+        `start_indices` (typically the network node of the reinforcement
+        region) to each of the individual pairs of `end_indices`.
 
         Returns
         -------
@@ -562,9 +545,9 @@ class ReinforcementPaths(LeastCostPaths):
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
-            transmission_lines_fpath, capacity_class, xmission_config=None,
-            clip_buffer=0, barrier_mult=100, indices=None,
-            allow_connections_within_states=False, save_paths=False):
+            region_identifier_column, transmission_lines_fpath,
+            capacity_class, xmission_config=None, clip_buffer=0,
+            barrier_mult=100, indices=None, save_paths=False):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -577,15 +560,19 @@ class ReinforcementPaths(LeastCostPaths):
             Path to GeoPackage with transmission features. The network
             node must be the first row of the GeoPackage - the rest
             should be substations that need to connect to that node.
-            This table must have a "ba_str" column which matches the
-            "ba_str" ID of the network node to the "ba_str" of the
+            This table must have a `region_identifier_column` column
+            which matches the `region_identifier_column` ID of the
+            network node to the `region_identifier_column` ID of the
             substations that should connect to it.
         network_nodes_fpath : str
-            Path to GeoPackage with network node endpoints. There should
-            be exactly one endpoint for each balancing area, and each
-            endpoint should have a "ba_str" column that identifies
-            matches exactly one of the ID's in the balancing area
-            GeoPackage to be used in downstream models.
+            Path to GeoPackage with network node endpoints. The
+            endpoints should have a `region_identifier_column` column
+            that identifies matches exactly one of the ID's in the
+            reinforcement regions GeoPackage to be used in downstream
+            models.
+        region_identifier_column : str
+            Name of column in `network_nodes_fpath` GeoPackage
+            containing a unique identifier for each region.
         capacity_class : str | int
             Transmission feature ``capacity_class`` to use for the
             'base' greenfield costs. 'Base' greenfield costs are only
@@ -606,10 +593,6 @@ class ReinforcementPaths(LeastCostPaths):
         max_workers : int, optional
             Number of workers to use for processing. If 1 run in serial,
             if ``None`` use all available cores. By default, ``None``.
-        allow_connections_within_states : bool, optional
-            Allow substations to connect to network nodes outside of
-            their own BA, as long as all connections stay within the
-            same state. By default, ``False``.
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
@@ -650,24 +633,18 @@ class ReinforcementPaths(LeastCostPaths):
         for loop_ind, index in enumerate(indices, start=1):
             network_node = (network_nodes.iloc[index:index + 1]
                             .reset_index(drop=True))
-            ba_str = network_node["ba_str"].values[0]
-            if allow_connections_within_states:
-                state_nodes = network_nodes[network_nodes["state"]
-                                            == network_node["state"].values[0]]
-                allowed_bas = set(state_nodes["ba_str"])
-            else:
-                allowed_bas = {ba_str}
-
-            node_substations = substations[substations["ba_str"]
-                                           .isin(allowed_bas)]
-            node_substations = node_substations.reset_index(drop=True)
-            logger.debug('Working on {} substations in BA {}'
-                         .format(len(node_substations), ba_str))
+            rid = network_node[region_identifier_column].values[0]
+            mask = substations[region_identifier_column] == rid
+            node_substations = substations[mask].reset_index(drop=True)
+            if len(node_substations) == 0:
+                continue
+            logger.info('Working on {} substations in region {}'
+                        .format(len(node_substations), rid))
             node_features = pd.concat([network_node, node_substations])
             rp = cls(cost_fpath, node_features, transmission_lines,
-                     xmission_config=xmission_config, clip_buffer=clip_buffer)
+                     clip_buffer=clip_buffer)
             node_least_cost_paths = rp.process_least_cost_paths(**lcp_kwargs)
-            node_least_cost_paths['ba_str'] = ba_str
+            node_least_cost_paths[region_identifier_column] = rid
             least_cost_paths += [node_least_cost_paths]
 
             logger.debug('Computed {}/{} reinforcement paths'
