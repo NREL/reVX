@@ -11,7 +11,7 @@ from typing import Optional, Union, TypedDict, List
 
 import h5py
 import numpy as np
-from numpy.typing import DTypeLike
+import numpy.typing as npt
 import pandas as pd
 import geopandas as gpd
 import rasterio as rio
@@ -22,20 +22,6 @@ from shapely.geometry import Point, LineString
 import rex
 
 logger = logging.getLogger(__name__)
-
-
-"""
-Config for assigning cost based on bins. Cells with values >= than 'min' and <
-'max' will be assigned 'cost'. One or both of 'min' and 'max' can be specified.
-'cost' must be specified.
-"""
-BinConfig = TypedDict('BinConfig', {
-    'min': float,
-    'max': float,
-    'cost': float,  # mandatory
-},
-    total=False
-)
 
 
 def _sum(a, b):
@@ -190,7 +176,8 @@ class CombineRasters:
 
         l_rast = self.rasterize(mask_shp_f, buffer_dist=buffer_dist,
                                 all_touched=all_touched,
-                                reproject_vector=reproject_vector, **fname_arg)
+                                reproject_vector=reproject_vector,
+                                **fname_arg) # type: ignore [arg-type]
 
         self._land_mask = l_rast == 1
 
@@ -198,11 +185,9 @@ class CombineRasters:
                   buffer_dist: Optional[float] = None,
                   all_touched: bool = False, reproject_vector: bool = True,
                   burn_value: Union[int, float] = 1,
-                  boundary_only: bool = False) -> np.ndarray:
+                  boundary_only: bool = False) -> npt.NDArray:
         """
-        Create the land mask layer from a vector file. Optionally, buffer all
-        features by a distance before rasterizing, e.g., to create a near-shore
-        friction layer.
+        Rasterize a vector layer.
 
         Parameters
         ----------
@@ -228,7 +213,7 @@ class CombineRasters:
         numpy.nd_array
             Rasterized vector data
         """
-        logger.info('Loading {}'.format(mask_shp_f))
+        logger.info('Loading %s', mask_shp_f)
         gdf = gpd.read_file(mask_shp_f)
 
         if reproject_vector:
@@ -271,127 +256,6 @@ class CombineRasters:
 
         self._land_mask = l_rast == 1
         logger.info('Successfully loaded land mask from {}'.format(mask_f))
-
-    def assign_cost_by_bins(self, in_filename: str, bins: List[BinConfig],
-                            out_filename: str):
-        """
-        Assign costs based on binned raster values. Cells with values >= than
-        'min' and < 'max' will be assigned 'cost'. One or both of 'min' and
-        'max' can be specified. 'cost' must be specified.
-
-        Parameters
-        ----------
-        in_filename
-            Input raster to assign costs based upon.
-        bins
-            List of bins to use for assigning costs.
-        out_filename
-            Output raster with binned costs.
-        """
-        with rio.open(in_filename) as ras:
-            input = ras.read(1)
-
-        output = self._assign_values_by_bins(input, bins)
-        self._save_tiff(output, out_filename)
-
-    @staticmethod
-    def _assign_values_by_bins(input: np.ndarray, bins: List[BinConfig]
-                               ) -> np.ndarray:
-        """
-        Assign values based on binned raster values. Cells with values >= than
-        'min' and < 'max' will be assigned 'cost'. One or both of 'min' and
-        'max' can be specified. 'cost' must be specified.
-
-        Parameters
-        ----------
-        input
-            Input raster to assign values based upon.
-        bins
-            List of bins to use for assigning costs.
-
-        Returns
-        -------
-            Binned costs
-        """
-        for bin in bins:
-            if 'cost' not in bin:
-                raise AttributeError(f'Bin config {bin} is missing "cost".')
-            if ('min' not in bin) and ('max' not in bin):
-                raise AttributeError(f'Bin config {bin} requires "min", "max",'
-                                     ' or both.')
-            if ('min' in bin) and ('max' in bin) and (bin['min'] > bin['max']):
-                raise AttributeError('Min is greater than max for bin config '
-                                     f'{bin}.')
-
-        # Warn user of potential oversights in bin config. Look for gaps
-        # between bin mins and maxes and overlapping bins.
-        sorted_bins = sorted(bins, key=lambda x: x.get('min', float('-inf')))
-        last_max = float('-inf')
-        for i, bin in enumerate(sorted_bins):
-            if bin.get('min', float('-inf')) < last_max:
-                last_bin = sorted_bins[i - 1] if i > 0 else '-infinity'
-                msg = (f'Overlapping bins detected between bin {last_bin} '
-                       f'and {bin}')
-                logger.warning(msg)
-            if bin.get('min', float('-inf')) > last_max:
-                last_bin = sorted_bins[i - 1] if i > 0 else '-infinity'
-                msg = f'Gap detected between bin {last_bin} and {bin}'
-                logger.warning(msg)
-
-            if i + 1 == len(sorted_bins):
-                if bin.get('max', float('inf')) < float('inf'):
-                    msg = f'Gap detected between bin {bin} and infinity'
-                    logger.warning(msg)
-
-            last_max = bin.get('max', float('inf'))
-
-        # Past guard clauses, perform binning
-        output = np.zeros(input.shape)
-
-        for i, bin in enumerate(bins):
-            logger.debug(f'Calculating costs for bin {i+1}/{len(bins)}: {bin}')
-            if ('min' in bin) and ('max' not in bin):
-                output = np.where(input >= bin['min'], bin['cost'], output)
-            elif ('min' not in bin) and ('max' in bin):
-                output = np.where(input < bin['max'], bin['cost'], output)
-            elif ('min' in bin) and ('max' in bin):
-                mask = np.logical_and(input >= bin['min'], input < bin['max'])
-                output = np.where(mask, bin['cost'], output)
-
-        return output
-
-    def combine_off_shore_costs(self, cost_files: List[str],
-                                save_tiff: bool = True,
-                                dtype: DTypeLike = 'float32'):
-        """
-        Additively combine off shore costs and use as friction. This is an
-        alternative method to build_off_shore_friction() to creating offshore
-        costs.
-
-        Parameters
-        ----------
-        cost_files
-            List of raster files to combine. All must have the same CRS and
-            transform.
-        save_tiff, optional
-            Save combined cost raster to tiff if True, by default True
-        dtype
-            Numpy data type for combined data
-        """
-        layers: List[np.ndarray] = []
-
-        for file in cost_files:
-            data: np.ndarray = rio.open(file).read(1)
-            assert data.shape == self._os_shape
-            if data.min() < 0:
-                raise ValueError(f'Cost layer {file} has values less than 0')
-            layers.append(data)
-
-        self._os_friction = reduce(_sum, layers).astype(dtype)
-
-        if save_tiff:
-            logger.info('Saving combined friction to tiff')
-            self._save_tiff(self._os_friction, self.OFFSHORE_FRICTION_FNAME)
 
     # flake8: noqa: C901
     def build_off_shore_friction(self, friction_files, slope_file=None,
