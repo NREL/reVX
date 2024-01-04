@@ -6,7 +6,7 @@ import pytest
 
 import numpy as np
 
-from reVX.least_cost_xmission.offshore_utilities import CombineRasters
+from reVX.least_cost_xmission.offshore_cost_creator import OffshoreCostCreator
 
 
 def test_bin_config_sanity_checking():
@@ -20,21 +20,22 @@ def test_bin_config_sanity_checking():
         {'min': 2, 'max': 3, },
     ]
     with pytest.raises(AttributeError) as _:
-        CombineRasters._assign_values_by_bins(input, missing_cost_config)
+        OffshoreCostCreator._assign_values_by_bins(input, missing_cost_config)
 
     missing_min_max_config = [{'cost': 1}]
     with pytest.raises(AttributeError) as _:
-        CombineRasters._assign_values_by_bins(input, missing_min_max_config)
+        OffshoreCostCreator._assign_values_by_bins(input,
+                                                   missing_min_max_config)
 
     reverse_bins_config = [{'min': 10, 'max': 0, 'cost': 1}]
     with pytest.raises(AttributeError) as _:
-        CombineRasters._assign_values_by_bins(input, reverse_bins_config)
+        OffshoreCostCreator._assign_values_by_bins(input, reverse_bins_config)
 
     good_config = [
         {'min': 1, 'max': 2, 'cost': 3},
         {'min': 2, 'max': 5, 'cost': 4},
     ]
-    CombineRasters._assign_values_by_bins(input, good_config)
+    OffshoreCostCreator._assign_values_by_bins(input, good_config)
 
 
 def test_cost_binning_results():
@@ -48,7 +49,7 @@ def test_cost_binning_results():
         {'min': 4, 'max': 8, 'cost': 3},
         {'min': 8, 'cost': 4},
     ]
-    output = CombineRasters._assign_values_by_bins(input, config)
+    output = OffshoreCostCreator._assign_values_by_bins(input, config)
     assert (output == np.array([[1, 2, 2],
                                 [3, 3, 3],
                                 [3, 4, 4]])).all()
@@ -57,7 +58,7 @@ def test_cost_binning_results():
         {'min': 2, 'max': 4, 'cost': 2},
         {'min': 4, 'max': 8, 'cost': 3},
     ]
-    output = CombineRasters._assign_values_by_bins(input, config)
+    output = OffshoreCostCreator._assign_values_by_bins(input, config)
     assert (output == np.array([[0, 2, 2],
                                 [3, 3, 3],
                                 [3, 0, 0]])).all()
@@ -71,7 +72,7 @@ def test_cost_binning_results():
         {'min': -300, 'max': -100, 'cost': 333},
         {'min': -100, 'cost': 111},
     ]
-    output = CombineRasters._assign_values_by_bins(input, config)
+    output = OffshoreCostCreator._assign_values_by_bins(input, config)
     assert (output == np.array([[999, 666, 111],
                                 [999, 333, 111],
                                 [666, 333, 111]])).all()
