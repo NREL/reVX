@@ -30,10 +30,10 @@ Config for assigning cost based on bins. Cells with values >= than 'min' and <
 'cost' must be specified.
 """
 BinConfig = TypedDict('BinConfig', {
-        'min': float,
-        'max': float,
-        'cost': float,  # mandatory
-    },
+    'min': float,
+    'max': float,
+    'cost': float,  # mandatory
+},
     total=False
 )
 
@@ -155,9 +155,11 @@ class CombineRasters:
         self._os_friction = None  # (float32) offshore friction raster
         self._land_mask = None  # (bool) land mask raster, true indicates land
 
-    def create_land_mask(self, mask_shp_f, save_tiff=False, filename=None,
-                         buffer_dist=None, all_touched=False,
-                         reproject_vector=True):
+    def create_land_mask(self, mask_shp_f: str, save_tiff: bool = False,
+                         filename: Optional[str] = None,
+                         buffer_dist: Optional[float] = None,
+                         all_touched: bool = False,
+                         reproject_vector: bool = True):
         """
         Create the land mask layer from a vector file. Optionally, buffer all
         features by a distance before rasterizing, e.g., to create a near-shore
@@ -165,40 +167,38 @@ class CombineRasters:
 
         Parameters
         ----------
-        mask_shp_f : str
+        mask_shp_f
             Full path to mask gpgk or shp file
-        save_tiff : bool
+        save_tiff
             Save mask as tiff if true
-        filename : str, optional
+        filename
             Name of file to save rasterized mask to
-        buffer_dist : int, optional
+        buffer_dist
             Distance to buffer features in mask_shp_f by. Same units as the
             template raster.
-        all_touched : bool, optional
+        all_touched
             Set all cells touched by vector to 1. False results in less cells
             being set to 1.
-        reproject_vector: bool, optional
+        reproject_vector
             Reproject CRS of vector to match template raster if True.
         """
+        fname_arg = {}
         if save_tiff:
             if filename is None:
                 filename = self.LAND_MASK_FNAME
-            l_rast = self.rasterize(mask_shp_f, filename=filename,
-                                    buffer_dist=buffer_dist,
-                                    all_touched=all_touched,
-                                    reproject_vector=reproject_vector)
-        else:
-            l_rast = self.rasterize(mask_shp_f, buffer_dist=buffer_dist,
-                                    all_touched=all_touched,
-                                    reproject_vector=reproject_vector)
+            fname_arg['filename'] = filename
+
+        l_rast = self.rasterize(mask_shp_f, buffer_dist=buffer_dist,
+                                all_touched=all_touched,
+                                reproject_vector=reproject_vector, **fname_arg)
 
         self._land_mask = l_rast == 1
 
-    def rasterize(self, mask_shp_f: str, filename: Optional[bool] = None,
-                  buffer_dist: Optional[bool] = None,
+    def rasterize(self, mask_shp_f: str, filename: Optional[str] = None,
+                  buffer_dist: Optional[float] = None,
                   all_touched: bool = False, reproject_vector: bool = True,
-                  burn_value: Union[int, float] = 1
-                  ) -> np.ndarray:
+                  burn_value: Union[int, float] = 1,
+                  boundary_only: bool = False) -> np.ndarray:
         """
         Create the land mask layer from a vector file. Optionally, buffer all
         features by a distance before rasterizing, e.g., to create a near-shore
@@ -206,26 +206,29 @@ class CombineRasters:
 
         Parameters
         ----------
-        mask_shp_f : str
+        mask_shp_f
             Full path to mask gpgk or shp file
-        filename : str, optional
+        filename
             Name of file to save rasterized mask to
-        buffer_dist : int, optional
+        buffer_dist
             Distance to buffer features in mask_shp_f by. Same units as the
             template raster.
-        all_touched : bool, optional
+        all_touched
             Set all cells touched by vector to 1. False results in less cells
             being set to 1.
-        reproject_vector: bool, optional
+        reproject_vector
             Reproject CRS of vector to match template raster if True.
-        burn_value: float|int, optional
+        burn_value
             Value used to burn vectors into raster
+        boundary_only
+            If True, rasterize boundary of vector
 
         Returns
         -------
         numpy.nd_array
             Rasterized vector data
         """
+        logger.info('Loading {}'.format(mask_shp_f))
         gdf = gpd.read_file(mask_shp_f)
 
         if reproject_vector:
@@ -235,8 +238,8 @@ class CombineRasters:
             gdf.geometry = gdf.geometry.buffer(buffer_dist)
 
         logger.info('Rasterizing {}'.format(mask_shp_f))
-        l_geom = list(gdf.geometry)
-        rasterized = features.rasterize(l_geom, out_shape=self._os_shape,
+        geo = gdf.boundary if boundary_only else gdf.geometry
+        rasterized = features.rasterize(list(geo), out_shape=self._os_shape,
                                         fill=0, out=None,
                                         transform=self.profile()['transform'],
                                         all_touched=all_touched,
@@ -326,12 +329,12 @@ class CombineRasters:
         last_max = float('-inf')
         for i, bin in enumerate(sorted_bins):
             if bin.get('min', float('-inf')) < last_max:
-                last_bin = sorted_bins[i-1] if i > 0 else '-infinity'
+                last_bin = sorted_bins[i - 1] if i > 0 else '-infinity'
                 msg = (f'Overlapping bins detected between bin {last_bin} '
                        f'and {bin}')
                 logger.warning(msg)
             if bin.get('min', float('-inf')) > last_max:
-                last_bin = sorted_bins[i-1] if i > 0 else '-infinity'
+                last_bin = sorted_bins[i - 1] if i > 0 else '-infinity'
                 msg = f'Gap detected between bin {last_bin} and {bin}'
                 logger.warning(msg)
 
@@ -420,7 +423,7 @@ class CombineRasters:
             bath_depth_cutoff.
         minimum_friction_files : list of tuples
             Same format as friction_files. Specified layers will be used to
-            ensure a minimum friction is uesd. This is performed after all
+            ensure a minimum friction is used. This is performed after all
             other friction layers have been combined.
         save_tiff : bool, optional
             Save composite friction to tiff if true
@@ -509,7 +512,7 @@ class CombineRasters:
 
         logger.info('Done processing friction layers')
 
-    def build_off_shore_barriers(self, barrier_files, fi_files,
+    def build_off_shore_barriers(self, barrier_files, fi_files=None,
                                  slope_file=None, save_tiff=False,
                                  normalize_barriers=True):
         """
@@ -525,7 +528,7 @@ class CombineRasters:
             to use as the barrier. Alternatively, a list of multiple values can
             be used as barriers. Any other values in the raster are assumed
             to be open to transmission.
-        fi_files : list of tuples (int, str)
+        fi_files : list of tuples (int, str), optional
             Force include layers. These will override the barrier layers.
             Tuple format is the same as for barrier_files, however the specifed
             raster values are force included.
@@ -564,6 +567,7 @@ class CombineRasters:
         if normalize_barriers:
             comp_bar[comp_bar >= 1] = 1
 
+        fi_files = fi_files if fi_files is not None else []
         if len(fi_files) > 0:
             logger.info('Loading forced inclusion layers')
             if not normalize_barriers:
@@ -633,8 +637,8 @@ class CombineRasters:
             if os_friction_f is None:
                 os_friction_f = self.OFFSHORE_FRICTION_FNAME
             if not os.path.exists(os_friction_f):
-                msg = ('Offshore friction has not been calculated and cached'
-                       ' friction was not found at {}. Please run {}.'
+                msg = ('Offshore friction has not been calculated and cached '
+                       'friction was not found at {}. Please run {}.'
                        'build_off_shore_friction() first or pass a valid '
                        'filename to os_friction_f'
                        .format(os_friction_f, self.__class__.__name__))
