@@ -1,11 +1,15 @@
+import json
 import logging
 from functools import reduce
-from typing import Optional, Union, TypedDict, List
+from typing import Optional, TypedDict, List
 
+import h5py
 import numpy as np
 import numpy.typing as npt
 import rasterio as rio
+from rasterio.warp import reproject, Resampling
 
+import rex
 from reVX.least_cost_xmission.offshore_utilities import CombineRasters, _sum
 
 logger = logging.getLogger(__name__)
@@ -24,7 +28,6 @@ BinConfig = TypedDict('BinConfig', {
 )
 
 Mask = npt.NDArray[np.bool_]
-OptionalMask = Optional[Mask]
 
 class OffshoreCostCreator(CombineRasters):
     """
@@ -37,6 +40,8 @@ class OffshoreCostCreator(CombineRasters):
     implementation and landfall cells are handled separately from land.
     """
     OFFSHORE_COSTS_FNAME = 'offshore_costs.tif'
+    COMBO_COSTS_FNAME = 'combo_costs.tif'
+    COMBO_BARRIERS_FNAME = 'combo_barriers.tif'
 
     LANDFALL_MASK_FNAME = 'landfall_mask.tif'  # One pixel width line at shore
     RAW_LAND_MASK_FNAME = 'raw_land_mask.tif'  # Rasterized land vector
@@ -59,14 +64,14 @@ class OffshoreCostCreator(CombineRasters):
                          slope_barrier_cutoff=slope_barrier_cutoff)
 
         # offshore costs
-        self._os_costs: Optional[npt.NDArray[np.float32]] = None
+        self._offshore_costs: Optional[npt.NDArray[np.float32]] = None
 
         # landfall mask, just the shore
-        self._landfall_mask: OptionalMask = None
+        self._landfall_mask: Optional[Mask] = None
         # land mask raster, true indicates land
-        self._land_mask: OptionalMask = None
+        self._land_mask: Optional[Mask] = None
         # offshore mask, true == water
-        self._offshore_mask: OptionalMask = None
+        self._offshore_mask: Optional[Mask] = None
 
     def assign_cost_by_bins(self, in_filename: str, bins: List[BinConfig],
                                 out_filename: str):
@@ -220,9 +225,27 @@ class OffshoreCostCreator(CombineRasters):
 
         logger.info('Successfully loaded offshore and land masks')
 
-    def build_off_shore_costs(self, cost_files: List[str],
-                                save_tiff: bool = True,
-                                dtype: npt.DTypeLike = 'float32'):
+    def load_offshore_costs(self, costs_file: str):
+        """
+        Load offshore costs from GeoTiff
+
+        Parameters
+        ----------
+        costs_file
+            Offshore costs file
+        """
+
+        with rio.open(costs_file) as ras:
+            data: npt.NDArray = ras.read(1)
+        assert data.shape == self._os_shape
+        if data.min() < 0:
+            raise ValueError(f'Costs layer {costs_file} has values less than '
+                             '0')
+        self._offshore_costs = data
+
+    def build_offshore_costs(self, cost_files: List[str],
+                             save_tiff: bool = True,
+                             dtype: npt.DTypeLike = 'float32'):
         """
         Additively combine off shore costs.
 
@@ -245,11 +268,130 @@ class OffshoreCostCreator(CombineRasters):
                 raise ValueError(f'Cost layer {file} has values less than 0')
             layers.append(data)
 
-        self._os_costs = reduce(_sum, layers).astype(dtype)
+        self._offshore_costs = reduce(_sum, layers).astype(dtype)
 
         if save_tiff:
             logger.info('Saving combined offshore costs to tiff')
-            self._save_tiff(self._os_costs, self.OFFSHORE_COSTS_FNAME)
+            self._save_tiff(self._offshore_costs, self.OFFSHORE_COSTS_FNAME)
 
+    def merge_os_and_land_costs(self, land_h5: str, h5_layer_name: str,
+                                 offshore_h5: str, landfall_cost: float,
+                                 save_tiff=False,):
+        """
+        Merge offshore and land costs and save to h5.
 
-    # def load_land_masks(self, raw_land_mask: )
+        Parameters
+        ----------
+        land_h5
+            H5 file with land costs
+        h5_layer_name
+            Name of land costs layer in H5 file
+        offshore_h5
+            H5 file to write combined costs to
+        landfall_cost
+            Cost for landfall substation
+        save_tiff, optional
+            Save combined costs to GeoTIFF if True, by default False
+        """
+        # Sanity check that required data exists
+        required_attrs = ['_offshore_costs', '_offshore_mask', '_land_mask',
+                    '_landfall_mask']
+        for attr in required_attrs:
+            if getattr(self, attr) is None:
+                raise ValueError(f'Attribute self.{attr} has a value of None. '
+                                 'Please run the appropriate method to '
+                                 'populate it. ')
+        # type narrowing
+        assert self._offshore_costs is not None
+        assert self._offshore_mask is not None
+        assert self._landfall_mask is not None
+
+        # Load land layer
+        logger.info('Loading land costs "%s" from %s', h5_layer_name,
+                    land_h5)
+        with rex.Resource(land_h5) as res:
+            land_profile_json = res.attrs[h5_layer_name]['profile']
+            old_land_data = res[h5_layer_name][0]
+        old_land_profile = json.loads(land_profile_json)
+
+        # Reproject land barriers to new offshore projection
+        logger.info('Reprojecting land costs')
+        combo_costs = self._reproject(old_land_data, old_land_profile,
+                                      dtype='float32')
+        assert self._offshore_costs.shape == combo_costs.shape
+
+        # Include offshore costs
+        mask = self._offshore_mask
+        combo_costs[mask] = self._offshore_costs[mask]
+
+        # Landfall costs
+        combo_costs[self._landfall_mask] = landfall_cost
+
+        if save_tiff:
+            logger.info('Saving offshore costs combined with %s to %s',
+                        h5_layer_name, self.COMBO_COSTS_FNAME)
+            self._save_tiff(combo_costs, self.COMBO_COSTS_FNAME)
+
+        # Write to h5
+        logger.info('Writing offshore costs combined with land "%s" to '
+                    '%s', h5_layer_name, offshore_h5)
+        combo_costs = combo_costs[np.newaxis, ...]
+
+        self._write_to_h5(offshore_h5, h5_layer_name, combo_costs)
+
+    def _write_to_h5(self, h5_file: str, layer_name: str, data: npt.NDArray):
+        """
+        Write data to an H5 file
+
+        Parameters
+        ----------
+        h5_file
+            Name and path of H5 file
+        layer_name
+            Layer name
+        data
+            Layer data to save
+        """
+        profile = self.profile()
+        profile['crs'] = profile['crs'].to_proj4()
+        profile['dtype'] = str(data.dtype)
+
+        with h5py.File(h5_file, 'a') as f:
+            if layer_name in f.keys():
+                dset = f[layer_name]
+                dset[...] = data
+            else:
+                dset = f.create_dataset(layer_name, data=data)
+
+            dset.attrs['profile'] = json.dumps(profile)
+            dset.attrs['shape'] = data.shape
+
+    def _reproject(self, src_raster: npt.NDArray, src_profile: dict,
+                   dtype: npt.DTypeLike = 'float32') -> npt.NDArray:
+        """
+        Reproject a raster into the offshore raster projection and transform.
+
+        Parameters
+        ----------
+        src_raster
+            Source raster
+        src_profile
+            Source raster profile
+        dtype, optional
+            Data type for destination raster, by default 'float32'
+
+        Returns
+        -------
+            Source data reprojected into the offshore projection.
+        """
+        dest_raster = np.ones(self._os_shape, dtype=dtype)
+        reproject(src_raster,
+                  destination=dest_raster,
+                  src_transform=src_profile['transform'],
+                  src_crs=src_profile['crs'],
+                  dst_transform=self.profile()['transform'],
+                  dst_crs=self.profile()['crs'],
+                  dst_resolution=self._os_shape, num_threads=5,
+                  resampling=Resampling.nearest,
+                  INIT_DEST=-1)
+        return dest_raster

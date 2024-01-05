@@ -7,7 +7,7 @@ import os
 import json
 import logging
 from functools import reduce
-from typing import Optional, Union, TypedDict, List
+from typing import Optional, Union, Dict
 
 import h5py
 import numpy as np
@@ -141,6 +141,8 @@ class CombineRasters:
         self._os_friction = None  # (float32) offshore friction raster
         self._land_mask = None  # (bool) land mask raster, true indicates land
 
+        self._vector_cache: Dict[str, gpd.GeoDataFrame] = {}
+
     def create_land_mask(self, mask_shp_f: str, save_tiff: bool = False,
                          filename: Optional[str] = None,
                          buffer_dist: Optional[float] = None,
@@ -213,10 +215,16 @@ class CombineRasters:
         numpy.nd_array
             Rasterized vector data
         """
-        logger.info('Loading %s', mask_shp_f)
-        gdf = gpd.read_file(mask_shp_f)
+        if mask_shp_f in self._vector_cache:
+            logger.info('Vector data for %s found in cache', mask_shp_f)
+            gdf = self._vector_cache[mask_shp_f]
+        else:
+            logger.info('Loading %s', mask_shp_f)
+            gdf = gpd.read_file(mask_shp_f)
+            self._vector_cache[mask_shp_f] = gdf
 
         if reproject_vector:
+            logger.debug('Reprojecting vector')
             gdf = gdf.to_crs(crs=self.profile()['crs'])
 
         if buffer_dist is not None:
@@ -783,5 +791,7 @@ class CombineRasters:
                 File name to save
         """
         dtype = data.dtype
+        if dtype == 'bool':
+            dtype = 'uint8'
         with rio.open(f_name, 'w', **self.profile(dtype=dtype)) as outf:
             outf.write(data, indexes=1)
