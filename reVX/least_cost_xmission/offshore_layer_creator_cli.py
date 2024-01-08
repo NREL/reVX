@@ -124,10 +124,10 @@ def from_config(config_fpath: str, create_h5: bool):
 
     cr.load_land_mask(mask_f=config.land_mask_fpath)
 
-    cr.merge_os_and_land_barriers(config.land_h5_fpath,
-                                  config.land_barrier_layer,
-                                  config.offshore_h5_fpath,
-                                  save_tiff=config.save_tiff)
+    cr.merge_os_and_land_barriers_simple(config.land_h5_fpath,
+                                         config.land_barrier_layer,
+                                         config.offshore_h5_fpath,
+                                         save_tiff=config.save_tiff)
 
     kwargs = {}
     if config.land_cost_mult is not None:

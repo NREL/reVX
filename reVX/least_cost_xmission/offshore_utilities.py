@@ -530,11 +530,12 @@ class CombineRasters:
                                        save_tiff=save_tiff,
                                        dtype='float32')
 
-    def merge_os_and_land_barriers(self, land_h5, land_barrier_layer,
-                                   offshore_h5, os_barrier_layer=None,
-                                   os_barriers_f=None, save_tiff=False):
+    def merge_os_and_land_barriers_simple(self, land_h5, land_barrier_layer,
+                                          offshore_h5, os_barrier_layer=None,
+                                          os_barriers_f=None, save_tiff=False):
         """
-        Combine offshore and land barrier layers and save to h5
+        Combine offshore and land barrier layers and save to h5. Use simple
+        land masking that doesn't consider landfall cells.
 
         Parameters
         ----------

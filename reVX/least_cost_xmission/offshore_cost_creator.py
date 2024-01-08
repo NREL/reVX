@@ -1,3 +1,7 @@
+"""
+Create offshore costs. Merge offshore costs and barriers with land layers and
+save to H5.
+"""
 import json
 import logging
 from functools import reduce
@@ -14,6 +18,8 @@ from reVX.least_cost_xmission.offshore_utilities import CombineRasters, _sum
 
 logger = logging.getLogger(__name__)
 
+H5_CHUNKS = (1, 128, 128)
+
 """
 Config for assigning cost based on bins. Cells with values >= than 'min' and <
 'max' will be assigned 'cost'. One or both of 'min' and 'max' can be specified.
@@ -28,6 +34,7 @@ BinConfig = TypedDict('BinConfig', {
 )
 
 Mask = npt.NDArray[np.bool_]
+
 
 class OffshoreCostCreator(CombineRasters):
     """
@@ -63,8 +70,8 @@ class OffshoreCostCreator(CombineRasters):
         super().__init__(template_f, layer_dir=layer_dir,
                          slope_barrier_cutoff=slope_barrier_cutoff)
 
-        # offshore costs
         self._offshore_costs: Optional[npt.NDArray[np.float32]] = None
+        self._offshore_barriers: Optional[npt.NDArray[np.float32]] = None
 
         # landfall mask, just the shore
         self._landfall_mask: Optional[Mask] = None
@@ -74,7 +81,7 @@ class OffshoreCostCreator(CombineRasters):
         self._offshore_mask: Optional[Mask] = None
 
     def assign_cost_by_bins(self, in_filename: str, bins: List[BinConfig],
-                                out_filename: str):
+                            out_filename: str):
         """
         Assign costs based on binned raster values. Cells with values >= than
         'min' and < 'max' will be assigned 'cost'. One or both of 'min' and
@@ -96,8 +103,8 @@ class OffshoreCostCreator(CombineRasters):
         self._save_tiff(output, out_filename)
 
     @staticmethod
-    def _assign_values_by_bins(input: np.ndarray, bins: List[BinConfig]
-                               ) -> np.ndarray:
+    def _assign_values_by_bins(input: np.ndarray,  # noqa: C901
+                               bins: List[BinConfig]) -> np.ndarray:
         """
         Assign values based on binned raster values. Cells with values >= than
         'min' and < 'max' will be assigned 'cost'. One or both of 'min' and
@@ -194,7 +201,7 @@ class OffshoreCostCreator(CombineRasters):
 
         # XOR landfall and raw land to get all land cells, except landfall
         # cells
-        self._land_mask = np.logical_xor(self._landfall_mask, # type: ignore
+        self._land_mask = np.logical_xor(self._landfall_mask,  # type: ignore
                                          raw_land_mask)
 
         if save_tiff:
@@ -243,6 +250,27 @@ class OffshoreCostCreator(CombineRasters):
                              '0')
         self._offshore_costs = data
 
+    def load_offshore_barriers(self, barriers_file: Optional[str] = None):
+        """
+        Load offshore barriers from GeoTiff
+
+        Parameters
+        ----------
+        barriers_file, optional
+            Offshore costs file
+        """
+        if barriers_file is None:
+            barriers_file = self.OFFSHORE_BARRIERS_FNAME
+
+        with rio.open(barriers_file) as ras:
+            data: npt.NDArray = ras.read(1)
+        assert data.shape == self._os_shape
+        if data.min() < 0:
+            raise ValueError(
+                f'Barriers layer {barriers_file} has values less than 0'
+            )
+        self._offshore_barriers = data
+
     def build_offshore_costs(self, cost_files: List[str],
                              save_tiff: bool = True,
                              dtype: npt.DTypeLike = 'float32'):
@@ -275,8 +303,8 @@ class OffshoreCostCreator(CombineRasters):
             self._save_tiff(self._offshore_costs, self.OFFSHORE_COSTS_FNAME)
 
     def merge_os_and_land_costs(self, land_h5: str, h5_layer_name: str,
-                                 offshore_h5: str, landfall_cost: float,
-                                 save_tiff=False,):
+                                offshore_h5: str, landfall_cost: float,
+                                save_tiff=False,):
         """
         Merge offshore and land costs and save to h5.
 
@@ -294,8 +322,9 @@ class OffshoreCostCreator(CombineRasters):
             Save combined costs to GeoTIFF if True, by default False
         """
         # Sanity check that required data exists
-        required_attrs = ['_offshore_costs', '_offshore_mask', '_land_mask',
-                    '_landfall_mask']
+        required_attrs = [
+            '_offshore_costs', '_offshore_mask', '_land_mask', '_landfall_mask'
+        ]
         for attr in required_attrs:
             if getattr(self, attr) is None:
                 raise ValueError(f'Attribute self.{attr} has a value of None. '
@@ -339,6 +368,74 @@ class OffshoreCostCreator(CombineRasters):
 
         self._write_to_h5(offshore_h5, h5_layer_name, combo_costs)
 
+    def merge_os_and_land_barriers(self, land_h5: str, h5_layer_name: str,
+                                   offshore_h5: str, save_tiff=False):
+        """
+        Merge offshore and land barriers and save to h5.
+
+        Parameters
+        ----------
+        land_h5
+            H5 file with land barriers
+        h5_layer_name
+            Name of land barriers layer in H5 file
+        offshore_h5
+            H5 file to write combined barriers to
+        save_tiff, optional
+            Save combined barriers to GeoTIFF if True, by default False
+        """
+        # Sanity check that required data exists
+        required_attrs = [
+            '_offshore_barriers',
+            '_offshore_mask',
+            '_land_mask',
+            '_landfall_mask'
+        ]
+        for attr in required_attrs:
+            if getattr(self, attr) is None:
+                raise ValueError(f'Attribute self.{attr} has a value of None. '
+                                 'Please run the appropriate method to '
+                                 'populate it. ')
+        # type narrowing
+        assert self._offshore_barriers is not None
+        assert self._offshore_mask is not None
+        assert self._landfall_mask is not None
+
+        # Load land layer
+        logger.info('Loading land barriers "%s" from %s', h5_layer_name,
+                    land_h5)
+        with rex.Resource(land_h5) as res:
+            if h5_layer_name not in res:
+                raise ValueError(f'Dataset {h5_layer_name} not found in '
+                                 '{land_h5}')
+            land_profile_json = res.attrs[h5_layer_name]['profile']
+            old_land_data = res[h5_layer_name][0]
+        old_land_profile = json.loads(land_profile_json)
+
+        # Reproject land barriers to new offshore projection
+        logger.info('Reprojecting land barriers')
+        combo_barriers = self._reproject(old_land_data, old_land_profile,
+                                         dtype='float32')
+        assert self._offshore_barriers.shape == combo_barriers.shape
+
+        # Include offshore barriers
+        mask = self._offshore_mask
+        combo_barriers[mask] = self._offshore_barriers[mask]
+
+        # Using land barriers for landfall cells. No change is needed.
+
+        if save_tiff:
+            logger.info('Saving offshore barriers combined with %s to %s',
+                        h5_layer_name, self.COMBO_BARRIERS_FNAME)
+            self._save_tiff(combo_barriers, self.COMBO_BARRIERS_FNAME)
+
+        # Write to h5
+        logger.info('Writing offshore barriers combined with land "%s" to '
+                    '%s', h5_layer_name, offshore_h5)
+        combo_barriers = combo_barriers[np.newaxis, ...]
+
+        self._write_to_h5(offshore_h5, h5_layer_name, combo_barriers)
+
     def _write_to_h5(self, h5_file: str, layer_name: str, data: npt.NDArray):
         """
         Write data to an H5 file
@@ -361,7 +458,9 @@ class OffshoreCostCreator(CombineRasters):
                 dset = f[layer_name]
                 dset[...] = data
             else:
-                dset = f.create_dataset(layer_name, data=data)
+                dset = f.create_dataset(layer_name, data=data,
+                                        chunks=H5_CHUNKS)
+                dset.attrs['chunks'] = H5_CHUNKS
 
             dset.attrs['profile'] = json.dumps(profile)
             dset.attrs['shape'] = data.shape
