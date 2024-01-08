@@ -412,10 +412,11 @@ class OffshoreCostCreator(CombineRasters):
             old_land_data = res[h5_layer_name][0]
         old_land_profile = json.loads(land_profile_json)
 
-        # Reproject land barriers to new offshore projection
+        # Reproject land barriers to new offshore projection. Set default
+        # value of 1 (barrier) to cells outside of land raster.
         logger.info('Reprojecting land barriers')
         combo_barriers = self._reproject(old_land_data, old_land_profile,
-                                         dtype='float32')
+                                         dtype='float32', init_dest=1)
         assert self._offshore_barriers.shape == combo_barriers.shape
 
         # Include offshore barriers
@@ -466,7 +467,8 @@ class OffshoreCostCreator(CombineRasters):
             dset.attrs['shape'] = data.shape
 
     def _reproject(self, src_raster: npt.NDArray, src_profile: dict,
-                   dtype: npt.DTypeLike = 'float32') -> npt.NDArray:
+                   dtype: npt.DTypeLike = 'float32', init_dest: float = -1
+                   ) -> npt.NDArray:
         """
         Reproject a raster into the offshore raster projection and transform.
 
@@ -478,6 +480,8 @@ class OffshoreCostCreator(CombineRasters):
             Source raster profile
         dtype, optional
             Data type for destination raster, by default 'float32'
+        init_dest, optional
+            Value for cells outside of boundary of src_raster
 
         Returns
         -------
@@ -492,5 +496,5 @@ class OffshoreCostCreator(CombineRasters):
                   dst_crs=self.profile()['crs'],
                   dst_resolution=self._os_shape, num_threads=5,
                   resampling=Resampling.nearest,
-                  INIT_DEST=-1)
+                  INIT_DEST=init_dest)
         return dest_raster

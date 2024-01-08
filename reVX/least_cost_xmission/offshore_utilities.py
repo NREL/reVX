@@ -402,8 +402,8 @@ class CombineRasters:
             to be open to transmission.
         fi_files : list of tuples (int, str), optional
             Force include layers. These will override the barrier layers.
-            Tuple format is the same as for barrier_files, however the specifed
-            raster values are force included.
+            Tuple format is the same as for barrier_files, however the
+            specified raster values are force included.
         slope_file : str, optional
             Path to slope tiff
         save_tiff : bool, options
