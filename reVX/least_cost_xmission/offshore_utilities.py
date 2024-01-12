@@ -384,7 +384,7 @@ class CombineRasters:
 
         logger.info('Done processing friction layers')
 
-    def build_off_shore_barriers(self, barrier_files, fi_files=None,
+    def build_off_shore_barriers_old(self, barrier_files, fi_files=None,
                                  slope_file=None, save_tiff=False,
                                  normalize_barriers=True):
         """
