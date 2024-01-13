@@ -6,9 +6,10 @@ import logging
 from copy import deepcopy
 import numpy as np
 import numpy.typing as npt
-from typing import Dict, TypedDict, List, Literal, Tuple, Any
+from typing import IO, Dict, TypedDict, List, Literal, Tuple, Any
 
 import h5py
+from affine import Affine
 import rasterio as rio
 
 import rex
@@ -17,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 class Profile(TypedDict, total=False):
     """ GeoTiff profile definition """
-    crs: Dict[str, Any]  # TODO - define the CRS better
-    transform: List[float]
+    crs: rio.crs.CRS
+    transform: Affine
     height: int
     width: int
     count: int
@@ -105,6 +106,50 @@ class TransLayerIoHandler:
 
     def load_layer(self):
         pass
+
+    def load_tiff(self, f_name: str, band: int = 1) -> npt.NDArray:
+        """
+        Load a
+
+        Parameters
+        ----------
+        f_name
+            _description_
+        band, optional
+            _description_, by default 1
+
+        Returns
+        -------
+            Raster data
+        """
+        full_fname = f_name
+        if not os.path.exists(full_fname):
+            full_fname = os.path.join(self._layer_dir, f_name)
+            if not os.path.exists(full_fname):
+                raise IOError( f'Unable to find file {f_name}')
+
+        with rio.open(full_fname) as ras:
+            data: npt.NDArray = ras.read(band)
+            transform = ras.transform
+            crs = ras.crs
+
+        if data.shape != self.shape:
+            raise ValueError(
+                f'Shape of {full_fname} ({data.shape}) does not match '
+                f'template raster shape ({self.shape}).'
+            )
+        if transform != self.profile['transform']:
+            raise ValueError(
+                f'Transform of {full_fname}:\n{transform}\ndoes not match '
+                f'template raster shape:\n{self.profile["transform"]}'
+            )
+        if crs != self.profile['crs']:
+            raise ValueError(
+                f'CRS of {full_fname}:\n{crs}\ndoes not match '
+                f'template raster shape:\n{self.profile["crs"]}'
+            )
+
+        return data
 
     def save_tiff(self, data: npt.NDArray, f_name: str):
         """

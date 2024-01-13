@@ -3,11 +3,10 @@ Create, load, and store masks to determine land and sea.
 """
 import os
 import logging
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-import rasterio as rio
 
 from .utils import rasterize
 from .trans_layer_io_handler import TransLayerIoHandler
@@ -154,15 +153,9 @@ class Masks:
         """
         full_fname = os.path.join(self._masks_dir, fname)
 
-        if not os.path.exists(full_fname):
-            raise IOError(
-                f'Failure loading masks: file {full_fname} does not exist.'
-            )
-
-        with rio.open(full_fname) as ras:
-            raster = ras.read(1)
+        raster = self._io_handler.load_tiff(full_fname)
 
         assert raster.max() == 1
         assert raster.min() == 0
-        assert raster.shape == self._io_handler.shape
+
         return raster == 1

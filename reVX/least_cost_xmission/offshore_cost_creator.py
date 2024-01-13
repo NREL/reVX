@@ -4,11 +4,9 @@ Create offshore costs and save to GeoTIFF.
 import logging
 from typing import TypedDict, List
 
-import rasterio as rio
 import numpy as np
 import numpy.typing as npt
 
-from reVX.least_cost_xmission.masks import Masks
 from reVX.least_cost_xmission.trans_layer_io_handler import TransLayerIoHandler
 
 logger = logging.getLogger(__name__)
@@ -30,17 +28,13 @@ class OffshoreCostCreator:
     """
     Create offshore costs and save to GeoTIFF.
     """
-    def __init__(self, masks: Masks, io_handler: TransLayerIoHandler):
-        """TODO
-
+    def __init__(self, io_handler: TransLayerIoHandler):
+        """
         Parameters
         ----------
-        masks
-            _description_
         io_handler
-            _description_
+            Transmission layer IO handler
         """
-        self._masks = masks
         self._io_handler = io_handler
 
     def assign_cost_by_bins(self, in_filename: str, bins: List[BinConfig],
@@ -59,8 +53,7 @@ class OffshoreCostCreator:
         out_filename
             Output raster with binned costs.
         """
-        with rio.open(in_filename) as ras:
-            input = ras.read(1)
+        input = self._io_handler.load_tiff(in_filename)
 
         output = self._assign_values_by_bins(input, bins)
         self._io_handler.save_tiff(output, out_filename)
