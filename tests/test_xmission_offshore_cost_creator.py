@@ -1,5 +1,5 @@
 """
-Test least cost transmission offshore utilities
+Test least cost transmission offshore cost creation
 """
 import os
 import pytest

@@ -14,7 +14,7 @@ from .trans_layer_io_handler import TransLayerIoHandler
 logger = logging.getLogger(__name__)
 
 # Mask array
-Mask = npt.NDArray[np.bool_]
+MaskArr = npt.NDArray[np.bool_]
 
 MASK_MSG = \
     'No mask available. Please run create_masks() or load_masks() first.'
@@ -42,30 +42,48 @@ class Masks:
         self._masks_dir = masks_dir
         os.makedirs(masks_dir, exist_ok=True)
 
-        self._landfall_mask: Optional[Mask] = None
-        self._dry_mask: Optional[Mask] = None
-        self._wet_mask: Optional[Mask] = None
+        self._landfall_mask: Optional[MaskArr] = None
+        self._dry_mask: Optional[MaskArr] = None
+        self._wet_mask: Optional[MaskArr] = None
+        self._dry_plus_mask: Optional[MaskArr] = None
+        self._wet_plus_mask: Optional[MaskArr] = None
 
     @property
-    def landfall_mask(self) -> Mask:
+    def landfall_mask(self) -> MaskArr:
         """ Landfalls cells mask, only one cell wide """
         if self._landfall_mask is None:
             raise ValueError(MASK_MSG)
         return self._landfall_mask
 
     @property
-    def wet_mask(self) -> Mask:
+    def wet_mask(self) -> MaskArr:
         """ Wet cells mask, does not include landfall cells """
         if self._wet_mask is None:
             raise ValueError(MASK_MSG)
         return self._wet_mask
 
     @property
-    def dry_mask(self) -> Mask:
+    def dry_mask(self) -> MaskArr:
         """ Dry cells mask, does not include landfall cells """
         if self._dry_mask is None:
             raise ValueError(MASK_MSG)
         return self._dry_mask
+
+    @property
+    def dry_plus_mask(self) -> MaskArr:
+        """ Dry cells mask, includes landfall cells """
+        if self._dry_plus_mask is None:
+            self._dry_plus_mask = np.logical_or(self.dry_mask,
+                                                self.landfall_mask)
+        return self._dry_plus_mask
+
+    @property
+    def wet_plus_mask(self) -> MaskArr:
+        """ Wet cells mask, includes landfall cells """
+        if self._wet_plus_mask is None:
+            self._wet_plus_mask = np.logical_or(self.wet_mask,
+                                                self.landfall_mask)
+        return self._wet_plus_mask
 
     def create_masks(self, land_mask_shp_f: str, save_tiff: bool = False,
                      reproject_vector: bool = True):
@@ -89,7 +107,7 @@ class Masks:
                              all_touched=True,
                              reproject_vector=reproject_vector)
 
-        raw_land_mask: Mask = raw_land == 1
+        raw_land_mask: MaskArr = raw_land == 1
 
         # Offshore mask is inversion of raw land mask
         self._wet_mask = ~raw_land_mask
