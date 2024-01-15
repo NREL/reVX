@@ -22,18 +22,6 @@ logger = logging.getLogger(__name__)
 H5_CHUNKS = (1, 128, 128)
 DEFAULT_DTYPE = 'float32'
 
-"""
-Config for assigning cost based on bins. Cells with values >= than 'min' and <
-'max' will be assigned 'cost'. One or both of 'min' and 'max' can be specified.
-'cost' must be specified.
-"""
-BinConfig = TypedDict('BinConfig', {
-    'min': float,
-    'max': float,
-    'cost': float,  # mandatory
-},
-    total=False
-)
 
 # Mask array
 Mask = npt.NDArray[np.bool_]

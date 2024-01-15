@@ -6,7 +6,7 @@ import logging
 from copy import deepcopy
 import numpy as np
 import numpy.typing as npt
-from typing import IO, Dict, TypedDict, List, Literal, Tuple, Any
+from typing import IO, Dict, TypedDict, List, Literal, Tuple, Any, Optional
 
 import h5py
 from affine import Affine
@@ -31,7 +31,9 @@ class TransLayerIoHandler:
     """
     Handle reading and writing H5 files and GeoTiffs
     """
-    def __init__(self, template_f: str, layer_dir='.'):
+    def __init__(self, template_f: str, h5_file: Optional[str] = None,
+                 layer_dir='.'):
+        self._h5_file = h5_file
         self._layer_dir = layer_dir
         self._profile = self._extract_profile(template_f)
         self.shape: Tuple[int, int] = (
@@ -79,7 +81,7 @@ class TransLayerIoHandler:
             for key, val in global_attrs.items():
                 f.attrs[key] = val
 
-    def write_to_h5(self, data: npt.NDArray, name: str, h5_file: str):
+    def write_to_h5(self, data: npt.NDArray, name: str):
         """
         TODO
 
@@ -89,12 +91,18 @@ class TransLayerIoHandler:
             _description_
         name
             _description_
-        h5_file
-            _description_
         """
         assert data.shape == self.shape
+        if self._h5_file is None:
+            _cls = self.__class__.__name__
+            raise IOError(
+                f'The H5 file was not set when initializing {_cls}'
+            )
 
-        with h5py.File(h5_file, 'a') as f:
+        if not os.path.exists(self._h5_file):
+            raise IOError (f'H5 file {self._h5_file} does not exist')
+
+        with h5py.File(self._h5_file, 'a') as f:
             if name in f.keys():
                 dset = f[name]
                 dset[...] = data
@@ -104,10 +112,11 @@ class TransLayerIoHandler:
     def _reproject(self):
         pass
 
-    def load_layer(self):
+    def load_h5_layer(self):
         pass
 
-    def load_tiff(self, f_name: str, band: int = 1) -> npt.NDArray:
+    def load_tiff(self, f_name: str, band: int = 1,
+                  reproject=False) -> npt.NDArray:
         """
         Load a
 
@@ -117,11 +126,19 @@ class TransLayerIoHandler:
             _description_
         band, optional
             _description_, by default 1
+        reproject
+            TODO
 
         Returns
         -------
             Raster data
         """
+        if reproject:
+            # TODO - allow reprojecting raster when loading
+            raise NotImplementedError(
+                'Reprojecting rasters on load is not yet supported'
+            )
+
         full_fname = f_name
         if not os.path.exists(full_fname):
             full_fname = os.path.join(self._layer_dir, f_name)

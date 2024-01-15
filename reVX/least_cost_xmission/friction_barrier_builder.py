@@ -1,6 +1,7 @@
 """
 Build friction or barrier layers.
 """
+from functools import reduce
 import logging
 from typing import Literal, Dict, TypedDict, Tuple, List
 
@@ -19,8 +20,9 @@ Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
 class LayerConfig(TypedDict, total=False):
     """
     Friction and barrier layers config dict. 'extent' is mandatory. 'map' and
-    'range' are exclusive, but one must be specified.  'value' must be
-    specified to 'range' is used.
+    'range' are exclusive, but one must be specified. 'value' must be specified
+    if 'range' is used. Example configs can be seen in
+    test_xmission_barrier_friction_builder.py in the tests directory.
     """
     extent: Extents  # extent to apply map or range to
 
@@ -34,39 +36,68 @@ class LayerConfig(TypedDict, total=False):
     # Value to assign for barrier/friction for raster values within 'range'.
     value: float
 
+    # If 'forced_inclusion' is specified, any cells with a value > 0 will
+    # force the final value of corresponding cells to 0. Multiple forced
+    # inclusions are allowed. This field is optional, and defaults to 'normal'
+    # _type: Literal['normal', 'forced_inclusion']
+    # TODO - The JSON parser should allow "type" as well as "_type"
+
+BARRIER_H5_LAYER_NAME = 'transmission_barrier'
+FRICTION_H5_LAYER_NAME = 'transmission_friction'
+
+BARRIER_TIFF_NAME = 'barrier.tif'
+FRICTION_TIFF_NAME = 'friction.tif'
 
 class FrictionBarrierBuilder:
     """
     Build friction or barrier layers.
     """
-    def __init__(self, io_handler: TransLayerIoHandler, masks: Masks,
+    def __init__(self, _type: Literal['friction', 'barrier'],
+                 io_handler: TransLayerIoHandler, masks: Masks,
                  dtype: npt.DTypeLike = 'float32'):
         """TODO
 
-        Parameters
-        ----------
-        io_handler
-            _description_
-        masks
-            _description_
         """
+        if _type not in ['friction', 'barrier']:
+            raise AttributeError(
+                f'_type must be "friction" or "barrier", received {_type}'
+            )
+        self._type = _type
         self._io_handler = io_handler
         self._masks = masks
         self._dtype = dtype
 
-    def build_layer(self, config: Dict[str, LayerConfig], save_tiff=True):
+    def build_layer(self, layers: Dict[str, LayerConfig], save_tiff=True):
         """
         Combine multiple GeoTIFFs to create a friction or barrier layer, save
         to H5, and (optionally) as a GeoTIFF.
 
         Parameters
         ----------
-        config
+        layers
             Dict of LayerConfigs keyed by GeoTIFF filenames.
         """
-        pass
+        logger.debug(f'Combining {self._type} layers')
+        layer_arrays: List[Tuple[npt.NDArray, LayerConfig]] = []
 
-    def _process_layers(self, config: List[Tuple[npt.NDArray, LayerConfig]]
+        for fname, config in layers.items():
+            data = self._io_handler.load_tiff(fname)
+            layer_arrays.append((data, config))
+
+        result = self._combine_layers(layer_arrays)
+
+        if save_tiff:
+            fname = BARRIER_TIFF_NAME if self._type == 'barrier' else \
+                FRICTION_TIFF_NAME
+            logger.debug(f'Writing combined {self._type} layers to {fname}')
+            self._io_handler.save_tiff(result, fname)
+
+        h5_layer_name = BARRIER_H5_LAYER_NAME if self._type == 'barrier' else \
+            FRICTION_H5_LAYER_NAME
+        logger.debug(f'Writing combined {self._type} layers to H5')
+        self._io_handler.write_to_h5(result, h5_layer_name)
+
+    def _combine_layers(self, layers: List[Tuple[npt.NDArray, LayerConfig]]
                        ) -> npt.NDArray:
         """
         Combine multiple arrays based on LayerConfigs and return composite
@@ -74,7 +105,7 @@ class FrictionBarrierBuilder:
 
         Parameters
         ----------
-        config
+        layers
             List of tuples, where the first value of each tuple is an array,
             and the second value is its LayerConfig.
 
@@ -82,7 +113,12 @@ class FrictionBarrierBuilder:
         -------
             The composite array.
         """
-        return np.ndarray()
+        # TODO - allow forced inclusions
+        results: List[npt.NDArray] = []
+        for data, config in layers:
+            result = self._process_layer(data, config)
+            results.append(result)
+        return reduce(lambda a, b: a + b, results)
 
     def _process_layer(self, data: npt.NDArray, config: LayerConfig
                       ) -> npt.NDArray:
