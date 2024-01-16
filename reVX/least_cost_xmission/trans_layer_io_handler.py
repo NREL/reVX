@@ -31,14 +31,22 @@ class TransLayerIoHandler:
     """
     Handle reading and writing H5 files and GeoTiffs
     """
-    def __init__(self, template_f: str, h5_file: Optional[str] = None,
-                 layer_dir='.'):
-        self._h5_file = h5_file
+    def __init__(self, template_f: str, layer_dir='.'):
+        """TODO
+
+        Parameters
+        ----------
+        template_f
+            _description_
+        layer_dir, optional
+            _description_, by default '.'
+        """
         self._layer_dir = layer_dir
         self._profile = self._extract_profile(template_f)
         self.shape: Tuple[int, int] = (
             self._profile['height'], self._profile['width']
         )
+        self._h5_file: Optional[str] = None
 
     @property
     def profile(self) -> Profile:
@@ -80,6 +88,22 @@ class TransLayerIoHandler:
             f.create_dataset('latitude', data=lats)
             for key, val in global_attrs.items():
                 f.attrs[key] = val
+        self._h5_file = new_h5
+
+    def set_h5_file(self, h5_file: str):
+        """
+        Set the H5 file to store layers in.
+
+        Parameters
+        ----------
+        h5_file
+            Path to file
+        """
+        if not os.path.exists(h5_file):
+            raise IOError (f'H5 file {h5_file} does not exist')
+
+        self._h5_file = h5_file
+
 
     def write_to_h5(self, data: npt.NDArray, name: str):
         """
@@ -92,15 +116,18 @@ class TransLayerIoHandler:
         name
             _description_
         """
-        assert data.shape == self.shape
         if self._h5_file is None:
             _cls = self.__class__.__name__
             raise IOError(
-                f'The H5 file was not set when initializing {_cls}'
+                'The H5 file is not set. Please create it with '
+                f'{_cls}.create_new_h5() or set with {_cls}.set_h5_file().'
             )
 
-        if not os.path.exists(self._h5_file):
-            raise IOError (f'H5 file {self._h5_file} does not exist')
+        if data.shape != self.shape:
+            raise ValueError(
+                f'Shape of provided data ({data.shape}) does not match '
+                f'template raster (self.shape).'
+            )
 
         with h5py.File(self._h5_file, 'a') as f:
             if name in f.keys():
@@ -118,7 +145,7 @@ class TransLayerIoHandler:
     def load_tiff(self, f_name: str, band: int = 1,
                   reproject=False) -> npt.NDArray:
         """
-        Load a
+        Load TODO
 
         Parameters
         ----------

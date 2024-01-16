@@ -24,6 +24,8 @@ BinConfig = TypedDict('BinConfig', {
     total=False
 )
 
+WET_COSTS_TIFF = 'wet_costs.tif'
+
 class OffshoreCostCreator:
     """
     Create offshore costs and save to GeoTIFF.
@@ -36,6 +38,23 @@ class OffshoreCostCreator:
             Transmission layer IO handler
         """
         self._io_handler = io_handler
+
+    def build_offshore_costs(self, in_filename: str, bins: List[BinConfig],
+                            out_filename = WET_COSTS_TIFF):
+        """
+        Build complete offshore costs. This is currently very simple. In the
+        future, costs will also vary with distance to port.
+
+        Parameters
+        ----------
+        in_filename
+            Input raster to assign costs based upon.
+        bins
+            List of bins to use for assigning depth based costs.
+        out_filename
+            Output raster with binned costs.
+        """
+        self.assign_cost_by_bins(in_filename, bins, out_filename)
 
     def assign_cost_by_bins(self, in_filename: str, bins: List[BinConfig],
                             out_filename: str):
@@ -58,22 +77,6 @@ class OffshoreCostCreator:
         output = self._assign_values_by_bins(input, bins)
         self._io_handler.save_tiff(output, out_filename)
 
-    def build_offshore_costs(self, in_filename: str, bins: List[BinConfig],
-                            out_filename: str):
-        """
-        Build complete offshore costs. This is currently very simple. In the
-        future, costs will also vary with distance to port.
-
-        Parameters
-        ----------
-        in_filename
-            Input raster to assign costs based upon.
-        bins
-            List of bins to use for assigning depth based costs.
-        out_filename
-            Output raster with binned costs.
-        """
-        self.assign_cost_by_bins(in_filename, bins, out_filename)
 
     @staticmethod
     def _assign_values_by_bins(input: npt.NDArray,  # noqa: C901

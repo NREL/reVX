@@ -35,14 +35,16 @@ _JsonFrictionFile = Tuple[Dict[str, Union[int, str]], str]
 JsonFrictionFiles = List[_JsonFrictionFile]
 
 
-class LayerCreatorConfig(BaseConfig):
+class OffshoreCreatorConfig(BaseConfig):
     """
-    Config framework for creating cost, friction, and barrier layers.
+    Config framework for creating offshore friction and barrier layers.
     """
 
-    NAME = 'LayerCreatorConfig'
+    NAME = 'OffshoreCreatorConfig'
     REQUIREMENTS = (
-        'template_raster_fpath', 'h5_fpath',
+        'offshore_h5_fpath', 'friction_files', 'barrier_files',
+        'template_raster_fpath', 'land_mask_fpath', 'land_h5_fpath',
+        'land_barrier_layer', 'land_costs_layer',
     )
 
     # pylint: disable=useless-parent-delegation
@@ -56,18 +58,11 @@ class LayerCreatorConfig(BaseConfig):
         super().__init__(config)
 
     @property
-    def template_raster_fpath(self) -> str:
+    def offshore_h5_fpath(self) -> str:
         """
-        Path and file name of template raster. (required)
+        H5 file to save friction and barriers to. (required)
         """
-        return self['template_raster_fpath']
-
-    @property
-    def h5_fpath(self) -> str:
-        """
-        H5 file for all layers. Will be created if it doesn't exist (required)
-        """
-        return self['h5_fpath']
+        return self['offshore_h5_fpath']
 
     @property
     def land_h5_fpath(self) -> str:
@@ -92,6 +87,12 @@ class LayerCreatorConfig(BaseConfig):
         """
         return self['barrier_files']
 
+    @property
+    def template_raster_fpath(self) -> str:
+        """
+        Path and file name of template raster. (required)
+        """
+        return self['template_raster_fpath']
 
     @property
     def land_mask_fpath(self) -> str:
@@ -138,6 +139,13 @@ class LayerCreatorConfig(BaseConfig):
         Path and file name of bathymetry raster.
         """
         return self.get('forced_inclusion_files', [])
+
+    @property
+    def overwrite_h5(self) -> bool:
+        """
+        Allow new H5 create to overwrite existing file if True.
+        """
+        return self.get('overwrite_h5', False)
 
     @property
     def save_tiff(self) -> bool:
@@ -263,10 +271,10 @@ class LayerCreatorConfig(BaseConfig):
         return ff
 
 
-class DryCostCreatorConfig(AnalysisConfig):
-    """Config framework for creating dry cost layers"""
+class CostCreatorConfig(AnalysisConfig):
+    """Config framework for creating cost layers"""
 
-    NAME = 'DryCostCreator'
+    NAME = 'CostCreator'
     REQUIREMENTS = ('h5_fpath', 'iso_regions')
 
     def __init__(self, config):

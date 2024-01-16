@@ -12,7 +12,7 @@ from rex.utilities.cli_dtypes import STR
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, safe_json_load
 
-from reVX.config.least_cost_xmission import CostCreatorConfig
+from reVX.config.least_cost_xmission import DryCostCreatorConfig
 from reVX.least_cost_xmission.cost_creator import XmissionCostCreator
 from reVX import __version__
 
@@ -41,7 +41,7 @@ def valid_config_keys():
     """
     Echo the valid Least Cost Xmission Cost Creator config keys
     """
-    click.echo(', '.join(get_class_properties(CostCreatorConfig)))
+    click.echo(', '.join(get_class_properties(DryCostCreatorConfig)))
 
 
 def run_local(ctx, config):
@@ -52,7 +52,7 @@ def run_local(ctx, config):
     ----------
     ctx : click.ctx
         click ctx object
-    config : reVX.config.least_cost_xmission.CostCreatorConfig
+    config : reVX.config.least_cost_xmission.DryCostCreatorConfig
         Cost Creator config object.
     """
     ctx.obj['NAME'] = config.name
@@ -82,7 +82,7 @@ def from_config(ctx, config, verbose):
     Run Least Cost Xmission Cost Creator from a config.
     """
 
-    config = CostCreatorConfig(config)
+    config = DryCostCreatorConfig(config)
 
     if 'VERBOSE' in ctx.obj:
         if any((ctx.obj['VERBOSE'], verbose)):
@@ -168,7 +168,7 @@ def get_node_cmd(config):
 
     Parameters
     ----------
-    config : reVX.config.least_cost_xmission.CostCreatorConfig
+    config : reVX.config.least_cost_xmission.DryCostCreatorConfig
         Cost Creator config object.
 
     Returns
@@ -207,7 +207,7 @@ def eagle(config):
 
     Parameters
     ----------
-    config : reVX.config.least_cost_xmission.CostCreatorConfig
+    config : reVX.config.least_cost_xmission.DryCostCreatorConfig
         Cost Creator config object.
     """
 

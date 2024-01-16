@@ -30,7 +30,7 @@ class FakeIoHandler:
         self.shape = shape
 
 io_handler = FakeIoHandler((3, 3))
-builder = FrictionBarrierBuilder(io_handler, masks)
+builder = FrictionBarrierBuilder('friction', io_handler, masks)
 
 
 def test_mask_plus():
