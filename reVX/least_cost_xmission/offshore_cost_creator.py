@@ -2,7 +2,9 @@
 Create offshore costs and save to GeoTIFF.
 """
 import logging
-from typing import TypedDict, List
+from typing import List
+from typing_extensions import TypedDict, Required
+
 
 import numpy as np
 import numpy.typing as npt
@@ -11,18 +13,16 @@ from reVX.least_cost_xmission.trans_layer_io_handler import TransLayerIoHandler
 
 logger = logging.getLogger(__name__)
 
-"""
-Config for assigning cost based on bins. Cells with values >= than 'min' and <
-'max' will be assigned 'cost'. One or both of 'min' and 'max' can be specified.
-'cost' must be specified.
-"""
-BinConfig = TypedDict('BinConfig', {
-        'min': float,
-        'max': float,
-        'cost': float,  # mandatory
-    },
-    total=False
-)
+class BinConfig(TypedDict, total=False):
+    """
+    Config for assigning cost based on bins. Cells with values >= than 'min'
+    and < 'max' will be assigned 'cost'. One or both of 'min' and 'max' can be
+    specified.
+    """
+    min: float
+    max: float
+    cost: Required[float]
+
 
 WET_COSTS_TIFF = 'wet_costs.tif'
 
@@ -39,7 +39,7 @@ class OffshoreCostCreator:
         """
         self._io_handler = io_handler
 
-    def build_offshore_costs(self, in_filename: str, bins: List[BinConfig],
+    def build_offshore_costs(self, bathy_tiff: str, bins: List[BinConfig],
                             out_filename = WET_COSTS_TIFF):
         """
         Build complete offshore costs. This is currently very simple. In the
@@ -47,14 +47,14 @@ class OffshoreCostCreator:
 
         Parameters
         ----------
-        in_filename
-            Input raster to assign costs based upon.
+        bathy_tiff
+            Bathymetric depth GeoTIFF. Values underwater should be negative.
         bins
             List of bins to use for assigning depth based costs.
         out_filename
             Output raster with binned costs.
         """
-        self.assign_cost_by_bins(in_filename, bins, out_filename)
+        self.assign_cost_by_bins(bathy_tiff, bins, out_filename)
 
     def assign_cost_by_bins(self, in_filename: str, bins: List[BinConfig],
                             out_filename: str):
@@ -98,8 +98,6 @@ class OffshoreCostCreator:
             Binned costs
         """
         for bin in bins:
-            if 'cost' not in bin:
-                raise AttributeError(f'Bin config {bin} is missing "cost".')
             if ('min' not in bin) and ('max' not in bin):
                 raise AttributeError(f'Bin config {bin} requires "min", "max",'
                                      ' or both.')

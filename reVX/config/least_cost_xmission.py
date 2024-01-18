@@ -35,7 +35,7 @@ _JsonFrictionFile = Tuple[Dict[str, Union[int, str]], str]
 JsonFrictionFiles = List[_JsonFrictionFile]
 
 
-class LayerCreatorConfig(BaseConfig):
+class OLD_LayerCreatorConfig(BaseConfig):
     """
     Config framework for creating cost, friction, and barrier layers.
     """

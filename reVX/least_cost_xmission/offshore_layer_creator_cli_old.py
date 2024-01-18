@@ -11,8 +11,8 @@ from typing import Dict, Union
 from rex.utilities.loggers import init_logger, LOG_LEVEL
 
 from reVX import __version__
-from reVX.least_cost_xmission.offshore_utilities import CombineRasters
-from reVX.least_cost_xmission.offshore_utilities import convert_pois_to_lines
+from reVX.least_cost_xmission.offshore_utilities_MOSTLY_OLD import CombineRasters
+from reVX.least_cost_xmission.offshore_utilities_MOSTLY_OLD import convert_pois_to_lines
 from reVX.config.least_cost_xmission import OffshoreCreatorConfig
 
 logger = logging.getLogger(__name__)

@@ -4,9 +4,8 @@ Handle reading and writing H5 files and GeoTiffs
 import os
 import logging
 from copy import deepcopy
-import numpy as np
 import numpy.typing as npt
-from typing import IO, Dict, TypedDict, List, Literal, Tuple, Any, Optional
+from typing import TypedDict, Literal, Tuple, Optional
 
 import h5py
 from affine import Affine

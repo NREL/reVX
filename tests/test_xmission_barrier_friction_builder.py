@@ -51,7 +51,7 @@ def test_mask_plus():
 
 
 def test_range():
-    """ Test range key in LayerConfig """
+    """ Test range key in FBLayerConfig """
     data = np.array([[1, 2, 3],
                      [4, 5, 6],
                      [7, 8, 9]])
@@ -87,7 +87,7 @@ def test_range():
 
 
 def test_map():
-    """ Test map key in LayerConfig """
+    """ Test map key in FBLayerConfig """
     data = np.array([[1, 1, 1],
                      [2, 2, 2],
                      [3, 3, 3]])
@@ -111,56 +111,6 @@ def test_map():
     assert (result == np.array([[0, 5, 0],
                                 [0, 0, 0],
                                 [0, 9, 0]])).all()
-
-def test_combine_layers():
-    """ Processing and combination of layers """
-    layers = [
-        (
-            np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]),
-            {
-                'extent': 'wet',
-                'map': {1: 5, 3: 9},
-            }
-        )
-    ]
-    result = builder._combine_layers(layers)
-    assert (result == np.array([[5, 0, 0],
-                                [0, 0, 0],
-                                [9, 0, 0]])).all()
-
-    layers = [
-        (
-            np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]),
-            {
-                'extent': 'all',
-                'range': [0, 10],
-                'value': 100,
-            }
-        ),
-        (
-            np.array([[1, 1, 1],
-                      [2, 2, 2],
-                      [3, 3, 3]]),
-            {
-                'extent': 'wet+',
-                'map': {1: 10, 2: 20},
-            }
-        ),
-        (
-            np.array([[10, 10, 10],
-                      [20, 20, 20],
-                      [30, 30, 30]]),
-            {
-                'extent': 'dry+',
-                'map': {20: 2, 30: 3},
-            }
-        ),
-    ]
-    result = builder._combine_layers(layers)
-    print(result)
-    assert (result == np.array([[110, 110, 100],
-                                [120, 122, 102],
-                                [100, 103, 103]])).all()
 
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.

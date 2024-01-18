@@ -85,7 +85,7 @@ class Masks:
                                                 self.landfall_mask)
         return self._wet_plus_mask
 
-    def create_masks(self, land_mask_shp_f: str, save_tiff: bool = False,
+    def create_masks(self, land_mask_shp_f: str, save_tiff: bool = True,
                      reproject_vector: bool = True):
         """
         Create the offshore and land mask layers from a polygon land vector
@@ -105,7 +105,7 @@ class Masks:
         # Raw land is all land cells, include landfall cells
         raw_land = rasterize(land_mask_shp_f, self._io_handler.profile,
                              all_touched=True,
-                             reproject_vector=reproject_vector)
+                             reproject_vector=reproject_vector, dtype='uint8')
 
         raw_land_mask: MaskArr = raw_land == 1
 
@@ -114,7 +114,8 @@ class Masks:
 
         landfall = rasterize(land_mask_shp_f, self._io_handler.profile,
                              reproject_vector=reproject_vector,
-                             all_touched=True, boundary_only=True)
+                             all_touched=True, boundary_only=True,
+                             dtype='uint8')
         self._landfall_mask = landfall == 1
 
         # XOR landfall and raw land to get all land cells, except landfall
@@ -122,12 +123,15 @@ class Masks:
         self._dry_mask = np.logical_xor(self.landfall_mask,
                                          raw_land_mask)
 
+        logger.debug('Created all masks')
+
         if save_tiff:
-            logger.debug('Saving land and offshore masks to GeoTIFF')
+            logger.debug('Saving masks to GeoTIFF')
             self.__save_mask(raw_land_mask, self.RAW_LAND_MASK_FNAME)
             self.__save_mask(self.wet_mask, self.OFFSHORE_MASK_FNAME)
             self.__save_mask(self.dry_mask, self.LAND_MASK_FNAME)
             self.__save_mask(self.landfall_mask, self.LANDFALL_MASK_FNAME)
+            logger.debug('Completed saving all masks')
 
     def load_masks(self):
         """
@@ -135,12 +139,11 @@ class Masks:
         self.create_masks() was run previously. Mask files must be in the
         current directory.
         """
-
+        logger.debug('Loading masks')
         self._dry_mask = self.__load_mask(self.LAND_MASK_FNAME)
         self._wet_mask = self.__load_mask(self.OFFSHORE_MASK_FNAME)
         self._landfall_mask = self.__load_mask(self.LANDFALL_MASK_FNAME)
-
-        logger.info('Successfully loaded wet and dry masks')
+        logger.debug('Successfully loaded wet, dry, and landfall masks')
 
     def __save_mask(self, data: npt.NDArray, fname: str):
         """
