@@ -135,8 +135,11 @@ def from_config(ctx, config, verbose):
 @click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
               default=None, help=("List of sc_point_gids to connect to. If "
                                   "running `from_config`, this can also be a "
-                                  "path to a CSV file with a 'sc_point_gids' "
-                                  "column containing the GID's to run."))
+                                  "path to a CSV file with a 'sc_point_gid' "
+                                  "column containing the GID's to run. Note "
+                                  "the missing 's' in the column name - this "
+                                  "makes it seamless to run on a supply curve "
+                                  "output from reV"))
 @click.option('--nn_sinks', '-nn', type=int,
               show_default=True, default=2,
               help=("Number of nearest neighbor sinks to use for clipping "
