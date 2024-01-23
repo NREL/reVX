@@ -52,10 +52,10 @@ def rasterize(fname: str, profile: Profile,
         Rasterized vector data
     """
     if fname in VECTOR_CACHE:
-        logger.info('Vector data for %s found in cache', fname)
+        logger.debug('Vector data for %s found in cache', fname)
         gdf = VECTOR_CACHE[fname]
     else:
-        logger.info('Loading %s', fname)
+        logger.debug('Loading %s', fname)
         gdf = gpd.read_file(fname)
         VECTOR_CACHE[fname] = gdf
 
@@ -70,7 +70,7 @@ def rasterize(fname: str, profile: Profile,
         gdf = gdf[~gdf.is_empty]  # Negative buffer may result in empty feats
         logger.debug(f'{len(gdf)} features after removing empty features.')
 
-    logger.info('Rasterizing {}'.format(fname))
+    logger.debug('Rasterizing {}'.format(fname))
     geo = gdf.boundary if boundary_only else gdf.geometry
     shape = (profile['height'], profile['width'])
     rasterized = features.rasterize(list(geo), out_shape=shape,
@@ -79,5 +79,5 @@ def rasterize(fname: str, profile: Profile,
                                     all_touched=all_touched,
                                     default_value=burn_value, dtype=dtype)
 
-    logger.info('Rasterizing complete')
+    logger.debug('Rasterizing complete')
     return rasterized

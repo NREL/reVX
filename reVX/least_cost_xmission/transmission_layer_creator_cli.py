@@ -53,12 +53,12 @@ def from_config(config_fpath: str):
     try:
         config = LayerCreationConfig.model_validate_json(raw_json)
     except ValidationError as e:
-        click.echo(f'Error loading config file {config_fpath}:\n{e}')
+        logger.error(f'Error loading config file {config_fpath}:\n{e}')
         sys.exit(1)
 
     if not any(map(lambda key: config.model_dump()[key] is not None,
                    CONFIG_ACTIONS)):
-        click.echo(
+        logger.error(
             f'At least one of {CONFIG_ACTIONS} must be in the config file'
         )
         sys.exit(1)
@@ -127,26 +127,26 @@ def _setup_h5_files(io_handler: TransLayerIoHandler,
         Existing H5 file to pull meta data from
     """
     if h5_fpath.exists():
-        click.echo(f'Using H5 file {h5_fpath} for storing data.')
+        logger.info(f'Using H5 file {h5_fpath} for storing data.')
         io_handler.set_h5_file(str(h5_fpath))
         return
 
     # h5_fpath doesn't exist, create it
     if existing_h5_fpath is None:
-        click.echo(
+        logger.error(
             f'"h5_fpath" {h5_fpath} does not exist. "existing_h5_fpath" '
             'must be set to an existing H5 file.'
         )
         sys.exit(1)
 
     if not existing_h5_fpath.exists():
-        click.echo(
+        logger.error(
             f'"existing_h5_fpath" {existing_h5_fpath} does not exist, and '
             'is required to create a new H5.'
         )
         sys.exit(1)
 
-    click.echo(f'Creating new H5 {h5_fpath} with meta data from '
+    logger.info(f'Creating new H5 {h5_fpath} with meta data from '
                 f'{existing_h5_fpath}')
     io_handler.create_new_h5(str(existing_h5_fpath), str(h5_fpath))
 
