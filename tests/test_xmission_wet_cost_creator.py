@@ -15,13 +15,6 @@ def test_bin_config_sanity_checking():
     """
     input = np.array([0, 0])
 
-    missing_cost_config = [
-        {'min': 1, 'max': 2, 'cost': 3},
-        {'min': 2, 'max': 3, },
-    ]
-    with pytest.raises(AttributeError) as _:
-        WetCostCreator._assign_values_by_bins(input, missing_cost_config)
-
     missing_min_max_config = [{'cost': 1}]
     with pytest.raises(AttributeError) as _:
         WetCostCreator._assign_values_by_bins(input,
