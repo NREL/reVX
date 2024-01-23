@@ -4,14 +4,18 @@ Handle reading and writing H5 files and GeoTiffs
 import os
 import logging
 from copy import deepcopy
+import numpy as np
 import numpy.typing as npt
 from typing import TypedDict, Literal, Tuple, Optional
 
 import h5py
 from affine import Affine
 import rasterio as rio
+from rasterio.warp import reproject, Resampling
 
 import rex
+
+from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +107,6 @@ class TransLayerIoHandler:
 
         self._h5_file = h5_file
 
-
     def write_to_h5(self, data: npt.NDArray, name: str):
         """
         TODO
@@ -135,11 +138,53 @@ class TransLayerIoHandler:
             else:
                 f.create_dataset(name, data=data)
 
-    def _reproject(self):
-        pass
+    def load_h5_layer(self, layer_name: str, h5_file: Optional[str] = None
+                      ) -> npt.NDArray:
+        """
+        Load raster data from an H5 file
 
-    def load_h5_layer(self):
-        pass
+        Parameters
+        ----------
+        layer_name
+            Layer to load from H5 file
+        h5_file, optional
+            H5 file to use. If None, use default H5 file. By default None.
+
+        Returns
+        -------
+            Array of data
+        """
+        if h5_file is None:
+            h5_file = self._h5_file
+
+        with h5py.File(h5_file) as res:
+            data = res[layer_name][0]
+
+        return data
+
+    def load_h5_attrs(self, layer_name: str, h5_file: Optional[str] = None
+                      ) -> dict:
+        """
+        Load attributes from an H5 file for a layer
+
+        Parameters
+        ----------
+        layer_name
+            Layer to load attributes for
+        h5_file, optional
+            H5 file to use. If None, use default H5 file. By default None.
+
+        Returns
+        -------
+            Dict of attribute data
+        """
+        if h5_file is None:
+            h5_file = self._h5_file
+
+        with h5py.File(h5_file) as res:
+            attrs = dict(res[layer_name].attrs)
+
+        return attrs
 
     def load_tiff(self, f_name: str, band: int = 1,
                   reproject=False) -> npt.NDArray:
@@ -214,6 +259,39 @@ class TransLayerIoHandler:
 
         with rio.open(f_name, 'w', **profile) as out_f:
             out_f.write(data, indexes=1)
+
+    def reproject(self, src_raster: npt.NDArray, src_profile: dict,
+                  dtype: npt.DTypeLike = DEFAULT_DTYPE, init_dest: float = -1):
+        """
+        Reproject a raster into the template raster projection and transform.
+
+        Parameters
+        ----------
+        src_raster
+            Source raster
+        src_profile
+            Source raster profile
+        dtype, optional
+            Data type for destination raster
+        init_dest, optional
+            Value for cells outside of boundary of src_raster
+
+        Returns
+        -------
+            Source data reprojected into the template projection.
+        """
+        dest_raster = np.zeros(self.shape, dtype=dtype)
+        reproject(src_raster,
+                  destination=dest_raster,
+                  src_transform=src_profile['transform'],
+                  src_crs=src_profile['crs'],
+                  dst_transform=self.profile['transform'],
+                  dst_crs=self.profile['crs'],
+                  # dst_resolution=self.shape,
+                  num_threads=4,
+                  resampling=Resampling.nearest,
+                  INIT_DEST=init_dest)
+        return dest_raster
 
     @staticmethod
     def _extract_profile(template_f: str) -> Profile:

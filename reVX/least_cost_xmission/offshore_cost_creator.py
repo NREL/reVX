@@ -5,9 +5,9 @@ import logging
 from typing import List
 from typing_extensions import TypedDict, Required
 
-
 import numpy as np
 import numpy.typing as npt
+from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE, WET_COSTS_TIFF
 
 from reVX.least_cost_xmission.trans_layer_io_handler import TransLayerIoHandler
 
@@ -23,8 +23,6 @@ class BinConfig(TypedDict, total=False):
     max: float
     cost: Required[float]
 
-
-WET_COSTS_TIFF = 'wet_costs.tif'
 
 class OffshoreCostCreator:
     """
@@ -77,7 +75,6 @@ class OffshoreCostCreator:
         output = self._assign_values_by_bins(input, bins)
         self._io_handler.save_tiff(output, out_filename)
 
-
     @staticmethod
     def _assign_values_by_bins(input: npt.NDArray,  # noqa: C901
                                bins: List[BinConfig]) -> npt.NDArray:
@@ -128,7 +125,7 @@ class OffshoreCostCreator:
             last_max = bin.get('max', float('inf'))
 
         # Past guard clauses, perform binning
-        output = np.zeros(input.shape)
+        output = np.zeros(input.shape, dtype=DEFAULT_DTYPE)
 
         for i, bin in enumerate(bins):
             logger.debug(f'Calculating costs for bin {i+1}/{len(bins)}: {bin}')

@@ -13,6 +13,7 @@ from pydantic import ValidationError
 from rex.utilities.loggers import init_mult
 
 from reVX import __version__
+from reVX.least_cost_xmission.cost_combiner import CostCombiner
 from reVX.least_cost_xmission.masks import Masks
 from reVX.least_cost_xmission.json_config import LayerCreationConfig
 from reVX.least_cost_xmission.offshore_cost_creator import OffshoreCostCreator
@@ -102,21 +103,28 @@ def from_config(config_fpath: str, create_h5: bool):
         )
 
     if config.combine_costs is not None:
-        pass
+        cc = config.combine_costs
+        combiner = CostCombiner(io_handler, masks)
+        wet_costs = combiner.load_wet_costs()
+        dry_costs = combiner.load_legacy_dry_costs(cc.dry_h5_fpath,
+                                                   cc.dry_costs_layer)
+        combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,
+                               save_tiff=save_tiff)
 
 
 def _setup_h5_files(io_handler: TransLayerIoHandler,
                     h5_fpath: Path, existing_h5_fpath: Optional[Path]):
-    """TODO
+    """
+    Load or Create new H5 file as needed
 
     Parameters
     ----------
     io_handler
-        _description_
+        The transmission IO handler
     h5_fpath
-        _description_
+        Path to H5 file to use for current analysis
     existing_h5_fpath
-        _description_
+        Existing H5 file to pull meta data from
     """
     if h5_fpath.exists():
         click.echo(f'Using H5 file {h5_fpath} for storing data.')

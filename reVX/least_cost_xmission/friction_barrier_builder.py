@@ -9,6 +9,7 @@ from typing_extensions import TypedDict, Required
 
 import numpy as np
 import numpy.typing as npt
+from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
 
 from reVX.least_cost_xmission.masks import MaskArr, Masks
 from reVX.least_cost_xmission.trans_layer_io_handler import TransLayerIoHandler
@@ -70,7 +71,7 @@ class FrictionBarrierBuilder:
     """
     def __init__(self, _type: Literal['friction', 'barrier'],
                  io_handler: TransLayerIoHandler, masks: Masks,
-                 dtype: npt.DTypeLike = 'float32'):
+                 dtype: npt.DTypeLike = DEFAULT_DTYPE):
         """
         Parameters
         ----------

@@ -29,8 +29,7 @@ class DryCosts(BaseModel):
 
 class CombineCosts(BaseModel):
     """ Config items required to combine wet and dry costs """
-    # TODO
-    land_fall_cost: float  # Cost to transition from wet to dry transmission
+    landfall_cost: float  # Cost to transition from wet to dry transmission
 
     # Note: the below items are temporary until dry costs are refactored
     dry_h5_fpath: FilePath  # H5 file with dry costs
