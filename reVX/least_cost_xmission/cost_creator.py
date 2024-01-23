@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module to build and save least cost raster layers
+Module to build and save dry (land) cost raster layers
 """
 import logging
 import numpy as np

@@ -16,9 +16,12 @@ from reVX import __version__
 from reVX.least_cost_xmission.cost_combiner import CostCombiner
 from reVX.least_cost_xmission.masks import Masks
 from reVX.least_cost_xmission.json_config import LayerCreationConfig
-from reVX.least_cost_xmission.offshore_cost_creator import OffshoreCostCreator
-from reVX.least_cost_xmission.trans_layer_io_handler import TransLayerIoHandler
-from reVX.least_cost_xmission.friction_barrier_builder import FrictionBarrierBuilder
+from reVX.least_cost_xmission.wet_cost_creator import WetCostCreator
+from reVX.least_cost_xmission.friction_barrier_builder import \
+    FrictionBarrierBuilder
+from reVX.least_cost_xmission.transmission_layer_io_handler import \
+    TransLayerIoHandler
+from reVX.least_cost_xmission.utils import convert_pois_to_lines
 
 logger = logging.getLogger(__name__)
 
@@ -42,8 +45,6 @@ def main(verbose):
 @main.command
 @click.option('-c', '--config', 'config_fpath', type=click.Path(exists=True),
               required=True, help='Configuration JSON.')
-@click.option('--create-h5/--use-existing-h5', default=True, show_default=True,
-              help='Create a new H5 data file or use an existing H5.')
 def from_config(config_fpath: str):
     """
     Create costs, barriers, and frictions from a config file.
@@ -63,9 +64,9 @@ def from_config(config_fpath: str):
         )
         sys.exit(1)
 
-    save_tiff = config.save_tiff
 
     # Done with guard clauses
+    save_tiff = config.save_tiff
     io_handler = TransLayerIoHandler(str(config.template_raster_fpath),
                                      layer_dir=config.layer_dir)
 
@@ -88,11 +89,11 @@ def from_config(config_fpath: str):
 
     if config.wet_costs is not None:
         wc = config.wet_costs
-        occ = OffshoreCostCreator(io_handler)
+        wcc = WetCostCreator(io_handler)
         if wc.wet_costs_tiff is None:
-            occ.build_offshore_costs(str(wc.bathy_tiff), wc.bins)
+            wcc.build_wet_costs(str(wc.bathy_tiff), wc.bins)
         else:
-            occ.build_offshore_costs(
+            wcc.build_wet_costs(
                 str(wc.bathy_tiff), wc.bins, str(wc.wet_costs_tiff)
             )
 
@@ -110,6 +111,27 @@ def from_config(config_fpath: str):
                                                    cc.dry_costs_layer)
         combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,
                                save_tiff=save_tiff)
+
+
+@main.command
+@click.option('--poi-file', '-p', required=True, type=click.Path(exists=True),
+              help='File of POIs in CSV format. Each POI must have the '
+              'following fields: "POI Name", "State", "Voltage (kV)", "Lat", '
+              'and "Long". "State" may be blank. Other fields are ignored.')
+@click.option('--template-raster', '-t', required=True,
+              type=click.Path(exists=True),
+              help='Raster to extract CRS from.')
+@click.option('--out-file', '-o', type=click.Path(), required=True,
+              help='Filename to use for POI lines GeoPackage file.')
+def convert_pois(poi_file: str, template_raster: str, out_file: str):
+    """
+    Convert points of interconnection (POI) to short lines. The transmission
+    routing code requires all transmission elements to be lines. The POIs
+    defined in the CSV will be converted to lines and labeled as substations.
+    As all substations must be link to a transmission line, a synthetic
+    transmission line is created that is linked to the POIs.
+    """
+    convert_pois_to_lines(poi_file, template_raster, out_file)
 
 
 def _setup_h5_files(io_handler: TransLayerIoHandler,

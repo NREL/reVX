@@ -11,7 +11,7 @@ import numpy.typing as npt
 from reVX.least_cost_xmission.masks import Masks
 from reVX.least_cost_xmission.config.constants import COMBINED_COSTS_H5_LAYER,\
     COMBINED_COSTS_TIFF, DEFAULT_DTYPE, WET_COSTS_TIFF
-from reVX.least_cost_xmission.trans_layer_io_handler import TransLayerIoHandler
+from reVX.least_cost_xmission.transmission_layer_io_handler import TransLayerIoHandler
 
 logger = logging.getLogger(__name__)
 

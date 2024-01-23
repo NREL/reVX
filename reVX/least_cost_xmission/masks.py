@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 
 from .utils import rasterize
-from .trans_layer_io_handler import TransLayerIoHandler
+from .transmission_layer_io_handler import TransLayerIoHandler
 
 logger = logging.getLogger(__name__)
 

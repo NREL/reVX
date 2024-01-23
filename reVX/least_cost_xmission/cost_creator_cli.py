@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=all
 """
-Xmission Cost Creator Command Line Interface
+Legacy Xmission Dry Cost Creator Command Line Interface
 """
 import click
 import logging
