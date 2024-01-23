@@ -29,14 +29,13 @@ class Masks:
     OFFSHORE_MASK_FNAME = 'offshore_mask.tif'
 
     def __init__(self, io_handler: TransLayerIoHandler, masks_dir='.'):
-        """ TODO
-
+        """
         Parameters
         ----------
         io_handler
-            _description_
+            Transmission IO handler
         masks_dir, optional
-            _description_, by default '.'
+            Directory for storing/finding mask GeoTIFFs, by default '.'
         """
         self._io_handler = io_handler
         self._masks_dir = masks_dir

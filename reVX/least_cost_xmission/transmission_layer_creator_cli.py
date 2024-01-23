@@ -44,7 +44,7 @@ def main(verbose):
               required=True, help='Configuration JSON.')
 @click.option('--create-h5/--use-existing-h5', default=True, show_default=True,
               help='Create a new H5 data file or use an existing H5.')
-def from_config(config_fpath: str, create_h5: bool):
+def from_config(config_fpath: str):
     """
     Create costs, barriers, and frictions from a config file.
     """
@@ -97,7 +97,7 @@ def from_config(config_fpath: str, create_h5: bool):
             )
 
     if config.dry_costs is not None:
-        # TODO
+        # TODO - implement this
         raise NotImplementedError(
             'The "dry_costs" option is not supported yet'
         )

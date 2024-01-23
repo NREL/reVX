@@ -54,8 +54,7 @@ class FBLayerConfig(TypedDict, total=False):
     # If 'forced_inclusion' is specified, any cells with a value > 0 will
     # force the final value of corresponding cells to 0. Multiple forced
     # inclusions are allowed. This field is optional, and defaults to 'normal'
-    # _type: Literal['normal', 'forced_inclusion']
-    # TODO - The JSON parser should allow "type" as well as "_type"
+    # type: Literal['normal', 'forced_inclusion']
 
 
 BARRIER_H5_LAYER_NAME = 'transmission_barrier'

@@ -35,14 +35,14 @@ class TransLayerIoHandler:
     Handle reading and writing H5 files and GeoTiffs
     """
     def __init__(self, template_f: str, layer_dir='.'):
-        """TODO
-
+        """
         Parameters
         ----------
         template_f
-            _description_
+            Template GeoTIFF with standard profile and transform
         layer_dir, optional
-            _description_, by default '.'
+            Directory to search for layers in, if not found in current
+            directory. By default '.'
         """
         self._layer_dir = layer_dir
         self._profile = self._extract_profile(template_f)
@@ -109,14 +109,14 @@ class TransLayerIoHandler:
 
     def write_to_h5(self, data: npt.NDArray, name: str):
         """
-        TODO
+        Write a raster layer to a H5 file.
 
         Parameters
         ----------
         data
-            _description_
+            Array of data to write
         name
-            _description_
+            Name of layer to write data to in H5
         """
         if self._h5_file is None:
             _cls = self.__class__.__name__
@@ -137,6 +137,7 @@ class TransLayerIoHandler:
                 dset[...] = data
             else:
                 f.create_dataset(name, data=data)
+            # TODO - write attributes
 
     def load_h5_layer(self, layer_name: str, h5_file: Optional[str] = None
                       ) -> npt.NDArray:
@@ -189,16 +190,17 @@ class TransLayerIoHandler:
     def load_tiff(self, f_name: str, band: int = 1,
                   reproject=False) -> npt.NDArray:
         """
-        Load TODO
+        Load GeoTIFF
 
         Parameters
         ----------
         f_name
-            _description_
+            Filename of GeoTIFF to load
         band, optional
-            _description_, by default 1
+            Band to load from GeoTIFF, by default 1
         reproject
-            TODO
+            Reproject raster to standard CRS and transform if True, by default,
+            False.
 
         Returns
         -------
@@ -287,7 +289,6 @@ class TransLayerIoHandler:
                   src_crs=src_profile['crs'],
                   dst_transform=self.profile['transform'],
                   dst_crs=self.profile['crs'],
-                  # dst_resolution=self.shape,
                   num_threads=4,
                   resampling=Resampling.nearest,
                   INIT_DEST=init_dest)

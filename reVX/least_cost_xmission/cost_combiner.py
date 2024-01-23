@@ -44,18 +44,18 @@ class CostCombiner:
 
     def load_legacy_dry_costs(self, h5_fpath, layer_name) -> npt.NDArray:
         """
-        TODO
+        Load legacy dry costs from H5 and reproject if necessary
 
         Parameters
         ----------
         h5_fpath
-            _description_
+            H5 file with dry costs
         layer_name
-            _description_
+            Name of costs layer
 
         Returns
         -------
-            _description_
+            Array of costs
         """
         if not Path(h5_fpath).exists():
             raise IOError(f'H5 file {h5_fpath} does not exist')
@@ -78,18 +78,19 @@ class CostCombiner:
                       dry_costs: npt.NDArray, landfall_cost: float,
                       save_tiff: bool = True):
         """
-        TODO
+        Combine wet, dry, and landfall costs using appropriate masks
 
         Parameters
         ----------
         wet_costs
-            _description_
+            Wet costs array
         dry_costs
-            _description_
+            Dry costs array
         landfall_cost
-            _description_
+            Cost to apply to landfall cells for account for conversion from
+            underwater cables to land based transmission.
         save_tiff, optional
-            _description_, by default True
+            Save combined costs to GeoTIFF if True, by default True
         """
         if wet_costs.shape != self._io_handler.shape:
             raise ValueError(
