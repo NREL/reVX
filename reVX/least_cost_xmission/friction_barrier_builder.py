@@ -10,16 +10,19 @@ from typing_extensions import TypedDict, Required
 import numpy as np
 import numpy.typing as npt
 
-from reVX.least_cost_xmission.utils import rasterize
-from reVX.least_cost_xmission.masks import MaskArr, Masks
-from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
-from reVX.least_cost_xmission.transmission_layer_io_handler import TransLayerIoHandler
+from .utils import rasterize
+from .masks import MaskArr, Masks
+from .config.constants import DEFAULT_DTYPE
+from .transmission_layer_io_handler import TransLayerIoHandler
+from .config.constants import BARRIER_H5_LAYER_NAME, BARRIER_TIFF, \
+    FRICTION_H5_LAYER_NAME, FRICTION_TIFF
 
 logger = logging.getLogger(__name__)
 
 # Terms for specifying masks. 'wet+' and 'dry+' indicated 'wet' + 'landfall'
 # and 'dry' + 'landfall', respectively.
 Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
+
 
 class Rasterize(TypedDict, total=False):
     """
@@ -28,6 +31,7 @@ class Rasterize(TypedDict, total=False):
     value: Required[float]  # Value to burn in to raster
     buffer: float  # Optional value to buffer vector by (can be negative)
     reproject: bool  # Reproject vector to raster CRS if True
+
 
 class FBLayerConfig(TypedDict, total=False):
     """
@@ -54,14 +58,7 @@ class FBLayerConfig(TypedDict, total=False):
     # If 'forced_inclusion' is specified, any cells with a value > 0 will
     # force the final value of corresponding cells to 0. Multiple forced
     # inclusions are allowed. This field is optional, and defaults to 'normal'
-    # type: Literal['normal', 'forced_inclusion']
-
-
-BARRIER_H5_LAYER_NAME = 'transmission_barrier'
-FRICTION_H5_LAYER_NAME = 'transmission_friction'
-
-BARRIER_TIFF_NAME = 'barrier.tif'
-FRICTION_TIFF_NAME = 'friction.tif'
+    # e.g., type : Literal['normal', 'forced_inclusion']
 
 
 class FrictionBarrierBuilder:
@@ -117,8 +114,8 @@ class FrictionBarrierBuilder:
         result = reduce(lambda a, b: a + b, layer_arrays)
 
         if save_tiff:
-            fname = BARRIER_TIFF_NAME if self._type == 'barrier' else \
-                FRICTION_TIFF_NAME
+            fname = BARRIER_TIFF if self._type == 'barrier' else \
+                FRICTION_TIFF
             logger.debug(f'Writing combined {self._type} layers to {fname}')
             self._io_handler.save_tiff(result, fname)
 
@@ -128,7 +125,7 @@ class FrictionBarrierBuilder:
         self._io_handler.write_to_h5(result, h5_layer_name)
 
     def _process_layer(self, data: npt.NDArray, config: FBLayerConfig
-                      ) -> npt.NDArray:
+                       ) -> npt.NDArray:
         """
         Process array using FBLayerConfig to create the desired layer. Desired
         "range" or "map" operation is only applied to the area indicated
@@ -167,7 +164,7 @@ class FrictionBarrierBuilder:
         return processed
 
     def _process_vector_layer(self, fname: str, config: FBLayerConfig
-                             ) -> npt.NDArray:
+                              ) -> npt.NDArray:
         """
         Rasterize a vector layer
 

@@ -9,9 +9,10 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.least_cost_xmission.masks import Masks
-from reVX.least_cost_xmission.config.constants import COMBINED_COSTS_H5_LAYER,\
-    COMBINED_COSTS_TIFF, DEFAULT_DTYPE, WET_COSTS_TIFF
-from reVX.least_cost_xmission.transmission_layer_io_handler import TransLayerIoHandler
+from reVX.least_cost_xmission.config.constants import \
+    COMBINED_COSTS_H5_LAYER, COMBINED_COSTS_TIFF, DEFAULT_DTYPE, WET_COSTS_TIFF
+from reVX.least_cost_xmission.transmission_layer_io_handler import \
+    TransLayerIoHandler
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class CostCombiner:
         self._io_handler = io_handler
         self._masks = masks
 
-    def load_wet_costs(self, f_name = WET_COSTS_TIFF) -> npt.NDArray:
+    def load_wet_costs(self, f_name: str = WET_COSTS_TIFF) -> npt.NDArray:
         """
         Load wet costs from file
 

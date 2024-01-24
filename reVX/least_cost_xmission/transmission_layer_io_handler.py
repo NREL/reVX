@@ -19,6 +19,7 @@ from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
 
 logger = logging.getLogger(__name__)
 
+
 class Profile(TypedDict, total=False):
     """ GeoTiff profile definition """
     crs: rio.crs.CRS
@@ -103,7 +104,7 @@ class TransLayerIoHandler:
             Path to file
         """
         if not os.path.exists(h5_file):
-            raise IOError (f'H5 file {h5_file} does not exist')
+            raise IOError(f'H5 file {h5_file} does not exist')
 
         self._h5_file = h5_file
 
@@ -216,7 +217,7 @@ class TransLayerIoHandler:
         if not os.path.exists(full_fname):
             full_fname = os.path.join(self._layer_dir, f_name)
             if not os.path.exists(full_fname):
-                raise IOError( f'Unable to find file {f_name}')
+                raise IOError(f'Unable to find file {f_name}')
 
         with rio.open(full_fname) as ras:
             data: npt.NDArray = ras.read(band)

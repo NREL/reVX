@@ -7,11 +7,14 @@ from typing_extensions import TypedDict, Required
 
 import numpy as np
 import numpy.typing as npt
-from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE, WET_COSTS_TIFF
+from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE, \
+    WET_COSTS_TIFF
 
-from reVX.least_cost_xmission.transmission_layer_io_handler import TransLayerIoHandler
+from reVX.least_cost_xmission.transmission_layer_io_handler import \
+    TransLayerIoHandler
 
 logger = logging.getLogger(__name__)
+
 
 class BinConfig(TypedDict, total=False):
     """
@@ -38,7 +41,7 @@ class WetCostCreator:
         self._io_handler = io_handler
 
     def build_wet_costs(self, bathy_tiff: str, bins: List[BinConfig],
-                        out_filename = WET_COSTS_TIFF):
+                        out_filename: str = WET_COSTS_TIFF):
         """
         Build complete offshore costs. This is currently very simple. In the
         future, costs will also vary with distance to port.

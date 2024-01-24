@@ -19,6 +19,7 @@ MaskArr = npt.NDArray[np.bool_]
 MASK_MSG = \
     'No mask available. Please run create_masks() or load_masks() first.'
 
+
 class Masks:
     """
     Create, load, and store masks to determine land and sea.
@@ -120,7 +121,7 @@ class Masks:
         # XOR landfall and raw land to get all land cells, except landfall
         # cells
         self._dry_mask = np.logical_xor(self.landfall_mask,
-                                         raw_land_mask)
+                                        raw_land_mask)
 
         logger.debug('Created all masks')
 

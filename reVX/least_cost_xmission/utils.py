@@ -18,6 +18,7 @@ VECTOR_CACHE: Dict[str, gpd.GeoDataFrame] = {}
 
 logger = logging.getLogger(__name__)
 
+
 def rasterize(fname: str, profile: Profile,
               buffer_dist: Optional[float] = None,
               all_touched: bool = False,
@@ -101,8 +102,7 @@ def convert_pois_to_lines(poi_csv_f: str, template_f: str, out_f: str):
     out_f
         Path and file name for geopackage
     """
-    logger.debug('Converting POIs in {} to lines in {}'
-                .format(poi_csv_f, out_f))
+    logger.debug('Converting POIs in %s to lines in %s', poi_csv_f, out_f)
     with rio.open(template_f) as ras:
         crs = ras.crs
 

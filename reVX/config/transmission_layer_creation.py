@@ -6,13 +6,14 @@ from typing import Optional, Dict, List, Union
 
 from pydantic import BaseModel, DirectoryPath, FilePath, NewPath
 
-from reVX.least_cost_xmission.friction_barrier_builder import FBLayerConfig
 from reVX.least_cost_xmission.wet_cost_creator import BinConfig
+from reVX.least_cost_xmission.friction_barrier_builder import FBLayerConfig
 
 # Keys are GeoTIFF file paths to use with the FBLayerConfig to use for that
 # GeoTIFF
 FrictionLayers = Dict[str, FBLayerConfig]
 BarrierLayers = Dict[str, FBLayerConfig]
+
 
 class WetCosts(BaseModel):
     """ Config items required to generate wet costs """
@@ -24,7 +25,6 @@ class WetCosts(BaseModel):
 class DryCosts(BaseModel):
     """ Config items required to generate dry costs """
     # TODO
-    pass
 
 
 class CombineCosts(BaseModel):
@@ -57,10 +57,11 @@ class LayerCreationConfig(BaseModel):
 
     # Land mask vector file. Setting this will cause new masks to be generated.
     land_mask_vector_fname: Optional[str] = None
+
     # Optional path for mask GeoTIFFs.
     masks_dir: DirectoryPath = Path('.')
 
-    # Optional processing steps to perform. One of these should be set.
+    # Optional processing steps to perform. One of these should be defined.
     friction_layers: Optional[FrictionLayers] = None
     barrier_layers: Optional[BarrierLayers] = None
     wet_costs: Optional[WetCosts] = None
@@ -71,4 +72,4 @@ class LayerCreationConfig(BaseModel):
     save_tiff: bool = True
 
     # TODO - uncomment this for prod
-    #model_config = ConfigDict(extra='forbid')
+    # model_config = ConfigDict(extra='forbid')
