@@ -3,6 +3,7 @@ Create, load, and store masks to determine land and sea.
 """
 import os
 import logging
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
@@ -173,6 +174,10 @@ class Masks:
             Mask data
         """
         full_fname = os.path.join(self._masks_dir, fname)
+
+        if not Path (full_fname).exists():
+            raise IOError(f'Mask file at {full_fname} not found. Please '
+                          'create masks first.')
 
         raster = self._io_handler.load_tiff(full_fname)
 

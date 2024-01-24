@@ -59,7 +59,7 @@ class LayerCreationConfig(BaseModel):
     land_mask_vector_fname: Optional[str] = None
 
     # Optional path for mask GeoTIFFs.
-    masks_dir: DirectoryPath = Path('.')
+    masks_dir: Union[DirectoryPath, NewPath] = Path('.')
 
     # Optional processing steps to perform. One of these should be defined.
     friction_layers: Optional[FrictionLayers] = None
