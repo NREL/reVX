@@ -2,6 +2,7 @@
 Handle reading and writing H5 files and GeoTiffs
 """
 import os
+import json
 import logging
 from copy import deepcopy
 import numpy as np
@@ -18,6 +19,9 @@ import rex
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
 
 logger = logging.getLogger(__name__)
+
+# Default chunk size for H5 data
+CHUNKS = (1, 128, 128)
 
 
 class Profile(TypedDict, total=False):
@@ -132,13 +136,24 @@ class TransLayerIoHandler:
                 f'template raster (self.shape).'
             )
 
+        # Add a "bands" dimension if missing
+        if data.ndim < 3:
+            data = np.expand_dims(data, 0)
+
         with h5py.File(self._h5_file, 'a') as f:
             if name in f.keys():
                 dset = f[name]
                 dset[...] = data
             else:
-                f.create_dataset(name, data=data)
-            # TODO - write attributes
+                f.create_dataset(name, data=data, chunks=CHUNKS)
+
+            # Save profile to attrs
+            profile = self.profile
+            profile['crs'] = profile['crs'].to_proj4()
+            t = profile['transform']
+            profile['transform'] = [t.a, t.b, t.c, t.d, t.e, t.f]
+            profile['dtype'] = str(data.dtype)
+            f[name].attrs['profile'] = json.dumps(profile)
 
     def load_h5_layer(self, layer_name: str, h5_file: Optional[str] = None
                       ) -> npt.NDArray:

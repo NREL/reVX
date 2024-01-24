@@ -67,7 +67,9 @@ class CostCombiner:
             return costs
 
         # Dry costs have a different shape. Attempt to reproject
-        logger.debug('Dry costs have an unexpected shape. Reprojecting.')
+        logger.debug(
+            'Dry costs shape does not match template raster. Reprojecting.'
+        )
         attrs = self._io_handler.load_h5_attrs(layer_name, h5_fpath)
         json_profile = attrs['profile']
         profile = json.loads(json_profile)
@@ -77,6 +79,7 @@ class CostCombiner:
 
     def combine_costs(self, wet_costs: npt.NDArray,
                       dry_costs: npt.NDArray, landfall_cost: float,
+                      layer_name: str = COMBINED_COSTS_H5_LAYER,
                       save_tiff: bool = True):
         """
         Combine wet, dry, and landfall costs using appropriate masks
@@ -88,8 +91,10 @@ class CostCombiner:
         dry_costs
             Dry costs array
         landfall_cost
-            Cost to apply to landfall cells for account for conversion from
-            underwater cables to land based transmission.
+            Cost to apply to landfall cells for conversion from underwater
+            cables to land based transmission.
+        layer_name, optional
+            Layer name for combined costs in H5
         save_tiff, optional
             Save combined costs to GeoTIFF if True, by default True
         """
@@ -123,4 +128,4 @@ class CostCombiner:
             )
 
         logger.debug('Writing combined costs to H5')
-        self._io_handler.write_to_h5(combined, COMBINED_COSTS_H5_LAYER)
+        self._io_handler.write_to_h5(combined, layer_name)

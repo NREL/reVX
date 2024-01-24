@@ -12,6 +12,7 @@ from shapely.geometry import Point, LineString
 import rasterio as rio
 from rasterio import features
 
+from .config.constants import DEFAULT_DTYPE
 from .transmission_layer_io_handler import Profile
 
 VECTOR_CACHE: Dict[str, gpd.GeoDataFrame] = {}
@@ -25,7 +26,7 @@ def rasterize(fname: str, profile: Profile,
               reproject_vector: bool = True,
               burn_value: Union[int, float] = 1,
               boundary_only: bool = False,
-              dtype: npt.DTypeLike = 'float32'
+              dtype: npt.DTypeLike = DEFAULT_DTYPE,
               ) -> npt.NDArray:
     """
     Rasterize a vector layer.
