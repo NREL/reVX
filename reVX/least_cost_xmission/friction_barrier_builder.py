@@ -3,8 +3,7 @@ Build friction or barrier layers from raster and vector data.
 """
 import logging
 from pathlib import Path
-from functools import reduce
-from typing import Literal, Dict, Tuple, List
+from typing import Literal, Dict, Tuple
 from typing_extensions import TypedDict, Required
 
 import numpy as np
@@ -22,6 +21,7 @@ logger = logging.getLogger(__name__)
 # Terms for specifying masks. 'wet+' and 'dry+' indicated 'wet' + 'landfall'
 # and 'dry' + 'landfall', respectively.
 Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
+ALL = 'all'
 
 
 class Rasterize(TypedDict, total=False):
@@ -96,22 +96,21 @@ class FrictionBarrierBuilder:
             Dict of FBLayerConfigs keyed by GeoTIFF/vector filenames.
         """
         logger.debug(f'Combining {self._type} layers')
-        layer_arrays: List[npt.NDArray] = []
+        result = np.zeros(self._io_handler.shape, dtype=DEFAULT_DTYPE)
 
         for fname, config in layers.items():
             logger.debug(f'Processing {fname} with config {config}')
             if Path(fname).suffix.lower() in ['.tif', '.tiff']:
                 data = self._io_handler.load_tiff(fname)
-                result = self._process_layer(data, config)
-                layer_arrays.append(result)
+                temp = self._process_layer(data, config)
+                result += temp
             elif Path(fname).suffix.lower() in ['.shp', '.gpkg']:
-                result = self._process_vector_layer(fname, config)
-                layer_arrays.append(result)
+                temp = self._process_vector_layer(fname, config)
+                result += temp
             else:
                 raise ValueError(f'Unsupported file extension on {fname}')
 
         # TODO - allow forced_inclusions
-        result = reduce(lambda a, b: a + b, layer_arrays)
 
         if save_tiff:
             fname = BARRIER_TIFF if self._type == 'barrier' else \
@@ -143,8 +142,6 @@ class FrictionBarrierBuilder:
             Transformed data.
         """
         self.__check_tiff_layer_config(config)
-        mask = self.__get_mask(config['extent'])
-        processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
 
         # Assign all cells in a range to a value
         if 'range' in config:
@@ -152,16 +149,28 @@ class FrictionBarrierBuilder:
             temp = np.where(
                 np.logical_and(data >= min, data < max), config['value'], 0
             )
+
+            if config['extent'] == ALL:
+                return temp
+
+            mask = self.__get_mask(config['extent'])
+            processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
             processed[mask] = temp[mask]
+            return processed
 
         # Assign cells values based on map
         if 'map' in config:
             temp = np.zeros(self._io_handler.shape, dtype=self._dtype)
             for key, val in config['map'].items():
                 temp[data == key] = val
-            processed[mask] = temp[mask]
 
-        return processed
+            if config['extent'] == ALL:
+                return temp
+
+            mask = self.__get_mask(config['extent'])
+            processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
+            processed[mask] = temp[mask]
+            return processed
 
     def _process_vector_layer(self, fname: str, config: FBLayerConfig
                               ) -> npt.NDArray:
@@ -185,9 +194,6 @@ class FrictionBarrierBuilder:
                 f'"rasterize": {config}'
             )
 
-        mask = self.__get_mask(config['extent'])
-        processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
-
         r_config = config['rasterize']
         buffer = r_config['buffer'] if 'buffer' in r_config else None
         reproject = r_config['reproject'] if 'reproject' in r_config else True
@@ -195,6 +201,12 @@ class FrictionBarrierBuilder:
         temp = rasterize(fname, self._io_handler.profile,
                          buffer_dist=buffer, burn_value=r_config['value'],
                          dtype=self._dtype, reproject_vector=reproject)
+
+        if config['extent'] == ALL:
+            return temp
+
+        mask = self.__get_mask(config['extent'])
+        processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
         processed[mask] = temp[mask]
         return processed
 
@@ -205,12 +217,17 @@ class FrictionBarrierBuilder:
         Parameters
         ----------
         extent
-            Extent of desired mask
+            Extent of desired mask, 'all' is not allowed.
 
         Returns
         -------
             Mask array
         """
+        if extent == ALL:
+            raise AttributeError(
+                f'Mask for extent of {extent} is unnecessary'
+            )
+
         if extent == 'wet':
             mask = self._masks.wet_mask
         elif extent == 'wet+':
@@ -222,7 +239,8 @@ class FrictionBarrierBuilder:
         elif extent == 'landfall':
             mask = self._masks.landfall_mask
         else:
-            mask = np.full(self._io_handler.shape, True, dtype=bool)
+            raise AttributeError(f'Unknown mask type: {extent}')
+
         return mask
 
     @staticmethod
