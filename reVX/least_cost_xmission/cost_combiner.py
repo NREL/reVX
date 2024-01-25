@@ -25,23 +25,23 @@ class CostCombiner:
         self._io_handler = io_handler
         self._masks = masks
 
-    def load_wet_costs(self, f_name: str = WET_COSTS_TIFF) -> npt.NDArray:
+    def load_wet_costs(self, fname: str = WET_COSTS_TIFF) -> npt.NDArray:
         """
         Load wet costs from file
 
         Parameters
         ----------
-        f_name, optional
+        fname, optional
             Filename for wet costs GeoTIFF, by default WET_COSTS_TIFF
 
         Returns
         -------
             Wet costs array
         """
-        if not Path(f_name).exists():
-            raise IOError(f'Wet costs GeoTIFF {f_name} does not exist')
-        logger.debug(f'Loading wet costs from {f_name}')
-        return self._io_handler.load_tiff(f_name)
+        if not Path(fname).exists():
+            raise IOError(f'Wet costs GeoTIFF {fname} does not exist')
+        logger.debug(f'Loading wet costs from {fname}')
+        return self._io_handler.load_tiff(fname)
 
     def load_legacy_dry_costs(self, h5_fpath, layer_name) -> npt.NDArray:
         """

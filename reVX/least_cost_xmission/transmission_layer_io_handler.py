@@ -203,14 +203,14 @@ class TransLayerIoHandler:
 
         return attrs
 
-    def load_tiff(self, f_name: str, band: int = 1,
+    def load_tiff(self, fname: str, band: int = 1,
                   reproject=False) -> npt.NDArray:
         """
         Load GeoTIFF
 
         Parameters
         ----------
-        f_name
+        fname
             Filename of GeoTIFF to load
         band, optional
             Band to load from GeoTIFF, by default 1
@@ -222,42 +222,47 @@ class TransLayerIoHandler:
         -------
             Raster data
         """
-        if reproject:
-            # TODO - allow reprojecting raster when loading
-            raise NotImplementedError(
-                'Reprojecting rasters on load is not yet supported'
-            )
-
-        full_fname = f_name
+        full_fname = fname
         if not os.path.exists(full_fname):
-            full_fname = os.path.join(self._layer_dir, f_name)
+            full_fname = os.path.join(self._layer_dir, fname)
             if not os.path.exists(full_fname):
-                raise IOError(f'Unable to find file {f_name}')
+                raise IOError(f'Unable to find file {fname}')
 
         with rio.open(full_fname) as ras:
             data: npt.NDArray = ras.read(band)
             transform = ras.transform
             crs = ras.crs
 
-        if data.shape != self.shape:
-            raise ValueError(
-                f'Shape of {full_fname} ({data.shape}) does not match '
-                f'template raster shape ({self.shape}).'
+        if not reproject:
+            if data.shape != self.shape:
+                raise ValueError(
+                    f'Shape of {full_fname} ({data.shape}) does not match '
+                    f'template raster shape ({self.shape}).'
+                )
+            if transform != self.profile['transform']:
+                raise ValueError(
+                    f'Transform of {full_fname}:\n{transform}\ndoes not match '
+                    f'template raster shape:\n{self.profile["transform"]}'
+                )
+            if crs != self.profile['crs']:
+                raise ValueError(
+                    f'CRS of {full_fname}:\n{crs}\ndoes not match '
+                    f'template raster shape:\n{self.profile["crs"]}'
+                )
+
+        if (data.shape != self.shape) or \
+           (transform != self.profile['transform']) or \
+           (crs != self.profile['crs']):
+            logger.debug(
+                f'Profile of {fname} does not match template, reprojecting'
             )
-        if transform != self.profile['transform']:
-            raise ValueError(
-                f'Transform of {full_fname}:\n{transform}\ndoes not match '
-                f'template raster shape:\n{self.profile["transform"]}'
-            )
-        if crs != self.profile['crs']:
-            raise ValueError(
-                f'CRS of {full_fname}:\n{crs}\ndoes not match '
-                f'template raster shape:\n{self.profile["crs"]}'
-            )
+            src_profile = self._extract_profile(full_fname)
+            data = self.reproject(data, src_profile, dtype=data.dtype,
+                                  init_dest=0)
 
         return data
 
-    def save_tiff(self, data: npt.NDArray, f_name: str):
+    def save_tiff(self, data: npt.NDArray, fname: str):
         """
         Save data to a GeoTIFF
 
@@ -265,7 +270,7 @@ class TransLayerIoHandler:
         ----------
             data : np.array
                 Data to save
-            f_name : str
+            fname : str
                 File name to save
         """
         dtype: npt.DTypeLike = data.dtype
@@ -275,10 +280,10 @@ class TransLayerIoHandler:
         profile = self.profile
         profile['dtype'] = dtype
 
-        with rio.open(f_name, 'w', **profile) as out_f:
+        with rio.open(fname, 'w', **profile) as out_f:
             out_f.write(data, indexes=1)
 
-    def reproject(self, src_raster: npt.NDArray, src_profile: dict,
+    def reproject(self, src_raster: npt.NDArray, src_profile: Profile,
                   dtype: npt.DTypeLike = DEFAULT_DTYPE, init_dest: float = -1):
         """
         Reproject a raster into the template raster projection and transform.

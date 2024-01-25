@@ -101,7 +101,7 @@ class FrictionBarrierBuilder:
         for fname, config in layers.items():
             logger.debug(f'Processing {fname} with config {config}')
             if Path(fname).suffix.lower() in ['.tif', '.tiff']:
-                data = self._io_handler.load_tiff(fname)
+                data = self._io_handler.load_tiff(fname, reproject=True)
                 temp = self._process_layer(data, config)
                 result += temp
             elif Path(fname).suffix.lower() in ['.shp', '.gpkg']:

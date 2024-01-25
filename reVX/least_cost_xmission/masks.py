@@ -175,7 +175,7 @@ class Masks:
         """
         full_fname = os.path.join(self._masks_dir, fname)
 
-        if not Path (full_fname).exists():
+        if not Path(full_fname).exists():
             raise IOError(f'Mask file at {full_fname} not found. Please '
                           'create masks first.')
 
