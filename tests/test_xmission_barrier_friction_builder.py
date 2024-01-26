@@ -6,10 +6,12 @@ import os
 import pytest
 
 import numpy as np
-from reVX.least_cost_xmission.friction_barrier_builder import FrictionBarrierBuilder
 
-from reVX.least_cost_xmission.masks import Masks
-from reVX.least_cost_xmission.transmission_layer_io_handler import TransLayerIoHandler
+from reVX.least_cost_xmission.layers.masks import Masks
+from reVX.least_cost_xmission.layers.friction_barrier_builder import \
+    FrictionBarrierBuilder
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+    TransLayerIoHandler
 
 # Fake masks. Left side of array is wet, right side is dry, center column in
 # landfall
@@ -26,9 +28,12 @@ masks._landfall_mask = np.array([[False, True, False],
                                  [False, True, False],
                                  [False, True, False]])
 
+
 class FakeIoHandler:
+    """ Fake IO Handler for testing """
     def __init__(self, shape):
         self.shape = shape
+
 
 io_handler: TransLayerIoHandler = FakeIoHandler((3, 3))
 builder = FrictionBarrierBuilder('friction', io_handler, masks)
@@ -37,17 +42,15 @@ builder = FrictionBarrierBuilder('friction', io_handler, masks)
 def test_mask_plus():
     """ Test function of wet_plus and dry_plus masks """
     assert (
-        masks.dry_plus_mask ==
-        np.array([[False, True, True],
-                  [False, True, True],
-                  [False, True, True]])
+        masks.dry_plus_mask == np.array([[False, True, True],
+                                         [False, True, True],
+                                         [False, True, True]])
     ).all()
 
     assert (
-        masks.wet_plus_mask ==
-        np.array([[True, True, False],
-                  [True, True, False],
-                  [True, True, False]])
+        masks.wet_plus_mask == np.array([[True, True, False],
+                                         [True, True, False],
+                                         [True, True, False]])
     ).all()
 
 
@@ -158,6 +161,7 @@ def test_map():
     assert (result == np.array([[0, 5, 0],
                                 [0, 0, 0],
                                 [0, 9, 0]])).all()
+
 
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.

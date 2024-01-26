@@ -3,9 +3,9 @@
 Tie Line Costs tests
 """
 import logging
+from matplotlib import colors
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
-import matplotlib.colors as colors
 import numpy as np
 import os
 import pytest

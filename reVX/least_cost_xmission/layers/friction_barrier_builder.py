@@ -9,12 +9,13 @@ from typing_extensions import TypedDict, Required
 import numpy as np
 import numpy.typing as npt
 
-from .utils import rasterize
-from .masks import MaskArr, Masks
-from .config.constants import DEFAULT_DTYPE
-from .transmission_layer_io_handler import TransLayerIoHandler
-from .config.constants import BARRIER_H5_LAYER_NAME, BARRIER_TIFF, \
-    FRICTION_H5_LAYER_NAME, FRICTION_TIFF
+from reVX.least_cost_xmission.layers.utils import rasterize
+from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
+from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+    TransLayerIoHandler
+from reVX.least_cost_xmission.config.constants import BARRIER_H5_LAYER_NAME, \
+    BARRIER_TIFF, FRICTION_H5_LAYER_NAME, FRICTION_TIFF
 
 logger = logging.getLogger(__name__)
 
@@ -23,12 +24,13 @@ logger = logging.getLogger(__name__)
 Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
 ALL = 'all'
 
+
 class Range(TypedDict, total=True):
     """
     Define a range of values in a raster to assign as a friction or barrrier.
-    First value of min_max is lowest value of range (inclusive), second value of
-    min_max is highest value in range (exclusive). `value` is the value used as
-    friction barrier for any cells in the raster that fall within the range.
+    First value of min_max is lowest value of range (inclusive), second value
+    of min_max is highest value in range (exclusive). `value` is the value used
+    as friction barrier for any cells in the raster that fall within the range.
     """
     min_max: Tuple[float, float]
     value: float

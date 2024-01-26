@@ -13,7 +13,8 @@ import rasterio as rio
 from rasterio import features
 
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
-from reVX.least_cost_xmission.transmission_layer_io_handler import Profile
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+    Profile
 
 VECTOR_CACHE: Dict[str, gpd.GeoDataFrame] = {}
 

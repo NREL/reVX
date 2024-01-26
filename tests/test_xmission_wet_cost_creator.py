@@ -6,7 +6,7 @@ import pytest
 
 import numpy as np
 
-from reVX.least_cost_xmission.wet_cost_creator import WetCostCreator
+from reVX.least_cost_xmission.costs.wet_cost_creator import WetCostCreator
 
 
 def test_bin_config_sanity_checking():
@@ -17,8 +17,7 @@ def test_bin_config_sanity_checking():
 
     missing_min_max_config = [{'cost': 1}]
     with pytest.raises(AttributeError) as _:
-        WetCostCreator._assign_values_by_bins(input,
-                                                   missing_min_max_config)
+        WetCostCreator._assign_values_by_bins(input, missing_min_max_config)
 
     reverse_bins_config = [{'min': 10, 'max': 0, 'cost': 1}]
     with pytest.raises(AttributeError) as _:

@@ -6,8 +6,9 @@ from typing import Optional, Dict, List, Union
 
 from pydantic import BaseModel, DirectoryPath, FilePath, NewPath
 
-from reVX.least_cost_xmission.wet_cost_creator import BinConfig
-from reVX.least_cost_xmission.friction_barrier_builder import FBLayerConfig
+from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
+from reVX.least_cost_xmission.layers.friction_barrier_builder import \
+    FBLayerConfig
 
 # Keys are GeoTIFF file paths to use with the FBLayerConfig to use for that
 # GeoTIFF

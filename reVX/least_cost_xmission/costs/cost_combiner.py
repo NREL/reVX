@@ -8,10 +8,10 @@ from pathlib import Path
 import numpy as np
 import numpy.typing as npt
 
-from reVX.least_cost_xmission.masks import Masks
+from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.config.constants import \
     COMBINED_COSTS_H5_LAYER, COMBINED_COSTS_TIFF, DEFAULT_DTYPE, WET_COSTS_TIFF
-from reVX.least_cost_xmission.transmission_layer_io_handler import \
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
     TransLayerIoHandler
 
 logger = logging.getLogger(__name__)

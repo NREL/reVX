@@ -12,9 +12,9 @@ from rex.utilities.cli_dtypes import STR
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, safe_json_load
 
-from reVX.config.least_cost_xmission import DryCostCreatorConfig
-from reVX.least_cost_xmission.cost_creator import XmissionCostCreator
 from reVX import __version__
+from reVX.config.least_cost_xmission import DryCostCreatorConfig
+from reVX.least_cost_xmission.costs.dry_cost_creator import XmissionCostCreator
 
 logger = logging.getLogger(__name__)
 

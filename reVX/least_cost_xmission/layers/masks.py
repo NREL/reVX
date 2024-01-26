@@ -9,8 +9,9 @@ from typing import Optional
 import numpy as np
 import numpy.typing as npt
 
-from .utils import rasterize
-from .transmission_layer_io_handler import TransLayerIoHandler
+from reVX.least_cost_xmission.layers.utils import rasterize
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+    TransLayerIoHandler
 
 logger = logging.getLogger(__name__)
 
