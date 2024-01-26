@@ -7,9 +7,22 @@ transmission line closest to the SC point.
 
 ## Files
 ### Python command-line interface (CLI) files
-* [`cost_creator_cli.py`](cost_creator_cli.py) - Compute transmission cost raster and save as hdf5. This includes creating slope and land use cost multipliers from source data and adding base transmission line construction costs. Final cost raster consists of line construction costs with all multipliers by ISO.
-* [`least_cost_paths_cli.py`](least_cost_paths_cli.py) - Calculate least cost paths between a set of points.
-* [`least_cost_xmission_cli.py`](least_cost_xmission_cli.py) - Calculate least cost transmission paths and connection costs.
+* [`transmission_layer_creator_cli.py`](transmission_layer_creator_cli.py) -
+Create all layers for a transmission routing analysis: barriers, friction, and
+wet costs. Dry costs must currently be created with `dry_cost_creator_cli.py`.
+If `reVX` has been installed with `pip`, the CLI command alias
+`transmission-layer-creator` is available for this file. Usage is discussed
+below.
+* [`dry_cost_creator_cli.py`](dry_cost_creator_cli.py) - Compute land-based
+transmission cost raster and save as HDF5. This includes creating slope and land
+use cost multipliers from source data and adding base transmission line
+construction costs. Final cost raster consists of line construction costs with
+all multipliers by ISO. CLI alias: `dry-cost-creator`
+* [`least_cost_paths_cli.py`](least_cost_paths_cli.py) - Calculate least cost
+paths between a set of points. CLI alias: `least-cost-paths`
+* [`least_cost_xmission_cli.py`](least_cost_xmission_cli.py) - Calculate least
+ cost transmission paths and connection costs. CLI alias: `least-cost-xmission`
+
 
 ### Other notable Python files
 * [`trans_cap_costs.py`](trans_cap_costs.py) - Determine paths and costs for a single SC point
@@ -17,9 +30,17 @@ transmission line closest to the SC point.
 	* `TransCapCosts` - Determine total transmission cost including line cost and any substation construction or improvements.
 * [`least_cost_xmission.py`](least_cost_xmission.py) - Calculate costs from SC points to transmission features. By default, all SC points are used or a subset may be specified by GID.
 * [`least_cost_paths.py`](least_cost_paths.py) - Parent class for `least_cost_xmission.py`.
-* [`offshore_utilities.py`](offshore_utilities.py) - Utility functions and classes for preparing friction, barrier, and transmission features for offshore analyses. Example Jupyter notebooks for these functions can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
+
+Example Jupyter notebooks for can be found in the
+[`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of
+this repository.
 
 <br>
+
+# Layer Creation
+Calculating transmission routing paths requires a series of layers.
+
+
 
 # CONUS (Onshore) Examples
 ## Costs
@@ -40,7 +61,7 @@ The below file can be used as a template to compute the costs to be used in a Le
   "log_level": "INFO"
 }
 ```
-See [`cost_creator_cli.local`](cost_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
+See [`dry_cost_creator_cli.local`](dry_cost_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
 ```
 ISO_regions              Dataset {1, 33792, 48640}
 latitude                 Dataset {33792, 48640}
@@ -55,8 +76,6 @@ tie_line_multipliers     Dataset {1, 33792, 48640}
 transmission_barrier     Dataset {1, 33792, 48640}
 usa_mrlc_nlcd2011        Dataset {1, 33792, 48640}
 ```
-
-<br>
 
 
 ### Find CONUS least cost paths on a local eagle node
