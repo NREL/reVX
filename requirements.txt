@@ -7,6 +7,7 @@ NREL-gaps>=0.3.3
 NREL-reV>=0.8.0
 NREL-rex>=0.2.80
 psycopg2-binary>=2.8
+pydantic>=2.5.3
 pyproj>=3.0.1
 pywavelets>=1.0
 rasterio>=1.2.10

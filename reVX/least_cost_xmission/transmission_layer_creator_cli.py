@@ -15,12 +15,14 @@ from rex.utilities.loggers import init_mult
 from reVX import __version__
 from reVX.config.transmission_layer_creation import LayerCreationConfig
 
-from .masks import Masks
-from .cost_combiner import CostCombiner
-from .wet_cost_creator import WetCostCreator
-from .friction_barrier_builder import FrictionBarrierBuilder
-from .transmission_layer_io_handler import TransLayerIoHandler
-from .utils import convert_pois_to_lines
+from reVX.least_cost_xmission.masks import Masks
+from reVX.least_cost_xmission.cost_combiner import CostCombiner
+from reVX.least_cost_xmission.wet_cost_creator import WetCostCreator
+from reVX.least_cost_xmission.friction_barrier_builder import \
+    FrictionBarrierBuilder
+from reVX.least_cost_xmission.transmission_layer_io_handler import \
+    TransLayerIoHandler
+from reVX.least_cost_xmission.utils import convert_pois_to_lines
 
 logger = logging.getLogger(__name__)
 
