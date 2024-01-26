@@ -3,7 +3,7 @@ Build friction or barrier layers from raster and vector data.
 """
 import logging
 from pathlib import Path
-from typing import Literal, Dict, Tuple
+from typing import Literal, Dict, Tuple, List
 from typing_extensions import TypedDict, Required
 
 import numpy as np
@@ -23,6 +23,16 @@ logger = logging.getLogger(__name__)
 Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
 ALL = 'all'
 
+class Range(TypedDict, total=True):
+    """
+    Define a range of values in a raster to assign as a friction or barrrier.
+    First value of min_max is lowest value of range (inclusive), second value of
+    min_max is highest value in range (exclusive). `value` is the value used as
+    friction barrier for any cells in the raster that fall within the range.
+    """
+    min_max: Tuple[float, float]
+    value: float
+
 
 class Rasterize(TypedDict, total=False):
     """
@@ -36,21 +46,18 @@ class Rasterize(TypedDict, total=False):
 class FBLayerConfig(TypedDict, total=False):
     """
     Friction and barrier layers config dict. 'extent' is mandatory. 'map',
-    'range', and 'rasterize' are exclusive, but one must be specified. 'value'
-    must be specified if 'range' is used. Example configs can be seen in
-    test_xmission_barrier_friction_builder.py in the tests directory.
+    'range', and 'rasterize' are exclusive, but one must be specified.  Example
+    configs can be seen in test_xmission_barrier_friction_builder.py in the
+    tests directory.
     """
     extent: Required[Extents]  # extent to apply map or range to
 
     # Dict of values in raster (keys) and values to use for barrier/friction
     map: Dict[float, float]
 
-    # Range of raster values to apply to barrier/friction. For value is minimum
-    # value of range (inclusive). Second value is maximum value of range
-    # (exclusive).
-    range: Tuple[float, float]
-    # Value to assign for barrier/friction for raster values within 'range'.
-    value: float
+    # One or more ranges of raster values to apply to barrier/friction. The
+    # value of overlapping ranges are added together.
+    range: List[Range]
 
     # Rasterize a vector and use as a friction or barrier layer
     rasterize: Rasterize
@@ -102,7 +109,7 @@ class FrictionBarrierBuilder:
             logger.debug(f'Processing {fname} with config {config}')
             if Path(fname).suffix.lower() in ['.tif', '.tiff']:
                 data = self._io_handler.load_tiff(fname, reproject=True)
-                temp = self._process_layer(data, config)
+                temp = self._process_raster_layer(data, config)
                 result += temp
             elif Path(fname).suffix.lower() in ['.shp', '.gpkg']:
                 temp = self._process_vector_layer(fname, config)
@@ -123,8 +130,8 @@ class FrictionBarrierBuilder:
         logger.debug(f'Writing combined {self._type} layers to H5')
         self._io_handler.write_to_h5(result, h5_layer_name)
 
-    def _process_layer(self, data: npt.NDArray, config: FBLayerConfig
-                       ) -> npt.NDArray:
+    def _process_raster_layer(self, data: npt.NDArray, config: FBLayerConfig
+                              ) -> npt.NDArray:
         """
         Process array using FBLayerConfig to create the desired layer. Desired
         "range" or "map" operation is only applied to the area indicated
@@ -143,19 +150,25 @@ class FrictionBarrierBuilder:
         """
         self.__check_tiff_layer_config(config)
 
-        # Assign all cells in a range to a value
+        # Assign all cells one or more ranges to a value
         if 'range' in config:
-            min, max = config['range']
-            temp = np.where(
-                np.logical_and(data >= min, data < max), config['value'], 0
-            )
-
-            if config['extent'] == ALL:
-                return temp
-
-            mask = self.__get_mask(config['extent'])
             processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
-            processed[mask] = temp[mask]
+            if config['extent'] != 'all':
+                mask = self.__get_mask(config['extent'])
+
+            for range in config['range']:
+                min, max = range['min_max']
+                value = range['value']
+                temp = np.where(
+                    np.logical_and(data >= min, data < max), value, 0
+                )
+
+                if config['extent'] == ALL:
+                    processed += temp
+                    continue
+
+                processed[mask] += temp[mask]
+
             return processed
 
         # Assign cells values based on map
@@ -273,16 +286,4 @@ class FrictionBarrierBuilder:
             raise ValueError(
                 'Either "map" or "range" must be specified, but '
                 f'neither were found in config {config}'
-            )
-
-        if 'range' in config and 'value' not in config:
-            raise ValueError(
-                '"value" must be specified if "range" is defined, but is '
-                f'missing in config {config}'
-            )
-
-        if 'range' not in config and 'value' in config:
-            raise ValueError(
-                '"value" is specified but "range" is missing '
-                f'in config {config}'
             )
