@@ -1,7 +1,9 @@
 # Least Cost Transmission Paths
-Determine least cost transmission paths from possible wind and solar farms (supply curve (SC) points) to the electrical grid. Available components of the electrical grid are substations, transmission lines, load centers and infinite sinks. The code only attempts to connect to a point on the transmission line closest to the SC point. This was initially used for land-based analyses, but has been modified for offshore transmission as well.
-
-<br>
+Determine least cost transmission paths from land-based and offshore wind and
+solar farms (supply curve (SC) points) to the electrical grid. Available
+components of the electrical grid are substations, transmission lines, load
+centers and infinite sinks. The code only attempts to connect to a point on the
+transmission line closest to the SC point.
 
 ## Files
 ### Python command-line interface (CLI) files
