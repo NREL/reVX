@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 CONFIG_ACTIONS = [
     'friction_layers', 'barrier_layers', 'wet_costs', 'dry_costs',
-    'combine_costs'
+    'combine_costs', 'merge_friction_and_barriers',
 ]
 
 
