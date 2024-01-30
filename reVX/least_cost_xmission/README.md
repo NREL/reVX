@@ -1,27 +1,12 @@
 # Least Cost Transmission Paths
-Determine least cost transmission paths from land-based and offshore wind and
-solar farms (supply curve (SC) points) to the electrical grid. Available
-components of the electrical grid are substations, transmission lines, load
-centers and infinite sinks. The code only attempts to connect to a point on the
-transmission line closest to the SC point.
+Determine least cost transmission paths from land-based and offshore wind and solar farms (supply curve (SC) points) to the electrical grid. Available components of the electrical grid are substations, transmission lines, load centers and infinite sinks. The code only attempts to connect to a point on the transmission line closest to the SC point.
 
 ## Files
 ### Python command-line interface (CLI) files
-* [`transmission_layer_creator_cli.py`](transmission_layer_creator_cli.py) -
-Create all layers for a transmission routing analysis: barriers, friction, and
-wet costs. Dry costs must currently be created with `dry_cost_creator_cli.py`.
-If `reVX` has been installed with `pip`, the CLI command alias
-`transmission-layer-creator` is available for this file. Usage is discussed
-below.
-* [`dry_cost_creator_cli.py`](dry_cost_creator_cli.py) - Compute land-based
-transmission cost raster and save as HDF5. This includes creating slope and land
-use cost multipliers from source data and adding base transmission line
-construction costs. Final cost raster consists of line construction costs with
-all multipliers by ISO. CLI alias: `dry-cost-creator`
-* [`least_cost_paths_cli.py`](least_cost_paths_cli.py) - Calculate least cost
-paths between a set of points. CLI alias: `least-cost-paths`
-* [`least_cost_xmission_cli.py`](least_cost_xmission_cli.py) - Calculate least
- cost transmission paths and connection costs. CLI alias: `least-cost-xmission`
+* [`transmission_layer_creator_cli.py`](transmission_layer_creator_cli.py) - Create all layers for a transmission routing analysis: barriers, friction, and wet costs. Dry costs must currently be created with `dry_cost_creator_cli.py`.  If `reVX` has been installed with `pip`, the CLI command alias `transmission-layer-creator` is available for this file. Usage is discussed below.
+* [`dry_cost_creator_cli.py`](dry_cost_creator_cli.py) - Compute land-based transmission cost raster and save as HDF5. This includes creating slope and land use cost multipliers from source data and adding base transmission line construction costs. Final cost raster consists of line construction costs with all multipliers by ISO. CLI alias: `dry-cost-creator`
+* [`least_cost_paths_cli.py`](least_cost_paths_cli.py) - Calculate least cost paths between a set of points. CLI alias: `least-cost-paths`
+* [`least_cost_xmission_cli.py`](least_cost_xmission_cli.py) - Calculate least cost transmission paths and connection costs. CLI alias: `least-cost-xmission`
 
 
 ### Other notable Python files
@@ -31,16 +16,20 @@ paths between a set of points. CLI alias: `least-cost-paths`
 * [`least_cost_xmission.py`](least_cost_xmission.py) - Calculate costs from SC points to transmission features. By default, all SC points are used or a subset may be specified by GID.
 * [`least_cost_paths.py`](least_cost_paths.py) - Parent class for `least_cost_xmission.py`.
 
-Example Jupyter notebooks for can be found in the
-[`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of
-this repository.
-
-<br>
+Example Jupyter notebooks for can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
 
 # Layer Creation
-Calculating transmission routing paths requires a series of layers.
+Calculating transmission routing paths requires a series of layers. The *costs* layer is mandatory. The *friction* and *barriers* layers are optional. The *costs* layer is the most important of the three.
 
+* *Costs* - The cost of building a transmission line including ROW and any factors such as slope, land use, and water depth though a single grid cell (typically 90 meters.) The routing algorithm scales costs for any transmission crossing at a diagonal. Costs for land-based transmission and undersea cables are calculated separately and combined. Note that landfall costs are included in the costs layer as a final step.
+* *Friction* - Friction indicates areas that transmission should avoid if at all possible. Paths that must cross a friction area will take the shortest possible path. Friction does not affect the cost of a line that runs across it, it merely discourages a path from crossing a friction area, possibly taking a longer and more expensive path.
+* *Barriers* - Barriers are effectively a much stronger deterrent for transmission than friction. Routing will preferentially take a more expensive, and higher friction route before crossing a barrier area. Barriers do not affect the cost of lines that are forced to cross them.
 
+Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator`](transmission_layer_creator_cli.py) command line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `LayerCreationConfig` class of [`transmission_layer_creation.py`](../config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options.
+
+TODO - describe action keys
+
+TODO - examples
 
 # CONUS (Onshore) Examples
 ## Costs
