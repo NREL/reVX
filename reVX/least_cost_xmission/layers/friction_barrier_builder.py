@@ -11,11 +11,10 @@ import numpy.typing as npt
 
 from reVX.least_cost_xmission.layers.utils import rasterize
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
-from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
+from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE, \
+    RAW_BARRIER_TIFF, FRICTION_TIFF
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
     TransLayerIoHandler
-from reVX.least_cost_xmission.config.constants import BARRIER_H5_LAYER_NAME, \
-    BARRIER_TIFF, FRICTION_H5_LAYER_NAME, FRICTION_TIFF
 
 logger = logging.getLogger(__name__)
 
@@ -94,10 +93,10 @@ class FrictionBarrierBuilder:
         self._masks = masks
         self._dtype = dtype
 
-    def build_layer(self, layers: Dict[str, FBLayerConfig], save_tiff=True):
+    def build_layer(self, layers: Dict[str, FBLayerConfig]):
         """
         Combine multiple GeoTIFFs and vectors to create a friction or barrier
-        layer, save to H5, and (optionally) as a GeoTIFF.
+        layer and save to GeoTIFF.
 
         Parameters
         ----------
@@ -121,23 +120,17 @@ class FrictionBarrierBuilder:
 
         # TODO - allow forced_inclusions
 
-        if save_tiff:
-            fname = BARRIER_TIFF if self._type == 'barrier' else \
-                FRICTION_TIFF
-            logger.debug(f'Writing combined {self._type} layers to {fname}')
-            self._io_handler.save_tiff(result, fname)
+        fname = RAW_BARRIER_TIFF if self._type == 'barrier' else \
+            FRICTION_TIFF
+        logger.debug(f'Writing combined {self._type} layers to {fname}')
+        self._io_handler.save_tiff(result, fname)
 
-        h5_layer_name = BARRIER_H5_LAYER_NAME if self._type == 'barrier' else \
-            FRICTION_H5_LAYER_NAME
-        logger.debug(f'Writing combined {self._type} layers to H5')
-        self._io_handler.write_to_h5(result, h5_layer_name)
-
-    def _process_raster_layer(self, data: npt.NDArray, config: FBLayerConfig
-                              ) -> npt.NDArray:
+    def _process_raster_layer(self, data: npt.NDArray,  # type: ignore[return]
+                              config: FBLayerConfig) -> npt.NDArray:
         """
         Process array using FBLayerConfig to create the desired layer. Desired
-        "range" or "map" operation is only applied to the area indicated
-        by the "extent".
+        "range" or "map" operation is only applied to the area indicated by the
+        "extent".
 
         Parameters
         ----------

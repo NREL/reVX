@@ -28,6 +28,15 @@ class DryCosts(BaseModel):
     # TODO
 
 
+class MergeFrictionBarriers(BaseModel):
+    """
+    Combine friction and barriers and save to H5. Multiple all barrier values
+    by a factor. The multiplier should be large enough that all barriers have
+    a higher value than any possible friction.
+    """
+    barrier_multiplier: float = 1e6
+
+
 class CombineCosts(BaseModel):
     """ Config items required to combine wet and dry costs """
     landfall_cost: float  # Cost to transition from wet to dry transmission
@@ -67,6 +76,7 @@ class LayerCreationConfig(BaseModel):
     barrier_layers: Optional[BarrierLayers] = None
     wet_costs: Optional[WetCosts] = None
     dry_costs: Optional[DryCosts] = None
+    merge_friction_and_barriers: Optional[MergeFrictionBarriers] = None
     combine_costs: Optional[CombineCosts] = None
 
     # Save GeoTIFFS from step if True

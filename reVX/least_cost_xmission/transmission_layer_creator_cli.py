@@ -13,7 +13,10 @@ from pydantic import ValidationError
 from rex.utilities.loggers import init_mult
 
 from reVX import __version__
-from reVX.config.transmission_layer_creation import LayerCreationConfig
+from reVX.config.transmission_layer_creation import LayerCreationConfig, \
+    MergeFrictionBarriers
+from reVX.least_cost_xmission.config.constants import BARRIER_H5_LAYER_NAME, \
+    BARRIER_TIFF, FRICTION_TIFF, RAW_BARRIER_TIFF
 
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.costs.cost_combiner import CostCombiner
@@ -82,11 +85,11 @@ def from_config(config_fpath: str):  # noqa: C901
     # Perform actions in config
     if config.barrier_layers is not None:
         fbb = FrictionBarrierBuilder('barrier', io_handler, masks)
-        fbb.build_layer(config.barrier_layers, save_tiff=save_tiff)
+        fbb.build_layer(config.barrier_layers)
 
     if config.friction_layers is not None:
         fbb = FrictionBarrierBuilder('friction', io_handler, masks)
-        fbb.build_layer(config.friction_layers, save_tiff=save_tiff)
+        fbb.build_layer(config.friction_layers)
 
     if config.wet_costs is not None:
         wc = config.wet_costs
@@ -103,6 +106,10 @@ def from_config(config_fpath: str):  # noqa: C901
         raise NotImplementedError(
             'The "dry_costs" option is not supported yet'
         )
+
+    if config.merge_friction_and_barriers is not None:
+        combine_friction_and_barriers(config.merge_friction_and_barriers,
+                                      io_handler, save_tiff=save_tiff)
 
     if config.combine_costs is not None:
         cc = config.combine_costs
@@ -173,6 +180,48 @@ def _setup_h5_files(io_handler: TransLayerIoHandler,
     logger.info(f'Creating new H5 {h5_fpath} with meta data from '
                 f'{existing_h5_fpath}')
     io_handler.create_new_h5(str(existing_h5_fpath), str(h5_fpath))
+
+
+def combine_friction_and_barriers(config: MergeFrictionBarriers,
+                                  io_handler: TransLayerIoHandler,
+                                  save_tiff: bool = True):
+    """
+    Combine friction and barriers and save to H5 and optionally GeoTIFF
+
+    Parameters
+    ----------
+    config
+        Config object
+    io_handler
+        Transmission IO handler
+    save_tiff
+        Save combined barriers to GeoTIFF if True
+    """
+    if not Path(FRICTION_TIFF).exists():
+        logger.error(
+            f'The friction GeoTIFF ({FRICTION_TIFF}) was not found. Please '
+            'create it using the `friction_layers` key in the config file.'
+        )
+
+    if not Path(RAW_BARRIER_TIFF).exists():
+        logger.error(
+            f'The raw barriers GeoTIFF ({RAW_BARRIER_TIFF}) was not found. '
+            'Please create it using the `barrier_layers` key in the config '
+            'file.'
+        )
+
+    logger.info('Loading friction and raw barriers.')
+    friction = io_handler.load_tiff(FRICTION_TIFF)
+    barriers = io_handler.load_tiff(RAW_BARRIER_TIFF)
+
+    combined = friction + barriers * config.barrier_multiplier
+
+    if save_tiff:
+        logger.debug('Saving combined barriers to GeoTIFF')
+        io_handler.save_tiff(combined, BARRIER_TIFF)
+
+    logger.info('Writing combined barriers to H5')
+    io_handler.write_to_h5(combined, BARRIER_H5_LAYER_NAME)
 
 
 if __name__ == '__main__':
