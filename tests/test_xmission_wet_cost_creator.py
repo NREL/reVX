@@ -6,7 +6,8 @@ import pytest
 
 import numpy as np
 
-from reVX.least_cost_xmission.costs.wet_cost_creator import WetCostCreator
+from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig, \
+    WetCostCreator
 
 
 def test_bin_config_sanity_checking():
@@ -15,17 +16,13 @@ def test_bin_config_sanity_checking():
     """
     input = np.array([0, 0])
 
-    missing_min_max_config = [{'cost': 1}]
+    reverse_bin = BinConfig(min=10, max=0, cost=1)
     with pytest.raises(AttributeError) as _:
-        WetCostCreator._assign_values_by_bins(input, missing_min_max_config)
-
-    reverse_bins_config = [{'min': 10, 'max': 0, 'cost': 1}]
-    with pytest.raises(AttributeError) as _:
-        WetCostCreator._assign_values_by_bins(input, reverse_bins_config)
+        WetCostCreator._assign_values_by_bins(input, reverse_bin)
 
     good_config = [
-        {'min': 1, 'max': 2, 'cost': 3},
-        {'min': 2, 'max': 5, 'cost': 4},
+        BinConfig(min=1, max=2, cost=3),
+        BinConfig(min=2, max=5, cost=4)
     ]
     WetCostCreator._assign_values_by_bins(input, good_config)
 
@@ -36,10 +33,10 @@ def test_cost_binning_results():
                       [4, 5, 6],
                       [7, 8, 9]])
     config = [
-        {'max': 2, 'cost': 1},
-        {'min': 2, 'max': 4, 'cost': 2},
-        {'min': 4, 'max': 8, 'cost': 3},
-        {'min': 8, 'cost': 4},
+        BinConfig(max=2, cost=1),
+        BinConfig(min=2, max=4, cost=2),
+        BinConfig(min=4, max=8, cost=3),
+        BinConfig(min=8, cost=4)
     ]
     output = WetCostCreator._assign_values_by_bins(input, config)
     assert (output == np.array([[1, 2, 2],
@@ -47,8 +44,8 @@ def test_cost_binning_results():
                                 [3, 4, 4]])).all()
 
     config = [
-        {'min': 2, 'max': 4, 'cost': 2},
-        {'min': 4, 'max': 8, 'cost': 3},
+        BinConfig(min=2, max=4, cost=2),
+        BinConfig(min=4, max=8, cost=3),
     ]
     output = WetCostCreator._assign_values_by_bins(input, config)
     assert (output == np.array([[0, 2, 2],
@@ -59,10 +56,10 @@ def test_cost_binning_results():
                       [-700, -250, 70],
                       [-500, -150, -70]])
     config = [
-        {'max': -500, 'cost': 999},
-        {'min': -500, 'max': -300, 'cost': 666},
-        {'min': -300, 'max': -100, 'cost': 333},
-        {'min': -100, 'cost': 111},
+        BinConfig(max=-500, cost=999),
+        BinConfig(min=-500, max=-300, cost=666),
+        BinConfig(min=-300, max=-100, cost=333),
+        BinConfig(min=-100, cost=111)
     ]
     output = WetCostCreator._assign_values_by_bins(input, config)
     assert (output == np.array([[999, 666, 111],

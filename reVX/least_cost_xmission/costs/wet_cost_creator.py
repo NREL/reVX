@@ -3,10 +3,10 @@ Create wet (offshore) costs and save to GeoTIFF.
 """
 import logging
 from typing import List
-from typing_extensions import TypedDict, Required
 
 import numpy as np
 import numpy.typing as npt
+from pydantic import BaseModel
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE, \
     WET_COSTS_TIFF
 
@@ -16,15 +16,15 @@ from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
 logger = logging.getLogger(__name__)
 
 
-class BinConfig(TypedDict, total=False):
+class BinConfig(BaseModel):
     """
     Config for assigning cost based on bins. Cells with values >= than 'min'
     and < 'max' will be assigned 'cost'. One or both of 'min' and 'max' can be
     specified.
     """
-    min: float
-    max: float
-    cost: Required[float]
+    min: float = float('-inf')
+    max: float = float('inf')
+    cost: float
 
 
 class WetCostCreator:
@@ -98,46 +98,41 @@ class WetCostCreator:
             Binned costs
         """
         for bin in bins:
-            if ('min' not in bin) and ('max' not in bin):
-                raise AttributeError(f'Bin config {bin} requires "min", "max",'
-                                     ' or both.')
-            if ('min' in bin) and ('max' in bin) and (bin['min'] > bin['max']):
+            if bin.min > bin.max:
                 raise AttributeError('Min is greater than max for bin config '
                                      f'{bin}.')
+            if bin.min == float('-inf') and bin.max == float('inf'):
+                msg = ('Bin covers all possible values, did you forget to set '
+                       f'min or max? {bin}')
+                logger.warning(msg)
 
         # Warn user of potential oversights in bin config. Look for gaps
         # between bin mins and maxes and overlapping bins.
-        sorted_bins = sorted(bins, key=lambda x: x.get('min', float('-inf')))
+        sorted_bins = sorted(bins, key=lambda x: x.min)
         last_max = float('-inf')
         for i, bin in enumerate(sorted_bins):
-            if bin.get('min', float('-inf')) < last_max:
+            if bin.min < last_max:
                 last_bin = sorted_bins[i - 1] if i > 0 else '-infinity'
                 msg = (f'Overlapping bins detected between bin {last_bin} '
                        f'and {bin}')
                 logger.warning(msg)
-            if bin.get('min', float('-inf')) > last_max:
+            if bin.min > last_max:
                 last_bin = sorted_bins[i - 1] if i > 0 else '-infinity'
                 msg = f'Gap detected between bin {last_bin} and {bin}'
                 logger.warning(msg)
-
             if i + 1 == len(sorted_bins):
-                if bin.get('max', float('inf')) < float('inf'):
+                if bin.max < float('inf'):
                     msg = f'Gap detected between bin {bin} and infinity'
                     logger.warning(msg)
 
-            last_max = bin.get('max', float('inf'))
+            last_max = bin.max
 
         # Past guard clauses, perform binning
         output = np.zeros(input.shape, dtype=DEFAULT_DTYPE)
 
         for i, bin in enumerate(bins):
             logger.debug(f'Calculating costs for bin {i+1}/{len(bins)}: {bin}')
-            if ('min' in bin) and ('max' not in bin):
-                output = np.where(input >= bin['min'], bin['cost'], output)
-            elif ('min' not in bin) and ('max' in bin):
-                output = np.where(input < bin['max'], bin['cost'], output)
-            elif ('min' in bin) and ('max' in bin):
-                mask = np.logical_and(input >= bin['min'], input < bin['max'])
-                output = np.where(mask, bin['cost'], output)
+            mask = np.logical_and(input >= bin.min, input < bin.max)
+            output = np.where(mask, bin.cost, output)
 
         return output

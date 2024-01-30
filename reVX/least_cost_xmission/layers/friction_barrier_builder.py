@@ -3,11 +3,11 @@ Build friction or barrier layers from raster and vector data.
 """
 import logging
 from pathlib import Path
-from typing import Literal, Dict, Tuple, List
-from typing_extensions import TypedDict, Required
+from typing import Literal, Dict, Optional, Tuple, List
 
 import numpy as np
 import numpy.typing as npt
+from pydantic import BaseModel
 
 from reVX.least_cost_xmission.layers.utils import rasterize
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
@@ -24,7 +24,7 @@ Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
 ALL = 'all'
 
 
-class Range(TypedDict, total=True):
+class Range(BaseModel):
     """
     Define a range of values in a raster to assign as a friction or barrrier.
     First value of min_max is lowest value of range (inclusive), second value
@@ -35,33 +35,33 @@ class Range(TypedDict, total=True):
     value: float
 
 
-class Rasterize(TypedDict, total=False):
+class Rasterize(BaseModel):
     """
     Rasterize a vector layer and apply a value to it.
     """
-    value: Required[float]  # Value to burn in to raster
-    buffer: float  # Optional value to buffer vector by (can be negative)
-    reproject: bool  # Reproject vector to raster CRS if True
+    value: float  # Value to burn in to raster
+    buffer: Optional[float] = None  # value to buffer by (can be negative)
+    reproject: bool = True  # Reproject vector to raster CRS if True
 
 
-class FBLayerConfig(TypedDict, total=False):
+class FBLayerConfig(BaseModel):
     """
-    Friction and barrier layers config dict. 'extent' is mandatory. 'map',
+    Friction and barrier layers config model. 'extent' is mandatory. 'map',
     'range', and 'rasterize' are exclusive, but one must be specified.  Example
     configs can be seen in test_xmission_barrier_friction_builder.py in the
     tests directory.
     """
-    extent: Required[Extents]  # extent to apply map or range to
+    extent: Extents  # extent to apply map or range to
 
     # Dict of values in raster (keys) and values to use for barrier/friction
-    map: Dict[float, float]
+    map: Optional[Dict[float, float]] = None
 
     # One or more ranges of raster values to apply to barrier/friction. The
     # value of overlapping ranges are added together.
-    range: List[Range]
+    range: Optional[List[Range]] = None
 
     # Rasterize a vector and use as a friction or barrier layer
-    rasterize: Rasterize
+    rasterize: Optional[Rasterize] = None
 
     # If 'forced_inclusion' is specified, any cells with a value > 0 will
     # force the final value of corresponding cells to 0. Multiple forced
@@ -146,19 +146,18 @@ class FrictionBarrierBuilder:
         self.__check_tiff_layer_config(config)
 
         # Assign all cells one or more ranges to a value
-        if 'range' in config:
+        if config.range is not None:
             processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
-            if config['extent'] != 'all':
-                mask = self.__get_mask(config['extent'])
+            if config.extent != ALL:
+                mask = self.__get_mask(config.extent)
 
-            for range in config['range']:
-                min, max = range['min_max']
-                value = range['value']
+            for range in config.range:
+                min, max = range.min_max
                 temp = np.where(
-                    np.logical_and(data >= min, data < max), value, 0
+                    np.logical_and(data >= min, data < max), range.value, 0
                 )
 
-                if config['extent'] == ALL:
+                if config.extent == ALL:
                     processed += temp
                     continue
 
@@ -167,15 +166,15 @@ class FrictionBarrierBuilder:
             return processed
 
         # Assign cells values based on map
-        if 'map' in config:
+        if config.map is not None:
             temp = np.zeros(self._io_handler.shape, dtype=self._dtype)
-            for key, val in config['map'].items():
+            for key, val in config.map.items():
                 temp[data == key] = val
 
-            if config['extent'] == ALL:
+            if config.extent == ALL:
                 return temp
 
-            mask = self.__get_mask(config['extent'])
+            mask = self.__get_mask(config.extent)
             processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
             processed[mask] = temp[mask]
             return processed
@@ -196,24 +195,24 @@ class FrictionBarrierBuilder:
         -------
             Rasterized vector
         """
-        if 'rasterize' not in config:
+        if config.rasterize is None:
             raise ValueError(
                 f'{fname} is a vector but the config is missing key '
                 f'"rasterize": {config}'
             )
 
-        r_config = config['rasterize']
-        buffer = r_config['buffer'] if 'buffer' in r_config else None
-        reproject = r_config['reproject'] if 'reproject' in r_config else True
+        r_config = config.rasterize
 
         temp = rasterize(fname, self._io_handler.profile,
-                         buffer_dist=buffer, burn_value=r_config['value'],
-                         dtype=self._dtype, reproject_vector=reproject)
+                         buffer_dist=r_config.buffer,
+                         burn_value=r_config.value,
+                         dtype=self._dtype,
+                         reproject_vector=r_config.reproject)
 
-        if config['extent'] == ALL:
+        if config.extent == ALL:
             return temp
 
-        mask = self.__get_mask(config['extent'])
+        mask = self.__get_mask(config.extent)
         processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
         processed[mask] = temp[mask]
         return processed
@@ -259,26 +258,26 @@ class FrictionBarrierBuilder:
         Parameters
         ----------
         config
-            The config dict to check
+            The config model to check
 
         Raises
         ------
         ValueError
             If an issue is detected
         """
-        if 'rasterize' in config:
+        if config.rasterize is not None:
             raise ValueError(
                 f'"rasterize" is only for vectors. Found in config {config}'
             )
 
-        if 'map' in config and 'range' in config:
+        if config.map is not None and config.range is not None:
             raise ValueError(
                 'Keys "map" and "range" are exclusionary but '
-                'more than one was found in config {config}'
+                'more than one was found in raster config {config}'
             )
 
-        if 'map' not in config and 'range' not in config:
+        if config.map is None and config.range is None:
             raise ValueError(
-                'Either "map" or "range" must be specified, but '
+                'Either "map" or "range" must be specified for a raster, but '
                 f'neither were found in config {config}'
             )

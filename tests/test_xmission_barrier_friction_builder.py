@@ -9,13 +9,22 @@ import numpy as np
 
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.layers.friction_barrier_builder import \
-    FrictionBarrierBuilder
+    FBLayerConfig, Range, FrictionBarrierBuilder
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
     TransLayerIoHandler
 
+
+class FakeIoHandler:
+    """ Fake IO Handler for testing """
+    def __init__(self, shape):
+        self.shape = shape
+
+
+io_handler: TransLayerIoHandler = FakeIoHandler((3, 3))  # type: ignore
+
 # Fake masks. Left side of array is wet, right side is dry, center column in
 # landfall
-masks: Masks = Masks('fake_handler')
+masks: Masks = Masks(io_handler)
 masks._dry_mask = np.array([[False, False, True],
                             [False, False, True],
                             [False, False, True]])
@@ -28,14 +37,6 @@ masks._landfall_mask = np.array([[False, True, False],
                                  [False, True, False],
                                  [False, True, False]])
 
-
-class FakeIoHandler:
-    """ Fake IO Handler for testing """
-    def __init__(self, shape):
-        self.shape = shape
-
-
-io_handler: TransLayerIoHandler = FakeIoHandler((3, 3))
 builder = FrictionBarrierBuilder('friction', io_handler, masks)
 
 
@@ -59,37 +60,28 @@ def test_range():
     data = np.array([[1, 2, 3],
                      [4, 5, 6],
                      [7, 8, 9]])
-    config = {
-        'extent': 'wet+',
-        'range': [{
-            'min_max': [1, 5],
-            'value': 4
-        }]
-    }
+    config = FBLayerConfig(
+        extent='wet+',
+        range=[Range(min_max=[1, 5], value=4)]
+    )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[4, 4, 0],
                                 [4, 0, 0],
                                 [0, 0, 0]])).all()
 
-    config = {
-        'extent': 'dry+',
-        'range': [{
-            'min_max': [5, 9],
-            'value': 5
-        }]
-    }
+    config = FBLayerConfig(
+        extent='dry+',
+        range=[Range(min_max=[5, 9], value=5)]
+    )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[0, 0, 0],
                                 [0, 5, 5],
                                 [0, 5, 0]])).all()
 
-    config = {
-        'extent': 'all',
-        'range': [{
-            'min_max': [2, 9],
-            'value': 5
-        }]
-    }
+    config = FBLayerConfig(
+        extent='all',
+        range=[Range(min_max=[2, 9], value=5)]
+    )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[0, 5, 5],
                                 [5, 5, 5],
@@ -101,35 +93,25 @@ def test_complex_ranges():
     data = np.array([[1, 2, 3],
                      [4, 5, 6],
                      [7, 8, 9]])
-    config = {
-        'extent': 'wet+',
-        'range': [
-            {
-                'min_max': [1, 5],
-                'value': 4
-            }, {
-                'min_max': [4, 10],
-                'value': 10
-            }
+    config = FBLayerConfig(
+        extent='wet+',
+        range=[
+            Range(min_max=[1, 5], value=4),
+            Range(min_max=[4, 10], value=10)
         ]
-    }
+    )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[4, 4, 0],
                                 [14, 10, 0],
                                 [10, 10, 0]])).all()
 
-    config = {
-        'extent': 'all',
-        'range': [
-            {
-                'min_max': [1, 6],
-                'value': 5
-            }, {
-                'min_max': [4, 9],
-                'value': 1
-            }
+    config = FBLayerConfig(
+        extent='all',
+        range=[
+            Range(min_max=[1, 6], value=5),
+            Range(min_max=[4, 9], value=1)
         ]
-    }
+    )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[5, 5, 5],
                                 [6, 6, 1],
@@ -141,10 +123,10 @@ def test_map():
     data = np.array([[1, 1, 1],
                      [2, 2, 2],
                      [3, 3, 3]])
-    config = {
-        'extent': 'wet',
-        'map': {1: 5, 3: 9},
-    }
+    config = FBLayerConfig(
+        extent='wet',
+        map={1: 5, 3: 9},
+    )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[5, 0, 0],
                                 [0, 0, 0],
@@ -153,10 +135,10 @@ def test_map():
     data = np.array([[1, 1, 1],
                      [2, 2, 2],
                      [3, 3, 3]])
-    config = {
-        'extent': 'landfall',
-        'map': {1: 5, 3: 9},
-    }
+    config = FBLayerConfig(
+        extent='landfall',
+        map={1: 5, 3: 9},
+    )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[0, 5, 0],
                                 [0, 0, 0],
