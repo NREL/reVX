@@ -118,8 +118,7 @@ def from_config(config_fpath: str):  # noqa: C901
         dry_costs = combiner.load_legacy_dry_costs(cc.dry_h5_fpath,
                                                    cc.dry_costs_layer)
         combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,
-                               layer_name=cc.dry_costs_layer,
-                               save_tiff=save_tiff)
+                               cc.dry_costs_layer, save_tiff=save_tiff)
 
 
 @main.command

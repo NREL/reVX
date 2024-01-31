@@ -79,8 +79,7 @@ class CostCombiner:
 
     def combine_costs(self, wet_costs: npt.NDArray,
                       dry_costs: npt.NDArray, landfall_cost: float,
-                      layer_name: str = COMBINED_COSTS_H5_LAYER,
-                      save_tiff: bool = True):
+                      layer_name: str, save_tiff: bool = True):
         """
         Combine wet, dry, and landfall costs using appropriate masks
 
@@ -93,7 +92,7 @@ class CostCombiner:
         landfall_cost
             Cost to apply to landfall cells for conversion from underwater
             cables to land based transmission.
-        layer_name, optional
+        layer_name
             Layer name for combined costs in H5
         save_tiff, optional
             Save combined costs to GeoTIFF if True, by default True

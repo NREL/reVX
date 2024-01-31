@@ -262,7 +262,7 @@ class FrictionBarrierBuilder:
             if config.extent != ALL:
                 mask = self.__get_mask(config.extent)
 
-            temp = self._io_handler.load_tiff(fname)  # TODO reproject
+            temp = self._io_handler.load_tiff(fname)  # TODO allow reprojecting
 
             if config.extent == ALL:
                 fi += temp
