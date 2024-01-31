@@ -47,9 +47,9 @@ class Rasterize(BaseModel):
 class FBLayerConfig(BaseModel):
     """
     Friction and barrier layers config model. 'extent' is mandatory. 'map',
-    'range', and 'rasterize' are exclusive, but one must be specified.  Example
-    configs can be seen in test_xmission_barrier_friction_builder.py in the
-    tests directory.
+    'range', and 'rasterize', and 'forced_inclusion' are exclusive, but one
+    must be specified.  Example configs can be seen in
+    test_xmission_barrier_friction_builder.py in the tests directory.
     """
     extent: Extents  # extent to apply map or range to
 
@@ -63,10 +63,10 @@ class FBLayerConfig(BaseModel):
     # Rasterize a vector and use as a friction or barrier layer
     rasterize: Optional[Rasterize] = None
 
-    # If 'forced_inclusion' is specified, any cells with a value > 0 will
+    # If 'forced_inclusion' is True, any cells with a value > 0 will
     # force the final value of corresponding cells to 0. Multiple forced
-    # inclusions are allowed. This field is optional, and defaults to 'normal'
-    # e.g., type : Literal['normal', 'forced_inclusion']
+    # inclusions are allowed.
+    forced_inclusion: bool = False
 
 
 class FrictionBarrierBuilder:
@@ -105,8 +105,13 @@ class FrictionBarrierBuilder:
         """
         logger.debug(f'Combining {self._type} layers')
         result = np.zeros(self._io_handler.shape, dtype=DEFAULT_DTYPE)
+        fi_layers: Dict[str, FBLayerConfig] = {}
 
         for fname, config in layers.items():
+            if config.forced_inclusion:
+                fi_layers[fname] = config
+                continue
+
             logger.debug(f'Processing {fname} with config {config}')
             if Path(fname).suffix.lower() in ['.tif', '.tiff']:
                 data = self._io_handler.load_tiff(fname, reproject=True)
@@ -118,7 +123,7 @@ class FrictionBarrierBuilder:
             else:
                 raise ValueError(f'Unsupported file extension on {fname}')
 
-        # TODO - allow forced_inclusions
+        result = self._process_forced_inclusions(result, fi_layers)
 
         fname = RAW_BARRIER_TIFF if self._type == 'barrier' else \
             FRICTION_TIFF
@@ -216,6 +221,56 @@ class FrictionBarrierBuilder:
         processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
         processed[mask] = temp[mask]
         return processed
+
+    def _process_forced_inclusions(self, data: npt.NDArray,
+                                   fi_layers: Dict[str, FBLayerConfig]
+                                   ) -> npt.NDArray:
+        """
+        Use forced inclusion (FI) layers to remove barriers/friction. Any
+        value > 0 in the FI layers will result in a 0 in the corresponding
+        cell in the returned raster.
+
+        Parameters
+        ----------
+        data
+            Composite friction or barrier layer
+        fi_layers
+            Dict of forced inclusions layers keyed by GeoTIFF filename.
+
+        Returns
+        -------
+            Composite layer with forced inclusions added
+        """
+        fi = np.zeros(self._io_handler.shape)
+
+        for fname, config in fi_layers.items():
+            if Path(fname).suffix.lower() not in ['.tif', '.tiff']:
+                logger.error(
+                    f'Forced inclusion file {fname} does not end with .tif. '
+                    'GeoTIFFs are the only format allowed for forced '
+                    'inclusions.'
+                )
+            if config.map is not None or config.range is not None or \
+               config.rasterize is not None:
+                logger.error(
+                    '`map`, `range`, and `rasterize` are not allowed if '
+                    '`forced_inclusion` is True, but one was found in config: '
+                    f'{fname}: {config}'
+                )
+
+            # Past guard clauses, process FI
+            if config.extent != ALL:
+                mask = self.__get_mask(config.extent)
+
+            temp = self._io_handler.load_tiff(fname)  # TODO reproject
+
+            if config.extent == ALL:
+                fi += temp
+            else:
+                fi[mask] += temp[mask]
+
+        data[fi > 0] = 0
+        return data
 
     def __get_mask(self, extent: Extents) -> MaskArr:
         """
