@@ -107,11 +107,11 @@ def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
     extra_data : list of dicts
         A list of dictionaries, where each dictionary contains two keys.
         The first key is "source", and its value must either be a
-        dictionary of field/ value pairs or a path to the extra data
+        dictionary of `field: value` pairs or a path to the extra data
         being extracted. The latter must be a path pointing to an
         HDF5 or JSON file (i.e. it must end in ".h5" or ".json"). The
         second key is "dsets", and it points to a list of dataset names
-        to extract from `data_fp`. For JSON and dictionary data
+        to extract from `source`. For JSON and dictionary data
         extraction, the values of the datasets must either be scalars or
         must match the length of the input `data_frame`. For HDF5 data,
         the datasets must be 1D datasets, and they will be merged with
@@ -188,11 +188,11 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
     extra_data : list of dicts, optional
         A list of dictionaries, where each dictionary contains two keys.
         The first key is "source", and its value must either be a
-        dictionary of field/ value pairs or a path to the extra data
+        dictionary of `field: value` pairs or a path to the extra data
         being extracted. The latter must be a path pointing to an
         HDF5 or JSON file (i.e. it must end in ".h5" or ".json"). The
         second key is "dsets", and it points to a list of dataset names
-        to extract from `data_fp`. For JSON and dictionary data
+        to extract from `source`. For JSON and dictionary data
         extraction, the values of the datasets must either be scalars or
         must match the length of the input `data_frame`. For HDF5 data,
         the datasets must be 1D datasets, and they will be merged with

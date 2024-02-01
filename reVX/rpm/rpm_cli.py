@@ -185,7 +185,8 @@ def cluster(ctx, rpm_meta, region_col, dist_rank_filter, contiguous_filter):
                                        job_tag=name, rpm_region_col=region_col,
                                        max_workers=max_workers,
                                        dist_rank_filter=dist_rank_filter,
-                                       contiguous_filter=contiguous_filter)
+                                       contiguous_filter=contiguous_filter,
+                                       method_kwargs={"n_init": 10})
 
     logger.info('reVX - RPM clustering methods complete.')
     ctx.obj['RPM_CLUSTERS'] = rpm_clusters
