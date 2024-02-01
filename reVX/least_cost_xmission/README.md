@@ -26,7 +26,7 @@ Calculating transmission routing paths requires a series of layers. The *costs* 
 Note that the *friction* and *barriers* layers must be combined together, using a multiplier for barriers, before an analysis is ran.
 
 ## Masks
-Several of the layer creation operations, particularly combining the dry and wet costs, are dependent on a series of mask GeoTIFFs to indicate which portions of the study file are considered dry versus wet. A polygon GeoPackage or shapefile can be used to create the masks. Features in the file are assumed to represent dry land. The boundaries of features are used to determine the landfall cells. The `transmission-layer-creator create-masks` CLI tool is used for this as shown in the example below.
+Several of the layer creation operations, particularly combining the dry and wet costs, are dependent on a series of mask GeoTIFFs to indicate which portions of the study file are considered dry versus wet. A polygon GeoPackage or shapefile can be used to create the masks. Features in the file are assumed to represent dry land. The boundaries of features are used to determine the landfall cells. The `transmission-layer-creator create-masks` command-line tool is used for this as shown in the example below.
 
 ```
 $ transmission-layer-creator --verbose create-masks \

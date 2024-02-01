@@ -16,7 +16,7 @@ from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
 logger = logging.getLogger(__name__)
 
 
-class BinConfig(BaseModel):
+class BinConfig(BaseModel, extra='forbid'):
     """
     Config for assigning cost based on bins. Cells with values >= than 'min'
     and < 'max' will be assigned 'cost'. One or both of 'min' and 'max' can be

@@ -4,7 +4,7 @@ Definition of friction, barrier, and costs processing JSON config file
 from pathlib import Path
 from typing import Optional, Dict, List, Union
 
-from pydantic import BaseModel, ConfigDict, DirectoryPath, FilePath, NewPath
+from pydantic import BaseModel, DirectoryPath, FilePath, NewPath
 
 from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
 from reVX.least_cost_xmission.layers.friction_barrier_builder import \
@@ -16,19 +16,19 @@ FrictionLayers = Dict[str, FBLayerConfig]
 BarrierLayers = Dict[str, FBLayerConfig]
 
 
-class WetCosts(BaseModel):
+class WetCosts(BaseModel, extra='forbid'):
     """ Config items required to generate wet costs """
     bins: List[BinConfig]  # Bin config for depth based costs
     bathy_tiff: FilePath  # File name of bathymetric depth GeoTIFF
     wet_costs_tiff: Optional[str] = None  # Name for wet costs GeoTIFF
 
 
-class DryCosts(BaseModel):
+class DryCosts(BaseModel, extra='forbid'):
     """ Config items required to generate dry costs """
     # TODO
 
 
-class MergeFrictionBarriers(BaseModel):
+class MergeFrictionBarriers(BaseModel, extra='forbid'):
     """
     Combine friction and barriers and save to H5. Multiple all barrier values
     by a factor. The multiplier should be large enough that all barriers have
@@ -37,7 +37,7 @@ class MergeFrictionBarriers(BaseModel):
     barrier_multiplier: float = 1e6
 
 
-class CombineCosts(BaseModel):
+class CombineCosts(BaseModel, extra='forbid'):
     """ Config items required to combine wet and dry costs """
     landfall_cost: float  # Cost to transition from wet to dry transmission
 
@@ -78,5 +78,3 @@ class LayerCreationConfig(BaseModel):
 
     # Save GeoTIFFS from step if True
     save_tiff: bool = True
-
-    #model_config = ConfigDict(extra='forbid')

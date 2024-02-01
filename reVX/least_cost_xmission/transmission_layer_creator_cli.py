@@ -50,14 +50,23 @@ def main(verbose):
 @main.command
 @click.option('-c', '--config', 'config_fpath', type=click.Path(exists=True),
               required=True, help='Configuration JSON.')
-def from_config(config_fpath: str):  # noqa: C901
+@click.option('--ignore-unknown-keys', '-i', is_flag=True, default=False,
+              help='Silently ignore unknown keys in config file.')
+def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
     """
     Create costs, barriers, and frictions from a config file.
     """
+    # By default, throw error on unknown keys in config file
+    class ForbidExtraConfig(LayerCreationConfig, extra='forbid'):
+        """ Throw error if unknown keys are found in JSON """
+
+    ConfigClass = LayerCreationConfig if ignore_unknown_keys else \
+        ForbidExtraConfig
+
     with open(config_fpath, 'r') as inf:
         raw_json = inf.read()
     try:
-        config = LayerCreationConfig.model_validate_json(raw_json)
+        config = ConfigClass.model_validate_json(raw_json)
     except ValidationError as e:
         logger.error(f'Error loading config file {config_fpath}:\n{e}')
         sys.exit(1)
