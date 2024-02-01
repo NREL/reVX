@@ -25,7 +25,6 @@ Calculating transmission routing paths requires a series of layers. The *costs* 
 
 Note that the *friction* and *barriers* layers must be combined together, using a multiplier for barriers, before an analysis is ran.
 
-
 ## H5 Layer File Creation
 The final costs and barriers layers must be saved in an H5 file for the routing code to run. A new H5 file can be created as shown below. Both the template raster and existing H5 file must have the same shape, CRS, and transform.
 

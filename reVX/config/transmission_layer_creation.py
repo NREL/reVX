@@ -2,9 +2,9 @@
 Definition of friction, barrier, and costs processing JSON config file
 """
 from pathlib import Path
-from typing import Optional, Dict, List, Union
+from typing import Optional, Dict, List
 
-from pydantic import BaseModel, DirectoryPath, FilePath, NewPath
+from pydantic import BaseModel, DirectoryPath, FilePath
 
 from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
 from reVX.least_cost_xmission.layers.friction_barrier_builder import \

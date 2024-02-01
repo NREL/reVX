@@ -4,7 +4,6 @@ layers required for LCP routing are saved to an H5 file. All layers may
 optionally be saved to GeoTIFF.
 """
 import sys
-from typing import Optional
 import click
 import logging
 from pathlib import Path
@@ -116,7 +115,7 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
-                                      io_handler, save_tiff=save_tiff)
+                                       io_handler, save_tiff=save_tiff)
 
     if config.combine_costs is not None:
         cc = config.combine_costs
