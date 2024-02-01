@@ -2,9 +2,9 @@
 Definition of friction, barrier, and costs processing JSON config file
 """
 from pathlib import Path
-from typing import Optional, Dict, List, Union
+from typing import Optional, Dict, List
 
-from pydantic import BaseModel, DirectoryPath, FilePath, NewPath
+from pydantic import BaseModel, DirectoryPath, FilePath
 
 from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
 from reVX.least_cost_xmission.layers.friction_barrier_builder import \
@@ -53,14 +53,8 @@ class LayerCreationConfig(BaseModel):
     # Template raster GeoTIFF for shape and profile
     template_raster_fpath: FilePath
 
-    # H5 to store results in. If it does not exist, it will be created from
-    # existing_h5_fpath.
-    h5_fpath: Union[FilePath, NewPath]
-
-    # Existing H5 to extra meta data, etc from. Setting existing_h5_fpath will
-    # result in a new H5 at `h5_path` being created if it doesn't already
-    # exist.
-    existing_h5_fpath: Optional[FilePath] = None
+    # H5 to store results in.
+    h5_fpath: FilePath
 
     # Optional directory to look for GeoTIFFs in, in addition to '.'
     layer_dir: DirectoryPath = Path('.')
@@ -76,5 +70,5 @@ class LayerCreationConfig(BaseModel):
     merge_friction_and_barriers: Optional[MergeFrictionBarriers] = None
     combine_costs: Optional[CombineCosts] = None
 
-    # Save GeoTIFFS from step if True
+    # Save GeoTIFFS from intermediate steps if True
     save_tiff: bool = True

@@ -4,7 +4,6 @@ layers required for LCP routing are saved to an H5 file. All layers may
 optionally be saved to GeoTIFF.
 """
 import sys
-from typing import Optional
 import click
 import logging
 from pathlib import Path
@@ -26,6 +25,7 @@ from reVX.least_cost_xmission.layers.friction_barrier_builder import \
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
     TransLayerIoHandler
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
+from reVX.utilities.exclusions import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +82,7 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
     save_tiff = config.save_tiff
     io_handler = TransLayerIoHandler(str(config.template_raster_fpath),
                                      layer_dir=config.layer_dir)
-
-    _setup_h5_files(io_handler, config.h5_fpath, config.existing_h5_fpath)
+    io_handler.set_h5_file(str(config.h5_fpath))
 
     masks = Masks(io_handler, masks_dir=config.masks_dir)
     masks.load_masks()
@@ -116,7 +115,7 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
-                                      io_handler, save_tiff=save_tiff)
+                                       io_handler, save_tiff=save_tiff)
 
     if config.combine_costs is not None:
         cc = config.combine_costs
@@ -174,48 +173,47 @@ def create_masks(land_mask_vector: str, template_raster: str, masks_dir: str,
                        reproject_vector=reproject)
 
 
-def _setup_h5_files(io_handler: TransLayerIoHandler,
-                    h5_fpath: Path, existing_h5_fpath: Optional[Path]):
+# @main.command
+@click.option('--template-raster', '-t', type=click.Path(exists=True),
+              required=True,
+              help='Raster to extract CRS, transform, and shape from.')
+@click.option('--h5-file', '-h', type=click.Path(exists=False), required=True,
+              help='Name of H5 file to create.')
+def FUTURE_create_h5(template_raster: str, h5_file: str):
     """
-    Load or Create new H5 file as needed
-
-    Parameters
-    ----------
-    io_handler
-        The transmission IO handler
-    h5_fpath
-        Path to H5 file to use for current analysis
-    existing_h5_fpath
-        Existing H5 file to pull meta data from
+    Create a new H5 file to store layers in.
     """
-    if h5_fpath.exists():
-        logger.info(f'Using H5 file {h5_fpath} for storing data.')
-        io_handler.set_h5_file(str(h5_fpath))
-        return
+    logger.info(
+        f'Using raster {template_raster} to create new H5 file {h5_file}'
+    )
+    ExclusionsConverter._init_h5(h5_file, template_raster)
 
-    # h5_fpath doesn't exist, create it
-    if existing_h5_fpath is None:
-        logger.error(
-            f'"h5_fpath" {h5_fpath} does not exist. "existing_h5_fpath" '
-            'must be set to an existing H5 file.'
-        )
-        sys.exit(1)
 
-    if not existing_h5_fpath.exists():
-        logger.error(
-            f'"existing_h5_fpath" {existing_h5_fpath} does not exist, and '
-            'is required to create a new H5.'
-        )
-        sys.exit(1)
-
-    logger.info(f'Creating new H5 {h5_fpath} with meta data from '
-                f'{existing_h5_fpath}')
-    io_handler.create_new_h5(str(existing_h5_fpath), str(h5_fpath))
+@main.command
+@click.option('--template-raster', '-t', type=click.Path(exists=True),
+              required=True,
+              help='Raster to extract CRS, transform, and shape from.')
+@click.option('--existing-h5-file', '-e', type=click.Path(exists=True),
+              required=True,
+              help='Existing H5 file with correct shape and profile.')
+@click.option('--new-h5-file', '-n', type=click.Path(exists=False),
+              required=True, help='Name of H5 file to create.')
+def create_h5(template_raster: str, existing_h5_file: str,
+              new_h5_file: str):
+    """
+    Create a new H5 file to store layers in.
+    """
+    logger.info(
+        f'Creating new H5 {new_h5_file} with meta data from '
+        f'{existing_h5_file}'
+    )
+    io_handler = TransLayerIoHandler(template_raster)
+    io_handler.create_new_h5(existing_h5_file, new_h5_file)
 
 
 def _combine_friction_and_barriers(config: MergeFrictionBarriers,
-                                  io_handler: TransLayerIoHandler,
-                                  save_tiff: bool = True):
+                                   io_handler: TransLayerIoHandler,
+                                   save_tiff: bool = True):
     """
     Combine friction and barriers and save to H5 and optionally GeoTIFF
 

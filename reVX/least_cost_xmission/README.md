@@ -25,19 +25,27 @@ Calculating transmission routing paths requires a series of layers. The *costs* 
 
 Note that the *friction* and *barriers* layers must be combined together, using a multiplier for barriers, before an analysis is ran.
 
+## H5 Layer File Creation
+The final costs and barriers layers must be saved in an H5 file for the routing code to run. A new H5 file can be created as shown below. Both the template raster and existing H5 file must have the same shape, CRS, and transform.
+
+```
+$ transmission-layer-creator --verbose create-h5 \
+    --template-raster template_raster.tif --existing-h5-file existing.h5 \
+    --new-h5-file new.h5
+```
+
 ## Masks
-Several of the layer creation operations, particularly combining the dry and wet costs, are dependent on a series of mask GeoTIFFs to indicate which portions of the study file are considered dry versus wet. A polygon GeoPackage or shapefile can be used to create the masks. Features in the file are assumed to represent dry land. The boundaries of features are used to determine the landfall cells. The `transmission-layer-creator create-masks` command-line tool is used for this as shown in the example below.
+Several of the layer creation operations, particularly combining the dry and wet costs, are dependent on a series of mask GeoTIFFs that indicate which portions of the study area are considered dry versus wet. A polygon GeoPackage or shapefile can be used to create the masks. Features in the file are assumed to represent dry land. The boundaries of features are used to determine the landfall cells. The `transmission-layer-creator create-masks` command-line tool is used for this as shown in the example below.
 
 ```
 $ transmission-layer-creator --verbose create-masks \
-    --template-raster combined_barriers.tif \
+    --template-raster template_raster.tif \
     --land-mask-vector land_mask_vector_file.gpkg \
     --masks-dir masks
 ```
 ## Layer Creation Configuration File
 Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator from-config`](transmission_layer_creator_cli.py) command-line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `LayerCreationConfig` class of [`transmission_layer_creation.py`](../config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options and can trigger a number of different operations depending on it's contents. These operations include:
 
-* Creating a new H5 file to store layers in
 * Creating wet and dry (TODO) cost layers
 * Combining wet and dry costs
 * Creating frictions and/or barrier layers
@@ -47,14 +55,13 @@ Layers are created by passing a JSON configuration file (config file) to the [`t
 The following keys are required to run any type of layer creation:
 
 * `template_raster_fpath` - Template GeoTIFF with the shape, CRS, and transform to use for the project. Data in the raster is ignored.
-* `h5_fpath` - H5 file to store layers in. `h5_fpath` will be created if it does not exist and `existing_h5_fpath` is set.
+* `h5_fpath` - H5 file to store layers in. It must exist and can be created as described above.
 
 ### Optional Keys
-Most of these keys are optional and affect how the layer creation runs. Some, like `land_mask_vector_fname`, may need to be specified once to generate the mask files, and then can be disabled.
+These keys are optional and affect how the layer creation runs.
 
-* `existing_h5_fpath` - Existing reV H5 file with the same shape as `template_raster_fpath`. Metadata is copied from `existing_h5_fpath` to `h5_fpath`. This must be defined to create `h5_fpath` if it does not exist.
 * `masks_dir` - Directory to find mask GeoTIFFs in. Defaults to the local directory.
-* `layer_dir` - By default, all GeoTIFFs listed in `barrier_layers` and `friction_layers` are assumed to be full defined paths or are located in the current working directory. The creator will also search for GeoTIFFs in `layer_dir` if it is set.
+* `layer_dir` - By default, all GeoTIFFs listed in `barrier_layers` and `friction_layers` are assumed to be fully defined paths or located in the current working directory. The creator will also search for GeoTIFFs in `layer_dir` if it is set.
 * `save_tiff` - Setting this to `true` will result in the creation of GeoTIFFs for intermediary processing steps. This can be useful for QA/QC.
 
 ### Action Keys
@@ -75,9 +82,10 @@ The below example JSON file shows all possible keys with example values. The for
 {
     "template_raster_fpath": "bathymetry.tif",
     "h5_fpath": "./new_xmission_routing_layers.h5",
-    "existing_h5_fpath": "Offshore_Exclusions.h5",
+
     "masks_dir": "./masks",
     "layer_dir": "/projects/rev/projects/wowts/data/final_friction_tifs/",
+    "save_tiff": true,
 
     "wet_costs": {
         "bathy_tiff": "bathymetry.tif",
@@ -131,9 +139,7 @@ The below example JSON file shows all possible keys with example values. The for
         "landfall_cost": 10e6,
         "dry_h5_fpath": "xmission_costs.h5",
         "dry_costs_layer": "tie_line_costs_102MW"
-    },
-
-    "save_tiff": true
+    }
 }
 ```
 
