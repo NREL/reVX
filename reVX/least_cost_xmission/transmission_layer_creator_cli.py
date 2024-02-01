@@ -104,7 +104,8 @@ def from_config(config_fpath: str):  # noqa: C901
     if config.dry_costs is not None:
         # TODO - implement this
         raise NotImplementedError(
-            'The "dry_costs" option is not supported yet'
+            'The "dry_costs" option is not supported yet. Use the legacy CLI'
+            'command in dry_cost_creator_cli.py.'
         )
 
     if config.merge_friction_and_barriers is not None:

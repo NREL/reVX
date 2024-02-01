@@ -10,8 +10,8 @@ from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
 from reVX.least_cost_xmission.layers.friction_barrier_builder import \
     FBLayerConfig
 
-# Keys are GeoTIFF file paths to use with the FBLayerConfig to use for that
-# GeoTIFF
+# Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
+# file.
 FrictionLayers = Dict[str, FBLayerConfig]
 BarrierLayers = Dict[str, FBLayerConfig]
 

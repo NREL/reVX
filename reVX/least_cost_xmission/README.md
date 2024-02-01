@@ -16,22 +16,130 @@ Determine least cost transmission paths from land-based and offshore wind and so
 * [`least_cost_xmission.py`](least_cost_xmission.py) - Calculate costs from SC points to transmission features. By default, all SC points are used or a subset may be specified by GID.
 * [`least_cost_paths.py`](least_cost_paths.py) - Parent class for `least_cost_xmission.py`.
 
-Example Jupyter notebooks for can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
-
 # Layer Creation
 Calculating transmission routing paths requires a series of layers. The *costs* layer is mandatory. The *friction* and *barriers* layers are optional. The *costs* layer is the most important of the three.
 
-* *Costs* - The cost of building a transmission line including ROW and any factors such as slope, land use, and water depth though a single grid cell (typically 90 meters.) The routing algorithm scales costs for any transmission crossing at a diagonal. Costs for land-based transmission and undersea cables are calculated separately and combined. Note that landfall costs are included in the costs layer as a final step.
-* *Friction* - Friction indicates areas that transmission should avoid if at all possible. Paths that must cross a friction area will take the shortest possible path. Friction does not affect the cost of a line that runs across it, it merely discourages a path from crossing a friction area, possibly taking a longer and more expensive path.
+* *Costs* - The cost of building a transmission line including ROW and any factors such as slope, land use, and water depth though a single grid cell (typically 90 meters.) The routing algorithm automatically scales costs for any transmission crossing a cell at a diagonal. Costs for land-based transmission and undersea cables are calculated separately and then combined. Note that landfall costs are incorporated into the final cost raster when wet and dry costs are combined.
+* *Friction* - Friction indicates areas that are undesirable for transmission. Paths that must cross a friction area will take the shortest possible path. Friction does not affect the cost of a line that runs across it; it merely discourages a path from crossing a friction area, possibly taking a longer and more expensive path.
 * *Barriers* - Barriers are effectively a much stronger deterrent for transmission than friction. Routing will preferentially take a more expensive, and higher friction route before crossing a barrier area. Barriers do not affect the cost of lines that are forced to cross them.
 
-Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator`](transmission_layer_creator_cli.py) command line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `LayerCreationConfig` class of [`transmission_layer_creation.py`](../config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options.
+Note that the *friction* and *barriers* layers must be combined together, using a multiplier for barriers, before an analysis is ran.
 
-TODO - describe action keys
+Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator`](transmission_layer_creator_cli.py) command-line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `LayerCreationConfig` class of [`transmission_layer_creation.py`](../config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options and can trigger a number of different operations depending on it's contents. These operations include:
 
-TODO - examples
+* Creating a new H5 file to store layers in
+* Creating wet, dry, and landfall masks from a vector
+* Creating wet and dry (TODO) cost layers
+* Combining wet and dry costs
+* Creating frictions and/or barrier layers
+* Combining friction and barrier layers together
 
-# CONUS (Onshore) Examples
+## Config File Keys
+### Required Keys
+The following keys are required to run any type of layer creation:
+
+* `template_raster_fpath` - Template GeoTIFF with the shape, CRS, and transform to use for the project. Data in the raster is ignored.
+* `h5_fpath` - H5 file to store layers in. `h5_fpath` will be created if it does not exist and `existing_h5_fpath` is set.
+
+### Optional Keys
+Most of these keys are optional and affect how the layer creation runs. Some, like `land_mask_vector_fname`, may need to be specified once to generate the mask files, and then can be disabled.
+
+* `existing_h5_fpath` - Existing reV H5 file with the same shape as `template_raster_fpath`. Metadata is copied from `existing_h5_fpath` to `h5_fpath`. This must be defined to create `h5_fpath` if it does not exist.
+* `land_mask_vector_fname` - Polygon GeoPackage or shapefile that defines what areas are considered wet and dry. Features in the file are assumed to represent dry land. The boundaries of features are used to determine the landfall cells.
+* `masks_dir` - Directory to store mask GeoTIFFs in. If not set, masks will be stored in the current working directory.
+* `layer_dir` - By default, all GeoTIFFs listed in `barrier_layers` and `friction_layers` are assumed to be full defined paths or are located in the current working directory. The creator will also search for GeoTIFFs in `layer_dir` if it is set.
+* `save_tiff` - Setting this to `true` will result in the creation of GeoTIFFs for intermediary processing steps. This can be useful for QA/QC.
+
+### Action Keys
+The keys below represent layer creation actions. Mostly analyses will need all layers to be created. Individual creation actions can be rerun as needed, e.g. if it is determined that the `dry_costs` need to be adjusted, but the `wet_costs` are acceptable, the `wet_costs` section can be removed from the config file to prevent it from being recalculated and reduce processing time.
+
+* Costs
+  * `wet_costs` - Costs for wet areas, typically oceans and great lakes.
+  * `dry_costs` - This is not yet implemented. Dry costs must be calculated with the legacy method described below and saved in an H5 file.
+  * `combine_costs` - Combine the wet and dry costs and save to H5. This action must be performed if either wet or dry costs have been recalculated.
+* Friction and barriers
+  * `friction_layers` - Friction areas that are less desirable for transmission routing.
+  * `barrier_layers` - Barrier areas that should not have any transmission in the them. Transmission will route through barriers if there is no other possible route.
+  * `merge_friction_and_barriers` - Combine friction and barriers and save as H5. This action must be performed if the friction or barriers have been modified.
+
+## Layer Creation Config File Examples
+The below example JSON file shows all possible keys with example values. The formal config file definition is the `LayerCreationConfig` class in the [`transmission_layer_creation.py`](../config/transmission_layer_creation.py) file.
+```
+{
+    "template_raster_fpath": "bathymetry.tif",
+    "h5_fpath": "./new_xmission_routing_layers.h5",
+    "existing_h5_fpath": "Offshore_Exclusions.h5",
+    "masks_dir": "./masks",
+    "land_mask_vector_fname": "gshhs_f_l1_rev_no_GL.gpkg",
+    "layer_dir": "/projects/rev/projects/wowts/data/final_friction_tifs/",
+
+    "wet_costs": {
+        "bathy_tiff": "bathymetry.tif",
+        "bins": [
+            {              "max": -2500, "cost": 80526},
+            {"min": -2500, "max": -2000, "cost": 73205},
+            {"min": -2000, "max": -1500, "cost": 66550},
+            {"min": -1500, "max": -1000, "cost": 60500},
+            {"min": -1000, "max": -500,  "cost": 55000},
+            {"min": -500,                "cost": 50000}
+        ]
+    },
+
+    "barrier_layers": {
+        "CAN_MEX_boundary_20240131.gpkg": {
+            "extent": "all",
+            "rasterize": {
+                "value": 106,
+                "reproject": true
+            }
+        },
+        "west_coast_slope.tif": {
+            "extent": "wet",
+            "range": [{
+                "min_max": [15, 1e99],
+                "value": 101
+            }]
+        },
+        "/projects/rev/data/conus/rasters/swca_cultural_resources_risk.tif": {
+            "extent": "all",
+            "map": { "4": 102 }
+        }
+    },
+
+    "friction_layers": {
+        "west_coast_slope.tif": {
+            "extent": "wet",
+            "range": [{
+                "min_max": [10, 15],
+                "value": 5
+            }]
+        },
+        "mpa.tif": { "map": {"2": 5, "3": 7}, "extent": "all" },
+    },
+
+    "merge_friction_and_barriers": {
+        "barrier_multiplier": 1e6
+    },
+
+    "combine_costs": {
+        "landfall_cost": 10e6,
+        "dry_h5_fpath": "xmission_costs.h5",
+        "dry_costs_layer": "tie_line_costs_102MW"
+    },
+
+    "save_tiff": true
+}
+```
+
+## Running the Layer Creator
+Once a config file has been created, the layer creation tool can be run from the command-line, e.g.:
+
+```
+transmission-layer-creator --verbose from-config --config layer_config_file.json
+```
+With an appropriate config file, this will result in all layers required for a transmission routing analysis being created and saved in the specified H5 file.
+
+# CONUS (Onshore) Example
 ## Costs
 The below file can be used as a template to compute the costs to be used in a Least Cost Path analysis described in more detail below.
 ```
@@ -233,19 +341,7 @@ General steps to run an offshore analysis:
 
 ## Offshore Examples
 ### Creating POI transmission features from points
-The onshore point of interconnections (POIs) have typically been provided in a
-CSV file. These must be converted to short lines in a GeoPackage to work with
-the LCP code. Note that the POIs must also be connected to a transmission line.
-The `convert_pois_to_lines()` function in `offshore_utilities.py` will perform all
-necessary operations to convert the CSV file to a properly configured
-GeoPackage. An example notebook is in this repository at
-`examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`.
-Paths from POIs to the fake transmission line can be removed in post processing
-using the `--drop TransLine` option with the `least-cost-xmission merge-output`
-command.
-
-### Build friction and barriers layer
-An example Jupyter notebook for building the friction and barrier layers can be found in the `examples/least_cost_paths` directory of this repository.
+The onshore point of interconnections (POIs) have typically been provided in a CSV file. These must be converted to short lines in a GeoPackage to work with the LCP code. Note that the POIs must also be connected to a transmission line.  The `transmission-layer-creator convert-pois` command-line function will perform all necessary operations to convert the CSV file to a properly configured GeoPackage.  Paths from POIs to the fake transmission line can be removed in post processing using the `--drop TransLine` option with the `least-cost-xmission merge-output` command.
 
 ### Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage
 This example uses `contextily` to add a base map to the plot, but is not required. Offshore needs an aggregation "resolution" of 118.
