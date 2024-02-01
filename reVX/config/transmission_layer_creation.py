@@ -4,14 +4,14 @@ Definition of friction, barrier, and costs processing JSON config file
 from pathlib import Path
 from typing import Optional, Dict, List, Union
 
-from pydantic import BaseModel, DirectoryPath, FilePath, NewPath
+from pydantic import BaseModel, ConfigDict, DirectoryPath, FilePath, NewPath
 
 from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
 from reVX.least_cost_xmission.layers.friction_barrier_builder import \
     FBLayerConfig
 
-# Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
-# file.
+# Friction and barrier layer definitions. Keys are GeoTIFF filepaths. Values
+# are the FBLayerConfig to use for that file.
 FrictionLayers = Dict[str, FBLayerConfig]
 BarrierLayers = Dict[str, FBLayerConfig]
 
@@ -62,14 +62,11 @@ class LayerCreationConfig(BaseModel):
     # exist.
     existing_h5_fpath: Optional[FilePath] = None
 
-    # Directory to look for GeoTIFFs in, in addition to '.'
+    # Optional directory to look for GeoTIFFs in, in addition to '.'
     layer_dir: DirectoryPath = Path('.')
 
-    # Land mask vector file. Setting this will cause new masks to be generated.
-    land_mask_vector_fname: Optional[str] = None
-
     # Optional path for mask GeoTIFFs.
-    masks_dir: Union[DirectoryPath, NewPath] = Path('.')
+    masks_dir: DirectoryPath = Path('.')
 
     # Optional processing steps to perform. One of these should be defined.
     friction_layers: Optional[FrictionLayers] = None
@@ -82,5 +79,4 @@ class LayerCreationConfig(BaseModel):
     # Save GeoTIFFS from step if True
     save_tiff: bool = True
 
-    # TODO - uncomment this for prod
-    # model_config = ConfigDict(extra='forbid')
+    #model_config = ConfigDict(extra='forbid')

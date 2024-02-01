@@ -77,10 +77,7 @@ def from_config(config_fpath: str):  # noqa: C901
     _setup_h5_files(io_handler, config.h5_fpath, config.existing_h5_fpath)
 
     masks = Masks(io_handler, masks_dir=config.masks_dir)
-    if config.land_mask_vector_fname is not None:
-        masks.create_masks(config.land_mask_vector_fname, save_tiff=save_tiff)
-    else:
-        masks.load_masks()
+    masks.load_masks()
 
     # Perform actions in config
     if config.barrier_layers is not None:
@@ -109,7 +106,7 @@ def from_config(config_fpath: str):  # noqa: C901
         )
 
     if config.merge_friction_and_barriers is not None:
-        combine_friction_and_barriers(config.merge_friction_and_barriers,
+        _combine_friction_and_barriers(config.merge_friction_and_barriers,
                                       io_handler, save_tiff=save_tiff)
 
     if config.combine_costs is not None:
@@ -141,6 +138,31 @@ def convert_pois(poi_file: str, template_raster: str, out_file: str):
     transmission line is created that is linked to the POIs.
     """
     convert_pois_to_lines(poi_file, template_raster, out_file)
+
+
+@main.command
+@click.option('--land-mask-vector', '-l', required=True,
+              type=click.Path(exists=True),
+              help='GeoPackage or shapefile representing land.')
+@click.option('--template-raster', '-t', required=True,
+              type=click.Path(exists=True),
+              help='Raster to extract CRS, transform, and shape from.')
+@click.option('--masks-dir', '-m', type=click.Path(), required=False,
+              default='.',
+              help='Directory to store mask GeoTIFFs in.')
+@click.option('--dont-reproject', '-d', is_flag=True, default=False,
+              help='Don\'t reproject vector before creating masks.')
+def create_masks(land_mask_vector: str, template_raster: str, masks_dir: str,
+                 dont_reproject: bool):
+    """
+    Convert a vector land file to wet, dry, and all other masks.
+    """
+    io_handler = TransLayerIoHandler(template_raster)
+    masks = Masks(io_handler, masks_dir=masks_dir)
+
+    reproject = not dont_reproject
+    masks.create_masks(land_mask_vector, save_tiff=True,
+                       reproject_vector=reproject)
 
 
 def _setup_h5_files(io_handler: TransLayerIoHandler,
@@ -182,7 +204,7 @@ def _setup_h5_files(io_handler: TransLayerIoHandler,
     io_handler.create_new_h5(str(existing_h5_fpath), str(h5_fpath))
 
 
-def combine_friction_and_barriers(config: MergeFrictionBarriers,
+def _combine_friction_and_barriers(config: MergeFrictionBarriers,
                                   io_handler: TransLayerIoHandler,
                                   save_tiff: bool = True):
     """
