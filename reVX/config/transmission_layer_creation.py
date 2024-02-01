@@ -74,10 +74,8 @@ class LayerCreationConfig(BaseModel):
     template_raster_fpath: FilePath
     """Template raster GeoTIFF for shape and profile"""
 
-    h5_fpath: Union[FilePath, NewPath]
-    """H5 to store results in.
-
-    If it does not exist, it will be created from existing_h5_fpath."""
+    h5_fpath: FilePath
+    """H5 to store results in."""
 
     layer_dir: DirectoryPath = Path('.')
     """Directory to look for GeoTIFFs in, in addition to '.'"""
@@ -128,4 +126,4 @@ class LayerCreationConfig(BaseModel):
     be defined."""
 
     save_tiff: bool = True
-    """Save GeoTIFFS from step if ``True``"""
+    """Save GeoTIFFS from intermediary steps if ``True``"""
