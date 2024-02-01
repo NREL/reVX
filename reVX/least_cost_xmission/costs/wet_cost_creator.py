@@ -23,8 +23,13 @@ class BinConfig(BaseModel):
     specified.
     """
     min: float = float('-inf')
+    """Minimum value to get a cost assigned (inclusive)"""
+
     max: float = float('inf')
+    """Maximum value to get a cost assigned (exclusive)"""
+
     cost: float
+    """Cost value to assign to the range defined by `min` and `max`."""
 
 
 class WetCostCreator:

@@ -32,16 +32,24 @@ class Range(BaseModel):
     as friction barrier for any cells in the raster that fall within the range.
     """
     min_max: Tuple[float, float]
+    """Range defining the [Inclusive, Exclusive] min/max to assign a value."""
+
     value: float
+    """Value to assign the range defined by `min_max`"""
 
 
 class Rasterize(BaseModel):
     """
     Rasterize a vector layer and apply a value to it.
     """
-    value: float  # Value to burn in to raster
-    buffer: Optional[float] = None  # value to buffer by (can be negative)
-    reproject: bool = True  # Reproject vector to raster CRS if True
+    value: float
+    """Value to burn in to raster"""
+
+    buffer: Optional[float] = None
+    """Value to buffer by (can be negative)"""
+
+    reproject: bool = True
+    """Reproject vector to raster CRS if ``True``"""
 
 
 class FBLayerConfig(BaseModel):
@@ -51,22 +59,27 @@ class FBLayerConfig(BaseModel):
     must be specified.  Example configs can be seen in
     test_xmission_barrier_friction_builder.py in the tests directory.
     """
-    extent: Extents  # extent to apply map or range to
+    extent: Extents
+    """Extent to apply map or range to"""
 
-    # Dict of values in raster (keys) and values to use for barrier/friction
     map: Optional[Dict[float, float]] = None
+    """Values in raster (keys) and values to use for barrier/friction"""
 
-    # One or more ranges of raster values to apply to barrier/friction. The
-    # value of overlapping ranges are added together.
     range: Optional[List[Range]] = None
+    """Ranges of raster values.
 
-    # Rasterize a vector and use as a friction or barrier layer
+    This input can be one or more ranges of raster values to apply to
+    barrier/friction. The value of overlapping ranges are added together."""
+
     rasterize: Optional[Rasterize] = None
+    """Rasterize a vector and use as a friction or barrier layer"""
 
-    # If 'forced_inclusion' is True, any cells with a value > 0 will
-    # force the final value of corresponding cells to 0. Multiple forced
-    # inclusions are allowed.
     forced_inclusion: bool = False
+    """Force inclusion.
+
+    If `forced_inclusion` is ``True``, any cells with a value > 0 will
+    force the final value of corresponding cells to 0. Multiple forced
+    inclusions are allowed."""
 
 
 class FrictionBarrierBuilder:
