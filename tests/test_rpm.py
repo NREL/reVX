@@ -142,7 +142,8 @@ def test_rpm(max_workers, pre_extract_inclusions):
             output_kwargs=None,
             dist_rank_filter=True,
             contiguous_filter=False,
-            pre_extract_inclusions=pre_extract_inclusions)
+            pre_extract_inclusions=pre_extract_inclusions,
+            method_kwargs={"n_init": 10})
 
         TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
                                          .format(JOB_TAG))
@@ -163,7 +164,8 @@ def test_rpm_no_exclusions():
             max_workers=1,
             output_kwargs=None,
             dist_rank_filter=True,
-            contiguous_filter=False)
+            contiguous_filter=False,
+            method_kwargs={"n_init": 10})
 
         TEST_CLUSTERS = os.path.join(td, 'rpm_cluster_outputs_{}.csv'
                                          .format(JOB_TAG))

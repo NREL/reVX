@@ -228,16 +228,15 @@ $ least-cost-xmission from-config --config ./config_conus.json
 ```
 
 # Reinforced Transmission
-In this methodology, total interconnection costs are comprised of two components: *point-of-interconnection costs* and *network upgrade costs*. Point-of-interconnection costs include the cost of the spur line between the RE facility (SC point) and the connected substation, as well as the cost to upgrade the substation itself. Network upgrade costs are represented by costs to increase the transmission capacity between the connected substation and the main network node in the balancing area. Network upgrade costs are assumed to be 50% of the cost of a new greenfield transmission of the same voltage as the existing transmission lines along the same path. The 50% heuristic represents cost for reconductoring or increasing the number of circuits along those lines. `reVX` (and any derivative products, e.g. `reV`) do not include estimates for longer-distance transmission that may be needed to export the renewable energy between one balancing area and another.
+In this methodology, total interconnection costs are comprised of two components: *point-of-interconnection costs* and *network upgrade costs*. Point-of-interconnection costs include the cost of the spur line between the RE facility (SC point) and the connected substation, as well as the cost to upgrade the substation itself. Network upgrade costs are represented by costs to increase the transmission capacity between the connected substation and the main network node in a given reinforcement region. Network upgrade costs are assumed to be 50% of the cost of a new greenfield transmission of the same voltage as the existing transmission lines along the same path. The 50% heuristic represents cost for reconductoring or increasing the number of circuits along those lines. `reVX` (and any derivative products, e.g. `reV`) do not include estimates for longer-distance transmission that may be needed to export the renewable energy between one reinforcement region and another.
 
 ### Key assumptions under this approach:
 
-- Area of interest (e.g. CONUS) is broken up into "Balancing Areas"
-- Each Balancing Area has exactly one "Network Node" (typically a city or highly populated area)
+- Area of interest (e.g. CONUS) is broken up into "Reinforcement Regions" (i.e. Balancing Areas, States, Counties, etc.)
+- Each reinforcement region has one or more "Network Node" (typically a city or highly populated area)
 - SC points **may only connect to substations**
-- Substations that a SC point connects to **must be in the same Balancing Area as the SC point**
-    - This assumption can be relaxed to allow connections within the same state.
-- Reinforcement costs are calculated based on the distance between the substation a SC point connected to and the Network Node in that Balancing Area
+- Substations that a SC point connects to **must be in the same reinforcement regions as the SC point**
+- Reinforcement costs are calculated based on the distance between the substation a SC point connected to and the Network Node in that reinforcement region
     - The path used to calculate reinforcement costs is traced along existing transmission lines **for as long as possible**.
     - The reinforcement cost is taken to be half (50%) of the total greenfield cost of the transmission line being traced. If a reinforcement path traces along multiple transmission lines, the corresponding greenfield costs are used for each segment. If multiple transmission lines are available in a single raster pixel, the cost for the highest-voltage line is used. Wherever there is no transmission line, a default greenfield cost assumption (specified by the user; typically 230 kV) is used.
 
@@ -245,17 +244,18 @@ An example plot of this method is shown below (credit: Anthony Lopez):
 
 ![sample_r_im](../../examples/least_cost_paths/sample_r_im.png "Sample Reinforcement Results")
 
-In this plot, (light) grey lines represent existing transmission, orange lines represent spur lines built from a supply curve point to a substation within the same Balancing Area, and green lines represent the reinforcement path calculated from the substation the Network Node (red dot in the center).
+In this plot, (light) grey lines represent existing transmission, orange lines represent spur lines built from a supply curve point to a substation within the same reinforcement region (Balancing Area), and green lines represent the reinforcement path calculated from the substation the Network Node (red dot in the center).
 
 
 ## Calculating Reinforced Transmission Tables
 
-First, map the substations in your data set to the balancing areas using the following reVX command:
+First, map the substations in your data set to the reinforcement regions using the following reVX command:
 
 ```
-$ least-cost-paths map-ba \
+$ least-cost-paths map-ss-to-rr \
     --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
-    --balancing_areas_fpath /shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg \
+    --regions_fpath /shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg \
+    --region_identifier_column ba_str \
     --out_file substations_with_ba.gpkg
 ```
 
@@ -265,7 +265,6 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
 {
     "execution_control": {
       "allocation": "YOUR_SLURM_ALLOCATION",
-      "feature": "--qos=normal",
       "memory": 178,
       "option": "eagle",
       "max_workers": 1,
@@ -276,6 +275,7 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
     "features_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs/substations_with_ba.gpkg",
     "network_nodes_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/data/transmission_endpoints",
     "transmission_lines_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
+    "region_identifier_column": "ba_str",
     "capacity_class": "400",
     "barrier_mult": "100",
     "log_directory": "./logs",
@@ -283,7 +283,9 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
 }
 ```
 
-Note that we are specifying ``"capacity_class": "400"``  to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. If you would like to allow substations to connect to endpoints within the same state, add `"allow_connections_within_states": true` to the file.
+Note that we are specifying ``"capacity_class": "400"``  to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+"region_identifier_column" and the values in that column should match the region containing the substations and network nodes. In order to avoid unnecessary computation, ensure that your features input contains
+only the substations for which you computed reinforcement costs in the previous step.
 
 After putting together your config file, simply call
 ```
@@ -303,7 +305,6 @@ You should now have a file containing all of the reinforcement costs for the sub
 {
     "execution_control": {
       "allocation": "YOUR_SLURM_ALLOCATION",
-      "feature": "--qos=normal",
       "memory": 500,
       "nodes": 100,
       "option": "eagle",
@@ -312,7 +313,8 @@ You should now have a file containing all of the reinforcement costs for the sub
     },
     "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
     "features_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs/substations_with_ba.gpkg",
-    "balancing_areas_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg",
+    "regions_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg",
+    "region_identifier_column": "ba_str",
     "capacity_class": "1000",
     "barrier_mult": "100",
     "log_directory": "./logs",
@@ -321,7 +323,6 @@ You should now have a file containing all of the reinforcement costs for the sub
     "name": "least_cost_transmission_1000MW"
 }
 ```
-If you would like to allow supply curve points to  connect to substations within the same state, add `"allow_connections_within_states": true` to the file.
 
 Kickoff the execution using the following command:
 ```

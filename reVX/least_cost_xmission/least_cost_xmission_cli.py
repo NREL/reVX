@@ -83,7 +83,7 @@ def from_config(ctx, config, verbose):
         run_local(ctx, config)
         return
 
-    if option != 'eagle':
+    if option not in {'eagle', 'kestrel'}:
         click.echo('Option "{}" is not supported'.format(option))
         return
 
@@ -108,14 +108,18 @@ def from_config(ctx, config, verbose):
 @click.option('--features_fpath', '-feats', required=True,
               type=click.Path(exists=True),
               help="Path to GeoPackage with transmission features")
-@click.option('--balancing_areas_fpath', '-ba', type=STR, show_default=True,
+@click.option('--regions_fpath', '-regs', type=STR, show_default=True,
               default=None,
-              help=("Path to Balancing areas GeoPackage. If no `None`, "
+              help=("Path to reinforcement regions GeoPackage. If not `None`, "
                     "Least Cost Xmission is run with reinforcement path "
                     "costs. Features must be substations only, and the "
-                    "substation file must contain a 'ba_str' column that "
-                    "matches the BA ID in this file for the balancing area "
-                    "containing that substation. "))
+                    "substation file must contain a "
+                    "`region_identifier_column` column that matches the "
+                    "`region_identifier_column` ID in this file for the "
+                    "reinforcement region containing that substation. "))
+@click.option('--region_identifier_column', '-rid', type=STR, default=None,
+              help=("Name of column in reinforcement regions GeoPackage"
+                    "containing a unique identifier for each region."))
 @click.option('--capacity_class', '-cap', type=str, required=True,
               help=("Capacity class of transmission features to connect "
                     "supply curve points to"))
@@ -131,8 +135,11 @@ def from_config(ctx, config, verbose):
 @click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
               default=None, help=("List of sc_point_gids to connect to. If "
                                   "running `from_config`, this can also be a "
-                                  "path to a CSV file with a 'sc_point_gids' "
-                                  "column containing the GID's to run."))
+                                  "path to a CSV file with a 'sc_point_gid' "
+                                  "column containing the GID's to run. Note "
+                                  "the missing 's' in the column name - this "
+                                  "makes it seamless to run on a supply curve "
+                                  "output from reV"))
 @click.option('--nn_sinks', '-nn', type=int,
               show_default=True, default=2,
               help=("Number of nearest neighbor sinks to use for clipping "
@@ -144,9 +151,6 @@ def from_config(ctx, config, verbose):
               show_default=True, default=100,
               help=("Tranmission barrier multiplier, used when computing the "
                     "least cost tie-line path"))
-@click.option('--state_connections', '-acws', is_flag=True,
-              help='Flag to allow substations ot connect to any endpoints '
-                   'within their state. Default is not verbose.')
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -174,11 +178,11 @@ def from_config(ctx, config, verbose):
               help=("Simplify path geometries by a value before writing to "
                     "GeoPackage."))
 @click.pass_context
-def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
-          capacity_class, resolution, xmission_config, min_line_length,
-          sc_point_gids, nn_sinks, clipping_buffer, barrier_mult,
-          state_connections, max_workers, out_dir, log_dir, verbose,
-          save_paths, radius, expand_radius, simplify_geo):
+def local(ctx, cost_fpath, features_fpath, regions_fpath,
+          region_identifier_column, capacity_class, resolution,
+          xmission_config, min_line_length, sc_point_gids, nn_sinks,
+          clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
+          verbose, save_paths, radius, expand_radius, simplify_geo):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -203,10 +207,10 @@ def local(ctx, cost_fpath, features_fpath, balancing_areas_fpath,
               "simplify_geo": simplify_geo,
               "radius": radius,
               "expand_radius": expand_radius}
-    if balancing_areas_fpath is not None:
-        kwargs["allow_connections_within_states"] = state_connections
+    if regions_fpath is not None:
         least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
-                                             balancing_areas_fpath,
+                                             regions_fpath,
+                                             region_identifier_column,
                                              capacity_class, **kwargs)
     else:
         kwargs["nn_sinks"] = nn_sinks
@@ -345,6 +349,7 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
     """
     log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
     init_logger('reVX', log_level=log_level)
+    logger.info("Merging reinforcement costs into transmission costs...")
 
     costs = (gpd.read_file(cost_fpath)
              if "gpkg" in cost_fpath
@@ -353,11 +358,19 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
                if "gpkg" in reinforcement_cost_fpath
                else pd.read_csv(reinforcement_cost_fpath))
 
+    logger.info("Loaded spur-line costs for {:,} substations and "
+                "reinforcement costs for {:,} substations"
+                .format(len(costs["trans_gid"].unique()),
+                        len(r_costs["gid"].unique())))
+
     r_costs.index = r_costs.gid
+    costs = costs[costs["trans_gid"].isin(r_costs.gid)].copy()
 
-    logger.info("Merging reinforcement costs into transmission costs...")
+    logger.info("Found {:,} substations with both spur-line and "
+                "reinforcement costs"
+                .format(len(costs["trans_gid"].unique())))
 
-    r_cols = ["ba_str", "reinforcement_poi_lat", "reinforcement_poi_lon",
+    r_cols = ["reinforcement_poi_lat", "reinforcement_poi_lon",
               "reinforcement_dist_km", "reinforcement_cost_per_mw"]
     costs[r_cols] = r_costs.loc[costs["trans_gid"], r_cols].values
 
@@ -390,7 +403,8 @@ def get_node_cmd(config, gids):
             'local',
             '-cost {}'.format(SLURM.s(config.cost_fpath)),
             '-feats {}'.format(SLURM.s(config.features_fpath)),
-            '-ba {}'.format(SLURM.s(config.balancing_areas_fpath)),
+            '-regs {}'.format(SLURM.s(config.regions_fpath)),
+            '-rid {}'.format(SLURM.s(config.region_identifier_column)),
             '-cap {}'.format(SLURM.s(config.capacity_class)),
             '-res {}'.format(SLURM.s(config.resolution)),
             '-xcfg {}'.format(SLURM.s(config.xmission_config)),
@@ -404,8 +418,6 @@ def get_node_cmd(config, gids):
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
-    if config.allow_connections_within_states:
-        args.append('-acws')
     if config.save_paths:
         args.append('--save_paths')
     if config.radius:
@@ -440,7 +452,7 @@ def run_local(ctx, config):
     ctx.invoke(local,
                cost_fpath=config.cost_fpath,
                features_fpath=config.features_fpath,
-               balancing_areas_fpath=config.balancing_areas_fpath,
+               regions_fpath=config.regions_fpath,
                capacity_class=config.capacity_class,
                resolution=config.resolution,
                xmission_config=config.xmission_config,
@@ -449,7 +461,7 @@ def run_local(ctx, config):
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
                barrier_mult=config.barrier_mult,
-               state_connections=config.allow_connections_within_states,
+               region_identifier_column=config.region_identifier_column,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
                log_dir=config.log_directory,

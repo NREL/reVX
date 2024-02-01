@@ -8,6 +8,7 @@ import pandas as pd
 
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig
+from reV.utilities.exceptions import ConfigError
 
 logger = logging.getLogger(__name__)
 
@@ -180,11 +181,23 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self['features_fpath']
 
     @property
-    def balancing_areas_fpath(self):
+    def regions_fpath(self):
         """
-        Balancing areas config input
+        Reinforcement regions .gpkg
         """
-        return self.get('balancing_areas_fpath', None)
+        return self.get('regions_fpath', None)
+
+    @property
+    def region_identifier_column(self):
+        """
+        Name of column containing unique region identifier
+        """
+        rid_col = self.get("region_identifier_column", None)
+        if self.regions_fpath is not None and rid_col is None:
+            msg = ("`region_identifier_column` input cannot be `None` for "
+                   "reinforcement path computation.")
+            raise ConfigError(msg)
+        return rid_col
 
     @property
     def capacity_class(self):
@@ -236,14 +249,6 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('barrier_mult', self._default_barrier_mult)
 
     @property
-    def allow_connections_within_states(self):
-        """
-        Boolean flag to allow supple curve points to connect to
-        substations outside their BA but within their own state.
-        """
-        return self.get("allow_connections_within_states", False)
-
-    @property
     def sc_point_gids(self):
         """
         List of sc_point_gids to compute Least Cost Xmission for
@@ -257,7 +262,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
             elif (isinstance(sc_point_gids, str)
                   and sc_point_gids.endswith(".csv")):
                 points = pd.read_csv(sc_point_gids)
-                sc_point_gids = list(points.sc_point_gids.values)
+                sc_point_gids = list(points.sc_point_gid.values)
 
             if not isinstance(sc_point_gids, list):
                 raise ValueError('sc_point_gids must be a list or path to a '
@@ -359,12 +364,25 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self.get('barrier_mult', self._default_barrier_mult)
 
     @property
-    def allow_connections_within_states(self):
+    def is_reinforcement_run(self):
         """
-        Boolean flag to allow substations to connect to endpoints
-        outside their BA but within their own state.
+        Boolean flag indicating wether this run is for reinforcement
+        path computation
         """
-        return self.get("allow_connections_within_states", False)
+        return (self.network_nodes_fpath is not None
+                and self.transmission_lines_fpath is not None)
+
+    @property
+    def region_identifier_column(self):
+        """
+        Name of column containing unique region identifier
+        """
+        rid_col = self.get("region_identifier_column", None)
+        if self.is_reinforcement_run and rid_col is None:
+            msg = ("`region_identifier_column` input cannot be `None` for "
+                   "reinforcement path computation.")
+            raise ConfigError(msg)
+        return rid_col
 
     @property
     def save_paths(self):
