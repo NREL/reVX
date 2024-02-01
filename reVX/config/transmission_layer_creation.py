@@ -10,7 +10,6 @@ from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
 from reVX.least_cost_xmission.layers.friction_barrier_builder import \
     FBLayerConfig
 
-
 FrictionLayers = Dict[str, FBLayerConfig]
 """Mapping of friction layers.
 
@@ -24,7 +23,7 @@ Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
 file."""
 
 
-class WetCosts(BaseModel):
+class WetCosts(BaseModel, extra='forbid'):
     """ Config items required to generate wet costs """
     bins: List[BinConfig]
     """Bin config for depth based costs"""
@@ -36,12 +35,12 @@ class WetCosts(BaseModel):
     """Name for wet costs GeoTIFF"""
 
 
-class DryCosts(BaseModel):
+class DryCosts(BaseModel, extra='forbid'):
     """ Config items required to generate dry costs """
     # TODO
 
 
-class MergeFrictionBarriers(BaseModel):
+class MergeFrictionBarriers(BaseModel, extra='forbid'):
     """
     Combine friction and barriers and save to H5. Multiple all barrier values
     by a factor. The multiplier should be large enough that all barriers have
@@ -54,7 +53,7 @@ class MergeFrictionBarriers(BaseModel):
     a higher value than any possible friction."""
 
 
-class CombineCosts(BaseModel):
+class CombineCosts(BaseModel, extra='forbid'):
     """ Config items required to combine wet and dry costs """
     landfall_cost: float
     """Cost to transition from wet to dry transmission"""
@@ -80,21 +79,10 @@ class LayerCreationConfig(BaseModel):
 
     If it does not exist, it will be created from existing_h5_fpath."""
 
-    existing_h5_fpath: Optional[FilePath] = None
-    """Existing H5 to extra meta data, etc from.
-
-    Setting existing_h5_fpath will result in a new H5 at `h5_path` being
-    created if it doesn't already exist."""
-
     layer_dir: DirectoryPath = Path('.')
     """Directory to look for GeoTIFFs in, in addition to '.'"""
 
-    land_mask_vector_fname: Optional[str] = None
-    """Land mask vector file.
-
-    Setting this will cause new masks to be generated."""
-
-    masks_dir: Union[DirectoryPath, NewPath] = Path('.')
+    masks_dir: DirectoryPath = Path('.')
     """Optional path for mask GeoTIFFs."""
 
     friction_layers: Optional[FrictionLayers] = None
@@ -141,6 +129,3 @@ class LayerCreationConfig(BaseModel):
 
     save_tiff: bool = True
     """Save GeoTIFFS from step if ``True``"""
-
-    # TODO - uncomment this for prod
-    # model_config = ConfigDict(extra='forbid')

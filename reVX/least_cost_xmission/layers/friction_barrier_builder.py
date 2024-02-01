@@ -24,7 +24,7 @@ Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
 ALL = 'all'
 
 
-class Range(BaseModel):
+class Range(BaseModel, extra='forbid'):
     """
     Define a range of values in a raster to assign as a friction or barrrier.
     First value of min_max is lowest value of range (inclusive), second value
@@ -38,7 +38,7 @@ class Range(BaseModel):
     """Value to assign the range defined by `min_max`"""
 
 
-class Rasterize(BaseModel):
+class Rasterize(BaseModel, extra='forbid'):
     """
     Rasterize a vector layer and apply a value to it.
     """
@@ -52,7 +52,7 @@ class Rasterize(BaseModel):
     """Reproject vector to raster CRS if ``True``"""
 
 
-class FBLayerConfig(BaseModel):
+class FBLayerConfig(BaseModel, extra='forbid'):
     """
     Friction and barrier layers config model. 'extent' is mandatory. 'map',
     'range', and 'rasterize', and 'forced_inclusion' are exclusive, but one
