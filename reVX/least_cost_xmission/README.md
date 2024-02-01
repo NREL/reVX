@@ -25,7 +25,7 @@ Calculating transmission routing paths requires a series of layers. The *costs* 
 
 Note that the *friction* and *barriers* layers must be combined together, using a multiplier for barriers, before an analysis is ran.
 
-Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator`](transmission_layer_creator_cli.py) command-line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `LayerCreationConfig` class of [`transmission_layer_creation.py`](../config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options and can trigger a number of different operations depending on it's contents. These operations include:
+Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) command-line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `LayerCreationConfig` class of [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options and can trigger a number of different operations depending on it's contents. These operations include:
 
 * Creating a new H5 file to store layers in
 * Creating wet, dry, and landfall masks from a vector
@@ -63,7 +63,7 @@ The keys below represent layer creation actions. Mostly analyses will need all l
   * `merge_friction_and_barriers` - Combine friction and barriers and save as H5. This action must be performed if the friction or barriers have been modified.
 
 ## Layer Creation Config File Examples
-The below example JSON file shows all possible keys with example values. The formal config file definition is the `LayerCreationConfig` class in the [`transmission_layer_creation.py`](../config/transmission_layer_creation.py) file.
+The below example JSON file shows all possible keys with example values. The formal config file definition is the `LayerCreationConfig` class in the [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py) file.
 ```
 {
     "template_raster_fpath": "bathymetry.tif",
@@ -160,7 +160,7 @@ The below file can be used as a template to compute the costs to be used in a Le
   "log_level": "INFO"
 }
 ```
-See [`dry_cost_creator_cli.local`](dry_cost_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
+See [`dry_cost_creator_cli.local`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/dry_cost_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
 ```
 ISO_regions              Dataset {1, 33792, 48640}
 latitude                 Dataset {33792, 48640}
