@@ -1118,19 +1118,21 @@ class PlantProfileAggregation:
         return multi_list
 
     def plants_meta(self):
-        """
-        Create plants meta data from filled plants DataFrames:
+        """Create plants meta data from filled plants DataFrames:
+
             - Location (lat, lon)
             - final capacity (MW)
             - sc_gids
             - res_gids
             - res gid_counts
+
         Parameters
         ----------
         plants : list
             List of filled plant DataFrames
         out_fpath : str
             .csv path to save plant meta data too
+
         Returns
         -------
         plants_meta : pandas.DataFrame

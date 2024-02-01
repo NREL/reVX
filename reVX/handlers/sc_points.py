@@ -655,8 +655,7 @@ class SupplyCurvePoints:
         return self.mask[sc_gid]
 
     def get_capacity(self, sc_gid, capacity):
-        """
-        Extract capacity from given Supply Curve point
+        """ Extract capacity from given Supply Curve point
 
         Parameters
         ----------
@@ -670,11 +669,13 @@ class SupplyCurvePoints:
             gid_counts built at each resource gid. None if sc_gid doesnt have
             the available capacity. e.g. if 202 MW of built capacity is
             requested:
-                sc_gid                           1
-                res_gids          [258265, 258267]
-                gid_counts              [773.0, 7]
-                cf_means            [0.126, 0.124]
-                build_capacity                 202
+
+                sc_gid         |                1
+                res_gids       | [258265, 258267]
+                gid_counts     |       [773.0, 7]
+                cf_means       |   [0.126, 0.124]
+                build_capacity |              202
+
         """
         sc_point = self.sc_points[sc_gid]
         try:
