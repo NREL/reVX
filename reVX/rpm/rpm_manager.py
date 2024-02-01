@@ -22,9 +22,11 @@ logger = logging.getLogger(__name__)
 class RPMClusterManager:
     """
     RPM Cluster Manager:
-    - Extracts gids for all RPM regions
-    - Runs RPMClusters in parallel for all regions
-    - Save results to disk
+
+        - Extracts gids for all RPM regions
+        - Runs RPMClusters in parallel for all regions
+        - Save results to disk
+
     """
     def __init__(self, cf_fpath, rpm_meta, rpm_region_col=None,
                  max_workers=None):
@@ -35,11 +37,15 @@ class RPMClusterManager:
             Path to reV .h5 file containing desired capacity factor profiles
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            - Categorical regions of interest with column label "region"
-            - # of clusters per region with column label "clusters"
-            - A column that maps the RPM regions to the cf_fpath meta data:
-              "res_gid" (priorized) or "gen_gid". This can be omitted if the
-              rpm_region_col kwarg input is found in the cf_fpath meta
+
+                - Categorical regions of interest with column label
+                  "region"
+                - # of clusters per region with column label "clusters"
+                - A column that maps the RPM regions to the cf_fpath
+                  meta data: "res_gid" (priorized) or "gen_gid". This
+                  can be omitted if the `rpm_region_col` kwarg input is
+                  found in the cf_fpath meta
+
         rpm_region_col : str | Nonetype
             If not None, the meta-data field to map RPM regions to
         max_workers : int, optional
@@ -69,11 +75,14 @@ class RPMClusterManager:
         ----------
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            - Categorical regions of interest with column label "region"
-            - # of clusters per region with column label "clusters"
-            - A column that maps the RPM regions to the cf_fpath meta data:
-              "res_gid" (priorized) or "gen_gid". This can be omitted if the
-              rpm_region_col kwarg input is found in the cf_fpath meta
+
+                - Categorical regions of interest with column label
+                  "region"
+                - # of clusters per region with column label "clusters"
+                - A column that maps the RPM regions to the cf_fpath
+                  meta data: "res_gid" (priorized) or "gen_gid". This
+                  can be omitted if the `rpm_region_col` kwarg input is
+                  found in the cf_fpath meta
 
         Returns
         -------
@@ -102,11 +111,15 @@ class RPMClusterManager:
         ----------
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            - Categorical regions of interest with column label "region"
-            - # of clusters per region with column label "clusters"
-            - A column that maps the RPM regions to the cf_fpath meta data:
-              "res_gid" (priorized) or "gen_gid". This can be omitted if the
-              rpm_region_col kwarg input is found in the cf_fpath meta
+
+                - Categorical regions of interest with column label
+                  "region"
+                - # of clusters per region with column label "clusters"
+                - A column that maps the RPM regions to the cf_fpath
+                  meta data: "res_gid" (priorized) or "gen_gid". This
+                  can be omitted if the `rpm_region_col` kwarg input is
+                  found in the cf_fpath meta
+
         region_col : str | Nonetype
             If not None, the meta-data field to map RPM regions to
 
@@ -264,9 +277,10 @@ class RPMClusterManager:
                      rpm_region_col=None, max_workers=True, **cluster_kwargs):
         """
         RPM Cluster Manager:
-        - Extracts gen_gids for all RPM regions
-        - Runs RPMClusters in parallel for all regions
-        - Save results to disk
+
+            - Extracts gen_gids for all RPM regions
+            - Runs RPMClusters in parallel for all regions
+            - Save results to disk
 
         Parameters
         ----------
@@ -274,11 +288,15 @@ class RPMClusterManager:
             Path to reV .h5 file containing desired capacity factor profiles
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            - Categorical regions of interest with column label "region"
-            - # of clusters per region with column label "clusters"
-            - A column that maps the RPM regions to the cf_fpath meta data:
-              "res_gid" (priorized) or "gen_gid". This can be omitted if the
-              rpm_region_col kwarg input is found in the cf_fpath meta
+
+                - Categorical regions of interest with column label
+                  "region"
+                - # of clusters per region with column label "clusters"
+                - A column that maps the RPM regions to the cf_fpath
+                  meta data: "res_gid" (priorized) or "gen_gid". This
+                  can be omitted if the `rpm_region_col` kwarg input is
+                  found in the cf_fpath meta
+
         out_dir : str
             Directory to dump output files.
         job_tag : str | None
@@ -321,9 +339,10 @@ class RPMClusterManager:
                                   **cluster_kwargs):
         """
         RPM Cluster Manager:
-        - Extracts gen_gids for all RPM regions
-        - Runs RPMClusters in parallel for all regions
-        - Save results to disk
+
+            - Extracts gen_gids for all RPM regions
+            - Runs RPMClusters in parallel for all regions
+            - Save results to disk
 
         Parameters
         ----------
@@ -331,11 +350,15 @@ class RPMClusterManager:
             Path to reV .h5 file containing desired capacity factor profiles
         rpm_meta : pandas.DataFrame | str
             DataFrame or path to .csv or .json containing the RPM meta data:
-            - Categorical regions of interest with column label "region"
-            - # of clusters per region with column label "clusters"
-            - A column that maps the RPM regions to the cf_fpath meta data:
-              "res_gid" (priorized) or "gen_gid". This can be omitted if the
-              rpm_region_col kwarg input is found in the cf_fpath meta
+
+                - Categorical regions of interest with column label
+                  "region"
+                - # of clusters per region with column label "clusters"
+                - A column that maps the RPM regions to the cf_fpath
+                  meta data: "res_gid" (priorized) or "gen_gid". This
+                  can be omitted if the `rpm_region_col` kwarg input is
+                  found in the cf_fpath meta
+
         excl_fpath : str | None
             Filepath to exclusions data (must match the techmap grid).
             None will not apply exclusions.
