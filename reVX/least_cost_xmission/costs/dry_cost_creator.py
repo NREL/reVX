@@ -28,15 +28,18 @@ METERS_PER_MILE = 1609.344
 class XmissionCostCreator(ExclusionsConverter):
     """
     Class to create and save Transmission cost layers to a .h5 Exclusion file
-    - dist_to_coast (for valid sc_points)
-    - base_costs
-    - multiplier_*mw
-    - xmission_barrier
+
+        - dist_to_coast (for valid sc_points)
+        - base_costs
+        - multiplier_*mw
+        - xmission_barrier
+
     """
     PIXEL_SIZE_M = 90  # raster cell width/height in meters
 
     def __init__(self, h5_fpath, iso_regions_fpath, iso_lookup=None):
         """
+
         Parameters
         ----------
         h5_fpath : str
@@ -197,8 +200,8 @@ class XmissionCostCreator(ExclusionsConverter):
 
         logger.debug('Loading complete')
 
-        assert self._iso_regions.shape == land_use.shape == slope.shape, \
-            'All rasters must be the same shape'
+        same_shape = self._iso_regions.shape == land_use.shape == slope.shape
+        assert same_shape, 'All rasters must be the same shape'
 
         mults_arr = np.ones(self._iso_regions.shape, dtype=np.float32)
         regions_mask = np.full(mults_arr.shape, False, dtype=bool)

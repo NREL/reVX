@@ -6,8 +6,8 @@ import pytest
 
 import numpy as np
 
-from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig, \
-    WetCostCreator
+from reVX.least_cost_xmission.costs.wet_cost_creator import (BinConfig,
+                                                             WetCostCreator)
 
 
 def test_bin_config_sanity_checking():

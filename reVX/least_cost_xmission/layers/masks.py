@@ -10,35 +10,41 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.least_cost_xmission.layers.utils import rasterize
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
+)
 
 logger = logging.getLogger(__name__)
 
 # Mask array
 MaskArr = npt.NDArray[np.bool_]
 
-MASK_MSG = \
-    'No mask available. Please run create_masks() or load_masks() first.'
+MASK_MSG = ('No mask available. Please run create_masks() or load_masks() '
+            'first.')
 
 
 class Masks:
     """
     Create, load, and store masks to determine land and sea.
     """
-    LANDFALL_MASK_FNAME = 'landfall_mask.tif'  # One pixel width line at shore
-    RAW_LAND_MASK_FNAME = 'raw_land_mask.tif'  # Rasterized land vector
-    LAND_MASK_FNAME = 'land_mask.tif'  # = Raw mask - landfall mask
+    LANDFALL_MASK_FNAME = 'landfall_mask.tif'
+    """One pixel width line at shore"""
+    RAW_LAND_MASK_FNAME = 'raw_land_mask.tif'
+    """Rasterized land vector"""
+    LAND_MASK_FNAME = 'land_mask.tif'
+    """Raw mask - landfall mask"""
     OFFSHORE_MASK_FNAME = 'offshore_mask.tif'
+    """Offshore mask filename"""
 
     def __init__(self, io_handler: TransLayerIoHandler, masks_dir='.'):
         """
+
         Parameters
         ----------
-        io_handler
+        io_handler : TransLayerIoHandler
             Transmission IO handler
-        masks_dir, optional
-            Directory for storing/finding mask GeoTIFFs, by default '.'
+        masks_dir : path-like, optional
+            Directory for storing/finding mask GeoTIFFs. By default, ``'.'``.
         """
         self._io_handler = io_handler
         self._masks_dir = masks_dir
@@ -52,28 +58,28 @@ class Masks:
 
     @property
     def landfall_mask(self) -> MaskArr:
-        """ Landfalls cells mask, only one cell wide """
+        """MaskArr: Landfalls cells mask, only one cell wide """
         if self._landfall_mask is None:
             raise ValueError(MASK_MSG)
         return self._landfall_mask
 
     @property
     def wet_mask(self) -> MaskArr:
-        """ Wet cells mask, does not include landfall cells """
+        """MaskArr: Wet cells mask, does not include landfall cells """
         if self._wet_mask is None:
             raise ValueError(MASK_MSG)
         return self._wet_mask
 
     @property
     def dry_mask(self) -> MaskArr:
-        """ Dry cells mask, does not include landfall cells """
+        """MaskArr: Dry cells mask, does not include landfall cells """
         if self._dry_mask is None:
             raise ValueError(MASK_MSG)
         return self._dry_mask
 
     @property
     def dry_plus_mask(self) -> MaskArr:
-        """ Dry cells mask, includes landfall cells """
+        """MaskArr: Dry cells mask, includes landfall cells """
         if self._dry_plus_mask is None:
             self._dry_plus_mask = np.logical_or(self.dry_mask,
                                                 self.landfall_mask)
@@ -81,7 +87,7 @@ class Masks:
 
     @property
     def wet_plus_mask(self) -> MaskArr:
-        """ Wet cells mask, includes landfall cells """
+        """MaskArr: Wet cells mask, includes landfall cells """
         if self._wet_plus_mask is None:
             self._wet_plus_mask = np.logical_or(self.wet_mask,
                                                 self.landfall_mask)
@@ -95,12 +101,13 @@ class Masks:
 
         Parameters
         ----------
-        mask_shp_f
+        mask_shp_f : str
             Full path to land polygon gpgk or shp file
-        save_tiff
-            Save mask as tiff if true
-        reproject_vector
+        save_tiff : bool, optional
+            Save mask as tiff if true. By default, ``True``.
+        reproject_vector : bool, optional
             Reproject CRS of vector to match template raster if True.
+            By default, ``True``.
         """
         logger.debug('Creating masks from %s', land_mask_shp_f)
 

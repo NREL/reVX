@@ -7,11 +7,12 @@ from typing import List
 import numpy as np
 import numpy.typing as npt
 from pydantic import BaseModel
-from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE, \
-    WET_COSTS_TIFF
+from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
+                                                       WET_COSTS_TIFF)
 
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class WetCostCreator:
         """
         Parameters
         ----------
-        io_handler
+        io_handler : TransLayerIoHandler
             Transmission layer IO handler
         """
         self._io_handler = io_handler
@@ -53,12 +54,12 @@ class WetCostCreator:
 
         Parameters
         ----------
-        bathy_tiff
+        bathy_tiff : path-like
             Bathymetric depth GeoTIFF. Values underwater should be negative.
-        bins
+        bins : list
             List of bins to use for assigning depth based costs.
-        out_filename
-            Output raster with binned costs.
+        out_filename : str, optional
+            Output raster with binned costs. By default, ``"wet_costs.tif"``.
         """
         self.assign_cost_by_bins(bathy_tiff, bins, out_filename)
 
@@ -93,13 +94,14 @@ class WetCostCreator:
 
         Parameters
         ----------
-        input
+        input : array-like
             Input raster to assign values based upon.
-        bins
+        bins : list
             List of bins to use for assigning costs.
 
         Returns
         -------
+        array-like
             Binned costs
         """
         for bin in bins:

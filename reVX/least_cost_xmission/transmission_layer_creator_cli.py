@@ -12,27 +12,29 @@ from pydantic import ValidationError
 from rex.utilities.loggers import init_mult
 
 from reVX import __version__
-from reVX.config.transmission_layer_creation import LayerCreationConfig, \
-    MergeFrictionBarriers
-from reVX.least_cost_xmission.config.constants import BARRIER_H5_LAYER_NAME, \
-    BARRIER_TIFF, FRICTION_TIFF, RAW_BARRIER_TIFF
+from reVX.config.transmission_layer_creation import (LayerCreationConfig,
+                                                     MergeFrictionBarriers)
+from reVX.least_cost_xmission.config.constants import (BARRIER_H5_LAYER_NAME,
+                                                       BARRIER_TIFF,
+                                                       FRICTION_TIFF,
+                                                       RAW_BARRIER_TIFF)
 
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.costs.cost_combiner import CostCombiner
 from reVX.least_cost_xmission.costs.wet_cost_creator import WetCostCreator
-from reVX.least_cost_xmission.layers.friction_barrier_builder import \
+from reVX.least_cost_xmission.layers.friction_barrier_builder import (
     FrictionBarrierBuilder
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+)
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
+)
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
 from reVX.utilities.exclusions import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
 
-CONFIG_ACTIONS = [
-    'friction_layers', 'barrier_layers', 'wet_costs', 'dry_costs',
-    'combine_costs', 'merge_friction_and_barriers',
-]
+CONFIG_ACTIONS = ['friction_layers', 'barrier_layers', 'wet_costs',
+                  'dry_costs', 'combine_costs', 'merge_friction_and_barriers']
 
 
 @click.group()
@@ -60,8 +62,8 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
     class ForbidExtraConfig(LayerCreationConfig, extra='forbid'):
         """ Throw error if unknown keys are found in JSON """
 
-    ConfigClass = LayerCreationConfig if ignore_unknown_keys else \
-        ForbidExtraConfig
+    ConfigClass = (LayerCreationConfig
+                   if ignore_unknown_keys else ForbidExtraConfig)
 
     with open(config_fpath, 'r') as inf:
         raw_json = inf.read()
@@ -73,9 +75,8 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
 
     if not any(map(lambda key: config.model_dump()[key] is not None,
                    CONFIG_ACTIONS)):
-        logger.error(
-            f'At least one of {CONFIG_ACTIONS} must be in the config file'
-        )
+        logger.error(f'At least one of {CONFIG_ACTIONS} must be in the '
+                     'config file')
         sys.exit(1)
 
     # Done with guard clauses
@@ -108,10 +109,9 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
 
     if config.dry_costs is not None:
         # TODO - implement this
-        raise NotImplementedError(
-            'The "dry_costs" option is not supported yet. Use the legacy CLI'
-            'command in dry_cost_creator_cli.py.'
-        )
+        raise NotImplementedError('The "dry_costs" option is not supported '
+                                  'yet. Use the legacy CLI command in '
+                                  'dry_cost_creator_cli.py.')
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
@@ -203,10 +203,8 @@ def create_h5(template_raster: str, existing_h5_file: str,
     """
     Create a new H5 file to store layers in.
     """
-    logger.info(
-        f'Creating new H5 {new_h5_file} with meta data from '
-        f'{existing_h5_file}'
-    )
+    logger.info(f'Creating new H5 {new_h5_file} with meta data from '
+                f'{existing_h5_file}')
     io_handler = TransLayerIoHandler(template_raster)
     io_handler.create_new_h5(existing_h5_file, new_h5_file)
 
@@ -219,25 +217,22 @@ def _combine_friction_and_barriers(config: MergeFrictionBarriers,
 
     Parameters
     ----------
-    config
+    config : MergeFrictionBarriers
         Config object
-    io_handler
+    io_handler : TransLayerIoHandler
         Transmission IO handler
-    save_tiff
-        Save combined barriers to GeoTIFF if True
+    save_tiff : bool, optional
+        Save combined barriers to GeoTIFF if True. By default, ``True``.
     """
     if not Path(FRICTION_TIFF).exists():
-        logger.error(
-            f'The friction GeoTIFF ({FRICTION_TIFF}) was not found. Please '
-            'create it using the `friction_layers` key in the config file.'
-        )
+        logger.error(f'The friction GeoTIFF ({FRICTION_TIFF}) was not found. '
+                     'Please create it using the `friction_layers` key in the '
+                     'config file.')
 
     if not Path(RAW_BARRIER_TIFF).exists():
-        logger.error(
-            f'The raw barriers GeoTIFF ({RAW_BARRIER_TIFF}) was not found. '
-            'Please create it using the `barrier_layers` key in the config '
-            'file.'
-        )
+        logger.error(f'The raw barriers GeoTIFF ({RAW_BARRIER_TIFF}) was not '
+                     'found. Please create it using the `barrier_layers` key '
+                     'in the config file.')
 
     logger.info('Loading friction and raw barriers.')
     friction = io_handler.load_tiff(FRICTION_TIFF)
