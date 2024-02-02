@@ -125,8 +125,6 @@ class CostCombiner:
         combined = np.zeros(self._io_handler.shape, dtype=DEFAULT_DTYPE)
         combined[self._masks.wet_mask] = wet_costs[self._masks.wet_mask]
         combined[self._masks.dry_mask] = dry_costs[self._masks.dry_mask]
-
-        # TODO - include half of wet and half of dry cost in landfall cost
         combined[self._masks.landfall_mask] = landfall_cost
 
         if save_tiff:
