@@ -235,13 +235,12 @@ class TransLayerIoHandler:
         if not reproject:
             if data.shape != self.shape:
                 raise ValueError(f'Shape of {full_fname} ({data.shape}) '
-                                'does not match template raster shape '
-                                f'({self.shape}).')
+                                 'does not match template raster shape '
+                                 f'({self.shape}).')
             if transform != self.profile['transform']:
                 raise ValueError(f'Transform of {full_fname}:\n{transform}\n'
                                  'does not match template raster shape:\n'
-                                 f'{self.profile["transform"]}'
-                )
+                                 f'{self.profile["transform"]}')
             if crs != self.profile['crs']:
                 raise ValueError(f'CRS of {full_fname}:\n{crs}\ndoes not '
                                  'match template raster shape:\n'

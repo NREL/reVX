@@ -7,7 +7,7 @@ from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
-from pydantic import BaseModel
+from reVX.config.transmission_layer_creation import RangeConfig
 from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
                                                        WET_COSTS_TIFF)
 
@@ -16,22 +16,6 @@ from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
 )
 
 logger = logging.getLogger(__name__)
-
-
-class BinConfig(BaseModel, extra='forbid'):
-    """
-    Config for assigning cost based on bins. Cells with values >= than 'min'
-    and < 'max' will be assigned 'cost'. One or both of 'min' and 'max' can be
-    specified.
-    """
-    min: float = float('-inf')
-    """Minimum value to get a cost assigned (inclusive)"""
-
-    max: float = float('inf')
-    """Maximum value to get a cost assigned (exclusive)"""
-
-    cost: float
-    """Cost value to assign to the range defined by `min` and `max`."""
 
 
 class WetCostCreator:
@@ -47,7 +31,7 @@ class WetCostCreator:
         """
         self._io_handler = io_handler
 
-    def build_wet_costs(self, bathy_tiff: str, bins: List[BinConfig],
+    def build_wet_costs(self, bathy_tiff: str, bins: List[RangeConfig],
                         out_filename: str = WET_COSTS_TIFF):
         """
         Build complete offshore costs. This is currently very simple. In the
@@ -64,7 +48,7 @@ class WetCostCreator:
         """
         self.assign_cost_by_bins(bathy_tiff, bins, out_filename)
 
-    def assign_cost_by_bins(self, in_filename: str, bins: List[BinConfig],
+    def assign_cost_by_bins(self, in_filename: str, bins: List[RangeConfig],
                             out_filename: str):
         """
         Assign costs based on binned raster values. Cells with values >= than
@@ -87,7 +71,7 @@ class WetCostCreator:
 
     @staticmethod
     def _assign_values_by_bins(input: npt.NDArray,  # noqa: C901
-                               bins: List[BinConfig]) -> npt.NDArray:
+                               bins: List[RangeConfig]) -> npt.NDArray:
         """
         Assign values based on binned raster values. Cells with values >= than
         'min' and < 'max' will be assigned 'cost'. One or both of 'min' and
@@ -145,6 +129,6 @@ class WetCostCreator:
         for i, bin in enumerate(bins):
             logger.debug(f'Calculating costs for bin {i+1}/{len(bins)}: {bin}')
             mask = np.logical_and(input >= bin.min, input < bin.max)
-            output = np.where(mask, bin.cost, output)
+            output = np.where(mask, bin.value, output)
 
         return output

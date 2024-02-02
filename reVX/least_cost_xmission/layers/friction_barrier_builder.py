@@ -3,11 +3,11 @@ Build friction or barrier layers from raster and vector data.
 """
 import logging
 from pathlib import Path
-from typing import Literal, Dict, Optional, Tuple, List
+from typing import Literal, Dict
 
 import numpy as np
 import numpy.typing as npt
-from pydantic import BaseModel
+from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
 
 from reVX.least_cost_xmission.layers.utils import rasterize
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
@@ -20,68 +20,7 @@ from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
 
 logger = logging.getLogger(__name__)
 
-# Terms for specifying masks. 'wet+' and 'dry+' indicated 'wet' + 'landfall'
-# and 'dry' + 'landfall', respectively.
-Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
 ALL = 'all'
-
-
-class Range(BaseModel, extra='forbid'):
-    """
-    Define a range of values in a raster to assign as a friction or barrier.
-    First value of min_max is lowest value of range (inclusive), second value
-    of min_max is highest value in range (exclusive). `value` is the value used
-    as friction barrier for any cells in the raster that fall within the range.
-    """
-    min_max: Tuple[float, float]
-    """Range defining the [Inclusive, Exclusive] min/max to assign a value."""
-
-    value: float
-    """Value to assign the range defined by `min_max`"""
-
-
-class Rasterize(BaseModel, extra='forbid'):
-    """
-    Rasterize a vector layer and apply a value to it.
-    """
-    value: float
-    """Value to burn in to raster"""
-
-    buffer: Optional[float] = None
-    """Value to buffer by (can be negative)"""
-
-    reproject: bool = True
-    """Reproject vector to raster CRS if ``True``"""
-
-
-class FBLayerConfig(BaseModel, extra='forbid'):
-    """
-    Friction and barrier layers config model. 'extent' is mandatory. 'map',
-    'range', and 'rasterize', and 'forced_inclusion' are exclusive, but one
-    must be specified.  Example configs can be seen in
-    test_xmission_barrier_friction_builder.py in the tests directory.
-    """
-    extent: Extents
-    """Extent to apply map or range to"""
-
-    map: Optional[Dict[float, float]] = None
-    """Values in raster (keys) and values to use for barrier/friction"""
-
-    range: Optional[List[Range]] = None
-    """Ranges of raster values.
-
-    This input can be one or more ranges of raster values to apply to
-    barrier/friction. The value of overlapping ranges are added together."""
-
-    rasterize: Optional[Rasterize] = None
-    """Rasterize a vector and use as a friction or barrier layer"""
-
-    forced_inclusion: bool = False
-    """Force inclusion.
-
-    If `forced_inclusion` is ``True``, any cells with a value > 0 will
-    force the final value of corresponding cells to 0. Multiple forced
-    inclusions are allowed."""
 
 
 class FrictionBarrierBuilder:
@@ -173,7 +112,7 @@ class FrictionBarrierBuilder:
                 mask = self._get_mask(config.extent)
 
             for range in config.range:
-                min, max = range.min_max
+                min, max = range.min, range.max
                 temp = np.where(np.logical_and(data >= min, data < max),
                                 range.value, 0)
 

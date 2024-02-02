@@ -6,10 +6,11 @@ import os
 import pytest
 
 import numpy as np
+from reVX.config.transmission_layer_creation import FBLayerConfig, RangeConfig
 
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.layers.friction_barrier_builder import (
-    FBLayerConfig, Range, FrictionBarrierBuilder
+    FrictionBarrierBuilder
 )
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
@@ -64,7 +65,7 @@ def test_range():
                      [7, 8, 9]])
     config = FBLayerConfig(
         extent='wet+',
-        range=[Range(min_max=[1, 5], value=4)]
+        range=[RangeConfig(min=1, max=5, value=4)]
     )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[4, 4, 0],
@@ -73,7 +74,7 @@ def test_range():
 
     config = FBLayerConfig(
         extent='dry+',
-        range=[Range(min_max=[5, 9], value=5)]
+        range=[RangeConfig(min=5, max=9, value=5)]
     )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[0, 0, 0],
@@ -82,7 +83,7 @@ def test_range():
 
     config = FBLayerConfig(
         extent='all',
-        range=[Range(min_max=[2, 9], value=5)]
+        range=[RangeConfig(min=2, max=9, value=5)]
     )
     result = builder._process_raster_layer(data, config)
     assert (result == np.array([[0, 5, 5],
@@ -98,8 +99,8 @@ def test_complex_ranges():
     config = FBLayerConfig(
         extent='wet+',
         range=[
-            Range(min_max=[1, 5], value=4),
-            Range(min_max=[4, 10], value=10)
+            RangeConfig(min=1, max=5, value=4),
+            RangeConfig(min=4, max=10, value=10)
         ]
     )
     result = builder._process_raster_layer(data, config)
@@ -110,8 +111,8 @@ def test_complex_ranges():
     config = FBLayerConfig(
         extent='all',
         range=[
-            Range(min_max=[1, 6], value=5),
-            Range(min_max=[4, 9], value=1)
+            RangeConfig(min=1, max=6, value=5),
+            RangeConfig(min=4, max=9, value=1)
         ]
     )
     result = builder._process_raster_layer(data, config)

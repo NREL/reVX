@@ -8,10 +8,11 @@ from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
+from reVX.config.transmission_layer_creation import FBLayerConfig
 
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.layers.friction_barrier_builder import (
-    FBLayerConfig, FrictionBarrierBuilder
+    FrictionBarrierBuilder
 )
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler

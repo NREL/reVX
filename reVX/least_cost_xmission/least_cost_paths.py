@@ -213,6 +213,7 @@ class LeastCostPaths:
                    "domain and will be dropped:\n{}"
                    .format(features.loc[~mask]))
             logger.warning(msg)
+            warn(msg)
             row = row[mask]
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)

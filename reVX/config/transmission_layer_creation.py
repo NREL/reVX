@@ -2,31 +2,79 @@
 Definition of friction, barrier, and costs processing JSON config file
 """
 from pathlib import Path
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Literal
 
 from pydantic import BaseModel, DirectoryPath, FilePath
 
-from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
-from reVX.least_cost_xmission.layers.friction_barrier_builder import (
-    FBLayerConfig
-)
 
-FrictionLayers = Dict[str, FBLayerConfig]
-"""Mapping of friction layers.
+# Terms for specifying masks. 'wet+' and 'dry+' indicated 'wet' + 'landfall'
+# and 'dry' + 'landfall', respectively.
+Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
 
-Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
-file."""
 
-BarrierLayers = Dict[str, FBLayerConfig]
-"""Mapping of barrier layers.
+class RangeConfig(BaseModel, extra='forbid'):
+    """
+    Config for defining a range and value to assign to cells matching that
+    range. Cells with values >= than 'min' and < 'max' will be assigned
+    'value'. One or both of 'min' and 'max' can be specified.
+    """
+    min: float = float('-inf')
+    """Minimum value to get a cost assigned (inclusive)"""
 
-Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
-file."""
+    max: float = float('inf')
+    """Maximum value to get a cost assigned (exclusive)"""
+
+    value: float
+    """Value to assign to the range defined by `min` and `max`."""
+
+
+class Rasterize(BaseModel, extra='forbid'):
+    """
+    Rasterize a vector layer and apply a value to it.
+    """
+    value: float
+    """Value to burn in to raster"""
+
+    buffer: Optional[float] = None
+    """Value to buffer by (can be negative)"""
+
+    reproject: bool = True
+    """Reproject vector to raster CRS if ``True``"""
+
+
+class FBLayerConfig(BaseModel, extra='forbid'):
+    """
+    Friction and barrier layers config model. 'extent' is mandatory. 'map',
+    'range', and 'rasterize', and 'forced_inclusion' are exclusive, but one
+    must be specified.  Example configs can be seen in
+    test_xmission_barrier_friction_builder.py in the tests directory.
+    """
+    extent: Extents
+    """Extent to apply map or range to"""
+
+    map: Optional[Dict[float, float]] = None
+    """Values in raster (keys) and values to use for barrier/friction"""
+
+    range: Optional[List[RangeConfig]] = None
+    """Ranges of raster values.
+
+    This input can be one or more ranges of raster values to apply to
+    barrier/friction. The value of overlapping ranges are added together."""
+
+    rasterize: Optional[Rasterize] = None
+    """Rasterize a vector and use as a friction or barrier layer"""
+
+    forced_inclusion: bool = False
+    """Force inclusion.
+
+    If `forced_inclusion` is ``True``, any cells with a value > 0 will
+    force the final value of corresponding cells to 0. Multiple forced
+    inclusions are allowed."""
 
 
 class WetCosts(BaseModel, extra='forbid'):
     """ Config items required to generate wet costs """
-    bins: List[BinConfig]
+    bins: List[RangeConfig]
     """Bin config for depth based costs"""
 
     bathy_tiff: FilePath
@@ -65,6 +113,19 @@ class CombineCosts(BaseModel, extra='forbid'):
 
     dry_costs_layer: str
     """Name of dry costs in H5 file"""
+
+
+FrictionLayers = Dict[str, FBLayerConfig]
+"""Mapping of friction layers.
+
+Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
+file."""
+
+BarrierLayers = Dict[str, FBLayerConfig]
+"""Mapping of barrier layers.
+
+Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
+file."""
 
 
 class LayerCreationConfig(BaseModel):
