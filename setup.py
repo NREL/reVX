@@ -85,8 +85,8 @@ setup(
                             ("offshore-layer-creator=reVX.least_cost_xmission."
                              "offshore_layer_creator_cli:main"),
                             ("transmission-layer-creator=reVX."
-                            "least_cost_xmission."
-                            "transmission_layer_creator_cli:main"),
+                             "least_cost_xmission."
+                             "transmission_layer_creator_cli:main"),
                             ],
     },
     include_package_data=True,
