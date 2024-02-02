@@ -14,7 +14,7 @@ Extents = Literal['all', 'wet', 'wet+', 'landfall', 'dry+', 'dry']
 
 class RangeConfig(BaseModel, extra='forbid'):
     """
-    Config for defining a range and value to assign to cells matching that
+    Config for defining a range and a value to assign to cells matching that
     range. Cells with values >= than 'min' and < 'max' will be assigned
     'value'. One or both of 'min' and 'max' can be specified.
     """
@@ -75,7 +75,7 @@ class FBLayerConfig(BaseModel, extra='forbid'):
 class WetCosts(BaseModel, extra='forbid'):
     """ Config items required to generate wet costs """
     bins: List[RangeConfig]
-    """Bin config for depth based costs"""
+    """Bins (ranges) for determining depth based costs"""
 
     bathy_tiff: FilePath
     """File name of bathymetric depth GeoTIFF"""

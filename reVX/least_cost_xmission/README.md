@@ -90,12 +90,12 @@ The below example JSON file shows all possible keys with example values. The for
     "wet_costs": {
         "bathy_tiff": "bathymetry.tif",
         "bins": [
-            {              "max": -2500, "cost": 80526},
-            {"min": -2500, "max": -2000, "cost": 73205},
-            {"min": -2000, "max": -1500, "cost": 66550},
-            {"min": -1500, "max": -1000, "cost": 60500},
-            {"min": -1000, "max": -500,  "cost": 55000},
-            {"min": -500,                "cost": 50000}
+            {              "max": -2500, "value": 80526},
+            {"min": -2500, "max": -2000, "value": 73205},
+            {"min": -2000, "max": -1500, "value": 66550},
+            {"min": -1500, "max": -1000, "value": 60500},
+            {"min": -1000, "max": -500,  "value": 55000},
+            {"min": -500,                "value": 50000}
         ]
     },
 
@@ -109,10 +109,7 @@ The below example JSON file shows all possible keys with example values. The for
         },
         "west_coast_slope.tif": {
             "extent": "wet",
-            "range": [{
-                "min_max": [15, 1e99],
-                "value": 101
-            }]
+            "range": [{ "min": 15, "value": 101 }]
         },
         "/projects/rev/data/conus/rasters/swca_cultural_resources_risk.tif": {
             "extent": "all",
@@ -123,10 +120,7 @@ The below example JSON file shows all possible keys with example values. The for
     "friction_layers": {
         "west_coast_slope.tif": {
             "extent": "wet",
-            "range": [{
-                "min_max": [10, 15],
-                "value": 5
-            }]
+            "range": [{ "min": 10, "max": 15, "value": 5 }]
         },
         "mpa.tif": { "map": {"2": 5, "3": 7}, "extent": "all" },
     },
