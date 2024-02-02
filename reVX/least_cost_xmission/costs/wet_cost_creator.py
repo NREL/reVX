@@ -3,6 +3,7 @@ Create wet (offshore) costs and save to GeoTIFF.
 """
 import logging
 from typing import List
+from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
@@ -110,6 +111,7 @@ class WetCostCreator:
                 msg = ('Bin covers all possible values, did you forget to set '
                        f'min or max? {bin}')
                 logger.warning(msg)
+                warn(msg)
 
         # Warn user of potential oversights in bin config. Look for gaps
         # between bin mins and maxes and overlapping bins.
@@ -121,14 +123,17 @@ class WetCostCreator:
                 msg = (f'Overlapping bins detected between bin {last_bin} '
                        f'and {bin}')
                 logger.warning(msg)
+                warn(msg)
             if bin.min > last_max:
                 last_bin = sorted_bins[i - 1] if i > 0 else '-infinity'
                 msg = f'Gap detected between bin {last_bin} and {bin}'
                 logger.warning(msg)
+                warn(msg)
             if i + 1 == len(sorted_bins):
                 if bin.max < float('inf'):
                     msg = f'Gap detected between bin {bin} and infinity'
                     logger.warning(msg)
+                    warn(msg)
 
             last_max = bin.max
 

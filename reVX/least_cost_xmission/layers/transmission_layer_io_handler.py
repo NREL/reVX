@@ -5,6 +5,7 @@ import os
 import json
 import logging
 from copy import deepcopy
+from pathlib import Path
 import numpy as np
 import numpy.typing as npt
 from typing import TypedDict, Literal, Tuple, Optional
@@ -81,8 +82,8 @@ class TransLayerIoHandler:
             Overwrite existing h5 file if True
 
         """
-        if os.path.exists(new_h5) and not overwrite:
-            raise AttributeError('File {} exits'.format(new_h5))
+        if (not Path(new_h5).exists()) and not overwrite:
+            raise FileExistsError('File {} exits'.format(new_h5))
 
         with rex.Resource(ex_h5) as res:
             lats = res['latitude']
@@ -107,8 +108,8 @@ class TransLayerIoHandler:
         h5_file
             Path to file
         """
-        if not os.path.exists(h5_file):
-            raise IOError(f'H5 file {h5_file} does not exist')
+        if not Path(h5_file).exists():
+            raise FileNotFoundError(f'H5 file {h5_file} does not exist')
 
         self._h5_file = h5_file
 
@@ -223,10 +224,10 @@ class TransLayerIoHandler:
             Raster data
         """
         full_fname = fname
-        if not os.path.exists(full_fname):
+        if not Path(full_fname).exists():
             full_fname = os.path.join(self._layer_dir, fname)
-            if not os.path.exists(full_fname):
-                raise IOError(f'Unable to find file {fname}')
+            if not Path(full_fname).exists():
+                raise FileNotFoundError(f'Unable to find file {fname}')
 
         with rio.open(full_fname) as ras:
             data: npt.NDArray = ras.read(band)

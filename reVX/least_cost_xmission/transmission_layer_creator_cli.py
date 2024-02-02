@@ -102,9 +102,8 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
         if wc.wet_costs_tiff is None:
             wcc.build_wet_costs(str(wc.bathy_tiff), wc.bins)
         else:
-            wcc.build_wet_costs(
-                str(wc.bathy_tiff), wc.bins, str(wc.wet_costs_tiff)
-            )
+            wcc.build_wet_costs(str(wc.bathy_tiff), wc.bins,
+                                str(wc.wet_costs_tiff))
 
     if config.dry_costs is not None:
         # TODO - implement this
@@ -183,9 +182,8 @@ def FUTURE_create_h5(template_raster: str, h5_file: str):
     """
     Create a new H5 file to store layers in.
     """
-    logger.info(
-        f'Using raster {template_raster} to create new H5 file {h5_file}'
-    )
+    logger.info(f'Using raster {template_raster} to create new H5 file '
+                '{h5_file}')
     ExclusionsConverter._init_h5(h5_file, template_raster)
 
 
@@ -203,10 +201,8 @@ def create_h5(template_raster: str, existing_h5_file: str,
     """
     Create a new H5 file to store layers in.
     """
-    logger.info(
-        f'Creating new H5 {new_h5_file} with meta data from '
-        f'{existing_h5_file}'
-    )
+    logger.info(f'Creating new H5 {new_h5_file} with meta data from '
+                f'{existing_h5_file}')
     io_handler = TransLayerIoHandler(template_raster)
     io_handler.create_new_h5(existing_h5_file, new_h5_file)
 
@@ -227,17 +223,16 @@ def _combine_friction_and_barriers(config: MergeFrictionBarriers,
         Save combined barriers to GeoTIFF if True
     """
     if not Path(FRICTION_TIFF).exists():
-        logger.error(
-            f'The friction GeoTIFF ({FRICTION_TIFF}) was not found. Please '
-            'create it using the `friction_layers` key in the config file.'
-        )
+        logger.error(f'The friction GeoTIFF ({FRICTION_TIFF}) was not found. '
+                     'Please create it using the `friction_layers` key in '
+                     'the config file.')
+        sys.exit(1)
 
     if not Path(RAW_BARRIER_TIFF).exists():
-        logger.error(
-            f'The raw barriers GeoTIFF ({RAW_BARRIER_TIFF}) was not found. '
-            'Please create it using the `barrier_layers` key in the config '
-            'file.'
-        )
+        logger.error(f'The raw barriers GeoTIFF ({RAW_BARRIER_TIFF}) was not '
+                     'found. Please create it using the `barrier_layers` key '
+                     'in the config file.')
+        sys.exit(1)
 
     logger.info('Loading friction and raw barriers.')
     friction = io_handler.load_tiff(FRICTION_TIFF)

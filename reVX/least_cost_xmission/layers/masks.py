@@ -129,10 +129,10 @@ class Masks:
 
         if save_tiff:
             logger.debug('Saving masks to GeoTIFF')
-            self.__save_mask(raw_land_mask, self.RAW_LAND_MASK_FNAME)
-            self.__save_mask(self.wet_mask, self.OFFSHORE_MASK_FNAME)
-            self.__save_mask(self.dry_mask, self.LAND_MASK_FNAME)
-            self.__save_mask(self.landfall_mask, self.LANDFALL_MASK_FNAME)
+            self._save_mask(raw_land_mask, self.RAW_LAND_MASK_FNAME)
+            self._save_mask(self.wet_mask, self.OFFSHORE_MASK_FNAME)
+            self._save_mask(self.dry_mask, self.LAND_MASK_FNAME)
+            self._save_mask(self.landfall_mask, self.LANDFALL_MASK_FNAME)
             logger.debug('Completed saving all masks')
 
     def load_masks(self):
@@ -142,12 +142,12 @@ class Masks:
         current directory.
         """
         logger.debug('Loading masks')
-        self._dry_mask = self.__load_mask(self.LAND_MASK_FNAME)
-        self._wet_mask = self.__load_mask(self.OFFSHORE_MASK_FNAME)
-        self._landfall_mask = self.__load_mask(self.LANDFALL_MASK_FNAME)
+        self._dry_mask = self._load_mask(self.LAND_MASK_FNAME)
+        self._wet_mask = self._load_mask(self.OFFSHORE_MASK_FNAME)
+        self._landfall_mask = self._load_mask(self.LANDFALL_MASK_FNAME)
         logger.debug('Successfully loaded wet, dry, and landfall masks')
 
-    def __save_mask(self, data: npt.NDArray, fname: str):
+    def _save_mask(self, data: npt.NDArray, fname: str):
         """
         Save mask to GeoTiff
 
@@ -161,7 +161,7 @@ class Masks:
         full_fname = os.path.join(self._masks_dir, fname)
         self._io_handler.save_tiff(data, full_fname)
 
-    def __load_mask(self, fname: str) -> npt.NDArray[np.bool_]:
+    def _load_mask(self, fname: str) -> npt.NDArray[np.bool_]:
         """
         Load mask from GeoTIFF with sanity checking
 
@@ -177,12 +177,22 @@ class Masks:
         full_fname = os.path.join(self._masks_dir, fname)
 
         if not Path(full_fname).exists():
-            raise IOError(f'Mask file at {full_fname} not found. Please '
-                          'create masks first.')
+            raise FileNotFoundError(f'Mask file at {full_fname} not found. '
+                                    'Please create masks first.')
 
         raster = self._io_handler.load_tiff(full_fname)
 
-        assert raster.max() == 1
-        assert raster.min() == 0
+        if raster.max() != 1:
+            msg = (f'Maximum value in mask file {fname} is {raster.max()} but'
+                   ' should be 1. Mask file appears to be corrupt. Please '
+                   'recreate it.')
+            logger.error(msg)
+            raise ValueError(msg)
+        if raster.min() != 0:
+            msg = (f'Minimum value in mask file {fname} is {raster.min()} but'
+                   ' should be 0. Mask file appears to be corrupt. Please '
+                   'recreate it.')
+            logger.error(msg)
+            raise ValueError(msg)
 
         return raster == 1

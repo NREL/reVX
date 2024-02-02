@@ -26,7 +26,7 @@ ALL = 'all'
 
 class Range(BaseModel, extra='forbid'):
     """
-    Define a range of values in a raster to assign as a friction or barrrier.
+    Define a range of values in a raster to assign as a friction or barrier.
     First value of min_max is lowest value of range (inclusive), second value
     of min_max is highest value in range (exclusive). `value` is the value used
     as friction barrier for any cells in the raster that fall within the range.
@@ -167,7 +167,7 @@ class FrictionBarrierBuilder:
         if config.range is not None:
             processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
             if config.extent != ALL:
-                mask = self.__get_mask(config.extent)
+                mask = self._get_mask(config.extent)
 
             for range in config.range:
                 min, max = range.min_max
@@ -183,19 +183,18 @@ class FrictionBarrierBuilder:
 
             return processed
 
-        # Assign cells values based on map
-        if config.map is not None:
-            temp = np.zeros(self._io_handler.shape, dtype=self._dtype)
-            for key, val in config.map.items():
-                temp[data == key] = val
+        # No range, has to be map. Assign cells values based on map.
+        temp = np.zeros(self._io_handler.shape, dtype=self._dtype)
+        for key, val in config.map.items():  # type: ignore[union-attr]
+            temp[data == key] = val
 
-            if config.extent == ALL:
-                return temp
+        if config.extent == ALL:
+            return temp
 
-            mask = self.__get_mask(config.extent)
-            processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
-            processed[mask] = temp[mask]
-            return processed
+        mask = self._get_mask(config.extent)
+        processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
+        processed[mask] = temp[mask]
+        return processed
 
     def _process_vector_layer(self, fname: str, config: FBLayerConfig
                               ) -> npt.NDArray:
@@ -230,7 +229,7 @@ class FrictionBarrierBuilder:
         if config.extent == ALL:
             return temp
 
-        mask = self.__get_mask(config.extent)
+        mask = self._get_mask(config.extent)
         processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
         processed[mask] = temp[mask]
         return processed
@@ -258,24 +257,24 @@ class FrictionBarrierBuilder:
 
         for fname, config in fi_layers.items():
             if Path(fname).suffix.lower() not in ['.tif', '.tiff']:
-                logger.error(
-                    f'Forced inclusion file {fname} does not end with .tif. '
-                    'GeoTIFFs are the only format allowed for forced '
-                    'inclusions.'
-                )
+                msg = (f'Forced inclusion file {fname} does not end with .tif.'
+                       ' GeoTIFFs are the only format allowed for forced '
+                       'inclusions.')
+                logger.error(msg)
+                raise ValueError(msg)
             if config.map is not None or config.range is not None or \
                config.rasterize is not None:
-                logger.error(
-                    '`map`, `range`, and `rasterize` are not allowed if '
-                    '`forced_inclusion` is True, but one was found in config: '
-                    f'{fname}: {config}'
-                )
+                msg = ('`map`, `range`, and `rasterize` are not allowed if '
+                       '`forced_inclusion` is True, but one was found in '
+                       f'config: {fname}: {config}')
+                logger.error(msg)
+                raise ValueError(msg)
 
             # Past guard clauses, process FI
             if config.extent != ALL:
-                mask = self.__get_mask(config.extent)
+                mask = self._get_mask(config.extent)
 
-            temp = self._io_handler.load_tiff(fname)  # TODO allow reprojecting
+            temp = self._io_handler.load_tiff(fname, reproject=True)
 
             if config.extent == ALL:
                 fi += temp
@@ -285,7 +284,7 @@ class FrictionBarrierBuilder:
         data[fi > 0] = 0
         return data
 
-    def __get_mask(self, extent: Extents) -> MaskArr:
+    def _get_mask(self, extent: Extents) -> MaskArr:
         """
         Get mask by requested extent
 
@@ -340,7 +339,7 @@ class FrictionBarrierBuilder:
 
         if config.map is not None and config.range is not None:
             raise ValueError(
-                'Keys "map" and "range" are exclusionary but '
+                'Keys "map" and "range" are mutually exclusive but '
                 'more than one was found in raster config {config}'
             )
 

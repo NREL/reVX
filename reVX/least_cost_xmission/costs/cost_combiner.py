@@ -4,6 +4,7 @@ Combine wet and dry costs.
 import json
 import logging
 from pathlib import Path
+from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
@@ -39,7 +40,8 @@ class CostCombiner:
             Wet costs array
         """
         if not Path(fname).exists():
-            raise IOError(f'Wet costs GeoTIFF {fname} does not exist')
+            raise FileNotFoundError(f'Wet costs GeoTIFF {fname} does not '
+                                    'exist')
         logger.debug(f'Loading wet costs from {fname}')
         return self._io_handler.load_tiff(fname)
 
@@ -59,7 +61,7 @@ class CostCombiner:
             Array of costs
         """
         if not Path(h5_fpath).exists():
-            raise IOError(f'H5 file {h5_fpath} does not exist')
+            raise FileNotFoundError(f'H5 file {h5_fpath} does not exist')
 
         logger.debug(f'Loading dry costs layer {layer_name} from {h5_fpath}')
         costs = self._io_handler.load_h5_layer(layer_name, h5_fpath)
@@ -121,10 +123,10 @@ class CostCombiner:
 
         num_zeros = (combined == 0).sum()
         if num_zeros > 0:
-            logger.warning(
-                f'{num_zeros} occurrences of 0 are in the combined costs. '
-                'This may cause erroneous paths and costs.'
-            )
+            msg = (f'{num_zeros} occurrences of 0 are in the combined costs. '
+                   'This may cause erroneous paths and costs.')
+            logger.warning(msg)
+            warn(msg)
 
         logger.debug('Writing combined costs to H5')
         self._io_handler.write_to_h5(combined, layer_name)
