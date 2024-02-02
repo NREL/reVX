@@ -10,10 +10,12 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.layers.friction_barrier_builder import \
+from reVX.least_cost_xmission.layers.friction_barrier_builder import (
     FBLayerConfig, FrictionBarrierBuilder
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+)
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
+)
 
 global_result: npt.NDArray
 

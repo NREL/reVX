@@ -16,7 +16,6 @@ import rasterio as rio
 from rasterio.warp import reproject, Resampling
 
 import rex
-
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
 
 logger = logging.getLogger(__name__)
@@ -42,19 +41,19 @@ class TransLayerIoHandler:
     """
     def __init__(self, template_f: str, layer_dir='.'):
         """
+
         Parameters
         ----------
-        template_f
+        template_f : str
             Template GeoTIFF with standard profile and transform
-        layer_dir, optional
+        layer_dir : path-like, optional
             Directory to search for layers in, if not found in current
-            directory. By default '.'
+            directory. By default, ``'.'``.
         """
         self._layer_dir = layer_dir
         self._profile = self._extract_profile(template_f)
-        self.shape: Tuple[int, int] = (
-            self._profile['height'], self._profile['width']
-        )
+        self.shape: Tuple[int, int] = (self._profile['height'],
+                                       self._profile['width'])
         self._h5_file: Optional[str] = None
 
     @property
@@ -74,13 +73,12 @@ class TransLayerIoHandler:
 
         Parameters
         ----------
-        ex_h5
+        ex_h5 : str
             Path to existing h5 file w/ offshore shape
-        new_h5
+        new_h5 : str
             Path for new h5 file to create
-        overwrite, optional
-            Overwrite existing h5 file if True
-
+        overwrite : bool, optional
+            Overwrite existing h5 file if True. By default, ``False``.
         """
         if (not Path(new_h5).exists()) and not overwrite:
             raise FileExistsError('File {} exits'.format(new_h5))
@@ -105,7 +103,7 @@ class TransLayerIoHandler:
 
         Parameters
         ----------
-        h5_file
+        h5_file : str
             Path to file
         """
         if not Path(h5_file).exists():
@@ -119,23 +117,20 @@ class TransLayerIoHandler:
 
         Parameters
         ----------
-        data
+        data : array-like
             Array of data to write
-        name
+        name : str
             Name of layer to write data to in H5
         """
         if self._h5_file is None:
             _cls = self.__class__.__name__
-            raise IOError(
-                'The H5 file is not set. Please create it with '
-                f'{_cls}.create_new_h5() or set with {_cls}.set_h5_file().'
-            )
+            raise IOError('The H5 file is not set. Please create it with '
+                          f'{_cls}.create_new_h5() or set with '
+                          f'{_cls}.set_h5_file().')
 
         if data.shape != self.shape:
-            raise ValueError(
-                f'Shape of provided data ({data.shape}) does not match '
-                f'template raster (self.shape).'
-            )
+            raise ValueError(f'Shape of provided data ({data.shape}) does '
+                             'not match template raster (self.shape).')
 
         # Add a "bands" dimension if missing
         if data.ndim < 3:
@@ -163,13 +158,14 @@ class TransLayerIoHandler:
 
         Parameters
         ----------
-        layer_name
+        layer_name : str
             Layer to load from H5 file
-        h5_file, optional
-            H5 file to use. If None, use default H5 file. By default None.
+        h5_file : path-like, optional
+            H5 file to use. If None, use default H5 file. By default ``None``.
 
         Returns
         -------
+        array-like
             Array of data
         """
         if h5_file is None:
@@ -187,13 +183,14 @@ class TransLayerIoHandler:
 
         Parameters
         ----------
-        layer_name
+        layer_name : str
             Layer to load attributes for
-        h5_file, optional
+        h5_file : path-like, optional
             H5 file to use. If None, use default H5 file. By default None.
 
         Returns
         -------
+        dict
             Dict of attribute data
         """
         if h5_file is None:
@@ -211,16 +208,17 @@ class TransLayerIoHandler:
 
         Parameters
         ----------
-        fname
+        fname : str
             Filename of GeoTIFF to load
-        band, optional
-            Band to load from GeoTIFF, by default 1
+        band : int, optional
+            Band to load from GeoTIFF. By default, ``1``.
         reproject
-            Reproject raster to standard CRS and transform if True, by default,
-            False.
+            Reproject raster to standard CRS and transform if True.
+            By default, ``False``.
 
         Returns
         -------
+        array-like
             Raster data
         """
         full_fname = fname
@@ -236,27 +234,25 @@ class TransLayerIoHandler:
 
         if not reproject:
             if data.shape != self.shape:
-                raise ValueError(
-                    f'Shape of {full_fname} ({data.shape}) does not match '
-                    f'template raster shape ({self.shape}).'
-                )
+                raise ValueError(f'Shape of {full_fname} ({data.shape}) '
+                                'does not match template raster shape '
+                                f'({self.shape}).')
             if transform != self.profile['transform']:
-                raise ValueError(
-                    f'Transform of {full_fname}:\n{transform}\ndoes not match '
-                    f'template raster shape:\n{self.profile["transform"]}'
+                raise ValueError(f'Transform of {full_fname}:\n{transform}\n'
+                                 'does not match template raster shape:\n'
+                                 f'{self.profile["transform"]}'
                 )
             if crs != self.profile['crs']:
-                raise ValueError(
-                    f'CRS of {full_fname}:\n{crs}\ndoes not match '
-                    f'template raster shape:\n{self.profile["crs"]}'
-                )
+                raise ValueError(f'CRS of {full_fname}:\n{crs}\ndoes not '
+                                 'match template raster shape:\n'
+                                 f'{self.profile["crs"]}')
 
-        if (data.shape != self.shape) or \
-           (transform != self.profile['transform']) or \
-           (crs != self.profile['crs']):
-            logger.debug(
-                f'Profile of {fname} does not match template, reprojecting'
-            )
+        mismatching_shape = data.shape != self.shape
+        mismatching_transform = transform != self.profile['transform']
+        mismatching_crs = crs != self.profile['crs']
+        if mismatching_shape or mismatching_transform or mismatching_crs:
+            logger.debug(f'Profile of {fname} does not match template, '
+                         'reprojecting')
             src_profile = self._extract_profile(full_fname)
             data = self.reproject(data, src_profile, dtype=data.dtype,
                                   init_dest=0)
@@ -269,10 +265,10 @@ class TransLayerIoHandler:
 
         Parameters
         ----------
-            data : np.array
-                Data to save
-            fname : str
-                File name to save
+        data : np.array
+            Data to save
+        fname : str
+            File name to save
         """
         dtype: npt.DTypeLike = data.dtype
         if dtype == 'bool':
@@ -291,17 +287,19 @@ class TransLayerIoHandler:
 
         Parameters
         ----------
-        src_raster
+        src_raster : array-like
             Source raster
-        src_profile
+        src_profile : Profile
             Source raster profile
-        dtype, optional
-            Data type for destination raster
-        init_dest, optional
-            Value for cells outside of boundary of src_raster
+        dtype : np.dtype, optional
+            Data type for destination raster. By default, ``float32``.
+        init_des : float, optional
+            Value for cells outside of boundary of src_raster.
+            By default, ``-1.0``.
 
         Returns
         -------
+        array-like
             Source data reprojected into the template projection.
         """
         dest_raster = np.zeros(self.shape, dtype=dtype)
@@ -320,13 +318,11 @@ class TransLayerIoHandler:
     def _extract_profile(template_f: str) -> Profile:
         """Extract profile from file. """
         with rio.open(template_f) as ras:
-            profile: Profile = {
-                'crs': ras.crs,
-                'transform': ras.transform,
-                'height': ras.height,
-                'width': ras.width,
-                # 'dtype': ras.dtype,
-                'count': 1,
-                'compress': 'lzw'
-            }
+            profile: Profile = {'crs': ras.crs,
+                                'transform': ras.transform,
+                                'height': ras.height,
+                                'width': ras.width,
+                                # 'dtype': ras.dtype,
+                                'count': 1,
+                                'compress': 'lzw'}
         return profile

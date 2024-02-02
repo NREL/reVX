@@ -10,10 +10,12 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.config.constants import COMBINED_COSTS_TIFF, \
-    DEFAULT_DTYPE, WET_COSTS_TIFF
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+from reVX.least_cost_xmission.config.constants import (COMBINED_COSTS_TIFF,
+                                                       DEFAULT_DTYPE,
+                                                       WET_COSTS_TIFF)
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
+)
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +25,15 @@ class CostCombiner:
     Combine wet and dry costs.
     """
     def __init__(self, io_handler: TransLayerIoHandler, masks: Masks):
+        """
+
+        Parameters
+        ----------
+        io_handler : TransLayerIoHandler
+            Transmission layer handler.
+        masks : Masks
+            Masks instance.
+        """
         self._io_handler = io_handler
         self._masks = masks
 
@@ -32,11 +43,12 @@ class CostCombiner:
 
         Parameters
         ----------
-        fname, optional
+        fname : str, optional
             Filename for wet costs GeoTIFF, by default WET_COSTS_TIFF
 
         Returns
         -------
+        array-like
             Wet costs array
         """
         if not Path(fname).exists():
@@ -51,13 +63,14 @@ class CostCombiner:
 
         Parameters
         ----------
-        h5_fpath
+        h5_fpath : path-like
             H5 file with dry costs
-        layer_name
+        layer_name : str
             Name of costs layer
 
         Returns
         -------
+        array-like
             Array of costs
         """
         if not Path(h5_fpath).exists():
@@ -69,9 +82,9 @@ class CostCombiner:
             return costs
 
         # Dry costs have a different shape. Attempt to reproject
-        logger.debug(
-            'Dry costs shape does not match template raster. Reprojecting.'
-        )
+        logger.debug('Dry costs shape does not match template raster. '
+                     'Reprojecting.')
+
         attrs = self._io_handler.load_h5_attrs(layer_name, h5_fpath)
         json_profile = attrs['profile']
         profile = json.loads(json_profile)
@@ -87,28 +100,27 @@ class CostCombiner:
 
         Parameters
         ----------
-        wet_costs
+        wet_costs : array-like
             Wet costs array
-        dry_costs
+        dry_costs : array-like
             Dry costs array
-        landfall_cost
+        landfall_cost : float
             Cost to apply to landfall cells for conversion from underwater
             cables to land based transmission.
-        layer_name
+        layer_name : str
             Layer name for combined costs in H5
-        save_tiff, optional
+        save_tiff : bool, optional
             Save combined costs to GeoTIFF if True, by default True
         """
         if wet_costs.shape != self._io_handler.shape:
-            raise ValueError(
-                f'Wet costs shape {wet_costs.shape} does not match shape '
-                f' of template raster {self._io_handler.shape}'
-            )
+            raise ValueError(f'Wet costs shape {wet_costs.shape} does not '
+                             'match shape of template raster '
+                             f'{self._io_handler.shape}')
+
         if dry_costs.shape != self._io_handler.shape:
-            raise ValueError(
-                f'Dry costs shape {dry_costs.shape} does not match shape '
-                f' of template raster {self._io_handler.shape}'
-            )
+            raise ValueError(f'Dry costs shape {dry_costs.shape} does not '
+                             'match shape of template raster '
+                             f'{self._io_handler.shape}')
 
         combined = np.zeros(self._io_handler.shape, dtype=DEFAULT_DTYPE)
         combined[self._masks.wet_mask] = wet_costs[self._masks.wet_mask]

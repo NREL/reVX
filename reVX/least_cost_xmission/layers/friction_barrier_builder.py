@@ -11,10 +11,12 @@ from pydantic import BaseModel
 
 from reVX.least_cost_xmission.layers.utils import rasterize
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
-from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE, \
-    RAW_BARRIER_TIFF, FRICTION_TIFF
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
+                                                       RAW_BARRIER_TIFF,
+                                                       FRICTION_TIFF)
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
+)
 
 logger = logging.getLogger(__name__)
 
@@ -86,22 +88,22 @@ class FrictionBarrierBuilder:
     """
     Build friction or barrier layers.
     """
-    def __init__(self, _type: Literal['friction', 'barrier'],
+    def __init__(self, type_: Literal['friction', 'barrier'],
                  io_handler: TransLayerIoHandler, masks: Masks,
                  dtype: npt.DTypeLike = DEFAULT_DTYPE):
         """
         Parameters
         ----------
-        _type
+        type_ : {'friction', 'barrier'}
             Type of layer being built
-        io_handler
+        io_handler : TransLayerIoHandler
             IO handler
-        masks
+        masks : Masks
             Mask Handler
-        dtype, optional
-            Data type for final dataset, by default 'float32'
+        dtype : np.dtype, optional
+            Data type for final dataset. By default, ``float32``.
         """
-        self._type = _type
+        self._type = type_
         self._io_handler = io_handler
         self._masks = masks
         self._dtype = dtype
@@ -113,7 +115,7 @@ class FrictionBarrierBuilder:
 
         Parameters
         ----------
-        layers
+        layers : dict
             Dict of FBLayerConfigs keyed by GeoTIFF/vector filenames.
         """
         logger.debug(f'Combining {self._type} layers')
@@ -138,8 +140,8 @@ class FrictionBarrierBuilder:
 
         result = self._process_forced_inclusions(result, fi_layers)
 
-        fname = RAW_BARRIER_TIFF if self._type == 'barrier' else \
-            FRICTION_TIFF
+        fname = (RAW_BARRIER_TIFF
+                 if self._type == 'barrier' else FRICTION_TIFF)
         logger.debug(f'Writing combined {self._type} layers to {fname}')
         self._io_handler.save_tiff(result, fname)
 
@@ -152,16 +154,17 @@ class FrictionBarrierBuilder:
 
         Parameters
         ----------
-        data
+        data : array-like
             Array of data to process.
-        config
+        config : FBLayerConfig
             Definition of layer processing.
 
         Returns
         -------
+        array-like | None
             Transformed data.
         """
-        self.__check_tiff_layer_config(config)
+        self._check_tiff_layer_config(config)
 
         # Assign all cells one or more ranges to a value
         if config.range is not None:
@@ -171,9 +174,8 @@ class FrictionBarrierBuilder:
 
             for range in config.range:
                 min, max = range.min_max
-                temp = np.where(
-                    np.logical_and(data >= min, data < max), range.value, 0
-                )
+                temp = np.where(np.logical_and(data >= min, data < max),
+                                range.value, 0)
 
                 if config.extent == ALL:
                     processed += temp
@@ -203,20 +205,19 @@ class FrictionBarrierBuilder:
 
         Parameters
         ----------
-        fname
+        fname : str
             Name of vector layer to rasterize
-        config
+        config : FBLayerConfig
             Config for layer
 
         Returns
         -------
+        array-like
             Rasterized vector
         """
         if config.rasterize is None:
-            raise ValueError(
-                f'{fname} is a vector but the config is missing key '
-                f'"rasterize": {config}'
-            )
+            raise ValueError(f'{fname} is a vector but the config is missing '
+                             f'key "rasterize": {config}')
 
         r_config = config.rasterize
 
@@ -244,13 +245,14 @@ class FrictionBarrierBuilder:
 
         Parameters
         ----------
-        data
+        data : array-like
             Composite friction or barrier layer
-        fi_layers
+        fi_layers : dict
             Dict of forced inclusions layers keyed by GeoTIFF filename.
 
         Returns
         -------
+        array-like
             Composite layer with forced inclusions added
         """
         fi = np.zeros(self._io_handler.shape)
@@ -262,8 +264,11 @@ class FrictionBarrierBuilder:
                        'inclusions.')
                 logger.error(msg)
                 raise ValueError(msg)
-            if config.map is not None or config.range is not None or \
-               config.rasterize is not None:
+
+            map_given = config.map is not None
+            range_given = config.range is not None
+            rasterize_given = config.rasterize is not None
+            if map_given or range_given or rasterize_given:
                 msg = ('`map`, `range`, and `rasterize` are not allowed if '
                        '`forced_inclusion` is True, but one was found in '
                        f'config: {fname}: {config}')
@@ -290,17 +295,16 @@ class FrictionBarrierBuilder:
 
         Parameters
         ----------
-        extent
+        extent : Extents
             Extent of desired mask, 'all' is not allowed.
 
         Returns
         -------
+        MaskArr
             Mask array
         """
         if extent == ALL:
-            raise AttributeError(
-                f'Mask for extent of {extent} is unnecessary'
-            )
+            raise AttributeError(f'Mask for extent of {extent} is unnecessary')
 
         if extent == 'wet':
             mask = self._masks.wet_mask
@@ -318,13 +322,13 @@ class FrictionBarrierBuilder:
         return mask
 
     @staticmethod
-    def __check_tiff_layer_config(config: FBLayerConfig):
+    def _check_tiff_layer_config(config: FBLayerConfig):
         """
         Check if a FBLayerConfig is valid for a GeoTIFF.
 
         Parameters
         ----------
-        config
+        config : FBLayerConfig
             The config model to check
 
         Raises
@@ -333,18 +337,15 @@ class FrictionBarrierBuilder:
             If an issue is detected
         """
         if config.rasterize is not None:
-            raise ValueError(
-                f'"rasterize" is only for vectors. Found in config {config}'
-            )
+            raise ValueError('"rasterize" is only for vectors. Found in '
+                             f'config {config}')
 
         if config.map is not None and config.range is not None:
-            raise ValueError(
-                'Keys "map" and "range" are mutually exclusive but '
-                'more than one was found in raster config {config}'
-            )
+            raise ValueError('Keys "map" and "range" are mutually exclusive '
+                             'but more than one was found in raster config '
+                             f'{config}')
 
         if config.map is None and config.range is None:
-            raise ValueError(
-                'Either "map" or "range" must be specified for a raster, but '
-                f'neither were found in config {config}'
-            )
+            raise ValueError('Either "map" or "range" must be specified for '
+                             'a raster, but neither were found in config '
+                             f'{config}')

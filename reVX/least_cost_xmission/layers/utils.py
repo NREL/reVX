@@ -13,8 +13,9 @@ import rasterio as rio
 from rasterio import features
 
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import \
+from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     Profile
+)
 
 VECTOR_CACHE: Dict[str, gpd.GeoDataFrame] = {}
 
@@ -34,24 +35,25 @@ def rasterize(fname: str, profile: Profile,
 
     Parameters
     ----------
-    fname
+    fname : str
         Full path to gpgk or shp file
-    profile
+    profile : Profile
         Raster profile to use
-    buffer_dist
+    buffer_dist : float, optional
         Distance to buffer features in fname by. Same units as the
-        template raster.
-    all_touched
+        template raster. By default, ``None``.
+    all_touched : bool, optional
         Set all cells touched by vector to 1. False results in less cells
-        being set to 1.
-    reproject_vector
+        being set to 1. By default, ``False``.
+    reproject_vector : bool, optional
         Reproject CRS of vector to match template raster if True.
-    burn_value
-        Value used to burn vectors into raster
-    boundary_only
-        If True, rasterize boundary of vector
-    dtype
-        Datatype to use
+        By default, ``True``.
+    burn_value : int | float, optional
+        Value used to burn vectors into raster. By default, ``1``.
+    boundary_only : bool, optional
+        If True, rasterize boundary of vector. By default, ``False``.
+    dtype : np.dtype, optional
+        Datatype to use. By default, ``float32``.
 
     Returns
     -------
@@ -97,11 +99,11 @@ def convert_pois_to_lines(poi_csv_f: str, template_f: str, out_f: str):
 
     Parameters
     ----------
-    poi_csv_f
+    poi_csv_f : str
         Path to CSV file with POIs in it
-    template_f
+    template_f : str
         Path to template raster with CRS to use for geopackage
-    out_f
+    out_f : str
         Path and file name for geopackage
     """
     logger.debug('Converting POIs in %s to lines in %s', poi_csv_f, out_f)
@@ -130,16 +132,12 @@ def convert_pois_to_lines(poi_csv_f: str, template_f: str, out_f: str):
     lines['trans_gids'] = '[9999]'
 
     # add a fake trans line for the subs to connect to to make LCP code happy
-    trans_line = pd.DataFrame(
-        {
-            'POI Name': 'fake',
-            'ac_cap': 9999999,
-            'category': 'TransLine',
-            'voltage': 500,  # kV
-            'trans_gids': None
-        },
-        index=[9999]
-    )
+    trans_line = pd.DataFrame({'POI Name': 'fake',
+                               'ac_cap': 9999999,
+                               'category': 'TransLine',
+                               'voltage': 500,  # kV
+                               'trans_gids': None},
+                              index=[9999])
 
     trans_line = gpd.GeoDataFrame(trans_line)
     geo = LineString([Point(0, 0), Point(100000, 100000)])

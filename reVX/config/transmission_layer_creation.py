@@ -7,8 +7,9 @@ from typing import Optional, Dict, List
 from pydantic import BaseModel, DirectoryPath, FilePath
 
 from reVX.least_cost_xmission.costs.wet_cost_creator import BinConfig
-from reVX.least_cost_xmission.layers.friction_barrier_builder import \
+from reVX.least_cost_xmission.layers.friction_barrier_builder import (
     FBLayerConfig
+)
 
 FrictionLayers = Dict[str, FBLayerConfig]
 """Mapping of friction layers.
