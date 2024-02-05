@@ -3,6 +3,7 @@
 Module to compute least cost transmission paths, distances, AND costs
 for one or more SC points
 """
+from warnings import warn
 import geopandas as gpd
 import json
 import logging
@@ -203,6 +204,7 @@ class LeastCostXmission(LeastCostPaths):
                    "required voltage of 69 kV and will be dropped:\n{}"
                    .format(features.loc[bad_subs, 'trans_gid']))
             logger.warning(msg)
+            warn(msg)
             features = features.loc[~bad_subs].reset_index(drop=True)
 
         return features, pd.Series(sub_lines_map)
@@ -324,6 +326,7 @@ class LeastCostXmission(LeastCostPaths):
                    "domain and will be dropped:\n{}"
                    .format(features.loc[~mask, 'trans_gid']))
             logger.warning(msg)
+            warn(msg)
             row = row[mask]
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)

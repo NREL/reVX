@@ -3,6 +3,7 @@
 """
 Least Cost Xmission Command Line Interface
 """
+from warnings import warn
 import click
 import logging
 import os
@@ -325,6 +326,7 @@ def map_ss_to_rr(ctx, features_fpath, regions_fpath, region_identifier_column,
                "required voltage of 69 kV and will be dropped:\n{}"
                .format(substations.loc[bad_subs, 'gid']))
         logger.warning(msg)
+        warn(msg)
         substations = substations.loc[~bad_subs].reset_index(drop=True)
 
     logger.info("Writing substation output to {!r}".format(out_file))
@@ -336,10 +338,11 @@ def map_ss_to_rr(ctx, features_fpath, regions_fpath, region_identifier_column,
     network_nodes_fpath = Path(network_nodes_fpath)
     network_nodes = gpd.read_file(network_nodes_fpath).to_crs(features.crs)
     if region_identifier_column in network_nodes:
-        logger.warning("Network nodes file {!r} was specified but it "
-                       "already contains the {!r} column. No data modified!"
-                       .format(str(network_nodes_fpath),
-                               region_identifier_column))
+        msg = ("Network nodes file {!r} was specified but it "
+               "already contains the {!r} column. No data modified!"
+               .format(str(network_nodes_fpath), region_identifier_column))
+        logger.warning(msg)
+        warn(msg)
         return
 
     centroids = network_nodes.centroid

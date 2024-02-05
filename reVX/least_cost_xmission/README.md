@@ -1,13 +1,13 @@
 # Least Cost Transmission Paths
-Determine least cost transmission paths from possible wind and solar farms (supply curve (SC) points) to the electrical grid. Available components of the electrical grid are substations, transmission lines, load centers and infinite sinks. The code only attempts to connect to a point on the transmission line closest to the SC point. This was initially used for land-based analyses, but has been modified for offshore transmission as well.
-
-<br>
+Determine least cost transmission paths from land-based and offshore wind and solar farms (supply curve (SC) points) to the electrical grid. Available components of the electrical grid are substations, transmission lines, load centers and infinite sinks. The code only attempts to connect to a point on the transmission line closest to the SC point.
 
 ## Files
 ### Python command-line interface (CLI) files
-* [`cost_creator_cli.py`](cost_creator_cli.py) - Compute transmission cost raster and save as hdf5. This includes creating slope and land use cost multipliers from source data and adding base transmission line construction costs. Final cost raster consists of line construction costs with all multipliers by ISO.
-* [`least_cost_paths_cli.py`](least_cost_paths_cli.py) - Calculate least cost paths between a set of points.
-* [`least_cost_xmission_cli.py`](least_cost_xmission_cli.py) - Calculate least cost transmission paths and connection costs.
+* [`transmission_layer_creator_cli.py`](transmission_layer_creator_cli.py) - Create all layers for a transmission routing analysis: barriers, friction, and wet costs. Dry costs must currently be created with `dry_cost_creator_cli.py`.  If `reVX` has been installed with `pip`, the CLI command alias `transmission-layer-creator` is available for this file. Usage is discussed below.
+* [`dry_cost_creator_cli.py`](dry_cost_creator_cli.py) - Compute land-based transmission cost raster and save as HDF5. This includes creating slope and land use cost multipliers from source data and adding base transmission line construction costs. Final cost raster consists of line construction costs with all multipliers by ISO. CLI alias: `dry-cost-creator`
+* [`least_cost_paths_cli.py`](least_cost_paths_cli.py) - Calculate least cost paths between a set of points. CLI alias: `least-cost-paths`
+* [`least_cost_xmission_cli.py`](least_cost_xmission_cli.py) - Calculate least cost transmission paths and connection costs. CLI alias: `least-cost-xmission`
+
 
 ### Other notable Python files
 * [`trans_cap_costs.py`](trans_cap_costs.py) - Determine paths and costs for a single SC point
@@ -15,11 +15,139 @@ Determine least cost transmission paths from possible wind and solar farms (supp
 	* `TransCapCosts` - Determine total transmission cost including line cost and any substation construction or improvements.
 * [`least_cost_xmission.py`](least_cost_xmission.py) - Calculate costs from SC points to transmission features. By default, all SC points are used or a subset may be specified by GID.
 * [`least_cost_paths.py`](least_cost_paths.py) - Parent class for `least_cost_xmission.py`.
-* [`offshore_utilities.py`](offshore_utilities.py) - Utility functions and classes for preparing friction, barrier, and transmission features for offshore analyses. Example Jupyter notebooks for these functions can be found in the [`examples/least_cost_paths`](../../examples/least_cost_paths/) directory of this repository.
 
-<br>
+# Layer Creation
+Calculating transmission routing paths requires a series of layers. The *costs* layer is mandatory. The *friction* and *barriers* layers are optional. The *costs* layer is the most important of the three.
 
-# CONUS (Onshore) Examples
+* *Costs* - The cost of building a transmission line including ROW and any factors such as slope, land use, and water depth though a single grid cell (typically 90 meters.) The routing algorithm automatically scales costs for any transmission crossing a cell at a diagonal. Costs for land-based transmission and undersea cables are calculated separately and then combined. Note that landfall costs are incorporated into the final cost raster when wet and dry costs are combined.
+* *Friction* - Friction indicates areas that are undesirable for transmission. Paths that must cross a friction area will take the shortest possible path. Friction does not affect the cost of a line that runs across it; it merely discourages a path from crossing a friction area, possibly taking a longer and more expensive path.
+* *Barriers* - Barriers are effectively a much stronger deterrent for transmission than friction. Routing will preferentially take a more expensive, and higher friction route before crossing a barrier area. Barriers do not affect the cost of lines that are forced to cross them.
+
+Note that the *friction* and *barriers* layers must be combined together, using a multiplier for barriers, before an analysis is ran.
+
+## H5 Layer File Creation
+The final costs and barriers layers must be saved in an H5 file for the routing code to run. A new H5 file can be created as shown below. Both the template raster and existing H5 file must have the same shape, CRS, and transform.
+
+```
+$ transmission-layer-creator --verbose create-h5 \
+    --template-raster template_raster.tif --existing-h5-file existing.h5 \
+    --new-h5-file new.h5
+```
+
+## Masks
+Several of the layer creation operations, particularly combining the dry and wet costs, are dependent on a series of mask GeoTIFFs that indicate which portions of the study area are considered dry versus wet. A polygon GeoPackage or shapefile can be used to create the masks. Features in the file are assumed to represent dry land. The boundaries of features are used to determine the landfall cells. The `transmission-layer-creator create-masks` command-line tool is used for this as shown in the example below.
+
+```
+$ transmission-layer-creator --verbose create-masks \
+    --template-raster template_raster.tif \
+    --land-mask-vector land_mask_vector_file.gpkg \
+    --masks-dir masks
+```
+## Layer Creation Configuration File
+Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator from-config`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) command-line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `LayerCreationConfig` class of [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options and can trigger a number of different operations depending on it's contents. These operations include:
+
+* Creating wet and dry (TODO) cost layers
+* Combining wet and dry costs
+* Creating frictions and/or barrier layers
+* Combining friction and barrier layers together
+
+### Required Keys
+The following keys are required to run any type of layer creation:
+
+* `template_raster_fpath` - Template GeoTIFF with the shape, CRS, and transform to use for the project. Data in the raster is ignored.
+* `h5_fpath` - H5 file to store layers in. It must exist and can be created as described above.
+
+### Optional Keys
+These keys are optional and affect how the layer creation runs.
+
+* `masks_dir` - Directory to find mask GeoTIFFs in. Defaults to the local directory.
+* `layer_dir` - By default, all GeoTIFFs listed in `barrier_layers` and `friction_layers` are assumed to be fully defined paths or located in the current working directory. The creator will also search for GeoTIFFs in `layer_dir` if it is set.
+* `save_tiff` - Setting this to `true` will result in the creation of GeoTIFFs for intermediary processing steps. This can be useful for QA/QC.
+
+### Action Keys
+The keys below represent layer creation actions. Mostly analyses will need all layers to be created. Individual creation actions can be rerun as needed, e.g. if it is determined that the `dry_costs` need to be adjusted, but the `wet_costs` are acceptable, the `wet_costs` section can be removed from the config file to prevent it from being recalculated and reduce processing time.
+
+* Costs
+  * `wet_costs` - Costs for wet areas, typically oceans and great lakes.
+  * `dry_costs` - This is not yet implemented. Dry costs must be calculated with the legacy method described below and saved in an H5 file.
+  * `combine_costs` - Combine the wet and dry costs and save to H5. This action must be performed if either wet or dry costs have been recalculated.
+* Friction and barriers
+  * `friction_layers` - Friction areas that are less desirable for transmission routing.
+  * `barrier_layers` - Barrier areas that should not have any transmission in the them. Transmission will route through barriers if there is no other possible route.
+  * `merge_friction_and_barriers` - Combine friction and barriers and save as H5. This action must be performed if the friction or barriers have been modified.
+
+## Layer Creation Config File Examples
+The below example JSON file shows all possible keys with example values. The formal config file definition is the `LayerCreationConfig` class in the [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py) file.
+```
+{
+    "template_raster_fpath": "bathymetry.tif",
+    "h5_fpath": "./new_xmission_routing_layers.h5",
+
+    "masks_dir": "./masks",
+    "layer_dir": "/projects/rev/projects/wowts/data/final_friction_tifs/",
+    "save_tiff": true,
+
+    "wet_costs": {
+        "bathy_tiff": "bathymetry.tif",
+        "bins": [
+            {              "max": -2500, "value": 80526},
+            {"min": -2500, "max": -2000, "value": 73205},
+            {"min": -2000, "max": -1500, "value": 66550},
+            {"min": -1500, "max": -1000, "value": 60500},
+            {"min": -1000, "max": -500,  "value": 55000},
+            {"min": -500,                "value": 50000}
+        ]
+    },
+
+    "barrier_layers": {
+        "CAN_MEX_boundary_20240131.gpkg": {
+            "extent": "all",
+            "rasterize": {
+                "value": 106,
+                "reproject": true
+            }
+        },
+        "west_coast_slope.tif": {
+            "extent": "wet",
+            "range": [{ "min": 15, "value": 101 }]
+        },
+        "/projects/rev/data/conus/rasters/swca_cultural_resources_risk.tif": {
+            "extent": "all",
+            "map": { "4": 102 }
+        }
+    },
+
+    "friction_layers": {
+        "west_coast_slope.tif": {
+            "extent": "wet",
+            "range": [{ "min": 10, "max": 15, "value": 5 }]
+        },
+        "mpa.tif": { "map": {"2": 5, "3": 7}, "extent": "all" },
+    },
+
+    "merge_friction_and_barriers": {
+        "barrier_multiplier": 1e6
+    },
+
+    "combine_costs": {
+        "landfall_cost": 10e6,
+        "dry_h5_fpath": "xmission_costs.h5",
+        "dry_costs_layer": "tie_line_costs_102MW"
+    }
+}
+```
+
+## Running the Layer Creator
+Once a config file has been created, the layer creation tool can be run from the command-line, e.g.:
+
+```
+$ transmission-layer-creator --verbose from-config --config layer_config_file.json
+```
+With an appropriate config file, this will result in all layers required for a transmission routing analysis being created and saved in the specified H5 file.
+
+# CONUS (Onshore) Example
+All examples assume that reVX was installed using `pip` so that the CLI commands are available.
+
 ## Costs
 The below file can be used as a template to compute the costs to be used in a Least Cost Path analysis described in more detail below.
 ```
@@ -38,7 +166,7 @@ The below file can be used as a template to compute the costs to be used in a Le
   "log_level": "INFO"
 }
 ```
-See [`cost_creator_cli.local`](cost_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
+See [`dry_cost_creator_cli.local`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/dry_cost_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
 ```
 ISO_regions              Dataset {1, 33792, 48640}
 latitude                 Dataset {33792, 48640}
@@ -54,17 +182,15 @@ transmission_barrier     Dataset {1, 33792, 48640}
 usa_mrlc_nlcd2011        Dataset {1, 33792, 48640}
 ```
 
-<br>
-
 
 ### Find CONUS least cost paths on a local eagle node
 Find least cost paths, costs, and connection costs on eagle login node for 1000MW capacity and all SC points, saving results in current directory. These examples will overload the login nodes and should be run on a debug node.
 
 ```
-python least_cost_xmission_cli.py local \
---cost_fpath /shared-projects/rev/exclusions/xmission_costs.h5 \
---features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
---capacity_class 1000
+$ least-cost-xmission local \
+    --cost_fpath /shared-projects/rev/exclusions/xmission_costs.h5 \
+    --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
+    --capacity_class 1000
 ```
 
 ### Run onshore analysis from a config file
@@ -92,11 +218,8 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
 Assuming the above config file is saved as `config_conus.json` in the current directory, it can be kicked off with:
 
 ```
-python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
---config ./config_conus.json
+$ least-cost-xmission from-config --config ./config_conus.json
 ```
-
-<br>
 
 # Reinforced Transmission
 In this methodology, total interconnection costs are comprised of two components: *point-of-interconnection costs* and *network upgrade costs*. Point-of-interconnection costs include the cost of the spur line between the RE facility (SC point) and the connected substation, as well as the cost to upgrade the substation itself. Network upgrade costs are represented by costs to increase the transmission capacity between the connected substation and the main network node in a given reinforcement region. Network upgrade costs are assumed to be 50% of the cost of a new greenfield transmission of the same voltage as the existing transmission lines along the same path. The 50% heuristic represents cost for reconductoring or increasing the number of circuits along those lines. `reVX` (and any derivative products, e.g. `reV`) do not include estimates for longer-distance transmission that may be needed to export the renewable energy between one reinforcement region and another.
@@ -122,8 +245,13 @@ In this plot, (light) grey lines represent existing transmission, orange lines r
 
 First, map the substations in your data set to the reinforcement regions using the following reVX command:
 
-    least-cost-paths map-ss-to-rr --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg --regions_fpath /shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg --region_identifier_column ba_str --out_file substations_with_ba.gpkg
-
+```
+$ least-cost-paths map-ss-to-rr \
+    --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
+    --regions_fpath /shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg \
+    --region_identifier_column ba_str \
+    --out_file substations_with_ba.gpkg
+```
 
 Next, compute the reinforcement paths on multiple nodes. Use the file below as a template (`reinforcement_path_costs_config.json`):
 
@@ -154,12 +282,16 @@ Note that we are specifying ``"capacity_class": "400"``  to use the 230 kV (400M
 only the substations for which you computed reinforcement costs in the previous step.
 
 After putting together your config file, simply call
-
-    least-cost-paths from-config -c reinforcement_path_costs_config.json
+```
+$ least-cost-paths from-config -c reinforcement_path_costs_config.json
+```
 
 This will generate 10 chunked files (since we used 10 nodes in the config above). To merge the data, simply call
-
-    least-cost-xmission merge-output -of reinforcement_costs_400MW_230kV.gpkg -od /shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs reinforcement_costs_*_400MW_230kV.csv
+```
+$ least-cost-xmission merge-output -of reinforcement_costs_400MW_230kV.gpkg \
+    -od /shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs \
+    reinforcement_costs_*_400MW_230kV.csv
+```
 
 You should now have a file containing all of the reinforcement costs for the substations in your dataset. Next, compute the spur line transmission costs for these substations using the following template config (`least_cost_transmission_1000MW.json`):
 
@@ -187,24 +319,29 @@ You should now have a file containing all of the reinforcement costs for the sub
 ```
 
 Kickoff the execution using the following command:
-
-    least-cost-xmission from-config -c least_cost_transmission_1000MW.json
+```
+$ least-cost-xmission from-config -c least_cost_transmission_1000MW.json
+```
 
 You may need to run this command multiple times - once for each transmission line capacity.
 As before the data will come split into multiple files (in this case 100, since we used 100 nodes). To merge the data, run a command similar to the one above:
-
-    least-cost-xmission merge-output -of transmission_1000MW_128.csv -od /shared-projects/rev/transmission_tables/reinforced_transmission/least_cost_transmission least_cost_transmission_*_1000_128.csv
-
+```
+$ least-cost-xmission merge-output -of transmission_1000MW_128.csv \
+    -od /shared-projects/rev/transmission_tables/reinforced_transmission/least_cost_transmission \
+    least_cost_transmission_*_1000_128.csv
+```
 Finally, combine the spur line transmission costs and the reinforcement costs into a single transmission table:
 
-    least-cost-xmission merge-reinforcement-costs -of transmission_reinforced_1000MW_128.csv -f /shared-projects/rev/transmission_tables/reinforced_transmission/least_cost_transmission/transmission_1000MW_128.csv -r /shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs/reinforcement_costs_400MW_230kV.csv
+```
+$ least-cost-xmission merge-reinforcement-costs \
+    -of transmission_reinforced_1000MW_128.csv \
+    -f /shared-projects/rev/transmission_tables/reinforced_transmission/least_cost_transmission/transmission_1000MW_128.csv \
+    -r /shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs/reinforcement_costs_400MW_230kV.csv
+```
 
 Again, you may need to run this command multiple times - once for each transmission line capacity.
 
 The resulting tables can be passed directly to `reV`, which will automatically detect reinforcement costs and take them into account during the supply curve computation.
-
-<br>
-
 
 # Offshore Least Cost Paths
 ## Nomenclature Note
@@ -213,78 +350,37 @@ The offshore least cost paths analysis was initially performed for the Atlantic 
 ## Offshore Workflow
 General steps to run an offshore analysis:
 
-1. Convert points-of-interconnection (POI) (grid connections on land) to transmission feature lines. Example notebook is at `reVX/examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`. The input CSV requires the following fields: 'POI Name', 'State', 'Voltage (kV)', 'Lat', 'Long'.
-2. Create offshore friction and barrier (exclusion) layers and merge with CONUS costs and barrier layers. Example notebook is at `reVX/examples/least_cost_paths/combine_layers_and_add_to_h5.ipynb`.
-3. Determine desired sc\_point_gids to process.
-4. Select appropriate clipping radius. Unlike the CONUS analysis, which clips the cost raster by proximity to infinite sinks, an offshore analysis uses a fixed search radius. 5000 is a good starting point. Note that memory usage increases with the square of radius.
-5. Run analysis. See examples below.
-6. Convert the output to GeoJSON (optional). See post processing below.
-
+1. Create cost, friction, and barrier layers as described above.
+2. Convert points-of-interconnection (POI) (grid connections on land) to transmission feature lines. See example below.
+4. Determine desired sc\_point_gids to process.
+5. Select appropriate clipping radius. Unlike a CONUS analysis, which clips the cost raster by proximity to infinite sinks, offshore analyses have typically used a fixed search radius. 5000 km is a good starting point. Note that memory usage increases with the square of radius.
+6. Run analysis. See examples below.
+7. Convert the output to GeoJSON (optional). See post processing below.
 
 ## Offshore Examples
+All examples assume that reVX was installed using `pip` so that the CLI commands are available.
+
 ### Creating POI transmission features from points
-The onshore point of interconnections (POIs) have typically been provided in a
-CSV file. These must be converted to short lines in a GeoPackage to work with
-the LCP code. Note that the POIs must also be connected to a transmission line.
-The `convert_pois_to_lines()` function in `offshore_utilities.py` will perform all
-necessary operations to convert the CSV file to a properly configured
-GeoPackage. An example notebook is in this repository at
-`examples/least_cost_paths/convert_points_of_interconnection_to_lines.ipynb`.
-Paths from POIs to the fake transmission line can be removed in post processing
-using the `--drop TransLine` option with the `least-cost-xmission merge-output`
-command.
-
-### Build friction and barriers layer
-An example Jupyter notebook for building the friction and barrier layers can be found in the `examples/least_cost_paths` directory of this repository.
-
-### Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage
-This example uses `contextily` to add a base map to the plot, but is not required. Offshore needs an aggregation "resolution" of 118.
-
-```
-import contextily as cx
-from rex.utilities.loggers import init_mult
-from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
-
-# Start the logger
-log_modules = [__name__, 'reVX', 'reV', 'rex']
-init_mult('run_aoswt', '.', modules=log_modules, verbose=True)
-
-cost_fpath = '/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5'
-features_fpath = '/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg'
-sc_point_gid = 51085
-
-# Calculate paths
-lcx = LeastCostXmission(cost_fpath, features_fpath, resolution=118)
-paths = lcx.process_sc_points('100', sc_point_gids=[sc_point_gid], save_paths=True,
-                               max_workers=1, radius=5000)
-
-# Plot the paths
-paths = paths.to_crs(epsg=3857)
-ax = paths.plot(figsize=(20,20), alpha=0.5, edgecolor='red')
-cx.add_basemap(ax, source=cx.providers.Stamen.TonerLite)
-
-# Save to a GeoPackage
-paths.to_file('example.gpkg', driver='GPKG')
-```
+The onshore point of interconnections (POIs) have typically been provided in a CSV file. These must be converted to very short lines in a GeoPackage to work with the LCP code. The input CSV must have the following fields: 'POI Name', 'State', 'Voltage (kV)', 'Lat', 'Long'. Note that the POIs must also be connected to a transmission line.  The `transmission-layer-creator convert-pois` command-line function will perform all necessary operations to convert the CSV file to a properly configured GeoPackage.  Paths from POIs to the fake transmission line can be removed in post processing using the `--drop TransLine` option with the `least-cost-xmission merge-output` command.
 
 ### Find offshore least cost paths on a local eagle node
 Find least cost paths, costs, and connection costs on eagle login node for 100MW capacity, saving results in current directory. These examples will overload the login nodes and should be run on a debug node.
 
 ```
-python least_cost_xmission_cli.py local \
---cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
---features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
---capacity_class 100
+$ least-cost-xmission local \
+    --cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
+    --features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
+    --capacity_class 100
 ```
 Run the above analysis for only two SC points, using only one core.
 
 ```
-python least_cost_xmission_cli.py local -v \
---cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
---features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
---capacity_class 100 \
---max_workers 1 \
---sc_point_gids [36092,36093]
+$ least-cost-xmission local -v \
+    --cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
+    --features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
+    --capacity_class 100 \
+    --max_workers 1 \
+    --sc_point_gids [36092,36093]
 ```
 
 ### Run AOSWT from a config file
@@ -322,33 +418,57 @@ The value for `allocation` should be set to the desired SLURM allocation. The `m
 Assuming the above config file is saved as `config_aoswt.json` in the current directory, it can be kicked off with:
 
 ```
-python -m reVX.least_cost_xmission.least_cost_xmission_cli from-config \
---config ./config_aoswt.json
+$ least-cost-xmission from-config --config ./config_aoswt.json
 ```
 
 ### Post processing
 Running an analysis on multiple nodes will result in multiple output files. These can be collected via several means. The below command will combine all output files into a single GeoPackage, assuming `save_paths` was enabled. If paths are not saved, the output will consist of multiple CSV files that must be merged manually.
 
 ```
-python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
---out-file combined.gpkg \
-output_files_*.gpkg
+$ least-cost-xmission merge-output --out-file combined.gpkg \
+    output_files_*.gpkg
 ```
 
 Transmission feature categories that are not desired in the final output can be dropped with:
 
 ```
-python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
---out-file combined.gpkg \
---drop TransLine --drop LoadCen \
-output_files_*.gpkg
+$ least-cost-xmission merge-output --out-file combined.gpkg \
+    --drop TransLine --drop LoadCen output_files_*.gpkg
 ```
 
 Additionally, the results may be split into GeoJSONs by transmission feature connected to with the following. This will not create a combined GeoPackage file. The optional `--simplify-geo YYY` argument, where `YYY` is a number, can also be used if not set in the config file. Setting `simplify-geo` in the config file results in much faster run times than in post-processing.
 
 ```
-python -m reVX.least_cost_xmission.least_cost_xmission_cli merge-output \
---drop TransLine \
---split-to-geojson --out-path ./out \
-output_files_*.gpkg
+$ least-cost-xmission merge-output --drop TransLine --split-to-geojson \
+    --out-path ./out output_files_*.gpkg
+```
+
+### Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage
+The processing can also be run within Python. This example uses `contextily` to add a base map to the plot, but is not required. Offshore needs an aggregation "resolution" of 118.
+
+```
+import contextily as cx
+from rex.utilities.loggers import init_mult
+from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
+
+# Start the logger
+log_modules = [__name__, 'reVX', 'reV', 'rex']
+init_mult('run_aoswt', '.', modules=log_modules, verbose=True)
+
+cost_fpath = '/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5'
+features_fpath = '/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg'
+sc_point_gid = 51085
+
+# Calculate paths
+lcx = LeastCostXmission(cost_fpath, features_fpath, resolution=118)
+paths = lcx.process_sc_points('100', sc_point_gids=[sc_point_gid], save_paths=True,
+                               max_workers=1, radius=5000)
+
+# Plot the paths
+paths = paths.to_crs(epsg=3857)
+ax = paths.plot(figsize=(20,20), alpha=0.5, edgecolor='red')
+cx.add_basemap(ax, source=cx.providers.Stamen.TonerLite)
+
+# Save to a GeoPackage
+paths.to_file('example.gpkg', driver='GPKG')
 ```

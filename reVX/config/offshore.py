@@ -119,11 +119,15 @@ class OffshoreInputsConfig(AnalysisConfig):
 
     @property
     def offshore_sites(self):
-        """
-        - Path to .csv|.json file with offshore sites meta data
-        - Path to a WIND Toolkit .h5 file to extact site meta from
-        - List, tuple, or vector of offshore gids
-        - Pre-extracted site meta DataFrame
+        """Offshore sites input.
+
+        This can be one of the following:
+
+            - Path to .csv|.json file with offshore sites meta data
+            - Path to a WIND Toolkit .h5 file to extact site meta from
+            - List, tuple, or vector of offshore gids
+            - Pre-extracted site meta DataFrame
+
         (required)
         """
         return self['offshore_sites']

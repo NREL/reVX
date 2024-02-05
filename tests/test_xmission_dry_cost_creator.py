@@ -16,9 +16,10 @@ from reV.handlers.exclusions import ExclusionLayers
 
 from reVX import TESTDATADIR
 from reVX.cli import main as cli
-from reVX.least_cost_xmission.cost_creator_cli import main
-from reVX.least_cost_xmission.cost_creator import XmissionCostCreator, \
-    XmissionConfig
+from reVX.least_cost_xmission.dry_cost_creator_cli import main
+from reVX.least_cost_xmission.costs.dry_cost_creator import (
+    XmissionCostCreator, XmissionConfig
+)
 from reVX.least_cost_xmission.config import TEST_DEFAULT_MULTS
 
 BASELINE_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')

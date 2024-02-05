@@ -49,9 +49,10 @@ def coordinate_distance(coords1, coords2):
 
 def log_versions(logger):
     """Log package versions:
-    - rex, reV, and reVX to info
-    - h5py, numpy, pandas, scipy, PySAM, geopandas, pyproj, rasterio, shapely,
-      sklearn, and skimage to debug
+
+        - rex, reV, and reVX to info
+        - h5py, numpy, pandas, scipy, PySAM, geopandas, pyproj,
+          rasterio, shapely, sklearn, and skimage to debug
 
     Parameters
     ----------

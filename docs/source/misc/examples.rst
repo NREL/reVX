@@ -5,3 +5,4 @@ Examples
    examples.rpm
    examples.reeds
    examples.setbacks
+   examples.transmission

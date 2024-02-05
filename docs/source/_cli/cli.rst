@@ -1,8 +1,9 @@
 Command Line Interfaces (CLIs)
-===============================
+==============================
 
 .. toctree::
 
+   dry-cost-creator
    least-cost-paths
    least-cost-xmission
    mean-wind-dirs
@@ -16,5 +17,5 @@ Command Line Interfaces (CLIs)
    reVX
    setbacks
    simple-plant-builder
+   transmission-layer-creator
    turbine-flicker
-   xmission-cost-creator

@@ -100,9 +100,9 @@ using HSDS to access it (``hsds: true``).
 
 The ``features`` inputs points ``reVX`` to the feature data from which setbacks should be computed. The value for this
 key should always be another dictionary. The keys in the new dictionary are the names of the setbacks you are computing
-(see the keys of [``SETBACK_SPECS``](setbacks.py) for all possible options - you may have to scroll down after
-clicking the link), and the values should point to the data on disk. There are several ways to point to a data file
-(though all files must be ``GeoPackages``):
+(see the keys of [``SETBACK_SPECS``](https://github.com/NREL/reVX/tree/main/reVX/setbacks/setbacks.py) for all possible
+options - you may have to scroll down after clicking the link), and the values should point to the data on disk.
+There are several ways to point to a data file (though all files must be ``GeoPackages``):
 * If the features for a particular setback calculation are contained within a single file, just set the value to the path
   to the file (relative paths are allowed)
 * If the features for a particular setback calculation are spread across several files (this is common practice to speed

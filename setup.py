@@ -76,14 +76,17 @@ setup(
                              "turbine_flicker_cli:main"),
                             ("simple-plant-builder=reVX.plexos."
                              "simple_plant_builder_cli:main"),
-                            ("xmission-cost-creator=reVX.least_cost_xmission."
-                             "cost_creator_cli:main"),
+                            ("dry-cost-creator=reVX.least_cost_xmission."
+                             "dry_cost_creator_cli:main"),
                             ("least-cost-xmission=reVX.least_cost_xmission."
                              "least_cost_xmission_cli:main"),
                             ("least-cost-paths=reVX.least_cost_xmission."
                              "least_cost_paths_cli:main"),
                             ("offshore-layer-creator=reVX.least_cost_xmission."
-                             "offshore_layer_creator_cli:main")
+                             "offshore_layer_creator_cli:main"),
+                            ("transmission-layer-creator=reVX."
+                             "least_cost_xmission."
+                             "transmission_layer_creator_cli:main"),
                             ],
     },
     include_package_data=True,

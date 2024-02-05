@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Module to build and save least cost raster layers
+Module to build and save dry (land) cost raster layers
 """
 import logging
 import numpy as np
@@ -22,19 +22,24 @@ NLCD_LAND_USE_CLASSES = {
     'urban': [24],
 }
 
+METERS_PER_MILE = 1609.344
+
 
 class XmissionCostCreator(ExclusionsConverter):
     """
     Class to create and save Transmission cost layers to a .h5 Exclusion file
-    - dist_to_coast (for valid sc_points)
-    - base_costs
-    - multiplier_*mw
-    - xmission_barrier
+
+        - dist_to_coast (for valid sc_points)
+        - base_costs
+        - multiplier_*mw
+        - xmission_barrier
+
     """
-    PIXEL_SIZE = 90
+    PIXEL_SIZE_M = 90  # raster cell width/height in meters
 
     def __init__(self, h5_fpath, iso_regions_fpath, iso_lookup=None):
         """
+
         Parameters
         ----------
         h5_fpath : str
@@ -175,10 +180,10 @@ class XmissionCostCreator(ExclusionsConverter):
             'usa_mrlc_nlcd2011'
         land_use_classes : dict, optional
             NCLD land use codes corresponding to use classes for multipliers.
-            if None us NLCD_LAND_USE_CLASSES. by default None
+            If None, use NLCD_LAND_USE_CLASSES. By default None
         default_mults : dict, optional
             Multipliers for regions not specified in iso_mults_fpath.
-            by default None
+            By default None
 
         Returns
         -------
@@ -195,8 +200,8 @@ class XmissionCostCreator(ExclusionsConverter):
 
         logger.debug('Loading complete')
 
-        assert self._iso_regions.shape == land_use.shape == slope.shape, \
-            'All rasters must be the same shape'
+        same_shape = self._iso_regions.shape == land_use.shape == slope.shape
+        assert same_shape, 'All rasters must be the same shape'
 
         mults_arr = np.ones(self._iso_regions.shape, dtype=np.float32)
         regions_mask = np.full(mults_arr.shape, False, dtype=bool)
@@ -277,7 +282,7 @@ class XmissionCostCreator(ExclusionsConverter):
                         .format(iso, capacity))
             iso_code = self._iso_lookup[iso]
             cost_per_mile = base_line_costs[iso][str(capacity)]
-            cost_per_cell = cost_per_mile / 1609.344 * self.PIXEL_SIZE
+            cost_per_cell = cost_per_mile / METERS_PER_MILE * self.PIXEL_SIZE_M
             logger.debug('$/mile is {}, $/cell is {}'
                          .format(cost_per_mile, cost_per_cell))
             mask = self._iso_regions == iso_code
