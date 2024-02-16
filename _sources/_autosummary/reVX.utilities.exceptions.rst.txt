@@ -1,0 +1,41 @@
+reVX.utilities.exceptions
+=========================
+
+.. automodule:: reVX.utilities.exceptions
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Exceptions
+
+   .. autosummary::
+      :toctree:
+   
+      ExclusionsCheckError
+      GeoTiffKeyError
+      InvalidMCPStartValueError
+      LeastCostPathNotFoundError
+      RPMRuntimeError
+      RPMTypeError
+      RPMValueError
+      ReedsKeyError
+      ReedsRuntimeError
+      ReedsValueError
+      SupplyCurvePointCapacityError
+      reVXError
+   
+   
+
+
+

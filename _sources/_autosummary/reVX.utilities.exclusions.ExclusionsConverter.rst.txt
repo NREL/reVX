@@ -1,0 +1,36 @@
+reVX.utilities.exclusions.ExclusionsConverter
+=============================================
+
+.. currentmodule:: reVX.utilities.exclusions
+
+.. autoclass:: ExclusionsConverter
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ExclusionsConverter.extract_all_layers
+      ~ExclusionsConverter.extract_layers
+      ~ExclusionsConverter.geotiff_to_layer
+      ~ExclusionsConverter.layer_to_geotiff
+      ~ExclusionsConverter.layers_to_h5
+      ~ExclusionsConverter.parse_tiff
+      ~ExclusionsConverter.write_geotiff
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ExclusionsConverter.layers
+   
+   

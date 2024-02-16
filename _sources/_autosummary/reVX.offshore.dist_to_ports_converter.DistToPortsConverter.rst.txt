@@ -1,0 +1,37 @@
+reVX.offshore.dist\_to\_ports\_converter.DistToPortsConverter
+=============================================================
+
+.. currentmodule:: reVX.offshore.dist_to_ports_converter
+
+.. autoclass:: DistToPortsConverter
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DistToPortsConverter.dist_to_ports_to_layer
+      ~DistToPortsConverter.extract_all_layers
+      ~DistToPortsConverter.extract_layers
+      ~DistToPortsConverter.geotiff_to_layer
+      ~DistToPortsConverter.layer_to_geotiff
+      ~DistToPortsConverter.layers_to_h5
+      ~DistToPortsConverter.parse_tiff
+      ~DistToPortsConverter.write_geotiff
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DistToPortsConverter.layers
+   
+   

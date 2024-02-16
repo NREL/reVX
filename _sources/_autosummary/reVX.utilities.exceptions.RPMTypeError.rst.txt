@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.RPMTypeError
+======================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: RPMTypeError

@@ -1,0 +1,6 @@
+reVX.config.transmission\_layer\_creation.FrictionLayers
+========================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autodata:: FrictionLayers

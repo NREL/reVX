@@ -1,0 +1,61 @@
+reVX.config.transmission\_layer\_creation.FBLayerConfig
+=======================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: FBLayerConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~FBLayerConfig.construct
+      ~FBLayerConfig.copy
+      ~FBLayerConfig.dict
+      ~FBLayerConfig.from_orm
+      ~FBLayerConfig.json
+      ~FBLayerConfig.model_construct
+      ~FBLayerConfig.model_copy
+      ~FBLayerConfig.model_dump
+      ~FBLayerConfig.model_dump_json
+      ~FBLayerConfig.model_json_schema
+      ~FBLayerConfig.model_parametrized_name
+      ~FBLayerConfig.model_post_init
+      ~FBLayerConfig.model_rebuild
+      ~FBLayerConfig.model_validate
+      ~FBLayerConfig.model_validate_json
+      ~FBLayerConfig.model_validate_strings
+      ~FBLayerConfig.parse_file
+      ~FBLayerConfig.parse_obj
+      ~FBLayerConfig.parse_raw
+      ~FBLayerConfig.schema
+      ~FBLayerConfig.schema_json
+      ~FBLayerConfig.update_forward_refs
+      ~FBLayerConfig.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FBLayerConfig.model_computed_fields
+      ~FBLayerConfig.model_config
+      ~FBLayerConfig.model_extra
+      ~FBLayerConfig.model_fields
+      ~FBLayerConfig.model_fields_set
+      ~FBLayerConfig.extent
+      ~FBLayerConfig.map
+      ~FBLayerConfig.range
+      ~FBLayerConfig.rasterize
+      ~FBLayerConfig.forced_inclusion
+   
+   

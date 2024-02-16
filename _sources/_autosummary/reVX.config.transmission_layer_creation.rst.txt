@@ -1,0 +1,46 @@
+reVX.config.transmission\_layer\_creation
+=========================================
+
+.. automodule:: reVX.config.transmission_layer_creation
+
+   
+   
+   .. rubric:: Module attributes
+
+   .. autosummary::
+      :toctree:
+   
+      FrictionLayers
+      BarrierLayers
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      CombineCosts
+      DryCosts
+      FBLayerConfig
+      LayerCreationConfig
+      MergeFrictionBarriers
+      RangeConfig
+      Rasterize
+      WetCosts
+   
+   
+
+   
+   
+   
+
+
+

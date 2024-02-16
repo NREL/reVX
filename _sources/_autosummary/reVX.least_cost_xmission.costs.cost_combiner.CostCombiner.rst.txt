@@ -1,0 +1,26 @@
+reVX.least\_cost\_xmission.costs.cost\_combiner.CostCombiner
+============================================================
+
+.. currentmodule:: reVX.least_cost_xmission.costs.cost_combiner
+
+.. autoclass:: CostCombiner
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CostCombiner.combine_costs
+      ~CostCombiner.load_legacy_dry_costs
+      ~CostCombiner.load_wet_costs
+   
+   
+
+   
+   
+   

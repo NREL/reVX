@@ -1,0 +1,67 @@
+reVX.config.transmission\_layer\_creation.LayerCreationConfig
+=============================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: LayerCreationConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LayerCreationConfig.construct
+      ~LayerCreationConfig.copy
+      ~LayerCreationConfig.dict
+      ~LayerCreationConfig.from_orm
+      ~LayerCreationConfig.json
+      ~LayerCreationConfig.model_construct
+      ~LayerCreationConfig.model_copy
+      ~LayerCreationConfig.model_dump
+      ~LayerCreationConfig.model_dump_json
+      ~LayerCreationConfig.model_json_schema
+      ~LayerCreationConfig.model_parametrized_name
+      ~LayerCreationConfig.model_post_init
+      ~LayerCreationConfig.model_rebuild
+      ~LayerCreationConfig.model_validate
+      ~LayerCreationConfig.model_validate_json
+      ~LayerCreationConfig.model_validate_strings
+      ~LayerCreationConfig.parse_file
+      ~LayerCreationConfig.parse_obj
+      ~LayerCreationConfig.parse_raw
+      ~LayerCreationConfig.schema
+      ~LayerCreationConfig.schema_json
+      ~LayerCreationConfig.update_forward_refs
+      ~LayerCreationConfig.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LayerCreationConfig.model_computed_fields
+      ~LayerCreationConfig.model_config
+      ~LayerCreationConfig.model_extra
+      ~LayerCreationConfig.model_fields
+      ~LayerCreationConfig.model_fields_set
+      ~LayerCreationConfig.template_raster_fpath
+      ~LayerCreationConfig.h5_fpath
+      ~LayerCreationConfig.layer_dir
+      ~LayerCreationConfig.masks_dir
+      ~LayerCreationConfig.friction_layers
+      ~LayerCreationConfig.barrier_layers
+      ~LayerCreationConfig.wet_costs
+      ~LayerCreationConfig.dry_costs
+      ~LayerCreationConfig.merge_friction_and_barriers
+      ~LayerCreationConfig.combine_costs
+      ~LayerCreationConfig.save_tiff
+   
+   

@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.least\_cost\_xmission.reinforcement\_region\_mapper
+==============================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.least_cost_xmission
+
+.. autofunction:: reinforcement_region_mapper

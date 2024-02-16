@@ -1,0 +1,42 @@
+reVX.least\_cost\_xmission.costs.dry\_cost\_creator.XmissionCostCreator
+=======================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.costs.dry_cost_creator
+
+.. autoclass:: XmissionCostCreator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~XmissionCostCreator.compute_base_line_costs
+      ~XmissionCostCreator.compute_multipliers
+      ~XmissionCostCreator.create_geotiff
+      ~XmissionCostCreator.extract_all_layers
+      ~XmissionCostCreator.extract_layers
+      ~XmissionCostCreator.geotiff_to_layer
+      ~XmissionCostCreator.layer_to_geotiff
+      ~XmissionCostCreator.layers_to_h5
+      ~XmissionCostCreator.parse_tiff
+      ~XmissionCostCreator.run
+      ~XmissionCostCreator.save_layer
+      ~XmissionCostCreator.write_geotiff
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~XmissionCostCreator.PIXEL_SIZE_M
+      ~XmissionCostCreator.layers
+   
+   

@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.ExclusionsCheckError
+==============================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: ExclusionsCheckError

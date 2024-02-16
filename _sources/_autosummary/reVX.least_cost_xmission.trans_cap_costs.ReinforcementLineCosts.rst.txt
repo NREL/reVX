@@ -1,0 +1,40 @@
+reVX.least\_cost\_xmission.trans\_cap\_costs.ReinforcementLineCosts
+===================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.trans_cap_costs
+
+.. autoclass:: ReinforcementLineCosts
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ReinforcementLineCosts.compute
+      ~ReinforcementLineCosts.least_cost_path
+      ~ReinforcementLineCosts.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ReinforcementLineCosts.capacity_class
+      ~ReinforcementLineCosts.clip_shape
+      ~ReinforcementLineCosts.col
+      ~ReinforcementLineCosts.col_offset
+      ~ReinforcementLineCosts.cost
+      ~ReinforcementLineCosts.mcp
+      ~ReinforcementLineCosts.mcp_cost
+      ~ReinforcementLineCosts.row
+      ~ReinforcementLineCosts.row_offset
+   
+   

@@ -1,0 +1,62 @@
+reVX.wind\_dirs.mean\_wind\_dirs\_point.MeanWindDirectionsPoint
+===============================================================
+
+.. currentmodule:: reVX.wind_dirs.mean_wind_dirs_point
+
+.. autoclass:: MeanWindDirectionsPoint
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MeanWindDirectionsPoint.agg_data_layers
+      ~MeanWindDirectionsPoint.aggregate
+      ~MeanWindDirectionsPoint.close
+      ~MeanWindDirectionsPoint.exclusion_weighted_mean
+      ~MeanWindDirectionsPoint.get_agg_slices
+      ~MeanWindDirectionsPoint.mean_wind_dirs
+      ~MeanWindDirectionsPoint.run
+      ~MeanWindDirectionsPoint.sc_mean
+      ~MeanWindDirectionsPoint.sc_sum
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MeanWindDirectionsPoint.area
+      ~MeanWindDirectionsPoint.bool_mask
+      ~MeanWindDirectionsPoint.centroid
+      ~MeanWindDirectionsPoint.cols
+      ~MeanWindDirectionsPoint.country
+      ~MeanWindDirectionsPoint.county
+      ~MeanWindDirectionsPoint.elevation
+      ~MeanWindDirectionsPoint.exclusions
+      ~MeanWindDirectionsPoint.gid
+      ~MeanWindDirectionsPoint.gid_counts
+      ~MeanWindDirectionsPoint.h5
+      ~MeanWindDirectionsPoint.h5_gid_set
+      ~MeanWindDirectionsPoint.include_mask
+      ~MeanWindDirectionsPoint.include_mask_flat
+      ~MeanWindDirectionsPoint.latitude
+      ~MeanWindDirectionsPoint.longitude
+      ~MeanWindDirectionsPoint.n_gids
+      ~MeanWindDirectionsPoint.offshore
+      ~MeanWindDirectionsPoint.pixel_area
+      ~MeanWindDirectionsPoint.resolution
+      ~MeanWindDirectionsPoint.rows
+      ~MeanWindDirectionsPoint.sc_point_gid
+      ~MeanWindDirectionsPoint.state
+      ~MeanWindDirectionsPoint.summary
+      ~MeanWindDirectionsPoint.timezone
+   
+   

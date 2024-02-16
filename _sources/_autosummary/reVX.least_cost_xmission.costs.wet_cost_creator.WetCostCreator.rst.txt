@@ -1,0 +1,25 @@
+reVX.least\_cost\_xmission.costs.wet\_cost\_creator.WetCostCreator
+==================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.costs.wet_cost_creator
+
+.. autoclass:: WetCostCreator
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~WetCostCreator.assign_cost_by_bins
+      ~WetCostCreator.build_wet_costs
+   
+   
+
+   
+   
+   

@@ -1,0 +1,59 @@
+reVX.config.transmission\_layer\_creation.CombineCosts
+======================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: CombineCosts
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~CombineCosts.construct
+      ~CombineCosts.copy
+      ~CombineCosts.dict
+      ~CombineCosts.from_orm
+      ~CombineCosts.json
+      ~CombineCosts.model_construct
+      ~CombineCosts.model_copy
+      ~CombineCosts.model_dump
+      ~CombineCosts.model_dump_json
+      ~CombineCosts.model_json_schema
+      ~CombineCosts.model_parametrized_name
+      ~CombineCosts.model_post_init
+      ~CombineCosts.model_rebuild
+      ~CombineCosts.model_validate
+      ~CombineCosts.model_validate_json
+      ~CombineCosts.model_validate_strings
+      ~CombineCosts.parse_file
+      ~CombineCosts.parse_obj
+      ~CombineCosts.parse_raw
+      ~CombineCosts.schema
+      ~CombineCosts.schema_json
+      ~CombineCosts.update_forward_refs
+      ~CombineCosts.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~CombineCosts.model_computed_fields
+      ~CombineCosts.model_config
+      ~CombineCosts.model_extra
+      ~CombineCosts.model_fields
+      ~CombineCosts.model_fields_set
+      ~CombineCosts.landfall_cost
+      ~CombineCosts.dry_h5_fpath
+      ~CombineCosts.dry_costs_layer
+   
+   

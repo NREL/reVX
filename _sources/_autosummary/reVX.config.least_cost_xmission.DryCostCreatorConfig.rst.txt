@@ -1,0 +1,63 @@
+reVX.config.least\_cost\_xmission.DryCostCreatorConfig
+======================================================
+
+.. currentmodule:: reVX.config.least_cost_xmission
+
+.. autoclass:: DryCostCreatorConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DryCostCreatorConfig.check_files
+      ~DryCostCreatorConfig.check_overwrite_keys
+      ~DryCostCreatorConfig.clear
+      ~DryCostCreatorConfig.copy
+      ~DryCostCreatorConfig.fromkeys
+      ~DryCostCreatorConfig.get
+      ~DryCostCreatorConfig.items
+      ~DryCostCreatorConfig.keys
+      ~DryCostCreatorConfig.pop
+      ~DryCostCreatorConfig.popitem
+      ~DryCostCreatorConfig.resolve_path
+      ~DryCostCreatorConfig.set_self_dict
+      ~DryCostCreatorConfig.setdefault
+      ~DryCostCreatorConfig.str_replace_and_resolve
+      ~DryCostCreatorConfig.update
+      ~DryCostCreatorConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DryCostCreatorConfig.NAME
+      ~DryCostCreatorConfig.REQUIREMENTS
+      ~DryCostCreatorConfig.STR_REP
+      ~DryCostCreatorConfig.analysis_years
+      ~DryCostCreatorConfig.config_dir
+      ~DryCostCreatorConfig.config_keys
+      ~DryCostCreatorConfig.cost_configs
+      ~DryCostCreatorConfig.default_mults
+      ~DryCostCreatorConfig.excl_h5
+      ~DryCostCreatorConfig.execution_control
+      ~DryCostCreatorConfig.extra_layers
+      ~DryCostCreatorConfig.h5_fpath
+      ~DryCostCreatorConfig.iso_regions
+      ~DryCostCreatorConfig.log_directory
+      ~DryCostCreatorConfig.log_level
+      ~DryCostCreatorConfig.name
+      ~DryCostCreatorConfig.nlcd_layer
+      ~DryCostCreatorConfig.slope_layer
+      ~DryCostCreatorConfig.tiff_dir
+   
+   

@@ -1,0 +1,42 @@
+reVX.handlers.geotiff.Geotiff
+=============================
+
+.. currentmodule:: reVX.handlers.geotiff
+
+.. autoclass:: Geotiff
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Geotiff.close
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Geotiff.bands
+      ~Geotiff.dtype
+      ~Geotiff.iarr
+      ~Geotiff.lat_lon
+      ~Geotiff.latitude
+      ~Geotiff.longitude
+      ~Geotiff.meta
+      ~Geotiff.n_cols
+      ~Geotiff.n_rows
+      ~Geotiff.profile
+      ~Geotiff.shape
+      ~Geotiff.tiff_shape
+      ~Geotiff.values
+   
+   

@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.ReedsRuntimeError
+===========================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: ReedsRuntimeError

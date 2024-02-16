@@ -1,0 +1,6 @@
+reVX.offshore.offshore\_inputs\_cli.run\_local
+==============================================
+
+.. currentmodule:: reVX.offshore.offshore_inputs_cli
+
+.. autofunction:: run_local

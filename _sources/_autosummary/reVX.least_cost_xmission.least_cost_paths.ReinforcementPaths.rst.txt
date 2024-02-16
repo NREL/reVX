@@ -1,0 +1,35 @@
+reVX.least\_cost\_xmission.least\_cost\_paths.ReinforcementPaths
+================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.least_cost_paths
+
+.. autoclass:: ReinforcementPaths
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ReinforcementPaths.process_least_cost_paths
+      ~ReinforcementPaths.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ReinforcementPaths.REQUIRED_LAYERS
+      ~ReinforcementPaths.end_features
+      ~ReinforcementPaths.end_indices
+      ~ReinforcementPaths.features
+      ~ReinforcementPaths.start_indices
+   
+   

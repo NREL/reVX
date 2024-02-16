@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.dry\_cost\_creator\_cli.get\_node\_cmd
+=================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.dry_cost_creator_cli
+
+.. autofunction:: get_node_cmd

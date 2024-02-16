@@ -1,0 +1,6 @@
+reVX.config.transmission\_layer\_creation.BarrierLayers
+=======================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autodata:: BarrierLayers

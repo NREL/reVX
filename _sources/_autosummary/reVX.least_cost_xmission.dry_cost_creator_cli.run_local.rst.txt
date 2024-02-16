@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.dry\_cost\_creator\_cli.run\_local
+=============================================================
+
+.. currentmodule:: reVX.least_cost_xmission.dry_cost_creator_cli
+
+.. autofunction:: run_local

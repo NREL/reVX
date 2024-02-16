@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.reVXError
+===================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: reVXError

@@ -1,0 +1,31 @@
+reVX.least\_cost\_xmission.config.xmission\_config
+==================================================
+
+.. automodule:: reVX.least_cost_xmission.config.xmission_config
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      XmissionConfig
+   
+   
+
+   
+   
+   
+
+
+

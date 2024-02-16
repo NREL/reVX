@@ -1,0 +1,46 @@
+reVX.least\_cost\_xmission.layers.transmission\_layer\_io\_handler.Profile
+==========================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.layers.transmission_layer_io_handler
+
+.. autoclass:: Profile
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Profile.clear
+      ~Profile.copy
+      ~Profile.fromkeys
+      ~Profile.get
+      ~Profile.items
+      ~Profile.keys
+      ~Profile.pop
+      ~Profile.popitem
+      ~Profile.setdefault
+      ~Profile.update
+      ~Profile.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Profile.crs
+      ~Profile.transform
+      ~Profile.height
+      ~Profile.width
+      ~Profile.count
+      ~Profile.dtype
+      ~Profile.compress
+   
+   

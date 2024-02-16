@@ -1,0 +1,40 @@
+reVX.least\_cost\_xmission.least\_cost\_xmission.LeastCostXmission
+==================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.least_cost_xmission
+
+.. autoclass:: LeastCostXmission
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LeastCostXmission.process_least_cost_paths
+      ~LeastCostXmission.process_sc_points
+      ~LeastCostXmission.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LeastCostXmission.REQUIRED_LAYERS
+      ~LeastCostXmission.end_features
+      ~LeastCostXmission.end_indices
+      ~LeastCostXmission.features
+      ~LeastCostXmission.sc_points
+      ~LeastCostXmission.sink_coords
+      ~LeastCostXmission.sink_tree
+      ~LeastCostXmission.start_indices
+      ~LeastCostXmission.sub_lines_mapping
+   
+   

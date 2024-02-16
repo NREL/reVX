@@ -1,0 +1,31 @@
+reVX.least\_cost\_xmission.layers.friction\_barrier\_builder
+============================================================
+
+.. automodule:: reVX.least_cost_xmission.layers.friction_barrier_builder
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      FrictionBarrierBuilder
+   
+   
+
+   
+   
+   
+
+
+

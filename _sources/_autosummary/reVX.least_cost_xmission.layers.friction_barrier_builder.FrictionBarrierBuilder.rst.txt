@@ -1,0 +1,24 @@
+reVX.least\_cost\_xmission.layers.friction\_barrier\_builder.FrictionBarrierBuilder
+===================================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.layers.friction_barrier_builder
+
+.. autoclass:: FrictionBarrierBuilder
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~FrictionBarrierBuilder.build_layer
+   
+   
+
+   
+   
+   

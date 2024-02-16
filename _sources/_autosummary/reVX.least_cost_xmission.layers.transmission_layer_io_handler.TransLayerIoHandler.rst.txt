@@ -1,0 +1,37 @@
+reVX.least\_cost\_xmission.layers.transmission\_layer\_io\_handler.TransLayerIoHandler
+======================================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.layers.transmission_layer_io_handler
+
+.. autoclass:: TransLayerIoHandler
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TransLayerIoHandler.create_new_h5
+      ~TransLayerIoHandler.load_h5_attrs
+      ~TransLayerIoHandler.load_h5_layer
+      ~TransLayerIoHandler.load_tiff
+      ~TransLayerIoHandler.reproject
+      ~TransLayerIoHandler.save_tiff
+      ~TransLayerIoHandler.set_h5_file
+      ~TransLayerIoHandler.write_to_h5
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TransLayerIoHandler.profile
+   
+   

@@ -1,0 +1,59 @@
+reVX.config.transmission\_layer\_creation.WetCosts
+==================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: WetCosts
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~WetCosts.construct
+      ~WetCosts.copy
+      ~WetCosts.dict
+      ~WetCosts.from_orm
+      ~WetCosts.json
+      ~WetCosts.model_construct
+      ~WetCosts.model_copy
+      ~WetCosts.model_dump
+      ~WetCosts.model_dump_json
+      ~WetCosts.model_json_schema
+      ~WetCosts.model_parametrized_name
+      ~WetCosts.model_post_init
+      ~WetCosts.model_rebuild
+      ~WetCosts.model_validate
+      ~WetCosts.model_validate_json
+      ~WetCosts.model_validate_strings
+      ~WetCosts.parse_file
+      ~WetCosts.parse_obj
+      ~WetCosts.parse_raw
+      ~WetCosts.schema
+      ~WetCosts.schema_json
+      ~WetCosts.update_forward_refs
+      ~WetCosts.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~WetCosts.model_computed_fields
+      ~WetCosts.model_config
+      ~WetCosts.model_extra
+      ~WetCosts.model_fields
+      ~WetCosts.model_fields_set
+      ~WetCosts.bins
+      ~WetCosts.bathy_tiff
+      ~WetCosts.wet_costs_tiff
+   
+   

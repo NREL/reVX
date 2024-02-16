@@ -1,0 +1,37 @@
+reVX.setbacks.setbacks\_converter.SetbacksConverter
+===================================================
+
+.. currentmodule:: reVX.setbacks.setbacks_converter
+
+.. autoclass:: SetbacksConverter
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~SetbacksConverter.extract_all_layers
+      ~SetbacksConverter.extract_layers
+      ~SetbacksConverter.geotiff_to_layer
+      ~SetbacksConverter.layer_to_geotiff
+      ~SetbacksConverter.layers_to_h5
+      ~SetbacksConverter.parse_tiff
+      ~SetbacksConverter.setbacks_to_layer
+      ~SetbacksConverter.write_geotiff
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SetbacksConverter.layers
+   
+   
