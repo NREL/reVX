@@ -141,7 +141,7 @@ The below example JSON file shows all possible keys with example values. The for
 Once a config file has been created, the layer creation tool can be run from the command-line, e.g.:
 
 ```
-$ transmission-layer-creator --verbose from-config --config layer_config_file.json
+$ dry-cost-creator --verbose from-config --config layer_config_file.json
 ```
 With an appropriate config file, this will result in all layers required for a transmission routing analysis being created and saved in the specified H5 file.
 
