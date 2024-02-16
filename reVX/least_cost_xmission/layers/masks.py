@@ -9,7 +9,7 @@ from typing import Optional
 import numpy as np
 import numpy.typing as npt
 
-from reVX.least_cost_xmission.layers.utils import rasterize
+from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
 )
@@ -112,19 +112,22 @@ class Masks:
         logger.debug('Creating masks from %s', land_mask_shp_f)
 
         # Raw land is all land cells, include landfall cells
-        raw_land = rasterize(land_mask_shp_f, self._io_handler.profile,
-                             all_touched=True,
-                             reproject_vector=reproject_vector, dtype='uint8')
+        raw_land = rasterize_shape_file(land_mask_shp_f,
+                                        self._io_handler.profile,
+                                        all_touched=True,
+                                        reproject_vector=reproject_vector,
+                                        dtype='uint8')
 
         raw_land_mask: MaskArr = raw_land == 1
 
         # Offshore mask is inversion of raw land mask
         self._wet_mask = ~raw_land_mask
 
-        landfall = rasterize(land_mask_shp_f, self._io_handler.profile,
-                             reproject_vector=reproject_vector,
-                             all_touched=True, boundary_only=True,
-                             dtype='uint8')
+        landfall = rasterize_shape_file(land_mask_shp_f,
+                                        self._io_handler.profile,
+                                        reproject_vector=reproject_vector,
+                                        all_touched=True, boundary_only=True,
+                                        dtype='uint8')
         self._landfall_mask = landfall == 1
 
         # XOR landfall and raw land to get all land cells, except landfall

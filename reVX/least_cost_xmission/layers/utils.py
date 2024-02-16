@@ -5,13 +5,12 @@ import logging
 from typing import Optional, Union, Dict
 
 import pandas as pd
+import rasterio as rio
 import geopandas as gpd
 import numpy.typing as npt
 from shapely.geometry import Point, LineString
 
-import rasterio as rio
-from rasterio import features
-
+from reVX.utilities import rasterize
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     Profile
@@ -22,14 +21,14 @@ VECTOR_CACHE: Dict[str, gpd.GeoDataFrame] = {}
 logger = logging.getLogger(__name__)
 
 
-def rasterize(fname: str, profile: Profile,
-              buffer_dist: Optional[float] = None,
-              all_touched: bool = False,
-              reproject_vector: bool = True,
-              burn_value: Union[int, float] = 1,
-              boundary_only: bool = False,
-              dtype: npt.DTypeLike = DEFAULT_DTYPE,
-              ) -> npt.NDArray:
+def rasterize_shape_file(fname: str, profile: Profile,
+                         buffer_dist: Optional[float] = None,
+                         all_touched: bool = False,
+                         reproject_vector: bool = True,
+                         burn_value: Union[int, float] = 1,
+                         boundary_only: bool = False,
+                         dtype: npt.DTypeLike = DEFAULT_DTYPE,
+                         ) -> npt.NDArray:
     """
     Rasterize a vector layer.
 
@@ -72,24 +71,10 @@ def rasterize(fname: str, profile: Profile,
         logger.debug('Reprojecting vector')
         gdf = gdf.to_crs(crs=profile['crs'])
 
-    if buffer_dist is not None:
-        logger.debug(f'Buffering {fname} by {buffer_dist}')
-        gdf.geometry = gdf.geometry.buffer(buffer_dist)
-        logger.debug(f'Buffering done. {len(gdf)} features before cleaning.')
-        gdf = gdf[~gdf.is_empty]  # Negative buffer may result in empty feats
-        logger.debug(f'{len(gdf)} features after removing empty features.')
-
-    logger.debug('Rasterizing {}'.format(fname))
-    geo = gdf.boundary if boundary_only else gdf.geometry
-    shape = (profile['height'], profile['width'])
-    rasterized = features.rasterize(list(geo), out_shape=shape,
-                                    fill=0, out=None,
-                                    transform=profile['transform'],
-                                    all_touched=all_touched,
-                                    default_value=burn_value, dtype=dtype)
-
-    logger.debug('Rasterizing complete')
-    return rasterized
+    logger.debug('Rasterizing %s', fname)
+    return rasterize(gdf, profile, buffer_dist=buffer_dist,
+                     all_touched=all_touched, burn_value=burn_value,
+                     boundary_only=boundary_only, dtype=dtype)
 
 
 def convert_pois_to_lines(poi_csv_f: str, template_f: str, out_f: str):

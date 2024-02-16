@@ -93,8 +93,12 @@ def from_config(ctx, config, verbose):
     if config.execution_control.option == 'local':
         run_local(ctx, config)
 
-    if config.execution_control.option == 'eagle':
-        eagle(config)
+    if config.execution_control.option not in {'eagle', 'kestrel'}:
+        click.echo('Option "{}" is not supported'
+                   .format(config.execution_control.option))
+        return
+
+    eagle(config)
 
 
 @main.command()
@@ -194,7 +198,7 @@ def get_node_cmd(config):
     if config.log_level == logging.DEBUG:
         args.append('-v')
 
-    cmd = ('python -m reVX.least_cost_xmission.cost_creator_cli {}'
+    cmd = ('python -m reVX.least_cost_xmission.dry_cost_creator_cli {}'
            .format(' '.join(args)))
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
 
