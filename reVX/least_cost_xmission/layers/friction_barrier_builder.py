@@ -9,7 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
 
-from reVX.least_cost_xmission.layers.utils import rasterize
+from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
 from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
                                                        RAW_BARRIER_TIFF,
@@ -160,11 +160,11 @@ class FrictionBarrierBuilder:
 
         r_config = config.rasterize
 
-        temp = rasterize(fname, self._io_handler.profile,
-                         buffer_dist=r_config.buffer,
-                         burn_value=r_config.value,
-                         dtype=self._dtype,
-                         reproject_vector=r_config.reproject)
+        temp = rasterize_shape_file(fname, self._io_handler.profile,
+                                    buffer_dist=r_config.buffer,
+                                    burn_value=r_config.value,
+                                    dtype=self._dtype,
+                                    reproject_vector=r_config.reproject)
 
         if config.extent == ALL:
             return temp
