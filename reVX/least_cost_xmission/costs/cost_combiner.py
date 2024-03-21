@@ -10,9 +10,10 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.config.constants import (COMBINED_COSTS_TIFF,
-                                                       DEFAULT_DTYPE,
-                                                       WET_COSTS_TIFF)
+from reVX.least_cost_xmission.config.constants import (
+    COMBINED_COSTS_TIFF, DEFAULT_DTYPE, WET_COSTS_TIFF,
+    COMBINED_COSTS_H5_LAYER_NAME, WET_COSTS_H5_LAYER_NAME,
+    DRY_COSTS_H5_LAYER_NAME, LANDFALL_COSTS_H5_LAYER_NAME)
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
 )
@@ -26,7 +27,6 @@ class CostCombiner:
     """
     def __init__(self, io_handler: TransLayerIoHandler, masks: Masks):
         """
-
         Parameters
         ----------
         io_handler : TransLayerIoHandler
@@ -94,9 +94,15 @@ class CostCombiner:
 
     def combine_costs(self, wet_costs: npt.NDArray,
                       dry_costs: npt.NDArray, landfall_cost: float,
-                      layer_name: str, save_tiff: bool = True):
+                      combined_layer_name: str = COMBINED_COSTS_H5_LAYER_NAME,
+                      wet_layer_name: str = WET_COSTS_H5_LAYER_NAME,
+                      dry_layer_name: str = DRY_COSTS_H5_LAYER_NAME,
+                      landfall_layer_name: str = LANDFALL_COSTS_H5_LAYER_NAME,
+                      save_tiff: bool = True):
         """
-        Combine wet, dry, and landfall costs using appropriate masks
+        Combine wet, dry, and landfall costs using appropriate masks. Write
+        all layers to H5. Individual costs layers are set to zero outside of
+        their domains before saving to H5.
 
         Parameters
         ----------
@@ -107,8 +113,14 @@ class CostCombiner:
         landfall_cost : float
             Cost to apply to landfall cells for conversion from underwater
             cables to land based transmission.
-        layer_name : str
-            Layer name for combined costs in H5
+        combined_layer_name : str
+            Name for combined costs in H5 file
+        wet_layer_name : str
+            Name for wet costs in H5 file
+        dry_layer_name : str
+            Name for dry costs in H5 file
+        landfall_layer_name : str
+            Name for landfall costs in H5 file
         save_tiff : bool, optional
             Save combined costs to GeoTIFF if True, by default True
         """
@@ -123,9 +135,12 @@ class CostCombiner:
                              f'{self._io_handler.shape}')
 
         combined = np.zeros(self._io_handler.shape, dtype=DEFAULT_DTYPE)
+        landfall_costs = np.zeros(self._io_handler.shape, dtype=DEFAULT_DTYPE)
+
+        landfall_costs[self._masks.landfall_mask] = landfall_cost
         combined[self._masks.wet_mask] = wet_costs[self._masks.wet_mask]
         combined[self._masks.dry_mask] = dry_costs[self._masks.dry_mask]
-        combined[self._masks.landfall_mask] = landfall_cost
+        combined[self._masks.landfall_mask] = landfall_costs[self._masks.landfall_mask]
 
         if save_tiff:
             logger.debug('Saving combined costs to GeoTIFF')
@@ -139,4 +154,17 @@ class CostCombiner:
             warn(msg)
 
         logger.debug('Writing combined costs to H5')
-        self._io_handler.write_to_h5(combined, layer_name)
+        self._io_handler.write_to_h5(combined, combined_layer_name)
+
+        logger.debug('Writing wet costs to H5')
+        wet_costs = wet_costs.copy()
+        wet_costs[~self._masks.wet_mask] = 0
+        self._io_handler.write_to_h5(wet_costs, wet_layer_name)
+
+        logger.debug('Writing dry costs to H5')
+        dry_costs = dry_costs.copy()
+        dry_costs[~self._masks.dry_mask] = 0
+        self._io_handler.write_to_h5(dry_costs, dry_layer_name)
+
+        logger.debug('Writing landfall costs to H5')
+        self._io_handler.write_to_h5(landfall_costs, landfall_layer_name)

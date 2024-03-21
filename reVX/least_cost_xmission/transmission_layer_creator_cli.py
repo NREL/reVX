@@ -10,6 +10,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 from rex.utilities.loggers import init_mult
+from gaps.config import load_config
 
 from reVX import __version__
 from reVX.config.transmission_layer_creation import (LayerCreationConfig,
@@ -65,10 +66,9 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
     ConfigClass = (LayerCreationConfig
                    if ignore_unknown_keys else ForbidExtraConfig)
 
-    with open(config_fpath, 'r') as inf:
-        raw_json = inf.read()
+    config_dict = load_config(config_fpath)
     try:
-        config = ConfigClass.model_validate_json(raw_json)
+        config = ConfigClass.model_validate(config_dict)
     except ValidationError as e:
         logger.error(f'Error loading config file {config_fpath}:\n{e}')
         sys.exit(1)
@@ -121,9 +121,14 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
         combiner = CostCombiner(io_handler, masks)
         wet_costs = combiner.load_wet_costs()
         dry_costs = combiner.load_legacy_dry_costs(cc.dry_h5_fpath,
-                                                   cc.dry_costs_layer)
+                                                   cc.dry_costs_layer_name)
+
+        # Include capacity in dry-only costs layer name
+        dry_h5_layer_name = f'dry_{cc.combined_costs_layer_name}'
         combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,
-                               cc.dry_costs_layer, save_tiff=save_tiff)
+                               combined_layer_name=cc.combined_costs_layer_name,
+                               dry_layer_name=dry_h5_layer_name,
+                               save_tiff=save_tiff)
 
 
 @main.command

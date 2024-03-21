@@ -13,7 +13,6 @@ import logging
 import warnings
 import pandas as pd
 import geopandas as gpd
-from pathlib import Path
 
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT

@@ -104,15 +104,19 @@ class MergeFrictionBarriers(BaseModel, extra='forbid'):
 
 class CombineCosts(BaseModel, extra='forbid'):
     """ Config items required to combine wet and dry costs """
+
     landfall_cost: float
     """Cost to transition from wet to dry transmission"""
 
-    # Note: the below items are temporary until dry costs are refactored
+    # Note: the dry costs items are temporary until dry costs are refactored
     dry_h5_fpath: FilePath
     """H5 file with dry costs"""
 
-    dry_costs_layer: str
-    """Name of dry costs in H5 file"""
+    dry_costs_layer_name: str
+    """Name of dry costs in legacy dry H5 file"""
+
+    combined_costs_layer_name: str
+    """Name of combined costs layer in """
 
 
 FrictionLayers = Dict[str, FBLayerConfig]
