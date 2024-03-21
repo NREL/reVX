@@ -9,13 +9,14 @@ import json
 import logging
 import numpy as np
 import os
+import time
 import pandas as pd
 import rasterio
+
 from pyproj.crs import CRS
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from concurrent.futures import as_completed
-import time
 
 from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.extent import SupplyCurveExtent
@@ -464,7 +465,8 @@ class LeastCostXmission(LeastCostPaths):
     def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
                           clipping_buffer=1.05, barrier_mult=100,
                           max_workers=None, save_paths=False, radius=None,
-                          expand_radius=True, mp_delay=3, simplify_geo=None):
+                          expand_radius=True, mp_delay=3, simplify_geo=None,
+                          cost_layers=None):
         """
         Compute Least Cost Transmission for desired sc_points
 
@@ -505,6 +507,9 @@ class LeastCostXmission(LeastCostPaths):
             Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        cost_layers : List[str] | None, optional
+            List of layers in H5 to calculate independent costs for after
+            deteremining path using main cost layer.
 
         Returns
         -------
@@ -525,6 +530,7 @@ class LeastCostXmission(LeastCostPaths):
         if max_workers > 1:
             logger.info('Computing Least Cost Transmission for SC points in '
                         'parallel on {} workers'.format(max_workers))
+            # TODO - handle cost_layers
             least_costs = self._process_multi_core(
                 capacity_class,
                 tie_line_voltage,
@@ -551,7 +557,8 @@ class LeastCostXmission(LeastCostPaths):
                 save_paths=save_paths,
                 radius=radius,
                 expand_radius=expand_radius,
-                simplify_geo=simplify_geo)
+                simplify_geo=simplify_geo,
+                cost_layers=cost_layers)
 
         if not least_costs:
             return pd.DataFrame(columns=['sc_point_gid'])
@@ -690,7 +697,8 @@ class LeastCostXmission(LeastCostPaths):
                              sc_point_gids, nn_sinks=2,
                              clipping_buffer=1.05, barrier_mult=100,
                              save_paths=False, radius=None,
-                             expand_radius=True, simplify_geo=None):
+                             expand_radius=True, simplify_geo=None,
+                             cost_layers=None):
         """
         Compute Least Cost Transmission for desired sc_points with a
         single core.
@@ -728,6 +736,9 @@ class LeastCostXmission(LeastCostPaths):
             By default, ``True``.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        cost_layers : List[str] | None, optional
+            List of layers in H5 to calculate independent costs for after
+            deteremining path using main cost layer.
 
         Returns
         -------
@@ -747,7 +758,6 @@ class LeastCostXmission(LeastCostPaths):
                     expand_radius=expand_radius)
                 if sc_features.empty:
                     continue
-
                 sc_costs = TransCapCosts.run(
                     self._cost_fpath,
                     sc_point.copy(deep=True),
@@ -757,7 +767,8 @@ class LeastCostXmission(LeastCostPaths):
                     barrier_mult=barrier_mult,
                     min_line_length=self._min_line_len,
                     save_paths=save_paths,
-                    simplify_geo=simplify_geo)
+                    simplify_geo=simplify_geo,
+                    cost_layers=cost_layers)
 
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
@@ -773,7 +784,7 @@ class LeastCostXmission(LeastCostPaths):
             xmission_config=None, min_line_length=0, sc_point_gids=None,
             nn_sinks=2, clipping_buffer=1.05, barrier_mult=100,
             max_workers=None, save_paths=False, radius=None,
-            expand_radius=True, simplify_geo=None):
+            expand_radius=True, simplify_geo=None, cost_layers=None):
         """
         Find Least Cost Transmission connections between desired
         sc_points to given transmission features for desired capacity
@@ -823,6 +834,9 @@ class LeastCostXmission(LeastCostPaths):
             By default, ``True``.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        cost_layers : List[str] | None, optional
+            List of layers in H5 to calculate independent costs for after
+            deteremining path using main cost layer.
 
         Returns
         -------
@@ -844,7 +858,8 @@ class LeastCostXmission(LeastCostPaths):
                                             save_paths=save_paths,
                                             radius=radius,
                                             expand_radius=expand_radius,
-                                            simplify_geo=simplify_geo)
+                                            simplify_geo=simplify_geo,
+                                            cost_layers=cost_layers)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'

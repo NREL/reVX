@@ -5,6 +5,7 @@ reVX Least Cost Xmission Configurations
 import os
 import logging
 import pandas as pd
+from typing import List, Optional
 
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig
@@ -246,7 +247,16 @@ class LeastCostXmissionConfig(AnalysisConfig):
         """
         Transmission barrier multiplier to use for MCP costs
         """
-        return self.get('barrier_mult', self._default_barrier_mult)
+        return float(self.get('barrier_mult', self._default_barrier_mult))
+
+    @property
+    def cost_layers(self) -> Optional[List[str]]:
+        """
+        List of optional H5 layers to determine independent costs and distances
+        for, e.g. wet and dry costs. These layers are not used for routing or
+        overall costs, just cost reporting for an fraction of the routing path.
+        """
+        return self.get('cost_layers', None)
 
     @property
     def sc_point_gids(self):

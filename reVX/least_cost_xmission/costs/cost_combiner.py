@@ -140,7 +140,8 @@ class CostCombiner:
         landfall_costs[self._masks.landfall_mask] = landfall_cost
         combined[self._masks.wet_mask] = wet_costs[self._masks.wet_mask]
         combined[self._masks.dry_mask] = dry_costs[self._masks.dry_mask]
-        combined[self._masks.landfall_mask] = landfall_costs[self._masks.landfall_mask]
+        combined[self._masks.landfall_mask] = \
+            landfall_costs[self._masks.landfall_mask]
 
         if save_tiff:
             logger.debug('Saving combined costs to GeoTIFF')

@@ -35,6 +35,7 @@ class XmissionCostCreator(ExclusionsConverter):
         - xmission_barrier
 
     """
+    # TODO - use CELL_SIZE from least_cost_xmission.config
     PIXEL_SIZE_M = 90  # raster cell width/height in meters
 
     def __init__(self, h5_fpath, iso_regions_fpath, iso_lookup=None):

@@ -125,8 +125,9 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
 
         # Include capacity in dry-only costs layer name
         dry_h5_layer_name = f'dry_{cc.combined_costs_layer_name}'
+        combined_costs_layer_name = cc.combined_costs_layer_name
         combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,
-                               combined_layer_name=cc.combined_costs_layer_name,
+                               combined_layer_name=combined_costs_layer_name,
                                dry_layer_name=dry_h5_layer_name,
                                save_tiff=save_tiff)
 

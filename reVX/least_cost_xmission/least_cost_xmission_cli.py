@@ -13,6 +13,7 @@ import logging
 import warnings
 import pandas as pd
 import geopandas as gpd
+from typing import List
 
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
@@ -176,12 +177,17 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Simplify path geometries by a value before writing to "
                     "GeoPackage."))
+@click.option('--cost-layers', '-cl', required=False, multiple=True,
+              default=(),
+              help='Layer in H5 to calculate independent costs and lengths '
+                   'for. Multiple layers may be specified.')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
           clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
-          verbose, save_paths, radius, expand_radius, simplify_geo):
+          verbose, save_paths, radius, expand_radius, simplify_geo,
+          cost_layers: List[str]):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -205,7 +211,8 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
               "radius": radius,
-              "expand_radius": expand_radius}
+              "expand_radius": expand_radius,
+              "cost_layers": cost_layers}
     if regions_fpath is not None:
         least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
                                              regions_fpath,
@@ -397,7 +404,6 @@ def get_node_cmd(config, gids):
     cmd : str
         CLI call to submit to SLURM execution.
     """
-
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-cost {}'.format(SLURM.s(config.cost_fpath)),
@@ -417,6 +423,9 @@ def get_node_cmd(config, gids):
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
+    if config.cost_layers is not None:
+        for layer in config.cost_layers:
+            args.append(f'-cl {layer}')
     if config.save_paths:
         args.append('--save_paths')
     if config.radius:
@@ -469,6 +478,7 @@ def run_local(ctx, config):
                expand_radius=config.expand_radius,
                save_paths=config.save_paths,
                simplify_geo=config.simplify_geo,
+               cost_layers=config.cost_layers,
                )
 
 

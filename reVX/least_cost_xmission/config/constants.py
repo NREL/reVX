@@ -5,7 +5,7 @@ WET_COSTS_H5_LAYER_NAME = 'wet_costs'
 LANDFALL_COSTS_H5_LAYER_NAME = 'landfall_costs'
 DRY_COSTS_H5_LAYER_NAME = 'dry_costs'
 COMBINED_COSTS_H5_LAYER_NAME = 'combined_costs'
-BARRIER_H5_LAYER_NAME = 'transmission_barrier'  # Combined friction and barriers
+BARRIER_H5_LAYER_NAME = 'transmission_barrier'  # Combined friction and barrier
 
 WET_COSTS_TIFF = 'wet_costs.tif'
 COMBINED_COSTS_TIFF = 'combined_costs.tif'

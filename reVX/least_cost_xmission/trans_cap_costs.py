@@ -6,6 +6,7 @@ for a clipped area.
 import geopandas as gpd
 import logging
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
 import rasterio
 from shapely.geometry import Polygon, Point
@@ -14,17 +15,19 @@ from shapely.ops import nearest_points
 from skimage.graph import MCP_Geometric
 import time
 from warnings import warn
+from typing import Union, List, Optional, Tuple, Dict
 
 from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
                                              SINK_CAT, SUBSTATION_CAT,
-                                             LOAD_CENTER_CAT)
+                                             LOAD_CENTER_CAT, CELL_SIZE)
+from reVX.least_cost_xmission.config.constants import \
+    LANDFALL_COSTS_H5_LAYER_NAME
 from reVX.utilities.exceptions import (InvalidMCPStartValueError,
                                        LeastCostPathNotFoundError)
 
 logger = logging.getLogger(__name__)
-
 
 class TieLineCosts:
     """
@@ -32,7 +35,8 @@ class TieLineCosts:
     locations
     """
     def __init__(self, cost_fpath, start_indices, capacity_class, row_slice,
-                 col_slice, xmission_config=None, barrier_mult=100):
+                 col_slice, xmission_config=None, barrier_mult=100,
+                 cost_layers=None):
         """
         Parameters
         ----------
@@ -72,6 +76,9 @@ class TieLineCosts:
         barrier_mult : int, optional
             Multiplier applied to the cost data to create transmission
             barrier costs. By default, ``100``.
+        cost_layers : List[str] | None, optional
+            List of layers in H5 to calculate independent costs for after
+            deteremining path using main cost layer.
         """
         self._cost_fpath = cost_fpath
         self._config = self._parse_config(xmission_config=xmission_config)
@@ -92,6 +99,14 @@ class TieLineCosts:
         with ExclusionLayers(self._cost_fpath) as f:
             self.transform = rasterio.Affine(*f.profile['transform'])
             self._full_shape = f.shape
+
+        self._cost_layers = {}
+        if cost_layers is not None:
+            with ExclusionLayers(self._cost_fpath) as f:
+                for cost_layer in cost_layers:
+                    cost = f[cost_layer, row_slice, col_slice]
+                    self._cost_layers[cost_layer] = cost
+
 
     def __repr__(self):
         msg = "{} starting at {}".format(self.__class__.__name__,
@@ -289,13 +304,15 @@ class TieLineCosts:
         with ExclusionLayers(cost_fpath) as f:
             cost = f[cost_layer, row_slice, col_slice]
             barrier = f['transmission_barrier', row_slice, col_slice]
+
         mcp_cost = cost + cost * barrier * barrier_mult
         mcp_cost = np.where(mcp_cost < 0, -1, mcp_cost)
 
         return cost, mcp_cost
 
     @staticmethod
-    def _compute_path_length(indices):
+    def _compute_path_length(indices: npt.NDArray
+                            ) -> Tuple[float, npt.NDArray]:
         """
         Compute the total length and cell by cell length of the lease
         cost path defined by 'indices'
@@ -316,7 +333,7 @@ class TieLineCosts:
         # Use Pythagorean theorem to calculate lengths between cells (km)
         # Use c**2 = a**2 + b**2 to determine length of individual paths
         lens = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
-        length = np.sum(lens) * 90 / 1000
+        length = np.sum(lens) * CELL_SIZE / 1000
 
         # Need to determine distance coming into and out of any cell. Assume
         # paths start and end at the center of a cell. Therefore, distance
@@ -333,10 +350,13 @@ class TieLineCosts:
 
         return length, lens
 
-    def least_cost_path(self, end_idx, save_path=False):
+    def least_cost_path(self, end_idx: Tuple[int, int], save_path=False) \
+        -> Tuple[float, float, float, float,
+                 Optional[Union[Point, LineString]], Dict[str, float]]:
         """
         Find least cost path, its length, and its total (un-barriered)
-        cost
+        cost. Optionally, calculate separate costs for sub-layers, and
+        geometry of path.
 
         Parameters
         ----------
@@ -358,11 +378,12 @@ class TieLineCosts:
             Latitude and longitude of the `end_idx` of the least cost
             path (i.e. the POI/transmission feature that was connected
             to).
-        path : shapely.geometry.linestring, optional
+        path : shapely.geometry.linestring | None, optional
             Path as a LineString, if `save_path` was set to ``True``.
+        cl_results : Dict[str, float]
+            Costs and lengths for individual sub-layers.
         """
         row, col = end_idx
-
         check = (row < 0 or col < 0 or row >= self.clip_shape[0]
                  or col >= self.clip_shape[1])
         if check:
@@ -378,6 +399,7 @@ class TieLineCosts:
             raise LeastCostPathNotFoundError(msg)
 
         try:
+            # Extract path indices
             indices = np.array(self.mcp.traceback((row, col)))
         except ValueError as ex:
             msg = ('Unable to find path from start {} to {}: {}'
@@ -387,11 +409,47 @@ class TieLineCosts:
         # Extract costs of cells
         # pylint: disable=unsubscriptable-object
         cell_costs = self.cost[indices[:, 0], indices[:, 1]]
-
         length, lens = self._compute_path_length(indices)
 
         # Multiple distance travel through cell by cost and sum it!
         cost = np.sum(cell_costs * lens)
+
+        # Determine parial costs for any cost layers
+        cl_results: Dict[str, float] = {}
+        if self._cost_layers:
+            logger.debug('Calculating partial costs and lengths for: %s',
+                         list(self._cost_layers.keys()))
+
+            total_layers_cost = 0
+            test_total_cost = 0
+
+            for layer_name, layer_cost_arr in self._cost_layers.items():
+                layer_costs = layer_cost_arr[indices[:, 0], indices[:, 1]]
+                layer_cost = np.sum(layer_costs * lens)
+                test_total_cost += layer_cost
+
+                # Don't scale landfall costs by length, just by # of landfalls
+                if layer_name == LANDFALL_COSTS_H5_LAYER_NAME:
+                    layer_cost = np.sum(layer_costs)
+
+                total_layers_cost += layer_cost
+                cl_results[f'{layer_name}_cost'] = layer_cost
+
+                # Get path length in km only where layer costs are > 0
+                layer_length = np.sum(lens[layer_costs > 0]) * CELL_SIZE / 1000
+                cl_results[f'{layer_name}_length_km'] = layer_length
+
+            # Sanity check that total of cost layers matches full cost raster.
+            if round(test_total_cost) != round(cost):
+                msg = (f'Sum of cost_layers costs ({total_layers_cost:,}) does'
+                       ' not equal cost calculated with composite cost layer '
+                       f'({cost:,}')
+                logger.warning(msg)
+                warn(msg)
+
+            # The original cost may not properly handle the landfall cost. Use
+            # composite layers cost instead.
+            cost = total_layers_cost
 
         with ExclusionLayers(self._cost_fpath) as f:
             poi_lat = f['latitude', self._row_slice, self._col_slice][row, col]
@@ -403,11 +461,10 @@ class TieLineCosts:
             col = indices[:, 1] + self.col_offset
             x, y = rasterio.transform.xy(self.transform, row, col)
             geom = Point if indices.shape[0] == 1 else LineString
-            out = length, cost, poi_lat, poi_lon, geom(list(zip(x, y)))
-        else:
-            out = length, cost, poi_lat, poi_lon
+            return (length, cost, poi_lat, poi_lon, geom(list(zip(x, y))), \
+                    cl_results)
 
-        return out
+        return (length, cost, poi_lat, poi_lon, None, cl_results)
 
     def compute(self, end_indices, save_paths=False):
         """
@@ -532,7 +589,8 @@ class TransCapCosts(TieLineCosts):
     """
 
     def __init__(self, cost_fpath, sc_point, features, capacity_class,
-                 radius=None, xmission_config=None, barrier_mult=100):
+                 radius=None, xmission_config=None, barrier_mult=100,
+                 cost_layers=None):
         """
         Parameters
         ----------
@@ -551,13 +609,16 @@ class TransCapCosts(TieLineCosts):
             .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
+        cost_layers : List[str] | None, optional
+            List of layers in H5 to calculate independent costs for after
+            deteremining path using main cost layer.
         """
         self._sc_point = sc_point
         start_indices, row_slice, col_slice = self._get_clipping_slices(
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
         super().__init__(cost_fpath, start_indices, capacity_class, row_slice,
                          col_slice, xmission_config=xmission_config,
-                         barrier_mult=barrier_mult)
+                         barrier_mult=barrier_mult, cost_layers=cost_layers)
         self._features = self._prep_features(features)
         self._clip_mask = None
 
@@ -588,7 +649,7 @@ class TransCapCosts(TieLineCosts):
         return self.sc_point['sc_point_gid']
 
     @property
-    def features(self):
+    def features(self) -> pd.DataFrame:
         """
         Table of transmission features
 
@@ -829,7 +890,7 @@ class TransCapCosts(TieLineCosts):
         ----------
         features : pandas.DataFrame
             Table of transmission features
-        clip_lines : bool, optional
+        clip_lines : bool, optional # TODO this appears to be obsolete
             Flag to clip transmission lines to clipped raster bounds,
             set to false when clipping radius is None,
             by default True
@@ -900,7 +961,9 @@ class TransCapCosts(TieLineCosts):
         return [row, col]
 
     def compute_tie_line_costs(self, min_line_length=5.7,  # noqa: C901
-                               save_paths=False):
+                               save_paths=False,
+                               cost_layers: Optional[List[str]] = None
+                               ) -> Union[pd.DataFrame, gpd.GeoDataFrame] :
         """
         Compute least cost path and distance between supply curve point
         and every transmission feature
@@ -912,6 +975,9 @@ class TransCapCosts(TieLineCosts):
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
+        cost_layers : List[str] | None, optional
+            List of layers in H5 to calculate independent costs for after
+            deteremining path using main cost layer.
 
         Returns
         -------
@@ -926,6 +992,11 @@ class TransCapCosts(TieLineCosts):
         if save_paths:
             paths = []
 
+        if cost_layers is not None:
+            for layer in cost_layers:
+                features[f'{layer}_line_cost'] = None
+                features[f'{layer}_dist_km'] = None
+
         logger.debug('Determining path lengths and costs')
 
         for index, feat in features.iterrows():
@@ -937,12 +1008,9 @@ class TransCapCosts(TieLineCosts):
                 feat_idx = feat[['row', 'col']].values
 
             try:
-                # pylint: disable=unbalanced-tuple-unpacking
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
-                if save_paths:
-                    (length, cost, poi_lat, poi_lon, path) = result
-                else:
-                    (length, cost, poi_lat, poi_lon) = result
+                (length, cost, poi_lat, \
+                    poi_lon, path, cl_results) = result
 
                 if t_line and feat['max_volts'] < tie_voltage:
                     msg = ('Tie-line {} voltage of {}kV is less than tie line '
@@ -964,12 +1032,17 @@ class TransCapCosts(TieLineCosts):
                     cost = cost * min_mult
                     length = min_line_length
 
+                # TODO - fix typing issues
                 features.loc[index, 'dist_km'] = length
                 features.loc[index, 'raw_line_cost'] = cost
                 features.loc[index, 'poi_lat'] = poi_lat
                 features.loc[index, 'poi_lon'] = poi_lon
                 if save_paths:
                     paths.append(path)
+
+                # Append any cost layer values
+                for key, value in cl_results.items():
+                    features.loc[index, key] = value
 
             except LeastCostPathNotFoundError as ex:
                 msg = ("Could not connect SC point {} to transmission feature "
@@ -1104,7 +1177,7 @@ class TransCapCosts(TieLineCosts):
     @classmethod
     def run(cls, cost_fpath, sc_point, features, capacity_class, radius=None,
             xmission_config=None, barrier_mult=100, min_line_length=5.7,
-            save_paths=False, simplify_geo=None):
+            save_paths=False, simplify_geo=None, cost_layers=None):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1134,6 +1207,9 @@ class TransCapCosts(TieLineCosts):
             by default False
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        cost_layers : List[str] | None, optional
+            List of layers in H5 to calculate independent costs for after
+            deteremining path using main cost layer.
 
         Returns
         -------
@@ -1150,7 +1226,7 @@ class TransCapCosts(TieLineCosts):
         try:
             tcc = cls(cost_fpath, sc_point, features, capacity_class,
                       radius=radius, xmission_config=xmission_config,
-                      barrier_mult=barrier_mult)
+                      barrier_mult=barrier_mult, cost_layers=cost_layers)
 
             features = tcc.compute(min_line_length=min_line_length,
                                    save_paths=save_paths,
