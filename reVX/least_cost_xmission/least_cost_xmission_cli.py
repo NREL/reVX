@@ -211,8 +211,8 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
               "radius": radius,
-              "expand_radius": expand_radius,
-              "cost_layers": cost_layers}
+              "expand_radius": expand_radius}
+
     if regions_fpath is not None:
         least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
                                              regions_fpath,
@@ -220,6 +220,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
                                              capacity_class, **kwargs)
     else:
         kwargs["nn_sinks"] = nn_sinks
+        kwargs["cost_layers"] = cost_layers
         least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
                                             capacity_class, **kwargs)
     if len(least_costs) == 0:

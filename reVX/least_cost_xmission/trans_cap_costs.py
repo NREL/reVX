@@ -29,6 +29,7 @@ from reVX.utilities.exceptions import (InvalidMCPStartValueError,
 
 logger = logging.getLogger(__name__)
 
+
 class TieLineCosts:
     """
     Compute Least Cost Tie-line cost from start location to desired end
@@ -106,7 +107,6 @@ class TieLineCosts:
                 for cost_layer in cost_layers:
                     cost = f[cost_layer, row_slice, col_slice]
                     self._cost_layers[cost_layer] = cost
-
 
     def __repr__(self):
         msg = "{} starting at {}".format(self.__class__.__name__,
@@ -311,8 +311,8 @@ class TieLineCosts:
         return cost, mcp_cost
 
     @staticmethod
-    def _compute_path_length(indices: npt.NDArray
-                            ) -> Tuple[float, npt.NDArray]:
+    def _compute_path_length(indices: npt.NDArray) \
+            -> Tuple[float, npt.NDArray]:
         """
         Compute the total length and cell by cell length of the lease
         cost path defined by 'indices'
@@ -461,7 +461,7 @@ class TieLineCosts:
             col = indices[:, 1] + self.col_offset
             x, y = rasterio.transform.xy(self.transform, row, col)
             geom = Point if indices.shape[0] == 1 else LineString
-            return (length, cost, poi_lat, poi_lon, geom(list(zip(x, y))), \
+            return (length, cost, poi_lat, poi_lon, geom(list(zip(x, y))),
                     cl_results)
 
         return (length, cost, poi_lat, poi_lon, None, cl_results)
@@ -963,7 +963,7 @@ class TransCapCosts(TieLineCosts):
     def compute_tie_line_costs(self, min_line_length=5.7,  # noqa: C901
                                save_paths=False,
                                cost_layers: Optional[List[str]] = None
-                               ) -> Union[pd.DataFrame, gpd.GeoDataFrame] :
+                               ) -> Union[pd.DataFrame, gpd.GeoDataFrame]:
         """
         Compute least cost path and distance between supply curve point
         and every transmission feature
@@ -1009,8 +1009,7 @@ class TransCapCosts(TieLineCosts):
 
             try:
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
-                (length, cost, poi_lat, \
-                    poi_lon, path, cl_results) = result
+                (length, cost, poi_lat, poi_lon, path, cl_results) = result
 
                 if t_line and feat['max_volts'] < tie_voltage:
                     msg = ('Tie-line {} voltage of {}kV is less than tie line '

@@ -530,7 +530,6 @@ class LeastCostXmission(LeastCostPaths):
         if max_workers > 1:
             logger.info('Computing Least Cost Transmission for SC points in '
                         'parallel on {} workers'.format(max_workers))
-            # TODO - handle cost_layers
             least_costs = self._process_multi_core(
                 capacity_class,
                 tie_line_voltage,
@@ -543,7 +542,8 @@ class LeastCostXmission(LeastCostPaths):
                 expand_radius=expand_radius,
                 mp_delay=mp_delay,
                 simplify_geo=simplify_geo,
-                max_workers=max_workers)
+                max_workers=max_workers,
+                cost_layers=cost_layers)
         else:
             logger.info('Computing Least Cost Transmission for {:,} SC points '
                         'in serial'.format(len(sc_point_gids)))
@@ -578,7 +578,8 @@ class LeastCostXmission(LeastCostPaths):
                             sc_point_gids, nn_sinks=2,
                             clipping_buffer=1.05, barrier_mult=100,
                             max_workers=2, save_paths=False, radius=None,
-                            expand_radius=True, mp_delay=3, simplify_geo=None):
+                            expand_radius=True, mp_delay=3, simplify_geo=None,
+                            cost_layers=None):
         """
         Compute Least Cost Transmission for desired sc_points using
         multiple cores.
@@ -621,6 +622,9 @@ class LeastCostXmission(LeastCostPaths):
             Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        cost_layers : List[str] | None, optional
+            List of layers in H5 to calculate independent costs for after
+            deteremining path using main cost layer.
 
         Returns
         -------
@@ -631,10 +635,11 @@ class LeastCostXmission(LeastCostPaths):
         """
         loggers = [__name__, 'reV', 'reVX']
         with SpawnProcessPool(max_workers=max_workers, loggers=loggers) as exe:
-            least_costs = self. _compute_paths_in_chunks(
+            least_costs = self._compute_paths_in_chunks(
                 exe, max_workers, sc_point_gids, tie_line_voltage,
                 nn_sinks, clipping_buffer, radius, expand_radius, mp_delay,
-                capacity_class, barrier_mult, save_paths, simplify_geo)
+                capacity_class, barrier_mult, save_paths, simplify_geo,
+                cost_layers)
 
         return least_costs
 
@@ -642,7 +647,7 @@ class LeastCostXmission(LeastCostPaths):
                                  tie_line_voltage, nn_sinks, clipping_buffer,
                                  radius, expand_radius, mp_delay,
                                  capacity_class, barrier_mult, save_paths,
-                                 simplify_geo):
+                                 simplify_geo, cost_layers):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -681,7 +686,8 @@ class LeastCostXmission(LeastCostPaths):
                                 barrier_mult=barrier_mult,
                                 min_line_length=self._min_line_len,
                                 save_paths=save_paths,
-                                simplify_geo=simplify_geo)
+                                simplify_geo=simplify_geo,
+                                cost_layers=cost_layers)
             futures[future] = None
             num_jobs += 1
             if num_jobs <= max_submissions:
