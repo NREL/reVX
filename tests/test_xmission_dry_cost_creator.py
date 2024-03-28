@@ -18,7 +18,7 @@ from reVX import TESTDATADIR
 from reVX.cli import main as cli
 from reVX.least_cost_xmission.dry_cost_creator_cli import main
 from reVX.least_cost_xmission.costs.dry_cost_creator import (
-    XmissionCostCreator, XmissionConfig
+    DryCostCreator, XmissionConfig
 )
 from reVX.least_cost_xmission.config import TEST_DEFAULT_MULTS
 
@@ -36,10 +36,10 @@ def build_test_costs():
                     {'transmission_barrier':
                      os.path.join(TESTDATADIR, 'xmission',
                                   'ri_trans_barriers.tif')}}
-    XmissionCostCreator.run(BASELINE_H5, ISO_REGIONS_F, excl_h5=EXCL_H5,
-                            slope_layer='ri_srtm_slope', nlcd_layer='ri_nlcd',
-                            tiff_dir=None, default_mults=TEST_DEFAULT_MULTS,
-                            extra_layers=extra_layers)
+    DryCostCreator.run(BASELINE_H5, ISO_REGIONS_F, excl_h5=EXCL_H5,
+                       slope_layer='ri_srtm_slope', nlcd_layer='ri_nlcd',
+                       tiff_dir=None, default_mults=TEST_DEFAULT_MULTS,
+                       extra_layers=extra_layers)
 
 
 @pytest.fixture(scope="module")
@@ -54,7 +54,7 @@ def test_land_use_multiplier():
     """ Test land use multiplier creation """
     lu_mults = {'forest': 1.63, 'wetland': 1.5}
     arr = np.array([[[0, 95, 90], [42, 41, 15]]])
-    xcc = XmissionCostCreator(BASELINE_H5, ISO_REGIONS_F)
+    xcc = DryCostCreator(BASELINE_H5, ISO_REGIONS_F)
     out = xcc._compute_land_use_mult(arr, lu_mults,
                                      land_use_classes=XC['land_use_classes'])
     expected = np.array([[[1.0, 1.5, 1.5], [1.63, 1.63, 1.0]]],
@@ -67,7 +67,7 @@ def test_slope_multiplier():
     arr = np.array([[[0, 1, 10], [20, 1, 6]]])
     config = {'hill_mult': 1.2, 'mtn_mult': 1.5,
               'hill_slope': 2, 'mtn_slope': 8}
-    xcc = XmissionCostCreator(EXCL_H5, ISO_REGIONS_F)
+    xcc = DryCostCreator(EXCL_H5, ISO_REGIONS_F)
     out = xcc._compute_slope_mult(arr, config)
     expected = np.array([[[1.0, 1.0, 1.5], [1.5, 1.0, 1.2]]],
                         dtype=np.float32)
@@ -78,8 +78,8 @@ def test_full_costs_workflow():
     """
     Test full cost calculator workflow for RI against known costs
     """
-    xcc = XmissionCostCreator(BASELINE_H5, ISO_REGIONS_F,
-                              iso_lookup=XC['iso_lookup'])
+    xcc = DryCostCreator(BASELINE_H5, ISO_REGIONS_F,
+                         iso_lookup=XC['iso_lookup'])
 
     mults_arr = xcc.compute_multipliers(
         XC['iso_multipliers'], excl_h5=EXCL_H5, slope_layer='ri_srtm_slope',

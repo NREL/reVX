@@ -7,7 +7,9 @@ import sys
 import click
 import logging
 from pathlib import Path
+from typing import Union, Any
 
+from gaps.config import load_config
 from pydantic import ValidationError
 from rex.utilities.loggers import init_mult
 
@@ -30,11 +32,22 @@ from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
 )
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
 from reVX.utilities.exclusions import ExclusionsConverter
+from reVX.least_cost_xmission.costs.dry_cost_creator import DryCostCreator
 
 logger = logging.getLogger(__name__)
 
 CONFIG_ACTIONS = ['friction_layers', 'barrier_layers', 'wet_costs',
                   'dry_costs', 'combine_costs', 'merge_friction_and_barriers']
+
+
+def str_or_none(val: Any) -> Union[str, None]:
+    """
+    Return None if val is None, otherwise convert to a string.
+    """
+    if val is None:
+        return None
+
+    return str(val)
 
 
 @click.group()
@@ -59,16 +72,16 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
     Create costs, barriers, and frictions from a config file.
     """
     # By default, throw error on unknown keys in config file
+    # TODO - this name shows up in error messages, make it better
     class ForbidExtraConfig(LayerCreationConfig, extra='forbid'):
         """ Throw error if unknown keys are found in JSON """
 
     ConfigClass = (LayerCreationConfig
                    if ignore_unknown_keys else ForbidExtraConfig)
 
-    with open(config_fpath, 'r') as inf:
-        raw_json = inf.read()
+    config_dict = load_config(config_fpath)
     try:
-        config = ConfigClass.model_validate_json(raw_json)
+        config = ConfigClass.model_validate(config_dict)
     except ValidationError as e:
         logger.error(f'Error loading config file {config_fpath}:\n{e}')
         sys.exit(1)
@@ -107,10 +120,15 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
                                 str(wc.wet_costs_tiff))
 
     if config.dry_costs is not None:
-        # TODO - implement this
-        raise NotImplementedError('The "dry_costs" option is not supported '
-                                  'yet. Use the legacy CLI command in '
-                                  'dry_cost_creator_cli.py.')
+        dc = config.dry_costs
+        DryCostCreator.run(str(config.h5_fpath),
+                           str(dc.iso_regions),
+                           excl_h5=str(dc.data_h5),
+                           cost_configs=str_or_none(dc.cost_configs),
+                           slope_layer=dc.slope_layer,
+                           nlcd_layer=dc.nlcd_layer,
+                           default_mults=str_or_none(dc.default_mults),
+                           tiff_dir='.')
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,

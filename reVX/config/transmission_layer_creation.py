@@ -86,7 +86,23 @@ class WetCosts(BaseModel, extra='forbid'):
 
 class DryCosts(BaseModel, extra='forbid'):
     """ Config items required to generate dry costs """
-    # TODO
+    iso_regions: FilePath
+    """Filename of ISO region GEoTIFF"""
+
+    data_h5: FilePath
+    """Path of H5 file with NLCD and SRTM slope layers"""
+
+    nlcd_layer: str = 'usa_mrlc_nlcd2011'
+    """Layer name of NLCD in H5"""
+
+    slope_layer: str = 'srtm_slope'
+    """Layer name of SRTM slope in H5"""
+
+    cost_configs: Optional[FilePath] = None
+    """JSON file with cost configs"""
+
+    default_mults: Optional[FilePath] = None
+    """JSON file with multipliers for regions not defined in ISO file"""
 
 
 class MergeFrictionBarriers(BaseModel, extra='forbid'):

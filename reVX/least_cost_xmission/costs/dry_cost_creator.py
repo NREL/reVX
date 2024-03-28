@@ -10,7 +10,7 @@ from reV.handlers.exclusions import ExclusionLayers
 
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities import ExclusionsConverter
-from reVX.least_cost_xmission.config import XmissionConfig
+from reVX.least_cost_xmission.config import XmissionConfig, CELL_SIZE
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +25,9 @@ NLCD_LAND_USE_CLASSES = {
 METERS_PER_MILE = 1609.344
 
 
-class XmissionCostCreator(ExclusionsConverter):
+class DryCostCreator(ExclusionsConverter):
     """
-    Class to create and save Transmission cost layers to a .h5 Exclusion file
+    Class to create and save dry transmission cost layers to an .h5 file.
 
         - dist_to_coast (for valid sc_points)
         - base_costs
@@ -35,7 +35,6 @@ class XmissionCostCreator(ExclusionsConverter):
         - xmission_barrier
 
     """
-    PIXEL_SIZE_M = 90  # raster cell width/height in meters
 
     def __init__(self, h5_fpath, iso_regions_fpath, iso_lookup=None):
         """
@@ -201,7 +200,12 @@ class XmissionCostCreator(ExclusionsConverter):
         logger.debug('Loading complete')
 
         same_shape = self._iso_regions.shape == land_use.shape == slope.shape
-        assert same_shape, 'All rasters must be the same shape'
+        if not same_shape:
+            msg = ('All rasters must be the same shape: iso_regions: '
+                   f'{self._iso_regions.shape}, land_use: {land_use.shape}, '
+                   f'slope: {slope.shape}')
+            logger.error(msg)
+            raise ValueError(msg)
 
         mults_arr = np.ones(self._iso_regions.shape, dtype=np.float32)
         regions_mask = np.full(mults_arr.shape, False, dtype=bool)
@@ -282,7 +286,7 @@ class XmissionCostCreator(ExclusionsConverter):
                         .format(iso, capacity))
             iso_code = self._iso_lookup[iso]
             cost_per_mile = base_line_costs[iso][str(capacity)]
-            cost_per_cell = cost_per_mile / METERS_PER_MILE * self.PIXEL_SIZE_M
+            cost_per_cell = cost_per_mile / METERS_PER_MILE * CELL_SIZE
             logger.debug('$/mile is {}, $/cell is {}'
                          .format(cost_per_mile, cost_per_cell))
             mask = self._iso_regions == iso_code
