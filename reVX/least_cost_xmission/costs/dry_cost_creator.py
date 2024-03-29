@@ -103,7 +103,7 @@ class DryCostCreator:
             # Calculate total costs w/ multipliers
             costs_arr = blc_arr * mults_arr
 
-            tie_line_costs_tiff = 'tie_line_costs{}MW.tif'.format(capacity)
+            tie_line_costs_tiff = 'tie_line_costs_{}MW.tif'.format(capacity)
             self._io_handler.save_tiff(costs_arr, tie_line_costs_tiff)
 
     @staticmethod
@@ -265,8 +265,9 @@ class DryCostCreator:
 
             if 'land_use' in default_mults:
                 region_land_use = land_use_layer[default_mask]
+                lu_mult_dict = default_mults['land_use']
                 lu_mult = self._compute_land_use_mult(region_land_use,
-                                                      default_mults['land_use'],
+                                                      lu_mult_dict,
                                                       land_use_classes)
                 mults_arr[default_mask] = lu_mult
 
