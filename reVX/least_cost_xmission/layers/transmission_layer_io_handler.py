@@ -52,8 +52,11 @@ class TransLayerIoHandler:
         """
         self._layer_dir = layer_dir
         self._profile = self._extract_profile(template_f)
+
         self.shape: Tuple[int, int] = (self._profile['height'],
                                        self._profile['width'])
+        """ Shape of template raster """
+
         self._h5_file: Optional[str] = None
 
     @property

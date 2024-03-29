@@ -66,7 +66,7 @@ def main(verbose):
 @click.option('-c', '--config', 'config_fpath', type=click.Path(exists=True),
               required=True, help='Configuration JSON.')
 @click.option('--ignore-unknown-keys', '-i', is_flag=True, default=False,
-              help='Silently ignore unknown keys in config file.')
+              help='Silently ignore unknown top-level keys in the config file.')
 def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
     """
     Create costs, barriers, and frictions from a config file.
@@ -121,14 +121,14 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
 
     if config.dry_costs is not None:
         dc = config.dry_costs
-        DryCostCreator.run(str(config.h5_fpath),
-                           str(dc.iso_regions),
-                           excl_h5=str(dc.data_h5),
-                           cost_configs=str_or_none(dc.cost_configs),
-                           slope_layer=dc.slope_layer,
-                           nlcd_layer=dc.nlcd_layer,
-                           default_mults=str_or_none(dc.default_mults),
-                           tiff_dir='.')
+
+        # Dry layers have historically used a different size raster
+        dry_io_handler = TransLayerIoHandler(str(dc.iso_region_tiff),
+                                             layer_dir=config.layer_dir)
+        dcc = DryCostCreator(dry_io_handler)
+        dcc.build_dry_costs(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
+                            str(dc.slope_tiff),
+                            cost_configs=str_or_none(dc.cost_configs))
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
@@ -138,6 +138,7 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
         cc = config.combine_costs
         combiner = CostCombiner(io_handler, masks)
         wet_costs = combiner.load_wet_costs()
+        # TODO - load dry costs tifff
         dry_costs = combiner.load_legacy_dry_costs(cc.dry_h5_fpath,
                                                    cc.dry_costs_layer)
         combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,

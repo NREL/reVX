@@ -9,5 +9,6 @@ BARRIER_H5_LAYER_NAME = 'transmission_barrier'
 FRICTION_TIFF = 'friction.tif'
 RAW_BARRIER_TIFF = 'barriers.tif'
 BARRIER_TIFF = 'combined_barriers.tif'  # File for combo friction and barriers
+DRY_MULTIPLIER_TIFF = 'dry_multipliers.tif'
 
 DEFAULT_DTYPE = 'float32'
