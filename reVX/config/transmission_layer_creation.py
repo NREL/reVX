@@ -86,7 +86,17 @@ class WetCosts(BaseModel, extra='forbid'):
 
 class DryCosts(BaseModel, extra='forbid'):
     """ Config items required to generate dry costs """
-    # TODO
+    iso_region_tiff: FilePath
+    """Filename of ISO region GeoTIFF"""
+
+    nlcd_tiff: FilePath
+    """File name of NLCD GeoTiff"""
+
+    slope_tiff: FilePath
+    """File name of slope GeoTiff"""
+
+    cost_configs: Optional[FilePath] = None
+    """JSON file with cost configs"""
 
 
 class MergeFrictionBarriers(BaseModel, extra='forbid'):
@@ -108,15 +118,8 @@ class CombineCosts(BaseModel, extra='forbid'):
     landfall_cost: float
     """Cost to transition from wet to dry transmission"""
 
-    # Note: the dry costs items are temporary until dry costs are refactored
-    dry_h5_fpath: FilePath
-    """H5 file with dry costs"""
-
-    dry_costs_layer_name: str
-    """Name of dry costs in legacy dry H5 file"""
-
-    combined_costs_layer_name: str
-    """Name of combined costs layer in """
+    dry_costs_tiff: Path
+    """GeoTIFF file with dry costs"""
 
 
 FrictionLayers = Dict[str, FBLayerConfig]

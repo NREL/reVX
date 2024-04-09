@@ -52,8 +52,11 @@ class TransLayerIoHandler:
         """
         self._layer_dir = layer_dir
         self._profile = self._extract_profile(template_f)
+
         self.shape: Tuple[int, int] = (self._profile['height'],
                                        self._profile['width'])
+        """ Shape of template raster """
+
         self._h5_file: Optional[str] = None
 
     @property
@@ -202,7 +205,7 @@ class TransLayerIoHandler:
         return attrs
 
     def load_tiff(self, fname: str, band: int = 1,
-                  reproject=False) -> npt.NDArray:
+                  reproject=False, skip_profile_test=False) -> npt.NDArray:
         """
         Load GeoTIFF
 
@@ -212,9 +215,12 @@ class TransLayerIoHandler:
             Filename of GeoTIFF to load
         band : int, optional
             Band to load from GeoTIFF. By default, ``1``.
-        reproject
+        reproject : bool, optional
             Reproject raster to standard CRS and transform if True.
             By default, ``False``.
+        skip_profile_test: bool, optional
+            Skip checking that shape, transform, and CRS match template raster
+            if ``True``. By default, ``False``.
 
         Returns
         -------
@@ -231,6 +237,9 @@ class TransLayerIoHandler:
             data: npt.NDArray = ras.read(band)
             transform = ras.transform
             crs = ras.crs
+
+        if skip_profile_test:
+            return data
 
         if not reproject:
             if data.shape != self.shape:

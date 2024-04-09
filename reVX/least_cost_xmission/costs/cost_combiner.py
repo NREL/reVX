@@ -57,7 +57,28 @@ class CostCombiner:
         logger.debug(f'Loading wet costs from {fname}')
         return self._io_handler.load_tiff(fname)
 
-    def load_legacy_dry_costs(self, h5_fpath, layer_name) -> npt.NDArray:
+    def load_dry_costs(self, fname: str) -> npt.NDArray:
+        """
+        Load costs from file
+
+        Parameters
+        ----------
+        fname : str
+            Filename for dry costs GeoTIFF
+
+        Returns
+        -------
+        array-like
+            Dry costs array
+        """
+        if not Path(fname).exists():
+            raise FileNotFoundError(f'Det costs GeoTIFF {fname} does not '
+                                    'exist')
+        logger.debug(f'Loading dry costs from {fname}')
+        return self._io_handler.load_tiff(fname, reproject=True)
+
+    def load_legacy_dry_costs(self, h5_fpath: str, layer_name: str
+                              ) -> npt.NDArray:
         """
         Load legacy dry costs from H5 and reproject if necessary
 

@@ -7,7 +7,9 @@ import sys
 import click
 import logging
 from pathlib import Path
+from typing import Union, Any
 
+from gaps.config import load_config
 from pydantic import ValidationError
 from rex.utilities.loggers import init_mult
 from gaps.config import load_config
@@ -31,11 +33,22 @@ from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
 )
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
 from reVX.utilities.exclusions import ExclusionsConverter
+from reVX.least_cost_xmission.costs.dry_cost_creator import DryCostCreator
 
 logger = logging.getLogger(__name__)
 
 CONFIG_ACTIONS = ['friction_layers', 'barrier_layers', 'wet_costs',
                   'dry_costs', 'combine_costs', 'merge_friction_and_barriers']
+
+
+def str_or_none(val: Any) -> Union[str, None]:
+    """
+    Return None if val is None, otherwise convert to a string.
+    """
+    if val is None:
+        return None
+
+    return str(val)
 
 
 @click.group()
@@ -53,22 +66,13 @@ def main(verbose):
 @main.command
 @click.option('-c', '--config', 'config_fpath', type=click.Path(exists=True),
               required=True, help='Configuration JSON.')
-@click.option('--ignore-unknown-keys', '-i', is_flag=True, default=False,
-              help='Silently ignore unknown keys in config file.')
-def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
+def from_config(config_fpath: str):  # noqa: C901
     """
     Create costs, barriers, and frictions from a config file.
     """
-    # By default, throw error on unknown keys in config file
-    class ForbidExtraConfig(LayerCreationConfig, extra='forbid'):
-        """ Throw error if unknown keys are found in JSON """
-
-    ConfigClass = (LayerCreationConfig
-                   if ignore_unknown_keys else ForbidExtraConfig)
-
     config_dict = load_config(config_fpath)
     try:
-        config = ConfigClass.model_validate(config_dict)
+        config = LayerCreationConfig.model_validate(config_dict)
     except ValidationError as e:
         logger.error(f'Error loading config file {config_fpath}:\n{e}')
         sys.exit(1)
@@ -107,10 +111,15 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
                                 str(wc.wet_costs_tiff))
 
     if config.dry_costs is not None:
-        # TODO - implement this
-        raise NotImplementedError('The "dry_costs" option is not supported '
-                                  'yet. Use the legacy CLI command in '
-                                  'dry_cost_creator_cli.py.')
+        dc = config.dry_costs
+
+        # Dry layers have historically used a different size raster
+        dry_io_handler = TransLayerIoHandler(str(dc.iso_region_tiff),
+                                             layer_dir=config.layer_dir)
+        dcc = DryCostCreator(dry_io_handler)
+        dcc.build_dry_costs(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
+                            str(dc.slope_tiff),
+                            cost_configs=str_or_none(dc.cost_configs))
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
@@ -120,16 +129,10 @@ def from_config(config_fpath: str, ignore_unknown_keys: bool):  # noqa: C901
         cc = config.combine_costs
         combiner = CostCombiner(io_handler, masks)
         wet_costs = combiner.load_wet_costs()
-        dry_costs = combiner.load_legacy_dry_costs(cc.dry_h5_fpath,
-                                                   cc.dry_costs_layer_name)
-
-        # Include capacity in dry-only costs layer name
-        dry_h5_layer_name = f'dry_{cc.combined_costs_layer_name}'
-        combined_costs_layer_name = cc.combined_costs_layer_name
+        dry_costs = combiner.load_dry_costs(str(cc.dry_costs_tiff))
+        dry_costs_layer = cc.dry_costs_tiff.stem
         combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,
-                               combined_layer_name=combined_costs_layer_name,
-                               dry_layer_name=dry_h5_layer_name,
-                               save_tiff=save_tiff)
+                               dry_costs_layer, save_tiff=save_tiff)
 
 
 @main.command

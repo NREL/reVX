@@ -4,7 +4,8 @@ Transmission Least Cost Defaults
 """
 import os
 
-from reVX.least_cost_xmission.config.xmission_config import XmissionConfig
+from reVX.least_cost_xmission.config.xmission_config import XmissionConfig,\
+    LandUseClasses, LandUseMultipliers, SlopeMultipliers, IsoMultipliers
 
 DEFAULTSDIR = os.path.dirname(os.path.realpath(__file__))
 
@@ -51,6 +52,7 @@ FAR_T_LINE_LENGTH = 999991
 LOW_VOLT_T_LINE_COST = FAR_T_LINE_COST * 2
 LOW_VOLT_T_LINE_LENGTH = FAR_T_LINE_LENGTH + 1
 
+# Default slope multipliers and cutoffs
 HILL_MULT = 1
 MTN_MULT = 1
 HILL_SLOPE = 2
@@ -59,7 +61,7 @@ MTN_SLOPE = 8
 METERS_IN_MILE = 1609.344
 
 WATER_NLCD_CODE = 11
-WATER_MULT = 10
+WATER_MULT = 10.0
 
 # Default test multipliers for RI
 TEST_DEFAULT_MULTS = {
