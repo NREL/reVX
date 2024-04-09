@@ -96,7 +96,23 @@ class DryCosts(BaseModel, extra='forbid'):
     """File name of slope GeoTiff"""
 
     cost_configs: Optional[FilePath] = None
-    """JSON file with cost configs"""
+    """
+    Path to json file contianing dictionary with Xmission cost
+    configuration values. Valid configuration keysare:
+
+        - "base_line_costs"
+        - "iso_lookup"
+        - "iso_multipliers"
+        - "land_use_classes"
+        - "new_substation_costs"
+        - "power_classes"
+        - "power_to_voltage"
+        - "transformer_costs"
+        - "upgrade_substation_costs"
+
+    Each of these keys should point to a dictionary or a path to
+    a separate json file contianing a dictionary of
+    configurations for each section."""
 
 
 class MergeFrictionBarriers(BaseModel, extra='forbid'):

@@ -158,10 +158,23 @@ class XmissionConfig(dict):
         Parameters
         ----------
         config : str | dict
-            Path to json file containing Xmission cost configuration values,
-            or jsonified dict of cost configuration values,
-            or dictionary of configuration values,
-            or dictionary of paths to config jsons
+            Dictionary or path to json file contianing dictionary with
+            Xmission cost configuration values. Valid configuration keys
+            are:
+
+                - "base_line_costs"
+                - "iso_lookup"
+                - "iso_multipliers"
+                - "land_use_classes"
+                - "new_substation_costs"
+                - "power_classes"
+                - "power_to_voltage"
+                - "transformer_costs"
+                - "upgrade_substation_costs"
+
+            Each of these keys should point to a dictionary or path to
+            json file contianing a dictionary of configurations for each
+            section.
         """
         if config is not None:
             if isinstance(config, str):
