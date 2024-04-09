@@ -99,6 +99,13 @@ The below example JSON file shows all possible keys with example values. The for
         ]
     },
 
+    "dry_costs": {
+        "iso_region_tiff": "/path/to/nlcd/ISO/regions/raster.tiff",
+        "nlcd_tiff": "/path/to/nlcd/raster.tiff",
+        "slope_tiff": "/path/to/slope/raster.tiff",
+        "cost_configs": "/optional/path/to/xmission/cost/config.json"
+    }
+
     "barrier_layers": {
         "CAN_MEX_boundary_20240131.gpkg": {
             "extent": "all",
