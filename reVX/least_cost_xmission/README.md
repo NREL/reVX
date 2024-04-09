@@ -131,8 +131,7 @@ The below example JSON file shows all possible keys with example values. The for
 
     "combine_costs": {
         "landfall_cost": 10e6,
-        "dry_h5_fpath": "xmission_costs.h5",
-        "dry_costs_layer": "tie_line_costs_102MW"
+        "dry_costs_tiff": "tie_line_costs_102MW.tiff"
     }
 }
 ```
