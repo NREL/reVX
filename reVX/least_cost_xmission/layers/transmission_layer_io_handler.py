@@ -70,6 +70,18 @@ class TransLayerIoHandler:
         """
         return deepcopy(self._profile)
 
+    @property
+    def h5_file(self):
+        """str: Path to output HDF5 file. """
+        return self._h5_file
+
+    @h5_file.setter
+    def h5_file(self, new_h5_fp):
+        if not Path(new_h5_fp).exists():
+            raise FileNotFoundError(f'H5 file {new_h5_fp} does not exist')
+
+        self._h5_file = new_h5_fp
+
     def create_new_h5(self, ex_h5: str, new_h5: str, overwrite: bool = False):
         """
         Create a new H5 file to save cost, barrier, and friction data in
@@ -100,20 +112,6 @@ class TransLayerIoHandler:
                 f.attrs[key] = val
         self._h5_file = new_h5
 
-    def set_h5_file(self, h5_file: str):
-        """
-        Set the H5 file to store layers in.
-
-        Parameters
-        ----------
-        h5_file : str
-            Path to file
-        """
-        if not Path(h5_file).exists():
-            raise FileNotFoundError(f'H5 file {h5_file} does not exist')
-
-        self._h5_file = h5_file
-
     def write_to_h5(self, data: npt.NDArray, name: str):
         """
         Write a raster layer to a H5 file.
@@ -129,7 +127,7 @@ class TransLayerIoHandler:
             _cls = self.__class__.__name__
             raise IOError('The H5 file is not set. Please create it with '
                           f'{_cls}.create_new_h5() or set with '
-                          f'{_cls}.set_h5_file().')
+                          f'{_cls}.h5_file = ...')
 
         if data.shape != self.shape:
             raise ValueError(f'Shape of provided data ({data.shape}) does '

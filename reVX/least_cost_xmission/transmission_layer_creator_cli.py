@@ -87,7 +87,7 @@ def from_config(config_fpath: str):  # noqa: C901
     save_tiff = config.save_tiff
     io_handler = TransLayerIoHandler(str(config.template_raster_fpath),
                                      layer_dir=config.layer_dir)
-    io_handler.set_h5_file(str(config.h5_fpath))
+    io_handler.h5_file = str(config.h5_fpath)
 
     masks = Masks(io_handler, masks_dir=config.masks_dir)
     masks.load_masks()
