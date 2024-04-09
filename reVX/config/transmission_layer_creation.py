@@ -96,7 +96,8 @@ class DryCosts(BaseModel, extra='forbid'):
     """File name of slope GeoTiff"""
 
     cost_configs: Optional[FilePath] = None
-    """
+    """Path to json file with Xmission cost configuration values.
+
     Path to json file contianing dictionary with Xmission cost
     configuration values. Valid configuration keysare:
 
