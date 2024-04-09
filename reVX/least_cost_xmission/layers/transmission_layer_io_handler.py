@@ -95,7 +95,7 @@ class TransLayerIoHandler:
         overwrite : bool, optional
             Overwrite existing h5 file if True. By default, ``False``.
         """
-        if (not Path(new_h5).exists()) and not overwrite:
+        if Path(new_h5).exists() and not overwrite:
             raise FileExistsError('File {} exits'.format(new_h5))
 
         with rex.Resource(ex_h5) as res:
