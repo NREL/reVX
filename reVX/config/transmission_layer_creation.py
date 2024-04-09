@@ -122,14 +122,14 @@ class CombineCosts(BaseModel, extra='forbid'):
 FrictionLayers = Dict[str, FBLayerConfig]
 """Mapping of friction layers.
 
-Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
-file."""
+Keys are GeoTIFF or vector filepaths. Values are the FBLayerConfig to use for
+that file."""
 
 BarrierLayers = Dict[str, FBLayerConfig]
 """Mapping of barrier layers.
 
-Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
-file."""
+Keys are GeoTIFF or vector filepaths. Values are the FBLayerConfig to use for
+that file."""
 
 
 class LayerCreationConfig(BaseModel):
