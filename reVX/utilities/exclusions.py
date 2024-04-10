@@ -975,7 +975,7 @@ class ExclusionsConverter:
         values : ndarray
             Geotiff data
         """
-        logger.debug('\t - Extracting {} from {}'
+        logger.debug('\t- Extracting {} from {}'
                      .format(layer, os.path.basename(excl_h5)))
         with ExclusionLayers(excl_h5, hsds=hsds) as f:
             profile = f.get_layer_profile(layer)
