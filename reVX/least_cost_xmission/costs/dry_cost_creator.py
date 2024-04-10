@@ -31,6 +31,7 @@ NLCD_LAND_USE_CLASSES: LandUseClasses = {
     'urban': [24],
 }
 
+
 class DryCostCreator:
     """
     Class to create and save dry transmission cost layers
@@ -229,14 +230,14 @@ class DryCostCreator:
         # Determine mask arrays for NCLD values and multiplier to apply
         indices: List[Tuple[MaskArr, float, int]] = []
         multiplier: float
-        for _class, multiplier in multipliers.items(): # type: ignore
+        for _class, multiplier in multipliers.items():  # type: ignore
             if _class not in land_use_classes:
                 msg = ('Class {} not in land_use_classes: {}'
                        .format(_class, land_use_classes))
                 logger.error(msg)
                 raise ValueError(msg)
 
-            nlcd_values: List[int] = land_use_classes[_class] # type: ignore
+            nlcd_values: List[int] = land_use_classes[_class]  # type: ignore
             assert isinstance(nlcd_values, list)
 
             for nlcd_value in nlcd_values:
@@ -250,12 +251,12 @@ class DryCostCreator:
         return mult_raster
 
     def _compute_multipliers(self, iso_mults: List[IsoMultipliers],
-                            iso_layer: npt.NDArray,
-                            slope_layer: npt.NDArray,
-                            land_use_layer: npt.NDArray,
-                            land_use_classes: Optional[LandUseClasses] = None,
-                            default_mults: Optional[IsoMultipliers] = None
-                            ) -> npt.NDArray:
+                             iso_layer: npt.NDArray,
+                             slope_layer: npt.NDArray,
+                             land_use_layer: npt.NDArray,
+                             land_use_classes: Optional[LandUseClasses] = None,
+                             default_mults: Optional[IsoMultipliers] = None
+                             ) -> npt.NDArray:
         """
         Create costs multiplier raster
 
