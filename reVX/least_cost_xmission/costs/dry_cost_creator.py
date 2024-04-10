@@ -36,7 +36,7 @@ class DryCostCreator:
     Class to create and save dry transmission cost layers
     """
     def __init__(self, io_handler: TransLayerIoHandler, masks: Masks,
-                 output_tiff_dir=None, h5_io_handler=None):
+                 output_tiff_dir=".", h5_io_handler=None):
         """
         Parameters
         ----------
@@ -45,9 +45,8 @@ class DryCostCreator:
         masks : Masks
             Masks instance.
         output_tiff_dir : path-like, optional
-            Directory where cost layers should be saved as GeoTIFF. If
-            ``None``, combined layers are not saved.
-            By default, ``None``.
+            Directory where cost layers should be saved as GeoTIFF.
+            By default, ``"."``.
         h5_io_handler : TransLayerIoHandler, optional
             Optional H5 file handler. If provided, the cost layers will
             be saved to the H5 file.

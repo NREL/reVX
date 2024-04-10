@@ -31,7 +31,7 @@ def test_land_use_multiplier():
     """ Test land use multiplier creation """
     lu_mults = {'forest': 1.63, 'wetland': 1.5}
     arr = np.array([[[0, 95, 90], [42, 41, 15]]])
-    dcc = DryCostCreator(IO_HANDLER)
+    dcc = DryCostCreator(IO_HANDLER, None)
     out = dcc._compute_land_use_mult(arr, lu_mults,
                                      land_use_classes=XC['land_use_classes'])
     expected = np.array([[[1.0, 1.5, 1.5], [1.63, 1.63, 1.0]]],
@@ -44,7 +44,7 @@ def test_slope_multiplier():
     arr = np.array([[[0, 1, 10], [20, 1, 6]]])
     config = {'hill_mult': 1.2, 'mtn_mult': 1.5,
               'hill_slope': 2, 'mtn_slope': 8}
-    dcc = DryCostCreator(IO_HANDLER)
+    dcc = DryCostCreator(IO_HANDLER, None)
     out = dcc._compute_slope_mult(arr, config)
     expected = np.array([[[1.0, 1.0, 1.5], [1.5, 1.0, 1.2]]],
                         dtype=np.float32)
@@ -55,7 +55,7 @@ def test_full_costs_workflow():
     """
     Test full cost calculator workflow for RI against known costs
     """
-    dcc = DryCostCreator(IO_HANDLER)
+    dcc = DryCostCreator(IO_HANDLER, None)
     dcc._iso_lookup = XC['iso_lookup']
 
     iso_layer = IO_HANDLER.load_tiff(ISO_REGIONS_F)
