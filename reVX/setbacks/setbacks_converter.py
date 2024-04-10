@@ -37,8 +37,9 @@ def parse_setbacks(setbacks, chunks=(128, 128), is_inclusion_layer=False):
     values = None
     reduction_func = np.minimum if is_inclusion_layer else np.maximum
     for geotiff in setbacks:
-        data = ExclusionsConverter.parse_tiff(geotiff, chunks=chunks,
-                                              check_tiff=False)[1]
+        with Geotiff(geotiff, chunks=chunks) as tif:
+            data = tif.values
+
         if values is None:
             values = data
         else:

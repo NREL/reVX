@@ -39,7 +39,8 @@ class DistToPortsConverter(ExclusionsConverter):
         """
         values = None
         for geotiff in dist_to_ports:
-            v = cls.parse_tiff(geotiff, chunks=chunks, check_tiff=False)[1]
+            with Geotiff(geotiff, chunks=chunks) as tif:
+                v = tif.values
             if not np.any(v):
                 msg = ('{} is invalid and only contains zeros and will be '
                        'skipped. It is advised to recreate the file and '
