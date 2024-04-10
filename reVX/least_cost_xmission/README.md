@@ -103,7 +103,11 @@ The below example JSON file shows all possible keys with example values. The for
         "iso_region_tiff": "/path/to/nlcd/ISO/regions/raster.tiff",
         "nlcd_tiff": "/path/to/nlcd/raster.tiff",
         "slope_tiff": "/path/to/slope/raster.tiff",
-        "cost_configs": "/optional/path/to/xmission/cost/config.json"
+        "cost_configs": "/optional/path/to/xmission/cost/config.json",
+        "extra_tiffs": [
+            /optional/path/to/extra/layer1.tif",
+            /optional/path/to/extra/layer2.tif"
+        ]
     }
 
     "barrier_layers": {
