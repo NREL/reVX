@@ -3,6 +3,8 @@
 Module to build and save dry (land) cost raster layers
 """
 import logging
+from pathlib import Path
+
 import numpy as np
 import numpy.typing as npt
 from typing import Optional, Dict, Union, List, Tuple
@@ -33,16 +35,21 @@ class DryCostCreator:
     """
     Class to create and save dry transmission cost layers
     """
-    def __init__(self, io_handler: TransLayerIoHandler):
+    def __init__(self, io_handler: TransLayerIoHandler, output_tiff_dir=None):
         """
         Parameters
         ----------
         io_handler : TransLayerIoHandler
             Transmission layer IO handler
+        output_tiff_dir : path-like, optional
+            Directory where cost layers should be saved as GeoTIFF. If
+            ``None``, combined layers are not saved.
+            By default, ``None``.
         """
         self._iso_lookup: Dict[str, int] = {}
         self._io_handler = io_handler
         self.shape = io_handler.shape
+        self.output_tiff_dir = Path(output_tiff_dir)
 
     def build_dry_costs(self, iso_region_tiff: str,
                         nlcd_tiff: str,
@@ -100,7 +107,8 @@ class DryCostCreator:
                                               default_mults=default_mults)
 
         logger.debug('Saving multipliers array GeoTIFF')
-        self._io_handler.save_tiff(mults_arr, DRY_MULTIPLIER_TIFF)
+        out_fp = self.output_tiff_dir / DRY_MULTIPLIER_TIFF
+        self._io_handler.save_tiff(mults_arr, out_fp)
 
         for power_class, capacity in xc['power_classes'].items():
             logger.info('Calculating costs for class %s using a %sMW line',
@@ -110,13 +118,15 @@ class DryCostCreator:
                                                     iso_layer)
 
             base_costs_tiff = 'base_line_costs_{}MW.tif'.format(capacity)
-            self._io_handler.save_tiff(blc_arr, base_costs_tiff)
+            out_fp = self.output_tiff_dir / base_costs_tiff
+            self._io_handler.save_tiff(blc_arr, out_fp)
 
             # Calculate total costs w/ multipliers
             costs_arr = blc_arr * mults_arr
 
             tie_line_costs_tiff = 'tie_line_costs_{}MW.tif'.format(capacity)
-            self._io_handler.save_tiff(costs_arr, tie_line_costs_tiff)
+            out_fp = self.output_tiff_dir / tie_line_costs_tiff
+            self._io_handler.save_tiff(costs_arr, out_fp)
 
     @staticmethod
     def _compute_slope_mult(slope: npt.NDArray,

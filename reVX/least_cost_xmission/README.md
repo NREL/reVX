@@ -62,7 +62,7 @@ These keys are optional and affect how the layer creation runs.
 
 * `masks_dir` - Directory to find mask GeoTIFFs in. Defaults to the local directory.
 * `layer_dir` - By default, all GeoTIFFs listed in `barrier_layers` and `friction_layers` are assumed to be fully defined paths or located in the current working directory. The creator will also search for GeoTIFFs in `layer_dir` if it is set.
-* `save_tiff` - Setting this to `true` will result in the creation of GeoTIFFs for intermediary processing steps. This can be useful for QA/QC.
+* `output_tiff_dir` - Directory to store the created GeoTIFFs for QA/QC. This directory must alrady exist. Defaults to the working directory.
 
 ### Action Keys
 The keys below represent layer creation actions. Mostly analyses will need all layers to be created. Individual creation actions can be rerun as needed, e.g. if it is determined that the `dry_costs` need to be adjusted, but the `wet_costs` are acceptable, the `wet_costs` section can be removed from the config file to prevent it from being recalculated and reduce processing time.
@@ -85,7 +85,7 @@ The below example JSON file shows all possible keys with example values. The for
 
     "masks_dir": "./masks",
     "layer_dir": "/projects/rev/projects/wowts/data/final_friction_tifs/",
-    "save_tiff": true,
+    "output_tiff_dir": "/projects/rev/projects/wowts/data/output_tifs/",
 
     "wet_costs": {
         "bathy_tiff": "bathymetry.tif",
@@ -144,11 +144,27 @@ The below example JSON file shows all possible keys with example values. The for
 ```
 
 ## Running the Layer Creator
-Once a config file has been created, the layer creation tool can be run from the command-line, e.g.:
+Prior to running the layer creating command, we must initialize an HDF5 file that will hold the cost layers.
+We can do this using the create
 
 ```
-$ dry-cost-creator --verbose from-config --config layer_config_file.json
+$ transmission-layer-creator --verbose create-h5 -t template.tif -e existing_xmission_routing_layers.h5 -n new_xmission_routing_layers.h5
 ```
+
+We also need to create the land mask, which we can do by running
+
+```
+$ transmission-layer-creator --verbose create-masks -l land_mask_vector.gpkg -t template.tif -m ./masks
+```
+
+Once an H5 file has been initialized, the land masks have been created, and a config file has been put together,
+the layer creation tool can be run from the command-line, e.g.:
+
+```
+$ transmission-layer-creator --verbose from-config --config layer_config_file.json
+```
+
+
 With an appropriate config file, this will result in all layers required for a transmission routing analysis being created and saved in the specified H5 file.
 
 # CONUS (Onshore) Example

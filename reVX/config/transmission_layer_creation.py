@@ -211,5 +211,5 @@ class LayerCreationConfig(BaseModel):
     `dry_costs`, `merge_friction_and_barriers` or  `combine_costs` must
     be defined."""
 
-    save_tiff: bool = True
-    """Save GeoTIFFS from intermediary steps if ``True``"""
+    output_tiff_dir: DirectoryPath = Path('.')
+    """Directory to store output tiff files in. """

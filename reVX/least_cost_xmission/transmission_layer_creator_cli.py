@@ -84,7 +84,8 @@ def from_config(config_fpath: str):  # noqa: C901
         sys.exit(1)
 
     # Done with guard clauses
-    save_tiff = config.save_tiff
+    output_tiff_dir = Path(config.output_tiff_dir).expanduser().resolve()
+    output_tiff_dir.mkdir(exist_ok=True, parents=True)
     io_handler = TransLayerIoHandler(str(config.template_raster_fpath),
                                      layer_dir=config.layer_dir)
     io_handler.h5_file = str(config.h5_fpath)
@@ -116,14 +117,14 @@ def from_config(config_fpath: str):  # noqa: C901
         # Dry layers have historically used a different size raster
         dry_io_handler = TransLayerIoHandler(str(dc.iso_region_tiff),
                                              layer_dir=config.layer_dir)
-        dcc = DryCostCreator(dry_io_handler)
+        dcc = DryCostCreator(dry_io_handler, output_tiff_dir)
         dcc.build_dry_costs(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
                             str(dc.slope_tiff),
                             cost_configs=str_or_none(dc.cost_configs))
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
-                                       io_handler, save_tiff=save_tiff)
+                                       io_handler, output_tiff_dir)
 
     if config.combine_costs is not None:
         cc = config.combine_costs
@@ -132,7 +133,8 @@ def from_config(config_fpath: str):  # noqa: C901
         dry_costs = combiner.load_dry_costs(str(cc.dry_costs_tiff))
         dry_costs_layer = cc.dry_costs_tiff.stem
         combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,
-                               dry_costs_layer, save_tiff=save_tiff)
+                               dry_costs_layer,
+                               output_tiff_dir=output_tiff_dir)
 
 
 @main.command
@@ -218,7 +220,7 @@ def create_h5(template_raster: str, existing_h5_file: str,
 
 def _combine_friction_and_barriers(config: MergeFrictionBarriers,
                                    io_handler: TransLayerIoHandler,
-                                   save_tiff: bool = True):
+                                   output_tiff_dir = None):
     """
     Combine friction and barriers and save to H5 and optionally GeoTIFF
 
@@ -228,8 +230,9 @@ def _combine_friction_and_barriers(config: MergeFrictionBarriers,
         Config object
     io_handler : TransLayerIoHandler
         Transmission IO handler
-    save_tiff : bool, optional
-        Save combined barriers to GeoTIFF if True. By default, ``True``.
+    output_tiff_dir : path-like, optional
+        Directory where combined barriers should be saved as GeoTIFF. If
+        ``None``, combined layers are not saved. By default, ``None``.
     """
     if not Path(FRICTION_TIFF).exists():
         logger.error(f'The friction GeoTIFF ({FRICTION_TIFF}) was not found. '
@@ -249,9 +252,9 @@ def _combine_friction_and_barriers(config: MergeFrictionBarriers,
 
     combined = friction + barriers * config.barrier_multiplier
 
-    if save_tiff:
+    if output_tiff_dir is not None:
         logger.debug('Saving combined barriers to GeoTIFF')
-        io_handler.save_tiff(combined, BARRIER_TIFF)
+        io_handler.save_tiff(combined, Path(output_tiff_dir) / BARRIER_TIFF)
 
     logger.info('Writing combined barriers to H5')
     io_handler.write_to_h5(combined, BARRIER_H5_LAYER_NAME)

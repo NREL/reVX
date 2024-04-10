@@ -119,7 +119,7 @@ class CostCombiner:
                       wet_layer_name: str = WET_COSTS_H5_LAYER_NAME,
                       dry_layer_name: str = DRY_COSTS_H5_LAYER_NAME,
                       landfall_layer_name: str = LANDFALL_COSTS_H5_LAYER_NAME,
-                      save_tiff: bool = True):
+                      output_tiff_dir = None):
         """
         Combine wet, dry, and landfall costs using appropriate masks. Write
         all layers to H5. Individual costs layers are set to zero outside of
@@ -142,8 +142,10 @@ class CostCombiner:
             Name for dry costs in H5 file
         landfall_layer_name : str
             Name for landfall costs in H5 file
-        save_tiff : bool, optional
-            Save combined costs to GeoTIFF if True, by default True
+        output_tiff_dir : path-like, optional
+            Path to output firectory to aave combined costs as GeoTIFF.
+            If ``None``, combined costs are not saved.
+            By default, ``None``.
         """
         if wet_costs.shape != self._io_handler.shape:
             raise ValueError(f'Wet costs shape {wet_costs.shape} does not '
@@ -164,9 +166,10 @@ class CostCombiner:
         combined[self._masks.landfall_mask] = \
             landfall_costs[self._masks.landfall_mask]
 
-        if save_tiff:
-            logger.debug('Saving combined costs to GeoTIFF')
-            self._io_handler.save_tiff(combined, COMBINED_COSTS_TIFF)
+        if output_tiff_dir is not None:
+            out_fp = Path(output_tiff_dir) / COMBINED_COSTS_TIFF
+            logger.debug('Saving combined costs to GeoTIFF: %s', str(out_fp))
+            self._io_handler.save_tiff(combined, out_fp)
 
         num_zeros = (combined == 0).sum()
         if num_zeros > 0:
