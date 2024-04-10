@@ -7,9 +7,11 @@ from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
+from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.config.transmission_layer_creation import RangeConfig
 from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
-                                                       WET_COSTS_TIFF)
+                                                       WET_COSTS_TIFF,
+                                                       WET_COSTS_H5_LAYER_NAME)
 
 from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
@@ -22,17 +24,26 @@ class WetCostCreator:
     """
     Create offshore costs and save to GeoTIFF.
     """
-    def __init__(self, io_handler: TransLayerIoHandler):
+    def __init__(self, io_handler: TransLayerIoHandler, masks: Masks,
+                 h5_io_handler=None):
         """
         Parameters
         ----------
         io_handler : TransLayerIoHandler
             Transmission layer IO handler
+        masks : Masks
+            Masks instance.
+        h5_io_handler : TransLayerIoHandler, optional
+            Optional H5 file handler. If provided, the cost layers will
+            be saved to the H5 file.
         """
         self._io_handler = io_handler
+        self._masks = masks
+        self._h5_io_handler = h5_io_handler
 
     def build_wet_costs(self, bathy_tiff: str, bins: List[RangeConfig],
-                        out_filename: str = WET_COSTS_TIFF):
+                        out_filename: str = WET_COSTS_TIFF,
+                        wet_layer_name: str = WET_COSTS_H5_LAYER_NAME):
         """
         Build complete offshore costs. This is currently very simple. In the
         future, costs will also vary with distance to port.
@@ -45,29 +56,18 @@ class WetCostCreator:
             List of bins to use for assigning depth based costs.
         out_filename : str, optional
             Output raster with binned costs. By default, ``"wet_costs.tif"``.
+        wet_layer_name : str
+            Name for wet costs in H5 file
         """
-        self.assign_cost_by_bins(bathy_tiff, bins, out_filename)
-
-    def assign_cost_by_bins(self, in_filename: str, bins: List[RangeConfig],
-                            out_filename: str):
-        """
-        Assign costs based on binned raster values. Cells with values >= than
-        'min' and < 'max' will be assigned 'cost'. One or both of 'min' and
-        'max' can be specified. 'cost' must be specified.
-
-        Parameters
-        ----------
-        in_filename
-            Input raster to assign costs based upon.
-        bins
-            List of bins to use for assigning costs.
-        out_filename
-            Output raster with binned costs.
-        """
-        input = self._io_handler.load_tiff(in_filename)
-
-        output = self._assign_values_by_bins(input, bins)
+        values = self._io_handler.load_tiff(bathy_tiff)
+        output = self._assign_values_by_bins(values, bins)
+        output[~self._masks.wet_mask] = 0
         self._io_handler.save_tiff(output, out_filename)
+
+        if self._h5_io_handler is not None:
+            out = self._h5_io_handler.load_tiff(out_filename, reproject=True)
+            logger.debug('Writing wet costs to H5')
+            self._h5_io_handler.write_to_h5(out, wet_layer_name)
 
     @staticmethod
     def _assign_values_by_bins(input: npt.NDArray,  # noqa: C901

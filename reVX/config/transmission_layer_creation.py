@@ -6,6 +6,8 @@ from typing import Optional, Dict, List, Literal
 
 from pydantic import BaseModel, DirectoryPath, FilePath
 
+from reVX.least_cost_xmission.config import IsoMultipliers
+
 
 # Terms for specifying masks. 'wet+' and 'dry+' indicated 'wet' + 'landfall'
 # and 'dry' + 'landfall', respectively.
@@ -114,6 +116,25 @@ class DryCosts(BaseModel, extra='forbid'):
     Each of these keys should point to a dictionary or a path to
     a separate json file contianing a dictionary of
     configurations for each section."""
+
+    default_mults: Optional[IsoMultipliers] = None
+    """Multipliers to be used for default region.
+
+    This input should be a dictionary with three keys:
+
+        - "iso": Thie key is ignored, but is required. Can set to
+          "default" and move on.
+        - "land_use": A dictionary where keys are the land use types
+          (e.g. "cropland", "forest", "wetland", etc.) and values are
+          the multipliers for those land uses.
+        - "slope": A dictionary where keys are the slope types/mults
+          (e.g. "hill_mult", "hill_slope", "mtn_mult", "mtn_slope",
+          etc.) and values are the slopes/multipliers.
+
+    """
+
+    extra_tiffs: Optional[List[FilePath]] = None
+    """Optional list of extra GeoTIFFs to add to cost H5 file. """
 
 
 class MergeFrictionBarriers(BaseModel, extra='forbid'):

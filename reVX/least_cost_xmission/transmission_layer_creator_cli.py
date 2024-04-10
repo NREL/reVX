@@ -20,7 +20,8 @@ from reVX.config.transmission_layer_creation import (LayerCreationConfig,
 from reVX.least_cost_xmission.config.constants import (BARRIER_H5_LAYER_NAME,
                                                        BARRIER_TIFF,
                                                        FRICTION_TIFF,
-                                                       RAW_BARRIER_TIFF)
+                                                       RAW_BARRIER_TIFF,
+                                                       WET_COSTS_TIFF)
 
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.costs.cost_combiner import CostCombiner
@@ -39,16 +40,6 @@ logger = logging.getLogger(__name__)
 
 CONFIG_ACTIONS = ['friction_layers', 'barrier_layers', 'wet_costs',
                   'dry_costs', 'combine_costs', 'merge_friction_and_barriers']
-
-
-def str_or_none(val: Any) -> Union[str, None]:
-    """
-    Return None if val is None, otherwise convert to a string.
-    """
-    if val is None:
-        return None
-
-    return str(val)
 
 
 @click.group()
@@ -86,30 +77,31 @@ def from_config(config_fpath: str):  # noqa: C901
     # Done with guard clauses
     output_tiff_dir = Path(config.output_tiff_dir).expanduser().resolve()
     output_tiff_dir.mkdir(exist_ok=True, parents=True)
-    io_handler = TransLayerIoHandler(str(config.template_raster_fpath),
-                                     layer_dir=config.layer_dir)
-    io_handler.h5_file = str(config.h5_fpath)
+    h5_io_handler = TransLayerIoHandler(str(config.template_raster_fpath),
+                                        layer_dir=config.layer_dir)
+    h5_io_handler.h5_file = str(config.h5_fpath)
 
-    masks = Masks(io_handler, masks_dir=config.masks_dir)
+    masks = Masks(h5_io_handler, masks_dir=config.masks_dir)
     masks.load_masks()
 
     # Perform actions in config
     if config.barrier_layers is not None:
-        fbb = FrictionBarrierBuilder('barrier', io_handler, masks)
+        fbb = FrictionBarrierBuilder('barrier', h5_io_handler, masks)
         fbb.build_layer(config.barrier_layers)
 
     if config.friction_layers is not None:
-        fbb = FrictionBarrierBuilder('friction', io_handler, masks)
+        fbb = FrictionBarrierBuilder('friction', h5_io_handler, masks)
         fbb.build_layer(config.friction_layers)
 
     if config.wet_costs is not None:
         wc = config.wet_costs
-        wcc = WetCostCreator(io_handler)
-        if wc.wet_costs_tiff is None:
-            wcc.build_wet_costs(str(wc.bathy_tiff), wc.bins)
-        else:
-            wcc.build_wet_costs(str(wc.bathy_tiff), wc.bins,
-                                str(wc.wet_costs_tiff))
+        wet_io_handler = TransLayerIoHandler(str(wc.bathy_tiff),
+                                             layer_dir=config.layer_dir)
+        wcc = WetCostCreator(wet_io_handler, masks, h5_io_handler)
+        wet_costs_tiff = (WET_COSTS_TIFF
+                          if wc.wet_costs_tiff is None
+                          else str(wc.wet_costs_tiff))
+        wcc.build_wet_costs(str(wc.bathy_tiff), wc.bins, wet_costs_tiff)
 
     if config.dry_costs is not None:
         dc = config.dry_costs
@@ -117,18 +109,22 @@ def from_config(config_fpath: str):  # noqa: C901
         # Dry layers have historically used a different size raster
         dry_io_handler = TransLayerIoHandler(str(dc.iso_region_tiff),
                                              layer_dir=config.layer_dir)
-        dcc = DryCostCreator(dry_io_handler, output_tiff_dir)
+        dcc = DryCostCreator(dry_io_handler, masks, output_tiff_dir,
+                             h5_io_handler)
+        cost_configs = None if not dc.cost_configs else str(dc.cost_configs)
         dcc.build_dry_costs(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
                             str(dc.slope_tiff),
-                            cost_configs=str_or_none(dc.cost_configs))
+                            cost_configs=cost_configs,
+                            default_mults=dc.default_mults,
+                            extra_tiffs=dc.extra_tiffs)
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
-                                       io_handler, output_tiff_dir)
+                                       h5_io_handler, output_tiff_dir)
 
     if config.combine_costs is not None:
         cc = config.combine_costs
-        combiner = CostCombiner(io_handler, masks)
+        combiner = CostCombiner(h5_io_handler, masks)
         wet_costs = combiner.load_wet_costs()
         dry_costs = combiner.load_dry_costs(str(cc.dry_costs_tiff))
         dry_costs_layer = cc.dry_costs_tiff.stem

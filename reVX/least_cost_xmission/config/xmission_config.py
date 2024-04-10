@@ -7,7 +7,8 @@ Mike Bannister
 import logging
 import os
 import numpy as np
-from typing import List, TypedDict
+from typing import List
+from typing_extensions import TypedDict
 
 from rex.utilities.utilities import safe_json_load
 
