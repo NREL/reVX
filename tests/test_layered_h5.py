@@ -85,13 +85,14 @@ def extract_layer(h5_path, layer):
 def test_bad_file_format():
     """Test init with bad file format"""
 
+    lh5 = LayeredH5("test_file.h5")
     with pytest.raises(ValueError) as error:
-        LayeredH5("test_file.h5", template_file="test_file.txt")
+        lh5.template_file = "test_file.txt"
 
     assert "format is not supported" in str(error)
 
     with pytest.raises(FileNotFoundError) as error:
-        LayeredH5("test_file.h5")
+        lh5.template_file = "test_file.h5"
 
     assert "not found on disk" in str(error)
 
