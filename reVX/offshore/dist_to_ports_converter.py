@@ -101,7 +101,7 @@ class DistToPortsConverter(LayeredH5):
             self.create_new(overwrite=False)
 
         if check_tiff:
-            check_geotiff(self.h5_file, dist_to_ports[0], chunks=self._chunks,
+            check_geotiff(self, dist_to_ports[0], chunks=self._chunks,
                           transform_atol=transform_atol)
 
         with Geotiff(dist_to_ports[0], chunks=self._chunks) as tif:

@@ -306,7 +306,7 @@ class LayeredH5:
                      layer_name, geotiff, self.h5_file)
 
         if check_tiff:
-            check_geotiff(self.h5_file, geotiff, chunks=self._chunks,
+            check_geotiff(self, geotiff, chunks=self._chunks,
                           transform_atol=transform_atol)
 
         with Geotiff(geotiff, chunks=self._chunks) as tif:
@@ -400,7 +400,7 @@ class LayeredH5:
             return data
 
         try:
-            check_geotiff(self.h5_file, geotiff, chunks=self._chunks)
+            check_geotiff(self, geotiff, chunks=self._chunks)
         except ProfileCheckError as err:
             if reproject:
                 logger.debug('Profile of %s does not match template, '
@@ -534,13 +534,14 @@ class LayeredH5:
         self.extract_layers(layers)
 
 
-def check_geotiff(excl_h5, geotiff, chunks=(128, 128), transform_atol=0.01):
+def check_geotiff(h5, geotiff, chunks=(128, 128), transform_atol=0.01):
     """Compare GeoTIFF with exclusion layer and raise errors if mismatch.
 
     Parameters
     ----------
-    excl_h5 : str
-        Path to HDF5 file containing GeoTIFF-like layers.
+    h5 : :class:`LayeredH5`
+        ``LayeredH5`` instance containing `shape`, `profile`, and
+        `template_file` attributes.
     geotiff : str
         Path to GeoTIFF file.
     chunks : tuple
@@ -562,33 +563,31 @@ def check_geotiff(excl_h5, geotiff, chunks=(128, 128), transform_atol=0.01):
         If shape, profile, or transform don;t match between HDF5 and
         GeoTIFF file.
     """
-    with Geotiff(geotiff, chunks=chunks) as tif, Resource(excl_h5) as h5:
+    with Geotiff(geotiff, chunks=chunks) as tif:
         if tif.bands > 1:
             msg = "{} contains more than one band!".format(geotiff)
             logger.error(msg)
             raise ProfileCheckError(msg)
 
-        shape = tuple(h5.attrs.get('shape', h5.shapes['latitude']))
-        if not np.array_equal(shape, tif.shape):
+        if not np.array_equal(h5.shape, tif.shape):
             msg = ('Shape of exclusion data in {} and {} do not '
-                   'match!'.format(geotiff, excl_h5))
+                   'match!'.format(geotiff, h5.template_file))
             logger.error(msg)
             raise ProfileCheckError(msg)
 
-        profile = json.loads(h5.global_attrs['profile'])
-        h5_crs = CRS.from_string(profile['crs']).to_dict()
+        h5_crs = CRS.from_string(h5.profile['crs']).to_dict()
         tif_crs = CRS.from_string(tif.profile['crs']).to_dict()
         if not crs_match(h5_crs, tif_crs):
             msg = ('Geospatial "CRS" in {} and {} do not match!\n {} !=\n {}'
-                   .format(geotiff, excl_h5, tif_crs, h5_crs))
+                   .format(geotiff, h5.template_file, tif_crs, h5_crs))
             logger.error(msg)
             raise ProfileCheckError(msg)
 
-        if not np.allclose(profile['transform'], tif.profile['transform'],
+        if not np.allclose(h5.profile['transform'], tif.profile['transform'],
                            atol=transform_atol):
             msg = ('Geospatial "transform" in {} and {} do not match!'
                    '\n {} !=\n {}'
-                   .format(geotiff, excl_h5, profile['transform'],
+                   .format(geotiff, h5.template_file, h5.profile['transform'],
                            tif.profile['transform']))
             logger.error(msg)
             raise ProfileCheckError(msg)

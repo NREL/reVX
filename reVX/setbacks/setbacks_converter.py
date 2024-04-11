@@ -109,7 +109,7 @@ class SetbacksConverter(LayeredH5):
         self._warn_or_error_for_existing_layer(layer_name, replace)
 
         if check_tiff:
-            check_geotiff(self.h5_file, setbacks[0], chunks=self._chunks,
+            check_geotiff(self, setbacks[0], chunks=self._chunks,
                           transform_atol=transform_atol)
 
         with Geotiff(setbacks[0], chunks=self._chunks) as tif:
