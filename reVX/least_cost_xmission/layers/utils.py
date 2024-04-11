@@ -12,16 +12,13 @@ from shapely.geometry import Point, LineString
 
 from reVX.utilities import rasterize
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    Profile
-)
 
 VECTOR_CACHE: Dict[str, gpd.GeoDataFrame] = {}
 
 logger = logging.getLogger(__name__)
 
 
-def rasterize_shape_file(fname: str, profile: Profile,
+def rasterize_shape_file(fname: str, profile: Dict,
                          buffer_dist: Optional[float] = None,
                          all_touched: bool = False,
                          reproject_vector: bool = True,
@@ -36,7 +33,7 @@ def rasterize_shape_file(fname: str, profile: Profile,
     ----------
     fname : str
         Full path to gpgk or shp file
-    profile : Profile
+    profile : dict
         Raster profile to use
     buffer_dist : float, optional
         Distance to buffer features in fname by. Same units as the
