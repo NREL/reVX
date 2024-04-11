@@ -11,7 +11,7 @@ class reVXError(Exception):
 
 
 class ProfileCheckError(ValueError):
-    """Profile mismtahc between two layers. """
+    """Profile mismatch between two layers. """
 
 
 class GeoTiffKeyError(Exception):
