@@ -302,7 +302,7 @@ class LayeredH5:
 
         self._warn_or_error_for_existing_layer(layer_name, replace)
 
-        logger.debug('\t- %s being extracted from $s and added to %s',
+        logger.debug('\t- %s being extracted from %s and added to %s',
                      layer_name, geotiff, self.h5_file)
 
         if check_tiff:
