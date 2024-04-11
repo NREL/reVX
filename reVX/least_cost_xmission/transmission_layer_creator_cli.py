@@ -22,7 +22,7 @@ from reVX.least_cost_xmission.config.constants import (BARRIER_H5_LAYER_NAME,
                                                        FRICTION_TIFF,
                                                        RAW_BARRIER_TIFF,
                                                        WET_COSTS_TIFF)
-
+from reVX.handlers.layered_h5 import LayeredH5
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.costs.cost_combiner import CostCombiner
 from reVX.least_cost_xmission.costs.wet_cost_creator import WetCostCreator
@@ -33,7 +33,6 @@ from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
     TransLayerIoHandler
 )
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
-from reVX.utilities.exclusions import ExclusionsConverter
 from reVX.least_cost_xmission.costs.dry_cost_creator import DryCostCreator
 
 logger = logging.getLogger(__name__)
@@ -189,9 +188,9 @@ def FUTURE_create_h5(template_raster: str, h5_file: str):
     """
     Create a new H5 file to store layers in.
     """
-    logger.info(f'Using raster {template_raster} to create new H5 file '
-                '{h5_file}')
-    ExclusionsConverter._init_h5(h5_file, template_raster)
+    logger.info('Using raster %s to create new H5 file %s', template_raster,
+                h5_file)
+    LayeredH5(h5_file, template_file=template_raster).create_new()
 
 
 @main.command

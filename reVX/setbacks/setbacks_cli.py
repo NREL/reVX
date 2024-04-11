@@ -17,7 +17,6 @@ from reVX.setbacks.regulations import (validate_setback_regulations_input,
                                        select_setback_regulations)
 from reVX.setbacks.setbacks_converter import parse_setbacks
 from reVX.handlers.geotiff import Geotiff
-from reVX.utilities import ExclusionsConverter
 from reVX import __version__
 from reVX.setbacks.setbacks import SETBACK_SPECS, setbacks_calculator
 
@@ -529,7 +528,7 @@ def merge_setbacks(node_out_path, node_pattern, are_partial_inclusions=None,
                               is_inclusion_layer=are_partial_inclusions)
 
     logger.info("Writing data to {!r}".format(out_file.as_posix()))
-    ExclusionsConverter.write_geotiff(out_file.as_posix(), profile, setbacks)
+    Geotiff.write(out_file.as_posix(), profile, setbacks)
 
     if purge_chunks:
         for fpath in input_setback_files:

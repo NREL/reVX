@@ -16,6 +16,10 @@ class ExclusionsCheckError(Exception):
     """
 
 
+class ProfileCheckError(ValueError):
+    """Profile mismtahc between two layers. """
+
+
 class GeoTiffKeyError(Exception):
     """
     KeyError for GeoTiffHandler

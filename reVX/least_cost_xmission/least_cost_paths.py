@@ -17,10 +17,10 @@ from reV.handlers.exclusions import ExclusionLayers
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
+from reVX.handlers.layered_h5 import crs_match
 from reVX.least_cost_xmission.config import TRANS_LINE_CAT, SUBSTATION_CAT
 from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
                                                       ReinforcementLineCosts)
-from reVX.utilities import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
 
@@ -121,8 +121,7 @@ class LeastCostPaths:
         """
         feat_crs = features.crs.to_dict()
         cost_crs = crs.to_dict()
-        bad_crs = ExclusionsConverter._check_crs(cost_crs, feat_crs)
-        if bad_crs:
+        if not crs_match(cost_crs, feat_crs):
             msg = ('input crs ({}) does not match cost raster crs ({})'
                    ' and will be transformed!'.format(feat_crs, cost_crs))
             logger.warning(msg)

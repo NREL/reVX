@@ -77,42 +77,6 @@ class CostCombiner:
         logger.debug(f'Loading dry costs from {fname}')
         return self._io_handler.load_tiff(fname, reproject=True)
 
-    def load_legacy_dry_costs(self, h5_fpath: str, layer_name: str
-                              ) -> npt.NDArray:
-        """
-        Load legacy dry costs from H5 and reproject if necessary
-
-        Parameters
-        ----------
-        h5_fpath : path-like
-            H5 file with dry costs
-        layer_name : str
-            Name of costs layer
-
-        Returns
-        -------
-        array-like
-            Array of costs
-        """
-        if not Path(h5_fpath).exists():
-            raise FileNotFoundError(f'H5 file {h5_fpath} does not exist')
-
-        logger.debug(f'Loading dry costs layer {layer_name} from {h5_fpath}')
-        costs = self._io_handler.load_h5_layer(layer_name, h5_fpath)
-        if costs.shape == self._io_handler.shape:
-            return costs
-
-        # Dry costs have a different shape. Attempt to reproject
-        logger.debug('Dry costs shape does not match template raster. '
-                     'Reprojecting.')
-
-        attrs = self._io_handler.load_h5_attrs(layer_name, h5_fpath)
-        json_profile = attrs['profile']
-        profile = json.loads(json_profile)
-        reprojected = self._io_handler.reproject(costs, profile, init_dest=-1)
-
-        return reprojected
-
     def combine_costs(self, wet_costs: npt.NDArray,
                       dry_costs: npt.NDArray, landfall_cost: float,
                       combined_layer_name: str = COMBINED_COSTS_H5_LAYER_NAME,

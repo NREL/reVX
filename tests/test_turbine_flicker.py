@@ -26,7 +26,7 @@ from reVX.turbine_flicker.turbine_flicker import (
 from reVX.turbine_flicker.regulations import FlickerRegulations
 from reVX.turbine_flicker.turbine_flicker_cli import main, flicker_fn_out
 from reVX.handlers.geotiff import Geotiff
-from reVX.utilities import ExclusionsConverter
+from reVX.handlers.layered_h5 import LayeredH5
 
 pytest.importorskip('hybrid.flicker')
 
@@ -224,8 +224,8 @@ def test_local_turbine_flicker():
         with ExclusionLayers(EXCL_H5) as f:
             fips = np.zeros(f.shape, dtype=np.uint32)
             fips[:10] = 39001
-            ExclusionsConverter._write_layer(excl_h5, 'cnty_fips', f.profile,
-                                             fips, chunks=f.chunks)
+            lh5 = LayeredH5(excl_h5, chunks=f.chunks)
+            lh5.write_layer_to_h5(fips, 'cnty_fips', f.profile)
 
         tf = TurbineFlicker(excl_h5, RES_H5, BLD_LAYER, regulations,
                             resolution=64, tm_dset=TM,
@@ -258,8 +258,8 @@ def test_local_flicker_empty_regs():
         shutil.copy(EXCL_H5, excl_h5)
         with ExclusionLayers(EXCL_H5) as f:
             fips = np.zeros(f.shape, dtype=np.uint32)
-            ExclusionsConverter._write_layer(excl_h5, 'cnty_fips', f.profile,
-                                             fips, chunks=f.chunks)
+            lh5 = LayeredH5(excl_h5, chunks=f.chunks)
+            lh5.write_layer_to_h5(fips, 'cnty_fips', f.profile)
 
         tf = TurbineFlicker(excl_h5, RES_H5, BLD_LAYER, regulations,
                             resolution=64, tm_dset=TM,
@@ -293,8 +293,8 @@ def test_local_and_generic_turbine_flicker():
         with ExclusionLayers(EXCL_H5) as f:
             fips = np.zeros(f.shape, dtype=np.uint32)
             fips[:10] = 39001
-            ExclusionsConverter._write_layer(excl_h5, 'cnty_fips', f.profile,
-                                             fips, chunks=f.chunks)
+            lh5 = LayeredH5(excl_h5, chunks=f.chunks)
+            lh5.write_layer_to_h5(fips, 'cnty_fips', f.profile)
 
         tf = TurbineFlicker(excl_h5, RES_H5, BLD_LAYER, regulations,
                             resolution=64, tm_dset=TM,
@@ -426,7 +426,7 @@ def test_cli_tiff_input(runner):
 
     with tempfile.TemporaryDirectory() as td:
         tiff_fp = os.path.join(td, "temp.tiff")
-        ExclusionsConverter.write_geotiff(tiff_fp, profile, building_layer)
+        Geotiff.write(tiff_fp, profile, building_layer)
 
         excl_h5 = os.path.join(td, os.path.basename(EXCL_H5))
         shutil.copy(EXCL_H5, excl_h5)

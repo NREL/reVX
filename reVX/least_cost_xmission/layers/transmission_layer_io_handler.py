@@ -152,56 +152,6 @@ class TransLayerIoHandler:
             profile['dtype'] = str(data.dtype)
             f[name].attrs['profile'] = json.dumps(profile)
 
-    def load_h5_layer(self, layer_name: str, h5_file: Optional[str] = None
-                      ) -> npt.NDArray:
-        """
-        Load raster data from an H5 file
-
-        Parameters
-        ----------
-        layer_name : str
-            Layer to load from H5 file
-        h5_file : path-like, optional
-            H5 file to use. If None, use default H5 file. By default ``None``.
-
-        Returns
-        -------
-        array-like
-            Array of data
-        """
-        if h5_file is None:
-            h5_file = self._h5_file
-
-        with h5py.File(h5_file) as res:
-            data = res[layer_name][0]
-
-        return data
-
-    def load_h5_attrs(self, layer_name: str, h5_file: Optional[str] = None
-                      ) -> dict:
-        """
-        Load attributes from an H5 file for a layer
-
-        Parameters
-        ----------
-        layer_name : str
-            Layer to load attributes for
-        h5_file : path-like, optional
-            H5 file to use. If None, use default H5 file. By default None.
-
-        Returns
-        -------
-        dict
-            Dict of attribute data
-        """
-        if h5_file is None:
-            h5_file = self._h5_file
-
-        with h5py.File(h5_file) as res:
-            attrs = dict(res[layer_name].attrs)
-
-        return attrs
-
     def load_tiff(self, fname: str, band: int = 1,
                   reproject=False, skip_profile_test=False) -> npt.NDArray:
         """
@@ -240,18 +190,21 @@ class TransLayerIoHandler:
             return data
 
         if not reproject:
-            if data.shape != self.shape:
-                raise ValueError(f'Shape of {full_fname} ({data.shape}) '
-                                 'does not match template raster shape '
-                                 f'({self.shape}).')
-            if transform != self.profile['transform']:
-                raise ValueError(f'Transform of {full_fname}:\n{transform}\n'
-                                 'does not match template raster shape:\n'
-                                 f'{self.profile["transform"]}')
-            if crs != self.profile['crs']:
-                raise ValueError(f'CRS of {full_fname}:\n{crs}\ndoes not '
-                                 'match template raster shape:\n'
-                                 f'{self.profile["crs"]}')
+            pass
+            # if data.shape != self.shape:
+            #     raise ValueError(f'Shape of {full_fname} ({data.shape}) '
+            #                      'does not match template raster shape '
+            #                      f'({self.shape}).')
+            # # if transform != self.profile['transform']:
+            # if not np.allclose(transform, self.profile['transform'],
+            #                    atol=0.01):
+            #     raise ValueError(f'Transform of {full_fname}:\n{transform}\n'
+            #                      'does not match template raster transform:\n'
+            #                      f'{self.profile["transform"]}')
+            # if crs != self.profile['crs']:
+            #     raise ValueError(f'CRS of {full_fname}:\n{crs}\ndoes not '
+            #                      'match template raster crs:\n'
+            #                      f'{self.profile["crs"]}')
 
         mismatching_shape = data.shape != self.shape
         mismatching_transform = transform != self.profile['transform']
