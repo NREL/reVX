@@ -152,10 +152,12 @@ Prior to running the layer creating command, we must initialize an HDF5 file tha
 We can do this using the create
 
 ```
-$ transmission-layer-creator --verbose create-h5 -t template.tif -e existing_xmission_routing_layers.h5 -n new_xmission_routing_layers.h5
+$ transmission-layer-creator --verbose create-h5 -t template.tif -h new_xmission_routing_layers.h5
 ```
 
-We also need to create the land mask, which we can do by running
+(Next steo is *optional* for dry-only runs: if you skip this, just add `"ignore_masks": true` to your config)
+We also need to create the land mask (optional for dry-only runs:
+just skip this step and add `"ignore_masks": true` to your config), which we can do by running
 
 ```
 $ transmission-layer-creator --verbose create-masks -l land_mask_vector.gpkg -t template.tif -m ./masks
