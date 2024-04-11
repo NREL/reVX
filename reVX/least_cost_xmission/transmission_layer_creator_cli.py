@@ -215,7 +215,7 @@ def create_h5(template_raster: str, existing_h5_file: str,
 
 def _combine_friction_and_barriers(config: MergeFrictionBarriers,
                                    io_handler: TransLayerIoHandler,
-                                   output_tiff_dir = None):
+                                   output_tiff_dir=None):
     """
     Combine friction and barriers and save to H5 and optionally GeoTIFF
 

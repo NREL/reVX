@@ -403,7 +403,7 @@ class LayeredH5:
                 logger.debug('Profile of %s does not match template, '
                              'reprojecting', geotiff)
                 data = self.reproject(data, src_profile, dtype=data.dtype,
-                                    init_dest=0)
+                                      init_dest=0)
             else:
                 raise err
 
