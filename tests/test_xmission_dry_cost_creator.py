@@ -2,18 +2,28 @@
 """
 Least cost transmission line path tests
 """
+import json
+import shutil
+import tempfile
+import traceback
+
 import numpy as np
 import os
 import pytest
+from click.testing import CliRunner
 
+from rex.utilities.loggers import LOGGERS
 from reV.handlers.exclusions import ExclusionLayers
 
 from reVX import TESTDATADIR
+# from reVX.cli import main as cli
+from reVX.least_cost_xmission.transmission_layer_creator_cli import main
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.costs.dry_cost_creator import (
     DryCostCreator, XmissionConfig
 )
 from reVX.least_cost_xmission.config import TEST_DEFAULT_MULTS
+from reVX.least_cost_xmission.config.constants import DRY_MULTIPLIER_TIFF
 
 
 BASELINE_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
@@ -24,6 +34,14 @@ NLCD_F = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_nlcd.tif')
 
 XC = XmissionConfig()
 IO_HANDLER = LayeredTransmissionH5(ISO_REGIONS_F)
+
+
+@pytest.fixture(scope="module")
+def runner():
+    """
+    cli runner
+    """
+    return CliRunner()
 
 
 def test_land_use_multiplier():
@@ -83,6 +101,63 @@ def test_full_costs_workflow():
                                                iso_layer)
         costs_arr = blc_arr * mults_arr
         assert np.isclose(known_costs, costs_arr).all()
+
+
+def test_cli(runner):
+    """Test DryCostCreator CLI (create-new and from-config). """
+    tb_tiff = os.path.join(TESTDATADIR, 'xmission', 'ri_trans_barriers.tif')
+    with tempfile.TemporaryDirectory() as td:
+        temp_iso = os.path.join(td, "ISO_regions.tif")
+        temp_tb = os.path.join(td, "transmission_barrier.tif")
+        h5_fpath = os.path.join(td, "test.h5")
+        layer_mapping = {"iso_region_tiff": (ISO_REGIONS_F, temp_iso),
+                         "transmission_barrier": (tb_tiff, temp_tb)}
+
+        for src, dst in layer_mapping.values():
+            shutil.copy(src, dst)
+
+        result = runner.invoke(main, ['create-h5',
+                                      '-h', h5_fpath,
+                                      '-t', temp_iso])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        config = {"h5_fpath": h5_fpath,
+                  "template_raster_fpath": ISO_REGIONS_F,
+                  "ignore_masks": True,
+                  "output_tiff_dir": td,
+                  "dry_costs": {"iso_region_tiff": temp_iso,
+                                "nlcd_tiff": NLCD_F,
+                                "slope_tiff": SLOPE_F,
+                                "default_mults": TEST_DEFAULT_MULTS,
+                                "extra_tiffs": [temp_tb]}}
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        with ExclusionLayers(BASELINE_H5) as f_truth:
+            with ExclusionLayers(h5_fpath) as f_test:
+                for layer in f_truth.layers:
+                    truth = f_truth[layer]
+
+                    # layer renamed
+                    if layer == "tie_line_multipliers":
+                        layer = DRY_MULTIPLIER_TIFF.split(".")[0]
+                    test = f_test[layer]
+
+                    # new DNE cost value is 0, not -1
+                    truth[np.isclose(truth, -1)] = 0
+
+                    assert np.allclose(truth, test)
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):

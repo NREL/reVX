@@ -65,6 +65,7 @@ WATER_MULT = 10.0
 
 # Default test multipliers for RI
 TEST_DEFAULT_MULTS = {
+    "iso": "default",
     "land_use": {
         "cropland": 1,
         "forest": 4,

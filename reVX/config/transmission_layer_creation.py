@@ -190,6 +190,9 @@ class LayerCreationConfig(BaseModel):
     masks_dir: DirectoryPath = Path('.')
     """Optional path for mask GeoTIFFs."""
 
+    ignore_masks: Optional[bool] = False
+    """Optional flag to ignore masks for cost creation (useful for dry runs)"""
+
     friction_layers: Optional[FrictionLayers] = None
     """Optional friction layer.
 

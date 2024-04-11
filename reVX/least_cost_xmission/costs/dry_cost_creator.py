@@ -15,7 +15,7 @@ from reVX.least_cost_xmission.config import (
     SlopeMultipliers, IsoMultipliers, WATER_MULT, WATER_NLCD_CODE,
     METERS_IN_MILE, HILL_MULT, MTN_MULT, HILL_SLOPE, MTN_SLOPE
 )
-from reVX.least_cost_xmission.layers.masks import Masks, MaskArr
+from reVX.least_cost_xmission.layers.masks import MaskArr
 from reVX.least_cost_xmission.config.constants import DRY_MULTIPLIER_TIFF
 
 logger = logging.getLogger(__name__)
@@ -34,15 +34,15 @@ class DryCostCreator:
     """
     Class to create and save dry transmission cost layers
     """
-    def __init__(self, io_handler: LayeredTransmissionH5, masks: Masks,
-                 output_tiff_dir=".", h5_io_handler=None):
+    def __init__(self, io_handler: LayeredTransmissionH5,
+                 dry_mask, output_tiff_dir=".", h5_io_handler=None):
         """
         Parameters
         ----------
         io_handler : :class:`LayeredTransmissionH5`
             Transmission layer IO handler
-        masks : Masks
-            Masks instance.
+        dry_mask : ndarray
+            Array representing mask for dry costs.
         output_tiff_dir : path-like, optional
             Directory where cost layers should be saved as GeoTIFF.
             By default, ``"."``.
@@ -52,10 +52,10 @@ class DryCostCreator:
         """
         self._iso_lookup: Dict[str, int] = {}
         self._io_handler = io_handler
-        self._masks = masks
         self.shape = io_handler.shape
         self.output_tiff_dir = Path(output_tiff_dir)
         self._h5_io_handler = h5_io_handler
+        self._dry_mask = dry_mask
 
     def build_dry_costs(self, iso_region_tiff: str,
                         nlcd_tiff: str,
@@ -149,7 +149,7 @@ class DryCostCreator:
             dry_layer_name = 'tie_line_costs_{}MW'.format(capacity)
             tie_line_costs_tiff = '{}.tif'.format(dry_layer_name)
             out_fp = self.output_tiff_dir / tie_line_costs_tiff
-            costs_arr[~self._masks.dry_mask] = 0
+            costs_arr[~self._dry_mask] = 0
             self._io_handler.save_data_using_h5_profile(costs_arr, out_fp)
             if self._h5_io_handler is not None:
                 out = self._h5_io_handler.load_data_using_h5_profile(

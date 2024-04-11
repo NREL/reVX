@@ -8,7 +8,7 @@ import click
 import logging
 from pathlib import Path
 
-from gaps.config import load_config
+import numpy as np
 from pydantic import ValidationError
 from rex.utilities.loggers import init_mult
 from gaps.config import load_config
@@ -78,7 +78,11 @@ def from_config(config_fpath: str):  # noqa: C901
                                           layer_dir=config.layer_dir)
 
     masks = Masks(h5_io_handler, masks_dir=config.masks_dir)
-    masks.load_masks()
+    try:
+        masks.load_masks()
+    except FileNotFoundError as error:
+        if not config.ignore_masks:
+            raise error
 
     # Perform actions in config
     if config.barrier_layers is not None:
@@ -107,7 +111,16 @@ def from_config(config_fpath: str):  # noqa: C901
         # Dry layers have historically used a different size raster
         dry_io_handler = LayeredTransmissionH5(template_file=template_file,
                                                layer_dir=config.layer_dir)
-        dcc = DryCostCreator(dry_io_handler, masks, output_tiff_dir,
+
+        try:
+            dry_mask = masks.dry_mask
+        except ValueError as error:
+            if config.ignore_masks:
+                dry_mask = np.full(dry_io_handler.shape, True)
+            else:
+                raise error
+
+        dcc = DryCostCreator(dry_io_handler, dry_mask, output_tiff_dir,
                              h5_io_handler)
         cost_configs = None if not dc.cost_configs else str(dc.cost_configs)
         dcc.build_dry_costs(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
