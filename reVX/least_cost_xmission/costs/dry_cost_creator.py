@@ -9,6 +9,7 @@ import numpy as np
 import numpy.typing as npt
 from typing import Optional, Dict, Union, List, Tuple
 
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.config import (
     XmissionConfig, CELL_SIZE, LandUseClasses, LandUseMultipliers,
     SlopeMultipliers, IsoMultipliers, WATER_MULT, WATER_NLCD_CODE,
@@ -16,9 +17,6 @@ from reVX.least_cost_xmission.config import (
 )
 from reVX.least_cost_xmission.layers.masks import Masks, MaskArr
 from reVX.least_cost_xmission.config.constants import DRY_MULTIPLIER_TIFF
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
-)
 
 logger = logging.getLogger(__name__)
 
@@ -36,19 +34,19 @@ class DryCostCreator:
     """
     Class to create and save dry transmission cost layers
     """
-    def __init__(self, io_handler: TransLayerIoHandler, masks: Masks,
+    def __init__(self, io_handler: LayeredTransmissionH5, masks: Masks,
                  output_tiff_dir=".", h5_io_handler=None):
         """
         Parameters
         ----------
-        io_handler : TransLayerIoHandler
+        io_handler : :class:`LayeredTransmissionH5`
             Transmission layer IO handler
         masks : Masks
             Masks instance.
         output_tiff_dir : path-like, optional
             Directory where cost layers should be saved as GeoTIFF.
             By default, ``"."``.
-        h5_io_handler : TransLayerIoHandler, optional
+        h5_io_handler : :class:`LayeredTransmissionH5`, optional
             Optional H5 file handler. If provided, the cost layers will
             be saved to the H5 file.
         """
@@ -107,9 +105,10 @@ class DryCostCreator:
         self._iso_lookup = xc['iso_lookup']
 
         logger.debug('Loading ISO region, slope and land use rasters')
-        iso_layer = self._io_handler.load_tiff(iso_region_tiff)
-        slope_layer = self._io_handler.load_tiff(slope_tiff)
-        nlcd_layer = self._io_handler.load_tiff(nlcd_tiff)
+        iso_layer = self._io_handler.load_data_using_h5_profile(
+            iso_region_tiff)
+        slope_layer = self._io_handler.load_data_using_h5_profile(slope_tiff)
+        nlcd_layer = self._io_handler.load_data_using_h5_profile(nlcd_tiff)
         logger.debug('Loading complete')
 
         lu_classes = xc['land_use_classes']
@@ -121,16 +120,17 @@ class DryCostCreator:
 
         logger.debug('Saving multipliers array GeoTIFF')
         mult_tiff = self.output_tiff_dir / DRY_MULTIPLIER_TIFF
-        self._io_handler.save_tiff(mults_arr, mult_tiff)
+        self._io_handler.save_data_using_h5_profile(mults_arr, mult_tiff)
 
         if self._h5_io_handler is not None:
             tiff_layers = [iso_region_tiff, slope_tiff, nlcd_tiff, mult_tiff]
             tiff_layers += extra_tiffs or []
             for layer_fp in tiff_layers:
                 layer_name = Path(layer_fp).stem
-                out = self._h5_io_handler.load_tiff(layer_fp, reproject=True)
+                out = self._h5_io_handler.load_data_using_h5_profile(
+                    layer_fp, reproject=True)
                 logger.debug(f'Writing {layer_name} to H5')
-                self._h5_io_handler.write_to_h5(out, layer_name)
+                self._h5_io_handler.write_layer_to_h5(out, layer_name)
 
         for power_class, capacity in xc['power_classes'].items():
             logger.info('Calculating costs for class %s using a %sMW line',
@@ -141,7 +141,7 @@ class DryCostCreator:
 
             base_costs_tiff = 'base_line_costs_{}MW.tif'.format(capacity)
             out_fp = self.output_tiff_dir / base_costs_tiff
-            self._io_handler.save_tiff(blc_arr, out_fp)
+            self._io_handler.save_data_using_h5_profile(blc_arr, out_fp)
 
             # Calculate total costs w/ multipliers
             costs_arr = blc_arr * mults_arr
@@ -150,11 +150,12 @@ class DryCostCreator:
             tie_line_costs_tiff = '{}.tif'.format(dry_layer_name)
             out_fp = self.output_tiff_dir / tie_line_costs_tiff
             costs_arr[~self._masks.dry_mask] = 0
-            self._io_handler.save_tiff(costs_arr, out_fp)
+            self._io_handler.save_data_using_h5_profile(costs_arr, out_fp)
             if self._h5_io_handler is not None:
-                out = self._h5_io_handler.load_tiff(out_fp, reproject=True)
+                out = self._h5_io_handler.load_data_using_h5_profile(
+                    out_fp, reproject=True)
                 logger.debug('Writing dry costs to H5')
-                self._h5_io_handler.write_to_h5(out, dry_layer_name)
+                self._h5_io_handler.write_layer_to_h5(out, dry_layer_name)
 
     @staticmethod
     def _compute_slope_mult(slope: npt.NDArray,

@@ -6,14 +6,12 @@ import os
 import pytest
 
 import numpy as np
-from reVX.config.transmission_layer_creation import FBLayerConfig, RangeConfig
 
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
+from reVX.config.transmission_layer_creation import FBLayerConfig, RangeConfig
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.layers.friction_barrier_builder import (
     FrictionBarrierBuilder
-)
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
 )
 
 
@@ -23,7 +21,7 @@ class FakeIoHandler:
         self.shape = shape
 
 
-io_handler: TransLayerIoHandler = FakeIoHandler((3, 3))  # type: ignore
+io_handler: LayeredTransmissionH5 = FakeIoHandler((3, 3))  # type: ignore
 
 # Fake masks. Left side of array is wet, right side is dry, center column in
 # landfall

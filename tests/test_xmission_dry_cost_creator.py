@@ -9,13 +9,12 @@ import pytest
 from reV.handlers.exclusions import ExclusionLayers
 
 from reVX import TESTDATADIR
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.costs.dry_cost_creator import (
     DryCostCreator, XmissionConfig
 )
 from reVX.least_cost_xmission.config import TEST_DEFAULT_MULTS
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
-)
+
 
 BASELINE_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 EXCL_H5 = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_exclusions.h5')
@@ -24,7 +23,7 @@ SLOPE_F = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_srtm_slope.tif')
 NLCD_F = os.path.join(TESTDATADIR, 'ri_exclusions', 'ri_nlcd.tif')
 
 XC = XmissionConfig()
-IO_HANDLER = TransLayerIoHandler(ISO_REGIONS_F)
+IO_HANDLER = LayeredTransmissionH5(ISO_REGIONS_F)
 
 
 def test_land_use_multiplier():
@@ -58,9 +57,11 @@ def test_full_costs_workflow():
     dcc = DryCostCreator(IO_HANDLER, None)
     dcc._iso_lookup = XC['iso_lookup']
 
-    iso_layer = IO_HANDLER.load_tiff(ISO_REGIONS_F)
-    slope_layer = IO_HANDLER.load_tiff(SLOPE_F, skip_profile_test=True)
-    nlcd_layer = IO_HANDLER.load_tiff(NLCD_F, skip_profile_test=True)
+    iso_layer = IO_HANDLER.load_data_using_h5_profile(ISO_REGIONS_F)
+    slope_layer = IO_HANDLER.load_data_using_h5_profile(SLOPE_F,
+                                                        skip_profile_test=True)
+    nlcd_layer = IO_HANDLER.load_data_using_h5_profile(NLCD_F,
+                                                       skip_profile_test=True)
 
     mults_arr = dcc._compute_multipliers(
         XC['iso_multipliers'],

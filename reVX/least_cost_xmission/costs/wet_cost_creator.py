@@ -7,15 +7,12 @@ from warnings import warn
 
 import numpy as np
 import numpy.typing as npt
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.config.transmission_layer_creation import RangeConfig
 from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
                                                        WET_COSTS_TIFF,
                                                        WET_COSTS_H5_LAYER_NAME)
-
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
-)
 
 logger = logging.getLogger(__name__)
 
@@ -24,16 +21,16 @@ class WetCostCreator:
     """
     Create offshore costs and save to GeoTIFF.
     """
-    def __init__(self, io_handler: TransLayerIoHandler, masks: Masks,
+    def __init__(self, io_handler: LayeredTransmissionH5, masks: Masks,
                  h5_io_handler=None):
         """
         Parameters
         ----------
-        io_handler : TransLayerIoHandler
+        io_handler : :class:`LayeredTransmissionH5`
             Transmission layer IO handler
         masks : Masks
             Masks instance.
-        h5_io_handler : TransLayerIoHandler, optional
+        h5_io_handler : :class:`LayeredTransmissionH5`, optional
             Optional H5 file handler. If provided, the cost layers will
             be saved to the H5 file.
         """
@@ -59,15 +56,16 @@ class WetCostCreator:
         wet_layer_name : str
             Name for wet costs in H5 file
         """
-        values = self._io_handler.load_tiff(bathy_tiff)
+        values = self._io_handler.load_data_using_h5_profile(bathy_tiff)
         output = self._assign_values_by_bins(values, bins)
         output[~self._masks.wet_mask] = 0
-        self._io_handler.save_tiff(output, out_filename)
+        self._io_handler.save_data_using_h5_profile(output, out_filename)
 
         if self._h5_io_handler is not None:
-            out = self._h5_io_handler.load_tiff(out_filename, reproject=True)
+            out = self._h5_io_handler.load_data_using_h5_profile(
+                out_filename, reproject=True)
             logger.debug('Writing wet costs to H5')
-            self._h5_io_handler.write_to_h5(out, wet_layer_name)
+            self._h5_io_handler.write_layer_to_h5(out, wet_layer_name)
 
     @staticmethod
     def _assign_values_by_bins(input: npt.NDArray,  # noqa: C901

@@ -371,7 +371,7 @@ class LayeredH5:
 
     def load_data_using_h5_profile(self, geotiff, band=1, reproject=False,
                                    skip_profile_test=False):
-        """Write to GeoTIFF file.
+        """Load GeoTIFF data, converting to H5 profile if necessary.
 
         Parameters
         ----------
@@ -532,6 +532,87 @@ class LayeredH5:
         layers = {layer_name: os.path.join(out_dir, f"{layer_name}.tif")
                   for layer_name in self.layers}
         self.extract_layers(layers)
+
+
+class LayeredTransmissionH5(LayeredH5):
+    """
+    Handle reading and writing H5 files and GeoTiffs
+    """
+
+    def __init__(self, h5_file=None, hsds=False, chunks=(128, 128),
+                 template_file=None, layer_dir='.'):
+        """
+
+        Parameters
+        ----------
+        h5_file : path-like, optional
+            Path to layered transmission HDF5 file. If this file is to
+            be created, a `template_file` must be provided (and must
+            exist on disk). Otherwise, the `template_file` input can be
+            ignored and this input will be used as the template file.
+            This input can be set to `None` if only the tiff conversion
+            utilities are required, but the `template_file` input must
+            be provided in this case. By default, ``None``.
+        hsds : bool, optional
+            Boolean flag to use h5pyd to handle HDF5 'files' hosted on
+            AWS behind HSDS. By default, ``False``.
+        chunks : tuple, optional
+            Chunk size of exclusions in HDF5 file and any output
+            GeoTIFFs. By default, ``(128, 128)``.
+        template_file : path-like, optional
+            Path to template GeoTIFF (``*.tif`` or ``*.tiff``) or HDF5
+            (``*.h5``) file containing the profile and transform to be
+            used for the layered transmission file. If ``None``, then
+            the `h5_file` input is used as the template. If ``None`` and
+            the `h5_file` input is also ``Nonee``, an error is thrown.
+            By default, ``None``.
+        layer_dir : path-like, optional
+            Directory to search for layers in, if not found in current
+            directory. By default, ``'.'``.
+        """
+        super().__init__(h5_file=h5_file, hsds=hsds, chunks=chunks,
+                         template_file=template_file)
+        self._layer_dir = layer_dir
+        if self.h5_file is None and self.template_file is None:
+            msg = "One of `h5_file` or `template_file` must be provided!"
+            logger.error(msg)
+            raise ValueError(msg)
+
+    def load_data_using_h5_profile(self, geotiff, band=1, reproject=False,
+                                   skip_profile_test=False):
+        """Load GeoTIFF data, converting to H5 profile if necessary.
+
+        Parameters
+        ----------
+        geotiff : str
+            Path to GeoTIFF from which data should be read. If just the
+            file name is provided, the class `layer_dir` attribute value
+            is prepended to get the full path.
+        band : int, optional
+            Band to load from GeoTIFF. By default, ``1``.
+        reproject : bool, optional
+            Reproject raster to standard CRS and transform if True.
+            By default, ``False``.
+        skip_profile_test: bool, optional
+            Skip checking that shape, transform, and CRS match template raster
+            if ``True``. By default, ``False``.
+
+        Returns
+        -------
+        array-like
+            Raster data.
+        """
+        full_fname = geotiff
+        if not Path(full_fname).exists():
+            full_fname = os.path.join(self._layer_dir, geotiff)
+            if not Path(full_fname).exists():
+                raise FileNotFoundError(f'Unable to find file {geotiff}')
+
+        skip_test = skip_profile_test
+        return super().load_data_using_h5_profile(geotiff=full_fname,
+                                                  band=band,
+                                                  reproject=reproject,
+                                                  skip_profile_test=skip_test)
 
 
 def check_geotiff(h5, geotiff, chunks=(128, 128), transform_atol=0.01):

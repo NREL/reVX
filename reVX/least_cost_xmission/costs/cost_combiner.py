@@ -9,14 +9,12 @@ from warnings import warn
 import numpy as np
 import numpy.typing as npt
 
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.config.constants import (
     COMBINED_COSTS_TIFF, DEFAULT_DTYPE, WET_COSTS_TIFF,
     COMBINED_COSTS_H5_LAYER_NAME, WET_COSTS_H5_LAYER_NAME,
     DRY_COSTS_H5_LAYER_NAME, LANDFALL_COSTS_H5_LAYER_NAME)
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
-)
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +23,11 @@ class CostCombiner:
     """
     Combine wet and dry costs.
     """
-    def __init__(self, io_handler: TransLayerIoHandler, masks: Masks):
+    def __init__(self, io_handler: LayeredTransmissionH5, masks: Masks):
         """
         Parameters
         ----------
-        io_handler : TransLayerIoHandler
+        io_handler : :class:`LayeredTransmissionH5`
             Transmission layer handler.
         masks : Masks
             Masks instance.
@@ -55,7 +53,7 @@ class CostCombiner:
             raise FileNotFoundError(f'Wet costs GeoTIFF {fname} does not '
                                     'exist')
         logger.debug(f'Loading wet costs from {fname}')
-        return self._io_handler.load_tiff(fname)
+        return self._io_handler.load_data_using_h5_profile(fname)
 
     def load_dry_costs(self, fname: str) -> npt.NDArray:
         """
@@ -75,7 +73,8 @@ class CostCombiner:
             raise FileNotFoundError(f'Det costs GeoTIFF {fname} does not '
                                     'exist')
         logger.debug(f'Loading dry costs from {fname}')
-        return self._io_handler.load_tiff(fname, reproject=True)
+        return self._io_handler.load_data_using_h5_profile(fname,
+                                                           reproject=True)
 
     def combine_costs(self, wet_costs: npt.NDArray,
                       dry_costs: npt.NDArray, landfall_cost: float,
@@ -133,7 +132,7 @@ class CostCombiner:
         if output_tiff_dir is not None:
             out_fp = Path(output_tiff_dir) / COMBINED_COSTS_TIFF
             logger.debug('Saving combined costs to GeoTIFF: %s', str(out_fp))
-            self._io_handler.save_tiff(combined, out_fp)
+            self._io_handler.save_data_using_h5_profile(combined, out_fp)
 
         num_zeros = (combined == 0).sum()
         if num_zeros > 0:
@@ -143,17 +142,17 @@ class CostCombiner:
             warn(msg)
 
         logger.debug('Writing combined costs to H5')
-        self._io_handler.write_to_h5(combined, combined_layer_name)
+        self._io_handler.write_layer_to_h5(combined, combined_layer_name)
 
         logger.debug('Writing wet costs to H5')
         wet_costs = wet_costs.copy()
         wet_costs[~self._masks.wet_mask] = 0
-        self._io_handler.write_to_h5(wet_costs, wet_layer_name)
+        self._io_handler.write_layer_to_h5(wet_costs, wet_layer_name)
 
         logger.debug('Writing dry costs to H5')
         dry_costs = dry_costs.copy()
         dry_costs[~self._masks.dry_mask] = 0
-        self._io_handler.write_to_h5(dry_costs, dry_layer_name)
+        self._io_handler.write_layer_to_h5(dry_costs, dry_layer_name)
 
         logger.debug('Writing landfall costs to H5')
-        self._io_handler.write_to_h5(landfall_costs, landfall_layer_name)
+        self._io_handler.write_layer_to_h5(landfall_costs, landfall_layer_name)

@@ -18,7 +18,7 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX.cli import main
 from reVX.handlers.geotiff import Geotiff
 from reVX import TESTDATADIR
-from reVX.handlers.layered_h5 import LayeredH5
+from reVX.handlers.layered_h5 import LayeredH5, LayeredTransmissionH5
 
 RI_DIR = os.path.join(TESTDATADIR, 'ri_exclusions')
 EXCL_H5 = os.path.join(RI_DIR, 'ri_exclusions.h5')
@@ -80,6 +80,15 @@ def extract_layer(h5_path, layer):
         profile = f.get_layer_profile(layer)
 
     return values, profile
+
+
+def test_bad_handler_init():
+    """Test initializing empty `LayeredTransmissionH5` throws error. """
+
+    with pytest.raises(ValueError) as err:
+        LayeredTransmissionH5()
+
+    assert "One of `h5_file` or `template_file` must be provided!" in str(err)
 
 
 def test_bad_file_format():

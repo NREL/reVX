@@ -7,16 +7,14 @@ from typing import Literal, Dict
 
 import numpy as np
 import numpy.typing as npt
-from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
 
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
+from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
 from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
 from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
                                                        RAW_BARRIER_TIFF,
                                                        FRICTION_TIFF)
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
-)
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +26,14 @@ class FrictionBarrierBuilder:
     Build friction or barrier layers.
     """
     def __init__(self, type_: Literal['friction', 'barrier'],
-                 io_handler: TransLayerIoHandler, masks: Masks,
+                 io_handler: LayeredTransmissionH5, masks: Masks,
                  dtype: npt.DTypeLike = DEFAULT_DTYPE):
         """
         Parameters
         ----------
         type_ : {'friction', 'barrier'}
             Type of layer being built
-        io_handler : TransLayerIoHandler
+        io_handler : :class:`LayeredTransmissionH5`
             IO handler
         masks : Masks
             Mask Handler
@@ -68,7 +66,8 @@ class FrictionBarrierBuilder:
 
             logger.debug(f'Processing {fname} with config {config}')
             if Path(fname).suffix.lower() in ['.tif', '.tiff']:
-                data = self._io_handler.load_tiff(fname, reproject=True)
+                data = self._io_handler.load_data_using_h5_profile(
+                    fname, reproject=True)
                 temp = self._process_raster_layer(data, config)
                 result += temp
             elif Path(fname).suffix.lower() in ['.shp', '.gpkg']:
@@ -82,7 +81,7 @@ class FrictionBarrierBuilder:
         fname = (RAW_BARRIER_TIFF
                  if self._type == 'barrier' else FRICTION_TIFF)
         logger.debug(f'Writing combined {self._type} layers to {fname}')
-        self._io_handler.save_tiff(result, fname)
+        self._io_handler.save_data_using_h5_profile(result, fname)
 
     def _process_raster_layer(self, data: npt.NDArray,  # type: ignore[return]
                               config: FBLayerConfig) -> npt.NDArray:
@@ -218,7 +217,8 @@ class FrictionBarrierBuilder:
             if config.extent != ALL:
                 mask = self._get_mask(config.extent)
 
-            temp = self._io_handler.load_tiff(fname, reproject=True)
+            temp = self._io_handler.load_data_using_h5_profile(fname,
+                                                               reproject=True)
 
             if config.extent == ALL:
                 fi += temp

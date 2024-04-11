@@ -1,5 +1,5 @@
 """
-CLI to create wet (TODO and dry) costs, barriers, and friction layers. Final
+CLI to create wet and dry costs, barriers, and friction layers. Final
 layers required for LCP routing are saved to an H5 file. All layers may
 optionally be saved to GeoTIFF.
 """
@@ -7,7 +7,6 @@ import sys
 import click
 import logging
 from pathlib import Path
-from typing import Union, Any
 
 from gaps.config import load_config
 from pydantic import ValidationError
@@ -22,15 +21,12 @@ from reVX.least_cost_xmission.config.constants import (BARRIER_H5_LAYER_NAME,
                                                        FRICTION_TIFF,
                                                        RAW_BARRIER_TIFF,
                                                        WET_COSTS_TIFF)
-from reVX.handlers.layered_h5 import LayeredH5
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.costs.cost_combiner import CostCombiner
 from reVX.least_cost_xmission.costs.wet_cost_creator import WetCostCreator
 from reVX.least_cost_xmission.layers.friction_barrier_builder import (
     FrictionBarrierBuilder
-)
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
 )
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
 from reVX.least_cost_xmission.costs.dry_cost_creator import DryCostCreator
@@ -76,9 +72,10 @@ def from_config(config_fpath: str):  # noqa: C901
     # Done with guard clauses
     output_tiff_dir = Path(config.output_tiff_dir).expanduser().resolve()
     output_tiff_dir.mkdir(exist_ok=True, parents=True)
-    h5_io_handler = TransLayerIoHandler(str(config.template_raster_fpath),
-                                        layer_dir=config.layer_dir)
-    h5_io_handler.h5_file = str(config.h5_fpath)
+    template_file = str(config.template_raster_fpath)
+    h5_io_handler = LayeredTransmissionH5(h5_file=str(config.h5_fpath),
+                                          template_file=template_file,
+                                          layer_dir=config.layer_dir)
 
     masks = Masks(h5_io_handler, masks_dir=config.masks_dir)
     masks.load_masks()
@@ -94,8 +91,9 @@ def from_config(config_fpath: str):  # noqa: C901
 
     if config.wet_costs is not None:
         wc = config.wet_costs
-        wet_io_handler = TransLayerIoHandler(str(wc.bathy_tiff),
-                                             layer_dir=config.layer_dir)
+        template_file = str(wc.bathy_tiff)
+        wet_io_handler = LayeredTransmissionH5(template_file=template_file,
+                                               layer_dir=config.layer_dir)
         wcc = WetCostCreator(wet_io_handler, masks, h5_io_handler)
         wet_costs_tiff = (WET_COSTS_TIFF
                           if wc.wet_costs_tiff is None
@@ -104,10 +102,11 @@ def from_config(config_fpath: str):  # noqa: C901
 
     if config.dry_costs is not None:
         dc = config.dry_costs
+        template_file = str(dc.iso_region_tiff)
 
         # Dry layers have historically used a different size raster
-        dry_io_handler = TransLayerIoHandler(str(dc.iso_region_tiff),
-                                             layer_dir=config.layer_dir)
+        dry_io_handler = LayeredTransmissionH5(template_file=template_file,
+                                               layer_dir=config.layer_dir)
         dcc = DryCostCreator(dry_io_handler, masks, output_tiff_dir,
                              h5_io_handler)
         cost_configs = None if not dc.cost_configs else str(dc.cost_configs)
@@ -170,7 +169,7 @@ def create_masks(land_mask_vector: str, template_raster: str, masks_dir: str,
     """
     Convert a vector land file to wet, dry, and all other masks.
     """
-    io_handler = TransLayerIoHandler(template_raster)
+    io_handler = LayeredTransmissionH5(template_file=template_raster)
     masks = Masks(io_handler, masks_dir=masks_dir)
 
     reproject = not dont_reproject
@@ -178,52 +177,32 @@ def create_masks(land_mask_vector: str, template_raster: str, masks_dir: str,
                        reproject_vector=reproject)
 
 
-# @main.command
+@main.command
 @click.option('--template-raster', '-t', type=click.Path(exists=True),
               required=True,
               help='Raster to extract CRS, transform, and shape from.')
 @click.option('--h5-file', '-h', type=click.Path(exists=False), required=True,
               help='Name of H5 file to create.')
-def FUTURE_create_h5(template_raster: str, h5_file: str):
+def create_h5(template_raster: str, h5_file: str):
     """
     Create a new H5 file to store layers in.
     """
     logger.info('Using raster %s to create new H5 file %s', template_raster,
                 h5_file)
-    LayeredH5(h5_file, template_file=template_raster).create_new()
-
-
-@main.command
-@click.option('--template-raster', '-t', type=click.Path(exists=True),
-              required=True,
-              help='Raster to extract CRS, transform, and shape from.')
-@click.option('--existing-h5-file', '-e', type=click.Path(exists=True),
-              required=True,
-              help='Existing H5 file with correct shape and profile.')
-@click.option('--new-h5-file', '-n', type=click.Path(exists=False),
-              required=True, help='Name of H5 file to create.')
-def create_h5(template_raster: str, existing_h5_file: str,
-              new_h5_file: str):
-    """
-    Create a new H5 file to store layers in.
-    """
-    logger.info(f'Creating new H5 {new_h5_file} with meta data from '
-                f'{existing_h5_file}')
-    io_handler = TransLayerIoHandler(template_raster)
-    io_handler.create_new_h5(existing_h5_file, new_h5_file)
+    LayeredTransmissionH5(h5_file, template_file=template_raster).create_new()
 
 
 def _combine_friction_and_barriers(config: MergeFrictionBarriers,
-                                   io_handler: TransLayerIoHandler,
+                                   io_handler: LayeredTransmissionH5,
                                    output_tiff_dir=None):
     """
     Combine friction and barriers and save to H5 and optionally GeoTIFF
 
     Parameters
     ----------
-    config : MergeFrictionBarriers
+    config : :class:`MergeFrictionBarriers`
         Config object
-    io_handler : TransLayerIoHandler
+    io_handler : :class:`LayeredTransmissionH5`
         Transmission IO handler
     output_tiff_dir : path-like, optional
         Directory where combined barriers should be saved as GeoTIFF. If
@@ -242,17 +221,18 @@ def _combine_friction_and_barriers(config: MergeFrictionBarriers,
         sys.exit(1)
 
     logger.info('Loading friction and raw barriers.')
-    friction = io_handler.load_tiff(FRICTION_TIFF)
-    barriers = io_handler.load_tiff(RAW_BARRIER_TIFF)
+    friction = io_handler.load_data_using_h5_profile(FRICTION_TIFF)
+    barriers = io_handler.load_data_using_h5_profile(RAW_BARRIER_TIFF)
 
     combined = friction + barriers * config.barrier_multiplier
 
     if output_tiff_dir is not None:
         logger.debug('Saving combined barriers to GeoTIFF')
-        io_handler.save_tiff(combined, Path(output_tiff_dir) / BARRIER_TIFF)
+        io_handler.save_data_using_h5_profile(
+            combined, Path(output_tiff_dir) / BARRIER_TIFF)
 
     logger.info('Writing combined barriers to H5')
-    io_handler.write_to_h5(combined, BARRIER_H5_LAYER_NAME)
+    io_handler.write_layer_to_h5(combined, BARRIER_H5_LAYER_NAME)
 
 
 if __name__ == '__main__':
