@@ -166,6 +166,16 @@ def layers_to_h5(ctx, layers, check_tiff, setbacks, distance_to_ports,
 
     inputs = safe_json_load(layers)
     layers = inputs['layers']
+
+    if not layers:
+        msg = ('`layers` input is empty - no layers found to move!')
+        logger.error(msg)
+        raise RuntimeError(msg)
+
+    if isinstance(layers, list):
+        template_file = layers[0]
+    else:
+        template_file = list(layers.values())[0]
     descriptions = inputs.get('descriptions')
     scale_factors = inputs.get('scale_factors')
 
@@ -178,25 +188,25 @@ def layers_to_h5(ctx, layers, check_tiff, setbacks, distance_to_ports,
         raise RuntimeError(msg)
 
     if setbacks:
-        ail = inputs.get('are_inclusion_layers', False)
-        SetbacksConverter(excl_h5).layers_to_h5(layers,
-                                                check_tiff=check_tiff,
-                                                are_inclusion_layers=ail,
-                                                transform_atol=transform_atol,
-                                                descriptions=descriptions,
-                                                scale_factors=scale_factors)
+        are_inclusion_layers = inputs.get('are_inclusion_layers', False)
+        converter = SetbacksConverter(excl_h5, template_file=template_file)
+        converter.layers_to_h5(layers, check_tiff=check_tiff,
+                               are_inclusion_layers=are_inclusion_layers,
+                               transform_atol=transform_atol,
+                               descriptions=descriptions,
+                               scale_factors=scale_factors)
     elif distance_to_ports:
-        tol = transform_atol
-        DistToPortsConverter(excl_h5).layers_to_h5(layers,
-                                                   check_tiff=check_tiff,
-                                                   transform_atol=tol,
-                                                   descriptions=descriptions,
-                                                   scale_factors=scale_factors)
+        converter = DistToPortsConverter(excl_h5, template_file=template_file)
+        converter.layers_to_h5(layers, check_tiff=check_tiff,
+                               transform_atol=transform_atol,
+                               descriptions=descriptions,
+                               scale_factors=scale_factors)
     else:
-        LayeredH5(excl_h5).layers_to_h5(layers, check_tiff=check_tiff,
-                                        transform_atol=transform_atol,
-                                        descriptions=descriptions,
-                                        scale_factors=scale_factors)
+        converter = LayeredH5(excl_h5, template_file=template_file)
+        converter.layers_to_h5(layers, check_tiff=check_tiff,
+                               transform_atol=transform_atol,
+                               descriptions=descriptions,
+                               scale_factors=scale_factors)
 
 
 @exclusions.command()

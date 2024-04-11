@@ -323,71 +323,71 @@ def test_scale():
         assert np.allclose(true_values, test_values, rtol=0.01, atol=0.01)
 
 
-# def test_cli(runner):
-#     """
-#     Test CLI
-#     """
-#     layer = 'ri_padus'
-#     with tempfile.TemporaryDirectory() as td:
-#         # Geotiff from H5
-#         result = runner.invoke(main, ['exclusions',
-#                                       '-h5', EXCL_H5,
-#                                       'layers-from-h5',
-#                                       '-o', td,
-#                                       '-l', layer])
-#         msg = ('Failed with error {}'
-#                .format(traceback.print_exception(*result.exc_info)))
-#         assert result.exit_code == 0, msg
+def test_cli(runner):
+    """
+    Test CLI
+    """
+    layer = 'ri_padus'
+    with tempfile.TemporaryDirectory() as td:
+        # Geotiff from H5
+        result = runner.invoke(main, ['exclusions',
+                                      '-h5', EXCL_H5,
+                                      'layers-from-h5',
+                                      '-o', td,
+                                      '-l', layer])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
 
-#         geotiff = os.path.join(td, '{}.tif'.format(layer))
-#         test_values, test_profile = extract_geotiff(geotiff)
+        geotiff = os.path.join(td, '{}.tif'.format(layer))
+        test_values, test_profile = extract_geotiff(geotiff)
 
-#         truth = os.path.join(DIR, '{}.tif'.format(layer))
-#         true_values, true_profile = extract_geotiff(truth)
+        truth = os.path.join(RI_DIR, '{}.tif'.format(layer))
+        true_values, true_profile = extract_geotiff(truth)
 
-#         assert np.allclose(true_values, test_values)
-#         assert true_profile == test_profile
+        assert np.allclose(true_values, test_values)
+        assert true_profile == test_profile
 
-#         # Geotiff to H5
-#         layers = {'layers': {layer: truth}}
-#         layers_path = os.path.join(td, 'layers.json')
-#         with open(layers_path, 'w') as f:
-#             json.dump(layers, f)
+        # Geotiff to H5
+        layers = {'layers': {layer: truth}}
+        layers_path = os.path.join(td, 'layers.json')
+        with open(layers_path, 'w') as f:
+            json.dump(layers, f)
 
-#         excl_h5 = os.path.join(td, "{}.h5".format(layer))
-#         result = runner.invoke(main, ['exclusions',
-#                                       '-h5', excl_h5,
-#                                       'layers-to-h5',
-#                                       '-l', layers_path])
-#         msg = ('Failed with error {}'
-#                .format(traceback.print_exception(*result.exc_info)))
-#         assert result.exit_code == 0, msg
+        excl_h5 = os.path.join(td, "{}.h5".format(layer))
+        result = runner.invoke(main, ['exclusions',
+                                      '-h5', excl_h5,
+                                      'layers-to-h5',
+                                      '-l', layers_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
 
-#         true_values, true_profile = extract_layer(EXCL_H5, layer)
-#         test_values, test_profile = extract_layer(excl_h5, layer)
+        true_values, true_profile = extract_layer(EXCL_H5, layer)
+        test_values, test_profile = extract_layer(excl_h5, layer)
 
-#         assert np.allclose(true_values, test_values)
+        assert np.allclose(true_values, test_values)
 
-#         for profile_k, true_v in true_profile.items():
-#             test_v = test_profile[profile_k]
-#             if profile_k == 'crs':
-#                 true_crs = dict([i.split("=") for i in true_v.split(' ')])
-#                 true_crs = pd.DataFrame(true_crs, index=[0, ])
-#                 true_crs = true_crs.apply(pd.to_numeric, errors='ignore')
+        for profile_k, true_v in true_profile.items():
+            test_v = test_profile[profile_k]
+            if profile_k == 'crs':
+                true_crs = dict([i.split("=") for i in true_v.split(' ')])
+                true_crs = pd.DataFrame(true_crs, index=[0, ])
+                true_crs = true_crs.apply(pd.to_numeric, errors='ignore')
 
-#                 test_crs = dict([i.split("=") for i in test_v.split(' ')])
-#                 test_crs = pd.DataFrame(test_crs, index=[0, ])
-#                 test_crs = test_crs.apply(pd.to_numeric, errors='ignore')
+                test_crs = dict([i.split("=") for i in test_v.split(' ')])
+                test_crs = pd.DataFrame(test_crs, index=[0, ])
+                test_crs = test_crs.apply(pd.to_numeric, errors='ignore')
 
-#                 cols = list(set(true_crs.columns) & set(test_crs.columns))
-#                 assert_frame_equal(true_crs[cols], test_crs[cols],
-#                                    check_dtype=False, check_exact=False)
-#             else:
-#                 msg = ("Profile {} does not match: {} != {}"
-#                        .format(profile_k, true_v, test_v))
-#                 assert true_v == test_v, msg
+                cols = list(set(true_crs.columns) & set(test_crs.columns))
+                assert_frame_equal(true_crs[cols], test_crs[cols],
+                                   check_dtype=False, check_exact=False)
+            else:
+                msg = ("Profile {} does not match: {} != {}"
+                       .format(profile_k, true_v, test_v))
+                assert true_v == test_v, msg
 
-#     LOGGERS.clear()
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):
