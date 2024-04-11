@@ -58,8 +58,7 @@ class LayeredH5:
         self._hsds = hsds
         self._chunks = chunks
         self._profile = None
-        self._template_file = None
-        self.template_file = template_file or h5_file
+        self._template_file = template_file or h5_file
 
     def __repr__(self):
         return "{} for {}".format(self.__class__.__name__, self.h5_file)
@@ -168,6 +167,8 @@ class LayeredH5:
             msg = f"Must provide template file to initialize {self.h5_file}!"
             logger.error(msg)
             raise ValueError(msg)
+
+        self._validate_template()
 
         logger.debug('\t- Initializing %s from %s',
                      self.h5_file, self.template_file)
@@ -295,6 +296,8 @@ class LayeredH5:
             By default, ``True``.
         """
         if not Path(self.h5_file).exists():
+            if self.template_file == self.h5_file:
+                self.template_file = geotiff
             self.create_new(overwrite=False)
 
         self._warn_or_error_for_existing_layer(layer_name, replace)

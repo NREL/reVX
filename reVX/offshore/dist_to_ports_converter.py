@@ -96,7 +96,8 @@ class DistToPortsConverter(LayeredH5):
                      .format(dist_to_ports))
 
         if not os.path.exists(self.h5_file):
-            self.template_file = dist_to_ports[0]
+            if self.template_file == self.h5_file:
+                self.template_file = dist_to_ports[0]
             self.create_new(overwrite=False)
 
         if check_tiff:

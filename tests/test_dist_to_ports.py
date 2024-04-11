@@ -116,7 +116,7 @@ def test_dist_to_ports(max_workers):
                 assert np.allclose(baseline, test), msg
 
         convert = DistToPortsConverter(excl_fpath)
-        convert.dist_to_ports_to_layer('test', td)
+        convert.write_dist_to_ports_to_h5(td, 'test')
 
         test = get_dist_to_ports(excl_fpath, ports_layer='test')
 

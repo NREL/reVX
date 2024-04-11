@@ -102,7 +102,8 @@ class SetbacksConverter(LayeredH5):
         logger.debug('\t- Combining setbacks in {}'.format(setbacks))
 
         if not os.path.exists(self.h5_file):
-            self.template_file = setbacks[0]
+            if self.template_file == self.h5_file:
+                self.template_file = setbacks[0]
             self.create_new(overwrite=False)
 
         self._warn_or_error_for_existing_layer(layer_name, replace)
