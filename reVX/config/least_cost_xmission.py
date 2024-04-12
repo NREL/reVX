@@ -5,7 +5,7 @@ reVX Least Cost Xmission Configurations
 import os
 import logging
 import pandas as pd
-from typing import List, Optional
+from typing import List
 
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig

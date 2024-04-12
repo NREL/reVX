@@ -426,8 +426,7 @@ class LeastCostPaths:
             indices=indices,
             save_paths=save_paths,
             max_workers=max_workers,
-            length_invariant_cost_layers=length_invariant_cost_layers
-            )
+            length_invariant_cost_layers=length_invariant_cost_layers)
 
         logger.info('{} paths were computed in {:.4f} hours'
                     .format(len(least_cost_paths),

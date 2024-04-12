@@ -448,7 +448,7 @@ class TieLineCosts:
         # Determine parial costs for any cost layers
         cl_results: Dict[str, float] = {}
         logger.debug('Calculating partial costs and lengths for: %s',
-                        list(self._cost_layer_map.keys()))
+                     list(self._cost_layer_map.keys()))
 
         cl_results = _compute_individual_layers_costs_lens(
             self._cost_layer_map, indices, lens, cl_results,
@@ -456,9 +456,9 @@ class TieLineCosts:
         cl_results = _compute_individual_layers_costs_lens(
             self._li_cost_layer_map, indices, lens, cl_results,
             scale_by_length=False)
-        test_total_cost = sum([layer
-                               for layer_name, layer in cl_results.items()
-                               if layer_name.endswith("_cost")])
+        test_total_cost = sum(layer
+                              for layer_name, layer in cl_results.items()
+                              if layer_name.endswith("_cost"))
 
         # Sanity check that total of cost layers matches full cost raster.
         if round(test_total_cost) != round(cost):

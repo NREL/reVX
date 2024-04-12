@@ -253,7 +253,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
                                          save_paths=save_paths,
                                          length_invariant_cost_layers=licl)
 
-    fpath_out = os.path.join(out_dir,  f'{name}_lcp'.format(name))
+    fpath_out = os.path.join(out_dir, f'{name}_lcp')
     if save_paths:
         fpath_out += '.gpkg'
         least_costs.to_file(fpath_out, driver="GPKG", index=False)
