@@ -535,6 +535,7 @@ class LeastCostXmission(LeastCostPaths):
 
         tie_line_voltage = self._config.capacity_to_kv(capacity_class)
 
+        # format any curly brackets in layer names given by user
         cc_str = self._config._parse_cap_class(capacity_class)
         cap = self._config['power_classes'][cc_str]
         cost_layers = [layer.format(cap) for layer in cost_layers]
