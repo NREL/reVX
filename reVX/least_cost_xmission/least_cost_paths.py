@@ -277,18 +277,21 @@ class LeastCostPaths:
         """
         return self.end_features[['row', 'col']].values
 
-    def process_least_cost_paths(self, capacity_class, barrier_mult=100,
+    def process_least_cost_paths(self, cost_layers, barrier_mult=100,
                                  indices=None, max_workers=None,
-                                 save_paths=False,):
+                                 save_paths=False,
+                                 length_invariant_cost_layers=None):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
 
         Parameters
         ----------
-        capacity_class : str | int
-            Capacity class of transmission features to connect supply
-            curve points to
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            deteremining path using main cost layer.
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
@@ -298,6 +301,11 @@ class LeastCostPaths:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
 
         Returns
         -------
@@ -316,20 +324,22 @@ class LeastCostPaths:
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 least_cost_paths = self._compute_paths_in_chunks(
-                    exe, max_workers, indices, capacity_class, barrier_mult,
+                    exe, max_workers, indices, cost_layers, barrier_mult,
                     save_paths)
         else:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
             log_mem(logger)
+            licl = length_invariant_cost_layers
             for ind, start in enumerate(indices, start=1):
                 self._start_feature_ind = start
                 lcp = TieLineCosts.run(self._cost_fpath,
                                        self.start_indices, self.end_indices,
-                                       capacity_class,
+                                       cost_layers,
                                        self._row_slice, self._col_slice,
                                        barrier_mult=barrier_mult,
-                                       save_paths=save_paths)
+                                       save_paths=save_paths,
+                                       length_invariant_cost_layers=licl)
                 end_features = self.end_features.drop(columns=['row', 'col'],
                                                       errors="ignore")
                 lcp = pd.concat((lcp, end_features), axis=1)
@@ -344,7 +354,7 @@ class LeastCostPaths:
         return least_cost_paths
 
     def _compute_paths_in_chunks(self, exe, max_submissions, indices,
-                                 capacity_class, barrier_mult, save_paths):
+                                 cost_layers, barrier_mult, save_paths):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -352,7 +362,7 @@ class LeastCostPaths:
             self._start_feature_ind = start
             future = exe.submit(TieLineCosts.run, self._cost_fpath,
                                 self.start_indices, self.end_indices,
-                                capacity_class,
+                                cost_layers,
                                 self._row_slice, self._col_slice,
                                 barrier_mult=barrier_mult,
                                 save_paths=save_paths)
@@ -366,9 +376,9 @@ class LeastCostPaths:
         return paths
 
     @classmethod
-    def run(cls, cost_fpath, features_fpath, capacity_class,
+    def run(cls, cost_fpath, features_fpath, cost_layers,
             clip_buffer=0, barrier_mult=100, indices=None, max_workers=None,
-            save_paths=False):
+            save_paths=False, length_invariant_cost_layers=None):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -379,9 +389,11 @@ class LeastCostPaths:
             Path to h5 file with cost rasters and other required layers
         features_fpath : str
             Path to GeoPackage with transmission features
-        capacity_class : str | int
-            Capacity class of transmission features to connect supply
-            curve points to
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            deteremining path using main cost layer.
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
@@ -394,6 +406,11 @@ class LeastCostPaths:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
 
         Returns
         -------
@@ -404,11 +421,13 @@ class LeastCostPaths:
         ts = time.time()
         lcp = cls(cost_fpath, features_fpath, clip_buffer=clip_buffer)
         least_cost_paths = lcp.process_least_cost_paths(
-            capacity_class,
+            cost_layers,
             barrier_mult=barrier_mult,
             indices=indices,
             save_paths=save_paths,
-            max_workers=max_workers)
+            max_workers=max_workers,
+            length_invariant_cost_layers=length_invariant_cost_layers
+            )
 
         logger.info('{} paths were computed in {:.4f} hours'
                     .format(len(least_cost_paths),
@@ -494,21 +513,26 @@ class ReinforcementPaths(LeastCostPaths):
         """
         return self._features[['row', 'col']].values
 
-    def process_least_cost_paths(self, capacity_class, barrier_mult=100,
-                                 save_paths=False):
+    def process_least_cost_paths(self, capacity_class, cost_layers,
+                                 barrier_mult=100, save_paths=False,
+                                 length_invariant_cost_layers=None):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
 
         Parameters
         ----------
-        capacity_class : str | int
-            Transmission feature ``capacity_class`` to use for the
-            'base' greenfield costs. 'Base' greenfield costs are only
-            used if the reinforcement path *must* deviate from existing
-            transmission lines. Typically, a capacity class of 400 MW
-            (230kV transmission line) is used for the base greenfield
-            costs.
+        capacity_class : int | str
+            Capacity class of the 'base' greenfield costs layer. Costs
+            will be scaled by the capacity corresponding to this class
+            to report reinforcement costs as $/MW.
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            'base' greenfield costs raster used for routing. 'Base'
+            greenfield costs are only used if the reinforcement path
+            *must* deviate from existing transmission lines. Typically,
+            a capacity class of 400 MW (230kV transmission line) is used
+            for the base greenfield costs.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -518,6 +542,11 @@ class ReinforcementPaths(LeastCostPaths):
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the 'base' greenfield
+            cost raster. The costs specified by these layers are not
+            scaled with distance traversed across the cell (i.e. fixed
+            one-time costs for crossing these cells).
 
         Returns
         -------
@@ -531,13 +560,15 @@ class ReinforcementPaths(LeastCostPaths):
                     .format(self._start_indices))
         log_mem(logger)
 
+        licl = length_invariant_cost_layers
         lcp = ReinforcementLineCosts.run(self._transmission_lines,
                                          self._cost_fpath,
                                          self.start_indices, self.end_indices,
-                                         capacity_class,
+                                         capacity_class, cost_layers,
                                          self._row_slice, self._col_slice,
                                          barrier_mult=barrier_mult,
-                                         save_paths=save_paths)
+                                         save_paths=save_paths,
+                                         length_invariant_cost_layers=licl)
         feats = self._features.drop(columns=['row', 'col'])
         least_cost_paths = pd.concat((lcp, feats), axis=1)
 
@@ -546,8 +577,9 @@ class ReinforcementPaths(LeastCostPaths):
     @classmethod
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
-            capacity_class, xmission_config=None, clip_buffer=0,
-            barrier_mult=100, indices=None, save_paths=False):
+            capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
+            barrier_mult=100, indices=None, save_paths=False,
+            length_invariant_cost_layers=None):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -573,13 +605,17 @@ class ReinforcementPaths(LeastCostPaths):
         region_identifier_column : str
             Name of column in `network_nodes_fpath` GeoPackage
             containing a unique identifier for each region.
-        capacity_class : str | int
-            Transmission feature ``capacity_class`` to use for the
-            'base' greenfield costs. 'Base' greenfield costs are only
-            used if the reinforcement path *must* deviate from existing
-            transmission lines. Typically, a capacity class of 400 MW
-            (230kV transmission line) is used for the base greenfield
-            costs.
+        capacity_class : int | str
+            Capacity class of the 'base' greenfield costs layer. Costs
+            will be scaled by the capacity corresponding to this class
+            to report reinforcement costs as $/MW.
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            'base' greenfield costs raster used for routing. 'Base'
+            greenfield costs are only used if the reinforcement path
+            *must* deviate from existing transmission lines. Typically,
+            a capacity class of 400 MW (230kV transmission line) is used
+            for the base greenfield costs.
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
@@ -596,6 +632,11 @@ class ReinforcementPaths(LeastCostPaths):
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the 'base' greenfield
+            cost raster. The costs specified by these layers are not
+            scaled with distance traversed across the cell (i.e. fixed
+            one-time costs for crossing these cells).
 
         Returns
         -------
@@ -606,7 +647,10 @@ class ReinforcementPaths(LeastCostPaths):
         """
         ts = time.time()
         least_cost_paths = []
+        licl = length_invariant_cost_layers
         lcp_kwargs = {"capacity_class": capacity_class,
+                      "cost_layers": cost_layers,
+                      "length_invariant_cost_layers": licl,
                       "barrier_mult": barrier_mult,
                       "save_paths": save_paths}
         with ExclusionLayers(cost_fpath) as f:

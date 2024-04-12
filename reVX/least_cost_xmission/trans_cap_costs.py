@@ -22,8 +22,6 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
                                              SINK_CAT, SUBSTATION_CAT,
                                              LOAD_CENTER_CAT, CELL_SIZE)
-from reVX.least_cost_xmission.config.constants import \
-    LANDFALL_COSTS_H5_LAYER_NAME
 from reVX.utilities.exceptions import (InvalidMCPStartValueError,
                                        LeastCostPathNotFoundError)
 
@@ -35,9 +33,13 @@ class TieLineCosts:
     Compute Least Cost Tie-line cost from start location to desired end
     locations
     """
-    def __init__(self, cost_fpath, start_indices, capacity_class, row_slice,
-                 col_slice, xmission_config=None, barrier_mult=100,
-                 cost_layers=None):
+
+    TB_LAYER_NAME = 'transmission_barrier'
+    """Expected name of transmission barrier layer in cost HDF5 file. """
+
+    def __init__(self, cost_fpath, start_indices, cost_layers,
+                 row_slice, col_slice, xmission_config=None, barrier_mult=100,
+                 length_invariant_cost_layers=None):
         """
         Parameters
         ----------
@@ -57,11 +59,11 @@ class TieLineCosts:
             Paths will be computed from this start location to each of
             the ``end_indices``, which are also locations in the cost
             array (typically transmission feature locations).
-        capacity_class : : int | str
-            Integer value representing the transmission feature
-            capacity. The integer values must matches at least one of
-            the integer capacity values represented by the keys in the
-            ``power_classes`` portion of the transmission config.
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            deteremining path using main cost layer.
         row_slice, col_slice : slice
             Slices into the cost raster array used to clip the area that
             should be considered when computing a least cost path. This
@@ -77,36 +79,28 @@ class TieLineCosts:
         barrier_mult : int, optional
             Multiplier applied to the cost data to create transmission
             barrier costs. By default, ``100``.
-        cost_layers : List[str] | None, optional
-            List of layers in H5 to calculate independent costs for after
-            deteremining path using main cost layer.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
         """
         self._cost_fpath = cost_fpath
         self._config = self._parse_config(xmission_config=xmission_config)
         self._start_indices = start_indices
         self._row_slice = row_slice
         self._col_slice = col_slice
-        self._capacity_class = self._config._parse_cap_class(capacity_class)
-
-        self._line_cap_mw = self._config['power_classes'][self.capacity_class]
-        cost_layer = 'tie_line_costs_{}MW'.format(self._line_cap_mw)
-        self._cost, self._mcp_cost = self._clip_costs(
-            cost_fpath, cost_layer, row_slice, col_slice,
-            barrier_mult=barrier_mult)
-
-        self._mcp = None
-        self._clip_shape = None
+        self._clip_shape = self._mcp = self._cost = self._mcp_cost = None
+        self._cost_layer_map = {}
+        self._li_cost_layer_map = {}
 
         with ExclusionLayers(self._cost_fpath) as f:
             self.transform = rasterio.Affine(*f.profile['transform'])
             self._full_shape = f.shape
 
-        self._cost_layers = {}
-        if cost_layers is not None:
-            with ExclusionLayers(self._cost_fpath) as f:
-                for cost_layer in cost_layers:
-                    cost = f[cost_layer, row_slice, col_slice]
-                    self._cost_layers[cost_layer] = cost
+        licl = length_invariant_cost_layers
+        self._clip_costs(cost_layers, length_invariant_cost_layers=licl,
+                         barrier_mult=barrier_mult)
 
     def __repr__(self):
         msg = "{} starting at {}".format(self.__class__.__name__,
@@ -213,17 +207,6 @@ class TieLineCosts:
         return self._mcp
 
     @property
-    def capacity_class(self):
-        """
-        SC point capacity class
-
-        Returns
-        -------
-        str
-        """
-        return self._capacity_class
-
-    @property
     def clip_shape(self):
         """
         Shaped of clipped cost raster
@@ -275,40 +258,63 @@ class TieLineCosts:
 
         return xmission_config
 
-    @staticmethod
-    def _clip_costs(cost_fpath, cost_layer, row_slice, col_slice,
+    def _clip_costs(self, cost_layers, length_invariant_cost_layers=None,
                     barrier_mult=100):
-        """
-        Extract clipped cost arrays from exclusion .h5 files
+        """Extract clipped cost arrays from exclusion .h5 files
 
         Parameters
         ----------
-        cost_fpath : str
-            Full path of .h5 file with cost arrays
-        cost_layer : str
-            Name of cost layer to extract
-        row_slice : slice
-            slice along axis 0 (rows) to clip costs too
-        col_slice : slice
-            slice along axis 1 (columns) to clip costs too
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            deteremining path using main cost layer.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
         barrier_mult : int, optional
-            Multiplier on transmission barrier costs, by default 100
-
-        Returns
-        -------
-        cost : ndarray
-            2d clipped array of raw tie-line costs
-        mcp_cost : ndarray
-            2d clipped array of mcp cost = cost * barrier * barrier_mult
+            Multiplier on transmission barrier costs.
+            By default, ``100``.
         """
-        with ExclusionLayers(cost_fpath) as f:
-            cost = f[cost_layer, row_slice, col_slice]
-            barrier = f['transmission_barrier', row_slice, col_slice]
+        li_cost_layers = length_invariant_cost_layers or []
+        self._cost = np.zeros(self.clip_shape, dtype=np.float32)
+        overlap = np.zeros(self.clip_shape, dtype=np.uint8)
+        with ExclusionLayers(self._cost_fpath) as f:
+            for cost_layer in cost_layers:
+                cost = f[cost_layer, self._row_slice, self._col_slice]
+                self._cost += cost
+                overlap += cost > 0
+                self._cost_layer_map[cost_layer] = cost
 
-        mcp_cost = cost + cost * barrier * barrier_mult
-        mcp_cost = np.where(mcp_cost < 0, -1, mcp_cost)
+            for li_cost_layer in li_cost_layers:
+                li_cost = f[li_cost_layer, self._row_slice, self._col_slice]
+                overlap += li_cost > 0
+                self._li_cost_layer_map[li_cost_layer] = li_cost
 
-        return cost, mcp_cost
+            barrier = f[self.TB_LAYER_NAME, self._row_slice, self._col_slice]
+            barrier = barrier * barrier_mult
+
+        if (overlap > 1).any():
+            all_layers = cost_layers + li_cost_layers
+            msg = (f"Found overlap in cost layers: {all_layers}! Some cells "
+                   "may contain double-counted costs. Please verify that all "
+                   "cost layers are mutually exclusive!")
+            logger.warning(msg)
+            warn(msg)
+
+        self._set_mcp_cost(barrier)
+
+    def _set_mcp_cost(self, barrier):
+        """Compute routing costs. """
+
+        self._mcp_cost = self._cost.copy()
+        for li_cost_layer in self._li_cost_layer_map.values():
+            self._mcp_cost += li_cost_layer
+
+        self._mcp_cost *= 1 + barrier
+        self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
 
     @staticmethod
     def _compute_path_length(indices: npt.NDArray) \
@@ -414,42 +420,13 @@ class TieLineCosts:
         # Multiple distance travel through cell by cost and sum it!
         cost = np.sum(cell_costs * lens)
 
+        if self._li_cost_layer_map:
+            li_costs = sum(self._li_cost_layer_map.values())
+            li_cell_costs = li_costs[indices[:, 0], indices[:, 1]]
+            cost += np.sum(li_cell_costs)
+
         # Determine parial costs for any cost layers
-        cl_results: Dict[str, float] = {}
-        if self._cost_layers:
-            logger.debug('Calculating partial costs and lengths for: %s',
-                         list(self._cost_layers.keys()))
-
-            total_layers_cost = 0
-            test_total_cost = 0
-
-            for layer_name, layer_cost_arr in self._cost_layers.items():
-                layer_costs = layer_cost_arr[indices[:, 0], indices[:, 1]]
-                layer_cost = np.sum(layer_costs * lens)
-                test_total_cost += layer_cost
-
-                # Don't scale landfall costs by length, just by # of landfalls
-                if layer_name == LANDFALL_COSTS_H5_LAYER_NAME:
-                    layer_cost = np.sum(layer_costs)
-
-                total_layers_cost += layer_cost
-                cl_results[f'{layer_name}_cost'] = layer_cost
-
-                # Get path length in km only where layer costs are > 0
-                layer_length = np.sum(lens[layer_costs > 0]) * CELL_SIZE / 1000
-                cl_results[f'{layer_name}_length_km'] = layer_length
-
-            # Sanity check that total of cost layers matches full cost raster.
-            if round(test_total_cost) != round(cost):
-                msg = (f'Sum of cost_layers costs ({total_layers_cost:,}) does'
-                       ' not equal cost calculated with composite cost layer '
-                       f'({cost:,}')
-                logger.warning(msg)
-                warn(msg)
-
-            # The original cost may not properly handle the landfall cost. Use
-            # composite layers cost instead.
-            cost = total_layers_cost
+        cl_results = self._compute_by_layer_results(indices, lens, cost)
 
         with ExclusionLayers(self._cost_fpath) as f:
             poi_lat = f['latitude', self._row_slice, self._col_slice][row, col]
@@ -465,6 +442,33 @@ class TieLineCosts:
                     cl_results)
 
         return (length, cost, poi_lat, poi_lon, None, cl_results)
+
+    def _compute_by_layer_results(self, indices, lens, cost):
+        """Compute costs and dists by individual layer. """
+        # Determine parial costs for any cost layers
+        cl_results: Dict[str, float] = {}
+        logger.debug('Calculating partial costs and lengths for: %s',
+                        list(self._cost_layer_map.keys()))
+
+        cl_results = _compute_individual_layers_costs_lens(
+            self._cost_layer_map, indices, lens, cl_results,
+            scale_by_length=True)
+        cl_results = _compute_individual_layers_costs_lens(
+            self._li_cost_layer_map, indices, lens, cl_results,
+            scale_by_length=False)
+        test_total_cost = sum([layer
+                               for layer_name, layer in cl_results.items()
+                               if layer_name.endswith("_cost")])
+
+        # Sanity check that total of cost layers matches full cost raster.
+        if round(test_total_cost) != round(cost):
+            msg = (f'Sum of cost_layers costs ({test_total_cost:,}) does '
+                   f'not equal cost calculated with composite cost layer '
+                   f'({cost:,}')
+            logger.warning(msg)
+            warn(msg)
+
+        return cl_results
 
     def compute(self, end_indices, save_paths=False):
         """
@@ -513,9 +517,9 @@ class TieLineCosts:
         return tie_lines
 
     @classmethod
-    def run(cls, cost_fpath, start_indices, end_indices, capacity_class,
+    def run(cls, cost_fpath, start_indices, end_indices, cost_layers,
             row_slice, col_slice, xmission_config=None, barrier_mult=100,
-            save_paths=False):
+            save_paths=False, length_invariant_cost_layers=None):
         """
         Compute least cost tie-line path to all features to be connected
         a single supply curve point.
@@ -538,11 +542,11 @@ class TieLineCosts:
             Paths will be computed from this start location to each of
             the ``end_indices``, which are also locations in the cost
             array (typically transmission feature locations).
-        capacity_class : : int | str
-            Integer value representing the transmission feature
-            capacity. The integer values must matches at least one of
-            the integer capacity values represented by the keys in the
-            ``power_classes`` portion of the transmission config.
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            deteremining path using main cost layer.
         row_slice, col_slice : slice
             Slices into the cost raster array used to clip the area that
             should be considered when computing a least cost path. This
@@ -561,6 +565,11 @@ class TieLineCosts:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry.
             By default, ``False``.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
 
         Returns
         -------
@@ -569,9 +578,10 @@ class TieLineCosts:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        tlc = cls(cost_fpath, start_indices, capacity_class, row_slice,
+        tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
                   col_slice, xmission_config=xmission_config,
-                  barrier_mult=barrier_mult)
+                  barrier_mult=barrier_mult,
+                  length_invariant_cost_layers=length_invariant_cost_layers)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
 
@@ -589,8 +599,8 @@ class TransCapCosts(TieLineCosts):
     """
 
     def __init__(self, cost_fpath, sc_point, features, capacity_class,
-                 radius=None, xmission_config=None, barrier_mult=100,
-                 cost_layers=None):
+                 cost_layers, radius=None, xmission_config=None,
+                 barrier_mult=100, length_invariant_cost_layers=None):
         """
         Parameters
         ----------
@@ -601,7 +611,13 @@ class TransCapCosts(TieLineCosts):
         features : pandas.DataFrame
             Table of transmission features
         capacity_class : int | str
-            Transmission feature capacity_class class
+            Transmission feature ``capacity_class`` class. Used to look
+            up connection costs.
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            deteremining path using main cost layer.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -609,16 +625,21 @@ class TransCapCosts(TieLineCosts):
             .jsons, or preloaded XmissionConfig objects, by default None
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
-        cost_layers : List[str] | None, optional
-            List of layers in H5 to calculate independent costs for after
-            deteremining path using main cost layer.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
         """
         self._sc_point = sc_point
         start_indices, row_slice, col_slice = self._get_clipping_slices(
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
-        super().__init__(cost_fpath, start_indices, capacity_class, row_slice,
+        licl = length_invariant_cost_layers
+        super().__init__(cost_fpath, start_indices, cost_layers, row_slice,
                          col_slice, xmission_config=xmission_config,
-                         barrier_mult=barrier_mult, cost_layers=cost_layers)
+                         barrier_mult=barrier_mult,
+                         length_invariant_cost_layers=licl)
+        self._capacity_class = self._config._parse_cap_class(capacity_class)
         self._features = self._prep_features(features)
         self._clip_mask = None
 
@@ -688,6 +709,17 @@ class TransCapCosts(TieLineCosts):
                                        [x[0], y[0]]])
 
         return self._clip_mask
+
+    @property
+    def capacity_class(self):
+        """
+        SC point capacity class
+
+        Returns
+        -------
+        str
+        """
+        return self._capacity_class
 
     @property
     def tie_line_voltage(self):
@@ -1174,9 +1206,10 @@ class TransCapCosts(TieLineCosts):
         return features
 
     @classmethod
-    def run(cls, cost_fpath, sc_point, features, capacity_class, radius=None,
-            xmission_config=None, barrier_mult=100, min_line_length=5.7,
-            save_paths=False, simplify_geo=None, cost_layers=None):
+    def run(cls, cost_fpath, sc_point, features, capacity_class, cost_layers,
+            radius=None, xmission_config=None, barrier_mult=100,
+            min_line_length=5.7, save_paths=False, simplify_geo=None,
+            length_invariant_cost_layers=None):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1192,6 +1225,11 @@ class TransCapCosts(TieLineCosts):
             Table of transmission features
         capacity_class : int | str
             Transmission feature capacity_class class
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            deteremining path using main cost layer.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -1206,9 +1244,11 @@ class TransCapCosts(TieLineCosts):
             by default False
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
-        cost_layers : List[str] | None, optional
-            List of layers in H5 to calculate independent costs for after
-            deteremining path using main cost layer.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
 
         Returns
         -------
@@ -1224,8 +1264,11 @@ class TransCapCosts(TieLineCosts):
 
         try:
             tcc = cls(cost_fpath, sc_point, features, capacity_class,
-                      radius=radius, xmission_config=xmission_config,
-                      barrier_mult=barrier_mult, cost_layers=cost_layers)
+                      cost_layers, radius=radius,
+                      xmission_config=xmission_config,
+                      barrier_mult=barrier_mult,
+                      length_invariant_cost_layers=length_invariant_cost_layers
+                      )
 
             features = tcc.compute(min_line_length=min_line_length,
                                    save_paths=save_paths,
@@ -1259,11 +1302,12 @@ class ReinforcementLineCosts(TieLineCosts):
     line voltages, corresponding costs are used for each portion of the
     path. In the case that the path must cross a region with no existing
     transmission lines to reach the destination, half (50%) of the
-    greenfield cost of the input ``capacity_class`` is used.
+    greenfield cost of the ``cost_layers`` input is used.
     """
     def __init__(self, transmission_lines, cost_fpath, start_indices,
-                 capacity_class, row_slice, col_slice, xmission_config=None,
-                 barrier_mult=100):
+                 capacity_class, cost_layers, row_slice, col_slice,
+                 xmission_config=None, barrier_mult=100,
+                 length_invariant_cost_layers=None):
         """
 
         Parameters
@@ -1287,12 +1331,16 @@ class ReinforcementLineCosts(TieLineCosts):
             array (typically substations within the BA of the network
             node).
         capacity_class : int | str
-            Transmission feature ``capacity_class`` to use for the
-            'base' greenfield costs. 'Base' greenfield costs are only
-            used if the reinforcement path *must* deviate from existing
-            transmission lines. Typically, a capacity class of 400 MW
-            (230kV transmission line) is used for the base greenfield
-            costs.
+            Capacity class of the 'base' greenfield costs layer. Costs
+            will be scaled by the capacity corresponding to this class
+            to report reinforcement costs as $/MW.
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            'base' greenfield costs raster used for routing. 'Base'
+            greenfield costs are only used if the reinforcement path
+            *must* deviate from existing transmission lines. Typically,
+            a capacity class of 400 MW (230kV transmission line) is used
+            for the base greenfield costs.
         row_slice, col_slice : slice
             Row and column slices into the cost array representing the
             window to compute reinforcement line path within.
@@ -1303,24 +1351,39 @@ class ReinforcementLineCosts(TieLineCosts):
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the 'base' greenfield
+            cost raster. The costs specified by these layers are not
+            scaled with distance traversed across the cell (i.e. fixed
+            one-time costs for crossing these cells).
         """
+        licl = length_invariant_cost_layers
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
-                         capacity_class=capacity_class, row_slice=row_slice,
-                         col_slice=col_slice, xmission_config=xmission_config,
-                         barrier_mult=barrier_mult)
-        self._cost = self._cost / self._line_cap_mw
+                         cost_layers=cost_layers,
+                         row_slice=row_slice, col_slice=col_slice,
+                         xmission_config=xmission_config,
+                         barrier_mult=barrier_mult,
+                         length_invariant_cost_layers=licl)
+        capacity_class = self._config._parse_cap_class(capacity_class)
+        line_cap_mw = self._config['power_classes'][capacity_class]
+        self._cost = self._cost / line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
             for capacity_mw, lines in transmission_lines.items():
                 t_lines = np.where(lines[row_slice, col_slice])
                 cost_layer = 'tie_line_costs_{}MW'.format(capacity_mw)
                 costs = f[cost_layer, row_slice, col_slice][t_lines]
-                self._mcp_cost[t_lines] = costs * 1e-9
+                self._mcp_cost[t_lines] = costs * 1e-9  # 0 not allowed
                 self._cost[t_lines] = costs / capacity_mw
+
+    def _compute_by_layer_results(self, *__, **___):
+        """By-layer results not supported for reinforcement run. """
+        return {}
 
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
-            capacity_class, row_slice, col_slice, xmission_config=None,
-            barrier_mult=100, save_paths=False):
+            capacity_class, cost_layers, row_slice, col_slice,
+            xmission_config=None, barrier_mult=100, save_paths=False,
+            length_invariant_cost_layers=None):
         """
         Compute reinforcement line path to all features to be connected
         a single supply curve point.
@@ -1353,12 +1416,16 @@ class ReinforcementLineCosts(TieLineCosts):
             (typically the network node of the BA) to each of the
             individual pairs of `end_indices`.
         capacity_class : int | str
-            Transmission feature ``capacity_class`` to use for the
-            'base' greenfield costs. 'Base' greenfield costs are only
-            used if the reinforcement path *must* deviate from existing
-            transmission lines. Typically, a capacity class of 400 MW
-            (230kV transmission line) is used for the base greenfield
-            costs.
+            Capacity class of the 'base' greenfield costs layer. Costs
+            will be scaled by the capacity corresponding to this class
+            to report reinforcement costs as $/MW.
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            'base' greenfield costs raster used for routing. 'Base'
+            greenfield costs are only used if the reinforcement path
+            *must* deviate from existing transmission lines. Typically,
+            a capacity class of 400 MW (230kV transmission line) is used
+            for the base greenfield costs.
         row_slice, col_slice : slice
             Row and column slices into the cost array representing the
             window to compute reinforcement line path within.
@@ -1372,6 +1439,11 @@ class ReinforcementLineCosts(TieLineCosts):
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the 'base' greenfield
+            cost raster. The costs specified by these layers are not
+            scaled with distance traversed across the cell (i.e. fixed
+            one-time costs for crossing these cells).
 
         Returns
         -------
@@ -1382,8 +1454,9 @@ class ReinforcementLineCosts(TieLineCosts):
         """
         ts = time.time()
         tlc = cls(transmission_lines, cost_fpath, start_indices,
-                  capacity_class, row_slice, col_slice,
-                  xmission_config=xmission_config, barrier_mult=barrier_mult)
+                  capacity_class, cost_layers, row_slice, col_slice,
+                  xmission_config=xmission_config, barrier_mult=barrier_mult,
+                  length_invariant_cost_layers=length_invariant_cost_layers)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
         tie_lines['cost'] = tie_lines['cost'] * 0.5
@@ -1405,3 +1478,21 @@ class ReinforcementLineCosts(TieLineCosts):
                      .format((time.time() - ts) / 60))
 
         return tie_lines
+
+
+def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
+                                          scale_by_length=True):
+    """Compute costs and dists by layer. """
+    for layer_name, layer_cost_arr in layer_map.items():
+        layer_costs = layer_cost_arr[indices[:, 0], indices[:, 1]]
+        if scale_by_length:
+            layer_cost = np.sum(layer_costs * lens)
+        else:
+            layer_cost = np.sum(layer_costs)
+        results[f'{layer_name}_cost'] = layer_cost
+
+        # Get path length in km only where layer costs are > 0
+        layer_length = np.sum(lens[layer_costs > 0]) * CELL_SIZE / 1000
+        results[f'{layer_name}_length_km'] = layer_length
+
+    return results

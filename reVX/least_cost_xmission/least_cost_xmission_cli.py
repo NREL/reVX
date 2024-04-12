@@ -177,17 +177,23 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Simplify path geometries by a value before writing to "
                     "GeoPackage."))
-@click.option('--cost-layers', '-cl', required=False, multiple=True,
+@click.option('--cost-layers', '-cl', required=True, multiple=True,
               default=(),
-              help='Layer in H5 to calculate independent costs and lengths '
-                   'for. Multiple layers may be specified.')
+              help='Layer in H5 to add to total cost raster used for routing. '
+                   'Multiple layers may be specified.')
+@click.option('--li-cost-layers', '-licl', required=False, multiple=True,
+              default=(),
+              help='Length-invariant cost layer in H5 to add to total cost '
+                   'raster used for routing. These costs do not scale with '
+                   'distance traversed acroiss the cell. Multiple layers may '
+                   'be specified.')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
           clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
           verbose, save_paths, radius, expand_radius, simplify_geo,
-          cost_layers: List[str]):
+          cost_layers: List[str], li_cost_layers):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -211,18 +217,20 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
               "radius": radius,
-              "expand_radius": expand_radius}
+              "expand_radius": expand_radius,
+              "length_invariant_cost_layers": li_cost_layers}
 
     if regions_fpath is not None:
         least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
                                              regions_fpath,
                                              region_identifier_column,
-                                             capacity_class, **kwargs)
+                                             capacity_class, cost_layers,
+                                             **kwargs)
     else:
         kwargs["nn_sinks"] = nn_sinks
-        kwargs["cost_layers"] = cost_layers
         least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
-                                            capacity_class, **kwargs)
+                                            capacity_class, cost_layers,
+                                            **kwargs)
     if len(least_costs) == 0:
         logger.error('No paths found.')
         return
@@ -322,8 +330,8 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
     # Split out put in to GeoJSON by POI name
     if split_to_geojson:
         if not isinstance(df, gpd.GeoDataFrame):
-            click.echo('Geo-spatial aware input files must be provided to split'
-                       ' to Geo-JSON.')
+            click.echo('Geo-spatial aware input files must be provided to '
+                       'split to Geo-JSON.')
             sys.exit(1)
         pois = set(df['POI Name'])
         for i, poi in enumerate(pois, start=1):
@@ -424,9 +432,11 @@ def get_node_cmd(config, gids):
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
 
-    if config.cost_layers is not None:
-        for layer in config.cost_layers:
-            args.append(f'-cl {layer}')
+    for layer in config.cost_layers:
+        args.append(f'-cl {layer}')
+    for layer in config.length_invariant_cost_layers:
+        args.append(f'-licl {layer}')
+
     if config.save_paths:
         args.append('--save_paths')
     if config.radius:
@@ -480,6 +490,7 @@ def run_local(ctx, config):
                save_paths=config.save_paths,
                simplify_geo=config.simplify_geo,
                cost_layers=config.cost_layers,
+               li_cost_layers=config.length_invariant_cost_layers,
                )
 
 

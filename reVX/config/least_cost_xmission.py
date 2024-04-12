@@ -102,7 +102,8 @@ class LeastCostXmissionConfig(AnalysisConfig):
     """Config framework for Least Cost Xmission"""
 
     NAME = 'LeastCostXmission'
-    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'capacity_class')
+    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'capacity_class',
+                    'cost_layers')
 
     def __init__(self, config):
         """
@@ -250,13 +251,22 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return float(self.get('barrier_mult', self._default_barrier_mult))
 
     @property
-    def cost_layers(self) -> Optional[List[str]]:
+    def cost_layers(self) -> List[str]:
         """
-        List of optional H5 layers to determine independent costs and distances
-        for, e.g. wet and dry costs. These layers are not used for routing or
-        overall costs, just cost reporting for an fraction of the routing path.
+        List of H5 layers that are summed to determine total costs
+        raster used for routing. Costs and distances for each individual
+        layer are also reported (e.g. wet and dry costs).
         """
-        return self.get('cost_layers', None)
+        return self['cost_layers']
+
+    @property
+    def length_invariant_cost_layers(self):
+        """
+        Layers to be added to the cost raster whose costs do not scale
+        with distance traversed (i.e. fixed one-time costs for crossing
+        these cells).
+        """
+        self.get('length_invariant_cost_layers', [])
 
     @property
     def sc_point_gids(self):
@@ -287,7 +297,7 @@ class LeastCostPathsConfig(AnalysisConfig):
     """Config framework for Least Cost Paths"""
 
     NAME = 'LeastCostPaths'
-    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'capacity_class')
+    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'cost_layers')
 
     def __init__(self, config):
         """
@@ -298,6 +308,24 @@ class LeastCostPathsConfig(AnalysisConfig):
         """
         super().__init__(config)
         self._default_barrier_mult = 100
+        self._validate_reinforcement_run()
+
+    def _validate_reinforcement_run(self):
+        """Validate all inputs given for reinforcement run"""
+        reinforcement_run = any(val is not None for val in
+                                [self.transmission_lines_fpath,
+                                 self.network_nodes_fpath,
+                                 self.capacity_class])
+        missing_inputs = any(val is None for val in
+                             [self.transmission_lines_fpath,
+                              self.network_nodes_fpath,
+                              self.capacity_class])
+        if reinforcement_run and missing_inputs:
+            msg = ("Must specify all of the following arguments for "
+                   "reinforcement computations: 'transmission_lines_fpath', "
+                   "'network_nodes_fpath', and 'capacity_class'!")
+            logger.error(msg)
+            raise ValueError(msg)
 
     @property
     def name(self):
@@ -348,9 +376,29 @@ class LeastCostPathsConfig(AnalysisConfig):
     @property
     def capacity_class(self):
         """
-        Capacity class, either {capacity}MW or capacity value in MW
+        Capacity class of the 'base' greenfield costs layer. Costs will
+        be scaled by the capacity corresponding to this class to report
+        reinforcement costs as $/MW. Only used for reinforcement path
+        computations.
         """
-        return self['capacity_class']
+        return self.get("capacity_class")
+
+    @property
+    def cost_layers(self):
+        """
+        List of H5 layers that are summed to determine total costs
+        raster used for routing.
+        """
+        return self['cost_layers']
+
+    @property
+    def length_invariant_cost_layers(self):
+        """
+        Layers to be added to the cost raster whose costs do not scale
+        with distance traversed (i.e. fixed one-time costs for crossing
+        these cells).
+        """
+        self.get('length_invariant_cost_layers', [])
 
     @property
     def xmission_config(self):

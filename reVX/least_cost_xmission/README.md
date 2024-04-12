@@ -180,26 +180,31 @@ All examples assume that reVX was installed using `pip` so that the CLI commands
 The below file can be used as a template to compute the costs to be used in a Least Cost Path analysis described in more detail below.
 ```
 {
-  "execution_control": {
-    "allocation": "YOUR_SLURM_ALLOCATION",
-    "feature": "--qos=normal",
-    "memory": 178,
-    "option": "eagle",
-    "walltime": 4
-  },
-  "h5_fpath": "/path/to/output/h5/file/that/already/contains/NLCD/and/slope/layers.h5",
-  "iso_regions": "/path/to/ISO/regions/raster.tiff",
-  "excl_h5": "/path/to/exclusion/file/with/NLCD/and/slope/layers.h5",
-  "log_directory": "/scratch/USER_NAME/log",
-  "log_level": "INFO"
-}
+    "h5_fpath": "./new_transmission_cost_file_name.h5",
+    "template_raster_fpath": "/path/to/template/reaster.tif",
+
+    "ignore_masks": true,
+    "output_tiff_dir": "./output_transmission_tiffs",
+
+    "dry_costs": {
+        "iso_region_tiff": "/path/to/iso_regions.tif",
+        "nlcd_tiff": "/path/to/nlcd.tif",
+        "slope_tiff": "/path/to/slope.tif",
+        "extra_tiffs": [
+            "/path/to/transmission_barrier.tif",
+            "/path/to/tie_line_multipliers.tif",
+            "/path/to/another_extra_layer.tif"
+        ]
+    }
+  }
 ```
-See [`dry_cost_creator_cli.local`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/dry_cost_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
+See [`transmission_layer_creator_cli.from_config`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
 ```
+another_extra_layer      Dataset {1, 33792, 48640}
 ISO_regions              Dataset {1, 33792, 48640}
 latitude                 Dataset {33792, 48640}
 longitude                Dataset {33792, 48640}
-srtm_slope               Dataset {1, 33792, 48640}
+slope                    Dataset {1, 33792, 48640}
 tie_line_costs_102MW     Dataset {1, 33792, 48640}
 tie_line_costs_1500MW    Dataset {1, 33792, 48640}
 tie_line_costs_205MW     Dataset {1, 33792, 48640}
@@ -207,7 +212,7 @@ tie_line_costs_3000MW    Dataset {1, 33792, 48640}
 tie_line_costs_400MW     Dataset {1, 33792, 48640}
 tie_line_multipliers     Dataset {1, 33792, 48640}
 transmission_barrier     Dataset {1, 33792, 48640}
-usa_mrlc_nlcd2011        Dataset {1, 33792, 48640}
+nlcd                     Dataset {1, 33792, 48640}
 ```
 
 
@@ -219,6 +224,7 @@ $ least-cost-xmission local \
     --cost_fpath /shared-projects/rev/exclusions/xmission_costs.h5 \
     --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
     --capacity_class 1000
+    --cl tie_line_costs_1500MW
 ```
 
 ### Run onshore analysis from a config file
@@ -237,6 +243,7 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
+  "cost_layers": ["tie_line_costs_1500MW"],
   "barrier_mult": "100",
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
@@ -299,13 +306,14 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
     "transmission_lines_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
     "region_identifier_column": "ba_str",
     "capacity_class": "400",
+    "cost_layers": ["tie_line_costs_400MW"],
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
 }
 ```
 
-Note that we are specifying ``"capacity_class": "400"``  to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+Note that we are specifying ``"cost_layers": ["tie_line_costs_400MW"]``  to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
 "region_identifier_column" and the values in that column should match the region containing the substations and network nodes. In order to avoid unnecessary computation, ensure that your features input contains
 only the substations for which you computed reinforcement costs in the previous step.
 
@@ -318,7 +326,7 @@ This will generate 10 chunked files (since we used 10 nodes in the config above)
 ```
 $ least-cost-xmission merge-output -of reinforcement_costs_400MW_230kV.gpkg \
     -od /shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs \
-    reinforcement_costs_*_400MW_230kV.csv
+    reinforcement_costs_*_lcp.csv
 ```
 
 You should now have a file containing all of the reinforcement costs for the substations in your dataset. Next, compute the spur line transmission costs for these substations using the following template config (`least_cost_transmission_1000MW.json`):
@@ -338,11 +346,12 @@ You should now have a file containing all of the reinforcement costs for the sub
     "regions_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg",
     "region_identifier_column": "ba_str",
     "capacity_class": "1000",
+    "cost_layers": ["tie_line_costs_1500MW"],
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
     "min_line_length": 0,
-    "name": "least_cost_transmission_1000MW"
+    "name": "least_cost_transmission"
 }
 ```
 

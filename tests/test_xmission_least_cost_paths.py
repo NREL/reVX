@@ -33,6 +33,13 @@ FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_county_centroids.gpkg')
 ALLCONNS_FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
 ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 CHECK_COLS = ('start_index', 'length_km', 'cost', 'index')
+DEFAULT_CONFIG = XmissionConfig()
+
+
+def _cap_class_to_cap(capacity):
+    """Get capacity for a capacity class. """
+    capacity_class = DEFAULT_CONFIG._parse_cap_class(capacity)
+    return DEFAULT_CONFIG['power_classes'][capacity_class]
 
 
 def check(truth, test, check_cols=CHECK_COLS):
@@ -88,7 +95,8 @@ def test_capacity_class(capacity):
     """
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_paths_{capacity}MW.csv')
-    test = LeastCostPaths.run(COST_H5, FEATURES, capacity)
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer])
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -106,7 +114,8 @@ def test_parallel(max_workers):
     capacity = random.choice([100, 200, 400, 1000, 3000])
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_paths_{capacity}MW.csv')
-    test = LeastCostPaths.run(COST_H5, FEATURES, capacity,
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer],
                               max_workers=max_workers)
 
     if not os.path.exists(truth):
@@ -141,10 +150,10 @@ def test_clip_buffer():
 
         with pytest.raises(LeastCostPathNotFoundError):
             LeastCostPaths.run(out_cost_fp, out_features_fp,
-                               capacity_class=100, max_workers=1)
+                               ["tie_line_costs_102MW"], max_workers=1)
 
         out = LeastCostPaths.run(out_cost_fp, out_features_fp,
-                                 capacity_class=100, max_workers=1,
+                                 ["tie_line_costs_102MW"], max_workers=1,
                                  clip_buffer=10)
         assert (out["length_km"] > 193).all()
 
@@ -155,6 +164,7 @@ def test_cli(runner, save_paths):
     Test CostCreator CLI
     """
     capacity = random.choice([100, 200, 400, 1000, 3000])
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_paths_{capacity}MW.csv')
     truth = pd.read_csv(truth)
@@ -167,8 +177,8 @@ def test_cli(runner, save_paths):
             },
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
-            "capacity_class": f'{capacity}MW',
             "save_paths": save_paths,
+            "cost_layers": [cost_layer]
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -180,18 +190,13 @@ def test_cli(runner, save_paths):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        print(os.listdir(td))
-        xmission_config = XmissionConfig()
-        capacity_class = xmission_config._parse_cap_class(capacity)
-        cap = xmission_config['power_classes'][capacity_class]
-        kv = xmission_config.capacity_to_kv(capacity_class)
         if save_paths:
-            test = '{}_{}MW_{}kV.gpkg'.format(os.path.basename(td), cap, kv)
+            test = '{}_lcp.gpkg'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = gpd.read_file(test)
             assert test.geometry is not None
         else:
-            test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
+            test = '{}_lcp.csv'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = pd.read_csv(test)
         check(truth, test)
@@ -204,7 +209,6 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
     """
     Test Reinforcement cost routines and CLI
     """
-    capacity = 400
     ri_ba, ri_network_nodes = ba_regions_and_network_nodes
     ri_feats = gpd.clip(gpd.read_file(ALLCONNS_FEATURES), ri_ba.buffer(10_000))
 
@@ -249,7 +253,8 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "network_nodes_fpath": ri_network_nodes_path,
             "transmission_lines_fpath": ALLCONNS_FEATURES,
             "region_identifier_column": "ba_str",
-            "capacity_class": f"{capacity}MW",
+            "capacity_class": 400,
+            "cost_layers": ["tie_line_costs_400MW"],
             "barrier_mult": 100,
             "save_paths": save_paths
         }
@@ -263,17 +268,13 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        xmission_config = XmissionConfig()
-        capacity_class = xmission_config._parse_cap_class(capacity)
-        cap = xmission_config['power_classes'][capacity_class]
-        kv = xmission_config.capacity_to_kv(capacity_class)
         if save_paths:
-            test = '{}_{}MW_{}kV.gpkg'.format(os.path.basename(td), cap, kv)
+            test = '{}_lcp.gpkg'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = gpd.read_file(test)
             assert test.geometry is not None
         else:
-            test = '{}_{}MW_{}kV.csv'.format(os.path.basename(td), cap, kv)
+            test = '{}_lcp.csv'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = pd.read_csv(test)
 
