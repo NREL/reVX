@@ -480,6 +480,9 @@ class LeastCostXmission(LeastCostPaths):
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
+            Layer names may have curly brackets (``{}``), which will be
+            filled in based on the capacity class input (e.g.
+            "tie_line_costs_{}MW").
         sc_point_gids : list, optional
             List of sc_point_gids to connect to, by default connect to
             all
@@ -531,6 +534,10 @@ class LeastCostXmission(LeastCostPaths):
             sc_point_gids = self.sc_points['sc_point_gid'].values
 
         tie_line_voltage = self._config.capacity_to_kv(capacity_class)
+
+        cc_str = self._config._parse_cap_class(capacity_class)
+        cap = self._config['power_classes'][cc_str]
+        cost_layers = [layer.format(cap) for layer in cost_layers]
 
         logger.debug('Using a barrier multiplier of %s', barrier_mult)
 
@@ -602,6 +609,9 @@ class LeastCostXmission(LeastCostPaths):
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
+            Layer names may have curly brackets (``{}``), which will be
+            filled in based on the capacity class input (e.g.
+            "tie_line_costs_{}MW").
         tie_line_voltage : int
             Tie-line voltage (kV)
         sc_point_gids : list | set
@@ -737,6 +747,9 @@ class LeastCostXmission(LeastCostPaths):
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
+            Layer names may have curly brackets (``{}``), which will be
+            filled in based on the capacity class input (e.g.
+            "tie_line_costs_{}MW").
         tie_line_voltage : int
             Tie-line voltage (kV)
         sc_point_gids : list | set
@@ -836,6 +849,9 @@ class LeastCostXmission(LeastCostPaths):
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
+            Layer names may have curly brackets (``{}``), which will be
+            filled in based on the capacity class input (e.g.
+            "tie_line_costs_{}MW").
         resolution : int, optional
             SC point resolution, by default 128
         xmission_config : str | dict | XmissionConfig, optional
@@ -1046,9 +1062,12 @@ class ReinforcedXmission(LeastCostXmission):
             List of layers in H5 that are summed to determine total
             'base' greenfield costs raster used for routing. 'Base'
             greenfield costs are only used if the reinforcement path
-            *must* deviate from existing transmission lines. Typically,
-            a capacity class of 400 MW (230kV transmission line) is used
-            for the base greenfield costs.
+            *must* deviate from existing transmission lines. Layer names
+            may have curly brackets (``{}``), which will be filled in
+            based on the `capacity_class` input (e.g.
+            "tie_line_costs_{}MW"). Typically, a capacity class of
+            400 MW (230kV transmission line) is used for the base
+            greenfield costs.
         resolution : int, optional
             SC point resolution. By default, ``128``.
         xmission_config : str | dict | XmissionConfig, optional

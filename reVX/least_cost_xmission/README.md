@@ -237,7 +237,7 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
-  "cost_layers": ["tie_line_costs_1500MW"],
+  "cost_layers": ["tie_line_costs_{}MW"],
   "barrier_mult": "100",
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
@@ -300,14 +300,14 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
     "transmission_lines_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
     "region_identifier_column": "ba_str",
     "capacity_class": "400",
-    "cost_layers": ["tie_line_costs_400MW"],
+    "cost_layers": ["tie_line_costs_{}MW"],
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
 }
 ```
 
-Note that we are specifying ``"cost_layers": ["tie_line_costs_400MW"]``  to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+Note that we are specifying ``"capacity_class": "400"`` (which then fills in the ``{}`` in ``"tie_line_costs_{}MW"``) to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
 "region_identifier_column" and the values in that column should match the region containing the substations and network nodes. In order to avoid unnecessary computation, ensure that your features input contains
 only the substations for which you computed reinforcement costs in the previous step.
 
@@ -340,7 +340,7 @@ You should now have a file containing all of the reinforcement costs for the sub
     "regions_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg",
     "region_identifier_column": "ba_str",
     "capacity_class": "1000",
-    "cost_layers": ["tie_line_costs_1500MW"],
+    "cost_layers": ["tie_line_costs_{}MW"],
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",

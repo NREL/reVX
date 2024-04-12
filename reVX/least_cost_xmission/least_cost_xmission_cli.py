@@ -180,7 +180,10 @@ def from_config(ctx, config, verbose):
 @click.option('--cost-layers', '-cl', required=True, multiple=True,
               default=(),
               help='Layer in H5 to add to total cost raster used for routing. '
-                   'Multiple layers may be specified.')
+                   'Multiple layers may be specified. Layer name may have '
+                   'curly brackets (``{}``), which will be filled in '
+                   'based on the capacity class input (e.g. '
+                   '"tie_line_costs_{}MW")')
 @click.option('--li-cost-layers', '-licl', required=False, multiple=True,
               default=(),
               help='Length-invariant cost layer in H5 to add to total cost '

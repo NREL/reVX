@@ -254,7 +254,7 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "transmission_lines_fpath": ALLCONNS_FEATURES,
             "region_identifier_column": "ba_str",
             "capacity_class": 400,
-            "cost_layers": ["tie_line_costs_400MW"],
+            "cost_layers": ["tie_line_costs_{}MW"],
             "barrier_mult": 100,
             "save_paths": save_paths
         }

@@ -142,7 +142,11 @@ def from_config(ctx, config, verbose):
 @click.option('--cost-layers', '-cl', required=True, multiple=True,
               default=(),
               help='Layer in H5 to add to total cost raster used for routing. '
-                   'Multiple layers may be specified.')
+                   'Multiple layers may be specified. If running '
+                   'reinforcement computations, layer name may have '
+                   'curly brackets (``{}``), which will be filled in '
+                   'based on the capacity class input (e.g. '
+                   '"tie_line_costs_{}MW")')
 @click.option('--network_nodes_fpath', '-nn', type=STR, show_default=True,
               default=None,
               help=("Path to Network Nodes GeoPackage. If given alongside "
@@ -223,6 +227,9 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
                             and transmission_lines_fpath is not None)
     if is_reinforcement_run:
         xmission_config = XmissionConfig(config=xmission_config)
+        cc_str = xmission_config._parse_cap_class(capacity_class)
+        cap = xmission_config['power_classes'][cc_str]
+        cost_layers = [layer.format(cap) for layer in cost_layers]
         logger.debug('Xmission Config: {}'.format(xmission_config))
         features = gpd.read_file(network_nodes_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)

@@ -205,7 +205,6 @@ def test_cli(runner, save_paths):
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_{capacity}MW.csv')
     truth = pd.read_csv(truth)
-    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
 
     with tempfile.TemporaryDirectory() as td:
         config = {
@@ -218,7 +217,7 @@ def test_cli(runner, save_paths):
             "capacity_class": f'{capacity}MW',
             "min_line_length": 5.76,
             "save_paths": save_paths,
-            "cost_layers": [cost_layer]
+            "cost_layers": ["tie_line_costs_{}MW"]
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
