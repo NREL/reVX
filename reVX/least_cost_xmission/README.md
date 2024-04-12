@@ -70,7 +70,6 @@ The keys below represent layer creation actions. Mostly analyses will need all l
 * Costs
   * `wet_costs` - Costs for wet areas, typically oceans and great lakes.
   * `dry_costs` - This is not yet implemented. Dry costs must be calculated with the legacy method described below and saved in an H5 file.
-  * `combine_costs` - Combine the wet and dry costs and save to H5. This action must be performed if either wet or dry costs have been recalculated.
 * Friction and barriers
   * `friction_layers` - Friction areas that are less desirable for transmission routing.
   * `barrier_layers` - Barrier areas that should not have any transmission in the them. Transmission will route through barriers if there is no other possible route.
@@ -138,11 +137,6 @@ The below example JSON file shows all possible keys with example values. The for
 
     "merge_friction_and_barriers": {
         "barrier_multiplier": 1e6
-    },
-
-    "combine_costs": {
-        "landfall_cost": 10e6,
-        "dry_costs_tiff": "tie_line_costs_102MW.tiff"
     }
 }
 ```

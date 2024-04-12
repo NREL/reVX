@@ -23,7 +23,6 @@ from reVX.least_cost_xmission.config.constants import (BARRIER_H5_LAYER_NAME,
                                                        WET_COSTS_TIFF)
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.costs.cost_combiner import CostCombiner
 from reVX.least_cost_xmission.costs.wet_cost_creator import WetCostCreator
 from reVX.least_cost_xmission.layers.friction_barrier_builder import (
     FrictionBarrierBuilder
@@ -34,7 +33,7 @@ from reVX.least_cost_xmission.costs.dry_cost_creator import DryCostCreator
 logger = logging.getLogger(__name__)
 
 CONFIG_ACTIONS = ['friction_layers', 'barrier_layers', 'wet_costs',
-                  'dry_costs', 'combine_costs', 'merge_friction_and_barriers']
+                  'dry_costs', 'merge_friction_and_barriers']
 
 
 @click.group()
@@ -132,16 +131,6 @@ def from_config(config_fpath: str):  # noqa: C901
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
                                        h5_io_handler, output_tiff_dir)
-
-    if config.combine_costs is not None:
-        cc = config.combine_costs
-        combiner = CostCombiner(h5_io_handler, masks)
-        wet_costs = combiner.load_wet_costs()
-        dry_costs = combiner.load_dry_costs(str(cc.dry_costs_tiff))
-        dry_costs_layer = cc.dry_costs_tiff.stem
-        combiner.combine_costs(wet_costs, dry_costs, cc.landfall_cost,
-                               dry_costs_layer,
-                               output_tiff_dir=output_tiff_dir)
 
 
 @main.command
