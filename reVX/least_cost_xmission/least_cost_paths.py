@@ -295,6 +295,10 @@ class LeastCostPaths:
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
+        indices : iterable, optonal
+            Indices of the transmission features input that should be
+            processed. By default ``None``, which process all
+            transmission features.
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -400,6 +404,10 @@ class LeastCostPaths:
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
+        indices : iterable, optonal
+            Indices of the transmission features input that should be
+            processed. By default ``None``, which process all
+            transmission features.
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -625,6 +633,10 @@ class ReinforcementPaths(LeastCostPaths):
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
+        indices : iterable, optonal
+            Indices corresponding to the network nodes that should be
+            processed. By default ``None``, which process all network
+            nodes.
         max_workers : int, optional
             Number of workers to use for processing. If 1 run in serial,
             if ``None`` use all available cores. By default, ``None``.
