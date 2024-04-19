@@ -279,6 +279,10 @@ class TieLineCosts:
             By default, ``100``.
         """
         li_cost_layers = length_invariant_cost_layers or []
+        logger.debug("Building cost layer with the folowing inputs:"
+                     f"\n\t- cost_layers: {cost_layers}"
+                     f"\n\t- length_invariant_cost_layers: {li_cost_layers}"
+                     f"\n\t- barrier_mult: {barrier_mult}")
         self._cost = np.zeros(self.clip_shape, dtype=np.float32)
         overlap = np.zeros(self.clip_shape, dtype=np.uint8)
         with ExclusionLayers(self._cost_fpath) as f:
@@ -315,6 +319,9 @@ class TieLineCosts:
 
         self._mcp_cost *= 1 + barrier
         self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
+        logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
+                     np.min(self._mcp_cost), np.max(self._mcp_cost),
+                     np.median(self._mcp_cost))
 
     @staticmethod
     def _compute_path_length(indices: npt.NDArray) \
@@ -404,6 +411,8 @@ class TieLineCosts:
                    .format(end_idx))
             raise LeastCostPathNotFoundError(msg)
 
+        logger.debug("Computing least cost path for end point (%d, %d)",
+                     row, col)
         try:
             # Extract path indices
             indices = np.array(self.mcp.traceback((row, col)))
@@ -1073,6 +1082,7 @@ class TransCapCosts(TieLineCosts):
 
                 # Append any cost layer values
                 for key, value in cl_results.items():
+                    logger.debug("Adding %s to output", key)
                     features.loc[index, key] = value
 
             except LeastCostPathNotFoundError as ex:
