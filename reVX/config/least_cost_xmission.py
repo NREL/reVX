@@ -266,7 +266,10 @@ class LeastCostXmissionConfig(AnalysisConfig):
         with distance traversed (i.e. fixed one-time costs for crossing
         these cells).
         """
-        self.get('length_invariant_cost_layers', [])
+        # self.get('length_invariant_cost_layers', []) does not work!!
+        if 'length_invariant_cost_layers' not in self:
+            return []
+        return self['length_invariant_cost_layers']
 
     @property
     def sc_point_gids(self):
@@ -398,7 +401,10 @@ class LeastCostPathsConfig(AnalysisConfig):
         with distance traversed (i.e. fixed one-time costs for crossing
         these cells).
         """
-        self.get('length_invariant_cost_layers', [])
+        # self.get('length_invariant_cost_layers', []) does not work!!
+        if 'length_invariant_cost_layers' not in self:
+            return []
+        return self['length_invariant_cost_layers']
 
     @property
     def xmission_config(self):
