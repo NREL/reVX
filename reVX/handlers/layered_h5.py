@@ -359,8 +359,6 @@ class LayeredH5:
             Layer to extract,
         geotiff : str
             Path to output GeoTIFF file.
-        use_h5_profile : bool, optional
-            Option to use HDF5 file profile instead of layer profile.
         """
         dtype = data.dtype.name
         if dtype == 'bool':
