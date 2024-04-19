@@ -403,7 +403,7 @@ class Geotiff:
             inferred from the `values` input itself.
         """
         out_dir = os.path.dirname(out_fp)
-        if not os.path.exists(out_dir):
+        if out_dir and not os.path.exists(out_dir):
             logger.debug("Creating %s", out_dir)
             os.makedirs(out_dir)
 
