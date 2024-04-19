@@ -329,7 +329,7 @@ class LeastCostPaths:
                                   loggers=loggers) as exe:
                 least_cost_paths = self._compute_paths_in_chunks(
                     exe, max_workers, indices, cost_layers, barrier_mult,
-                    save_paths)
+                    save_paths, length_invariant_cost_layers)
         else:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
@@ -358,7 +358,8 @@ class LeastCostPaths:
         return least_cost_paths
 
     def _compute_paths_in_chunks(self, exe, max_submissions, indices,
-                                 cost_layers, barrier_mult, save_paths):
+                                 cost_layers, barrier_mult, save_paths,
+                                 licl):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -369,7 +370,8 @@ class LeastCostPaths:
                                 cost_layers,
                                 self._row_slice, self._col_slice,
                                 barrier_mult=barrier_mult,
-                                save_paths=save_paths)
+                                save_paths=save_paths,
+                                length_invariant_cost_layers=licl)
             futures[future] = self.end_features
             logger.debug('Submitted {} of {} futures'
                          .format(ind, len(indices)))
