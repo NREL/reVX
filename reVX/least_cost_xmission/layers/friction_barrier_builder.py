@@ -10,7 +10,6 @@ import numpy.typing as npt
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
-from reVX.config.transmission_layer_creation import FBLayerConfig
 from reVX.least_cost_xmission.layers.base import LayerCreator
 from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks

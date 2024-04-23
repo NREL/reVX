@@ -6,8 +6,9 @@ import logging
 import numpy as np
 
 from reVX.least_cost_xmission.layers.base import LayerCreator
-from reVX.least_cost_xmission.config.constants import (LANDFALL_COSTS_TIFF,
-                                                       LANDFALL_COSTS_H5_LAYER_NAME)
+from reVX.least_cost_xmission.config.constants import (
+    LANDFALL_COSTS_TIFF, LANDFALL_COSTS_H5_LAYER_NAME
+)
 
 logger = logging.getLogger(__name__)
 
