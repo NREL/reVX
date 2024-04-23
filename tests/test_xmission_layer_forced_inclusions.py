@@ -86,8 +86,8 @@ def test_forced_inclusion():
             forced_inclusion=True,
         ),
     }
-    builder = FrictionBarrierBuilder('friction', io_handler, masks)
-    builder.build_layer(config)
+    builder = FrictionBarrierBuilder(io_handler, masks)
+    builder.build('friction', config)
     assert (global_result == np.array([[1, 1, 1],
                                        [0, 0, 2],
                                        [3, 0, 0]])).all()

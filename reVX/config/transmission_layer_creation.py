@@ -82,9 +82,6 @@ class WetCosts(BaseModel, extra='forbid'):
     bathy_tiff: FilePath
     """File name of bathymetric depth GeoTIFF"""
 
-    wet_costs_tiff: Optional[str] = None
-    """Name for wet costs GeoTIFF"""
-
 
 class DryCosts(BaseModel, extra='forbid'):
     """ Config items required to generate dry costs """
@@ -187,31 +184,51 @@ class LayerCreationConfig(BaseModel):
     """Optional friction layer.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, or `merge_friction_and_barriers` must be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     barrier_layers: Optional[BarrierLayers] = None
     """Optional barrier layer.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, or `merge_friction_and_barriers` must be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     wet_costs: Optional[WetCosts] = None
     """Optional wet cost layer.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, or `merge_friction_and_barriers` must be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     dry_costs: Optional[DryCosts] = None
     """Optional dry cost layer.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, or  `merge_friction_and_barriers` must be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
+
+    landfall_cost: Optional[float] = None
+    """Cost to transition from wet to dry transmission.
+
+    If this input is specified, a landfall cost layer is created.
+
+    At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     merge_friction_and_barriers: Optional[MergeFrictionBarriers] = None
     """Optional config to merge friction barriers.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, or `merge_friction_and_barriers` must be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     output_tiff_dir: DirectoryPath = Path('.')
     """Directory to store output tiff files in. """

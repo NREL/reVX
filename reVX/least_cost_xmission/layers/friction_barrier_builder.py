@@ -10,6 +10,8 @@ import numpy.typing as npt
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
+from reVX.config.transmission_layer_creation import FBLayerConfig
+from reVX.least_cost_xmission.layers.base import LayerCreator
 from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
 from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
@@ -21,42 +23,46 @@ logger = logging.getLogger(__name__)
 ALL = 'all'
 
 
-class FrictionBarrierBuilder:
+class FrictionBarrierBuilder(LayerCreator):
     """
     Build friction or barrier layers.
     """
-    def __init__(self, type_: Literal['friction', 'barrier'],
-                 io_handler: LayeredTransmissionH5, masks: Masks,
+    def __init__(self, io_handler: LayeredTransmissionH5,
+                 mask: Masks, output_tiff_dir=".",
                  dtype: npt.DTypeLike = DEFAULT_DTYPE):
         """
         Parameters
         ----------
-        type_ : {'friction', 'barrier'}
-            Type of layer being built
         io_handler : :class:`LayeredTransmissionH5`
-            IO handler
-        masks : Masks
-            Mask Handler
+            Transmission layer IO handler
+        mask : Masks
+            Masks instance that can be used to retrieve multiple types
+            of masks.
+        output_tiff_dir : path-like, optional
+            Directory where cost layers should be saved as GeoTIFF.
+            By default, ``"."``.
         dtype : np.dtype, optional
             Data type for final dataset. By default, ``float32``.
         """
-        self._type = type_
-        self._io_handler = io_handler
-        self._masks = masks
-        self._dtype = dtype
+        super().__init__(io_handler=io_handler, mask=mask,
+                         output_tiff_dir=output_tiff_dir, dtype=dtype)
 
-    def build_layer(self, layers: Dict[str, FBLayerConfig]):
+    def build(self, kind: Literal['friction', 'barrier'],
+              layers: Dict[str, FBLayerConfig]):
         """
         Combine multiple GeoTIFFs and vectors to create a friction or barrier
         layer and save to GeoTIFF.
 
         Parameters
         ----------
+        kind : {'friction', 'barrier'}
+            Type of layer being built
         layers : dict
             Dict of FBLayerConfigs keyed by GeoTIFF/vector filenames.
         """
-        logger.debug(f'Combining {self._type} layers')
-        result = np.zeros(self._io_handler.shape, dtype=DEFAULT_DTYPE)
+        kind = kind.casefold()
+        logger.debug('Combining %s layers', kind)
+        result = np.zeros(self._io_handler.shape, dtype=self._dtype)
         fi_layers: Dict[str, FBLayerConfig] = {}
 
         for fname, config in layers.items():
@@ -79,9 +85,10 @@ class FrictionBarrierBuilder:
         result = self._process_forced_inclusions(result, fi_layers)
 
         fname = (RAW_BARRIER_TIFF
-                 if self._type == 'barrier' else FRICTION_TIFF)
-        logger.debug(f'Writing combined {self._type} layers to {fname}')
-        self._io_handler.save_data_using_h5_profile(result, fname)
+                 if kind == 'barrier' else FRICTION_TIFF)
+        out_filename = self.output_tiff_dir / fname
+        logger.debug('Writing combined %s layers to %s', kind, out_filename)
+        self._io_handler.save_data_using_h5_profile(result, out_filename)
 
     def _process_raster_layer(self, data: npt.NDArray,  # type: ignore[return]
                               config: FBLayerConfig) -> npt.NDArray:
@@ -246,15 +253,15 @@ class FrictionBarrierBuilder:
             raise AttributeError(f'Mask for extent of {extent} is unnecessary')
 
         if extent == 'wet':
-            mask = self._masks.wet_mask
+            mask = self._mask.wet_mask
         elif extent == 'wet+':
-            mask = self._masks.wet_plus_mask
+            mask = self._mask.wet_plus_mask
         elif extent == 'dry':
-            mask = self._masks.dry_mask
+            mask = self._mask.dry_mask
         elif extent == 'dry+':
-            mask = self._masks.dry_plus_mask
+            mask = self._mask.dry_plus_mask
         elif extent == 'landfall':
-            mask = self._masks.landfall_mask
+            mask = self._mask.landfall_mask
         else:
             raise AttributeError(f'Unknown mask type: {extent}')
 

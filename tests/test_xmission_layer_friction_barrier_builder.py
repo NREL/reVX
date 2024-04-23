@@ -38,7 +38,7 @@ masks._landfall_mask = np.array([[False, True, False],
                                  [False, True, False],
                                  [False, True, False]])
 
-builder = FrictionBarrierBuilder('friction', io_handler, masks)
+builder = FrictionBarrierBuilder(io_handler, masks)
 
 
 def test_mask_plus():

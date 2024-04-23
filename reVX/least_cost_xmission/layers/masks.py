@@ -188,7 +188,8 @@ class Masks:
             raise FileNotFoundError(f'Mask file at {full_fname} not found. '
                                     'Please create masks first.')
 
-        raster = self._io_handler.load_data_using_h5_profile(full_fname)
+        raster = self._io_handler.load_data_using_h5_profile(full_fname,
+                                                             reproject=True)
 
         if raster.max() != 1:
             msg = (f'Maximum value in mask file {fname} is {raster.max()} but'

@@ -19,8 +19,7 @@ from reVX.config.transmission_layer_creation import (LayerCreationConfig,
 from reVX.least_cost_xmission.config.constants import (BARRIER_H5_LAYER_NAME,
                                                        BARRIER_TIFF,
                                                        FRICTION_TIFF,
-                                                       RAW_BARRIER_TIFF,
-                                                       WET_COSTS_TIFF)
+                                                       RAW_BARRIER_TIFF)
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.costs.wet_cost_creator import WetCostCreator
@@ -29,11 +28,14 @@ from reVX.least_cost_xmission.layers.friction_barrier_builder import (
 )
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
 from reVX.least_cost_xmission.costs.dry_cost_creator import DryCostCreator
+from reVX.least_cost_xmission.costs.landfall_cost_creator import (
+    LandfallCostCreator
+)
 
 logger = logging.getLogger(__name__)
 
 CONFIG_ACTIONS = ['friction_layers', 'barrier_layers', 'wet_costs',
-                  'dry_costs', 'merge_friction_and_barriers']
+                  'dry_costs', 'landfall_cost', 'merge_friction_and_barriers']
 
 
 @click.group()
@@ -84,49 +86,41 @@ def from_config(config_fpath: str):  # noqa: C901
             raise error
 
     # Perform actions in config
+    fbb = FrictionBarrierBuilder(h5_io_handler, masks, output_tiff_dir)
     if config.barrier_layers is not None:
-        fbb = FrictionBarrierBuilder('barrier', h5_io_handler, masks)
-        fbb.build_layer(config.barrier_layers)
+        fbb.build('barrier', config.barrier_layers)
 
     if config.friction_layers is not None:
-        fbb = FrictionBarrierBuilder('friction', h5_io_handler, masks)
-        fbb.build_layer(config.friction_layers)
+        fbb.build('friction', config.friction_layers)
 
     if config.wet_costs is not None:
         wc = config.wet_costs
         template_file = str(wc.bathy_tiff)
-        wet_io_handler = LayeredTransmissionH5(template_file=template_file,
-                                               layer_dir=config.layer_dir)
-        wcc = WetCostCreator(wet_io_handler, masks, h5_io_handler)
-        wet_costs_tiff = (WET_COSTS_TIFF
-                          if wc.wet_costs_tiff is None
-                          else str(wc.wet_costs_tiff))
-        wcc.build_wet_costs(str(wc.bathy_tiff), wc.bins, wet_costs_tiff)
+        wcc = WetCostCreator(h5_io_handler, masks.wet_mask, output_tiff_dir)
+        wcc.build(str(wc.bathy_tiff), wc.bins)
 
     if config.dry_costs is not None:
         dc = config.dry_costs
         template_file = str(dc.iso_region_tiff)
 
-        # Dry layers have historically used a different size raster
-        dry_io_handler = LayeredTransmissionH5(template_file=template_file,
-                                               layer_dir=config.layer_dir)
-
         try:
             dry_mask = masks.dry_mask
         except ValueError as error:
             if config.ignore_masks:
-                dry_mask = np.full(dry_io_handler.shape, True)
+                dry_mask = np.full(h5_io_handler.shape, True)
             else:
                 raise error
 
-        dcc = DryCostCreator(dry_io_handler, dry_mask, output_tiff_dir,
-                             h5_io_handler)
+        dcc = DryCostCreator(h5_io_handler, dry_mask, output_tiff_dir)
         cost_configs = None if not dc.cost_configs else str(dc.cost_configs)
-        dcc.build_dry_costs(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
-                            str(dc.slope_tiff),
-                            cost_configs=cost_configs,
-                            default_mults=dc.default_mults,
-                            extra_tiffs=dc.extra_tiffs)
+        dcc.build(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
+                  str(dc.slope_tiff), cost_configs=cost_configs,
+                  default_mults=dc.default_mults, extra_tiffs=dc.extra_tiffs)
+
+    if config.landfall_cost is not None:
+        lcc = LandfallCostCreator(h5_io_handler, masks.landfall_mask,
+                                  output_tiff_dir)
+        lcc.build(config.landfall_cost)
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
@@ -210,28 +204,31 @@ def _combine_friction_and_barriers(config: MergeFrictionBarriers,
         Directory where combined barriers should be saved as GeoTIFF. If
         ``None``, combined layers are not saved. By default, ``None``.
     """
-    if not Path(FRICTION_TIFF).exists():
-        logger.error(f'The friction GeoTIFF ({FRICTION_TIFF}) was not found. '
-                     'Please create it using the `friction_layers` key in '
-                     'the config file.')
+    output_tiff_dir = Path(output_tiff_dir)
+    friction_tiff = output_tiff_dir / FRICTION_TIFF
+    raw_barrier_tiff = output_tiff_dir / RAW_BARRIER_TIFF
+    if not friction_tiff.exists():
+        logger.error(f'The friction GeoTIFF ({str(friction_tiff)}) was not '
+                     'found. Please create it using the `friction_layers` '
+                     'key in the config file.')
         sys.exit(1)
 
-    if not Path(RAW_BARRIER_TIFF).exists():
-        logger.error(f'The raw barriers GeoTIFF ({RAW_BARRIER_TIFF}) was not '
-                     'found. Please create it using the `barrier_layers` key '
-                     'in the config file.')
+    if not raw_barrier_tiff.exists():
+        logger.error(f'The raw barriers GeoTIFF ({str(raw_barrier_tiff)}) was '
+                     'not found. Please create it using the `barrier_layers` '
+                     'key in the config file.')
         sys.exit(1)
 
     logger.info('Loading friction and raw barriers.')
-    friction = io_handler.load_data_using_h5_profile(FRICTION_TIFF)
-    barriers = io_handler.load_data_using_h5_profile(RAW_BARRIER_TIFF)
+    friction = io_handler.load_data_using_h5_profile(friction_tiff)
+    barriers = io_handler.load_data_using_h5_profile(raw_barrier_tiff)
 
     combined = friction + barriers * config.barrier_multiplier
 
     if output_tiff_dir is not None:
         logger.debug('Saving combined barriers to GeoTIFF')
-        io_handler.save_data_using_h5_profile(
-            combined, Path(output_tiff_dir) / BARRIER_TIFF)
+        io_handler.save_data_using_h5_profile(combined,
+                                              output_tiff_dir / BARRIER_TIFF)
 
     logger.info('Writing combined barriers to H5')
     io_handler.write_layer_to_h5(combined, BARRIER_H5_LAYER_NAME)
