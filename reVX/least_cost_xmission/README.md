@@ -69,7 +69,8 @@ The keys below represent layer creation actions. Mostly analyses will need all l
 
 * Costs
   * `wet_costs` - Costs for wet areas, typically oceans and great lakes.
-  * `dry_costs` - This is not yet implemented. Dry costs must be calculated with the legacy method described below and saved in an H5 file.
+  * `dry_costs` - Costs for dry areas, computed using costs per pre-defined regions and multipliers that are applied based on slope and land-use categories.
+  * `landfall_cost` - Single cost value for landfall (offshore analysis only).
 * Friction and barriers
   * `friction_layers` - Friction areas that are less desirable for transmission routing.
   * `barrier_layers` - Barrier areas that should not have any transmission in the them. Transmission will route through barriers if there is no other possible route.
@@ -108,6 +109,8 @@ The below example JSON file shows all possible keys with example values. The for
             /optional/path/to/extra/layer2.tif"
         ]
     }
+
+    "landfall_cost": 450e6,
 
     "barrier_layers": {
         "CAN_MEX_boundary_20240131.gpkg": {
