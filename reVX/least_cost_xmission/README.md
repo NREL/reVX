@@ -457,6 +457,7 @@ $ least-cost-xmission from-config --config ./config_aoswt.json
 
 A sample config for WOWTS would look very similar:
 
+```
 {
   "execution_control": {
     "allocation": "YOUR_SLURM_ALLOCATION",
@@ -480,6 +481,7 @@ A sample config for WOWTS would look very similar:
   "simplify_geo": 20,
   "sc_point_gids": "sc_points.csv"
 }
+```
 
 ### Post processing
 Running an analysis on multiple nodes will result in multiple output files. These can be collected via several means. The below command will combine all output files into a single GeoPackage, assuming `save_paths` was enabled. If paths are not saved, the output will consist of multiple CSV files that must be merged manually.
