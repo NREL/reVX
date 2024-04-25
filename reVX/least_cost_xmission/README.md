@@ -69,7 +69,7 @@ The keys below represent layer creation actions. Mostly analyses will need all l
 
 * Costs
   * `wet_costs` - Costs for wet areas, typically oceans and great lakes.
-  * `dry_costs` - Costs for dry areas, computed using costs per pre-defined regions and multipliers that are applied based on slope and land-use categories.
+  * `dry_costs` - Costs for dry areas, computed using costs per predefined regions and multipliers that are applied based on slope and land-use categories.
   * `landfall_cost` - Single cost value for landfall (offshore analysis only).
 * Friction and barriers
   * `friction_layers` - Friction areas that are less desirable for transmission routing.
