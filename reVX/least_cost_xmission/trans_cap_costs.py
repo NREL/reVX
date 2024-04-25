@@ -1029,7 +1029,7 @@ class TransCapCosts(TieLineCosts):
         if save_paths:
             paths = []
 
-        for layer in self.self._cost_layer_map:
+        for layer in self._cost_layer_map:
             features[f'{layer}_line_cost'] = None
             features[f'{layer}_dist_km'] = None
 
