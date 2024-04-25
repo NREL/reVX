@@ -455,6 +455,32 @@ Assuming the above config file is saved as `config_aoswt.json` in the current di
 $ least-cost-xmission from-config --config ./config_aoswt.json
 ```
 
+A sample config for WOWTS would look very similar:
+
+{
+  "execution_control": {
+    "allocation": "YOUR_SLURM_ALLOCATION",
+    "memory": 249,
+    "nodes": 5,
+    "option": "kestrel",
+    "walltime": 4
+  },
+  "log_directory": "/scratch/USER_NAME/log",
+  "log_level": "INFO"
+  "cost_fpath": "/projects/rev/data/transmission/north_america/conus/least_cost/offshore/processing/conus_20240221.h5",
+  "features_fpath": "/projects/rev/projects/wowts/data/20240223_poi_trans_feats.gpkg",
+  "capacity_class": "1000",
+  "cost_layers": ["tie_line_costs_{}MW", "wet_costs"],
+  "length_invariant_cost_layers": ["landfall_costs"],
+  "barrier_mult": "5000",
+  "resolution": 157,
+  "radius": 777,
+  "expand_radius": false,
+  "save_paths": true,
+  "simplify_geo": 20,
+  "sc_point_gids": "sc_points.csv"
+}
+
 ### Post processing
 Running an analysis on multiple nodes will result in multiple output files. These can be collected via several means. The below command will combine all output files into a single GeoPackage, assuming `save_paths` was enabled. If paths are not saved, the output will consist of multiple CSV files that must be merged manually.
 
