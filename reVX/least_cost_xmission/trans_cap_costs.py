@@ -1003,7 +1003,6 @@ class TransCapCosts(TieLineCosts):
 
     def compute_tie_line_costs(self, min_line_length=5.7,  # noqa: C901
                                save_paths=False,
-                               cost_layers: Optional[List[str]] = None
                                ) -> Union[pd.DataFrame, gpd.GeoDataFrame]:
         """
         Compute least cost path and distance between supply curve point
@@ -1016,9 +1015,6 @@ class TransCapCosts(TieLineCosts):
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
-        cost_layers : List[str] | None, optional
-            List of layers in H5 to calculate independent costs for after
-            deteremining path using main cost layer.
 
         Returns
         -------
@@ -1033,10 +1029,9 @@ class TransCapCosts(TieLineCosts):
         if save_paths:
             paths = []
 
-        if cost_layers is not None:
-            for layer in cost_layers:
-                features[f'{layer}_line_cost'] = None
-                features[f'{layer}_dist_km'] = None
+        for layer in self.cost_layers:
+            features[f'{layer}_line_cost'] = None
+            features[f'{layer}_dist_km'] = None
 
         logger.debug('Determining path lengths and costs')
 
