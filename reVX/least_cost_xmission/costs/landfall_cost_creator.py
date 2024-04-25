@@ -20,9 +20,10 @@ class LandfallCostCreator(LayerCreator):
 
     def build(self, landfall_cost: float,
               landfall_layer_name: str = LANDFALL_COSTS_H5_LAYER_NAME):
-        """
-        Build complete offshore costs. This is currently very simple. In the
-        future, costs will also vary with distance to port.
+        """Build landfall costs.
+
+        Currently, this just sets the landfall mask to the given
+        landfall cost value (0's everywhere else).
 
         Parameters
         ----------
