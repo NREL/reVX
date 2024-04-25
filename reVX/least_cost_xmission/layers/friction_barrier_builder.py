@@ -27,14 +27,14 @@ class FrictionBarrierBuilder(LayerCreator):
     Build friction or barrier layers.
     """
     def __init__(self, io_handler: LayeredTransmissionH5,
-                 mask: Masks, output_tiff_dir=".",
+                 masks: Masks, output_tiff_dir=".",
                  dtype: npt.DTypeLike = DEFAULT_DTYPE):
         """
         Parameters
         ----------
         io_handler : :class:`LayeredTransmissionH5`
             Transmission layer IO handler
-        mask : Masks
+        masks : Masks
             Masks instance that can be used to retrieve multiple types
             of masks.
         output_tiff_dir : path-like, optional
@@ -43,7 +43,8 @@ class FrictionBarrierBuilder(LayerCreator):
         dtype : np.dtype, optional
             Data type for final dataset. By default, ``float32``.
         """
-        super().__init__(io_handler=io_handler, mask=mask,
+        self._masks = masks
+        super().__init__(io_handler=io_handler, mask=None,
                          output_tiff_dir=output_tiff_dir, dtype=dtype)
 
     def build(self, kind: Literal['friction', 'barrier'],
@@ -252,15 +253,15 @@ class FrictionBarrierBuilder(LayerCreator):
             raise AttributeError(f'Mask for extent of {extent} is unnecessary')
 
         if extent == 'wet':
-            mask = self._mask.wet_mask
+            mask = self._masks.wet_mask
         elif extent == 'wet+':
-            mask = self._mask.wet_plus_mask
+            mask = self._masks.wet_plus_mask
         elif extent == 'dry':
-            mask = self._mask.dry_mask
+            mask = self._masks.dry_mask
         elif extent == 'dry+':
-            mask = self._mask.dry_plus_mask
+            mask = self._masks.dry_plus_mask
         elif extent == 'landfall':
-            mask = self._mask.landfall_mask
+            mask = self._masks.landfall_mask
         else:
             raise AttributeError(f'Unknown mask type: {extent}')
 

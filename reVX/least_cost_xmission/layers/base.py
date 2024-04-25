@@ -16,15 +16,18 @@ class LayerCreator(ABC):
     Abstract Base Class to create and save transmission routing layers
     """
     def __init__(self, io_handler: LayeredTransmissionH5,
-                 mask, output_tiff_dir=".",
+                 mask=None, output_tiff_dir=".",
                  dtype: npt.DTypeLike = DEFAULT_DTYPE):
         """
         Parameters
         ----------
         io_handler : :class:`LayeredTransmissionH5`
             Transmission layer IO handler
-        mask : ndarray
-            Array representing mask for layer values.
+        mask : ndarray, optional
+            Array representing mask for layer values. Only optional if
+            subclass implementation handles masks differently
+            (e.g. the `FrictionBarrierBuilder` class).
+            By default, ``None``
         output_tiff_dir : path-like, optional
             Directory where cost layers should be saved as GeoTIFF.
             By default, ``"."``.
