@@ -1487,7 +1487,29 @@ class ReinforcementLineCosts(TieLineCosts):
 
 def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
                                           scale_by_length=True):
-    """Compute costs and dists by layer. """
+    """Compute costs and dists by layer.
+
+    Parameters
+    ----------
+    layer_map : dict
+        Dictionary mapping layer names to layer costs. The costs through
+        each layer will be computed and reported separately.
+    indices : array-like
+        Array of (x, y) indices corresponding to the LCP route.
+    lens : array-like
+        Array of lengths that the route takes through every pixel.
+    results : pd.Series
+        Series of results for this path to which layer costs will be
+        added.
+    scale_by_length : bool, optional
+        Option to scale costs by length. By default, ``True``.
+
+    Returns
+    -------
+    pd.Series
+        Series of results for this path with individual layer costs and
+        distances added.
+    """
     for layer_name, layer_cost_arr in layer_map.items():
         layer_costs = layer_cost_arr[indices[:, 0], indices[:, 1]]
         if scale_by_length:
