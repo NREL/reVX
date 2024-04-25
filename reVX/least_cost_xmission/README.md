@@ -100,7 +100,7 @@ The below example JSON file shows all possible keys with example values. The for
     },
 
     "dry_costs": {
-        "iso_region_tiff": "/path/to/nlcd/ISO/regions/raster.tiff",
+        "iso_region_tiff": "/path/to/nlcd/ISO/regions/ISO_regions.tif",
         "nlcd_tiff": "/path/to/nlcd/raster.tiff",
         "slope_tiff": "/path/to/slope/raster.tiff",
         "cost_configs": "/optional/path/to/xmission/cost/config.json",
@@ -144,6 +144,8 @@ The below example JSON file shows all possible keys with example values. The for
 }
 ```
 
+Note that the "iso_region_tiff" input tiff file must be called "ISO_regions.tif" (capitalization is important).
+
 ## Running the Layer Creator
 Prior to running the layer creating command, we must initialize an HDF5 file that will hold the cost layers.
 We can do this using the create
@@ -152,7 +154,7 @@ We can do this using the create
 $ transmission-layer-creator --verbose create-h5 -t template.tif -h new_xmission_routing_layers.h5
 ```
 
-(Next steo is *optional* for dry-only runs: if you skip this, just add `"ignore_masks": true` to your config)
+(Next step is *optional* for dry-only runs: if you skip this, just add `"ignore_masks": true` to your config)
 We also need to create the land mask (optional for dry-only runs:
 just skip this step and add `"ignore_masks": true` to your config), which we can do by running
 
@@ -178,13 +180,13 @@ The below file can be used as a template to compute the costs to be used in a Le
 ```
 {
     "h5_fpath": "./new_transmission_cost_file_name.h5",
-    "template_raster_fpath": "/path/to/template/reaster.tif",
+    "template_raster_fpath": "/path/to/template/raster.tif",
 
     "ignore_masks": true,
     "output_tiff_dir": "./output_transmission_tiffs",
 
     "dry_costs": {
-        "iso_region_tiff": "/path/to/iso_regions.tif",
+        "iso_region_tiff": "/path/to/ISO_regions.tif",
         "nlcd_tiff": "/path/to/nlcd.tif",
         "slope_tiff": "/path/to/slope.tif",
         "extra_tiffs": [
@@ -195,6 +197,7 @@ The below file can be used as a template to compute the costs to be used in a Le
     }
   }
 ```
+Note that the "iso_region_tiff" input tiff file must be called "ISO_regions.tif" (capitalization is important).
 See [`transmission_layer_creator_cli.from_config`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
 ```
 another_extra_layer      Dataset {1, 33792, 48640}
