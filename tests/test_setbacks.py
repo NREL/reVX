@@ -31,7 +31,6 @@ from reVX.setbacks.regulations import (SetbackRegulations,
 from reVX.setbacks import SETBACKS
 from reVX.setbacks.base import Rasterizer
 from reVX.setbacks.setbacks_cli import cli
-from reVX.utilities import ExclusionsConverter
 
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'setbacks', 'ri_setbacks.h5')
@@ -1448,8 +1447,8 @@ def test_cli_merge_setbacks(runner, return_to_main_test_dir, inclusions):
         result = runner.invoke(cli, ['merge', '-c', config_path])
         assert result.exit_code == 1
 
-        ExclusionsConverter.write_geotiff(tiff_1, profile, arr1)
-        ExclusionsConverter.write_geotiff(tiff_2, profile, arr2)
+        Geotiff.write(tiff_1, profile, arr1)
+        Geotiff.write(tiff_2, profile, arr2)
 
         runner.invoke(cli, ['merge', '-c', config_path])
         with Geotiff(out_fp) as tif:

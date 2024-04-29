@@ -25,6 +25,7 @@ jobs:
       with:
         auto-update-conda: true
         python-version: ${{ matrix.python-version }}
+        miniconda-version: "latest"
     - name: Install conda dependencies
       shell: bash -l {0}
       run: |

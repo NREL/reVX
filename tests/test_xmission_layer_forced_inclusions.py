@@ -8,14 +8,12 @@ from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
-from reVX.config.transmission_layer_creation import FBLayerConfig
 
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
+from reVX.config.transmission_layer_creation import FBLayerConfig
 from reVX.least_cost_xmission.layers.masks import Masks
 from reVX.least_cost_xmission.layers.friction_barrier_builder import (
     FrictionBarrierBuilder
-)
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
 )
 
 global_result: npt.NDArray
@@ -26,9 +24,9 @@ class FakeIoHandler:
     def __init__(self, shape: Tuple[int, int]):
         self.shape = shape
 
-    def load_tiff(self, fname: str,
-                  reproject: bool = True  # pylint: disable=unused-argument
-                  ) -> npt.NDArray:
+    # pylint: disable=unused-argument
+    def load_data_using_h5_profile(self, fname: str,
+                                   reproject: bool = True) -> npt.NDArray:
         """ Fake tiff loader """
         if fname == 'friction_1.tif':
             return np.array([[1, 1, 1],
@@ -47,14 +45,14 @@ class FakeIoHandler:
 
         raise AttributeError
 
-    def save_tiff(self, data: npt.NDArray,
-                  fname: str):  # pylint: disable=unused-argument
+    # pylint: disable=unused-argument
+    def save_data_using_h5_profile(self, data: npt.NDArray, fname: str):
         """ Store data to be saved in GeoTIFF to global """
         global global_result  # pylint: disable=global-statement
         global_result = data
 
 
-io_handler: TransLayerIoHandler = FakeIoHandler((3, 3))  # type: ignore
+io_handler: LayeredTransmissionH5 = FakeIoHandler((3, 3))  # type: ignore
 
 # Fake masks. Left side of array is wet, right side is dry, center column in
 # landfall
@@ -88,8 +86,8 @@ def test_forced_inclusion():
             forced_inclusion=True,
         ),
     }
-    builder = FrictionBarrierBuilder('friction', io_handler, masks)
-    builder.build_layer(config)
+    builder = FrictionBarrierBuilder(io_handler, masks)
+    builder.build('friction', config)
     assert (global_result == np.array([[1, 1, 1],
                                        [0, 0, 2],
                                        [3, 0, 0]])).all()

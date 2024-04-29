@@ -9,13 +9,14 @@ import json
 import logging
 import numpy as np
 import os
+import time
 import pandas as pd
 import rasterio
+
 from pyproj.crs import CRS
 from scipy.spatial import cKDTree
 from shapely.geometry import Point
 from concurrent.futures import as_completed
-import time
 
 from reV.handlers.exclusions import ExclusionLayers
 from reV.supply_curve.extent import SupplyCurveExtent
@@ -461,10 +462,12 @@ class LeastCostXmission(LeastCostPaths):
                      .format(len(clipped_sc_features), radius_m))
         return clipped_sc_features.copy(deep=True)
 
-    def process_sc_points(self, capacity_class, sc_point_gids=None, nn_sinks=2,
+    def process_sc_points(self, capacity_class, cost_layers,
+                          sc_point_gids=None, nn_sinks=2,
                           clipping_buffer=1.05, barrier_mult=100,
                           max_workers=None, save_paths=False, radius=None,
-                          expand_radius=True, mp_delay=3, simplify_geo=None):
+                          expand_radius=True, mp_delay=3, simplify_geo=None,
+                          length_invariant_cost_layers=None):
         """
         Compute Least Cost Transmission for desired sc_points
 
@@ -473,6 +476,13 @@ class LeastCostXmission(LeastCostPaths):
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            Layer names may have curly brackets (``{}``), which will be
+            filled in based on the capacity class input (e.g.
+            "tie_line_costs_{}MW").
         sc_point_gids : list, optional
             List of sc_point_gids to connect to, by default connect to
             all
@@ -505,6 +515,11 @@ class LeastCostXmission(LeastCostPaths):
             Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
 
         Returns
         -------
@@ -520,6 +535,11 @@ class LeastCostXmission(LeastCostPaths):
 
         tie_line_voltage = self._config.capacity_to_kv(capacity_class)
 
+        # format any curly brackets in layer names given by user
+        cc_str = self._config._parse_cap_class(capacity_class)
+        cap = self._config['power_classes'][cc_str]
+        cost_layers = [layer.format(cap) for layer in cost_layers]
+
         logger.debug('Using a barrier multiplier of %s', barrier_mult)
 
         if max_workers > 1:
@@ -527,6 +547,7 @@ class LeastCostXmission(LeastCostPaths):
                         'parallel on {} workers'.format(max_workers))
             least_costs = self._process_multi_core(
                 capacity_class,
+                cost_layers,
                 tie_line_voltage,
                 sc_point_gids=sc_point_gids,
                 nn_sinks=nn_sinks,
@@ -537,12 +558,14 @@ class LeastCostXmission(LeastCostPaths):
                 expand_radius=expand_radius,
                 mp_delay=mp_delay,
                 simplify_geo=simplify_geo,
-                max_workers=max_workers)
+                max_workers=max_workers,
+                length_invariant_cost_layers=length_invariant_cost_layers)
         else:
             logger.info('Computing Least Cost Transmission for {:,} SC points '
                         'in serial'.format(len(sc_point_gids)))
             least_costs = self._process_single_core(
                 capacity_class,
+                cost_layers,
                 tie_line_voltage,
                 sc_point_gids=sc_point_gids,
                 nn_sinks=nn_sinks,
@@ -551,7 +574,8 @@ class LeastCostXmission(LeastCostPaths):
                 save_paths=save_paths,
                 radius=radius,
                 expand_radius=expand_radius,
-                simplify_geo=simplify_geo)
+                simplify_geo=simplify_geo,
+                length_invariant_cost_layers=length_invariant_cost_layers)
 
         if not least_costs:
             return pd.DataFrame(columns=['sc_point_gid'])
@@ -567,11 +591,12 @@ class LeastCostXmission(LeastCostPaths):
 
         return least_costs.reset_index(drop=True)
 
-    def _process_multi_core(self, capacity_class, tie_line_voltage,
-                            sc_point_gids, nn_sinks=2,
+    def _process_multi_core(self, capacity_class, cost_layers,
+                            tie_line_voltage, sc_point_gids, nn_sinks=2,
                             clipping_buffer=1.05, barrier_mult=100,
                             max_workers=2, save_paths=False, radius=None,
-                            expand_radius=True, mp_delay=3, simplify_geo=None):
+                            expand_radius=True, mp_delay=3, simplify_geo=None,
+                            length_invariant_cost_layers=None):
         """
         Compute Least Cost Transmission for desired sc_points using
         multiple cores.
@@ -581,6 +606,13 @@ class LeastCostXmission(LeastCostPaths):
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            Layer names may have curly brackets (``{}``), which will be
+            filled in based on the capacity class input (e.g.
+            "tie_line_costs_{}MW").
         tie_line_voltage : int
             Tie-line voltage (kV)
         sc_point_gids : list | set
@@ -614,6 +646,11 @@ class LeastCostXmission(LeastCostPaths):
             Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
 
         Returns
         -------
@@ -624,18 +661,19 @@ class LeastCostXmission(LeastCostPaths):
         """
         loggers = [__name__, 'reV', 'reVX']
         with SpawnProcessPool(max_workers=max_workers, loggers=loggers) as exe:
-            least_costs = self. _compute_paths_in_chunks(
+            least_costs = self._compute_paths_in_chunks(
                 exe, max_workers, sc_point_gids, tie_line_voltage,
                 nn_sinks, clipping_buffer, radius, expand_radius, mp_delay,
-                capacity_class, barrier_mult, save_paths, simplify_geo)
+                capacity_class, cost_layers, barrier_mult, save_paths,
+                simplify_geo, length_invariant_cost_layers)
 
         return least_costs
 
     def _compute_paths_in_chunks(self, exe, max_submissions, sc_point_gids,
                                  tie_line_voltage, nn_sinks, clipping_buffer,
                                  radius, expand_radius, mp_delay,
-                                 capacity_class, barrier_mult, save_paths,
-                                 simplify_geo):
+                                 capacity_class, cost_layers, barrier_mult,
+                                 save_paths, simplify_geo, li_cost_layers):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -652,13 +690,16 @@ class LeastCostXmission(LeastCostPaths):
             if sc_features.empty:
                 continue
 
+            licp = li_cost_layers
             start_cost = _starting_cost(self._cost_fpath,
                                         sc_point.copy(deep=True),
                                         sc_features,
                                         capacity_class,
+                                        cost_layers=cost_layers,
                                         radius=sc_radius,
                                         xmission_config=self._config,
-                                        barrier_mult=barrier_mult)
+                                        barrier_mult=barrier_mult,
+                                        length_invariant_cost_layers=licp)
 
             if start_cost < 0:
                 logger.debug("Could not connect SC point {} to "
@@ -669,12 +710,14 @@ class LeastCostXmission(LeastCostPaths):
                                 self._cost_fpath,
                                 sc_point.copy(deep=True),
                                 sc_features, capacity_class,
+                                cost_layers,
                                 radius=sc_radius,
                                 xmission_config=self._config,
                                 barrier_mult=barrier_mult,
                                 min_line_length=self._min_line_len,
                                 save_paths=save_paths,
-                                simplify_geo=simplify_geo)
+                                simplify_geo=simplify_geo,
+                                length_invariant_cost_layers=li_cost_layers)
             futures[future] = None
             num_jobs += 1
             if num_jobs <= max_submissions:
@@ -686,11 +729,12 @@ class LeastCostXmission(LeastCostPaths):
         paths = _collect_future_chunks(futures, paths)
         return paths
 
-    def _process_single_core(self, capacity_class, tie_line_voltage,
-                             sc_point_gids, nn_sinks=2,
+    def _process_single_core(self, capacity_class, cost_layers,
+                             tie_line_voltage, sc_point_gids, nn_sinks=2,
                              clipping_buffer=1.05, barrier_mult=100,
                              save_paths=False, radius=None,
-                             expand_radius=True, simplify_geo=None):
+                             expand_radius=True, simplify_geo=None,
+                             length_invariant_cost_layers=None):
         """
         Compute Least Cost Transmission for desired sc_points with a
         single core.
@@ -700,6 +744,13 @@ class LeastCostXmission(LeastCostPaths):
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            Layer names may have curly brackets (``{}``), which will be
+            filled in based on the capacity class input (e.g.
+            "tie_line_costs_{}MW").
         tie_line_voltage : int
             Tie-line voltage (kV)
         sc_point_gids : list | set
@@ -728,6 +779,11 @@ class LeastCostXmission(LeastCostPaths):
             By default, ``True``.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
 
         Returns
         -------
@@ -747,7 +803,6 @@ class LeastCostXmission(LeastCostPaths):
                     expand_radius=expand_radius)
                 if sc_features.empty:
                     continue
-
                 sc_costs = TransCapCosts.run(
                     self._cost_fpath,
                     sc_point.copy(deep=True),
@@ -757,7 +812,9 @@ class LeastCostXmission(LeastCostPaths):
                     barrier_mult=barrier_mult,
                     min_line_length=self._min_line_len,
                     save_paths=save_paths,
-                    simplify_geo=simplify_geo)
+                    simplify_geo=simplify_geo,
+                    cost_layers=cost_layers,
+                    length_invariant_cost_layers=length_invariant_cost_layers)
 
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
@@ -769,11 +826,12 @@ class LeastCostXmission(LeastCostPaths):
         return least_costs
 
     @classmethod
-    def run(cls, cost_fpath, features_fpath, capacity_class, resolution=128,
-            xmission_config=None, min_line_length=0, sc_point_gids=None,
-            nn_sinks=2, clipping_buffer=1.05, barrier_mult=100,
-            max_workers=None, save_paths=False, radius=None,
-            expand_radius=True, simplify_geo=None):
+    def run(cls, cost_fpath, features_fpath, capacity_class, cost_layers,
+            resolution=128, xmission_config=None, min_line_length=0,
+            sc_point_gids=None, nn_sinks=2, clipping_buffer=1.05,
+            barrier_mult=100, max_workers=None, save_paths=False, radius=None,
+            expand_radius=True, simplify_geo=None,
+            length_invariant_cost_layers=None):
         """
         Find Least Cost Transmission connections between desired
         sc_points to given transmission features for desired capacity
@@ -788,6 +846,13 @@ class LeastCostXmission(LeastCostPaths):
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            Layer names may have curly brackets (``{}``), which will be
+            filled in based on the capacity class input (e.g.
+            "tie_line_costs_{}MW").
         resolution : int, optional
             SC point resolution, by default 128
         xmission_config : str | dict | XmissionConfig, optional
@@ -823,6 +888,11 @@ class LeastCostXmission(LeastCostPaths):
             By default, ``True``.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the cost raster. The
+            costs specified by these layers are not scaled with distance
+            traversed across the cell (i.e. fixed one-time costs for
+            crossing these cells).
 
         Returns
         -------
@@ -835,7 +905,10 @@ class LeastCostXmission(LeastCostPaths):
         lcx = cls(cost_fpath, features_fpath, resolution=resolution,
                   xmission_config=xmission_config,
                   min_line_length=min_line_length)
+
+        licl = length_invariant_cost_layers
         least_costs = lcx.process_sc_points(capacity_class,
+                                            cost_layers,
                                             sc_point_gids=sc_point_gids,
                                             nn_sinks=nn_sinks,
                                             clipping_buffer=clipping_buffer,
@@ -844,7 +917,8 @@ class LeastCostXmission(LeastCostPaths):
                                             save_paths=save_paths,
                                             radius=radius,
                                             expand_radius=expand_radius,
-                                            simplify_geo=simplify_geo)
+                                            simplify_geo=simplify_geo,
+                                            length_invariant_cost_layers=licl)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'
@@ -955,11 +1029,11 @@ class ReinforcedXmission(LeastCostXmission):
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, regions_fpath,
-            region_identifier_column, capacity_class, resolution=128,
-            xmission_config=None, min_line_length=0, sc_point_gids=None,
-            clipping_buffer=1.05, barrier_mult=100, max_workers=None,
-            simplify_geo=None, save_paths=False, radius=None,
-            expand_radius=True):
+            region_identifier_column, capacity_class, cost_layers,
+            resolution=128, xmission_config=None, min_line_length=0,
+            sc_point_gids=None, clipping_buffer=1.05, barrier_mult=100,
+            max_workers=None, simplify_geo=None, save_paths=False, radius=None,
+            expand_radius=True, length_invariant_cost_layers=None):
         """
         Find Least Cost Transmission connections between desired
         sc_points and substations in their reinforcement region.
@@ -985,6 +1059,16 @@ class ReinforcedXmission(LeastCostXmission):
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to.
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            'base' greenfield costs raster used for routing. 'Base'
+            greenfield costs are only used if the reinforcement path
+            *must* deviate from existing transmission lines. Layer names
+            may have curly brackets (``{}``), which will be filled in
+            based on the `capacity_class` input (e.g.
+            "tie_line_costs_{}MW"). Typically, a capacity class of
+            400 MW (230kV transmission line) is used for the base
+            greenfield costs.
         resolution : int, optional
             SC point resolution. By default, ``128``.
         xmission_config : str | dict | XmissionConfig, optional
@@ -1019,6 +1103,11 @@ class ReinforcedXmission(LeastCostXmission):
             Option to expand radius to include at least one connection
             feature. Has no effect if ``radius=None``.
             By default, ``True``.
+        length_invariant_cost_layers : List[str] | None, optional
+            List of layers in H5 to be added to the 'base' greenfield
+            cost raster. The costs specified by these layers are not
+            scaled with distance traversed across the cell (i.e. fixed
+            one-time costs for crossing these cells).
 
         Returns
         -------
@@ -1031,7 +1120,8 @@ class ReinforcedXmission(LeastCostXmission):
         lcx = cls(cost_fpath, features_fpath, regions_fpath,
                   region_identifier_column, resolution, xmission_config,
                   min_line_length)
-        least_costs = lcx.process_sc_points(capacity_class,
+        licl = length_invariant_cost_layers
+        least_costs = lcx.process_sc_points(capacity_class, cost_layers,
                                             sc_point_gids=sc_point_gids,
                                             clipping_buffer=clipping_buffer,
                                             barrier_mult=barrier_mult,
@@ -1039,7 +1129,8 @@ class ReinforcedXmission(LeastCostXmission):
                                             save_paths=save_paths,
                                             radius=radius,
                                             expand_radius=expand_radius,
-                                            simplify_geo=simplify_geo)
+                                            simplify_geo=simplify_geo,
+                                            length_invariant_cost_layers=licl)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'

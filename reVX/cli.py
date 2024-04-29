@@ -16,7 +16,8 @@ from rex.utilities.utilities import safe_json_load
 from reV.supply_curve.exclusions import ExclusionMaskFromDict, ExclusionLayers
 
 from reVX.offshore.dist_to_ports_converter import DistToPortsConverter
-from reVX.utilities import ExclusionsConverter
+from reVX.handlers.geotiff import Geotiff
+from reVX.handlers.layered_h5 import LayeredH5
 from reVX.utilities.forecasts import FcstUtils
 from reVX.utilities.output_extractor import output_extractor
 from reVX.utilities.region_classifier import RegionClassifier
@@ -141,8 +142,8 @@ def exclusions(ctx, excl_h5):
                     " Json can also contain layer descriptions and/or "
                     "scale factors"))
 @click.option('-check_tiff', '-ct', is_flag=True,
-              help=("Flag to check tiff profile and coordinates against "
-                    "exclusion .h5 profile and coordinates"))
+              help=("Flag to check tiff profile, CRS, and shape against "
+                    "exclusion .h5 profile, CRS, and shape"))
 @click.option('--setbacks', '-sb', is_flag=True,
               help=("Flag to convert setbacks to exclusion layers"))
 @click.option('--distance_to_ports', '-dtp', is_flag=True,
@@ -151,16 +152,11 @@ def exclusions(ctx, excl_h5):
               show_default=True,
               help=("Absolute tolerance parameter when comparing geotiff "
                     "transform data."))
-@click.option('--coord_atol', '-catol', default=0.00001, type=float,
-              show_default=True,
-              help=("Absolute tolerance parameter when comparing new "
-                    "un-projected geotiff coordinates against previous "
-                    "coordinates."))
 @click.option('--purge', '-r', is_flag=True,
               help="Remove existing .h5 file before loading layers")
 @click.pass_context
 def layers_to_h5(ctx, layers, check_tiff, setbacks, distance_to_ports,
-                 transform_atol, coord_atol, purge):
+                 transform_atol, purge):
     """
     Add layers to exclusions .h5 file
     """
@@ -182,28 +178,25 @@ def layers_to_h5(ctx, layers, check_tiff, setbacks, distance_to_ports,
         raise RuntimeError(msg)
 
     if setbacks:
-        incl_layers = inputs.get('are_inclusion_layers', False)
-        SetbacksConverter.layers_to_h5(excl_h5, layers,
-                                       check_tiff=check_tiff,
-                                       are_inclusion_layers=incl_layers,
-                                       transform_atol=transform_atol,
-                                       coord_atol=coord_atol,
-                                       descriptions=descriptions,
-                                       scale_factors=scale_factors)
+        are_inclusion_layers = inputs.get('are_inclusion_layers', False)
+        converter = SetbacksConverter(excl_h5)
+        converter.layers_to_h5(layers, check_tiff=check_tiff,
+                               are_inclusion_layers=are_inclusion_layers,
+                               transform_atol=transform_atol,
+                               descriptions=descriptions,
+                               scale_factors=scale_factors)
     elif distance_to_ports:
-        DistToPortsConverter.layers_to_h5(excl_h5, layers,
-                                          check_tiff=check_tiff,
-                                          transform_atol=transform_atol,
-                                          coord_atol=coord_atol,
-                                          descriptions=descriptions,
-                                          scale_factors=scale_factors)
+        converter = DistToPortsConverter(excl_h5)
+        converter.layers_to_h5(layers, check_tiff=check_tiff,
+                               transform_atol=transform_atol,
+                               descriptions=descriptions,
+                               scale_factors=scale_factors)
     else:
-        ExclusionsConverter.layers_to_h5(excl_h5, layers,
-                                         check_tiff=check_tiff,
-                                         transform_atol=transform_atol,
-                                         coord_atol=coord_atol,
-                                         descriptions=descriptions,
-                                         scale_factors=scale_factors)
+        converter = LayeredH5(excl_h5)
+        converter.layers_to_h5(layers, check_tiff=check_tiff,
+                               transform_atol=transform_atol,
+                               descriptions=descriptions,
+                               scale_factors=scale_factors)
 
 
 @exclusions.command()
@@ -223,9 +216,9 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
     if layers is not None:
         layers = {layer: os.path.join(out_dir, "{}.tif".format(layer))
                   for layer in layers}
-        ExclusionsConverter.extract_layers(excl_h5, layers, hsds=hsds)
+        LayeredH5(excl_h5, hsds=hsds).extract_layers(layers)
     else:
-        ExclusionsConverter.extract_all_layers(excl_h5, out_dir, hsds=hsds)
+        LayeredH5(excl_h5, hsds=hsds).extract_all_layers(out_dir)
 
 
 @exclusions.command()
@@ -282,7 +275,7 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
     if out.endswith(".tif") or out.endswith(".tiff"):
         out = Path(out).resolve().as_posix()
         logger.info("Writing mask to {!r}".format(out))
-        ExclusionsConverter.write_geotiff(out, profile, mask_)
+        Geotiff.write(out, profile, mask_)
     else:
         if isinstance(excl_fpath, list):
             excl_fpath = excl_fpath[0]
@@ -290,9 +283,8 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
                     .format(out, excl_fpath))
         desc = ("Exclusion mask computed from exclusion dictionary: {!r}"
                 .format(excl_dict))
-        # pylint: disable=protected-access
-        ExclusionsConverter._write_layer(excl_fpath, out, profile, mask_,
-                                         description=desc)
+        LayeredH5(excl_fpath).write_layer_to_h5(mask_, out, profile,
+                                                description=desc)
 
 
 def _reeds_cols_preprocessor(config):

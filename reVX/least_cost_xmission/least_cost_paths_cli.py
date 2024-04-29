@@ -74,6 +74,7 @@ def run_local(ctx, config):
                network_nodes_fpath=config.network_nodes_fpath,
                transmission_lines_fpath=config.transmission_lines_fpath,
                capacity_class=config.capacity_class,
+               cost_layers=config.cost_layers,
                xmission_config=config.xmission_config,
                clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
@@ -83,7 +84,8 @@ def run_local(ctx, config):
                save_paths=config.save_paths,
                out_dir=config.dirout,
                log_dir=config.log_directory,
-               verbose=config.log_level)
+               verbose=config.log_level,
+               li_cost_layers=config.length_invariant_cost_layers)
 
 
 @main.command()
@@ -137,9 +139,14 @@ def from_config(ctx, config, verbose):
 @click.option('--features_fpath', '-feats', required=True,
               type=click.Path(exists=True),
               help="Path to GeoPackage with transmission features")
-@click.option('--capacity_class', '-cap', type=str, required=True,
-              help=("Capacity class of transmission features to connect "
-                    "supply curve points to"))
+@click.option('--cost-layers', '-cl', required=True, multiple=True,
+              default=(),
+              help='Layer in H5 to add to total cost raster used for routing. '
+                   'Multiple layers may be specified. If running '
+                   'reinforcement computations, layer name may have '
+                   'curly brackets (``{}``), which will be filled in '
+                   'based on the capacity class input (e.g. '
+                   '"tie_line_costs_{}MW")')
 @click.option('--network_nodes_fpath', '-nn', type=STR, show_default=True,
               default=None,
               help=("Path to Network Nodes GeoPackage. If given alongside "
@@ -154,7 +161,13 @@ def from_config(ctx, config, verbose):
                     "calculation is run.".format(TRANS_LINE_CAT)))
 @click.option('--xmission_config', '-xcfg', type=STR, show_default=True,
               default=None,
-              help=("Path to transmission config .json"))
+              help=("Path to transmission config .json. Only used for "
+                    "reinforcement path computations."))
+@click.option('--capacity_class', '-cap', type=str, required=False,
+              help=("Capacity class of the 'base' greenfield costs layer. "
+                    "Costs will be scaled by the capacity corresponding to "
+                    "this class to report reinforcement costs as $/MW. "
+                    "Only used for reinforcement path computations."))
 @click.option('--clip_buffer', '-cb', type=int,
               show_default=True, default=0,
               help="Optional number of array elements to buffer clip area by.")
@@ -185,11 +198,18 @@ def from_config(ctx, config, verbose):
               help='Directory to dump log files.')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
+@click.option('--li-cost-layers', '-licl', required=False, multiple=True,
+              default=(),
+              help='Length-invariant cost layer in H5 to add to total cost '
+                   'raster used for routing. These costs do not scale with '
+                   'distance traversed acroiss the cell. Multiple layers may '
+                   'be specified.')
 @click.pass_context
-def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
-          transmission_lines_fpath, xmission_config, clip_buffer, start_index,
-          step_index, barrier_mult, max_workers, region_identifier_column,
-          save_paths, out_dir, log_dir, verbose):
+def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
+          transmission_lines_fpath, xmission_config, capacity_class,
+          clip_buffer, start_index, step_index, barrier_mult, max_workers,
+          region_identifier_column, save_paths, out_dir, log_dir, verbose,
+          li_cost_layers):
     """
     Run Least Cost Paths on local hardware
     """
@@ -203,11 +223,14 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
     create_dirs(out_dir)
     logger.info('Computing Least Cost Paths connections and writing them to {}'
                 .format(out_dir))
-    xmission_config = XmissionConfig(config=xmission_config)
-    logger.debug('Xmission Config: {}'.format(xmission_config))
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
     if is_reinforcement_run:
+        xmission_config = XmissionConfig(config=xmission_config)
+        cc_str = xmission_config._parse_cap_class(capacity_class)
+        cap = xmission_config['power_classes'][cc_str]
+        cost_layers = [layer.format(cap) for layer in cost_layers]
+        logger.debug('Xmission Config: {}'.format(xmission_config))
         features = gpd.read_file(network_nodes_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
         indices = features.index[start_index::step_index]
@@ -215,30 +238,29 @@ def local(ctx, cost_fpath, features_fpath, capacity_class, network_nodes_fpath,
                   "clip_buffer": int(clip_buffer),
                   "barrier_mult": barrier_mult,
                   "indices": indices,
-                  "save_paths": save_paths}
+                  "save_paths": save_paths,
+                  "length_invariant_cost_layers": li_cost_layers}
         least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
                                              network_nodes_fpath,
                                              region_identifier_column,
                                              transmission_lines_fpath,
-                                             capacity_class,
+                                             capacity_class, cost_layers,
                                              **kwargs)
     else:
         features = gpd.read_file(features_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
         indices = features.index[start_index::step_index]
+        licl = li_cost_layers
         least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
-                                         capacity_class,
+                                         cost_layers,
                                          clip_buffer=int(clip_buffer),
                                          barrier_mult=barrier_mult,
                                          indices=indices,
                                          max_workers=max_workers,
-                                         save_paths=save_paths)
+                                         save_paths=save_paths,
+                                         length_invariant_cost_layers=licl)
 
-    capacity_class = xmission_config._parse_cap_class(capacity_class)
-    cap = xmission_config['power_classes'][capacity_class]
-    kv = xmission_config.capacity_to_kv(capacity_class)
-    fn_out = '{}_{}MW_{}kV'.format(name, cap, kv)
-    fpath_out = os.path.join(out_dir, fn_out)
+    fpath_out = os.path.join(out_dir, f'{name}_lcp')
     if save_paths:
         fpath_out += '.gpkg'
         least_costs.to_file(fpath_out, driver="GPKG", index=False)
@@ -385,6 +407,11 @@ def get_node_cmd(config, start_index=0):
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             ]
+
+    for layer in config.cost_layers:
+        args.append(f'-cl {layer}')
+    for layer in config.length_invariant_cost_layers:
+        args.append(f'-licl {layer}')
 
     if config.save_paths:
         args.append('-paths')

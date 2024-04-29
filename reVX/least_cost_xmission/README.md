@@ -62,15 +62,15 @@ These keys are optional and affect how the layer creation runs.
 
 * `masks_dir` - Directory to find mask GeoTIFFs in. Defaults to the local directory.
 * `layer_dir` - By default, all GeoTIFFs listed in `barrier_layers` and `friction_layers` are assumed to be fully defined paths or located in the current working directory. The creator will also search for GeoTIFFs in `layer_dir` if it is set.
-* `save_tiff` - Setting this to `true` will result in the creation of GeoTIFFs for intermediary processing steps. This can be useful for QA/QC.
+* `output_tiff_dir` - Directory to store the created GeoTIFFs for QA/QC. This directory must alrady exist. Defaults to the working directory.
 
 ### Action Keys
 The keys below represent layer creation actions. Mostly analyses will need all layers to be created. Individual creation actions can be rerun as needed, e.g. if it is determined that the `dry_costs` need to be adjusted, but the `wet_costs` are acceptable, the `wet_costs` section can be removed from the config file to prevent it from being recalculated and reduce processing time.
 
 * Costs
   * `wet_costs` - Costs for wet areas, typically oceans and great lakes.
-  * `dry_costs` - This is not yet implemented. Dry costs must be calculated with the legacy method described below and saved in an H5 file.
-  * `combine_costs` - Combine the wet and dry costs and save to H5. This action must be performed if either wet or dry costs have been recalculated.
+  * `dry_costs` - Costs for dry areas, computed using costs per predefined regions and multipliers that are applied based on slope and land-use categories.
+  * `landfall_cost` - Single cost value for landfall (offshore analysis only).
 * Friction and barriers
   * `friction_layers` - Friction areas that are less desirable for transmission routing.
   * `barrier_layers` - Barrier areas that should not have any transmission in the them. Transmission will route through barriers if there is no other possible route.
@@ -85,7 +85,7 @@ The below example JSON file shows all possible keys with example values. The for
 
     "masks_dir": "./masks",
     "layer_dir": "/projects/rev/projects/wowts/data/final_friction_tifs/",
-    "save_tiff": true,
+    "output_tiff_dir": "/projects/rev/projects/wowts/data/output_tifs/",
 
     "wet_costs": {
         "bathy_tiff": "bathymetry.tif",
@@ -98,6 +98,19 @@ The below example JSON file shows all possible keys with example values. The for
             {"min": -500,                "value": 50000}
         ]
     },
+
+    "dry_costs": {
+        "iso_region_tiff": "/path/to/nlcd/ISO/regions/ISO_regions.tif",
+        "nlcd_tiff": "/path/to/nlcd/raster.tiff",
+        "slope_tiff": "/path/to/slope/raster.tiff",
+        "cost_configs": "/optional/path/to/xmission/cost/config.json",
+        "extra_tiffs": [
+            /optional/path/to/extra/layer1.tif",
+            /optional/path/to/extra/layer2.tif"
+        ]
+    }
+
+    "landfall_cost": 450e6,
 
     "barrier_layers": {
         "CAN_MEX_boundary_20240131.gpkg": {
@@ -127,22 +140,36 @@ The below example JSON file shows all possible keys with example values. The for
 
     "merge_friction_and_barriers": {
         "barrier_multiplier": 1e6
-    },
-
-    "combine_costs": {
-        "landfall_cost": 10e6,
-        "dry_h5_fpath": "xmission_costs.h5",
-        "dry_costs_layer": "tie_line_costs_102MW"
     }
 }
 ```
 
+Note that the "iso_region_tiff" input tiff file must be called "ISO_regions.tif" (capitalization is important).
+
 ## Running the Layer Creator
-Once a config file has been created, the layer creation tool can be run from the command-line, e.g.:
+Prior to running the layer creating command, we must initialize an HDF5 file that will hold the cost layers.
+We can do this using the create
 
 ```
-$ dry-cost-creator --verbose from-config --config layer_config_file.json
+$ transmission-layer-creator --verbose create-h5 -t template.tif -h new_xmission_routing_layers.h5
 ```
+
+(Next step is *optional* for dry-only runs: if you skip this, just add `"ignore_masks": true` to your config)
+We also need to create the land mask (optional for dry-only runs:
+just skip this step and add `"ignore_masks": true` to your config), which we can do by running
+
+```
+$ transmission-layer-creator --verbose create-masks -l land_mask_vector.gpkg -t template.tif -m ./masks
+```
+
+Once an H5 file has been initialized, the land masks have been created, and a config file has been put together,
+the layer creation tool can be run from the command-line, e.g.:
+
+```
+$ transmission-layer-creator --verbose from-config --config layer_config_file.json
+```
+
+
 With an appropriate config file, this will result in all layers required for a transmission routing analysis being created and saved in the specified H5 file.
 
 # CONUS (Onshore) Example
@@ -152,26 +179,32 @@ All examples assume that reVX was installed using `pip` so that the CLI commands
 The below file can be used as a template to compute the costs to be used in a Least Cost Path analysis described in more detail below.
 ```
 {
-  "execution_control": {
-    "allocation": "YOUR_SLURM_ALLOCATION",
-    "feature": "--qos=normal",
-    "memory": 178,
-    "option": "eagle",
-    "walltime": 4
-  },
-  "h5_fpath": "/path/to/output/h5/file/that/already/contains/NLCD/and/slope/layers.h5",
-  "iso_regions": "/path/to/ISO/regions/raster.tiff",
-  "excl_h5": "/path/to/exclusion/file/with/NLCD/and/slope/layers.h5",
-  "log_directory": "/scratch/USER_NAME/log",
-  "log_level": "INFO"
-}
+    "h5_fpath": "./new_transmission_cost_file_name.h5",
+    "template_raster_fpath": "/path/to/template/raster.tif",
+
+    "ignore_masks": true,
+    "output_tiff_dir": "./output_transmission_tiffs",
+
+    "dry_costs": {
+        "iso_region_tiff": "/path/to/ISO_regions.tif",
+        "nlcd_tiff": "/path/to/nlcd.tif",
+        "slope_tiff": "/path/to/slope.tif",
+        "extra_tiffs": [
+            "/path/to/transmission_barrier.tif",
+            "/path/to/tie_line_multipliers.tif",
+            "/path/to/another_extra_layer.tif"
+        ]
+    }
+  }
 ```
-See [`dry_cost_creator_cli.local`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/dry_cost_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
+Note that the "iso_region_tiff" input tiff file must be called "ISO_regions.tif" (capitalization is important).
+See [`transmission_layer_creator_cli.from_config`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
 ```
+another_extra_layer      Dataset {1, 33792, 48640}
 ISO_regions              Dataset {1, 33792, 48640}
 latitude                 Dataset {33792, 48640}
 longitude                Dataset {33792, 48640}
-srtm_slope               Dataset {1, 33792, 48640}
+slope                    Dataset {1, 33792, 48640}
 tie_line_costs_102MW     Dataset {1, 33792, 48640}
 tie_line_costs_1500MW    Dataset {1, 33792, 48640}
 tie_line_costs_205MW     Dataset {1, 33792, 48640}
@@ -179,7 +212,7 @@ tie_line_costs_3000MW    Dataset {1, 33792, 48640}
 tie_line_costs_400MW     Dataset {1, 33792, 48640}
 tie_line_multipliers     Dataset {1, 33792, 48640}
 transmission_barrier     Dataset {1, 33792, 48640}
-usa_mrlc_nlcd2011        Dataset {1, 33792, 48640}
+nlcd                     Dataset {1, 33792, 48640}
 ```
 
 
@@ -191,6 +224,7 @@ $ least-cost-xmission local \
     --cost_fpath /shared-projects/rev/exclusions/xmission_costs.h5 \
     --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
     --capacity_class 1000
+    --cl tie_line_costs_1500MW
 ```
 
 ### Run onshore analysis from a config file
@@ -209,6 +243,7 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
+  "cost_layers": ["tie_line_costs_{}MW"],
   "barrier_mult": "100",
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
@@ -271,13 +306,14 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
     "transmission_lines_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
     "region_identifier_column": "ba_str",
     "capacity_class": "400",
+    "cost_layers": ["tie_line_costs_{}MW"],
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
 }
 ```
 
-Note that we are specifying ``"capacity_class": "400"``  to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+Note that we are specifying ``"capacity_class": "400"`` (which then fills in the ``{}`` in ``"tie_line_costs_{}MW"``) to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
 "region_identifier_column" and the values in that column should match the region containing the substations and network nodes. In order to avoid unnecessary computation, ensure that your features input contains
 only the substations for which you computed reinforcement costs in the previous step.
 
@@ -290,7 +326,7 @@ This will generate 10 chunked files (since we used 10 nodes in the config above)
 ```
 $ least-cost-xmission merge-output -of reinforcement_costs_400MW_230kV.gpkg \
     -od /shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs \
-    reinforcement_costs_*_400MW_230kV.csv
+    reinforcement_costs_*_lcp.csv
 ```
 
 You should now have a file containing all of the reinforcement costs for the substations in your dataset. Next, compute the spur line transmission costs for these substations using the following template config (`least_cost_transmission_1000MW.json`):
@@ -310,11 +346,12 @@ You should now have a file containing all of the reinforcement costs for the sub
     "regions_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg",
     "region_identifier_column": "ba_str",
     "capacity_class": "1000",
+    "cost_layers": ["tie_line_costs_{}MW"],
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
     "min_line_length": 0,
-    "name": "least_cost_transmission_1000MW"
+    "name": "least_cost_transmission"
 }
 ```
 
@@ -419,6 +456,34 @@ Assuming the above config file is saved as `config_aoswt.json` in the current di
 
 ```
 $ least-cost-xmission from-config --config ./config_aoswt.json
+```
+
+A sample config for WOWTS would look very similar:
+
+```
+{
+  "execution_control": {
+    "allocation": "YOUR_SLURM_ALLOCATION",
+    "memory": 249,
+    "nodes": 5,
+    "option": "kestrel",
+    "walltime": 4
+  },
+  "log_directory": "/scratch/USER_NAME/log",
+  "log_level": "INFO"
+  "cost_fpath": "/projects/rev/data/transmission/north_america/conus/least_cost/offshore/processing/conus_20240221.h5",
+  "features_fpath": "/projects/rev/projects/wowts/data/20240223_poi_trans_feats.gpkg",
+  "capacity_class": "1000",
+  "cost_layers": ["tie_line_costs_{}MW", "wet_costs"],
+  "length_invariant_cost_layers": ["landfall_costs"],
+  "barrier_mult": "5000",
+  "resolution": 157,
+  "radius": 777,
+  "expand_radius": false,
+  "save_paths": true,
+  "simplify_geo": 20,
+  "sc_point_gids": "sc_points.csv"
+}
 ```
 
 ### Post processing

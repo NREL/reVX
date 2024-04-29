@@ -10,10 +10,8 @@ class reVXError(Exception):
     """
 
 
-class ExclusionsCheckError(Exception):
-    """
-    Error during Exclusion layer checking
-    """
+class ProfileCheckError(ValueError):
+    """Profile mismatch between two layers. """
 
 
 class GeoTiffKeyError(Exception):

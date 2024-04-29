@@ -7,58 +7,62 @@ from typing import Literal, Dict
 
 import numpy as np
 import numpy.typing as npt
-from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
 
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
+from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
+from reVX.least_cost_xmission.layers.base import LayerCreator
 from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
 from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
                                                        RAW_BARRIER_TIFF,
                                                        FRICTION_TIFF)
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
-)
 
 logger = logging.getLogger(__name__)
 
 ALL = 'all'
 
 
-class FrictionBarrierBuilder:
+class FrictionBarrierBuilder(LayerCreator):
     """
     Build friction or barrier layers.
     """
-    def __init__(self, type_: Literal['friction', 'barrier'],
-                 io_handler: TransLayerIoHandler, masks: Masks,
+    def __init__(self, io_handler: LayeredTransmissionH5,
+                 masks: Masks, output_tiff_dir=".",
                  dtype: npt.DTypeLike = DEFAULT_DTYPE):
         """
         Parameters
         ----------
-        type_ : {'friction', 'barrier'}
-            Type of layer being built
-        io_handler : TransLayerIoHandler
-            IO handler
+        io_handler : :class:`LayeredTransmissionH5`
+            Transmission layer IO handler
         masks : Masks
-            Mask Handler
+            Masks instance that can be used to retrieve multiple types
+            of masks.
+        output_tiff_dir : path-like, optional
+            Directory where cost layers should be saved as GeoTIFF.
+            By default, ``"."``.
         dtype : np.dtype, optional
             Data type for final dataset. By default, ``float32``.
         """
-        self._type = type_
-        self._io_handler = io_handler
         self._masks = masks
-        self._dtype = dtype
+        super().__init__(io_handler=io_handler, mask=None,
+                         output_tiff_dir=output_tiff_dir, dtype=dtype)
 
-    def build_layer(self, layers: Dict[str, FBLayerConfig]):
+    def build(self, kind: Literal['friction', 'barrier'],
+              layers: Dict[str, FBLayerConfig]):
         """
         Combine multiple GeoTIFFs and vectors to create a friction or barrier
         layer and save to GeoTIFF.
 
         Parameters
         ----------
+        kind : {'friction', 'barrier'}
+            Type of layer being built
         layers : dict
             Dict of FBLayerConfigs keyed by GeoTIFF/vector filenames.
         """
-        logger.debug(f'Combining {self._type} layers')
-        result = np.zeros(self._io_handler.shape, dtype=DEFAULT_DTYPE)
+        kind = kind.casefold()
+        logger.debug('Combining %s layers', kind)
+        result = np.zeros(self._io_handler.shape, dtype=self._dtype)
         fi_layers: Dict[str, FBLayerConfig] = {}
 
         for fname, config in layers.items():
@@ -68,7 +72,8 @@ class FrictionBarrierBuilder:
 
             logger.debug(f'Processing {fname} with config {config}')
             if Path(fname).suffix.lower() in ['.tif', '.tiff']:
-                data = self._io_handler.load_tiff(fname, reproject=True)
+                data = self._io_handler.load_data_using_h5_profile(
+                    fname, reproject=True)
                 temp = self._process_raster_layer(data, config)
                 result += temp
             elif Path(fname).suffix.lower() in ['.shp', '.gpkg']:
@@ -80,9 +85,10 @@ class FrictionBarrierBuilder:
         result = self._process_forced_inclusions(result, fi_layers)
 
         fname = (RAW_BARRIER_TIFF
-                 if self._type == 'barrier' else FRICTION_TIFF)
-        logger.debug(f'Writing combined {self._type} layers to {fname}')
-        self._io_handler.save_tiff(result, fname)
+                 if kind == 'barrier' else FRICTION_TIFF)
+        out_filename = self.output_tiff_dir / fname
+        logger.debug('Writing combined %s layers to %s', kind, out_filename)
+        self._io_handler.save_data_using_h5_profile(result, out_filename)
 
     def _process_raster_layer(self, data: npt.NDArray,  # type: ignore[return]
                               config: FBLayerConfig) -> npt.NDArray:
@@ -218,7 +224,8 @@ class FrictionBarrierBuilder:
             if config.extent != ALL:
                 mask = self._get_mask(config.extent)
 
-            temp = self._io_handler.load_tiff(fname, reproject=True)
+            temp = self._io_handler.load_data_using_h5_profile(fname,
+                                                               reproject=True)
 
             if config.extent == ALL:
                 fi += temp

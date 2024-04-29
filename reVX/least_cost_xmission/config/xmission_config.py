@@ -7,8 +7,73 @@ Mike Bannister
 import logging
 import os
 import numpy as np
+from typing import List
+from typing_extensions import TypedDict
 
 from rex.utilities.utilities import safe_json_load
+
+
+class LandUseClasses(TypedDict):
+    """
+    NLCD land use values that correpsond to land use classes as defined for
+    this project.
+    """
+    cropland: List[int]
+    forest: List[int]
+    wetland: List[int]
+    suburban: List[int]
+    urban: List[int]
+
+
+class LandUseMultipliers(TypedDict, total=False):
+    """ Land use multipliers """
+
+    cropland: float
+    """ Cost multiplier for cropland """
+
+    forest: float
+    """ Cost multiplier for forest """
+
+    suburban: float
+    """ Cost multiplier for suburban areas """
+
+    urban: float
+    """ Cost multiplier for urband areas """
+
+    wetland: float
+    """
+    Cost multiplier for wetlands. This is independent of the water multiplier.
+    """
+
+
+class SlopeMultipliers(TypedDict, total=False):
+    """ Slope multipliers and cutoffs """
+
+    hill_mult: float
+    """ Cost multiplier for hills """
+
+    hill_slope: float
+    """ Lowest slope that qualifies as a hill (decimal percent) """
+
+    mtn_mult: float
+    """ Cost multiplier for mountains """
+
+    mtn_slope: float
+    """ Lowest slope that qualifies as a mountain (decimal percent) """
+
+
+class IsoMultipliers(TypedDict):
+    """ Multiplier config for one ISO """
+
+    iso: str
+    """ Name of ISO these multipliers are for"""
+
+    land_use: LandUseMultipliers
+    """ Land use multipliers """
+
+    slope: SlopeMultipliers
+    """ Slope multipliers and cutoffs """
+
 
 CONFIG_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG = {
@@ -94,10 +159,23 @@ class XmissionConfig(dict):
         Parameters
         ----------
         config : str | dict
-            Path to json file containing Xmission cost configuration values,
-            or jsonified dict of cost configuration values,
-            or dictionary of configuration values,
-            or dictionary of paths to config jsons
+            Dictionary or path to json file contianing dictionary with
+            Xmission cost configuration values. Valid configuration keys
+            are:
+
+                - "base_line_costs"
+                - "iso_lookup"
+                - "iso_multipliers"
+                - "land_use_classes"
+                - "new_substation_costs"
+                - "power_classes"
+                - "power_to_voltage"
+                - "transformer_costs"
+                - "upgrade_substation_costs"
+
+            Each of these keys should point to a dictionary or path to
+            json file contianing a dictionary of configurations for each
+            section.
         """
         if config is not None:
             if isinstance(config, str):

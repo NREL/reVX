@@ -9,10 +9,8 @@ from typing import Optional
 import numpy as np
 import numpy.typing as npt
 
+from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
-from reVX.least_cost_xmission.layers.transmission_layer_io_handler import (
-    TransLayerIoHandler
-)
 
 logger = logging.getLogger(__name__)
 
@@ -36,12 +34,12 @@ class Masks:
     OFFSHORE_MASK_FNAME = 'offshore_mask.tif'
     """Offshore mask filename"""
 
-    def __init__(self, io_handler: TransLayerIoHandler, masks_dir='.'):
+    def __init__(self, io_handler: LayeredTransmissionH5, masks_dir='.'):
         """
 
         Parameters
         ----------
-        io_handler : TransLayerIoHandler
+        io_handler : :class:`LayeredTransmissionH5`
             Transmission IO handler
         masks_dir : path-like, optional
             Directory for storing/finding mask GeoTIFFs. By default, ``'.'``.
@@ -169,7 +167,7 @@ class Masks:
             Name of file to save
         """
         full_fname = os.path.join(self._masks_dir, fname)
-        self._io_handler.save_tiff(data, full_fname)
+        self._io_handler.save_data_using_h5_profile(data, full_fname)
 
     def _load_mask(self, fname: str) -> npt.NDArray[np.bool_]:
         """
@@ -190,7 +188,8 @@ class Masks:
             raise FileNotFoundError(f'Mask file at {full_fname} not found. '
                                     'Please create masks first.')
 
-        raster = self._io_handler.load_tiff(full_fname)
+        raster = self._io_handler.load_data_using_h5_profile(full_fname,
+                                                             reproject=True)
 
         if raster.max() != 1:
             msg = (f'Maximum value in mask file {fname} is {raster.max()} but'

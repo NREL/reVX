@@ -6,6 +6,8 @@ Created on Thu Jun 20 09:43:34 2019
 
 @author: gbuster
 """
+import os
+import logging
 import rasterio
 import numpy as np
 import pandas as pd
@@ -14,6 +16,9 @@ from pyproj import Transformer
 
 from rex.utilities.parse_keys import parse_keys
 from reVX.utilities.exceptions import GeoTiffKeyError
+
+
+logger = logging.getLogger(__name__)
 
 
 class Geotiff:
@@ -380,3 +385,42 @@ class Geotiff:
     def close(self):
         """Close the rasterio source object"""
         self._src.close()
+
+    @staticmethod
+    def write(out_fp, profile, values, dtype=None):
+        """Write values to GeoTIFF file with given profile.
+
+        Parameters
+        ----------
+        out_fp : str
+            Path to GeoTIFF output file to save data to.
+        profile : dict
+            GeoTIFF profile (attributes).
+        values : ndarray
+            GeoTIFF data to save.
+        dtype : str, optional
+            Type of data being stored. If ``None``, the data dtype is
+            inferred from the `values` input itself.
+        """
+        out_dir = os.path.dirname(out_fp)
+        if out_dir and not os.path.exists(out_dir):
+            logger.debug("Creating %s", out_dir)
+            os.makedirs(out_dir)
+
+        if values.ndim < 3:
+            values = np.expand_dims(values, 0)
+
+        dtype = dtype or values.dtype.name
+        profile['dtype'] = dtype
+
+        if "nodata" not in profile:
+            if np.issubdtype(dtype, np.integer):
+                dtype_max = np.iinfo(dtype).max
+            else:
+                dtype_max = np.finfo(dtype).max
+            profile['nodata'] = dtype_max
+
+        with rasterio.open(out_fp, 'w', **profile) as f:
+            f.write(values)
+
+        logger.debug('%s created', out_fp)

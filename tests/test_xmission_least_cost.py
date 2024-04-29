@@ -20,6 +20,7 @@ from rex.utilities.loggers import LOGGERS
 from reV.supply_curve.supply_curve import SupplyCurve
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
+from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission_cli import main
 from reVX.least_cost_xmission.least_cost_paths_cli import main as lcp_main
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
@@ -32,6 +33,13 @@ CHECK_COLS = ('raw_line_cost', 'dist_km', 'length_mult', 'tie_line_cost',
               'sc_point_gid')
 ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 N_SC_POINTS = 10  # number of sc_points to run, chosen at random for each test
+DEFAULT_CONFIG = XmissionConfig()
+
+
+def _cap_class_to_cap(capacity):
+    """Get capacity for a capacity class. """
+    capacity_class = DEFAULT_CONFIG._parse_cap_class(capacity)
+    return DEFAULT_CONFIG['power_classes'][capacity_class]
 
 
 def check_baseline(truth, test, check_cols=CHECK_COLS):
@@ -100,6 +108,7 @@ def test_capacity_class(capacity):
     """
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_{capacity}MW.csv')
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
     sc_point_gids = None
     if os.path.exists(truth):
         truth = pd.read_csv(truth)
@@ -109,7 +118,7 @@ def test_capacity_class(capacity):
         mask = truth['sc_point_gid'].isin(sc_point_gids)
         truth = truth.loc[mask]
 
-    test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
+    test = LeastCostXmission.run(COST_H5, FEATURES, capacity, [cost_layer],
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=5.76)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
@@ -129,6 +138,7 @@ def test_parallel(max_workers):
     capacity = random.choice([100, 200, 400, 1000])
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_{capacity}MW.csv')
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
     sc_point_gids = None
     if os.path.exists(truth):
         truth = pd.read_csv(truth)
@@ -138,7 +148,7 @@ def test_parallel(max_workers):
         mask = truth['sc_point_gid'].isin(sc_point_gids)
         truth = truth.loc[mask]
 
-    test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
+    test = LeastCostXmission.run(COST_H5, FEATURES, capacity, [cost_layer],
                                  max_workers=max_workers,
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=5.76)
@@ -172,7 +182,9 @@ def test_resolution(resolution):
         mask = truth['sc_point_gid'].isin(sc_point_gids)
         truth = truth.loc[mask]
 
-    test = LeastCostXmission.run(COST_H5, FEATURES, 100, resolution=resolution,
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(100)}MW'
+    test = LeastCostXmission.run(COST_H5, FEATURES, 100, [cost_layer],
+                                 resolution=resolution,
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=resolution * 0.09 / 2)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
@@ -205,6 +217,7 @@ def test_cli(runner, save_paths):
             "capacity_class": f'{capacity}MW',
             "min_line_length": 5.76,
             "save_paths": save_paths,
+            "cost_layers": ["tie_line_costs_{}MW"]
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -236,7 +249,6 @@ def test_reinforcement_cli(runner, ri_ba, save_paths):
     """
     Test Reinforcement cost routines and CLI
     """
-    capacity = 1000
     ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
 
     with tempfile.TemporaryDirectory() as td:
@@ -266,7 +278,8 @@ def test_reinforcement_cli(runner, ri_ba, save_paths):
             "features_fpath": ri_substations_path,
             "regions_fpath": ri_ba_path,
             "region_identifier_column": "ba_str",
-            "capacity_class": f'{capacity}MW',
+            "capacity_class": 1000,
+            "cost_layers": ["tie_line_costs_1500MW"],
             "barrier_mult": 100,
             "min_line_length": 0,
             "save_paths": save_paths,
@@ -283,12 +296,12 @@ def test_reinforcement_cli(runner, ri_ba, save_paths):
         assert result.exit_code == 0, msg
 
         if save_paths:
-            test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
+            test = '{}_1000_128.gpkg'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = gpd.read_file(test)
             assert test.geometry is not None
         else:
-            test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+            test = '{}_1000_128.csv'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = pd.read_csv(test)
 

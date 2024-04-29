@@ -6,6 +6,8 @@ from typing import Optional, Dict, List, Literal
 
 from pydantic import BaseModel, DirectoryPath, FilePath
 
+from reVX.least_cost_xmission.config import IsoMultipliers
+
 
 # Terms for specifying masks. 'wet+' and 'dry+' indicated 'wet' + 'landfall'
 # and 'dry' + 'landfall', respectively.
@@ -80,13 +82,56 @@ class WetCosts(BaseModel, extra='forbid'):
     bathy_tiff: FilePath
     """File name of bathymetric depth GeoTIFF"""
 
-    wet_costs_tiff: Optional[str] = None
-    """Name for wet costs GeoTIFF"""
-
 
 class DryCosts(BaseModel, extra='forbid'):
     """ Config items required to generate dry costs """
-    # TODO
+    iso_region_tiff: FilePath
+    """Filename of ISO region GeoTIFF"""
+
+    nlcd_tiff: FilePath
+    """File name of NLCD GeoTiff"""
+
+    slope_tiff: FilePath
+    """File name of slope GeoTiff"""
+
+    cost_configs: Optional[FilePath] = None
+    """Path to json file with Xmission cost configuration values.
+
+    Path to json file contianing dictionary with Xmission cost
+    configuration values. Valid configuration keysare:
+
+        - "base_line_costs"
+        - "iso_lookup"
+        - "iso_multipliers"
+        - "land_use_classes"
+        - "new_substation_costs"
+        - "power_classes"
+        - "power_to_voltage"
+        - "transformer_costs"
+        - "upgrade_substation_costs"
+
+    Each of these keys should point to a dictionary or a path to
+    a separate json file contianing a dictionary of
+    configurations for each section."""
+
+    default_mults: Optional[IsoMultipliers] = None
+    """Multipliers to be used for default region.
+
+    This input should be a dictionary with three keys:
+
+        - "iso": Thie key is ignored, but is required. Can set to
+          "default" and move on.
+        - "land_use": A dictionary where keys are the land use types
+          (e.g. "cropland", "forest", "wetland", etc.) and values are
+          the multipliers for those land uses.
+        - "slope": A dictionary where keys are the slope types/mults
+          (e.g. "hill_mult", "hill_slope", "mtn_mult", "mtn_slope",
+          etc.) and values are the slopes/multipliers.
+
+    """
+
+    extra_tiffs: Optional[List[FilePath]] = None
+    """Optional list of extra GeoTIFFs to add to cost H5 file. """
 
 
 class MergeFrictionBarriers(BaseModel, extra='forbid'):
@@ -102,30 +147,17 @@ class MergeFrictionBarriers(BaseModel, extra='forbid'):
     a higher value than any possible friction."""
 
 
-class CombineCosts(BaseModel, extra='forbid'):
-    """ Config items required to combine wet and dry costs """
-    landfall_cost: float
-    """Cost to transition from wet to dry transmission"""
-
-    # Note: the below items are temporary until dry costs are refactored
-    dry_h5_fpath: FilePath
-    """H5 file with dry costs"""
-
-    dry_costs_layer: str
-    """Name of dry costs in H5 file"""
-
-
 FrictionLayers = Dict[str, FBLayerConfig]
 """Mapping of friction layers.
 
-Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
-file."""
+Keys are GeoTIFF or vector filepaths. Values are the FBLayerConfig to use for
+that file."""
 
 BarrierLayers = Dict[str, FBLayerConfig]
 """Mapping of barrier layers.
 
-Keys are GeoTIFF filepaths. Values are the FBLayerConfig to use for that
-file."""
+Keys are GeoTIFF or vector filepaths. Values are the FBLayerConfig to use for
+that file."""
 
 
 class LayerCreationConfig(BaseModel):
@@ -145,47 +177,58 @@ class LayerCreationConfig(BaseModel):
     masks_dir: DirectoryPath = Path('.')
     """Optional path for mask GeoTIFFs."""
 
+    ignore_masks: Optional[bool] = False
+    """Optional flag to ignore masks for cost creation (useful for dry runs)"""
+
     friction_layers: Optional[FrictionLayers] = None
     """Optional friction layer.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, `merge_friction_and_barriers` or  `combine_costs` must
-    be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     barrier_layers: Optional[BarrierLayers] = None
     """Optional barrier layer.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, `merge_friction_and_barriers` or  `combine_costs` must
-    be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     wet_costs: Optional[WetCosts] = None
     """Optional wet cost layer.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, `merge_friction_and_barriers` or  `combine_costs` must
-    be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     dry_costs: Optional[DryCosts] = None
     """Optional dry cost layer.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, `merge_friction_and_barriers` or  `combine_costs` must
-    be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
+
+    landfall_cost: Optional[float] = None
+    """Cost to transition from wet to dry transmission.
+
+    If this input is specified, a landfall cost layer is created.
+
+    At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
     merge_friction_and_barriers: Optional[MergeFrictionBarriers] = None
     """Optional config to merge friction barriers.
 
     At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, `merge_friction_and_barriers` or  `combine_costs` must
-    be defined."""
+    `dry_costs`, 'landfall_cost' , or `merge_friction_and_barriers` must
+    be defined.
+    """
 
-    combine_costs: Optional[CombineCosts] = None
-    """Optional config to combine costs.
-
-    At least one of `friction_layers`, `barrier_layers`, `wet_costs`,
-    `dry_costs`, `merge_friction_and_barriers` or  `combine_costs` must
-    be defined."""
-
-    save_tiff: bool = True
-    """Save GeoTIFFS from intermediary steps if ``True``"""
+    output_tiff_dir: DirectoryPath = Path('.')
+    """Directory to store output tiff files in. """

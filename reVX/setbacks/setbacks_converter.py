@@ -8,8 +8,8 @@ import os
 from warnings import warn
 
 from reVX.handlers.geotiff import Geotiff
+from reVX.handlers.layered_h5 import LayeredH5, check_geotiff
 from reVX.handlers.outputs import Outputs
-from reVX.utilities import ExclusionsConverter
 
 logger = logging.getLogger(__name__)
 
@@ -37,8 +37,9 @@ def parse_setbacks(setbacks, chunks=(128, 128), is_inclusion_layer=False):
     values = None
     reduction_func = np.minimum if is_inclusion_layer else np.maximum
     for geotiff in setbacks:
-        data = ExclusionsConverter.parse_tiff(geotiff, chunks=chunks,
-                                              check_tiff=False)[1]
+        with Geotiff(geotiff, chunks=chunks) as tif:
+            data = tif.values
+
         if values is None:
             values = data
         else:
@@ -47,25 +48,25 @@ def parse_setbacks(setbacks, chunks=(128, 128), is_inclusion_layer=False):
     return values
 
 
-class SetbacksConverter(ExclusionsConverter):
+class SetbacksConverter(LayeredH5):
     """
     Convert setbacks goetiff(s) to excl .h5 layers
     """
 
-    def setbacks_to_layer(self, layer, setbacks, check_tiff=True,
-                          is_inclusion_layer=False, transform_atol=0.01,
-                          coord_atol=0.001, description=None,
-                          scale_factor=None, dtype='uint8'):
+    def write_setbacks_to_h5(self, setbacks, layer_name, check_tiff=True,
+                             is_inclusion_layer=False, transform_atol=0.01,
+                             description=None, scale_factor=None,
+                             dtype='uint8', replace=True):
         """
         Transfer geotiff setbacks to h5 confirming they match existing layers
 
         Parameters
         ----------
-        layer : str
-            Name of layer to create of replace.
         setbacks : str
             Path to geotiff file or directory containing multiple
             geotiff files to be merged.
+        layer_name : str
+            Name of layer to create of replace.
         check_tiff : bool, optional
             Flag to check tiff profile and coordinates against exclusion
             .h5 profile and coordinates, by default True.
@@ -86,7 +87,10 @@ class SetbacksConverter(ExclusionsConverter):
             .h5 file, by default None, which does not apply any scaling.
         dtype : str, optional
             Dtype to save geotiff data as in the .h5 file. Only used
-            when 'scale_factor' is not None, by default 'uint8'
+            when 'scale_factor' is not None, by default 'uint8',
+        replace : bool, optional
+            Option to replace existing layer (if any).
+            By default, ``True``.
         """
         if os.path.isdir(setbacks):
             setbacks = [os.path.join(setbacks, file)
@@ -97,25 +101,16 @@ class SetbacksConverter(ExclusionsConverter):
 
         logger.debug('\t- Combining setbacks in {}'.format(setbacks))
 
-        if not os.path.exists(self._excl_h5):
-            self._init_h5(self._excl_h5, setbacks[0], chunks=self._chunks)
+        if not os.path.exists(self.h5_file):
+            if self.template_file == self.h5_file:
+                self.template_file = setbacks[0]
+            self.create_new(overwrite=False)
 
-        msg = ("{} is already present in {}".format(layer, self._excl_h5))
-        if layer in self.layers:
-            if self._replace:
-                msg += " and will be replaced"
-                logger.warning(msg)
-                warn(msg)
-            else:
-                msg += ", to 'replace' set to True"
-                logger.error(msg)
-                raise KeyError(msg)
+        self._warn_or_error_for_existing_layer(layer_name, replace)
 
         if check_tiff:
-            self._check_geotiff(self._excl_h5, setbacks[0],
-                                chunks=self._chunks,
-                                transform_atol=transform_atol,
-                                coord_atol=coord_atol)
+            check_geotiff(self, setbacks[0], chunks=self._chunks,
+                          transform_atol=transform_atol)
 
         with Geotiff(setbacks[0], chunks=self._chunks) as tif:
             profile = tif.profile
@@ -123,28 +118,24 @@ class SetbacksConverter(ExclusionsConverter):
         setbacks = parse_setbacks(setbacks, chunks=self._chunks,
                                   is_inclusion_layer=is_inclusion_layer)
         if scale_factor is not None:
-            setbacks = Outputs._check_data_dtype(setbacks, dtype,
-                                                 scale_factor=scale_factor)
+            attrs = {'scale_factor': scale_factor}
+            setbacks = Outputs._check_data_dtype(layer_name, setbacks, dtype,
+                                                 attrs=attrs)
 
-        logger.debug('Writing final setback layer to {!r}'
-                     .format(self._excl_h5))
-        self._write_layer(self._excl_h5, layer, profile, setbacks,
-                          chunks=self._chunks, description=description,
-                          scale_factor=scale_factor)
+        logger.debug('Writing final setback layer to %s', self.h5_file)
+        self.write_layer_to_h5(setbacks, layer_name, profile=profile,
+                               description=description,
+                               scale_factor=scale_factor)
 
-    @classmethod
-    def layers_to_h5(cls, excl_h5, layers, chunks=(128, 128),
-                     replace=True, check_tiff=True,
+    def layers_to_h5(self, layers, replace=True, check_tiff=True,
                      are_inclusion_layers=False, transform_atol=0.01,
-                     coord_atol=0.001, descriptions=None, scale_factors=None):
+                     descriptions=None, scale_factors=None):
         """
         Create exclusions .h5 file, or load layers into existing exclusion .h5
         file from provided setbacks
 
         Parameters
         ----------
-        excl_h5 : str
-            Path to .h5 file containing or to contain exclusion layers
         layers : dict | list
             Dictionary where keys are layer names and values are paths
             to the corresponding geotiff files or paths to directories
@@ -152,8 +143,6 @@ class SetbacksConverter(ExclusionsConverter):
             layer. If input is a list of paths to geotiff files, then
             the name of the layer is inferred from the geotiff file
             name.
-        chunks : tuple, optional
-            Chunk size of exclusions in geotiff, by default (128, 128)
         replace : bool, optional
             Flag to replace existing layers if needed, by default True
         check_tiff : bool, optional
@@ -166,10 +155,6 @@ class SetbacksConverter(ExclusionsConverter):
         transform_atol : float, optional
             Absolute tolerance parameter when comparing geotiff
             transform data, by default 0.01.
-        coord_atol : float, optional
-            Absolute tolerance parameter when comparing new un-projected
-            geotiff coordinates against previous coordinates,
-            by default 0.001.
         description : dict, optional
             Description of exclusion layers, by default None
         scale_factor : dict, optional
@@ -186,11 +171,11 @@ class SetbacksConverter(ExclusionsConverter):
         if descriptions is None:
             descriptions = {}
 
-        excls = cls(excl_h5, chunks=chunks, replace=replace)
-        logger.info('Creating {}'.format(excl_h5))
-        for layer, setbacks in layers.items():
-            logger.info('- Transfering {}'.format(layer))
-            scale = scale_factors.get(layer, None)
+        logger.info('Moving layers to %s', self.h5_file)
+        for layer_name, setbacks in layers.items():
+            logger.info('- Transfering %s', layer_name)
+            description = descriptions.get(layer_name, None)
+            scale = scale_factors.get(layer_name, None)
             if scale is not None:
                 scale_factor = scale['scale_factor']
                 dtype = scale['dtype']
@@ -198,12 +183,10 @@ class SetbacksConverter(ExclusionsConverter):
                 scale_factor = None
                 dtype = None
 
-            description = descriptions.get(layer, None)
-
-            excls.setbacks_to_layer(layer, setbacks, check_tiff=check_tiff,
-                                    is_inclusion_layer=are_inclusion_layers,
-                                    transform_atol=transform_atol,
-                                    coord_atol=coord_atol,
-                                    description=description,
-                                    scale_factor=scale_factor,
-                                    dtype=dtype)
+            self.write_setbacks_to_h5(setbacks, layer_name,
+                                      check_tiff=check_tiff,
+                                      is_inclusion_layer=are_inclusion_layers,
+                                      transform_atol=transform_atol,
+                                      description=description,
+                                      scale_factor=scale_factor,
+                                      dtype=dtype, replace=replace)
