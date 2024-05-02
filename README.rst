@@ -2,25 +2,27 @@
 Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
 ************************************************************************
 
-.. image:: https://github.com/NREL/reVX/workflows/Documentation/badge.svg
+|Docs| |Tests| |Linter| |PythonV| |PyPi| |Codecov| |Zenondo|
+
+.. |Docs| image:: https://github.com/NREL/reVX/workflows/Documentation/badge.svg
     :target: https://nrel.github.io/reVX/
 
-.. image:: https://github.com/NREL/reVX/workflows/Pytests/badge.svg
+.. |Tests| image:: https://github.com/NREL/reVX/workflows/Pytests/badge.svg
     :target: https://github.com/NREL/reVX/actions?query=workflow%3A%22Pytests%22
 
-.. image:: https://github.com/NREL/reVX/workflows/Lint%20Code%20Base/badge.svg
+.. |Linter| image:: https://github.com/NREL/reVX/workflows/Lint%20Code%20Base/badge.svg
     :target: https://github.com/NREL/reVX/actions?query=workflow%3A%22Lint+Code+Base%22
 
-.. image:: https://img.shields.io/pypi/pyversions/NREL-reVX.svg
+.. |PythonV| image:: https://img.shields.io/pypi/pyversions/NREL-reVX.svg
     :target: https://pypi.org/project/NREL-reVX/
 
-.. image:: https://badge.fury.io/py/NREL-reVX.svg
+.. |PyPi| image:: https://badge.fury.io/py/NREL-reVX.svg
     :target: https://badge.fury.io/py/NREL-reVX
 
-.. image:: https://codecov.io/gh/nrel/reVX/branch/main/graph/badge.svg?token=3J5M44VAA9
+.. |Codecov| image:: https://codecov.io/gh/nrel/reVX/branch/main/graph/badge.svg?token=3J5M44VAA9
     :target: https://codecov.io/gh/nrel/reVX
 
-.. image:: https://zenodo.org/badge/201337735.svg
+.. |Zenondo| image:: https://zenodo.org/badge/201337735.svg
    :target: https://zenodo.org/badge/latestdoi/201337735
 
 .. inclusion-intro
