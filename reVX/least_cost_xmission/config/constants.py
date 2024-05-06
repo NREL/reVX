@@ -1,6 +1,8 @@
 """
 Standard filenames, H5 layer names, etc.
 """
+ALL = 'all'
+
 WET_COSTS_H5_LAYER_NAME = 'wet_costs'
 LANDFALL_COSTS_H5_LAYER_NAME = 'landfall_costs'
 DRY_COSTS_H5_LAYER_NAME = 'dry_costs'
