@@ -1500,17 +1500,17 @@ def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
         Array of (x, y) indices corresponding to the LCP route.
     lens : array-like
         Array of lengths that the route takes through every pixel.
-    results : pd.Series
-        Series of results for this path to which layer costs will be
+    results : dict
+        Dictionary of results for this path to which layer costs will be
         added.
     scale_by_length : bool, optional
         Option to scale costs by length. By default, ``True``.
 
     Returns
     -------
-    pd.Series
-        Series of results for this path with individual layer costs and
-        distances added.
+    dict
+        Dictionary of results for this path with individual layer costs
+        and distances added.
     """
     for layer_name, layer_cost_arr in layer_map.items():
         layer_costs = layer_cost_arr[indices[:, 0], indices[:, 1]]
