@@ -303,8 +303,10 @@ class TieLineCosts:
         if (overlap > 1).any():
             all_layers = cost_layers + li_cost_layers
             msg = (f"Found overlap in cost layers: {all_layers}! Some cells "
-                   "may contain double-counted costs. Please verify that all "
-                   "cost layers are mutually exclusive!")
+                   "may contain double-counted costs. If you intentionally "
+                   "specified cost layers that overlap, please ignore this "
+                   "message. Otherwise, verify that all cost layers are "
+                   "mutually exclusive!")
             logger.warning(msg)
             warn(msg)
 
