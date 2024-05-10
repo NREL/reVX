@@ -51,6 +51,9 @@ class FakeIoHandler:
         global global_result  # pylint: disable=global-statement
         global_result = data
 
+    def write_layer_to_h5(self, data, layer_name):
+        pass
+
 
 io_handler: LayeredTransmissionH5 = FakeIoHandler((3, 3))  # type: ignore
 

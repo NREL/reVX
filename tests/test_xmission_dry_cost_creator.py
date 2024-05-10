@@ -125,7 +125,6 @@ def test_cli(runner):
 
         config = {"h5_fpath": h5_fpath,
                   "template_raster_fpath": ISO_REGIONS_F,
-                  "ignore_masks": True,
                   "output_tiff_dir": td,
                   "dry_costs": {"iso_region_tiff": temp_iso,
                                 "nlcd_tiff": NLCD_F,

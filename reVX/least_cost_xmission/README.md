@@ -29,9 +29,7 @@ Note that the *friction* and *barriers* layers must be combined together, using 
 The final costs and barriers layers must be saved in an H5 file for the routing code to run. A new H5 file can be created as shown below. Both the template raster and existing H5 file must have the same shape, CRS, and transform.
 
 ```
-$ transmission-layer-creator --verbose create-h5 \
-    --template-raster template_raster.tif --existing-h5-file existing.h5 \
-    --new-h5-file new.h5
+$ transmission-layer-creator --verbose create-h5 --template-raster template_raster.tif --new-h5-file new.h5
 ```
 
 ## Masks
@@ -87,16 +85,76 @@ The below example JSON file shows all possible keys with example values. The for
     "layer_dir": "/projects/rev/projects/wowts/data/final_friction_tifs/",
     "output_tiff_dir": "/projects/rev/projects/wowts/data/output_tifs/",
 
-    "wet_costs": {
-        "bathy_tiff": "bathymetry.tif",
-        "bins": [
-            {              "max": -2500, "value": 80526},
-            {"min": -2500, "max": -2000, "value": 73205},
-            {"min": -2000, "max": -1500, "value": 66550},
-            {"min": -1500, "max": -1000, "value": 60500},
-            {"min": -1000, "max": -500,  "value": 55000},
-            {"min": -500,                "value": 50000}
-        ]
+    "layers": [
+        {
+            "layer_name": "wet_costs",
+            "description": null,
+            "include_in_h5": true,
+            "build": {
+                "bathymetry.tif": {
+                    "extent": "wet+",
+                    "bins": [
+                        {              "max": -2500, "value": 80526},
+                        {"min": -2500, "max": -2000, "value": 73205},
+                        {"min": -2000, "max": -1500, "value": 66550},
+                        {"min": -1500, "max": -1000, "value": 60500},
+                        {"min": -1000, "max": -500,  "value": 55000},
+                        {"min": -500,                "value": 50000}
+                    ]
+                },
+            }
+        },
+        {
+            "layer_name": "landfall_costs",
+            "description": null,
+            "include_in_h5": true,
+            "build": {
+                "bathymetry.tif": {
+                    "extent": "wet+",
+                    "global_value": 450e6
+                },
+            }
+        },
+        {
+            "layer_name": "barrier",
+            "description": null,
+            "include_in_h5": false,
+            "build": {
+                "CAN_MEX_boundary_20240131.gpkg": {
+                    "extent": "all",
+                    "rasterize": {
+                        "value": 106,
+                        "reproject": true
+                    }
+                },
+                "west_coast_slope.tif": {
+                    "extent": "wet",
+                    "bins": [{ "min": 15, "value": 101 }]
+                },
+                "/projects/rev/data/conus/rasters/swca_cultural_resources_risk.tif": {
+                    "extent": "all",
+                    "map": { "4": 102 }
+                }
+            }
+        },
+        {
+            "layer_name": "friction",
+            "description": null,
+            "include_in_h5": false,
+            "build": {
+                "west_coast_slope.tif": {
+                    "extent": "wet",
+                    "bins": [{ "min": 10, "max": 15, "value": 5 }]
+                },
+                "mpa.tif": { "map": {"2": 5, "3": 7}, "extent": "all" },
+            }
+        },
+    ]
+
+    "merge_friction_and_barriers": {
+        "friction_layer": "friction",
+        "barrier_layer": "barrier",
+        "barrier_multiplier": 1e6
     },
 
     "dry_costs": {
@@ -108,38 +166,6 @@ The below example JSON file shows all possible keys with example values. The for
             /optional/path/to/extra/layer1.tif",
             /optional/path/to/extra/layer2.tif"
         ]
-    }
-
-    "landfall_cost": 450e6,
-
-    "barrier_layers": {
-        "CAN_MEX_boundary_20240131.gpkg": {
-            "extent": "all",
-            "rasterize": {
-                "value": 106,
-                "reproject": true
-            }
-        },
-        "west_coast_slope.tif": {
-            "extent": "wet",
-            "range": [{ "min": 15, "value": 101 }]
-        },
-        "/projects/rev/data/conus/rasters/swca_cultural_resources_risk.tif": {
-            "extent": "all",
-            "map": { "4": 102 }
-        }
-    },
-
-    "friction_layers": {
-        "west_coast_slope.tif": {
-            "extent": "wet",
-            "range": [{ "min": 10, "max": 15, "value": 5 }]
-        },
-        "mpa.tif": { "map": {"2": 5, "3": 7}, "extent": "all" },
-    },
-
-    "merge_friction_and_barriers": {
-        "barrier_multiplier": 1e6
     }
 }
 ```
@@ -154,9 +180,8 @@ We can do this using the create
 $ transmission-layer-creator --verbose create-h5 -t template.tif -h new_xmission_routing_layers.h5
 ```
 
-(Next step is *optional* for dry-only runs: if you skip this, just add `"ignore_masks": true` to your config)
-We also need to create the land mask (optional for dry-only runs:
-just skip this step and add `"ignore_masks": true` to your config), which we can do by running
+(Next step is *optional* for dry-only runs)
+We also need to create the land mask, which we can do by running
 
 ```
 $ transmission-layer-creator --verbose create-masks -l land_mask_vector.gpkg -t template.tif -m ./masks
@@ -181,8 +206,6 @@ The below file can be used as a template to compute the costs to be used in a Le
 {
     "h5_fpath": "./new_transmission_cost_file_name.h5",
     "template_raster_fpath": "/path/to/template/raster.tif",
-
-    "ignore_masks": true,
     "output_tiff_dir": "./output_transmission_tiffs",
 
     "dry_costs": {
