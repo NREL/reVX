@@ -19,7 +19,7 @@ from reVX import TESTDATADIR
 # from reVX.cli import main as cli
 from reVX.least_cost_xmission.transmission_layer_creator_cli import main
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
-from reVX.least_cost_xmission.costs.dry_cost_creator import (
+from reVX.least_cost_xmission.layers.dry_cost_creator import (
     DryCostCreator, XmissionConfig
 )
 from reVX.least_cost_xmission.config import TEST_DEFAULT_MULTS

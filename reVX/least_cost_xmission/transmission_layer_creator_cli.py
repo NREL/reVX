@@ -24,7 +24,7 @@ from reVX.least_cost_xmission.layers.friction_barrier_builder import (
     FrictionBarrierBuilder
 )
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
-from reVX.least_cost_xmission.costs.dry_cost_creator import DryCostCreator
+from reVX.least_cost_xmission.layers.dry_cost_creator import DryCostCreator
 
 
 logger = logging.getLogger(__name__)
