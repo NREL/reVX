@@ -364,7 +364,7 @@ def _validate_bin_continuity(bins):
         if bin.min < last_max:
             last_bin = sorted_bins[i - 1] if i > 0 else '-infinity'
             msg = (f'Overlapping bins detected between bin {last_bin} '
-                    f'and {bin}')
+                   f'and {bin}')
             logger.warning(msg)
             warn(msg)
         if bin.min > last_max:

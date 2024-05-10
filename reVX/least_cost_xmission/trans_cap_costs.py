@@ -1016,7 +1016,7 @@ class TransCapCosts(TieLineCosts):
 
         return [row, col]
 
-    def compute_tie_line_costs(self, # noqa: C901
+    def compute_tie_line_costs(self,  # noqa: C901
                                min_line_length=MINIMUM_SPUR_DIST_KM,
                                save_paths=False,
                                ) -> Union[pd.DataFrame, gpd.GeoDataFrame]:
