@@ -11,7 +11,7 @@ from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
 
 
-class LayerCreator(ABC):
+class BaseLayerCreator(ABC):
     """
     Abstract Base Class to create and save transmission routing layers
     """

@@ -16,7 +16,7 @@ from reVX.least_cost_xmission.config import (
     METERS_IN_MILE, HILL_MULT, MTN_MULT, HILL_SLOPE, MTN_SLOPE
 )
 from reVX.least_cost_xmission.layers.masks import MaskArr
-from reVX.least_cost_xmission.layers.base import LayerCreator
+from reVX.least_cost_xmission.layers.base import BaseLayerCreator
 from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
                                                        DRY_MULTIPLIER_TIFF)
 
@@ -32,7 +32,7 @@ NLCD_LAND_USE_CLASSES: LandUseClasses = {
 }
 
 
-class DryCostCreator(LayerCreator):
+class DryCostCreator(BaseLayerCreator):
     """
     Class to create and save dry transmission cost layers
     """
