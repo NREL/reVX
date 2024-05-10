@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
-from reVX.config.transmission_layer_creation import Extents, FBLayerConfig
+from reVX.config.transmission_layer_creation import Extents, LayerBuildConfig
 from reVX.least_cost_xmission.layers.base import BaseLayerCreator
 from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
@@ -46,7 +46,7 @@ class LayerCreator(BaseLayerCreator):
         super().__init__(io_handler=io_handler, mask=None,
                          output_tiff_dir=output_tiff_dir, dtype=dtype)
 
-    def build(self, layer_name, build_config: Dict[str, FBLayerConfig],
+    def build(self, layer_name, build_config: Dict[str, LayerBuildConfig],
               values_are_costs_per_mile=False, write_to_h5=True,
               description=None):
         """
@@ -58,7 +58,7 @@ class LayerCreator(BaseLayerCreator):
         layer_name : str
             Name of layer to use in H5 and for output tiff.
         build_config : dict
-            Dict of FBLayerConfigs keyed by GeoTIFF/vector filenames.
+            Dict of LayerBuildConfig keyed by GeoTIFF/vector filenames.
         values_are_costs_per_mile : bool, default=False
             Option to convert values into costs per cell under the
             assumption that the resulting values arte costs in $/mile.
@@ -73,7 +73,7 @@ class LayerCreator(BaseLayerCreator):
         layer_name = layer_name.replace(".tif", "").replace(".tiff", "")
         logger.debug('Combining %s layers', layer_name)
         result = np.zeros(self._io_handler.shape, dtype=self._dtype)
-        fi_layers: Dict[str, FBLayerConfig] = {}
+        fi_layers: Dict[str, LayerBuildConfig] = {}
 
         for fname, config in build_config.items():
             if config.forced_inclusion:
@@ -108,17 +108,17 @@ class LayerCreator(BaseLayerCreator):
                                                description=description)
 
     def _process_raster_layer(self, data: npt.NDArray,  # type: ignore[return]
-                              config: FBLayerConfig) -> npt.NDArray:
-        """
-        Process array using FBLayerConfig to create the desired layer. Desired
-        "range" or "map" operation is only applied to the area indicated by the
-        "extent".
+                              config: LayerBuildConfig) -> npt.NDArray:
+        """Create the desired layer from the array using LayerBuildConfig.
+
+        Desired "range" or "map" operation is only applied to the area
+        indicated by the "extent".
 
         Parameters
         ----------
         data : array-like
             Array of data to process.
-        config : FBLayerConfig
+        config : LayerBuildConfig
             Definition of layer processing.
 
         Returns
@@ -178,7 +178,7 @@ class LayerCreator(BaseLayerCreator):
         processed[mask] = temp[mask]
         return processed
 
-    def _process_vector_layer(self, fname: str, config: FBLayerConfig
+    def _process_vector_layer(self, fname: str, config: LayerBuildConfig
                               ) -> npt.NDArray:
         """
         Rasterize a vector layer
@@ -187,7 +187,7 @@ class LayerCreator(BaseLayerCreator):
         ----------
         fname : str
             Name of vector layer to rasterize
-        config : FBLayerConfig
+        config : LayerBuildConfig
             Config for layer
 
         Returns
@@ -216,7 +216,7 @@ class LayerCreator(BaseLayerCreator):
         return processed
 
     def _process_forced_inclusions(self, data: npt.NDArray,
-                                   fi_layers: Dict[str, FBLayerConfig]
+                                   fi_layers: Dict[str, LayerBuildConfig]
                                    ) -> npt.NDArray:
         """
         Use forced inclusion (FI) layers to remove barriers/friction. Any
@@ -308,13 +308,12 @@ class LayerCreator(BaseLayerCreator):
         return mask
 
     @staticmethod
-    def _check_tiff_layer_config(config: FBLayerConfig):
-        """
-        Check if a FBLayerConfig is valid for a GeoTIFF.
+    def _check_tiff_layer_config(config: LayerBuildConfig):
+        """ Check if a LayerBuildConfig is valid for a GeoTIFF.
 
         Parameters
         ----------
-        config : FBLayerConfig
+        config : LayerBuildConfig
             The config model to check
 
         Raises

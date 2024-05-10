@@ -8,7 +8,8 @@ import pytest
 import numpy as np
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
-from reVX.config.transmission_layer_creation import FBLayerConfig, RangeConfig
+from reVX.config.transmission_layer_creation import (LayerBuildConfig,
+                                                     RangeConfig)
 from reVX.least_cost_xmission.layers import LayerCreator
 from reVX.least_cost_xmission.layers.masks import Masks
 
@@ -55,11 +56,11 @@ def test_mask_plus():
 
 
 def test_bins():
-    """ Test bins key in FBLayerConfig """
+    """ Test bins key in LayerBuildConfig """
     data = np.array([[1, 2, 3],
                      [4, 5, 6],
                      [7, 8, 9]])
-    config = FBLayerConfig(
+    config = LayerBuildConfig(
         extent='wet+',
         bins=[RangeConfig(min=1, max=5, value=4)]
     )
@@ -68,7 +69,7 @@ def test_bins():
                                 [4, 0, 0],
                                 [0, 0, 0]])).all()
 
-    config = FBLayerConfig(
+    config = LayerBuildConfig(
         extent='dry+',
         bins=[RangeConfig(min=5, max=9, value=5)]
     )
@@ -77,7 +78,7 @@ def test_bins():
                                 [0, 5, 5],
                                 [0, 5, 0]])).all()
 
-    config = FBLayerConfig(
+    config = LayerBuildConfig(
         extent='all',
         bins=[RangeConfig(min=2, max=9, value=5)]
     )
@@ -88,11 +89,11 @@ def test_bins():
 
 
 def test_complex_bins():
-    """ Test bins key with multiple bins in FBLayerConfig """
+    """ Test bins key with multiple bins in LayerBuildConfig """
     data = np.array([[1, 2, 3],
                      [4, 5, 6],
                      [7, 8, 9]])
-    config = FBLayerConfig(
+    config = LayerBuildConfig(
         extent='wet+',
         bins=[
             RangeConfig(min=1, max=5, value=4),
@@ -104,7 +105,7 @@ def test_complex_bins():
                                 [14, 10, 0],
                                 [10, 10, 0]])).all()
 
-    config = FBLayerConfig(
+    config = LayerBuildConfig(
         extent='all',
         bins=[
             RangeConfig(min=1, max=6, value=5),
@@ -118,11 +119,11 @@ def test_complex_bins():
 
 
 def test_map():
-    """ Test map key in FBLayerConfig """
+    """ Test map key in LayerBuildConfig """
     data = np.array([[1, 1, 1],
                      [2, 2, 2],
                      [3, 3, 3]])
-    config = FBLayerConfig(
+    config = LayerBuildConfig(
         extent='wet',
         map={1: 5, 3: 9},
     )
@@ -134,7 +135,7 @@ def test_map():
     data = np.array([[1, 1, 1],
                      [2, 2, 2],
                      [3, 3, 3]])
-    config = FBLayerConfig(
+    config = LayerBuildConfig(
         extent='landfall',
         map={1: 5, 3: 9},
     )
@@ -153,7 +154,7 @@ def test_bin_config_sanity_checking():
                       [0, 0, 0]])
 
     reverse_bins = [RangeConfig(min=10, max=0, value=1)]
-    config = FBLayerConfig(extent="all", bins=reverse_bins)
+    config = LayerBuildConfig(extent="all", bins=reverse_bins)
     with pytest.raises(AttributeError) as _:
         builder._process_raster_layer(input, config)
 
@@ -161,7 +162,7 @@ def test_bin_config_sanity_checking():
         RangeConfig(min=1, max=2, value=3),
         RangeConfig(min=2, max=5, value=4)
     ]
-    good_config = FBLayerConfig(extent="all", bins=bin_config)
+    good_config = LayerBuildConfig(extent="all", bins=bin_config)
     builder._process_raster_layer(input, good_config)
 
 
@@ -176,7 +177,7 @@ def test_cost_binning_results():
         RangeConfig(min=4, max=8, value=3),
         RangeConfig(min=8, value=4)
     ]
-    config = FBLayerConfig(extent="all", bins=bins)
+    config = LayerBuildConfig(extent="all", bins=bins)
     output = builder._process_raster_layer(input, config)
     assert (output == np.array([[1, 2, 2],
                                 [3, 3, 3],
@@ -186,7 +187,7 @@ def test_cost_binning_results():
         RangeConfig(min=2, max=4, value=2),
         RangeConfig(min=4, max=8, value=3),
     ]
-    config = FBLayerConfig(extent="all", bins=bins)
+    config = LayerBuildConfig(extent="all", bins=bins)
     output = builder._process_raster_layer(input, config)
     assert (output == np.array([[0, 2, 2],
                                 [3, 3, 3],
@@ -201,7 +202,7 @@ def test_cost_binning_results():
         RangeConfig(min=-300, max=-100, value=333),
         RangeConfig(min=-100, value=111)
     ]
-    config = FBLayerConfig(extent="all", bins=bins)
+    config = LayerBuildConfig(extent="all", bins=bins)
     output = builder._process_raster_layer(input, config)
     assert (output == np.array([[999, 666, 111],
                                 [999, 333, 111],

@@ -10,7 +10,7 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
-from reVX.config.transmission_layer_creation import FBLayerConfig
+from reVX.config.transmission_layer_creation import LayerBuildConfig
 from reVX.least_cost_xmission.layers import LayerCreator
 from reVX.least_cost_xmission.layers.masks import Masks
 
@@ -74,15 +74,15 @@ masks._landfall_mask = np.array([[False, True, False],
 def test_forced_inclusion():
     """ Test forced inclusions """
     config = {
-        'fi_1.tif': FBLayerConfig(
+        'fi_1.tif': LayerBuildConfig(
             extent='wet+',
             forced_inclusion=True,
         ),
-        'friction_1.tif': FBLayerConfig(
+        'friction_1.tif': LayerBuildConfig(
             extent='all',
             map={1: 1, 2: 2, 3: 3}
         ),
-        'fi_2.tif': FBLayerConfig(
+        'fi_2.tif': LayerBuildConfig(
             extent='dry+',
             forced_inclusion=True,
         ),

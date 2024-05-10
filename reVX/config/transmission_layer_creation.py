@@ -45,7 +45,7 @@ class Rasterize(BaseModel, extra='forbid'):
     """Reproject vector to raster CRS if ``True``"""
 
 
-class FBLayerConfig(BaseModel, extra='forbid'):
+class LayerBuildConfig(BaseModel, extra='forbid'):
     """
     Friction and barrier layers config model.
     'global_value', 'map', 'bins', 'rasterize', and 'forced_inclusion'
@@ -183,11 +183,11 @@ class MergeFrictionBarriers(BaseModel, extra='forbid'):
     a higher value than any possible friction."""
 
 
-LayerComponents = Dict[str, FBLayerConfig]
+LayerComponents = Dict[str, LayerBuildConfig]
 """Mapping of layer components.
 
-Keys are GeoTIFF or vector filepaths. Values are the FBLayerConfig to use for
-that file."""
+Keys are GeoTIFF or vector filepaths. Values are the LayerBuildConfig
+to use for that file."""
 
 
 class LayerConfig(BaseModel):
@@ -214,8 +214,8 @@ class LayerConfig(BaseModel):
     build: LayerComponents
     """Mapping of layer components used to build this layer.
 
-    Keys are GeoTIFF or vector filepaths. Values are the FBLayerConfig
-    to use for that file."""
+    Keys are GeoTIFF or vector filepaths. Values are the
+    LayerBuildConfig to use for that file."""
 
 
 Layers = List[LayerConfig]
