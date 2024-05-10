@@ -19,10 +19,8 @@ from reVX.config.transmission_layer_creation import (LayerCreationConfig,
                                                      MergeFrictionBarriers)
 from reVX.least_cost_xmission.config.constants import ALL
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
+from reVX.least_cost_xmission.layers import LayerCreator
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.layers.friction_barrier_builder import (
-    FrictionBarrierBuilder
-)
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
 from reVX.least_cost_xmission.layers.dry_cost_creator import DryCostCreator
 
@@ -74,11 +72,11 @@ def from_config(config_fpath: str):  # noqa: C901
     masks = _load_masks(config, h5_io_handler)
 
     # Perform actions in config
-    fbb = FrictionBarrierBuilder(h5_io_handler, masks, output_tiff_dir)
+    builder = LayerCreator(h5_io_handler, masks, output_tiff_dir)
     for lc in config.layers or []:
-        fbb.build(lc.layer_name, lc.build,
-                  values_are_costs_per_mile=lc.values_are_costs_per_mile,
-                  write_to_h5=lc.include_in_h5, description=lc.description)
+        builder.build(lc.layer_name, lc.build,
+                      values_are_costs_per_mile=lc.values_are_costs_per_mile,
+                      write_to_h5=lc.include_in_h5, description=lc.description)
 
     if config.dry_costs is not None:
         dc = config.dry_costs

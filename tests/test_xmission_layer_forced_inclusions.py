@@ -11,10 +11,8 @@ import numpy.typing as npt
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.config.transmission_layer_creation import FBLayerConfig
+from reVX.least_cost_xmission.layers import LayerCreator
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.layers.friction_barrier_builder import (
-    FrictionBarrierBuilder
-)
 
 global_result: npt.NDArray
 
@@ -89,7 +87,7 @@ def test_forced_inclusion():
             forced_inclusion=True,
         ),
     }
-    builder = FrictionBarrierBuilder(io_handler, masks)
+    builder = LayerCreator(io_handler, masks)
     builder.build('friction', config)
     assert (global_result == np.array([[1, 1, 1],
                                        [0, 0, 2],

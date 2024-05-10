@@ -9,10 +9,8 @@ import numpy as np
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.config.transmission_layer_creation import FBLayerConfig, RangeConfig
+from reVX.least_cost_xmission.layers import LayerCreator
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.layers.friction_barrier_builder import (
-    FrictionBarrierBuilder
-)
 
 
 class FakeIoHandler:
@@ -38,7 +36,7 @@ masks._landfall_mask = np.array([[False, True, False],
                                  [False, True, False],
                                  [False, True, False]])
 
-builder = FrictionBarrierBuilder(io_handler, masks)
+builder = LayerCreator(io_handler, masks)
 
 
 def test_mask_plus():

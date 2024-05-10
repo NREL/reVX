@@ -22,10 +22,9 @@ TIFF_EXTENSIONS = {'.tif', '.tiff'}
 SHP_EXTENSIONS = {'.shp', '.gpkg'}
 
 
-class FrictionBarrierBuilder(BaseLayerCreator):
-    """
-    Build friction or barrier layers.
-    """
+class LayerCreator(BaseLayerCreator):
+    """Build layer based on tiff and user config."""
+
     def __init__(self, io_handler: LayeredTransmissionH5,
                  masks: Masks, output_tiff_dir=".",
                  dtype: npt.DTypeLike = DEFAULT_DTYPE):
