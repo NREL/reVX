@@ -15,8 +15,9 @@ from rex.utilities.loggers import init_mult
 from gaps.config import load_config
 
 from reVX import __version__
-from reVX.config.transmission_layer_creation import (LayerCreationConfig,
-                                                     MergeFrictionBarriers)
+from reVX.config.transmission_layer_creation import (
+    TransmissionLayerCreationConfig, MergeFrictionBarriers
+)
 from reVX.least_cost_xmission.config.constants import ALL
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.layers import LayerCreator
@@ -50,7 +51,7 @@ def from_config(config_fpath: str):  # noqa: C901
     """
     config_dict = load_config(config_fpath)
     try:
-        config = LayerCreationConfig.model_validate(config_dict)
+        config = TransmissionLayerCreationConfig.model_validate(config_dict)
     except ValidationError as e:
         logger.error(f'Error loading config file {config_fpath}:\n{e}')
         sys.exit(1)

@@ -10,7 +10,9 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
-from reVX.config.transmission_layer_creation import Extents, LayerBuildConfig
+from reVX.config.transmission_layer_creation import (Extents,
+                                                     LayerBuildConfig,
+                                                     LayerBuildComponents)
 from reVX.least_cost_xmission.layers.base import BaseLayerCreator
 from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
@@ -46,7 +48,7 @@ class LayerCreator(BaseLayerCreator):
         super().__init__(io_handler=io_handler, mask=None,
                          output_tiff_dir=output_tiff_dir, dtype=dtype)
 
-    def build(self, layer_name, build_config: Dict[str, LayerBuildConfig],
+    def build(self, layer_name, build_config: LayerBuildComponents,
               values_are_costs_per_mile=False, write_to_h5=True,
               description=None):
         """
@@ -57,7 +59,7 @@ class LayerCreator(BaseLayerCreator):
         ----------
         layer_name : str
             Name of layer to use in H5 and for output tiff.
-        build_config : dict
+        build_config : LayerBuildComponents
             Dict of LayerBuildConfig keyed by GeoTIFF/vector filenames.
         values_are_costs_per_mile : bool, default=False
             Option to convert values into costs per cell under the
@@ -73,7 +75,7 @@ class LayerCreator(BaseLayerCreator):
         layer_name = layer_name.replace(".tif", "").replace(".tiff", "")
         logger.debug('Combining %s layers', layer_name)
         result = np.zeros(self._io_handler.shape, dtype=self._dtype)
-        fi_layers: Dict[str, LayerBuildConfig] = {}
+        fi_layers: LayerBuildComponents = {}
 
         for fname, config in build_config.items():
             if config.forced_inclusion:
@@ -216,7 +218,7 @@ class LayerCreator(BaseLayerCreator):
         return processed
 
     def _process_forced_inclusions(self, data: npt.NDArray,
-                                   fi_layers: Dict[str, LayerBuildConfig]
+                                   fi_layers: LayerBuildComponents
                                    ) -> npt.NDArray:
         """
         Use forced inclusion (FI) layers to remove barriers/friction. Any
@@ -227,7 +229,7 @@ class LayerCreator(BaseLayerCreator):
         ----------
         data : array-like
             Composite friction or barrier layer
-        fi_layers : dict
+        fi_layers : LayerBuildComponents
             Dict of forced inclusions layers keyed by GeoTIFF filename.
 
         Returns

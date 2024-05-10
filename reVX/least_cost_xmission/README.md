@@ -42,7 +42,7 @@ $ transmission-layer-creator --verbose create-masks \
     --masks-dir masks
 ```
 ## Layer Creation Configuration File
-Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator from-config`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) command-line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `LayerCreationConfig` class of [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options and can trigger a number of different operations depending on it's contents. These operations include:
+Layers are created by passing a JSON configuration file (config file) to the [`transmission-layer-creator from-config`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) command-line tool. The format of the JSON file is defined using [Pydantic](https://docs.pydantic.dev/latest/) in the `TransmissionLayerCreationConfig` class of [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py). The config file consists of key-value pairs describing necessary files and layer creation options and can trigger a number of different operations depending on it's contents. These operations include:
 
 * Creating wet and dry (TODO) cost layers
 * Combining wet and dry costs
@@ -75,7 +75,7 @@ The keys below represent layer creation actions. Mostly analyses will need all l
   * `merge_friction_and_barriers` - Combine friction and barriers and save as H5. This action must be performed if the friction or barriers have been modified.
 
 ## Layer Creation Config File Examples
-The below example JSON file shows all possible keys with example values. The formal config file definition is the `LayerCreationConfig` class in the [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py) file.
+The below example JSON file shows all possible keys with example values. The formal config file definition is the `TransmissionLayerCreationConfig` class in the [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py) file.
 ```
 {
     "template_raster_fpath": "bathymetry.tif",

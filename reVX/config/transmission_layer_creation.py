@@ -183,8 +183,8 @@ class MergeFrictionBarriers(BaseModel, extra='forbid'):
     a higher value than any possible friction."""
 
 
-LayerComponents = Dict[str, LayerBuildConfig]
-"""Mapping of layer components.
+LayerBuildComponents = Dict[str, LayerBuildConfig]
+"""Mapping of layer components to use for building the final layer.
 
 Keys are GeoTIFF or vector filepaths. Values are the LayerBuildConfig
 to use for that file."""
@@ -211,7 +211,7 @@ class LayerConfig(BaseModel):
     what is ultimately used for routing.
     """
 
-    build: LayerComponents
+    build: LayerBuildComponents
     """Mapping of layer components used to build this layer.
 
     Keys are GeoTIFF or vector filepaths. Values are the
@@ -222,7 +222,7 @@ Layers = List[LayerConfig]
 """Layer configs to build and potentially add to H5 file. """
 
 
-class LayerCreationConfig(BaseModel):
+class TransmissionLayerCreationConfig(BaseModel):
     """
     Definition of friction, barrier, and costs processing JSON config file.
     """
