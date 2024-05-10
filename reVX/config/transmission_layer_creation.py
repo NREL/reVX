@@ -92,15 +92,6 @@ class LayerBuildConfig(BaseModel, extra='forbid'):
     inclusions are allowed."""
 
 
-class WetCosts(BaseModel, extra='forbid'):
-    """ Config items required to generate wet costs """
-    bins: List[RangeConfig]
-    """Bins (ranges) for determining depth based costs"""
-
-    bathy_tiff: FilePath
-    """File name of bathymetric depth GeoTIFF"""
-
-
 class DryCosts(BaseModel, extra='forbid'):
     """ Config items required to generate dry costs """
     iso_region_tiff: FilePath
