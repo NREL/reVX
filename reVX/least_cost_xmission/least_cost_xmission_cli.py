@@ -24,8 +24,14 @@ from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
                                                           ReinforcedXmission)
-from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
-                                             SINK_CAT, SUBSTATION_CAT)
+from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+                                                       LOAD_CENTER_CAT,
+                                                       SINK_CAT,
+                                                       SUBSTATION_CAT,
+                                                       MINIMUM_SPUR_DIST_KM,
+                                                       BARRIERS_MULT,
+                                                       CLIP_RASTER_BUFFER,
+                                                       NUM_NN_SINKS)
 from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
 
 TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
@@ -130,7 +136,7 @@ def from_config(ctx, config, verbose):
               default=None,
               help=("Path to Xmission config .json"))
 @click.option('--min_line_length', '-mll', type=int,
-              show_default=True, default=0,
+              show_default=True, default=MINIMUM_SPUR_DIST_KM,
               help=("Minimum Tie-line length."))
 @click.option('--sc_point_gids', '-gids', type=INTLIST, show_default=True,
               default=None, help=("List of sc_point_gids to connect to. If "
@@ -141,14 +147,14 @@ def from_config(ctx, config, verbose):
                                   "makes it seamless to run on a supply curve "
                                   "output from reV"))
 @click.option('--nn_sinks', '-nn', type=int,
-              show_default=True, default=2,
+              show_default=True, default=NUM_NN_SINKS,
               help=("Number of nearest neighbor sinks to use for clipping "
                     "radius calculation. This is overridden by --radius"))
 @click.option('--clipping_buffer', '-buffer', type=float,
-              show_default=True, default=1.05,
+              show_default=True, default=CLIP_RASTER_BUFFER,
               help=("Buffer to expand clipping radius by"))
 @click.option('--barrier_mult', '-bmult', type=float,
-              show_default=True, default=100,
+              show_default=True, default=BARRIERS_MULT,
               help=("Tranmission barrier multiplier, used when computing the "
                     "least cost tie-line path"))
 @click.option('--max_workers', '-mw', type=INT,

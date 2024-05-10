@@ -10,15 +10,19 @@ import numpy.typing as npt
 from typing import Optional, Dict, Union, List, Tuple
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
-from reVX.least_cost_xmission.config import (
-    XmissionConfig, CELL_SIZE, LandUseClasses, LandUseMultipliers,
-    SlopeMultipliers, IsoMultipliers, WATER_MULT, WATER_NLCD_CODE,
-    METERS_IN_MILE, HILL_MULT, MTN_MULT, HILL_SLOPE, MTN_SLOPE
-)
+from reVX.least_cost_xmission.config import (XmissionConfig, LandUseClasses,
+                                             LandUseMultipliers,
+                                             SlopeMultipliers, IsoMultipliers)
+from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
+                                                       WATER_MULT,
+                                                       WATER_NLCD_CODE,
+                                                       METERS_IN_MILE,
+                                                       HILL_MULT, MTN_MULT,
+                                                       HILL_SLOPE, MTN_SLOPE,
+                                                       DEFAULT_DTYPE,
+                                                       DRY_MULTIPLIER_TIFF)
 from reVX.least_cost_xmission.layers.masks import MaskArr
 from reVX.least_cost_xmission.layers.base import BaseLayerCreator
-from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE,
-                                                       DRY_MULTIPLIER_TIFF)
 
 logger = logging.getLogger(__name__)
 

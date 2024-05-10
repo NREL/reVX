@@ -19,9 +19,19 @@ from typing import Union, Optional, Tuple, Dict
 
 from reV.handlers.exclusions import ExclusionLayers
 
-from reVX.least_cost_xmission.config import (XmissionConfig, TRANS_LINE_CAT,
-                                             SINK_CAT, SUBSTATION_CAT,
-                                             LOAD_CENTER_CAT, CELL_SIZE)
+from reVX.least_cost_xmission.config import XmissionConfig
+from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+                                                       SINK_CAT,
+                                                       SINK_CONNECTION_COST,
+                                                       SUBSTATION_CAT,
+                                                       LOAD_CENTER_CAT,
+                                                       CELL_SIZE,
+                                                       SHORT_MULT,
+                                                       MEDIUM_MULT,
+                                                       SHORT_CUTOFF,
+                                                       MEDIUM_CUTOFF,
+                                                       MINIMUM_SPUR_DIST_KM,
+                                                       BARRIERS_MULT)
 from reVX.utilities.exceptions import (InvalidMCPStartValueError,
                                        LeastCostPathNotFoundError)
 
@@ -38,7 +48,8 @@ class TieLineCosts:
     """Expected name of transmission barrier layer in cost HDF5 file. """
 
     def __init__(self, cost_fpath, start_indices, cost_layers,
-                 row_slice, col_slice, xmission_config=None, barrier_mult=100,
+                 row_slice, col_slice, xmission_config=None,
+                 barrier_mult=BARRIERS_MULT,
                  length_invariant_cost_layers=None):
         """
         Parameters
@@ -259,7 +270,7 @@ class TieLineCosts:
         return xmission_config
 
     def _clip_costs(self, cost_layers, length_invariant_cost_layers=None,
-                    barrier_mult=100):
+                    barrier_mult=BARRIERS_MULT):
         """Extract clipped cost arrays from exclusion .h5 files
 
         Parameters
@@ -529,8 +540,9 @@ class TieLineCosts:
 
     @classmethod
     def run(cls, cost_fpath, start_indices, end_indices, cost_layers,
-            row_slice, col_slice, xmission_config=None, barrier_mult=100,
-            save_paths=False, length_invariant_cost_layers=None):
+            row_slice, col_slice, xmission_config=None,
+            barrier_mult=BARRIERS_MULT, save_paths=False,
+            length_invariant_cost_layers=None):
         """
         Compute least cost tie-line path to all features to be connected
         a single supply curve point.
@@ -611,7 +623,8 @@ class TransCapCosts(TieLineCosts):
 
     def __init__(self, cost_fpath, sc_point, features, capacity_class,
                  cost_layers, radius=None, xmission_config=None,
-                 barrier_mult=100, length_invariant_cost_layers=None):
+                 barrier_mult=BARRIERS_MULT,
+                 length_invariant_cost_layers=None):
         """
         Parameters
         ----------
@@ -1003,7 +1016,8 @@ class TransCapCosts(TieLineCosts):
 
         return [row, col]
 
-    def compute_tie_line_costs(self, min_line_length=5.7,  # noqa: C901
+    def compute_tie_line_costs(self, # noqa: C901
+                               min_line_length=MINIMUM_SPUR_DIST_KM,
                                save_paths=False,
                                ) -> Union[pd.DataFrame, gpd.GeoDataFrame]:
         """
@@ -1013,7 +1027,7 @@ class TransCapCosts(TieLineCosts):
         Parameters
         ----------
         min_line_length : float, optional
-            Minimum line length in km, by default 5.7
+            Minimum line length in km, by default 0
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
@@ -1123,12 +1137,12 @@ class TransCapCosts(TieLineCosts):
 
         # Length multiplier
         features['length_mult'] = 1.0
-        # Short cutoff
-        mask = features['dist_km'] < 3 * 5280 / 3.28084 / 1000
-        features.loc[mask, 'length_mult'] = 1.5
         # Medium cutoff
-        mask = features['dist_km'] <= 10 * 5280 / 3.28084 / 1000
-        features.loc[mask, 'length_mult'] = 1.2
+        mask = features['dist_km'] <= MEDIUM_CUTOFF
+        features.loc[mask, 'length_mult'] = MEDIUM_MULT
+        # Short cutoff
+        mask = features['dist_km'] < SHORT_CUTOFF
+        features.loc[mask, 'length_mult'] = SHORT_MULT
 
         features['tie_line_cost'] = (features['raw_line_cost']
                                      * features['length_mult'])
@@ -1148,7 +1162,7 @@ class TransCapCosts(TieLineCosts):
 
         # Sink costs
         mask = features['category'] == SINK_CAT
-        features.loc[mask, 'new_sub_cost'] = 1e11
+        features.loc[mask, 'new_sub_cost'] = SINK_CONNECTION_COST
 
         # Total cost
         features['connection_cost'] = (features['xformer_cost']
@@ -1157,7 +1171,7 @@ class TransCapCosts(TieLineCosts):
 
         return features
 
-    def compute(self, min_line_length=5.7, save_paths=False,
+    def compute(self, min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
                 simplify_geo=None):
         """
         Compute Transmission capital cost of connecting SC point to
@@ -1167,7 +1181,7 @@ class TransCapCosts(TieLineCosts):
         Parameters
         ----------
         min_line_length : float, optional
-            Minimum line length in km, by default 5.7
+            Minimum line length in km, by default 0
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
@@ -1214,9 +1228,9 @@ class TransCapCosts(TieLineCosts):
 
     @classmethod
     def run(cls, cost_fpath, sc_point, features, capacity_class, cost_layers,
-            radius=None, xmission_config=None, barrier_mult=100,
-            min_line_length=5.7, save_paths=False, simplify_geo=None,
-            length_invariant_cost_layers=None):
+            radius=None, xmission_config=None, barrier_mult=BARRIERS_MULT,
+            min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
+            simplify_geo=None, length_invariant_cost_layers=None):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1245,7 +1259,7 @@ class TransCapCosts(TieLineCosts):
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
         min_line_length : float, optional
-            Minimum line length in km, by default 5.7
+            Minimum line length in km, by default 0
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
@@ -1313,7 +1327,7 @@ class ReinforcementLineCosts(TieLineCosts):
     """
     def __init__(self, transmission_lines, cost_fpath, start_indices,
                  capacity_class, cost_layers, row_slice, col_slice,
-                 xmission_config=None, barrier_mult=100,
+                 xmission_config=None, barrier_mult=BARRIERS_MULT,
                  length_invariant_cost_layers=None):
         """
 
@@ -1389,7 +1403,7 @@ class ReinforcementLineCosts(TieLineCosts):
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
             capacity_class, cost_layers, row_slice, col_slice,
-            xmission_config=None, barrier_mult=100, save_paths=False,
+            xmission_config=None, barrier_mult=BARRIERS_MULT, save_paths=False,
             length_invariant_cost_layers=None):
         """
         Compute reinforcement line path to all features to be connected

@@ -22,8 +22,8 @@ from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.layers.dry_cost_creator import (
     DryCostCreator, XmissionConfig
 )
-from reVX.least_cost_xmission.config import TEST_DEFAULT_MULTS
-from reVX.least_cost_xmission.config.constants import DRY_MULTIPLIER_TIFF
+from reVX.least_cost_xmission.config.constants import (DRY_MULTIPLIER_TIFF,
+                                                       TEST_DEFAULT_MULTS)
 
 
 BASELINE_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')

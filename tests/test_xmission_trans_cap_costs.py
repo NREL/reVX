@@ -10,8 +10,10 @@ import numpy as np
 import os
 import pytest
 
-from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
-                                             SINK_CAT, SUBSTATION_CAT)
+from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+                                                       LOAD_CENTER_CAT,
+                                                       SINK_CAT,
+                                                       SUBSTATION_CAT)
 # from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
 #                                                       TransCapCosts)
 # from reVX import TESTDATADIR

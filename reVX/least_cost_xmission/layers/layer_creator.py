@@ -16,8 +16,9 @@ from reVX.config.transmission_layer_creation import (Extents,
 from reVX.least_cost_xmission.layers.base import BaseLayerCreator
 from reVX.least_cost_xmission.layers.utils import rasterize_shape_file
 from reVX.least_cost_xmission.layers.masks import MaskArr, Masks
-from reVX.least_cost_xmission.config import METERS_IN_MILE, CELL_SIZE
-from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE, ALL)
+from reVX.least_cost_xmission.config.constants import (DEFAULT_DTYPE, ALL,
+                                                       METERS_IN_MILE,
+                                                       CELL_SIZE)
 
 logger = logging.getLogger(__name__)
 TIFF_EXTENSIONS = {'.tif', '.tiff'}
