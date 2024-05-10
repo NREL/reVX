@@ -50,8 +50,8 @@ class LayerCreator(BaseLayerCreator):
               values_are_costs_per_mile=False, write_to_h5=True,
               description=None):
         """
-        Combine multiple GeoTIFFs and vectors to create a friction or barrier
-        layer and save to GeoTIFF.
+        Combine multiple GeoTIFFs and vectors to a raster layer and save
+        to GeoTIFF/HDF5 file.
 
         Parameters
         ----------
