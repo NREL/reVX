@@ -21,16 +21,19 @@ from reV.supply_curve.supply_curve import SupplyCurve
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.config import XmissionConfig
+from reVX.least_cost_xmission.config.constants import (SHORT_CUTOFF,
+                                                       SHORT_MULT,
+                                                       MEDIUM_CUTOFF,
+                                                       MEDIUM_MULT)
 from reVX.least_cost_xmission.least_cost_xmission_cli import main
 from reVX.least_cost_xmission.least_cost_paths_cli import main as lcp_main
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
-CHECK_COLS = ('raw_line_cost', 'dist_km', 'length_mult', 'tie_line_cost',
-              'xformer_cost_per_mw', 'xformer_cost', 'sub_upgrade_cost',
-              'new_sub_cost', 'connection_cost', 'trans_cap_cost', 'trans_gid',
-              'sc_point_gid')
+CHECK_COLS = ('raw_line_cost', 'dist_km', 'xformer_cost_per_mw',
+              'xformer_cost', 'sub_upgrade_cost', 'new_sub_cost',
+              'connection_cost', 'trans_gid', 'sc_point_gid')
 ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 N_SC_POINTS = 10  # number of sc_points to run, chosen at random for each test
 DEFAULT_CONFIG = XmissionConfig()
@@ -40,6 +43,26 @@ def _cap_class_to_cap(capacity):
     """Get capacity for a capacity class. """
     capacity_class = DEFAULT_CONFIG._parse_cap_class(capacity)
     return DEFAULT_CONFIG['power_classes'][capacity_class]
+
+
+def check_length_mults(test):
+    """Check that length mults are applied correctly. """
+    test["dist_km"] = test["dist_km"].astype('float32')
+    test["length_mult"] = test["length_mult"].astype('float32')
+
+    short_mask = test["dist_km"] < SHORT_CUTOFF
+    assert (test.loc[short_mask, "length_mult"] == SHORT_MULT).all()
+
+    med_mask = ((test["dist_km"] >= SHORT_CUTOFF)
+                & (test["dist_km"] <= MEDIUM_CUTOFF))
+    assert (test.loc[med_mask, "length_mult"] == MEDIUM_MULT).all()
+
+    long_mask = test["dist_km"] > MEDIUM_CUTOFF
+    assert (test.loc[long_mask, "length_mult"] == 1).all()
+
+    test = test.sort_values(by="length_mult", ascending=True)
+    assert (test.iloc[1:]["length_mult"].values
+            >= test.iloc[:-1]["length_mult"].values).all()
 
 
 def check_baseline(truth, test, check_cols=CHECK_COLS):
@@ -70,11 +93,31 @@ def check_baseline(truth, test, check_cols=CHECK_COLS):
             c_test = p_test[c].values.astype('float32')
             assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
+        for c in ["tie_line_cost", "trans_cap_cost"]:
+            msg = f'values for {c} do not match for sc_point {gid}!'
+            # truth set has incorrect short mult
+            mask = p_true["dist_km"].astype('float32') >= SHORT_CUTOFF
+            c_truth = p_true.loc[mask, c].values.astype('float32')
+            mask = p_test["dist_km"].astype('float32') >= SHORT_CUTOFF
+            c_test = p_test.loc[mask, c].values.astype('float32')
+            assert np.allclose(c_truth, c_test, equal_nan=True), msg
+
     for c in check_cols:
         msg = f'values for {c} do not match!'
         c_truth = truth[c].values.astype('float32')
         c_test = test[c].values.astype('float32')
         assert np.allclose(c_truth, c_test, equal_nan=True), msg
+
+    for c in ["tie_line_cost", "trans_cap_cost"]:
+        msg = f'values for {c} do not match!'
+        # truth set has incorrect short mult
+        mask = truth["dist_km"].astype('float32') >= SHORT_CUTOFF
+        c_truth = truth.loc[mask, c].values.astype('float32')
+        mask = test["dist_km"].astype('float32') >= SHORT_CUTOFF
+        c_test = test.loc[mask, c].values.astype('float32')
+        assert np.allclose(c_truth, c_test, equal_nan=True), msg
+
+    check_length_mults(test)
 
 
 @pytest.fixture(scope="module")
