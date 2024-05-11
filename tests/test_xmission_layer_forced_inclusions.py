@@ -41,7 +41,7 @@ class FakeIoHandler:
                              [0, 0, 0],
                              [2, 2, 2]])
 
-        raise AttributeError
+        raise AttributeError(f"Unknown filename: {fname}")
 
     # pylint: disable=unused-argument
     def save_data_using_h5_profile(self, data: npt.NDArray, fname: str):
@@ -88,7 +88,7 @@ def test_forced_inclusion():
         ),
     }
     builder = LayerCreator(io_handler, masks)
-    builder.build('friction', config)
+    builder.build('friction', config, write_to_h5=False)
     assert (global_result == np.array([[1, 1, 1],
                                        [0, 0, 2],
                                        [3, 0, 0]])).all()
