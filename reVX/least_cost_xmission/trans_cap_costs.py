@@ -1120,9 +1120,22 @@ class TransCapCosts(TieLineCosts):
 
         return features
 
-    def compute_connection_costs(self, features=None):
+    def compute_connection_costs(self, features=None,
+                                 length_mult_kind="linear"):
         """
         Calculate connection costs for tie lines
+
+        Parameters
+        ----------
+        features : str, optional
+            Optional features input. If ``None``, features held by this
+            object are used.
+        length_mult_kind : {"step", "linear"}, default="linear"
+            Type of length multiplier calcualtion. "step" computes
+            length multipliers using a step function, while "linear"
+            computes the length multiplier using a linear interpolation
+            between 0 amd 10 mile spur-line lengths.
+            By default, ``"linear"``.
 
         Returns
         -------
@@ -1134,15 +1147,7 @@ class TransCapCosts(TieLineCosts):
             features = self.features.copy()
 
         features = features.reset_index(drop=True)
-
-        # Length multiplier
-        features['length_mult'] = 1.0
-        # Medium cutoff
-        mask = features['dist_km'] <= MEDIUM_CUTOFF
-        features.loc[mask, 'length_mult'] = MEDIUM_MULT
-        # Short cutoff
-        mask = features['dist_km'] < SHORT_CUTOFF
-        features.loc[mask, 'length_mult'] = SHORT_MULT
+        features = _compute_length_mult(features, kind=length_mult_kind)
 
         features['tie_line_cost'] = (features['raw_line_cost']
                                      * features['length_mult'])
@@ -1172,7 +1177,7 @@ class TransCapCosts(TieLineCosts):
         return features
 
     def compute(self, min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
-                simplify_geo=None):
+                simplify_geo=None, length_mult_kind="linear"):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1187,6 +1192,12 @@ class TransCapCosts(TieLineCosts):
             by default False
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
+        length_mult_kind : {"step", "linear"}, default="linear"
+            Type of length multiplier calcualtion. "step" computes
+            length multipliers using a step function, while "linear"
+            computes the length multiplier using a linear interpolation
+            between 0 amd 10 mile spur-line lengths.
+            By default, ``"linear"``.
 
         Returns
         -------
@@ -1207,7 +1218,8 @@ class TransCapCosts(TieLineCosts):
             warn(msg)
             features = features.loc[~mask]
 
-        features = self.compute_connection_costs(features=features)
+        features = self.compute_connection_costs(
+            features=features, length_mult_kind=length_mult_kind)
 
         features['trans_cap_cost'] = (features['tie_line_cost']
                                       + features['connection_cost'])
@@ -1230,7 +1242,8 @@ class TransCapCosts(TieLineCosts):
     def run(cls, cost_fpath, sc_point, features, capacity_class, cost_layers,
             radius=None, xmission_config=None, barrier_mult=BARRIERS_MULT,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
-            simplify_geo=None, length_invariant_cost_layers=None):
+            simplify_geo=None, length_invariant_cost_layers=None,
+            length_mult_kind="linear"):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1270,6 +1283,12 @@ class TransCapCosts(TieLineCosts):
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        length_mult_kind : {"step", "linear"}, default="linear"
+            Type of length multiplier calcualtion. "step" computes
+            length multipliers using a step function, while "linear"
+            computes the length multiplier using a linear interpolation
+            between 0 amd 10 mile spur-line lengths.
+            By default, ``"linear"``.
 
         Returns
         -------
@@ -1293,7 +1312,8 @@ class TransCapCosts(TieLineCosts):
 
             features = tcc.compute(min_line_length=min_line_length,
                                    save_paths=save_paths,
-                                   simplify_geo=simplify_geo)
+                                   simplify_geo=simplify_geo,
+                                   length_mult_kind=length_mult_kind)
             logger.debug('Least Cost transmission costs computed for '
                          'SC point {} in {:.4f}s'
                          .format(tcc.sc_point_gid, time.time() - ts))
@@ -1539,3 +1559,53 @@ def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
         results[f'{layer_name}_length_km'] = layer_length
 
     return results
+
+
+def _compute_length_mult(features, kind="linear"):
+    """Compute length mults based on user input.
+
+    Length multiplier data source:
+    https://www.wecc.org/Administrative/TEPPC_TransCapCostCalculator_E3_2019_Update.xlsx
+    """
+    if kind.casefold() == "step":
+        return _compute_step_wise_lm(features)
+
+    if kind.casefold() == "linear":
+        return _compute_linear_lm(features)
+
+    raise ValueError(f"Unknown length computation kind: {kind}")
+
+
+def _compute_step_wise_lm(features):
+    """Compute length mults using step function.
+
+    This was the _intented_ original implementation, though the first
+    pass was bugged and not fixed before the switch the linear mults
+    was made.
+
+    The implemetnation below works as originally intended.
+    """
+    # Length multiplier
+    features['length_mult'] = 1.0
+    # Medium cutoff
+    mask = features['dist_km'] <= MEDIUM_CUTOFF
+    features.loc[mask, 'length_mult'] = MEDIUM_MULT
+    # Short cutoff
+    mask = features['dist_km'] < SHORT_CUTOFF
+    features.loc[mask, 'length_mult'] = SHORT_MULT
+    return features
+
+
+def _compute_linear_lm(features):
+    """Compute length mults using linear interpolatiuon below 10 miles."""
+
+    # Length multiplier
+    features['length_mult'] = 1.0
+    slope = (1 - SHORT_MULT) / (MEDIUM_CUTOFF - SHORT_CUTOFF / 2)
+
+    mask = features['dist_km'] <= MEDIUM_CUTOFF
+    features.loc[mask, 'length_mult'] = (
+        slope * (features.loc[mask, 'dist_km'] -  MEDIUM_CUTOFF) + 1
+    )
+
+    return features

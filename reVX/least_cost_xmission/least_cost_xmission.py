@@ -476,7 +476,8 @@ class LeastCostXmission(LeastCostPaths):
                           barrier_mult=BARRIERS_MULT,
                           max_workers=None, save_paths=False, radius=None,
                           expand_radius=True, mp_delay=3, simplify_geo=None,
-                          length_invariant_cost_layers=None):
+                          length_invariant_cost_layers=None,
+                          length_mult_kind="linear"):
         """
         Compute Least Cost Transmission for desired sc_points
 
@@ -529,6 +530,12 @@ class LeastCostXmission(LeastCostPaths):
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        length_mult_kind : {"step", "linear"}, default="linear"
+            Type of length multiplier calcualtion. "step" computes
+            length multipliers using a step function, while "linear"
+            computes the length multiplier using a linear interpolation
+            between 0 amd 10 mile spur-line lengths.
+            By default, ``"linear"``.
 
         Returns
         -------
@@ -568,7 +575,8 @@ class LeastCostXmission(LeastCostPaths):
                 mp_delay=mp_delay,
                 simplify_geo=simplify_geo,
                 max_workers=max_workers,
-                length_invariant_cost_layers=length_invariant_cost_layers)
+                length_invariant_cost_layers=length_invariant_cost_layers,
+                length_mult_kind=length_mult_kind)
         else:
             logger.info('Computing Least Cost Transmission for {:,} SC points '
                         'in serial'.format(len(sc_point_gids)))
@@ -584,7 +592,8 @@ class LeastCostXmission(LeastCostPaths):
                 radius=radius,
                 expand_radius=expand_radius,
                 simplify_geo=simplify_geo,
-                length_invariant_cost_layers=length_invariant_cost_layers)
+                length_invariant_cost_layers=length_invariant_cost_layers,
+                length_mult_kind=length_mult_kind)
 
         if not least_costs:
             return pd.DataFrame(columns=['sc_point_gid'])
@@ -607,7 +616,8 @@ class LeastCostXmission(LeastCostPaths):
                             barrier_mult=BARRIERS_MULT, max_workers=2,
                             save_paths=False, radius=None, expand_radius=True,
                             mp_delay=3, simplify_geo=None,
-                            length_invariant_cost_layers=None):
+                            length_invariant_cost_layers=None,
+                            length_mult_kind="linear"):
         """
         Compute Least Cost Transmission for desired sc_points using
         multiple cores.
@@ -662,6 +672,12 @@ class LeastCostXmission(LeastCostPaths):
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        length_mult_kind : {"step", "linear"}, default="linear"
+            Type of length multiplier calcualtion. "step" computes
+            length multipliers using a step function, while "linear"
+            computes the length multiplier using a linear interpolation
+            between 0 amd 10 mile spur-line lengths.
+            By default, ``"linear"``.
 
         Returns
         -------
@@ -676,7 +692,7 @@ class LeastCostXmission(LeastCostPaths):
                 exe, max_workers, sc_point_gids, tie_line_voltage,
                 nn_sinks, clipping_buffer, radius, expand_radius, mp_delay,
                 capacity_class, cost_layers, barrier_mult, save_paths,
-                simplify_geo, length_invariant_cost_layers)
+                simplify_geo, length_invariant_cost_layers, length_mult_kind)
 
         return least_costs
 
@@ -684,7 +700,8 @@ class LeastCostXmission(LeastCostPaths):
                                  tie_line_voltage, nn_sinks, clipping_buffer,
                                  radius, expand_radius, mp_delay,
                                  capacity_class, cost_layers, barrier_mult,
-                                 save_paths, simplify_geo, li_cost_layers):
+                                 save_paths, simplify_geo, li_cost_layers,
+                                 length_mult_kind):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -728,7 +745,8 @@ class LeastCostXmission(LeastCostPaths):
                                 min_line_length=self._min_line_len,
                                 save_paths=save_paths,
                                 simplify_geo=simplify_geo,
-                                length_invariant_cost_layers=li_cost_layers)
+                                length_invariant_cost_layers=li_cost_layers,
+                                length_mult_kind=length_mult_kind)
             futures[future] = None
             num_jobs += 1
             if num_jobs <= max_submissions:
@@ -747,7 +765,8 @@ class LeastCostXmission(LeastCostPaths):
                              barrier_mult=BARRIERS_MULT, save_paths=False,
                              radius=None, expand_radius=True,
                              simplify_geo=None,
-                             length_invariant_cost_layers=None):
+                             length_invariant_cost_layers=None,
+                             length_mult_kind="linear"):
         """
         Compute Least Cost Transmission for desired sc_points with a
         single core.
@@ -797,6 +816,12 @@ class LeastCostXmission(LeastCostPaths):
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        length_mult_kind : {"step", "linear"}, default="linear"
+            Type of length multiplier calcualtion. "step" computes
+            length multipliers using a step function, while "linear"
+            computes the length multiplier using a linear interpolation
+            between 0 amd 10 mile spur-line lengths.
+            By default, ``"linear"``.
 
         Returns
         -------
@@ -827,7 +852,8 @@ class LeastCostXmission(LeastCostPaths):
                     save_paths=save_paths,
                     simplify_geo=simplify_geo,
                     cost_layers=cost_layers,
-                    length_invariant_cost_layers=length_invariant_cost_layers)
+                    length_invariant_cost_layers=length_invariant_cost_layers,
+                    length_mult_kind=length_mult_kind)
 
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
@@ -846,7 +872,7 @@ class LeastCostXmission(LeastCostPaths):
             clipping_buffer=CLIP_RASTER_BUFFER,
             barrier_mult=BARRIERS_MULT, max_workers=None, save_paths=False,
             radius=None, expand_radius=True, simplify_geo=None,
-            length_invariant_cost_layers=None):
+            length_invariant_cost_layers=None, length_mult_kind="linear"):
         """
         Find Least Cost Transmission connections between desired
         sc_points to given transmission features for desired capacity
@@ -908,6 +934,12 @@ class LeastCostXmission(LeastCostPaths):
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        length_mult_kind : {"step", "linear"}, default="linear"
+            Type of length multiplier calcualtion. "step" computes
+            length multipliers using a step function, while "linear"
+            computes the length multiplier using a linear interpolation
+            between 0 amd 10 mile spur-line lengths.
+            By default, ``"linear"``.
 
         Returns
         -------
@@ -933,7 +965,8 @@ class LeastCostXmission(LeastCostPaths):
                                             radius=radius,
                                             expand_radius=expand_radius,
                                             simplify_geo=simplify_geo,
-                                            length_invariant_cost_layers=licl)
+                                            length_invariant_cost_layers=licl,
+                                            length_mult_kind=length_mult_kind)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'
@@ -1051,7 +1084,7 @@ class ReinforcedXmission(LeastCostXmission):
             clipping_buffer=CLIP_RASTER_BUFFER, barrier_mult=BARRIERS_MULT,
             max_workers=None, simplify_geo=None, save_paths=False,
             radius=None, expand_radius=True,
-            length_invariant_cost_layers=None):
+            length_invariant_cost_layers=None, length_mult_kind="linear"):
         """
         Find Least Cost Transmission connections between desired
         sc_points and substations in their reinforcement region.
@@ -1126,6 +1159,12 @@ class ReinforcedXmission(LeastCostXmission):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
+        length_mult_kind : {"step", "linear"}, default="linear"
+            Type of length multiplier calcualtion. "step" computes
+            length multipliers using a step function, while "linear"
+            computes the length multiplier using a linear interpolation
+            between 0 amd 10 mile spur-line lengths.
+            By default, ``"linear"``.
 
         Returns
         -------
@@ -1148,7 +1187,8 @@ class ReinforcedXmission(LeastCostXmission):
                                             radius=radius,
                                             expand_radius=expand_radius,
                                             simplify_geo=simplify_geo,
-                                            length_invariant_cost_layers=licl)
+                                            length_invariant_cost_layers=licl,
+                                            length_mult_kind=length_mult_kind)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'
