@@ -25,7 +25,9 @@ from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
 from reVX.least_cost_xmission.least_cost_xmission import (
     reinforcement_region_mapper
 )
-from reVX.least_cost_xmission.config import TRANS_LINE_CAT, SUBSTATION_CAT
+from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+                                                       SUBSTATION_CAT,
+                                                       BARRIERS_MULT)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -178,7 +180,7 @@ def from_config(ctx, config, verbose):
               show_default=True, default=1,
               help=("Step index of features to run."))
 @click.option('--barrier_mult', '-bmult', type=float,
-              show_default=True, default=100,
+              show_default=True, default=BARRIERS_MULT,
               help=("Transmission barrier multiplier, used when computing the "
                     "least cost tie-line path"))
 @click.option('--max_workers', '-mw', type=INT,

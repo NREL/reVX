@@ -10,11 +10,9 @@ import numpy as np
 import numpy.typing as npt
 
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
-from reVX.config.transmission_layer_creation import FBLayerConfig
+from reVX.config.transmission_layer_creation import LayerBuildConfig
+from reVX.least_cost_xmission.layers import LayerCreator
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.layers.friction_barrier_builder import (
-    FrictionBarrierBuilder
-)
 
 global_result: npt.NDArray
 
@@ -43,13 +41,16 @@ class FakeIoHandler:
                              [0, 0, 0],
                              [2, 2, 2]])
 
-        raise AttributeError
+        raise AttributeError(f"Unknown filename: {fname}")
 
     # pylint: disable=unused-argument
     def save_data_using_h5_profile(self, data: npt.NDArray, fname: str):
         """ Store data to be saved in GeoTIFF to global """
         global global_result  # pylint: disable=global-statement
         global_result = data
+
+    def write_layer_to_h5(self, data, layer_name):
+        pass
 
 
 io_handler: LayeredTransmissionH5 = FakeIoHandler((3, 3))  # type: ignore
@@ -73,21 +74,21 @@ masks._landfall_mask = np.array([[False, True, False],
 def test_forced_inclusion():
     """ Test forced inclusions """
     config = {
-        'fi_1.tif': FBLayerConfig(
+        'fi_1.tif': LayerBuildConfig(
             extent='wet+',
             forced_inclusion=True,
         ),
-        'friction_1.tif': FBLayerConfig(
+        'friction_1.tif': LayerBuildConfig(
             extent='all',
             map={1: 1, 2: 2, 3: 3}
         ),
-        'fi_2.tif': FBLayerConfig(
+        'fi_2.tif': LayerBuildConfig(
             extent='dry+',
             forced_inclusion=True,
         ),
     }
-    builder = FrictionBarrierBuilder(io_handler, masks)
-    builder.build('friction', config)
+    builder = LayerCreator(io_handler, masks)
+    builder.build('friction', config, write_to_h5=False)
     assert (global_result == np.array([[1, 1, 1],
                                        [0, 0, 2],
                                        [3, 0, 0]])).all()

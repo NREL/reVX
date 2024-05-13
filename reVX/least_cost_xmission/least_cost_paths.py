@@ -18,7 +18,9 @@ from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
 from reVX.handlers.layered_h5 import crs_match
-from reVX.least_cost_xmission.config import TRANS_LINE_CAT, SUBSTATION_CAT
+from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+                                                       SUBSTATION_CAT,
+                                                       BARRIERS_MULT)
 from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
                                                       ReinforcementLineCosts)
 
@@ -277,7 +279,7 @@ class LeastCostPaths:
         """
         return self.end_features[['row', 'col']].values
 
-    def process_least_cost_paths(self, cost_layers, barrier_mult=100,
+    def process_least_cost_paths(self, cost_layers, barrier_mult=BARRIERS_MULT,
                                  indices=None, max_workers=None,
                                  save_paths=False,
                                  length_invariant_cost_layers=None):
@@ -383,8 +385,9 @@ class LeastCostPaths:
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, cost_layers,
-            clip_buffer=0, barrier_mult=100, indices=None, max_workers=None,
-            save_paths=False, length_invariant_cost_layers=None):
+            clip_buffer=0, barrier_mult=BARRIERS_MULT, indices=None,
+            max_workers=None, save_paths=False,
+            length_invariant_cost_layers=None):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -523,7 +526,7 @@ class ReinforcementPaths(LeastCostPaths):
         return self._features[['row', 'col']].values
 
     def process_least_cost_paths(self, capacity_class, cost_layers,
-                                 barrier_mult=100, save_paths=False,
+                                 barrier_mult=BARRIERS_MULT, save_paths=False,
                                  length_invariant_cost_layers=None):
         """
         Find the reinforcement line paths between the network node and
@@ -587,7 +590,7 @@ class ReinforcementPaths(LeastCostPaths):
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
-            barrier_mult=100, indices=None, save_paths=False,
+            barrier_mult=BARRIERS_MULT, indices=None, save_paths=False,
             length_invariant_cost_layers=None):
         """
         Find the reinforcement line paths between the network node and

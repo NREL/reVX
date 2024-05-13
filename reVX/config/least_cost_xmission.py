@@ -7,6 +7,11 @@ import logging
 import pandas as pd
 from typing import List
 
+from reVX.least_cost_xmission.config.constants import (RESOLUTION,
+                                                       NUM_NN_SINKS,
+                                                       CLIP_RASTER_BUFFER,
+                                                       BARRIERS_MULT,
+                                                       MINIMUM_SPUR_DIST_KM)
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig
 from reV.utilities.exceptions import ConfigError
@@ -29,11 +34,6 @@ class LeastCostXmissionConfig(AnalysisConfig):
             Path to config .json or pre-extracted config input dictionary.
         """
         super().__init__(config)
-        self._default_resolution = 128
-        self._default_nn_sinks = 2
-        self._default_clipping_buffer = 1.05
-        self._default_barrier_mult = 100
-        self._default_min_line_length = 5.7
         self._sc_point_gids = None
 
     @property
@@ -129,7 +129,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
         """
         SC point resolution
         """
-        return self.get('resolution', self._default_resolution)
+        return self.get('resolution', RESOLUTION)
 
     @property
     def xmission_config(self):
@@ -143,28 +143,28 @@ class LeastCostXmissionConfig(AnalysisConfig):
         """
         Minimum Tie-line length config input
         """
-        return self.get('min_line_length', 0)
+        return self.get('min_line_length', MINIMUM_SPUR_DIST_KM)
 
     @property
     def nn_sinks(self):
         """
         Number of nearest neighbor sinks to use for clipping radius
         """
-        return self.get('nn_sinks', self._default_nn_sinks)
+        return self.get('nn_sinks', NUM_NN_SINKS)
 
     @property
     def clipping_buffer(self):
         """
         Buffer to add to clipping radius
         """
-        return self.get('clipping_buffer', self._default_clipping_buffer)
+        return self.get('clipping_buffer', CLIP_RASTER_BUFFER)
 
     @property
     def barrier_mult(self):
         """
         Transmission barrier multiplier to use for MCP costs
         """
-        return float(self.get('barrier_mult', self._default_barrier_mult))
+        return float(self.get('barrier_mult', BARRIERS_MULT))
 
     @property
     def cost_layers(self) -> List[str]:
@@ -226,7 +226,6 @@ class LeastCostPathsConfig(AnalysisConfig):
             Path to config .json or pre-extracted config input dictionary.
         """
         super().__init__(config)
-        self._default_barrier_mult = 100
         self._validate_reinforcement_run()
 
     def _validate_reinforcement_run(self):
@@ -341,7 +340,7 @@ class LeastCostPathsConfig(AnalysisConfig):
         """
         Transmission barrier multiplier to use for MCP costs
         """
-        return self.get('barrier_mult', self._default_barrier_mult)
+        return self.get('barrier_mult', BARRIERS_MULT)
 
     @property
     def is_reinforcement_run(self):

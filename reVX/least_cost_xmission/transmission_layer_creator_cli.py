@@ -7,6 +7,7 @@ import sys
 import click
 import logging
 from pathlib import Path
+from warnings import warn
 
 import numpy as np
 from pydantic import ValidationError
@@ -14,28 +15,19 @@ from rex.utilities.loggers import init_mult
 from gaps.config import load_config
 
 from reVX import __version__
-from reVX.config.transmission_layer_creation import (LayerCreationConfig,
-                                                     MergeFrictionBarriers)
-from reVX.least_cost_xmission.config.constants import (BARRIER_H5_LAYER_NAME,
-                                                       BARRIER_TIFF,
-                                                       FRICTION_TIFF,
-                                                       RAW_BARRIER_TIFF)
+from reVX.config.transmission_layer_creation import (
+    TransmissionLayerCreationConfig, MergeFrictionBarriers
+)
+from reVX.least_cost_xmission.config.constants import ALL
 from reVX.handlers.layered_h5 import LayeredTransmissionH5
+from reVX.least_cost_xmission.layers import LayerCreator
 from reVX.least_cost_xmission.layers.masks import Masks
-from reVX.least_cost_xmission.costs.wet_cost_creator import WetCostCreator
-from reVX.least_cost_xmission.layers.friction_barrier_builder import (
-    FrictionBarrierBuilder
-)
 from reVX.least_cost_xmission.layers.utils import convert_pois_to_lines
-from reVX.least_cost_xmission.costs.dry_cost_creator import DryCostCreator
-from reVX.least_cost_xmission.costs.landfall_cost_creator import (
-    LandfallCostCreator
-)
+from reVX.least_cost_xmission.layers.dry_cost_creator import DryCostCreator
+
 
 logger = logging.getLogger(__name__)
-
-CONFIG_ACTIONS = ['friction_layers', 'barrier_layers', 'wet_costs',
-                  'dry_costs', 'landfall_cost', 'merge_friction_and_barriers']
+CONFIG_ACTIONS = ['layers', 'dry_costs', 'merge_friction_and_barriers']
 
 
 @click.group()
@@ -59,7 +51,7 @@ def from_config(config_fpath: str):  # noqa: C901
     """
     config_dict = load_config(config_fpath)
     try:
-        config = LayerCreationConfig.model_validate(config_dict)
+        config = TransmissionLayerCreationConfig.model_validate(config_dict)
     except ValidationError as e:
         logger.error(f'Error loading config file {config_fpath}:\n{e}')
         sys.exit(1)
@@ -78,26 +70,14 @@ def from_config(config_fpath: str):  # noqa: C901
                                           template_file=template_file,
                                           layer_dir=config.layer_dir)
 
-    masks = Masks(h5_io_handler, masks_dir=config.masks_dir)
-    try:
-        masks.load_masks()
-    except FileNotFoundError as error:
-        if not config.ignore_masks:
-            raise error
+    masks = _load_masks(config, h5_io_handler)
 
     # Perform actions in config
-    fbb = FrictionBarrierBuilder(h5_io_handler, masks, output_tiff_dir)
-    if config.barrier_layers is not None:
-        fbb.build('barrier', config.barrier_layers)
-
-    if config.friction_layers is not None:
-        fbb.build('friction', config.friction_layers)
-
-    if config.wet_costs is not None:
-        wc = config.wet_costs
-        template_file = str(wc.bathy_tiff)
-        wcc = WetCostCreator(h5_io_handler, masks.wet_mask, output_tiff_dir)
-        wcc.build(str(wc.bathy_tiff), wc.bins)
+    builder = LayerCreator(h5_io_handler, masks, output_tiff_dir)
+    for lc in config.layers or []:
+        builder.build(lc.layer_name, lc.build,
+                      values_are_costs_per_mile=lc.values_are_costs_per_mile,
+                      write_to_h5=lc.include_in_h5, description=lc.description)
 
     if config.dry_costs is not None:
         dc = config.dry_costs
@@ -105,22 +85,17 @@ def from_config(config_fpath: str):  # noqa: C901
 
         try:
             dry_mask = masks.dry_mask
-        except ValueError as error:
-            if config.ignore_masks:
-                dry_mask = np.full(h5_io_handler.shape, True)
-            else:
-                raise error
+        except ValueError:
+            msg = "Dry mask not found! Computing dry costs for full extent!"
+            logger.warning(msg)
+            warn(msg)
+            dry_mask = np.full(h5_io_handler.shape, True)
 
         dcc = DryCostCreator(h5_io_handler, dry_mask, output_tiff_dir)
         cost_configs = None if not dc.cost_configs else str(dc.cost_configs)
         dcc.build(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
                   str(dc.slope_tiff), cost_configs=cost_configs,
                   default_mults=dc.default_mults, extra_tiffs=dc.extra_tiffs)
-
-    if config.landfall_cost is not None:
-        lcc = LandfallCostCreator(h5_io_handler, masks.landfall_mask,
-                                  output_tiff_dir)
-        lcc.build(config.landfall_cost)
 
     if config.merge_friction_and_barriers is not None:
         _combine_friction_and_barriers(config.merge_friction_and_barriers,
@@ -188,6 +163,34 @@ def create_h5(template_raster: str, h5_file: str):
     LayeredTransmissionH5(h5_file, template_file=template_raster).create_new()
 
 
+def _load_masks(config, h5_io_handler):
+    """Load masks based on config file.
+
+    Parameters
+    ----------
+    config : :class:`MergeFrictionBarriers`
+        Config object
+    h5_io_handler : :class:`LayeredTransmissionH5`
+        Transmission IO handler
+
+    Returns
+    -------
+    Masks
+        Masks instance based on directories in config file.
+    """
+    masks = Masks(h5_io_handler, masks_dir=config.masks_dir)
+    if not config.layers:
+        return masks
+
+    build_configs = [lc.build for lc in config.layers]
+    need_masks = any(lc.extent != ALL
+                     for bc in build_configs for lc in bc.values())
+    if need_masks:
+        masks.load_masks()
+
+    return masks
+
+
 def _combine_friction_and_barriers(config: MergeFrictionBarriers,
                                    io_handler: LayeredTransmissionH5,
                                    output_tiff_dir=None):
@@ -205,8 +208,8 @@ def _combine_friction_and_barriers(config: MergeFrictionBarriers,
         ``None``, combined layers are not saved. By default, ``None``.
     """
     output_tiff_dir = Path(output_tiff_dir)
-    friction_tiff = output_tiff_dir / FRICTION_TIFF
-    raw_barrier_tiff = output_tiff_dir / RAW_BARRIER_TIFF
+    friction_tiff = output_tiff_dir / f"{config.friction_layer}.tif"
+    raw_barrier_tiff = output_tiff_dir / f"{config.barrier_layer}.tif"
     if not friction_tiff.exists():
         logger.error(f'The friction GeoTIFF ({str(friction_tiff)}) was not '
                      'found. Please create it using the `friction_layers` '
@@ -226,12 +229,12 @@ def _combine_friction_and_barriers(config: MergeFrictionBarriers,
     combined = friction + barriers * config.barrier_multiplier
 
     if output_tiff_dir is not None:
-        logger.debug('Saving combined barriers to GeoTIFF')
-        io_handler.save_data_using_h5_profile(combined,
-                                              output_tiff_dir / BARRIER_TIFF)
+        out_fp = output_tiff_dir / f"{config.output_layer_name}.tif"
+        logger.debug('Saving combined barriers to %s', out_fp)
+        io_handler.save_data_using_h5_profile(combined, out_fp)
 
     logger.info('Writing combined barriers to H5')
-    io_handler.write_layer_to_h5(combined, BARRIER_H5_LAYER_NAME)
+    io_handler.write_layer_to_h5(combined, config.output_layer_name)
 
 
 if __name__ == '__main__':

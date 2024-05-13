@@ -23,8 +23,15 @@ from reV.supply_curve.extent import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
-from reVX.least_cost_xmission.config import (TRANS_LINE_CAT, LOAD_CENTER_CAT,
-                                             SINK_CAT, SUBSTATION_CAT)
+from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+                                                       LOAD_CENTER_CAT,
+                                                       SINK_CAT,
+                                                       SUBSTATION_CAT,
+                                                       CLIP_RASTER_BUFFER,
+                                                       NUM_NN_SINKS,
+                                                       RESOLUTION,
+                                                       MINIMUM_SPUR_DIST_KM,
+                                                       BARRIERS_MULT)
 from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
 from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
 
@@ -38,8 +45,8 @@ class LeastCostXmission(LeastCostPaths):
     """
     REQUIRED_LAYERS = ['transmission_barrier', 'ISO_regions']
 
-    def __init__(self, cost_fpath, features_fpath, resolution=128,
-                 xmission_config=None, min_line_length=0):
+    def __init__(self, cost_fpath, features_fpath, resolution=RESOLUTION,
+                 xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM):
         """
         Parameters
         ----------
@@ -211,7 +218,7 @@ class LeastCostXmission(LeastCostPaths):
         return features, pd.Series(sub_lines_map)
 
     @staticmethod
-    def _create_sc_points(cost_fpath, resolution=128):
+    def _create_sc_points(cost_fpath, resolution=RESOLUTION):
         """
         Load SC points, covert row/col to array wide, and determine x/y
         for reV projection
@@ -287,7 +294,7 @@ class LeastCostXmission(LeastCostPaths):
         return row, col, mask
 
     @classmethod
-    def _map_to_costs(cls, cost_fpath, features_fpath, resolution=128):
+    def _map_to_costs(cls, cost_fpath, features_fpath, resolution=RESOLUTION):
         """
         Map supply curve points and transmission features to cost array
         pixel indices
@@ -346,8 +353,9 @@ class LeastCostXmission(LeastCostPaths):
 
         return sc_points, features, sub_lines_map, shape
 
-    def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
-                          clipping_buffer=1.05, radius=None,
+    def _clip_to_sc_point(self, sc_point, tie_line_voltage,
+                          nn_sinks=NUM_NN_SINKS,
+                          clipping_buffer=CLIP_RASTER_BUFFER, radius=None,
                           expand_radius=True):
         """
         Clip costs raster to AOI around SC point, and get substations,
@@ -463,8 +471,9 @@ class LeastCostXmission(LeastCostPaths):
         return clipped_sc_features.copy(deep=True)
 
     def process_sc_points(self, capacity_class, cost_layers,
-                          sc_point_gids=None, nn_sinks=2,
-                          clipping_buffer=1.05, barrier_mult=100,
+                          sc_point_gids=None, nn_sinks=NUM_NN_SINKS,
+                          clipping_buffer=CLIP_RASTER_BUFFER,
+                          barrier_mult=BARRIERS_MULT,
                           max_workers=None, save_paths=False, radius=None,
                           expand_radius=True, mp_delay=3, simplify_geo=None,
                           length_invariant_cost_layers=None):
@@ -592,10 +601,12 @@ class LeastCostXmission(LeastCostPaths):
         return least_costs.reset_index(drop=True)
 
     def _process_multi_core(self, capacity_class, cost_layers,
-                            tie_line_voltage, sc_point_gids, nn_sinks=2,
-                            clipping_buffer=1.05, barrier_mult=100,
-                            max_workers=2, save_paths=False, radius=None,
-                            expand_radius=True, mp_delay=3, simplify_geo=None,
+                            tie_line_voltage, sc_point_gids,
+                            nn_sinks=NUM_NN_SINKS,
+                            clipping_buffer=CLIP_RASTER_BUFFER,
+                            barrier_mult=BARRIERS_MULT, max_workers=2,
+                            save_paths=False, radius=None, expand_radius=True,
+                            mp_delay=3, simplify_geo=None,
                             length_invariant_cost_layers=None):
         """
         Compute Least Cost Transmission for desired sc_points using
@@ -730,10 +741,12 @@ class LeastCostXmission(LeastCostPaths):
         return paths
 
     def _process_single_core(self, capacity_class, cost_layers,
-                             tie_line_voltage, sc_point_gids, nn_sinks=2,
-                             clipping_buffer=1.05, barrier_mult=100,
-                             save_paths=False, radius=None,
-                             expand_radius=True, simplify_geo=None,
+                             tie_line_voltage, sc_point_gids,
+                             nn_sinks=NUM_NN_SINKS,
+                             clipping_buffer=CLIP_RASTER_BUFFER,
+                             barrier_mult=BARRIERS_MULT, save_paths=False,
+                             radius=None, expand_radius=True,
+                             simplify_geo=None,
                              length_invariant_cost_layers=None):
         """
         Compute Least Cost Transmission for desired sc_points with a
@@ -827,10 +840,12 @@ class LeastCostXmission(LeastCostPaths):
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, capacity_class, cost_layers,
-            resolution=128, xmission_config=None, min_line_length=0,
-            sc_point_gids=None, nn_sinks=2, clipping_buffer=1.05,
-            barrier_mult=100, max_workers=None, save_paths=False, radius=None,
-            expand_radius=True, simplify_geo=None,
+            resolution=RESOLUTION, xmission_config=None,
+            min_line_length=MINIMUM_SPUR_DIST_KM,
+            sc_point_gids=None, nn_sinks=NUM_NN_SINKS,
+            clipping_buffer=CLIP_RASTER_BUFFER,
+            barrier_mult=BARRIERS_MULT, max_workers=None, save_paths=False,
+            radius=None, expand_radius=True, simplify_geo=None,
             length_invariant_cost_layers=None):
         """
         Find Least Cost Transmission connections between desired
@@ -937,8 +952,8 @@ class ReinforcedXmission(LeastCostXmission):
     """
 
     def __init__(self, cost_fpath, features_fpath, regions_fpath,
-                 region_identifier_column, resolution=128,
-                 xmission_config=None, min_line_length=0,
+                 region_identifier_column, resolution=RESOLUTION,
+                 xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM,
                  allow_connections_within_states=False):
         """
         Parameters
@@ -993,8 +1008,9 @@ class ReinforcedXmission(LeastCostXmission):
 
         return substations, None
 
-    def _clip_to_sc_point(self, sc_point, tie_line_voltage, nn_sinks=2,
-                          clipping_buffer=1.05, radius=None,
+    def _clip_to_sc_point(self, sc_point, tie_line_voltage,
+                          nn_sinks=NUM_NN_SINKS,
+                          clipping_buffer=CLIP_RASTER_BUFFER, radius=None,
                           expand_radius=True):
         """Clip features to be substations in the region of the sc point.  """
         logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
@@ -1030,10 +1046,12 @@ class ReinforcedXmission(LeastCostXmission):
     @classmethod
     def run(cls, cost_fpath, features_fpath, regions_fpath,
             region_identifier_column, capacity_class, cost_layers,
-            resolution=128, xmission_config=None, min_line_length=0,
-            sc_point_gids=None, clipping_buffer=1.05, barrier_mult=100,
-            max_workers=None, simplify_geo=None, save_paths=False, radius=None,
-            expand_radius=True, length_invariant_cost_layers=None):
+            resolution=RESOLUTION, xmission_config=None,
+            min_line_length=MINIMUM_SPUR_DIST_KM, sc_point_gids=None,
+            clipping_buffer=CLIP_RASTER_BUFFER, barrier_mult=BARRIERS_MULT,
+            max_workers=None, simplify_geo=None, save_paths=False,
+            radius=None, expand_radius=True,
+            length_invariant_cost_layers=None):
         """
         Find Least Cost Transmission connections between desired
         sc_points and substations in their reinforcement region.

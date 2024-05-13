@@ -11,7 +11,7 @@ from reVX.handlers.layered_h5 import LayeredTransmissionH5
 from reVX.least_cost_xmission.config.constants import DEFAULT_DTYPE
 
 
-class LayerCreator(ABC):
+class BaseLayerCreator(ABC):
     """
     Abstract Base Class to create and save transmission routing layers
     """
@@ -26,8 +26,7 @@ class LayerCreator(ABC):
         mask : ndarray, optional
             Array representing mask for layer values. Only optional if
             subclass implementation handles masks differently
-            (e.g. the `FrictionBarrierBuilder` class).
-            By default, ``None``
+            (e.g. the `LayerCreator` class). By default, ``None``
         output_tiff_dir : path-like, optional
             Directory where cost layers should be saved as GeoTIFF.
             By default, ``"."``.
