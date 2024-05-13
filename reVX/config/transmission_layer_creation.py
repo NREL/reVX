@@ -54,7 +54,7 @@ class LayerBuildConfig(BaseModel, extra='forbid'):
     tests directory.
     """
 
-    extent: Optional[Extents] = ALL
+    extent: Extents = ALL
     """Extent to apply map or range to.
 
     Must be one of the following:
@@ -73,7 +73,7 @@ class LayerBuildConfig(BaseModel, extra='forbid'):
     """Global value to use for entire layer extent. """
 
     map: Optional[Dict[float, float]] = None
-    """Values in raster (keys) and values to use for barrier/friction"""
+    """Values in raster (keys) and values to use layer."""
 
     bins: Optional[List[RangeConfig]] = None
     """Ranges of raster values.
@@ -82,7 +82,7 @@ class LayerBuildConfig(BaseModel, extra='forbid'):
     barrier/friction. The value of overlapping ranges are added together."""
 
     rasterize: Optional[Rasterize] = None
-    """Rasterize a vector and use as a friction or barrier layer"""
+    """Rasterize a vector and save as layer"""
 
     forced_inclusion: bool = False
     """Force inclusion.
@@ -193,7 +193,7 @@ class LayerConfig(BaseModel):
     """Optional description to store in attrs for layer. """
 
     include_in_h5: Optional[bool] = True
-    """Flag to specify wether layer should be stored in H5 or not. """
+    """Flag to specify whether layer should be stored in H5 or not. """
 
     values_are_costs_per_mile: Optional[bool] = False
     """Option to specify that the values given represent $/mile.
