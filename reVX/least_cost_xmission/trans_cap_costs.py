@@ -1605,7 +1605,7 @@ def _compute_linear_lm(features):
 
     mask = features['dist_km'] <= MEDIUM_CUTOFF
     features.loc[mask, 'length_mult'] = (
-        slope * (features.loc[mask, 'dist_km'] -  MEDIUM_CUTOFF) + 1
+        slope * (features.loc[mask, 'dist_km'] - MEDIUM_CUTOFF) + 1
     )
 
     return features
