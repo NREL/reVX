@@ -805,7 +805,7 @@ class TransCapCosts(TieLineCosts):
 
         return start_indices, row_slice, col_slice
 
-    def _calc_xformer_cost(self, features, tie_line_voltage):
+    def _calc_xformer_cost(self, features):
         """
         Compute transformer costs in $/MW for needed features, all
         others will be 0
@@ -827,26 +827,26 @@ class TransCapCosts(TieLineCosts):
         """
 
         mask = features['category'] == SUBSTATION_CAT
-        mask &= features['max_volts'] < tie_line_voltage
+        mask &= features['max_volts'] < self.tie_line_voltage
         if np.any(mask):
             msg = ('Voltages for substations {} do not exceed tie-line '
                    'voltage of {}'
                    .format(features.loc[mask, 'trans_gid'].values,
-                           tie_line_voltage))
+                           self.tie_line_voltage))
             logger.error(msg)
             raise RuntimeError(msg)
 
         xformer_costs = np.zeros(len(features))
         for volts, df in features.groupby('min_volts'):
             idx = df.index.values
-            xformer_costs[idx] = self._config.xformer_cost(volts,
-                                                           tie_line_voltage)
+            xformer_costs[idx] = self._config.xformer_cost(
+                volts, self.tie_line_voltage)
 
         mask = features['category'] == TRANS_LINE_CAT
-        mask &= features['max_volts'] < tie_line_voltage
+        mask &= features['max_volts'] < self.tie_line_voltage
         xformer_costs[mask] = 0
 
-        mask = features['min_volts'] <= tie_line_voltage
+        mask = features['min_volts'] <= self.tie_line_voltage
         xformer_costs[mask] = 0
 
         mask = features['region'] == self._config['iso_lookup']['TEPPC']
@@ -1160,8 +1160,7 @@ class TransCapCosts(TieLineCosts):
                                      * features['length_mult'])
 
         # Transformer costs
-        features['xformer_cost_per_mw'] = self._calc_xformer_cost(
-            features, self.tie_line_voltage)
+        features['xformer_cost_per_mw'] = self._calc_xformer_cost(features)
         capacity = int(self.capacity_class.strip('MW'))
         features['xformer_cost'] = (features['xformer_cost_per_mw']
                                     * capacity)
