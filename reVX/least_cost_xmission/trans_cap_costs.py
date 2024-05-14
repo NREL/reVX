@@ -854,8 +854,7 @@ class TransCapCosts(TieLineCosts):
 
         return xformer_costs
 
-    @staticmethod
-    def _calc_sub_upgrade_cost(features, tie_line_voltage, config=None):
+    def _calc_sub_upgrade_cost(self, features):
         """
         Compute substation upgrade costs for needed features, all others
         will be 0
@@ -865,18 +864,12 @@ class TransCapCosts(TieLineCosts):
         features : pd.DataFrame
             Table of transmission features to compute transformer costs
             for
-        tie_line_voltage : int
-            Tie-line voltage in kV
-        config : str | dict | XmissionConfig
-            Transmission configuration
 
         Returns
         -------
         sub_upgrade_costs : ndarray
             Substation upgrade costs in $
         """
-        if not isinstance(config, XmissionConfig):
-            config = XmissionConfig(config=config)
 
         sub_upgrade_cost = np.zeros(len(features))
         if np.any(features['region'] == 0):
@@ -890,13 +883,12 @@ class TransCapCosts(TieLineCosts):
         if np.any(mask):
             for region, df in features.loc[mask].groupby('region'):
                 idx = df.index.values
-                sub_upgrade_cost[idx] = config.sub_upgrade_cost(
-                    region, tie_line_voltage)
+                sub_upgrade_cost[idx] = self._config.sub_upgrade_cost(
+                    region, self.tie_line_voltage)
 
         return sub_upgrade_cost
 
-    @staticmethod
-    def _calc_new_sub_cost(features, tie_line_voltage, config=None):
+    def _calc_new_sub_cost(self, features):
         """
         Compute new substation costs for needed features, all others
         will be 0
@@ -906,18 +898,12 @@ class TransCapCosts(TieLineCosts):
         features : pd.DataFrame
             Table of transmission features to compute transformer costs
             for
-        tie_line_voltage : int
-            Tie-line voltage in kV
-        config : str | dict | XmissionConfig
-            Transmission configuration
 
         Returns
         -------
         new_sub_cost : ndarray
             new substation costs in $
         """
-        if not isinstance(config, XmissionConfig):
-            config = XmissionConfig(config=config)
 
         new_sub_cost = np.zeros(len(features))
         if np.any(features['region'] == 0):
@@ -931,8 +917,8 @@ class TransCapCosts(TieLineCosts):
         if np.any(mask):
             for region, df in features.loc[mask].groupby('region'):
                 idx = df.index.values
-                new_sub_cost[idx] = config.new_sub_cost(
-                    region, tie_line_voltage)
+                new_sub_cost[idx] = self._config.new_sub_cost(
+                    region, self.tie_line_voltage)
 
         return new_sub_cost
 
@@ -1166,10 +1152,8 @@ class TransCapCosts(TieLineCosts):
                                     * capacity)
 
         # Substation costs
-        features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost(
-            features, self.tie_line_voltage, config=self._config)
-        features['new_sub_cost'] = self._calc_new_sub_cost(
-            features, self.tie_line_voltage, config=self._config)
+        features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost(features)
+        features['new_sub_cost'] = self._calc_new_sub_cost(features)
 
         # Sink costs
         mask = features['category'] == SINK_CAT
