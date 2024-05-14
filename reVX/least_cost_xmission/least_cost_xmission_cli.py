@@ -196,13 +196,19 @@ def from_config(ctx, config, verbose):
                    'raster used for routing. These costs do not scale with '
                    'distance traversed acroiss the cell. Multiple layers may '
                    'be specified.')
+@click.option('--length_mult_kind', '-lmk', type=STR, default='linear',
+              show_default=True,
+              help='Type of length multiplier calcualtion. "step" computes '
+                   'length multipliers using a step function, while "linear" '
+                   'computes the length multiplier using a linear '
+                   'interpolation between 0 amd 10 mile spur-line lengths.')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
           clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
           verbose, save_paths, radius, expand_radius, simplify_geo,
-          cost_layers: List[str], li_cost_layers):
+          cost_layers: List[str], li_cost_layers, length_mult_kind):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -227,7 +233,8 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "simplify_geo": simplify_geo,
               "radius": radius,
               "expand_radius": expand_radius,
-              "length_invariant_cost_layers": li_cost_layers}
+              "length_invariant_cost_layers": li_cost_layers,
+              "length_mult_kind": length_mult_kind}
 
     if regions_fpath is not None:
         least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
@@ -439,6 +446,7 @@ def get_node_cmd(config, gids):
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
+            '-lmk {}'.format(SLURM.s(config.length_mult_kind)),
             ]
 
     for layer in config.cost_layers:
@@ -500,6 +508,7 @@ def run_local(ctx, config):
                simplify_geo=config.simplify_geo,
                cost_layers=config.cost_layers,
                li_cost_layers=config.length_invariant_cost_layers,
+               length_mult_kind=config.length_mult_kind,
                )
 
 

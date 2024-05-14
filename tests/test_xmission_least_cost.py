@@ -45,17 +45,19 @@ def _cap_class_to_cap(capacity):
     return DEFAULT_CONFIG['power_classes'][capacity_class]
 
 
-def check_length_mults(test):
+def check_length_mults(test, lmk):
     """Check that length mults are applied correctly. """
+
     test["dist_km"] = test["dist_km"].astype('float32')
     test["length_mult"] = test["length_mult"].astype('float32')
 
-    short_mask = test["dist_km"] < SHORT_CUTOFF
-    assert (test.loc[short_mask, "length_mult"] == SHORT_MULT).all()
+    if lmk.casefold() == "step":
+        short_mask = test["dist_km"] < SHORT_CUTOFF
+        assert (test.loc[short_mask, "length_mult"] == SHORT_MULT).all()
 
-    med_mask = ((test["dist_km"] >= SHORT_CUTOFF)
-                & (test["dist_km"] <= MEDIUM_CUTOFF))
-    assert (test.loc[med_mask, "length_mult"] == MEDIUM_MULT).all()
+        med_mask = ((test["dist_km"] >= SHORT_CUTOFF)
+                    & (test["dist_km"] <= MEDIUM_CUTOFF))
+        assert (test.loc[med_mask, "length_mult"] == MEDIUM_MULT).all()
 
     long_mask = test["dist_km"] > MEDIUM_CUTOFF
     assert (test.loc[long_mask, "length_mult"] == 1).all()
@@ -65,7 +67,7 @@ def check_length_mults(test):
             >= test.iloc[:-1]["length_mult"].values).all()
 
 
-def check_baseline(truth, test, check_cols=CHECK_COLS):
+def check_baseline(truth, test, check_cols=CHECK_COLS, lmk="linear"):
     """
     Compare values in truth and test for given columns
     """
@@ -77,11 +79,11 @@ def check_baseline(truth, test, check_cols=CHECK_COLS):
                        test['sc_point_gid'].unique()), msg
     truth_points = truth.groupby('sc_point_gid')
     test_points = test.groupby('sc_point_gid')
+
+    cutoff = SHORT_CUTOFF if lmk.casefold() == "step" else MEDIUM_CUTOFF
+
     for gid, p_true in truth_points:
-        print(gid)
-        print(p_true)
         p_test = test_points.get_group(gid)
-        print(p_test)
 
         msg = f'Unique trans_gids do not match for sc_point {gid}!'
         assert np.allclose(p_true['trans_gid'].unique(),
@@ -95,10 +97,10 @@ def check_baseline(truth, test, check_cols=CHECK_COLS):
 
         for c in ["tie_line_cost", "trans_cap_cost"]:
             msg = f'values for {c} do not match for sc_point {gid}!'
-            # truth set has incorrect short mult
-            mask = p_true["dist_km"].astype('float32') >= SHORT_CUTOFF
+            # truth set has incorrect mults
+            mask = p_true["dist_km"].astype('float32') >= cutoff
             c_truth = p_true.loc[mask, c].values.astype('float32')
-            mask = p_test["dist_km"].astype('float32') >= SHORT_CUTOFF
+            mask = p_test["dist_km"].astype('float32') >= cutoff
             c_test = p_test.loc[mask, c].values.astype('float32')
             assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
@@ -110,14 +112,14 @@ def check_baseline(truth, test, check_cols=CHECK_COLS):
 
     for c in ["tie_line_cost", "trans_cap_cost"]:
         msg = f'values for {c} do not match!'
-        # truth set has incorrect short mult
-        mask = truth["dist_km"].astype('float32') >= SHORT_CUTOFF
+        # truth set has incorrect mults
+        mask = truth["dist_km"].astype('float32') >= cutoff
         c_truth = truth.loc[mask, c].values.astype('float32')
-        mask = test["dist_km"].astype('float32') >= SHORT_CUTOFF
+        mask = test["dist_km"].astype('float32') >= cutoff
         c_test = test.loc[mask, c].values.astype('float32')
         assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
-    check_length_mults(test)
+    check_length_mults(test, lmk=lmk)
 
 
 @pytest.fixture(scope="module")
@@ -144,8 +146,9 @@ def ri_ba():
                             geometry=list(shapes))
 
 
+@pytest.mark.parametrize('lmk', ["step", "linear"])
 @pytest.mark.parametrize('capacity', [100, 200, 400, 1000])
-def test_capacity_class(capacity):
+def test_capacity_class(capacity, lmk):
     """
     Test least cost xmission and compare with baseline data
     """
@@ -163,18 +166,19 @@ def test_capacity_class(capacity):
 
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity, [cost_layer],
                                  sc_point_gids=sc_point_gids,
-                                 min_line_length=5.76)
+                                 min_line_length=5.76, length_mult_kind=lmk)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
         truth = pd.read_csv(truth)
 
-    check_baseline(truth, test)
+    check_baseline(truth, test, lmk=lmk)
 
 
+@pytest.mark.parametrize('lmk', ["step", "linear"])
 @pytest.mark.parametrize('max_workers', [1, None])
-def test_parallel(max_workers):
+def test_parallel(max_workers, lmk):
     """
     Test least cost xmission and compare with baseline data
     """
@@ -194,18 +198,19 @@ def test_parallel(max_workers):
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity, [cost_layer],
                                  max_workers=max_workers,
                                  sc_point_gids=sc_point_gids,
-                                 min_line_length=5.76)
+                                 min_line_length=5.76, length_mult_kind=lmk)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
         truth = pd.read_csv(truth)
 
-    check_baseline(truth, test)
+    check_baseline(truth, test, lmk=lmk)
 
 
+@pytest.mark.parametrize('lmk', ["step", "linear"])
 @pytest.mark.parametrize('resolution', [64, 128])
-def test_resolution(resolution):
+def test_resolution(resolution, lmk):
     """
     Test least cost xmission and compare with baseline data
     """
@@ -229,18 +234,20 @@ def test_resolution(resolution):
     test = LeastCostXmission.run(COST_H5, FEATURES, 100, [cost_layer],
                                  resolution=resolution,
                                  sc_point_gids=sc_point_gids,
-                                 min_line_length=resolution * 0.09 / 2)
+                                 min_line_length=resolution * 0.09 / 2,
+                                 length_mult_kind=lmk)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
         truth = pd.read_csv(truth)
 
-    check_baseline(truth, test)
+    check_baseline(truth, test, lmk=lmk)
 
 
+@pytest.mark.parametrize('lmk', ["step", "linear"])
 @pytest.mark.parametrize("save_paths", [False, True])
-def test_cli(runner, save_paths):
+def test_cli(runner, save_paths, lmk):
     """
     Test CostCreator CLI
     """
@@ -260,7 +267,8 @@ def test_cli(runner, save_paths):
             "capacity_class": f'{capacity}MW',
             "min_line_length": 5.76,
             "save_paths": save_paths,
-            "cost_layers": ["tie_line_costs_{}MW"]
+            "cost_layers": ["tie_line_costs_{}MW"],
+            "length_mult_kind": lmk
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -282,7 +290,7 @@ def test_cli(runner, save_paths):
             test = os.path.join(td, test)
             test = pd.read_csv(test)
         SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
-        check_baseline(truth, test)
+        check_baseline(truth, test, lmk=lmk)
 
     LOGGERS.clear()
 

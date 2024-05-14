@@ -139,6 +139,18 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('xmission_config', None)
 
     @property
+    def length_mult_kind(self):
+        """
+        Type of length multiplier calcualtion.
+
+        "step" computes length multipliers using a step function, while
+        "linear" computes the length multiplier using a linear
+        interpolation between 0 amd 10 mile spur-line lengths.
+        By default, ``"linear"``.
+        """
+        return self.get('length_mult_kind', "linear")
+
+    @property
     def min_line_length(self):
         """
         Minimum Tie-line length config input
