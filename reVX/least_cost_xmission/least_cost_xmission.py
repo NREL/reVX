@@ -404,8 +404,12 @@ class LeastCostXmission(LeastCostPaths):
             else:
                 logger.debug('Using forced radius of {}'.format(radius))
 
+            with ExclusionLayers(self._cost_fpath) as f:
+                resolution = f.profile["transform"][0]
+
             sc_features = self._clip_to_radius(sc_point, radius, sc_features,
-                                               clipping_buffer, expand_radius)
+                                               clipping_buffer, resolution,
+                                               expand_radius)
 
         mask = self.features['max_volts'] >= tie_line_voltage
         sc_features = sc_features.loc[mask].copy(deep=True)
@@ -439,7 +443,7 @@ class LeastCostXmission(LeastCostPaths):
         return sc_features, radius
 
     def _clip_to_radius(self, sc_point, radius, sc_features, clipping_buffer,
-                        expand_radius=True):
+                        resolution, expand_radius=True):
         """Clip features to radius.
 
         If no features are found within the initial radius, it is
@@ -449,9 +453,6 @@ class LeastCostXmission(LeastCostPaths):
         if radius is None or len(sc_features) == 0:
             return sc_features
 
-        # Get pixel resolution and calculate buffer
-        with ExclusionLayers(self._cost_fpath) as ds:
-            resolution = ds.profile["transform"][0]
         radius_m = radius * resolution
         logger.debug('Clipping features to radius {}m'.format(radius_m))
         buffer = sc_point["geometry"].buffer(radius_m)
@@ -1058,9 +1059,16 @@ class ReinforcedXmission(LeastCostXmission):
         logger.debug('{} transmission features found in clipped area '
                      .format(len(sc_features)))
 
+        with ExclusionLayers(self._cost_fpath) as f:
+            transform = f.profile["transform"]
+
+        resolution = transform[0]
+        transform = rasterio.Affine(*transform)
+
         if radius is not None:
             sc_features = self._clip_to_radius(sc_point, radius, sc_features,
-                                               clipping_buffer, expand_radius)
+                                               clipping_buffer, resolution,
+                                               expand_radius)
 
         mask = self.features['max_volts'] >= tie_line_voltage
         sc_features = sc_features.loc[mask].copy(deep=True)
@@ -1068,8 +1076,8 @@ class ReinforcedXmission(LeastCostXmission):
         if sc_features.empty:
             return sc_features, None
 
-        dists = (sc_features[['row', 'col']] - sc_point[['row', 'col']])
-        radius = int(np.ceil(dists.abs().values.max() * clipping_buffer))
+        radius = _compute_radius(sc_features, sc_point, transform,
+                                 clipping_buffer)
         logger.debug('{} transmission features found in clipped area of '
                      'radius {} with minimum max voltage of {}'
                      .format(len(sc_features), radius, tie_line_voltage))
@@ -1240,3 +1248,13 @@ def _starting_cost(cost_fpath, point, sc_features, capacity_class, **kwargs):
     cost_calculator = TransCapCosts(cost_fpath, point, sc_features,
                                     capacity_class, **kwargs)
     return cost_calculator.mcp_cost[cost_calculator.row, cost_calculator.col]
+
+
+def _compute_radius(sc_features, sc_point, transform, clipping_buffer):
+    """Compute boundary clipping radius based on feature total bounds. """
+    minx, miny, maxx, maxy = sc_features.total_bounds
+    r1, c1 = rasterio.transform.rowcol(transform, minx, miny)
+    r2, c2 = rasterio.transform.rowcol(transform, maxx, maxy)
+    bounds = pd.DataFrame({"row": [r1, r2], "col": [c1, c2]})
+    dists = bounds[['row', 'col']] - sc_point[['row', 'col']]
+    return int(np.ceil(dists.abs().values.max() * clipping_buffer))
