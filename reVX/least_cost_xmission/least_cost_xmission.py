@@ -44,6 +44,7 @@ class LeastCostXmission(LeastCostPaths):
     for all possible connections to all supply curve points
     """
     REQUIRED_LAYERS = ['transmission_barrier', 'ISO_regions']
+    _TCC_CLASS = TransCapCosts
 
     def __init__(self, cost_fpath, features_fpath, resolution=RESOLUTION,
                  xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM):
@@ -63,7 +64,7 @@ class LeastCostXmission(LeastCostPaths):
             Minimum line length in km, by default 0.
         """
         self._check_layers(cost_fpath)
-        self._config = TransCapCosts._parse_config(
+        self._config = self._TCC_CLASS._parse_config(
             xmission_config=xmission_config)
 
         (self._sc_points, self._features,
@@ -735,7 +736,7 @@ class LeastCostXmission(LeastCostPaths):
                              "transmission features: Invalid start cost!"
                              .format(gid))
                 continue
-            future = exe.submit(TransCapCosts.run,
+            future = exe.submit(self._TCC_CLASS.run,
                                 self._cost_fpath,
                                 sc_point.copy(deep=True),
                                 sc_features, capacity_class,
@@ -842,7 +843,7 @@ class LeastCostXmission(LeastCostPaths):
                     expand_radius=expand_radius)
                 if sc_features.empty:
                     continue
-                sc_costs = TransCapCosts.run(
+                sc_costs = self._TCC_CLASS.run(
                     self._cost_fpath,
                     sc_point.copy(deep=True),
                     sc_features, capacity_class,
