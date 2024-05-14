@@ -978,17 +978,16 @@ class LeastCostXmission(LeastCostPaths):
         return least_costs
 
 
-class ReinforcedXmission(LeastCostXmission):
+class RegionalXmission(LeastCostXmission):
     """
     Compute Least Cost tie-line paths and full transmission cap cost
-    for all supply curve points to all possible connections (substations
-    within the SC reinforcement region).
+    for all supply curve points to all possible connections within the
+    region containing the supply curve point.
     """
 
-    def __init__(self, cost_fpath, features_fpath, regions_fpath,
+    def __init__(self, cost_fpath, features_fpath, regions,
                  region_identifier_column, resolution=RESOLUTION,
-                 xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM,
-                 allow_connections_within_states=False):
+                 xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM):
         """
         Parameters
         ----------
@@ -998,16 +997,16 @@ class ReinforcedXmission(LeastCostXmission):
             Path to GeoPackage with transmission features. All features
             except substations will be dropped. This table must have a
             `region_identifier` column which matches one of the
-            `region_identifier` ID's in the reinforcement regions
+            `region_identifier` ID's in the `regions` GeoPackage.
+        regions : str | GeoDataFrame
+            Path to GeoPackage with regions or GeoDataFrame defining
+            regions. This table must have the specified
+            `region_identifier` column which matches the
+            `region_identifier` column ID's in the `features_fpath`
             GeoPackage.
-        regions_fpath : str
-            Path to GeoPackage with reinforcement regions. This table
-            must have the specified `region_identifier` column which
-            matches the `region_identifier` column ID's in the
-            `features_fpath` GeoPackage.
         region_identifier_column : str
-            Name of column in reinforcement regions GeoPackage
-            containing a unique identifier for each region.
+            Name of column in `regions` GeoPackage containing a unique
+            identifier for each region.
         resolution : int, optional
             SC point resolution. By default, ``128``.
         xmission_config : str | dict | XmissionConfig, optional
@@ -1022,10 +1021,10 @@ class ReinforcedXmission(LeastCostXmission):
                          resolution=resolution,
                          xmission_config=xmission_config,
                          min_line_length=min_line_length)
-        self._regions = (gpd.read_file(regions_fpath)
-                         .to_crs(self.features.crs))
+        if isinstance(regions, str):
+            regions = gpd.read_file(regions)
+        self._regions = regions.to_crs(self.features.crs)
         self._rid_column = region_identifier_column
-        self.allow_connections_within_states = allow_connections_within_states
 
     @staticmethod
     def _load_trans_feats(features_fpath):
@@ -1095,7 +1094,7 @@ class ReinforcedXmission(LeastCostXmission):
             length_invariant_cost_layers=None, length_mult_kind="linear"):
         """
         Find Least Cost Transmission connections between desired
-        sc_points and substations in their reinforcement region.
+        sc_points and substations in their region.
 
         Parameters
         ----------
@@ -1105,29 +1104,24 @@ class ReinforcedXmission(LeastCostXmission):
             Path to GeoPackage with transmission features. All features
             except substations will be dropped. This table must have a
             `region_identifier` column which matches one of the
-            `region_identifier` ID's in the reinforcement regions
+            `region_identifier` ID's in the `regions` GeoPackage.
+        regions : str | GeoDataFrame
+            Path to GeoPackage with regions or GeoDataFrame defining
+            regions. This table must have the specified
+            `region_identifier` column which matches the
+            `region_identifier` column ID's in the `features_fpath`
             GeoPackage.
-        regions_fpath : str
-            Path to GeoPackage with reinforcement regions. This table
-            must have the specified `region_identifier` column which
-            matches the `region_identifier` column ID's in the
-            `features_fpath` GeoPackage.
         region_identifier_column : str
-            Name of column in reinforcement regions GeoPackage
-            containing a unique identifier for each region.
+            Name of column in `regions` GeoPackage containing a unique
+            identifier for each region.
         capacity_class : str | int
             Capacity class of transmission features to connect supply
             curve points to.
         cost_layers : List[str]
             List of layers in H5 that are summed to determine total
-            'base' greenfield costs raster used for routing. 'Base'
-            greenfield costs are only used if the reinforcement path
-            *must* deviate from existing transmission lines. Layer names
-            may have curly brackets (``{}``), which will be filled in
-            based on the `capacity_class` input (e.g.
-            "tie_line_costs_{}MW"). Typically, a capacity class of
-            400 MW (230kV transmission line) is used for the base
-            greenfield costs.
+            cost raster used for routing. Layer names may have curly
+            brackets (``{}``), which will be filled in based on the
+            `capacity_class` input (e.g. "tie_line_costs_{}MW").
         resolution : int, optional
             SC point resolution. By default, ``128``.
         xmission_config : str | dict | XmissionConfig, optional
@@ -1150,8 +1144,8 @@ class ReinforcedXmission(LeastCostXmission):
         simplify_geo : float | None, optional
             If float, simplify geometries using this value.
         save_paths : bool, optional
-            Flag to save reinforcement line path as a multi-line
-            geometry. By default, ``False``.
+            Flag to save spur line path as a multi-line geometry.
+            By default, ``False``.
         radius : None | int, optional
             Force clipping radius. Substations beyond this radius will
             not be considered for connection with supply curve point. If
@@ -1178,8 +1172,8 @@ class ReinforcedXmission(LeastCostXmission):
         -------
         least_costs : pandas.DataFrame | gpd.DataFrame
             Least cost connections between all supply curve points and
-            the substations in their reinforcement region with the given
-            capacity class.
+            the substations in their region with the given capacity
+            class.
         """
         ts = time.time()
         lcx = cls(cost_fpath, features_fpath, regions_fpath,
@@ -1207,8 +1201,8 @@ class ReinforcedXmission(LeastCostXmission):
         return least_costs
 
 
-def reinforcement_region_mapper(regions, region_identifier_column):
-    """Generate a function to map points to a reinforcement region.
+def region_mapper(regions, region_identifier_column):
+    """Generate a function to map points to a region.
 
     The returned mapping function maps a point to a unique value from
     the `region_identifier_column` column in the input GeoPackage.
@@ -1216,16 +1210,16 @@ def reinforcement_region_mapper(regions, region_identifier_column):
     Parameters
     ----------
     regions : gpd.GeoPackage
-        GeoPackage defining the reinforcement regions. This table must
+        GeoPackage defining the regions. This table must
         have a `region_identifier_column` column which uniquely
         identifies the region, as well as a geometry for each region.
     """
-    def _map_reinforcement_region(point):
-        """Find the reinforcement region ID for the input point. """
+    def _map_region(point):
+        """Find the region ID for the input point. """
         idx = regions.distance(point).sort_values().index[0]
         return regions.loc[idx, region_identifier_column]
 
-    return _map_reinforcement_region
+    return _map_region
 
 
 def _collect_future_chunks(futures, least_cost_paths):

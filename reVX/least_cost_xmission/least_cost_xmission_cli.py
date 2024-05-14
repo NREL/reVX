@@ -23,7 +23,7 @@ from rex.utilities.utilities import get_class_properties
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
-                                                          ReinforcedXmission)
+                                                          RegionalXmission)
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        LOAD_CENTER_CAT,
                                                        SINK_CAT,
@@ -237,11 +237,11 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "length_mult_kind": length_mult_kind}
 
     if regions_fpath is not None:
-        least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
-                                             regions_fpath,
-                                             region_identifier_column,
-                                             capacity_class, cost_layers,
-                                             **kwargs)
+        least_costs = RegionalXmission.run(cost_fpath, features_fpath,
+                                           regions_fpath,
+                                           region_identifier_column,
+                                           capacity_class, cost_layers,
+                                           **kwargs)
     else:
         kwargs["nn_sinks"] = nn_sinks
         least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
