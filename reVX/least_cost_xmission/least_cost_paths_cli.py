@@ -22,9 +22,7 @@ from reVX.config.least_cost_xmission import LeastCostPathsConfig
 from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
                                                        ReinforcementPaths)
-from reVX.least_cost_xmission.least_cost_xmission import (
-    reinforcement_region_mapper
-)
+from reVX.least_cost_xmission.least_cost_xmission import region_mapper
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SUBSTATION_CAT,
                                                        BARRIERS_MULT)
@@ -325,7 +323,7 @@ def map_ss_to_rr(ctx, features_fpath, regions_fpath, region_identifier_column,
     logger.info("Mapping {:,d} substation locations to {:,d} reinforcement "
                 "regions".format(substations.shape[0], regions.shape[0]))
 
-    map_func = reinforcement_region_mapper(regions, region_identifier_column)
+    map_func = region_mapper(regions, region_identifier_column)
     centroids = substations.centroid
     substations[region_identifier_column] = centroids.apply(map_func)
 
