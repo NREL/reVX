@@ -104,6 +104,7 @@ class TieLineCosts:
         self._clip_shape = self._mcp = self._cost = self._mcp_cost = None
         self._cost_layer_map = {}
         self._li_cost_layer_map = {}
+        self._cumulative_costs = None
 
         with ExclusionLayers(self._cost_fpath) as f:
             self.transform = rasterio.Affine(*f.profile['transform'])
@@ -213,7 +214,8 @@ class TieLineCosts:
             logger.debug('Building MCP instance for size {}'
                          .format(self.mcp_cost.shape))
             self._mcp = MCP_Geometric(self.mcp_cost)
-            self._mcp.find_costs(starts=[(self.row, self.col)])
+            self._cumulative_costs, __ = self._mcp.find_costs(
+                starts=[(self.row, self.col)])
 
         return self._mcp
 
