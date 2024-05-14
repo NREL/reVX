@@ -805,8 +805,7 @@ class TransCapCosts(TieLineCosts):
 
         return start_indices, row_slice, col_slice
 
-    @staticmethod
-    def _calc_xformer_cost(features, tie_line_voltage, config=None):
+    def _calc_xformer_cost(self, features, tie_line_voltage):
         """
         Compute transformer costs in $/MW for needed features, all
         others will be 0
@@ -826,8 +825,6 @@ class TransCapCosts(TieLineCosts):
         xformer_costs : ndarray
             vector of $/MW transformer costs
         """
-        if not isinstance(config, XmissionConfig):
-            config = XmissionConfig(config=config)
 
         mask = features['category'] == SUBSTATION_CAT
         mask &= features['max_volts'] < tie_line_voltage
@@ -842,7 +839,8 @@ class TransCapCosts(TieLineCosts):
         xformer_costs = np.zeros(len(features))
         for volts, df in features.groupby('min_volts'):
             idx = df.index.values
-            xformer_costs[idx] = config.xformer_cost(volts, tie_line_voltage)
+            xformer_costs[idx] = self._config.xformer_cost(volts,
+                                                           tie_line_voltage)
 
         mask = features['category'] == TRANS_LINE_CAT
         mask &= features['max_volts'] < tie_line_voltage
@@ -851,7 +849,7 @@ class TransCapCosts(TieLineCosts):
         mask = features['min_volts'] <= tie_line_voltage
         xformer_costs[mask] = 0
 
-        mask = features['region'] == config['iso_lookup']['TEPPC']
+        mask = features['region'] == self._config['iso_lookup']['TEPPC']
         xformer_costs[mask] = 0
 
         return xformer_costs
@@ -1156,7 +1154,7 @@ class TransCapCosts(TieLineCosts):
 
         # Transformer costs
         features['xformer_cost_per_mw'] = self._calc_xformer_cost(
-            features, self.tie_line_voltage, config=self._config)
+            features, self.tie_line_voltage)
         capacity = int(self.capacity_class.strip('MW'))
         features['xformer_cost'] = (features['xformer_cost_per_mw']
                                     * capacity)
