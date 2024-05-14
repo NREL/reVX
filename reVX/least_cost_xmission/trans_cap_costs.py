@@ -1049,15 +1049,17 @@ class TransCapCosts(TieLineCosts):
             features[f'{layer}_line_cost'] = None
             features[f'{layer}_dist_km'] = None
 
-        logger.debug('Determining path lengths and costs')
-
         for index, feat in features.iterrows():
+            logger.debug('Determining path length and cost to feature:\n%s',
+                         feat)
             if feat['category'] == TRANS_LINE_CAT:
                 t_line = True
                 feat_idx = self._get_trans_line_idx(feat)
             else:
                 t_line = False
                 feat_idx = feat[['row', 'col']].values
+
+            logger.debug('Feat index is: %s', feat_idx)
 
             try:
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
