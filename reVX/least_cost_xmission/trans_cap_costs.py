@@ -1016,6 +1016,18 @@ class TransCapCosts(TieLineCosts):
 
         return [row, col]
 
+    def _check_tline_voltage(self, cost, feat):
+        """Return large cost if tie line voltage is too low. """
+        if feat['max_volts'] < self.tie_line_voltage:
+            msg = ('Tie-line {} voltage of {}kV is less than tie line '
+                   'voltage of {}kV.'
+                   .format(feat['trans_gid'], feat['max_volts'],
+                           self.tie_line_voltage))
+            logger.debug(msg)
+            cost = 1e12
+
+        return cost
+
     def compute_tie_line_costs(self,  # noqa: C901
                                min_line_length=MINIMUM_SPUR_DIST_KM,
                                save_paths=False,
@@ -1038,7 +1050,6 @@ class TransCapCosts(TieLineCosts):
             Updated table of transmission features with the tie-line
             cost and distance added
         """
-        tie_voltage = self.tie_line_voltage
         features = self.features.copy()
         features['raw_line_cost'] = None
         features['dist_km'] = None
@@ -1052,11 +1063,11 @@ class TransCapCosts(TieLineCosts):
         for index, feat in features.iterrows():
             logger.debug('Determining path length and cost to feature:\n%s',
                          feat)
-            if feat['category'] == TRANS_LINE_CAT:
-                t_line = True
+
+            t_line = feat['category'] == TRANS_LINE_CAT
+            if t_line:
                 feat_idx = self._get_trans_line_idx(feat)
             else:
-                t_line = False
                 feat_idx = feat[['row', 'col']].values
 
             logger.debug('Feat index is: %s', feat_idx)
@@ -1065,14 +1076,8 @@ class TransCapCosts(TieLineCosts):
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
                 (length, cost, poi_lat, poi_lon, path, cl_results) = result
 
-                if t_line and feat['max_volts'] < tie_voltage:
-                    msg = ('Tie-line {} voltage of {}kV is less than tie line '
-                           'voltage of {}kV.'
-                           .format(feat['trans_gid'], feat['max_volts'],
-                                   tie_voltage))
-                    logger.debug(msg)
-
-                    cost = 1e12
+                if t_line:
+                    cost = self._check_tline_voltage(cost, feat)
 
                 if length < min_line_length:
                     msg = ('Tie-line length {} will be increased to the '
