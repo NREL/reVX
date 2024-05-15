@@ -79,7 +79,8 @@ def from_config(ctx, config, verbose):
 
     config = LeastCostXmissionConfig(config)
     option = config.execution_control.option
-    TieLineCosts.WARN_ABOUT_COST_LAYER_OVERLAP =  config.warn_overlap
+    TieLineCosts.WARN_ABOUT_COST_LAYER_OVERLAP = (
+        config.warn_about_cost_layer_overlap)
 
     if 'VERBOSE' in ctx.obj:
         if any((ctx.obj['VERBOSE'], verbose)):
