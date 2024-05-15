@@ -22,6 +22,7 @@ from rex.utilities.utilities import get_class_properties
 
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
+from reVX.least_cost_xmission.trans_cap_costs import TieLineCosts
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
                                                           RegionalXmission)
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
@@ -78,6 +79,7 @@ def from_config(ctx, config, verbose):
 
     config = LeastCostXmissionConfig(config)
     option = config.execution_control.option
+    TieLineCosts.WARN_ABOUT_COST_LAYER_OVERLAP =  config.warn_overlap
 
     if 'VERBOSE' in ctx.obj:
         if any((ctx.obj['VERBOSE'], verbose)):

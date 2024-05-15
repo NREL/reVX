@@ -223,6 +223,13 @@ class LeastCostXmissionConfig(AnalysisConfig):
 
         return self._sc_point_gids
 
+    @property
+    def warn_overlap(self):
+        """
+        Boolean flag deciding wether to warn about cost layer overlap
+        """
+        return self.get('warn_about_cost_layer_overlap', True)
+
 
 class LeastCostPathsConfig(AnalysisConfig):
     """Config framework for Least Cost Paths"""

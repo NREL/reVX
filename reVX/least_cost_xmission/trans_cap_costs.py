@@ -44,6 +44,8 @@ class TieLineCosts:
     locations
     """
 
+    WARN_ABOUT_COST_LAYER_OVERLAP = True
+
     TB_LAYER_NAME = 'transmission_barrier'
     """Expected name of transmission barrier layer in cost HDF5 file. """
 
@@ -313,7 +315,7 @@ class TieLineCosts:
             barrier = f[self.TB_LAYER_NAME, self._row_slice, self._col_slice]
             barrier = barrier * barrier_mult
 
-        if (overlap > 1).any():
+        if (overlap > 1).any() and self.WARN_ABOUT_COST_LAYER_OVERLAP:
             all_layers = cost_layers + li_cost_layers
             msg = (f"Found overlap in cost layers: {all_layers}! Some cells "
                    "may contain double-counted costs. If you intentionally "
