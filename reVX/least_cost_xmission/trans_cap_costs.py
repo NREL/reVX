@@ -490,7 +490,7 @@ class TieLineCosts:
         if round(test_total_cost) != round(cost):
             msg = (f'Sum of cost_layers costs ({test_total_cost:,}) does '
                    f'not equal cost calculated with composite cost layer '
-                   f'({cost:,}')
+                   f'({cost:,})')
             logger.warning(msg)
             warn(msg)
 
@@ -695,7 +695,7 @@ class TransCapCosts(TieLineCosts):
         -------
         int
         """
-        return self.sc_point['sc_point_gid']
+        return int(self.sc_point['sc_point_gid'])
 
     @property
     def features(self) -> pd.DataFrame:
@@ -1048,7 +1048,9 @@ class TransCapCosts(TieLineCosts):
             features[f'{layer}_line_cost'] = None
             features[f'{layer}_dist_km'] = None
 
-        for index, feat in features.iterrows():
+        logger.info('Computing paths to %d features for SC Point %d',
+                     len(features), self.sc_point_gid)
+        for iter_ind, (index, feat) in enumerate(features.iterrows(), start=1):
             logger.debug('Determining path length and cost to feature:\n%s',
                          feat)
 
@@ -1103,10 +1105,15 @@ class TransCapCosts(TieLineCosts):
             except InvalidMCPStartValueError:
                 raise
             except Exception:
-                logger.exception('Could not connect SC point {} to '
-                                 'transmission features!'
-                                 .format(self.sc_point_gid))
+                logger.exception('Could not connect SC point %d to '
+                                 'transmission features!', self.sc_point_gid)
                 raise
+
+            logger.info('Processed %d out of %d features (%.2f%) for SC '
+                        'point %d',
+                         iter_ind, len(features),
+                         iter_ind / len(features) * 100,
+                         self.sc_point_gid)
 
         if save_paths:
             with ExclusionLayers(self._cost_fpath) as el:

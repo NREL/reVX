@@ -561,8 +561,9 @@ class LeastCostXmission(LeastCostPaths):
         logger.debug('Using a barrier multiplier of %s', barrier_mult)
 
         if max_workers > 1:
-            logger.info('Computing Least Cost Transmission for SC points in '
-                        'parallel on {} workers'.format(max_workers))
+            logger.info('Computing Least Cost Transmission for %d SC points '
+                        'in parallel on %d workers',
+                        len(sc_point_gids),  max_workers)
             least_costs = self._process_multi_core(
                 capacity_class,
                 cost_layers,
