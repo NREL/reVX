@@ -320,11 +320,11 @@ def map_ss_to_rr(ctx, features_fpath, regions_fpath, region_identifier_column,
                    .reset_index(drop=True)
                    .dropna(axis="columns", how="all"))
 
+    regions = gpd.read_file(regions_fpath).to_crs(features.crs)
     logger.info("Mapping {:,d} substation locations to {:,d} "
                 "reinforcement regions"
                 .format(substations.shape[0], regions.shape[0]))
 
-    regions = gpd.read_file(regions_fpath).to_crs(features.crs)
     map_func = region_mapper(regions, region_identifier_column)
     centroids = substations.centroid
     substations[region_identifier_column] = centroids.apply(map_func)
