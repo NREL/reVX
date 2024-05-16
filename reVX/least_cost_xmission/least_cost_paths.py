@@ -675,6 +675,8 @@ class ReinforcementPaths(LeastCostPaths):
             cost_transform = rasterio.Affine(*f.profile['transform'])
 
         features = gpd.read_file(features_fpath).to_crs(cost_crs)
+        mapping = {'gid': 'trans_gid'}
+        features = features.rename(columns=mapping)
         substations = (features[features.category == SUBSTATION_CAT]
                        .reset_index(drop=True)
                        .dropna(axis="columns", how="all"))
@@ -760,18 +762,18 @@ def min_reinforcement_costs(table):
     ----------
     table : pd.DataFrame | gpd.GeoDataFrame
         Table containing costs for reinforced transmission. Must contain
-        a `gid` column identifying each substation with its own unique
-        ID and a `reinforcement_cost_per_mw` column with the
+        a `trans_gid` column identifying each substation with its own
+        unique ID and a `reinforcement_cost_per_mw` column with the
         reinforcement costs to minimize.
 
     Returns
     -------
     pd.DataFrame | gpd.GeoDataFrame
-        Table with a single entry for each `gid` with the least
+        Table with a single entry for each `trans_gid` with the least
         `reinforcement_cost_per_mw`.
     """
 
-    grouped = table.groupby('gid')
+    grouped = table.groupby('trans_gid')
     table = table.loc[grouped["reinforcement_cost_per_mw"].idxmin()]
     return table.reset_index(drop=True)
 
