@@ -373,11 +373,14 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
               help=("Path to GeoPackage/CSV file with calculated "
                     "reinforcement costs. This file must have a 'gid' column "
                     "that will be used to merge in the reinforcement costs."))
+@click.option('--merge_column', '-mc', default="trans_gid", type=STR,
+              help=("Name of column in `cost_fpath` and "
+                    "`reinforcement_cost_fpath` files to merge on."))
 @click.option('--out_file', '-of', default=None, type=STR,
               help='Name for output GeoPackage/CSV file.')
 @click.pass_context
 def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
-                              out_file):
+                              merge_column, out_file):
     """
     Merge reinforcement costs into transmission costs.
     """
@@ -394,19 +397,19 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
 
     logger.info("Loaded spur-line costs for {:,} substations and "
                 "reinforcement costs for {:,} substations"
-                .format(len(costs["trans_gid"].unique()),
-                        len(r_costs["gid"].unique())))
+                .format(len(costs[merge_column].unique()),
+                        len(r_costs[merge_column].unique())))
 
-    r_costs.index = r_costs.gid
-    costs = costs[costs["trans_gid"].isin(r_costs.gid)].copy()
+    r_costs.index = r_costs[merge_column].values
+    costs = costs[costs[merge_column].isin(r_costs[merge_column])].copy()
 
     logger.info("Found {:,} substations with both spur-line and "
                 "reinforcement costs"
-                .format(len(costs["trans_gid"].unique())))
+                .format(len(costs[merge_column].unique())))
 
     r_cols = ["reinforcement_poi_lat", "reinforcement_poi_lon",
               "reinforcement_dist_km", "reinforcement_cost_per_mw"]
-    costs[r_cols] = r_costs.loc[costs["trans_gid"], r_cols].values
+    costs[r_cols] = r_costs.loc[costs[merge_column], r_cols].values
 
     logger.info("Writing output to {!r}".format(out_file))
 
