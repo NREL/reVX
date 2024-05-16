@@ -467,7 +467,7 @@ class LeastCostXmission(LeastCostPaths):
             buffer = sc_point["geometry"].buffer(radius_m)
             clipped_sc_features = sc_features.clip(buffer)
 
-        logger.debug('{} transmission features found in clipped area with '
+        logger.info('{} transmission features found in clipped area with '
                      'radius {}'
                      .format(len(clipped_sc_features), radius_m))
         return clipped_sc_features.copy(deep=True)

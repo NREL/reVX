@@ -270,6 +270,10 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
 
 
 @main.command()
+@click.option('--features_fpath', '-feats', required=True,
+              type=click.Path(exists=True),
+              help="Path to GeoPackage with substation and transmission "
+                   "features")
 @click.option('--regions_fpath', '-regs', required=True,
               type=click.Path(exists=True),
               help=("Path to reinforcement regions GeoPackage."))
@@ -277,9 +281,6 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
               type=STR,
               help=("Name of column in reinforcement regions GeoPackage"
                     "containing a unique identifier for each region."))
-@click.option('--features_fpath', '-feats', default=None, type=STR,
-              help="Path to GeoPackage with substation and transmission "
-                   "features")
 @click.option('--network_nodes_fpath', '-nodes', default=None, type=STR,
               help=("Path to network nodes GeoPackage. If this input is "
                     "included, the `region_identifier_column` is added if "
@@ -287,7 +288,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
 @click.option('--out_file', '-of', default=None, type=STR,
               help='Name for output GeoPackage file.')
 @click.pass_context
-def map_ss_to_rr(ctx, regions_fpath, region_identifier_column, features_fpath,
+def map_ss_to_rr(ctx, features_fpath, regions_fpath, region_identifier_column,
                  network_nodes_fpath, out_file):
     """
     Map substation locations to reinforcement regions.
@@ -314,48 +315,46 @@ def map_ss_to_rr(ctx, regions_fpath, region_identifier_column, features_fpath,
     log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
     init_logger('reVX', log_level=log_level)
 
+    features = gpd.read_file(features_fpath)
+    substations = (features[features.category == SUBSTATION_CAT]
+                   .reset_index(drop=True)
+                   .dropna(axis="columns", how="all"))
+
+    logger.info("Mapping {:,d} substation locations to {:,d} "
+                "reinforcement regions"
+                .format(substations.shape[0], regions.shape[0]))
+
     regions = gpd.read_file(regions_fpath).to_crs(features.crs)
+    map_func = region_mapper(regions, region_identifier_column)
+    centroids = substations.centroid
+    substations[region_identifier_column] = centroids.apply(map_func)
 
-    if features_fpath is not None:
-        features = gpd.read_file(features_fpath)
-        substations = (features[features.category == SUBSTATION_CAT]
-                       .reset_index(drop=True)
-                       .dropna(axis="columns", how="all"))
+    logger.info("Calculating min/max voltage for each substation...")
+    bad_subs = np.zeros(len(substations), dtype=bool)
+    for idx, row in substations.iterrows():
+        lines = row['trans_gids']
+        if isinstance(lines, str):
+            lines = json.loads(lines)
 
-        logger.info("Mapping {:,d} substation locations to {:,d} "
-                    "reinforcement regions"
-                    .format(substations.shape[0], regions.shape[0]))
+        lines_mask = features['gid'].isin(lines)
+        voltage = features.loc[lines_mask, 'voltage'].values
 
-        map_func = region_mapper(regions, region_identifier_column)
-        centroids = substations.centroid
-        substations[region_identifier_column] = centroids.apply(map_func)
+        if np.max(voltage) >= 69:
+            substations.loc[idx, 'min_volts'] = np.min(voltage)
+            substations.loc[idx, 'max_volts'] = np.max(voltage)
+        else:
+            bad_subs[idx] = True
 
-        logger.info("Calculating min/max voltage for each substation...")
-        bad_subs = np.zeros(len(substations), dtype=bool)
-        for idx, row in substations.iterrows():
-            lines = row['trans_gids']
-            if isinstance(lines, str):
-                lines = json.loads(lines)
+    if any(bad_subs):
+        msg = ("The following sub-stations do not have the minimum "
+               "required voltage of 69 kV and will be dropped:\n{}"
+               .format(substations.loc[bad_subs, 'gid']))
+        logger.warning(msg)
+        warn(msg)
+        substations = substations.loc[~bad_subs].reset_index(drop=True)
 
-            lines_mask = features['gid'].isin(lines)
-            voltage = features.loc[lines_mask, 'voltage'].values
-
-            if np.max(voltage) >= 69:
-                substations.loc[idx, 'min_volts'] = np.min(voltage)
-                substations.loc[idx, 'max_volts'] = np.max(voltage)
-            else:
-                bad_subs[idx] = True
-
-        if any(bad_subs):
-            msg = ("The following sub-stations do not have the minimum "
-                   "required voltage of 69 kV and will be dropped:\n{}"
-                   .format(substations.loc[bad_subs, 'gid']))
-            logger.warning(msg)
-            warn(msg)
-            substations = substations.loc[~bad_subs].reset_index(drop=True)
-
-        logger.info("Writing substation output to {!r}".format(out_file))
-        substations.to_file(out_file, driver="GPKG", index=False)
+    logger.info("Writing substation output to {!r}".format(out_file))
+    substations.to_file(out_file, driver="GPKG", index=False)
 
     if network_nodes_fpath is None:
         return
