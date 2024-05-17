@@ -720,7 +720,7 @@ class ReinforcementPaths(LeastCostPaths):
             logger.debug('Computed {}/{} reinforcement paths'
                          .format(loop_ind, len(indices)))
 
-        logger.info('{} paths were computed in {:.4f} hours'
+        logger.info('Paths to {} network node(s) were computed in {:.4f} hours'
                     .format(len(least_cost_paths), (time.time() - ts) / 3600))
 
         costs = pd.concat(least_cost_paths, ignore_index=True)
