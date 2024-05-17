@@ -591,7 +591,7 @@ class ReinforcementPaths(LeastCostPaths):
             region_identifier_column, transmission_lines_fpath,
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
             barrier_mult=BARRIERS_MULT, indices=None, save_paths=False,
-            length_invariant_cost_layers=None):
+            length_invariant_cost_layers=None, ss_id_col="trans_gid"):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -653,6 +653,11 @@ class ReinforcementPaths(LeastCostPaths):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
+        ss_id_col : str, default="trans_gid"
+            Name of column containing unique identifier for each
+            substation. This column will be used to compute minimum
+            reinforcement cost per substation.
+            By default, ``"trans_gid"``.
 
         Returns
         -------
@@ -675,8 +680,8 @@ class ReinforcementPaths(LeastCostPaths):
             cost_transform = rasterio.Affine(*f.profile['transform'])
 
         features = gpd.read_file(features_fpath).to_crs(cost_crs)
-        mapping = {'gid': 'trans_gid'}
-        features = features.rename(columns=mapping)
+        mapping = {'gid': ss_id_col}
+        substations = features.rename(columns=mapping)
         substations = (features[features.category == SUBSTATION_CAT]
                        .reset_index(drop=True)
                        .dropna(axis="columns", how="all"))
@@ -716,7 +721,7 @@ class ReinforcementPaths(LeastCostPaths):
                     .format(len(least_cost_paths), (time.time() - ts) / 3600))
 
         costs = pd.concat(least_cost_paths, ignore_index=True)
-        return min_reinforcement_costs(costs)
+        return min_reinforcement_costs(costs, group_col=ss_id_col)
 
 
 def _rasterize_transmission(transmission_lines, xmission_config, cost_shape,
@@ -755,25 +760,29 @@ def _rasterize_transmission_layer(transmission_lines, cost_shape,
     return out
 
 
-def min_reinforcement_costs(table):
+def min_reinforcement_costs(table, group_col="trans_gid"):
     """Filter table down to cheapest reinforcement per substation.
 
     Parameters
     ----------
     table : pd.DataFrame | gpd.GeoDataFrame
         Table containing costs for reinforced transmission. Must contain
-        a `trans_gid` column identifying each substation with its own
+        a `group_col` column identifying each substation with its own
         unique ID and a `reinforcement_cost_per_mw` column with the
         reinforcement costs to minimize.
+    group_col : str, default="trans_gid"
+        Name of column containing unique identifier for each substation.
+        This column will be used to group costs and select the minimum
+        one.
 
     Returns
     -------
     pd.DataFrame | gpd.GeoDataFrame
-        Table with a single entry for each `trans_gid` with the least
+        Table with a single entry for each `group_col` with the least
         `reinforcement_cost_per_mw`.
     """
 
-    grouped = table.groupby('trans_gid')
+    grouped = table.groupby(group_col)
     table = table.loc[grouped["reinforcement_cost_per_mw"].idxmin()]
     return table.reset_index(drop=True)
 
