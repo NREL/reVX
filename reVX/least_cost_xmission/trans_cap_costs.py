@@ -1354,8 +1354,8 @@ class ReinforcementLineCosts(TieLineCosts):
         ----------
         transmission_lines : dict
             Dictionary where the keys are the names of cost layers in
-            the cost HDF5 file and values are arrays with the
-            corresponding existing transmission lines rastered into
+            the cost HDF5 file and values are **clipped** arrays with
+            the corresponding existing transmission lines rastered into
             them (i.e. array value is 1 at a pixel if there is a
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
@@ -1409,7 +1409,7 @@ class ReinforcementLineCosts(TieLineCosts):
         self._cost = self._cost / line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
             for capacity_mw, lines in transmission_lines.items():
-                t_lines = np.where(lines[row_slice, col_slice])
+                t_lines = np.where(lines)
                 cost_layer = 'tie_line_costs_{}MW'.format(capacity_mw)
                 costs = f[cost_layer, row_slice, col_slice][t_lines]
                 # allow crossing of barriers along existing transmission lines
@@ -1434,8 +1434,8 @@ class ReinforcementLineCosts(TieLineCosts):
         ----------
         transmission_lines : dict
             Dictionary where the keys are the names of cost layers in
-            the cost HDF5 file and values are arrays with the
-            corresponding existing transmission lines rastered into
+            the cost HDF5 file and values are **clipped** arrays with
+            the corresponding existing transmission lines rastered into
             them (i.e. array value is 1 at a pixel if there is a
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing

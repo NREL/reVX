@@ -490,7 +490,10 @@ class ReinforcementPaths(LeastCostPaths):
                           .reset_index(drop=True)
                           .dropna(axis="columns", how="all"))
 
-        self._transmission_lines = transmission_lines
+        self._transmission_lines = {
+            capacity_mw: lines[self._row_slice, self._col_slice]
+            for capacity_mw, lines in transmission_lines.items()
+        }
 
     @property
     def start_indices(self):
