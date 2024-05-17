@@ -687,6 +687,8 @@ class ReinforcementPaths(LeastCostPaths):
         substations = substations.dropna(axis="columns", how="all")
 
         lines = gpd.read_file(transmission_lines_fpath).to_crs(cost_crs)
+        mapping = {'VOLTAGE': 'voltage'}
+        lines = lines.rename(columns=mapping)
         transmission_lines = (lines[lines.category == TRANS_LINE_CAT]
                               .reset_index(drop=True))
 
