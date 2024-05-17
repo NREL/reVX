@@ -19,7 +19,6 @@ from rex.utilities.loggers import log_mem
 
 from reVX.handlers.layered_h5 import crs_match
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
-                                                       SUBSTATION_CAT,
                                                        BARRIERS_MULT)
 from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
                                                       ReinforcementLineCosts)
@@ -685,9 +684,7 @@ class ReinforcementPaths(LeastCostPaths):
         features = gpd.read_file(features_fpath).to_crs(cost_crs)
         mapping = {'gid': ss_id_col}
         substations = features.rename(columns=mapping)
-        substations = (features[features.category == SUBSTATION_CAT]
-                       .reset_index(drop=True)
-                       .dropna(axis="columns", how="all"))
+        substations = substations.dropna(axis="columns", how="all")
 
         lines = gpd.read_file(transmission_lines_fpath).to_crs(cost_crs)
         transmission_lines = (lines[lines.category == TRANS_LINE_CAT]
