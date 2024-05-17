@@ -784,8 +784,11 @@ def min_reinforcement_costs(table, group_col="trans_gid"):
         Table with a single entry for each `group_col` with the least
         `reinforcement_cost_per_mw`.
     """
-
+    logger.debug("Computing min reinforcement column grouped by %s", group_col)
+    logger.debug("Reinforcement table contains %d paths", len(table))
     grouped = table.groupby(group_col)
+    logger.debug("Reinforcement table contains %d groups of %s",
+                 len(grouped), group_col)
     table = table.loc[grouped["reinforcement_cost_per_mw"].idxmin()]
     return table.reset_index(drop=True)
 
