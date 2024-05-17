@@ -783,7 +783,7 @@ def min_reinforcement_costs(table, group_col="trans_gid"):
         Table with a single entry for each `group_col` with the least
         `reinforcement_cost_per_mw`.
     """
-    logger.debug("Computing min reinforcement column grouped by %s", group_col)
+    logger.debug("Computing min reinforcement cost grouped by %s", group_col)
     logger.debug("Reinforcement table contains %d paths", len(table))
     grouped = table.groupby(group_col)
     logger.debug("Reinforcement table contains %d groups of %s",
@@ -803,7 +803,7 @@ def _collect_future_chunks(futures, least_cost_paths):
         lcp = future.result()
         lcp = pd.concat((lcp, end_features), axis=1)
         least_cost_paths.append(lcp)
-        logger.debug('Collected {} of {} futures!'.format(i, num_to_collect))
+        logger.debug('Collected %d of %d futures!'.format(i, num_to_collect))
         log_mem(logger)
 
     return least_cost_paths
