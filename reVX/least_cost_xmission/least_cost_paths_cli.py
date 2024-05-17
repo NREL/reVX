@@ -421,6 +421,9 @@ def get_node_cmd(config, start_index=0):
     if config.log_level == logging.DEBUG:
         args.append('-v')
 
+    if config.xmission_config is not None:
+        args.append('-xcfg {}'.format(SLURM.s(config.xmission_config)),)
+
     cmd = ('python -m reVX.least_cost_xmission.least_cost_paths_cli {}'
            .format(' '.join(args)))
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
