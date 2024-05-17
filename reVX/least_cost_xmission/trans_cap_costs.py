@@ -1412,6 +1412,8 @@ class ReinforcementLineCosts(TieLineCosts):
                 t_lines = np.where(lines[row_slice, col_slice])
                 cost_layer = 'tie_line_costs_{}MW'.format(capacity_mw)
                 costs = f[cost_layer, row_slice, col_slice][t_lines]
+                # allow crossing of barriers along existing transmission lines
+                costs[costs <= 0] = 1
                 self._mcp_cost[t_lines] = costs * 1e-9  # 0 not allowed
                 self._cost[t_lines] = costs / capacity_mw
 
