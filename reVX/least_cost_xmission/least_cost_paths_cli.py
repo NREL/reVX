@@ -202,6 +202,10 @@ def from_config(ctx, config, verbose):
 @click.option('--log_dir', '-log', default=None, type=STR,
               show_default=True,
               help='Directory to dump log files.')
+@click.option('--ss_id_col', '-ssid', default="poi_gid", type=STR,
+              show_default=True,
+              help='Name of column used to unqiuely identify substations. '
+                   'Used for reinforcement calcaultions only. ')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
 @click.option('--li-cost-layers', '-licl', required=False, multiple=True,
@@ -214,8 +218,8 @@ def from_config(ctx, config, verbose):
 def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
           clip_buffer, start_index, step_index, barrier_mult, max_workers,
-          region_identifier_column, save_paths, out_dir, log_dir, verbose,
-          li_cost_layers):
+          region_identifier_column, save_paths, out_dir, log_dir, ss_id_col,
+          verbose, li_cost_layers):
     """
     Run Least Cost Paths on local hardware
     """
@@ -248,6 +252,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
         features = gpd.read_file(network_nodes_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
         kwargs["indices"] = features.index[start_index::step_index]
+        kwargs["ss_id_col"] = ss_id_col
         least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
                                              network_nodes_fpath,
                                              region_identifier_column,
@@ -524,6 +529,7 @@ def get_node_cmd(config, start_index=0):
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
+            '-ssid {}'.format(SLURM.s(config.ss_id_col)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),

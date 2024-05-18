@@ -392,6 +392,15 @@ class LeastCostPathsConfig(AnalysisConfig):
         return rid_col
 
     @property
+    def ss_id_col(self):
+        """
+        Name of column containing unique identifier for each substation.
+        This column will be used to compute minimum reinforcement cost
+        per substation. By default, ``"poi_gid"``.
+        """
+        return self.get("ss_id_col", "poi_gid")
+
+    @property
     def save_paths(self):
         """
         Boolean flag to save the least cost paths along with the costs and
