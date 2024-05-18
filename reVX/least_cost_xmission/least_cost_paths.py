@@ -707,8 +707,12 @@ class ReinforcementPaths(LeastCostPaths):
             node_substations = substations[mask].reset_index(drop=True)
             if len(node_substations) == 0:
                 continue
-            logger.info('Working on {} substations in region {}'
-                        .format(len(node_substations), rid))
+
+            logger.debug('Found %d unique %s',
+                         node_substations[ss_id_col].unique().shape[0],
+                         ss_id_col)
+            logger.info('Working on %d substations in region %s',
+                        len(node_substations), rid)
             node_features = pd.concat([network_node, node_substations])
             rp = cls(cost_fpath, node_features, transmission_lines,
                      clip_buffer=clip_buffer)
@@ -716,13 +720,17 @@ class ReinforcementPaths(LeastCostPaths):
             node_least_cost_paths[region_identifier_column] = rid
             least_cost_paths += [node_least_cost_paths]
 
-            logger.debug('Computed {}/{} reinforcement paths'
+            logger.debug('Found %d reinforcement paths for network node',
+                         len(node_least_cost_paths))
+            logger.debug('Computed reinforcements for {}/{} network nodes'
                          .format(loop_ind, len(indices)))
 
         logger.info('Paths to {} network node(s) were computed in {:.4f} hours'
                     .format(len(least_cost_paths), (time.time() - ts) / 3600))
 
         costs = pd.concat(least_cost_paths, ignore_index=True)
+        logger.debug('Computed %d reinforcement paths for %d unique POIs',
+                     len(costs), costs[ss_id_col].unique().shape[0])
         return min_reinforcement_costs(costs, group_col=ss_id_col)
 
 
@@ -785,6 +793,11 @@ def min_reinforcement_costs(table, group_col="trans_gid"):
     """
     logger.debug("Computing min reinforcement cost grouped by %s", group_col)
     logger.debug("Reinforcement table contains %d paths", len(table))
+
+    logger.debug("Dropping NA reinforcement costs")
+    table = table[~table["reinforcement_cost_per_mw"].isna()]
+    logger.debug("Reinforcement table with no NA costs contains %d paths",
+                 len(table))
     grouped = table.groupby(group_col)
     logger.debug("Reinforcement table contains %d groups of %s",
                  len(grouped), group_col)

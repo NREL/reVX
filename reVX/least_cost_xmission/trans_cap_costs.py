@@ -1052,7 +1052,7 @@ class TransCapCosts(TieLineCosts):
             features[f'{layer}_dist_km'] = None
 
         logger.info('Computing paths to %d features for SC Point %d',
-                     len(features), self.sc_point_gid)
+                    len(features), self.sc_point_gid)
         for iter_ind, (index, feat) in enumerate(features.iterrows(), start=1):
             logger.debug('Determining path length and cost to feature:\n%s',
                          feat)
@@ -1112,7 +1112,7 @@ class TransCapCosts(TieLineCosts):
                                  'transmission features!', self.sc_point_gid)
                 raise
 
-            logger.info('Processed %d out of %d features (%.2f%) for SC '
+            logger.info('Processed %d out of %d features (%.2f%%) for SC '
                         'point %d',
                          iter_ind, len(features),
                          iter_ind / len(features) * 100,
@@ -1523,8 +1523,10 @@ class ReinforcementLineCosts(TieLineCosts):
                                       'poi_lon': 'reinforcement_poi_lon'},
                                      axis=1)
 
-        logger.debug('Reinforcement Path Cost computed in {:.4f} min'
-                     .format((time.time() - ts) / 60))
+        logger.debug('Reinforcement Path Cost computed in %.4f min',
+                     (time.time() - ts) / 60)
+        logger.debug('Reinforcement tie-line columns: %s',
+                     str(tie_lines.columns))
 
         return tie_lines
 
