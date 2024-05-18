@@ -528,7 +528,8 @@ class ReinforcementPaths(LeastCostPaths):
         return self._features[['row', 'col']].values
 
     def process_least_cost_paths(self, capacity_class, cost_layers,
-                                 barrier_mult=BARRIERS_MULT, save_paths=False,
+                                 barrier_mult=BARRIERS_MULT, max_workers=None,
+                                 save_paths=False,
                                  length_invariant_cost_layers=None):
         """
         Find the reinforcement line paths between the network node and
@@ -573,18 +574,57 @@ class ReinforcementPaths(LeastCostPaths):
         logger.info('Computing reinforcement path costs for start index {}'
                     .format(self._start_indices))
         log_mem(logger)
+        max_workers = os.cpu_count() if max_workers is None else max_workers
+        max_workers = int(max_workers)
 
         licl = length_invariant_cost_layers
-        lcp = ReinforcementLineCosts.run(self._transmission_lines,
-                                         self._cost_fpath,
-                                         self.start_indices, self.end_indices,
-                                         capacity_class, cost_layers,
-                                         self._row_slice, self._col_slice,
-                                         barrier_mult=barrier_mult,
-                                         save_paths=save_paths,
-                                         length_invariant_cost_layers=licl)
-        feats = self._features.drop(columns=['row', 'col'])
-        least_cost_paths = pd.concat((lcp, feats), axis=1)
+        least_cost_paths = []
+        if max_workers > 1:
+            logger.info('Computing Reinforcement Cost Paths in parallel on '
+                        '%d workers', max_workers)
+            log_mem(logger)
+            loggers = [__name__, 'reV', 'reVX']
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
+
+                futures = {}
+                for ind in range(max_workers):
+                    feats = self._features.iloc[ind::max_workers]
+                    future = exe.submit(ReinforcementLineCosts.run,
+                                        self._transmission_lines,
+                                        self._cost_fpath,
+                                        self.start_indices,
+                                        feats[['row', 'col']].values,
+                                        capacity_class,
+                                        cost_layers,
+                                        self._row_slice,
+                                        self._col_slice,
+                                        barrier_mult=barrier_mult,
+                                        save_paths=save_paths,
+                                        length_invariant_cost_layers=licl)
+                    futures[future] = feats
+                    logger.debug('Submitted %d of %d futures',
+                                 ind + 1, max_workers)
+                    log_mem(logger)
+
+                least_cost_paths = _collect_future_chunks(futures,
+                                                          least_cost_paths)
+                least_cost_paths = pd.concat(least_cost_paths,
+                                             ignore_index=True)
+
+        else:
+            lcp = ReinforcementLineCosts.run(self._transmission_lines,
+                                             self._cost_fpath,
+                                             self.start_indices,
+                                             self.end_indices,
+                                             capacity_class,
+                                             cost_layers,
+                                             self._row_slice,
+                                             self._col_slice,
+                                             barrier_mult=barrier_mult,
+                                             save_paths=save_paths,
+                                             length_invariant_cost_layers=licl)
+            least_cost_paths = lcp.merge(self._features, on=["row", "col"])
 
         least_cost_paths = least_cost_paths.dropna(axis="columns", how="all")
         drop_cols = ['index', 'row', 'col']
@@ -594,8 +634,9 @@ class ReinforcementPaths(LeastCostPaths):
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
-            barrier_mult=BARRIERS_MULT, indices=None, save_paths=False,
-            length_invariant_cost_layers=None, ss_id_col="trans_gid"):
+            barrier_mult=BARRIERS_MULT, indices=None, max_workers=None,
+            save_paths=False, length_invariant_cost_layers=None,
+            ss_id_col="trans_gid"):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -677,7 +718,8 @@ class ReinforcementPaths(LeastCostPaths):
                       "cost_layers": cost_layers,
                       "length_invariant_cost_layers": licl,
                       "barrier_mult": barrier_mult,
-                      "save_paths": save_paths}
+                      "save_paths": save_paths,
+                      "max_workers": max_workers}
         with ExclusionLayers(cost_fpath) as f:
             cost_crs = CRS.from_string(f.crs)
             cost_shape = f.shape

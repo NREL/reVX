@@ -225,21 +225,23 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
                 .format(out_dir))
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
+
+    kwargs = {"clip_buffer": int(clip_buffer),
+              "barrier_mult": barrier_mult,
+              "save_paths": save_paths,
+              "max_workers": max_workers,
+              "length_invariant_cost_layers": li_cost_layers}
+
     if is_reinforcement_run:
         xmission_config = XmissionConfig(config=xmission_config)
+        kwargs["xmission_config"] = xmission_config
         cc_str = xmission_config._parse_cap_class(capacity_class)
         cap = xmission_config['power_classes'][cc_str]
         cost_layers = [layer.format(cap) for layer in cost_layers]
         logger.debug('Xmission Config: {}'.format(xmission_config))
         features = gpd.read_file(network_nodes_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
-        indices = features.index[start_index::step_index]
-        kwargs = {"xmission_config": xmission_config,
-                  "clip_buffer": int(clip_buffer),
-                  "barrier_mult": barrier_mult,
-                  "indices": indices,
-                  "save_paths": save_paths,
-                  "length_invariant_cost_layers": li_cost_layers}
+        kwargs["indices"] = features.index[start_index::step_index]
         least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
                                              network_nodes_fpath,
                                              region_identifier_column,
@@ -249,16 +251,9 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     else:
         features = gpd.read_file(features_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
-        indices = features.index[start_index::step_index]
-        licl = li_cost_layers
+        kwargs["indices"] = features.index[start_index::step_index]
         least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
-                                         cost_layers,
-                                         clip_buffer=int(clip_buffer),
-                                         barrier_mult=barrier_mult,
-                                         indices=indices,
-                                         max_workers=max_workers,
-                                         save_paths=save_paths,
-                                         length_invariant_cost_layers=licl)
+                                         cost_layers, **kwargs)
 
     fpath_out = os.path.join(out_dir, f'{name}_lcp')
     if save_paths:
