@@ -107,10 +107,12 @@ class TieLineCosts:
         self._cost_layer_map = {}
         self._li_cost_layer_map = {}
         self._cumulative_costs = None
+        self.transform = None
+        self._full_shape = None
+        self._cost_crs = None
 
-        with ExclusionLayers(self._cost_fpath) as f:
-            self.transform = rasterio.Affine(*f.profile['transform'])
-            self._full_shape = f.shape
+        with ExclusionLayers(self._cost_fpath) as fh:
+            self._extract_data_from_cost_h5(fh)
 
         licl = length_invariant_cost_layers
         self._clip_costs(cost_layers, length_invariant_cost_layers=licl,
@@ -121,6 +123,12 @@ class TieLineCosts:
                                          self._start_indices)
 
         return msg
+
+    def _extract_data_from_cost_h5(self, fh):
+        """Extract extra info from cost H5 file. """
+        self.transform = rasterio.Affine(*fh.profile['transform'])
+        self._full_shape = fh.shape
+        self._cost_crs = fh.crs
 
     @property
     def row_offset(self):
@@ -538,10 +546,8 @@ class TieLineCosts:
         tie_lines = pd.DataFrame({'length_km': lengths, 'cost': costs,
                                   'poi_lat': poi_lats, 'poi_lon': poi_lons})
         if save_paths:
-            with ExclusionLayers(self._cost_fpath) as f:
-                crs = f.crs
-
-            tie_lines = gpd.GeoDataFrame(tie_lines, geometry=paths, crs=crs)
+            tie_lines = gpd.GeoDataFrame(tie_lines, geometry=paths,
+                                         crs=self._cost_crs)
 
         return tie_lines
 
@@ -667,6 +673,7 @@ class TransCapCosts(TieLineCosts):
             crossing these cells).
         """
         self._sc_point = sc_point
+        self._region_layer = None
         start_indices, row_slice, col_slice = self._get_clipping_slices(
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
         licl = length_invariant_cost_layers
@@ -677,6 +684,12 @@ class TransCapCosts(TieLineCosts):
         self._capacity_class = self._config._parse_cap_class(capacity_class)
         self._features = self._prep_features(features)
         self._clip_mask = None
+
+    def _extract_data_from_cost_h5(self, fh):
+        """Extract extra info from cost H5 file. """
+        super()._extract_data_from_cost_h5(fh)
+        self._region_layer = fh["ISO_regions",
+                                self._row_slice, self._col_slice]
 
     @property
     def sc_point(self):
@@ -1119,9 +1132,8 @@ class TransCapCosts(TieLineCosts):
                          self.sc_point_gid)
 
         if save_paths:
-            with ExclusionLayers(self._cost_fpath) as el:
-                crs = el.crs
-            features = gpd.GeoDataFrame(features, geometry=paths, crs=crs)
+            features = gpd.GeoDataFrame(features, geometry=paths,
+                                        crs=self._cost_crs)
 
         return features
 
