@@ -33,7 +33,8 @@ from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        MINIMUM_SPUR_DIST_KM,
                                                        BARRIERS_MULT)
 from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
-from reVX.least_cost_xmission.trans_cap_costs import TransCapCosts
+from reVX.least_cost_xmission.trans_cap_costs import (TransCapCosts,
+                                                      RegionalTransCapCosts)
 
 logger = logging.getLogger(__name__)
 
@@ -987,7 +988,16 @@ class RegionalXmission(LeastCostXmission):
     Compute Least Cost tie-line paths and full transmission cap cost
     for all supply curve points to all possible connections within the
     region containing the supply curve point.
+
+    This class also offers a bit more flexibility than it's base
+    (``LeastCostXmission``):
+
+        - costs can be specified for region values of 0.
+        - the ``trans_gid``, ``min_volt`` and ``max_volt`` columns are
+          no longer required in the features input.
+
     """
+    _TCC_CLASS = RegionalTransCapCosts
 
     def __init__(self, cost_fpath, features_fpath, regions,
                  region_identifier_column, resolution=RESOLUTION,
@@ -1025,42 +1035,55 @@ class RegionalXmission(LeastCostXmission):
                          resolution=resolution,
                          xmission_config=xmission_config,
                          min_line_length=min_line_length)
+
+        with ExclusionLayers(cost_fpath) as f:
+            crs = CRS.from_string(f.crs)
+        self._features = self._features.to_crs(crs)
+
         if isinstance(regions, str):
             regions = gpd.read_file(regions)
-        self._regions = regions.to_crs(self.features.crs)
+        self._regions = regions.to_crs(crs)
         self._rid_column = region_identifier_column
+        self._region_features = {}
 
     @staticmethod
     def _load_trans_feats(features_fpath):
-        """Load existing substations from disk. """
+        """Load existing transmission features from disk. """
 
-        logger.debug('Loading substations...')
-        substations = gpd.read_file(features_fpath)
-        substations = substations[substations.category == SUBSTATION_CAT]
-        substations = substations.reset_index(drop=True)
-        substations = substations.drop(columns=['bgid', 'egid', 'cap_left'],
-                                       errors='ignore')
-        mapping = {'gid': 'trans_gid', 'trans_gids': 'trans_line_gids'}
-        substations = substations.rename(columns=mapping)
+        logger.debug('Loading transmission features...')
 
-        return substations, None
+        features = gpd.read_file(features_fpath)
+        features = features.reset_index(drop=True)
+        features = features.drop(columns=['bgid', 'egid', 'cap_left'],
+                                 errors='ignore')
+        mapping = {'gid': 'trans_gid'}
+        features = features.rename(columns=mapping)
 
-    def _clip_to_sc_point(self, sc_point, tie_line_voltage,
-                          nn_sinks=NUM_NN_SINKS,
+        return features, None
+
+    def _clipped_features(self, rid):
+        """Clip features to region and record the region ID. """
+        if rid in self._region_features:
+            return self._region_features[rid]
+
+        mask = self._regions[self._rid_column] == rid
+        sc_features = gpd.clip(self.features, self._regions[mask])
+        self._region_features[rid] = sc_features
+        return sc_features
+
+    def _clip_to_sc_point(self, sc_point, *__,
                           clipping_buffer=CLIP_RASTER_BUFFER, radius=None,
-                          expand_radius=True):
+                          expand_radius=True, **___):
         """Clip features to be substations in the region of the sc point.  """
-        logger.debug('Clipping features to sc_point {}'.format(sc_point.name))
+        logger.debug('Clipping features to sc_point %d',sc_point.sc_point_gid)
 
         point = self.sc_points.loc[sc_point.name:sc_point.name].centroid
-        map_func = reinforcement_region_mapper(self._regions, self._rid_column)
+        map_func = region_mapper(self._regions, self._rid_column)
         rid = point.apply(map_func).values[0]
-        logger.debug("  - Clipping features to reinforcement region: {}"
-                     .format(rid))
-        mask = self.features[self._rid_column] == rid
-        sc_features = self.features.loc[mask].copy(deep=True)
-        logger.debug('{} transmission features found in clipped area '
-                     .format(len(sc_features)))
+        logger.debug("  - Clipping features to region: %s", rid)
+        sc_features = self._clipped_features(rid)
+        logger.debug('%d transmission features found in clipped area ',
+                     len(sc_features))
 
         with ExclusionLayers(self._cost_fpath) as f:
             transform = f.profile["transform"]
@@ -1073,18 +1096,16 @@ class RegionalXmission(LeastCostXmission):
                                                clipping_buffer, resolution,
                                                expand_radius)
 
-        mask = self.features['max_volts'] >= tie_line_voltage
-        sc_features = sc_features.loc[mask].copy(deep=True)
-
         if sc_features.empty:
             return sc_features, None
 
         radius = _compute_radius(sc_features, sc_point, transform,
                                  clipping_buffer)
-        logger.debug('{} transmission features found in clipped area of '
-                     'radius {} with minimum max voltage of {}'
-                     .format(len(sc_features), radius, tie_line_voltage))
+        logger.debug('%d transmission features found in clipped area of '
+                     'radius %.2f',
+                     len(sc_features), radius)
 
+        sc_features[self._rid_column] = rid
         return sc_features, radius
 
     @classmethod
