@@ -649,6 +649,7 @@ class TransCapCosts(TieLineCosts):
     (least-cost tie-line cost + connection cost) for all features to be
     connected a single supply curve point
     """
+    _CHECK_FOR_INVALID_REGION = True
 
     def __init__(self, cost_fpath, sc_point, features, capacity_class,
                  cost_layers, radius=None, xmission_config=None,
@@ -910,7 +911,7 @@ class TransCapCosts(TieLineCosts):
         """
 
         sub_upgrade_cost = np.zeros(len(features))
-        if np.any(features['region'] == 0):
+        if self._CHECK_FOR_INVALID_REGION and np.any(features['region'] == 0):
             mask = features['region'] == 0
             msg = ('Features {} have an invalid region! Region must != 0!'
                    .format(features.loc[mask, 'trans_gid'].values))
@@ -944,7 +945,7 @@ class TransCapCosts(TieLineCosts):
         """
 
         new_sub_cost = np.zeros(len(features))
-        if np.any(features['region'] == 0):
+        if self._CHECK_FOR_INVALID_REGION and np.any(features['region'] == 0):
             mask = features['region'] == 0
             msg = ('Features {} have an invalid region! Region must != 0!'
                    .format(features.loc[mask, 'trans_gid'].values))
@@ -1375,6 +1376,75 @@ class TransCapCosts(TieLineCosts):
             raise
 
         return features
+
+
+class RegionalTransCapCosts(TransCapCosts):
+    """Compute tie-line costs when connections are limitred to a region.
+
+    This class also allows for costs for region values of 0.
+    Additionally, the `trans_gid`, `min_volt` and `max_volt` columns are
+    no longer required in the features input.
+    """
+    TRANSFORMER_COST_VOLTAGE = 69
+    _CHECK_FOR_INVALID_REGION = False
+
+    def _get_trans_line_idx(self, trans_line):
+        """Get the cheapest point on each transmission line.
+
+        Parameters
+        ----------
+        trans_lines : GeoPandas.GeoSeries
+            Transmission lines to be connected to each supply curve
+            point.
+
+        Returns
+        -------
+        [row, col] : list
+            Row, col index of the cheapest point on the transmission
+            line to route to from the supply curve point.
+        """
+        window = rasterio.windows.from_bounds(*self.clip_mask.bounds,
+                                              transform=self.transform)
+        window_transform = rasterio.windows.transform(window=window,
+                                                      transform=self.transform)
+
+        mask = rasterio.features.geometry_mask([trans_line.geometry],
+                                               out_shape=self.cost.shape,
+                                               transform=window_transform,
+                                               invert=True)
+        rows, cols = np.where(mask)
+
+        __ = self.mcp  # ensures self._cumulative_costs is not `None`
+        point_ind = np.argmin(self._cumulative_costs[rows, cols])
+
+        return [rows[point_ind], cols[point_ind]]
+
+    def _check_tline_voltage(self, cost, *__, **___):
+        """No adjustments. """
+        return cost
+
+    def _calc_xformer_cost(self, features):
+        """Compute transformer costs in $/MW
+
+        Parameters
+        ----------
+        features : pd.DataFrame
+            Table of transmission features to compute transformer costs
+            for
+
+        Returns
+        -------
+        xformer_costs : ndarray
+            vector of $/MW transformer costs
+        """
+        cost = self._config.xformer_cost(self.TRANSFORMER_COST_VOLTAGE,
+                                         self.tie_line_voltage)
+        xformer_costs = np.full(len(features), cost)
+
+        mask = features['region'] == self._config['iso_lookup']['TEPPC']
+        xformer_costs[mask] = 0
+
+        return xformer_costs
 
 
 class ReinforcementLineCosts(TieLineCosts):
