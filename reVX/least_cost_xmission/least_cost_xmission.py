@@ -708,8 +708,23 @@ class LeastCostXmission(LeastCostPaths):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
+        mask = self.sc_points.sc_point_gid.isin(sc_point_gids)
+        sc_points = self.sc_points[mask]
+        if sc_points.empty:
+            return paths
+
+        costs = _starting_costs(self._cost_fpath, sc_points, cost_layers,
+                                li_cost_layers, barrier_mult)
+        if (costs < 0).any():
+            bad_points = sc_points[costs < 0]
+            bad_sc_ids = list(bad_points["sc_point_gid"].values)
+            msg = ("Could not connect SC points with invalid starting costs "
+                   f"to transmission features: {bad_sc_ids}")
+            logger.warning(msg)
+            warn(msg)
+
         num_jobs = 1
-        for __, sc_point in self.sc_points.iterrows():
+        for __, sc_point in sc_points[costs >= 0].iterrows():
             gid = sc_point['sc_point_gid']
             if gid not in sc_point_gids:
                 continue
@@ -721,22 +736,6 @@ class LeastCostXmission(LeastCostPaths):
             if sc_features.empty:
                 continue
 
-            licp = li_cost_layers
-            start_cost = _starting_cost(self._cost_fpath,
-                                        sc_point.copy(deep=True),
-                                        sc_features,
-                                        capacity_class,
-                                        cost_layers=cost_layers,
-                                        radius=sc_radius,
-                                        xmission_config=self._config,
-                                        barrier_mult=barrier_mult,
-                                        length_invariant_cost_layers=licp)
-
-            if start_cost < 0:
-                logger.debug("Could not connect SC point {} to "
-                             "transmission features: Invalid start cost!"
-                             .format(gid))
-                continue
             future = exe.submit(self._TCC_CLASS.run,
                                 self._cost_fpath,
                                 sc_point.copy(deep=True),
@@ -1239,11 +1238,25 @@ def _collect_future_chunks(futures, least_cost_paths):
     return least_cost_paths
 
 
-def _starting_cost(cost_fpath, point, sc_features, capacity_class, **kwargs):
+def _starting_costs(cost_fpath, points, cost_layers,
+                    length_invariant_cost_layers, barrier_mult):
     """Extract the starting point cost"""
-    cost_calculator = TransCapCosts(cost_fpath, point, sc_features,
-                                    capacity_class, **kwargs)
-    return cost_calculator.mcp_cost[cost_calculator.row, cost_calculator.col]
+    costs = 0
+    rows, cols = points["row"].values, points["col"].values
+    with ExclusionLayers(cost_fpath) as f:
+        for layer in (cost_layers or []):
+            costs += f[layer][rows, cols]
+
+        for layer in (length_invariant_cost_layers or []):
+            costs += f[layer][rows, cols]
+
+        barrier = f[TransCapCosts.TB_LAYER_NAME, rows, cols]
+        barrier = barrier * float(barrier_mult)
+        costs *= 1 + barrier
+        costs = np.where(costs <= 0, -1, costs)
+
+    return costs
+
 
 
 def _compute_radius(sc_features, sc_point, transform, clipping_buffer):
