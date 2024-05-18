@@ -457,6 +457,7 @@ def get_node_cmd(config, gids):
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             '-lmk {}'.format(SLURM.s(config.length_mult_kind)),
+            '-mpd {}'.format(SLURM.s(config.mp_delay)),
             ]
 
     for layer in config.cost_layers:
