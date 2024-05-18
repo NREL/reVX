@@ -70,6 +70,15 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('expand_radius', True)
 
     @property
+    def mp_delay(self):
+        """
+        Delay in seconds between starting multi-process workers.
+        Useful for reducing memory spike at working startup.
+        By default, ``3.0``.
+        """
+        return self.get('mp_delay', 3.0)
+
+    @property
     def simplify_geo(self):
         """
         Optional float to use to simplify path geometries before saving to

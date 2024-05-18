@@ -750,7 +750,7 @@ class LeastCostXmission(LeastCostPaths):
                                 length_mult_kind=length_mult_kind)
             futures[future] = None
             num_jobs += 1
-            if num_jobs <= max_submissions:
+            if mp_delay > 0 and num_jobs <= max_submissions:
                 time.sleep(mp_delay)
             logger.debug('Submitted {} futures'.format(num_jobs))
             log_mem(logger)
@@ -872,7 +872,7 @@ class LeastCostXmission(LeastCostPaths):
             sc_point_gids=None, nn_sinks=NUM_NN_SINKS,
             clipping_buffer=CLIP_RASTER_BUFFER,
             barrier_mult=BARRIERS_MULT, max_workers=None, save_paths=False,
-            radius=None, expand_radius=True, simplify_geo=None,
+            radius=None, expand_radius=True, mp_delay=3, simplify_geo=None,
             length_invariant_cost_layers=None, length_mult_kind="linear"):
         """
         Find Least Cost Transmission connections between desired
@@ -928,6 +928,9 @@ class LeastCostXmission(LeastCostPaths):
             Option to expand radius to include at least one connection
             feature. Has no effect if ``radius=None``.
             By default, ``True``.
+        mp_delay : float, default=3.0
+            Delay in seconds between starting multi-process workers.
+            Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
         length_invariant_cost_layers : List[str] | None, optional
@@ -965,6 +968,7 @@ class LeastCostXmission(LeastCostPaths):
                                             save_paths=save_paths,
                                             radius=radius,
                                             expand_radius=expand_radius,
+                                            mp_delay=mp_delay,
                                             simplify_geo=simplify_geo,
                                             length_invariant_cost_layers=licl,
                                             length_mult_kind=length_mult_kind)
@@ -1090,7 +1094,7 @@ class RegionalXmission(LeastCostXmission):
             min_line_length=MINIMUM_SPUR_DIST_KM, sc_point_gids=None,
             clipping_buffer=CLIP_RASTER_BUFFER, barrier_mult=BARRIERS_MULT,
             max_workers=None, simplify_geo=None, save_paths=False,
-            radius=None, expand_radius=True,
+            radius=None, expand_radius=True, mp_delay=3,
             length_invariant_cost_layers=None, length_mult_kind="linear"):
         """
         Find Least Cost Transmission connections between desired
@@ -1156,6 +1160,9 @@ class RegionalXmission(LeastCostXmission):
             Option to expand radius to include at least one connection
             feature. Has no effect if ``radius=None``.
             By default, ``True``.
+        mp_delay : float, optional
+            Delay in seconds between starting multi-process workers.
+            Useful for reducing memory spike at working startup.
         length_invariant_cost_layers : List[str] | None, optional
             List of layers in H5 to be added to the 'base' greenfield
             cost raster. The costs specified by these layers are not
@@ -1188,6 +1195,7 @@ class RegionalXmission(LeastCostXmission):
                                             save_paths=save_paths,
                                             radius=radius,
                                             expand_radius=expand_radius,
+                                            mp_delay=mp_delay,
                                             simplify_geo=simplify_geo,
                                             length_invariant_cost_layers=licl,
                                             length_mult_kind=length_mult_kind)

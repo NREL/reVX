@@ -178,6 +178,9 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Radius to clip costs raster to in pixels This overrides "
                     "--nn_sinks if set."))
+@click.option('--mp_delay', '-mpd', type=FLOAT, show_default=True, default=3.0,
+              help=("Delay in seconds between starting multi-process workers. "
+                    "Useful for reducing memory spike at working startup."))
 @click.option('--expand_radius', '-er', is_flag=True,
               help='Flag to expand radius until at least one transmission '
                    'feature is included for connection. Has no effect if '
@@ -210,7 +213,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
           clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
-          verbose, save_paths, radius, expand_radius, simplify_geo,
+          verbose, save_paths, radius, expand_radius, mp_delay, simplify_geo,
           cost_layers: List[str], li_cost_layers, length_mult_kind):
     """
     Run Least Cost Xmission on local hardware
@@ -236,6 +239,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "simplify_geo": simplify_geo,
               "radius": radius,
               "expand_radius": expand_radius,
+              "mp_delay": mp_delay,
               "length_invariant_cost_layers": li_cost_layers,
               "length_mult_kind": length_mult_kind}
 
