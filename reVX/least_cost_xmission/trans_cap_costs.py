@@ -503,8 +503,11 @@ class TieLineCosts:
         Parameters
         ----------
         end_indices : tuple | list
-            (row, col) index or list of (row, col) indices of end
-            point(s) to connect and compute least cost path to
+            Tuple (row, col) index or list of (row, col) indices in the
+            **clipped** cost array indicating the end location(s) to
+            compute least cost path paths to. Paths are computed from
+            the `start_indices` that this class was initialized with to
+            each of the individual pairs of `end_indices`.
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
@@ -637,7 +640,11 @@ class TransCapCosts(TieLineCosts):
         sc_point : gpd.GeoSeries
             Supply Curve Point meta data
         features : pandas.DataFrame
-            Table of transmission features
+            Table of transmission features to connect to supply curve
+            point. Must have "row" and "col" columns that point to the
+            indexs of the feature **in the original cost array**. Must
+            also have a "category" column that distinguishes between
+            substations and transmission lines.
         capacity_class : int | str
             Transmission feature ``capacity_class`` class. Used to look
             up connection costs.
@@ -934,10 +941,6 @@ class TransCapCosts(TieLineCosts):
         ----------
         features : pandas.DataFrame
             Table of transmission features
-        clip_lines : bool, optional # TODO this appears to be obsolete
-            Flag to clip transmission lines to clipped raster bounds,
-            set to false when clipping radius is None,
-            by default True
 
         Returns
         -------
@@ -1255,7 +1258,11 @@ class TransCapCosts(TieLineCosts):
         sc_point : gpd.GeoSeries
             Supply Curve Point meta data
         features : pandas.DataFrame
-            Table of transmission features
+            Table of transmission features to connect to supply curve
+            point. Must have "row" and "col" columns that point to the
+            indexs of the feature **in the original cost array**. Must
+            also have a "category" column that distinguishes between
+            substations and transmission lines.
         capacity_class : int | str
             Transmission feature capacity_class class
         cost_layers : List[str]
@@ -1363,13 +1370,13 @@ class ReinforcementLineCosts(TieLineCosts):
         cost_fpath : str
             Full path of .h5 file with cost arrays.
         start_indices : tuple
-            Tuple of (row_idx, col_idx) in the cost array indicating the
-            start position of all reinforcement line paths to compute
-            (typically, this is the location of the network node in the
-            BA). Paths will be computed from this start location to each
-            of the `end_indices`, which are also locations in the cost
-            array (typically substations within the BA of the network
-            node).
+            Tuple of (row_idx, col_idx) in the **clipped** cost array
+            indicating the start position of all reinforcement line
+            paths to compute (typically, this is the location of the
+            network node in the BA). Paths will be computed from this
+            start location to each of the `end_indices`, which are also
+            locations in the cost array (typically substations within
+            the BA of the network node).
         capacity_class : int | str
             Capacity class of the 'base' greenfield costs layer. Costs
             will be scaled by the capacity corresponding to this class
@@ -1443,20 +1450,20 @@ class ReinforcementLineCosts(TieLineCosts):
         cost_fpath : str
             Full path of .h5 file with cost arrays.
         start_indices : tuple
-            Tuple of (row_idx, col_idx) in the cost array indicating the
-            start position of all reinforcement line paths to compute
-            (typically, this is the location of the network node in the
-            BA). Paths will be computed from this start location to each
-            of the `end_indices`, which are also locations in the cost
-            array (typically substations within the BA of the network
-            node).
+            Tuple of (row_idx, col_idx) in the **clipped** cost array
+            indicating the start position of all reinforcement line
+            paths to compute (typically, this is the location of the
+            network node in the BA). Paths will be computed from this
+            start location to each of the `end_indices`, which are also
+            locations in the cost array (typically substations within
+            the BA of the network node).
         end_indices : tuple | list
             Tuple (row, col) index or list of (row, col) indices in the
-            cost array indicating the end location(s) to compute
-            reinforcement line paths to (typically substations within a
-            single BA). Paths are computed from the `start_indices`
-            (typically the network node of the BA) to each of the
-            individual pairs of `end_indices`.
+            **clipped** cost array indicating the end location(s) to
+            compute reinforcement line paths to (typically substations
+            within a single BA). Paths are computed from the
+            `start_indices` (typically the network node of the BA) to
+            each of the individual pairs of `end_indices`.
         capacity_class : int | str
             Capacity class of the 'base' greenfield costs layer. Costs
             will be scaled by the capacity corresponding to this class
