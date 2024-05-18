@@ -77,11 +77,11 @@ def run_local(ctx, config):
     ctx.invoke(local,
                cost_fpath=config.cost_fpath,
                features_fpath=config.features_fpath,
+               cost_layers=config.cost_layers,
                network_nodes_fpath=config.network_nodes_fpath,
                transmission_lines_fpath=config.transmission_lines_fpath,
-               capacity_class=config.capacity_class,
-               cost_layers=config.cost_layers,
                xmission_config=config.xmission_config,
+               capacity_class=config.capacity_class,
                clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
                barrier_mult=config.barrier_mult,
@@ -90,6 +90,7 @@ def run_local(ctx, config):
                save_paths=config.save_paths,
                out_dir=config.dirout,
                log_dir=config.log_directory,
+               ss_id_col=config.ss_id_col,
                verbose=config.log_level,
                li_cost_layers=config.length_invariant_cost_layers)
 
