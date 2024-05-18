@@ -534,17 +534,33 @@ class TieLineCosts:
         paths = []
         poi_lats = []
         poi_lons = []
+        rows = []
+        cols = []
         for end_idx in end_indices:
-            out = self.least_cost_path(end_idx, save_path=save_paths)
+            rows.append(end_idx[0])
+            cols.append(end_idx[1])
+            try:
+                out = self.least_cost_path(end_idx, save_path=save_paths)
+            except LeastCostPathNotFoundError as ex:
+                msg = ('Unable to find path from start {} to {}: {}\n'
+                       'Skipping...'.format((self.row, self.col), end_idx, ex))
+                logger.warning(msg)
+                warn(msg)
+                out = [None] * 6
+
             lengths.append(out[0])
             costs.append(out[1])
             poi_lats.append(out[2])
             poi_lons.append(out[3])
             if save_paths:
+                shape = out[4]
+                if shape is None:
+                    shape = Point(*end_idx)
                 paths.append(out[4])
 
         tie_lines = pd.DataFrame({'length_km': lengths, 'cost': costs,
-                                  'poi_lat': poi_lats, 'poi_lon': poi_lons})
+                                  'poi_lat': poi_lats, 'poi_lon': poi_lons,
+                                  'row': rows, 'col': cols})
         if save_paths:
             tie_lines = gpd.GeoDataFrame(tie_lines, geometry=paths,
                                          crs=self._cost_crs)
@@ -1057,6 +1073,9 @@ class TransCapCosts(TieLineCosts):
         features = self.features.copy()
         features['raw_line_cost'] = None
         features['dist_km'] = None
+        features['row'] = None
+        features['col'] = None
+        features['poi_gid'] = None
         if save_paths:
             paths = []
 
@@ -1069,6 +1088,16 @@ class TransCapCosts(TieLineCosts):
         for iter_ind, (index, feat) in enumerate(features.iterrows(), start=1):
             logger.debug('Determining path length and cost to feature:\n%s',
                          feat)
+
+            row, col = feat_idx
+            row += self.row_offset
+            col += self.col_offset
+            features.loc[index, 'row'] = row
+            features.loc[index, 'col'] = col
+
+            poi_gid = self._full_shape[1] * row + col
+            features.loc[index, 'poi_gid'] = poi_gid
+            features.loc[index, 'region'] = self._region_layer[*feat_idx]
 
             t_line = feat['category'] == TRANS_LINE_CAT
             if t_line:
@@ -1096,7 +1125,6 @@ class TransCapCosts(TieLineCosts):
                     cost = cost * min_mult
                     length = min_line_length
 
-                # TODO - fix typing issues
                 features.loc[index, 'dist_km'] = length
                 features.loc[index, 'raw_line_cost'] = cost
                 features.loc[index, 'poi_lat'] = poi_lat
@@ -1135,6 +1163,8 @@ class TransCapCosts(TieLineCosts):
             features = gpd.GeoDataFrame(features, geometry=paths,
                                         crs=self._cost_crs)
 
+        for int_col in ["row", "col", "poi_gid"]:
+            features[int_col] = features[int_col].astype("Int64")
         return features
 
     def compute_connection_costs(self, features=None,
@@ -1237,11 +1267,9 @@ class TransCapCosts(TieLineCosts):
 
         features['trans_cap_cost'] = (features['tie_line_cost']
                                       + features['connection_cost'])
-        drop_cols = ['row', 'col']
         if not save_paths:
-            drop_cols.append('geometry')
-        features = features.drop(columns=drop_cols,
-                                 errors='ignore').reset_index(drop=True)
+            features = features.drop(columns=['geometry'],
+                                     errors='ignore').reset_index(drop=True)
 
         features['sc_row_ind'] = self.sc_point['sc_row_ind']
         features['sc_col_ind'] = self.sc_point['sc_col_ind']

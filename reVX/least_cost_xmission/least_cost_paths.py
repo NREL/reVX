@@ -586,7 +586,9 @@ class ReinforcementPaths(LeastCostPaths):
         feats = self._features.drop(columns=['row', 'col'])
         least_cost_paths = pd.concat((lcp, feats), axis=1)
 
-        return least_cost_paths.drop("index", axis="columns", errors="ignore")
+        least_cost_paths = least_cost_paths.dropna(axis="columns", how="all")
+        drop_cols = ['index', 'row', 'col']
+        return least_cost_paths.drop(columns=drop_cols, errors="ignore")
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
@@ -811,12 +813,14 @@ def _collect_future_chunks(futures, least_cost_paths):
     num_to_collect = len(futures)
     for i, future in enumerate(as_completed(futures), start=1):
         end_features = futures.pop(future)
-        end_features = end_features.drop(columns=['row', 'col'],
-                                         errors="ignore")
         lcp = future.result()
-        lcp = pd.concat((lcp, end_features), axis=1)
+        logger.debug("Joining feautres of shape %s with results of shape %s",
+                     str(end_features.shape), str(lcp.shape))
+        logger.debug("Feature cols: %s", str(end_features.columns))
+        logger.debug("Results cols: %s", str(lcp.columns))
+        lcp = lcp.merge(end_features, on=["row", "col"])
         least_cost_paths.append(lcp)
-        logger.debug('Collected %d of %d futures!'.format(i, num_to_collect))
+        logger.debug('Collected %d of %d futures!', i, num_to_collect)
         log_mem(logger)
 
     return least_cost_paths
