@@ -148,9 +148,10 @@ def test_clip_buffer():
         with ExclusionLayers(out_cost_fp) as excl:
             assert np.allclose(excl['tie_line_costs_102MW'], costs)
 
-        with pytest.raises(LeastCostPathNotFoundError):
-            LeastCostPaths.run(out_cost_fp, out_features_fp,
-                               ["tie_line_costs_102MW"], max_workers=1)
+        out_no_buffer = LeastCostPaths.run(out_cost_fp, out_features_fp,
+                                           ["tie_line_costs_102MW"],
+                                           max_workers=1)
+        assert out_no_buffer["length_km"].isna().all()
 
         out = LeastCostPaths.run(out_cost_fp, out_features_fp,
                                  ["tie_line_costs_102MW"], max_workers=1,
