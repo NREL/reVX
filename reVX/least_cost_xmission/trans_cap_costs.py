@@ -1074,8 +1074,6 @@ class TransCapCosts(TieLineCosts):
         features = self.features.copy()
         features['raw_line_cost'] = None
         features['dist_km'] = None
-        features['row'] = None
-        features['col'] = None
         features['poi_gid'] = None
         if save_paths:
             paths = []
@@ -1090,16 +1088,6 @@ class TransCapCosts(TieLineCosts):
             logger.debug('Determining path length and cost to feature:\n%s',
                          feat)
 
-            row, col = feat_idx
-            row += self.row_offset
-            col += self.col_offset
-            features.loc[index, 'row'] = row
-            features.loc[index, 'col'] = col
-
-            poi_gid = self._full_shape[1] * row + col
-            features.loc[index, 'poi_gid'] = poi_gid
-            features.loc[index, 'region'] = self._region_layer[*feat_idx]
-
             t_line = feat['category'] == TRANS_LINE_CAT
             if t_line:
                 feat_idx = self._get_trans_line_idx(feat)
@@ -1107,6 +1095,19 @@ class TransCapCosts(TieLineCosts):
                 feat_idx = feat[['row', 'col']].values
 
             logger.debug('Feat index is: %s', feat_idx)
+
+            row, col = feat_idx
+            region = self._region_layer[row, col]
+            row += self.row_offset
+            col += self.col_offset
+            poi_gid = self._full_shape[1] * row + col
+            logger.debug('Adding row, col, poi_gid, region: %d, %d, %d, %s',
+                         row, col, poi_gid, str(region))
+
+            features.loc[index, 'row'] = row
+            features.loc[index, 'col'] = col
+            features.loc[index, 'poi_gid'] = poi_gid
+            features.loc[index, 'region'] = region
 
             try:
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
