@@ -636,7 +636,7 @@ class ReinforcementPaths(LeastCostPaths):
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
             barrier_mult=BARRIERS_MULT, indices=None, max_workers=None,
             save_paths=False, length_invariant_cost_layers=None,
-            ss_id_col="trans_gid"):
+            ss_id_col="poi_gid"):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -698,11 +698,11 @@ class ReinforcementPaths(LeastCostPaths):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
-        ss_id_col : str, default="trans_gid"
+        ss_id_col : str, default="poi_gid"
             Name of column containing unique identifier for each
             substation. This column will be used to compute minimum
             reinforcement cost per substation.
-            By default, ``"trans_gid"``.
+            By default, ``"poi_gid"``.
 
         Returns
         -------
@@ -814,7 +814,7 @@ def _rasterize_transmission_layer(transmission_lines, cost_shape,
     return out
 
 
-def min_reinforcement_costs(table, group_col="trans_gid"):
+def min_reinforcement_costs(table, group_col="poi_gid"):
     """Filter table down to cheapest reinforcement per substation.
 
     Parameters
@@ -824,7 +824,7 @@ def min_reinforcement_costs(table, group_col="trans_gid"):
         a `group_col` column identifying each substation with its own
         unique ID and a `reinforcement_cost_per_mw` column with the
         reinforcement costs to minimize.
-    group_col : str, default="trans_gid"
+    group_col : str, default="poi_gid"
         Name of column containing unique identifier for each substation.
         This column will be used to group costs and select the minimum
         one.
