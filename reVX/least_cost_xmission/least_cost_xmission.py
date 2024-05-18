@@ -463,7 +463,6 @@ class LeastCostXmission(LeastCostPaths):
         while expand_radius and len(clipped_sc_features) <= 0:
             clipping_buffer += 0.05
             radius_m = radius * resolution * clipping_buffer
-            logger.debug('Clipping features to radius {}m'.format(radius_m))
             buffer = sc_point["geometry"].buffer(radius_m)
             clipped_sc_features = sc_features.clip(buffer)
 
