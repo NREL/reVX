@@ -523,6 +523,7 @@ def run_local(ctx, config):
                verbose=config.log_level,
                radius=config.radius,
                expand_radius=config.expand_radius,
+               mp_delay=config.mp_delay,
                save_paths=config.save_paths,
                simplify_geo=config.simplify_geo,
                cost_layers=config.cost_layers,
