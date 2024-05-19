@@ -1078,8 +1078,8 @@ class TransCapCosts(TieLineCosts):
         if save_paths:
             paths = []
 
-        for layer in self._cost_layer_map:
-            features[f'{layer}_line_cost'] = None
+        for layer in chain(self._cost_layer_map, self._li_cost_layer_map):
+            features[f'{layer}_cost'] = None
             features[f'{layer}_dist_km'] = None
 
         logger.info('Computing paths to %d features for SC Point %d',
@@ -1677,7 +1677,7 @@ def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
 
         # Get path length in km only where layer costs are > 0
         layer_length = np.sum(lens[layer_costs > 0]) * CELL_SIZE / 1000
-        results[f'{layer_name}_length_km'] = layer_length
+        results[f'{layer_name}_dist_km'] = layer_length
 
     return results
 
