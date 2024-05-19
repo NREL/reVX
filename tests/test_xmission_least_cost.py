@@ -306,9 +306,9 @@ def test_cli(runner, save_paths, lmk):
 
 
 @pytest.mark.parametrize("save_paths", [False, True])
-def test_reinforcement_cli(runner, ri_ba, save_paths):
+def test_regional_cli(runner, ri_ba, save_paths):
     """
-    Test Reinforcement cost routines and CLI
+    Test Regional cost routines and CLI
     """
     ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
 
