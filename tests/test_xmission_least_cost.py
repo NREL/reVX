@@ -366,16 +366,31 @@ def test_regional_cli(runner, ri_ba, save_paths):
             test = os.path.join(td, test)
             test = pd.read_csv(test)
 
-        assert len(test) == 13
-        assert set(test.trans_gid.unique()) == {69130}
-        assert set(test.ba_str.unique()) == {"p4"}
-
         assert "poi_lat" in test
         assert "poi_lon" in test
         assert "ba_str" in test
 
-        assert len(test.poi_lat.unique()) == 1
-        assert len(test.poi_lon.unique()) == 1
+        assert len(test) == 1036
+        # trans_gid has 1 duplicate substation entry
+        assert len(set(test.trans_gid.unique())) == 69
+        assert len(set(test.poi_gid.unique())) == 68
+        assert set(test.ba_str.unique()) == {"p1", "p2", "p3", "p4"}
+
+        mask = test['max_volts'] >= 500
+
+        assert len(test[mask]) == 13
+        assert set(test[mask].trans_gid.unique()) == {69130}
+        assert set(test[mask].ba_str.unique()) == {"p4"}
+
+
+        assert len(test[mask].poi_lat.unique()) == 1
+        assert len(test[mask].poi_lon.unique()) == 1
+
+        # mask = (test["dist_km"] > 5.76) & (test["raw_line_cost"] < 1e12)
+        assert np.allclose(test["tie_line_costs_1500MW_cost"].astype(float),
+                           test["raw_line_cost"].astype(float))
+        assert np.allclose(test["tie_line_costs_1500MW_dist_km"].astype(float),
+                           test["dist_km"].astype(float))
 
     LOGGERS.clear()
 
