@@ -75,7 +75,6 @@ def check_baseline(truth, test, lmk="linear"):
                        'sub_upgrade_cost', 'new_sub_cost', 'connection_cost']
     ckeck_no_lm_cols = ["tie_line_cost", "trans_cap_cost"]
 
-
     msg = 'Unique sc_point gids do not match!'
     assert np.allclose(truth['sc_point_gid'].unique(),
                        test['sc_point_gid'].unique()), msg
@@ -406,11 +405,9 @@ def test_regional_cli(runner, ri_ba, save_paths):
         assert set(test[mask].trans_gid.unique()) == {69130}
         assert set(test[mask].ba_str.unique()) == {"p4"}
 
-
         assert len(test[mask].poi_lat.unique()) == 1
         assert len(test[mask].poi_lon.unique()) == 1
 
-        # mask = (test["dist_km"] > 5.76) & (test["raw_line_cost"] < 1e12)
         assert np.allclose(test["tie_line_costs_1500MW_cost"].astype(float),
                            test["raw_line_cost"].astype(float))
         assert np.allclose(test["tie_line_costs_1500MW_dist_km"].astype(float),
