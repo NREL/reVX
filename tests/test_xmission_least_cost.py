@@ -169,6 +169,16 @@ def test_capacity_class(capacity, lmk):
                                  min_line_length=5.76, length_mult_kind=lmk)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
 
+    assert f"{cost_layer}_cost" in test
+    assert f"{cost_layer}_dist_km" in test
+    assert "poi_gid" in test
+
+    mask = (test["dist_km"] > 5.76) & (test["raw_line_cost"] < 1e12)
+    assert np.allclose(test.loc[mask, f"{cost_layer}_cost"].astype(float),
+                       test.loc[mask, "raw_line_cost"].astype(float))
+    assert np.allclose(test.loc[mask, f"{cost_layer}_dist_km"].astype(float),
+                       test.loc[mask, "dist_km"].astype(float))
+
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
         truth = pd.read_csv(truth)
