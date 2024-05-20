@@ -3,6 +3,7 @@
 Module to compute least cost transmission paths, distances, and costs
 for a clipped area.
 """
+from itertools import chain
 import geopandas as gpd
 import logging
 import numpy as np
