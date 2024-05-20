@@ -123,16 +123,19 @@ class LeastCostPaths:
         feat_crs = features.crs.to_dict()
         cost_crs = crs.to_dict()
         if not crs_match(cost_crs, feat_crs):
-            msg = ('input crs ({}) does not match cost raster crs ({})'
-                   ' and will be transformed!'.format(feat_crs, cost_crs))
+            msg = ('input crs ({}) does not match cost raster crs ({}) '
+                   'and will be transformed!'.format(feat_crs, cost_crs))
             logger.warning(msg)
             warn(msg)
             features = features.to_crs(crs)
 
-        logger.debug('Map features to cost raster')
+        logger.debug('Map %d features to cost raster', len(features))
+        logger.debug('First few features:\n%s', str(features.head()))
+        logger.debug('Transform:\n%s', str(transform))
         coords = features['geometry'].centroid
         row, col = rasterio.transform.rowcol(transform, coords.x.values,
                                              coords.y.values)
+        logger.debug('Mapping done!')
         row = np.array(row)
         col = np.array(col)
 
@@ -142,6 +145,7 @@ class LeastCostPaths:
         mask &= col >= 0
         mask &= col < shape[1]
 
+        logger.debug('Mask computed!')
         return row, col, mask
 
     @staticmethod
@@ -218,8 +222,10 @@ class LeastCostPaths:
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)
 
+        logger.debug('Getting clip size...')
         row_slice, col_slice = cls._get_clip_slice(row, col, shape,
                                                    clip_buffer=clip_buffer)
+        logger.debug('Done!')
 
         features['row'] = row - row_slice.start
         features['col'] = col - col_slice.start
@@ -725,22 +731,30 @@ class ReinforcementPaths(LeastCostPaths):
             cost_shape = f.shape
             cost_transform = rasterio.Affine(*f.profile['transform'])
 
+        logger.info('Loading features from %s', features_fpath)
         features = gpd.read_file(features_fpath).to_crs(cost_crs)
         mapping = {'gid': ss_id_col}
         substations = features.rename(columns=mapping)
         substations = substations.dropna(axis="columns", how="all")
+        logger.info('Loaded %d features from %s', len(substations),
+                    features_fpath)
 
+        logger.info('Loading tline shapes from %s', transmission_lines_fpath)
         lines = gpd.read_file(transmission_lines_fpath).to_crs(cost_crs)
         mapping = {'VOLTAGE': 'voltage'}
         lines = lines.rename(columns=mapping)
         transmission_lines = (lines[lines.category == TRANS_LINE_CAT]
                               .reset_index(drop=True))
+        logger.info('Loaded %d tline shapes from %s', len(transmission_lines),
+                    transmission_lines_fpath)
 
+        logger.debug("Rasterizing transmission lines onto grid...")
         transmission_lines = _rasterize_transmission(transmission_lines,
                                                      xmission_config,
                                                      cost_shape,
                                                      cost_transform)
 
+        logger.info('Loading network nodes from %s', network_nodes_fpath)
         network_nodes = gpd.read_file(network_nodes_fpath).to_crs(cost_crs)
         indices = network_nodes.index if indices is None else indices
         for loop_ind, index in enumerate(indices, start=1):
@@ -748,6 +762,8 @@ class ReinforcementPaths(LeastCostPaths):
                             .reset_index(drop=True))
             rid = network_node[region_identifier_column].values[0]
             mask = substations[region_identifier_column] == rid
+            logger.debug('Computing reinfocements to %s in region %s',
+                         str(network_node), rid)
             node_substations = substations[mask].reset_index(drop=True)
             if len(node_substations) == 0:
                 continue

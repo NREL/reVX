@@ -244,6 +244,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
               "length_invariant_cost_layers": li_cost_layers}
 
     if is_reinforcement_run:
+        logger.info('Detected reinforcement run!')
         xmission_config = XmissionConfig(config=xmission_config)
         kwargs["xmission_config"] = xmission_config
         cc_str = xmission_config._parse_cap_class(capacity_class)
