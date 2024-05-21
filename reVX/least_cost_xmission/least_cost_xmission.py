@@ -81,7 +81,6 @@ class LeastCostXmission(LeastCostPaths):
         self._iso_layer_name = iso_regions_layer_name
         self._check_layers()
 
-        self._check_layers(cost_fpath)
         self._config = self._TCC_CLASS._parse_config(
             xmission_config=xmission_config)
 
@@ -104,7 +103,7 @@ class LeastCostXmission(LeastCostPaths):
 
         return msg
 
-    def _check_layers_in_h5(self):
+    def _check_layers(self):
         """Check to make sure the required layers are in cost_fpath. """
         self._check_layers_in_h5(self._cost_fpath,
                                  [self._tb_layer_name, self._iso_layer_name])

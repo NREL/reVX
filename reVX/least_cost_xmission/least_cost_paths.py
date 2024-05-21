@@ -80,7 +80,7 @@ class LeastCostPaths:
         """
         return self._features
 
-    def _check_layers_in_h5(self):
+    def _check_layers(self):
         """Check to make sure the required layers are in cost_fpath. """
         self._check_layers_in_h5(self._cost_fpath, [self._tb_layer_name])
 
