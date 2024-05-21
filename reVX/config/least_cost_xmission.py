@@ -11,7 +11,9 @@ from reVX.least_cost_xmission.config.constants import (RESOLUTION,
                                                        NUM_NN_SINKS,
                                                        CLIP_RASTER_BUFFER,
                                                        BARRIERS_MULT,
-                                                       MINIMUM_SPUR_DIST_KM)
+                                                       MINIMUM_SPUR_DIST_KM,
+                                                       BARRIER_H5_LAYER_NAME,
+                                                       ISO_H5_LAYER_NAME)
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig
 from reV.utilities.exceptions import ConfigError
@@ -181,11 +183,25 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('clipping_buffer', CLIP_RASTER_BUFFER)
 
     @property
+    def tb_layer_name(self):
+        """
+        Name of transmission barrier layer in `cost_fpath` file.
+        """
+        return self.get('tb_layer_name', BARRIER_H5_LAYER_NAME)
+
+    @property
     def barrier_mult(self):
         """
         Transmission barrier multiplier to use for MCP costs
         """
         return float(self.get('barrier_mult', BARRIERS_MULT))
+
+    @property
+    def iso_regions_layer_name(self):
+        """
+        Name of ISO regions layer in `cost_fpath` file.
+        """
+        return self.get('iso_regions_layer_name', ISO_H5_LAYER_NAME)
 
     @property
     def cost_layers(self) -> List[str]:
@@ -207,6 +223,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
         if 'length_invariant_cost_layers' not in self:
             return []
         return self['length_invariant_cost_layers']
+
+    @property
+    def tracked_layers(self):
+        """
+        Dictionary mapping layer names to strings, where the strings are
+        numpy methods that should be applied to the layer along the LCP.
+        """
+        return self.get("tracked_layers")
 
     @property
     def sc_point_gids(self):
@@ -343,11 +367,26 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self['length_invariant_cost_layers']
 
     @property
+    def tracked_layers(self):
+        """
+        Dictionary mapping layer names to strings, where the strings are
+        numpy methods that should be applied to the layer along the LCP.
+        """
+        return self.get("tracked_layers")
+
+    @property
     def xmission_config(self):
         """
         Xmission config input
         """
         return self.get('xmission_config', None)
+
+    @property
+    def tb_layer_name(self):
+        """
+        Name of transmission barrier layer in `cost_fpath` file.
+        """
+        return self.get('tb_layer_name', BARRIER_H5_LAYER_NAME)
 
     @property
     def clip_buffer(self):
