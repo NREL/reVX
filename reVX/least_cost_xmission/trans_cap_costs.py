@@ -32,7 +32,9 @@ from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SHORT_CUTOFF,
                                                        MEDIUM_CUTOFF,
                                                        MINIMUM_SPUR_DIST_KM,
-                                                       BARRIERS_MULT)
+                                                       BARRIERS_MULT,
+                                                       BARRIER_H5_LAYER_NAME,
+                                                       ISO_H5_LAYER_NAME)
 from reVX.utilities.exceptions import (InvalidMCPStartValueError,
                                        LeastCostPathNotFoundError)
 
@@ -45,15 +47,11 @@ class TieLineCosts:
     locations
     """
 
-    WARN_ABOUT_COST_LAYER_OVERLAP = True
-
-    TB_LAYER_NAME = 'transmission_barrier'
-    """Expected name of transmission barrier layer in cost HDF5 file. """
-
     def __init__(self, cost_fpath, start_indices, cost_layers,
                  row_slice, col_slice, xmission_config=None,
+                 tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None):
+                 length_invariant_cost_layers=None, tracked_layers=None):
         """
         Parameters
         ----------
@@ -90,6 +88,11 @@ class TieLineCosts:
             transmission config JSONs, or preloaded XmissionConfig
             objects. If ``None``, the default config is used.
             By default, ``None``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier applied to the cost data to create transmission
             barrier costs. By default, ``100``.
@@ -98,8 +101,26 @@ class TieLineCosts:
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         """
         self._cost_fpath = cost_fpath
+        self._tb_layer_name = tb_layer_name
         self._config = self._parse_config(xmission_config=xmission_config)
         self._start_indices = start_indices
         self._row_slice = row_slice
@@ -107,6 +128,7 @@ class TieLineCosts:
         self._clip_shape = self._mcp = self._cost = self._mcp_cost = None
         self._cost_layer_map = {}
         self._li_cost_layer_map = {}
+        self._tracked_layers = tracked_layers or {}
         self._cumulative_costs = None
         self.transform = None
         self._full_shape = None
@@ -321,10 +343,10 @@ class TieLineCosts:
                 overlap += li_cost > 0
                 self._li_cost_layer_map[li_cost_layer] = li_cost
 
-            barrier = f[self.TB_LAYER_NAME, self._row_slice, self._col_slice]
+            barrier = f[self._tb_layer_name, self._row_slice, self._col_slice]
             barrier = barrier * barrier_mult
 
-        if (overlap > 1).any() and self.WARN_ABOUT_COST_LAYER_OVERLAP:
+        if (overlap > 1).any():
             all_layers = cost_layers + li_cost_layers
             msg = (f"Found overlap in cost layers: {all_layers}! Some cells "
                    "may contain double-counted costs. If you intentionally "
@@ -571,8 +593,9 @@ class TieLineCosts:
     @classmethod
     def run(cls, cost_fpath, start_indices, end_indices, cost_layers,
             row_slice, col_slice, xmission_config=None,
-            barrier_mult=BARRIERS_MULT, save_paths=False,
-            length_invariant_cost_layers=None):
+            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            save_paths=False, length_invariant_cost_layers=None,
+            tracked_layers=None):
         """
         Compute least cost tie-line path to all features to be connected
         a single supply curve point.
@@ -612,6 +635,11 @@ class TieLineCosts:
             transmission config JSONs, or preloaded XmissionConfig
             objects. If ``None``, the default config is used.
             By default, ``None``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier applied to the cost data to create transmission
             barrier costs. By default, ``100``.
@@ -623,6 +651,23 @@ class TieLineCosts:
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
 
         Returns
         -------
@@ -633,8 +678,9 @@ class TieLineCosts:
         ts = time.time()
         tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
                   col_slice, xmission_config=xmission_config,
-                  barrier_mult=barrier_mult,
-                  length_invariant_cost_layers=length_invariant_cost_layers)
+                  tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
+                  length_invariant_cost_layers=length_invariant_cost_layers,
+                  tracked_layers=tracked_layers)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
 
@@ -654,8 +700,10 @@ class TransCapCosts(TieLineCosts):
 
     def __init__(self, cost_fpath, sc_point, features, capacity_class,
                  cost_layers, radius=None, xmission_config=None,
+                 tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None):
+                 iso_regions_layer_name=ISO_H5_LAYER_NAME,
+                 length_invariant_cost_layers=None, tracked_layers=None):
         """
         Parameters
         ----------
@@ -682,23 +730,52 @@ class TransCapCosts(TieLineCosts):
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
+        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
+            Name of ISO regions layer in `cost_fpath` file. The layer
+            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
+            By default, :obj:`ISO_H5_LAYER_NAME`.
         length_invariant_cost_layers : List[str] | None, optional
             List of layers in H5 to be added to the cost raster. The
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         """
         self._sc_point = sc_point
         self._region_layer = None
+        self._iso_regions_layer_name = iso_regions_layer_name
         start_indices, row_slice, col_slice = self._get_clipping_slices(
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
         licl = length_invariant_cost_layers
         super().__init__(cost_fpath, start_indices, cost_layers, row_slice,
                          col_slice, xmission_config=xmission_config,
+                         tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
-                         length_invariant_cost_layers=licl)
+                         length_invariant_cost_layers=licl,
+                         tracked_layers=tracked_layers)
         self._capacity_class = self._config._parse_cap_class(capacity_class)
         self._features = self._prep_features(features)
         self._clip_mask = None
@@ -706,7 +783,7 @@ class TransCapCosts(TieLineCosts):
     def _extract_data_from_cost_h5(self, fh):
         """Extract extra info from cost H5 file. """
         super()._extract_data_from_cost_h5(fh)
-        self._region_layer = fh["ISO_regions",
+        self._region_layer = fh[self._iso_regions_layer_name,
                                 self._row_slice, self._col_slice]
 
     @property
@@ -1285,10 +1362,12 @@ class TransCapCosts(TieLineCosts):
 
     @classmethod
     def run(cls, cost_fpath, sc_point, features, capacity_class, cost_layers,
-            radius=None, xmission_config=None, barrier_mult=BARRIERS_MULT,
+            radius=None, xmission_config=None,
+            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            iso_regions_layer_name=ISO_H5_LAYER_NAME,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
             simplify_geo=None, length_invariant_cost_layers=None,
-            length_mult_kind="linear"):
+            tracked_layers=None, length_mult_kind="linear"):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1318,8 +1397,17 @@ class TransCapCosts(TieLineCosts):
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
+        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
+            Name of ISO regions layer in `cost_fpath` file. The layer
+            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
+            By default, :obj:`ISO_H5_LAYER_NAME`.
         min_line_length : float, optional
             Minimum line length in km, by default 0
         save_paths : bool, optional
@@ -1332,6 +1420,23 @@ class TransCapCosts(TieLineCosts):
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         length_mult_kind : {"step", "linear"}, default="linear"
             Type of length multiplier calcualtion. "step" computes
             length multipliers using a step function, while "linear"
@@ -1355,7 +1460,10 @@ class TransCapCosts(TieLineCosts):
             tcc = cls(cost_fpath, sc_point, features, capacity_class,
                       cost_layers, radius=radius,
                       xmission_config=xmission_config,
+                      tb_layer_name=tb_layer_name,
                       barrier_mult=barrier_mult,
+                      iso_regions_layer_name=iso_regions_layer_name,
+                      tracked_layers=tracked_layers,
                       length_invariant_cost_layers=length_invariant_cost_layers
                       )
 
@@ -1465,8 +1573,9 @@ class ReinforcementLineCosts(TieLineCosts):
     """
     def __init__(self, transmission_lines, cost_fpath, start_indices,
                  capacity_class, cost_layers, row_slice, col_slice,
-                 xmission_config=None, barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None):
+                 xmission_config=None, tb_layer_name=BARRIER_H5_LAYER_NAME,
+                 barrier_mult=BARRIERS_MULT,
+                 length_invariant_cost_layers=None, tracked_layers=None):
         """
 
         Parameters
@@ -1507,6 +1616,11 @@ class ReinforcementLineCosts(TieLineCosts):
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
             By default, ``None``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -1515,14 +1629,33 @@ class ReinforcementLineCosts(TieLineCosts):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         """
         licl = length_invariant_cost_layers
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
                          cost_layers=cost_layers,
                          row_slice=row_slice, col_slice=col_slice,
                          xmission_config=xmission_config,
+                         tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
-                         length_invariant_cost_layers=licl)
+                         length_invariant_cost_layers=licl,
+                         tracked_layers=tracked_layers)
         capacity_class = self._config._parse_cap_class(capacity_class)
         line_cap_mw = self._config['power_classes'][capacity_class]
         self._cost = self._cost / line_cap_mw
@@ -1543,8 +1676,9 @@ class ReinforcementLineCosts(TieLineCosts):
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
             capacity_class, cost_layers, row_slice, col_slice,
-            xmission_config=None, barrier_mult=BARRIERS_MULT, save_paths=False,
-            length_invariant_cost_layers=None):
+            xmission_config=None, tb_layer_name=BARRIER_H5_LAYER_NAME,
+            barrier_mult=BARRIERS_MULT, save_paths=False,
+            length_invariant_cost_layers=None, tracked_layers=None):
         """
         Compute reinforcement line path to all features to be connected
         a single supply curve point.
@@ -1594,6 +1728,11 @@ class ReinforcementLineCosts(TieLineCosts):
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
             By default, ``None``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -1605,6 +1744,23 @@ class ReinforcementLineCosts(TieLineCosts):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
 
         Returns
         -------
@@ -1616,8 +1772,10 @@ class ReinforcementLineCosts(TieLineCosts):
         ts = time.time()
         tlc = cls(transmission_lines, cost_fpath, start_indices,
                   capacity_class, cost_layers, row_slice, col_slice,
-                  xmission_config=xmission_config, barrier_mult=barrier_mult,
-                  length_invariant_cost_layers=length_invariant_cost_layers)
+                  xmission_config=xmission_config,
+                  tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
+                  length_invariant_cost_layers=length_invariant_cost_layers,
+                  tracked_layers=tracked_layers)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
         tie_lines['cost'] = tie_lines['cost'] * 0.5

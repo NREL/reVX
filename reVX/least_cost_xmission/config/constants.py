@@ -4,6 +4,7 @@ Standard filenames, H5 layer names, etc.
 
 ALL = 'all'
 
+ISO_H5_LAYER_NAME = 'ISO_regions'
 BARRIER_H5_LAYER_NAME = 'transmission_barrier'  # Combined friction and barrier
 DRY_MULTIPLIER_TIFF = 'dry_multipliers.tif'
 
