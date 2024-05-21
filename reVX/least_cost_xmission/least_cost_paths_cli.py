@@ -224,7 +224,7 @@ def from_config(ctx, config, verbose):
                    'raster used for routing. These costs do not scale with '
                    'distance traversed acroiss the cell. Multiple layers may '
                    'be specified.')
-@click.option('--tracked_layers', '-tl', type=STR, default=None,
+@click.option('--tracked_layers', '-trl', type=STR, default=None,
               show_default=True,
               help=('Dictionary mapping layer names to strings, where the '
                     'strings are numpy methods that should be applied to '
@@ -567,7 +567,7 @@ def get_node_cmd(config, start_index=0):
         args.append('-paths')
 
     if config.tracked_layers:
-        args.append('-tl {}'.format(SLURM.s(config.tracked_layers)))
+        args.append('-trl {}'.format(SLURM.s(config.tracked_layers)))
 
     if config.log_level == logging.DEBUG:
         args.append('-v')
