@@ -158,7 +158,7 @@ The below example JSON file shows all possible keys with example values. The for
     },
 
     "dry_costs": {
-        "iso_region_tiff": "/path/to/nlcd/ISO/regions/ISO_regions.tif",
+        "iso_region_tiff": "/path/to/nlcd/ISO/regions/iso_regions.tif",
         "nlcd_tiff": "/path/to/nlcd/raster.tiff",
         "slope_tiff": "/path/to/slope/raster.tiff",
         "cost_configs": "/optional/path/to/xmission/cost/config.json",
@@ -169,8 +169,6 @@ The below example JSON file shows all possible keys with example values. The for
     }
 }
 ```
-
-Note that the "iso_region_tiff" input tiff file must be called "ISO_regions.tif" (capitalization is important).
 
 ## Running the Layer Creator
 Prior to running the layer creating command, we must initialize an HDF5 file that will hold the cost layers.
@@ -209,7 +207,7 @@ The below file can be used as a template to compute the costs to be used in a Le
     "output_tiff_dir": "./output_transmission_tiffs",
 
     "dry_costs": {
-        "iso_region_tiff": "/path/to/ISO_regions.tif",
+        "iso_region_tiff": "/path/to/iso_regions.tif",
         "nlcd_tiff": "/path/to/nlcd.tif",
         "slope_tiff": "/path/to/slope.tif",
         "extra_tiffs": [
@@ -220,11 +218,11 @@ The below file can be used as a template to compute the costs to be used in a Le
     }
   }
 ```
-Note that the "iso_region_tiff" input tiff file must be called "ISO_regions.tif" (capitalization is important).
+
 See [`transmission_layer_creator_cli.from_config`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
 ```
 another_extra_layer      Dataset {1, 33792, 48640}
-ISO_regions              Dataset {1, 33792, 48640}
+iso_regions              Dataset {1, 33792, 48640}
 latitude                 Dataset {33792, 48640}
 longitude                Dataset {33792, 48640}
 slope                    Dataset {1, 33792, 48640}
@@ -267,11 +265,16 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
   "cost_layers": ["tie_line_costs_{}MW"],
+  "iso_regions_layer_name": "iso_regions",
   "barrier_mult": "100",
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
 }
 ```
+
+Note that the `iso_regions_layer_name` input is needed because our nayer name
+is not the expected default value of `"ISO_regions"` (our layer name is
+lowercase).
 
 Assuming the above config file is saved as `config_conus.json` in the current directory, it can be kicked off with:
 
@@ -369,6 +372,7 @@ You should now have a file containing all of the reinforcement costs for the sub
     "region_identifier_column": "rr_id",
     "capacity_class": "1000",
     "cost_layers": ["tie_line_costs_{}MW"],
+    "iso_regions_layer_name": "iso_regions",
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
@@ -418,6 +422,7 @@ Since we want to allow tie-line connecitons, we must first run LCP to determine 
     "capacity_class": "200",  // 138 kV
     "barrier_mult": "5000",
     "cost_layers": ["tie_line_costs_{}MW", "swca_cultural_resources_risk", "swca_natural_resources_risk"],
+    "iso_regions_layer_name": "iso_regions",
     "log_directory": "./logs",
     "log_level": "INFO",
     "resolution": 128,
