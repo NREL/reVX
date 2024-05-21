@@ -19,7 +19,7 @@ from shapely.geometry import Point
 from rex.utilities.loggers import init_logger, init_mult, create_dirs
 from rex.utilities.cli_dtypes import STR, INT
 from rex.utilities.hpc import SLURM
-from rex.utilities.utilities import get_class_properties
+from rex.utilities.utilities import get_class_properties, dict_str_load
 
 from reV.handlers.exclusions import ExclusionLayers
 
@@ -31,7 +31,8 @@ from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
 from reVX.least_cost_xmission.least_cost_xmission import region_mapper
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SUBSTATION_CAT,
-                                                       BARRIERS_MULT)
+                                                       BARRIERS_MULT,
+                                                       BARRIER_H5_LAYER_NAME)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -84,6 +85,7 @@ def run_local(ctx, config):
                capacity_class=config.capacity_class,
                clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
+               tb_layer_name=config.tb_layer_name,
                barrier_mult=config.barrier_mult,
                max_workers=config.execution_control.max_workers,
                region_identifier_column=config.region_identifier_column,
@@ -92,7 +94,8 @@ def run_local(ctx, config):
                log_dir=config.log_directory,
                ss_id_col=config.ss_id_col,
                verbose=config.log_level,
-               li_cost_layers=config.length_invariant_cost_layers)
+               li_cost_layers=config.length_invariant_cost_layers,
+               tracked_layers=config.tracked_layers)
 
 
 @main.command()
@@ -184,6 +187,12 @@ def from_config(ctx, config, verbose):
 @click.option('--step_index', '-step', type=int,
               show_default=True, default=1,
               help=("Step index of features to run."))
+@click.option('--tb_layer_name', '-tbln', default=BARRIER_H5_LAYER_NAME,
+              type=STR, show_default=True,
+              help='Name of transmission barrier layer in `cost_fpath` file. '
+                   'This layer defines the multipliers applied to the cost '
+                   'layer to determine LCP routing (but does not actually '
+                   'affect output costs')
 @click.option('--barrier_mult', '-bmult', type=float,
               show_default=True, default=BARRIERS_MULT,
               help=("Transmission barrier multiplier, used when computing the "
@@ -215,12 +224,17 @@ def from_config(ctx, config, verbose):
                    'raster used for routing. These costs do not scale with '
                    'distance traversed acroiss the cell. Multiple layers may '
                    'be specified.')
+@click.option('--tracked_layers', '-tl', type=STR, default=None,
+              show_default=True,
+              help=('Dictionary mapping layer names to strings, where the '
+                    'strings are numpy methods that should be applied to '
+                    'the layer along the LCP.'))
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
-          clip_buffer, start_index, step_index, barrier_mult, max_workers,
-          region_identifier_column, save_paths, out_dir, log_dir, ss_id_col,
-          verbose, li_cost_layers):
+          clip_buffer, start_index, step_index, tb_layer_name, barrier_mult,
+          max_workers, region_identifier_column, save_paths, out_dir, log_dir,
+          ss_id_col, verbose, li_cost_layers, tracked_layers):
     """
     Run Least Cost Paths on local hardware
     """
@@ -234,14 +248,20 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     create_dirs(out_dir)
     logger.info('Computing Least Cost Paths connections and writing them to {}'
                 .format(out_dir))
+
+    if isinstance(tracked_layers, str):
+        tracked_layers = dict_str_load(tracked_layers)
+
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
 
     kwargs = {"clip_buffer": int(clip_buffer),
+              "tb_layer_name": tb_layer_name,
               "barrier_mult": barrier_mult,
               "save_paths": save_paths,
               "max_workers": max_workers,
-              "length_invariant_cost_layers": li_cost_layers}
+              "length_invariant_cost_layers": li_cost_layers,
+              "tracked_layers": tracked_layers}
 
     if is_reinforcement_run:
         logger.info('Detected reinforcement run!')
@@ -530,6 +550,7 @@ def get_node_cmd(config, start_index=0):
             '-cb {}'.format(SLURM.s(config.clip_buffer)),
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
+            '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
             '-ssid {}'.format(SLURM.s(config.ss_id_col)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
@@ -544,6 +565,9 @@ def get_node_cmd(config, start_index=0):
 
     if config.save_paths:
         args.append('-paths')
+
+    if config.tracked_layers:
+        args.append('-tl {}'.format(SLURM.s(config.tracked_layers)))
 
     if config.log_level == logging.DEBUG:
         args.append('-v')

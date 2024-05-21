@@ -18,7 +18,7 @@ from typing import List
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
-from rex.utilities.utilities import get_class_properties
+from rex.utilities.utilities import get_class_properties, dict_str_load
 
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
@@ -31,7 +31,9 @@ from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        MINIMUM_SPUR_DIST_KM,
                                                        BARRIERS_MULT,
                                                        CLIP_RASTER_BUFFER,
-                                                       NUM_NN_SINKS)
+                                                       NUM_NN_SINKS,
+                                                       BARRIER_H5_LAYER_NAME,
+                                                       ISO_H5_LAYER_NAME)
 from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
 
 TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
@@ -153,10 +155,20 @@ def from_config(ctx, config, verbose):
 @click.option('--clipping_buffer', '-buffer', type=float,
               show_default=True, default=CLIP_RASTER_BUFFER,
               help=("Buffer to expand clipping radius by"))
+@click.option('--tb_layer_name', '-tbln', default=BARRIER_H5_LAYER_NAME,
+              type=STR, show_default=True,
+              help='Name of transmission barrier layer in `cost_fpath` file. '
+                   'This layer defines the multipliers applied to the cost '
+                   'layer to determine LCP routing (but does not actually '
+                   'affect output costs')
 @click.option('--barrier_mult', '-bmult', type=float,
               show_default=True, default=BARRIERS_MULT,
               help=("Tranmission barrier multiplier, used when computing the "
                     "least cost tie-line path"))
+@click.option('--iso_regions_layer_name', '-irln', default=ISO_H5_LAYER_NAME,
+              type=STR, show_default=True,
+              help='Name of ISO regions layer in `cost_fpath` file. The '
+                   "layer maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .")
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -199,6 +211,11 @@ def from_config(ctx, config, verbose):
                    'raster used for routing. These costs do not scale with '
                    'distance traversed acroiss the cell. Multiple layers may '
                    'be specified.')
+@click.option('--tracked_layers', '-tl', type=STR, default=None,
+              show_default=True,
+              help=('Dictionary mapping layer names to strings, where the '
+                    'strings are numpy methods that should be applied to '
+                    'the layer along the LCP.'))
 @click.option('--length_mult_kind', '-lmk', type=STR, default='linear',
               show_default=True,
               help='Type of length multiplier calcualtion. "step" computes '
@@ -209,9 +226,11 @@ def from_config(ctx, config, verbose):
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
-          clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
-          verbose, save_paths, radius, expand_radius, mp_delay, simplify_geo,
-          cost_layers: List[str], li_cost_layers, length_mult_kind):
+          clipping_buffer, tb_layer_name, barrier_mult,
+          iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
+          save_paths, radius, expand_radius, mp_delay, simplify_geo,
+          cost_layers: List[str], li_cost_layers, tracked_layers,
+          length_mult_kind):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -225,12 +244,18 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     create_dirs(out_dir)
     logger.info('Computing Least Cost Xmission connections and writing them {}'
                 .format(out_dir))
+
+    if isinstance(tracked_layers, str):
+        tracked_layers = dict_str_load(tracked_layers)
+
     kwargs = {"resolution": resolution,
               "xmission_config": xmission_config,
               "min_line_length": min_line_length,
               "sc_point_gids": sc_point_gids,
               "clipping_buffer": clipping_buffer,
+              "tb_layer_name": tb_layer_name,
               "barrier_mult": barrier_mult,
+              "iso_regions_layer_name": iso_regions_layer_name,
               "max_workers": max_workers,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
@@ -238,7 +263,8 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "expand_radius": expand_radius,
               "mp_delay": mp_delay,
               "length_invariant_cost_layers": li_cost_layers,
-              "length_mult_kind": length_mult_kind}
+              "length_mult_kind": length_mult_kind,
+              "tracked_layers": tracked_layers}
 
     if regions_fpath is not None:
         least_costs = RegionalXmission.run(cost_fpath, features_fpath,
@@ -449,7 +475,9 @@ def get_node_cmd(config, gids):
             '-gids {}'.format(SLURM.s(gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
+            '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
+            '-irln {}'.format(SLURM.s(config.iso_regions_layer_name)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
@@ -470,6 +498,8 @@ def get_node_cmd(config, gids):
         args.append('-er')
     if config.simplify_geo:
         args.append('--simplify-geo {}'.format(config.simplify_geo))
+    if config.tracked_layers:
+        args.append('-tl {}'.format(SLURM.s(config.tracked_layers)))
 
     if config.log_level == logging.DEBUG:
         args.append('-v')
@@ -504,7 +534,9 @@ def run_local(ctx, config):
                sc_point_gids=config.sc_point_gids,
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
+               tb_layer_name=config.tb_layer_name,
                barrier_mult=config.barrier_mult,
+               iso_regions_layer_name=config.iso_regions_layer_name,
                region_identifier_column=config.region_identifier_column,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
@@ -517,6 +549,7 @@ def run_local(ctx, config):
                simplify_geo=config.simplify_geo,
                cost_layers=config.cost_layers,
                li_cost_layers=config.length_invariant_cost_layers,
+               tracked_layers=config.tracked_layers,
                length_mult_kind=config.length_mult_kind)
 
 
