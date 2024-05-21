@@ -22,7 +22,6 @@ from rex.utilities.utilities import get_class_properties
 
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
-from reVX.least_cost_xmission.trans_cap_costs import TieLineCosts
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
                                                           RegionalXmission)
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
@@ -206,17 +205,13 @@ def from_config(ctx, config, verbose):
                    'length multipliers using a step function, while "linear" '
                    'computes the length multiplier using a linear '
                    'interpolation between 0 amd 10 mile spur-line lengths.')
-@click.option('--warn_about_cost_layer_overlap', '-wclo', is_flag=True,
-              help='Option to throw warning about cost layer overlap. '
-                   'Default is not to throw warning.')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
           clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
           verbose, save_paths, radius, expand_radius, mp_delay, simplify_geo,
-          cost_layers: List[str], li_cost_layers, length_mult_kind,
-          warn_about_cost_layer_overlap):
+          cost_layers: List[str], li_cost_layers, length_mult_kind):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -226,8 +221,6 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
 
     log_modules = [__name__, 'reVX', 'reV', 'rex']
     init_mult(name, log_dir, modules=log_modules, verbose=verbose)
-
-    TieLineCosts.WARN_ABOUT_COST_LAYER_OVERLAP = warn_about_cost_layer_overlap
 
     create_dirs(out_dir)
     logger.info('Computing Least Cost Xmission connections and writing them {}'
@@ -481,9 +474,6 @@ def get_node_cmd(config, gids):
     if config.log_level == logging.DEBUG:
         args.append('-v')
 
-    if config.warn_about_cost_layer_overlap:
-        args.append('-wclo')
-
     cmd = ('python -m reVX.least_cost_xmission.least_cost_xmission_cli {}'
            .format(' '.join(args)))
     logger.debug('Submitting the following cli call:\n\t{}'.format(cmd))
@@ -503,7 +493,6 @@ def run_local(ctx, config):
         Least Cost Xmission config object.
     """
     ctx.obj['NAME'] = config.name
-    wclo = config.warn_about_cost_layer_overlap
     ctx.invoke(local,
                cost_fpath=config.cost_fpath,
                features_fpath=config.features_fpath,
@@ -528,9 +517,7 @@ def run_local(ctx, config):
                simplify_geo=config.simplify_geo,
                cost_layers=config.cost_layers,
                li_cost_layers=config.length_invariant_cost_layers,
-               length_mult_kind=config.length_mult_kind,
-               warn_about_cost_layer_overlap=wclo,
-               )
+               length_mult_kind=config.length_mult_kind)
 
 
 def eagle(config, gids):
