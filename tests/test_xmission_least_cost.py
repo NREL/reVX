@@ -504,7 +504,6 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
             fh.create_dataset("tb", data=tb)
             fh.create_dataset("iso", data=iso)
 
-
         config = {
             "log_directory": td,
             "execution_control": {
