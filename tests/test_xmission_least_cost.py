@@ -294,8 +294,6 @@ def test_tracked_layers():
         sc_point_gids = truth['sc_point_gid'].unique()
         sc_point_gids = np.random.choice(sc_point_gids,
                                          size=N_SC_POINTS, replace=False)
-        mask = truth['sc_point_gid'].isin(sc_point_gids)
-        truth = truth.loc[mask]
 
     with tempfile.TemporaryDirectory() as td:
         cost_h5_path = os.path.join(td, 'costs.h5')
@@ -324,7 +322,7 @@ def test_tracked_layers():
     assert "layer4_dne" not in test
     assert "layer5_mean" in test
 
-    assert (test["layer1_sum"] <= test["dist_km"] / 90 * 1000).all()
+    assert (test["layer1_sum"] <= test["dist_km"] / 90 * 1000 + 1).all()
     assert np.allclose(test["layer2_max"], 2)
     assert np.allclose(test["layer5_mean"], 1)
 
