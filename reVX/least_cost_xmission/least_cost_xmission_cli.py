@@ -315,11 +315,15 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help='Simplify path geometries by a value before exporting.')
+@click.option('--ss_id_col', '-ssid', default=None, type=STR,
+              show_default=True,
+              help='Name of column used to unqiuely identify substations. '
+                   'Used for reinforcement calcaultions only. ')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
 # flake8: noqa: C901
 def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
-                 out_dir, drop, simplify_geo, files):
+                 out_dir, drop, simplify_geo, ss_id_col, files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON
     """
@@ -333,8 +337,8 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
     if drop:
         for cat in drop:
             if cat not in TRANS_CAT_TYPES:
-                logger.info('--drop options must on or more of {}, received {}'
-                            .format(TRANS_CAT_TYPES, drop))
+                logger.info('--drop options must be one or more of %s, '
+                            'received %s', TRANS_CAT_TYPES, drop)
                 return
 
     warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -343,13 +347,14 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
         logger.info('Loading %s (%i/%i)', file, i, len(files))
         df_tmp = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
         dfs.append(df_tmp)
+
     df = pd.concat(dfs)
     warnings.filterwarnings('default', category=RuntimeWarning)
 
     if drop:
         mask = df['category'].isin(drop)
-        logger.info('Dropping {} of {} total features with category(ies): {}'
-                    .format(mask.sum(), len(df), ", ".join(drop)))
+        logger.info('Dropping %d of %d total features with category(ies): %s',
+                    mask.sum(), len(df), ", ".join(drop))
         df = df[~mask]
 
     df = df.reset_index()
@@ -362,8 +367,9 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
         logger.info('Simplifying geometries by {}'.format(simplify_geo))
         df.geometry = df.geometry.simplify(simplify_geo)
 
-    if all(col in df for col in ["gid", "reinforcement_cost_per_mw"]):
-        df = min_reinforcement_costs(df)
+    if ss_id_col is not None:
+        logger.info('Computing minimum reinforcement cost')
+        df = min_reinforcement_costs(df, group_col=ss_id_col)
 
     create_dirs(out_dir)
 
