@@ -129,6 +129,7 @@ class TieLineCosts:
         self._cost_layer_map = {}
         self._li_cost_layer_map = {}
         self._tracked_layers = tracked_layers or {}
+        self._tracked_layer_map = {}
         self._cumulative_costs = None
         self.transform = None
         self._full_shape = None
@@ -343,6 +344,23 @@ class TieLineCosts:
                 overlap += li_cost > 0
                 self._li_cost_layer_map[li_cost_layer] = li_cost
 
+            for tracked_layer, method in self._tracked_layers.items():
+                if getattr(np, method, None) is None:
+                    msg = (f"Did not find method {method!r} in numpy! "
+                           f"Skipping tracked layer {tracked_layer!r}")
+                    logger.warning(msg)
+                    warn(msg)
+                    continue
+                if tracked_layer not in f.layers:
+                    msg = (f"Did not find layer {tracked_layer!r} in cost "
+                           f"file {str(self._cost_fpath)!r}. Skipping...")
+                    logger.warning(msg)
+                    warn(msg)
+                    continue
+
+                layer = f[tracked_layer, self._row_slice, self._col_slice]
+                self._tracked_layer_map[tracked_layer] = layer
+
             barrier = f[self._tb_layer_name, self._row_slice, self._col_slice]
             barrier = barrier * barrier_mult
 
@@ -484,6 +502,7 @@ class TieLineCosts:
 
         # Determine parial costs for any cost layers
         cl_results = self._compute_by_layer_results(indices, lens, cost)
+        cl_results = self._compute_tracked_layer_values(cl_results, indices)
 
         with ExclusionLayers(self._cost_fpath) as f:
             poi_lat = f['latitude', self._row_slice, self._col_slice][row, col]
@@ -524,6 +543,17 @@ class TieLineCosts:
                    f'({cost:,})')
             logger.warning(msg)
             warn(msg)
+
+        return cl_results
+
+    def _compute_tracked_layer_values(self, cl_results, indices):
+        """Compute aggregate values over tracked layers. """
+
+        for layer_name, layer_values_arr in self._tracked_layer_map.items():
+            layer_values = layer_values_arr[indices[:, 0], indices[:, 1]]
+            method = self._tracked_layers[layer_name]
+            aggregate = getattr(np, method)(layer_values)
+            cl_results[f'{layer_name}_{method}'] = aggregate
 
         return cl_results
 

@@ -280,6 +280,55 @@ def test_resolution(resolution, lmk):
     check_baseline(truth, test, lmk=lmk)
 
 
+def test_tracked_layers():
+    """
+    Test tracked layers functionality
+    """
+    capacity = 200
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_{capacity}MW.csv')
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    sc_point_gids = None
+    if os.path.exists(truth):
+        truth = pd.read_csv(truth)
+        sc_point_gids = truth['sc_point_gid'].unique()
+        sc_point_gids = np.random.choice(sc_point_gids,
+                                         size=N_SC_POINTS, replace=False)
+        mask = truth['sc_point_gid'].isin(sc_point_gids)
+        truth = truth.loc[mask]
+
+    with tempfile.TemporaryDirectory() as td:
+        cost_h5_path = os.path.join(td, 'costs.h5')
+        shutil.copy(COST_H5, cost_h5_path)
+
+        with h5py.File(cost_h5_path, "a") as fh:
+            data_shape = fh["ISO_regions"].shape
+
+            fh.create_dataset("layer1", data=np.ones(data_shape))
+            fh.create_dataset("layer2", data=np.ones(data_shape) * 2)
+            fh.create_dataset("layer4", data=np.ones(data_shape) * 4)
+            fh.create_dataset("layer5", data=np.ones(data_shape))
+
+        test = LeastCostXmission.run(cost_h5_path, FEATURES, capacity,
+                                     [cost_layer], sc_point_gids=sc_point_gids,
+                                     min_line_length=0,
+                                     tracked_layers={"layer1": "sum",
+                                                     "layer2": "max",
+                                                     "layer3": "min",
+                                                     "layer4": "dne",
+                                                     "layer5": "mean"})
+
+    assert "layer1_sum" in test
+    assert "layer2_max" in test
+    assert "layer3_min" not in test
+    assert "layer4_dne" not in test
+    assert "layer5_mean" in test
+
+    assert (test["layer1_sum"] <= test["dist_km"] / 90 * 1000).all()
+    assert np.allclose(test["layer2_max"], 2)
+    assert np.allclose(test["layer5_mean"], 1)
+
+
 @pytest.mark.parametrize('lmk', ["step", "linear"])
 @pytest.mark.parametrize("save_paths", [False, True])
 def test_cli(runner, save_paths, lmk):
