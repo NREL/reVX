@@ -1265,9 +1265,9 @@ class TransCapCosts(TieLineCosts):
 
             logger.info('Processed %d out of %d features (%.2f%%) for SC '
                         'point %d',
-                         iter_ind, len(features),
-                         iter_ind / len(features) * 100,
-                         self.sc_point_gid)
+                        iter_ind, len(features),
+                        iter_ind / len(features) * 100,
+                        self.sc_point_gid)
 
         if save_paths:
             features = gpd.GeoDataFrame(features, geometry=paths,
