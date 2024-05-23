@@ -3,6 +3,7 @@
 """
 Least Cost Xmission Command Line Interface
 """
+import time
 import click
 import logging
 import os
@@ -238,6 +239,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     """
     Run Least Cost Paths on local hardware
     """
+    start_time = time.time()
     name = ctx.obj['NAME']
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
@@ -249,6 +251,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     logger.info('Computing Least Cost Paths connections and writing them to {}'
                 .format(out_dir))
 
+    logger.debug("Tracked layers input: %r", tracked_layers)
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
 
@@ -291,10 +294,16 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     fpath_out = os.path.join(out_dir, f'{name}_lcp')
     if save_paths:
         fpath_out += '.gpkg'
+        logger.info('Writing output to %s', fpath_out)
         least_costs.to_file(fpath_out, driver="GPKG", index=False)
     else:
         fpath_out += '.csv'
+        logger.info('Writing output to %s', fpath_out)
         least_costs.to_csv(fpath_out, index=False)
+
+    logger.info('Writing output complete')
+    elapsed_time = (time.time() - start_time) / 60
+    logger.info("Processing took %.2f minutes", elapsed_time)
 
 
 @main.command()

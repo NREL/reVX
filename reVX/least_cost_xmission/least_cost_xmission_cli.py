@@ -8,6 +8,7 @@ TODO - add cmd line doc
 """
 import os
 import sys
+import time
 import click
 import logging
 import warnings
@@ -234,6 +235,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     """
     Run Least Cost Xmission on local hardware
     """
+    start_time = time.time()
     name = ctx.obj['NAME']
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
@@ -285,12 +287,15 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     fn_out = '{}_{}_{}.{}'.format(name, capacity_class, resolution, ext)
     fpath_out = os.path.join(out_dir, fn_out)
 
-    logger.info('Writing output to {}'.format(fpath_out))
+    logger.info('Writing output to %s', fpath_out)
     if save_paths:
         least_costs.to_file(fpath_out, driver='GPKG')
     else:
         least_costs.to_csv(fpath_out, index=False)
+
     logger.info('Writing output complete')
+    elapsed_time = (time.time() - start_time) / 60
+    logger.info("Processing took %.2f minutes", elapsed_time)
 
 
 @main.command()
