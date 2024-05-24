@@ -426,24 +426,28 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
     init_logger('reVX', log_level=log_level)
     logger.info("Merging reinforcement costs into transmission costs...")
 
+    logger.debug("Reading in transmission costs from %s", str(cost_fpath))
     costs = (gpd.read_file(cost_fpath)
              if "gpkg" in cost_fpath
              else pd.read_csv(cost_fpath))
+
+    logger.debug("Reading in reinforcement costs from %s",
+                 str(reinforcement_cost_fpath))
     r_costs = (gpd.read_file(reinforcement_cost_fpath)
                if "gpkg" in reinforcement_cost_fpath
                else pd.read_csv(reinforcement_cost_fpath))
 
-    logger.info("Loaded spur-line costs for {:,} substations and "
-                "reinforcement costs for {:,} substations"
-                .format(len(costs[merge_column].unique()),
-                        len(r_costs[merge_column].unique())))
+    logger.info("Loaded spur-line costs for %d substations and "
+                "reinforcement costs for %d substations",
+                len(costs[merge_column].unique()),
+                len(r_costs[merge_column].unique()))
 
     r_costs.index = r_costs[merge_column].values
     costs = costs[costs[merge_column].isin(r_costs[merge_column])].copy()
 
-    logger.info("Found {:,} substations with both spur-line and "
-                "reinforcement costs"
-                .format(len(costs[merge_column].unique())))
+    logger.info("Found %d substations with both spur-line and "
+                "reinforcement costs",
+                len(costs[merge_column].unique()))
 
     r_cols = ["reinforcement_poi_lat", "reinforcement_poi_lon",
               "reinforcement_dist_km", "reinforcement_cost_per_mw"]
