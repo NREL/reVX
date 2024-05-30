@@ -4,10 +4,12 @@ Least cost transmission line path tests
 """
 import json
 import os
+import shutil
 import random
 import tempfile
 import traceback
 
+import h5py
 import pytest
 import rasterio
 import numpy as np
@@ -21,7 +23,8 @@ from reV.supply_curve.supply_curve import SupplyCurve
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.config import XmissionConfig
-from reVX.least_cost_xmission.config.constants import (SHORT_CUTOFF,
+from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+                                                       SHORT_CUTOFF,
                                                        SHORT_MULT,
                                                        MEDIUM_CUTOFF,
                                                        MEDIUM_MULT)
@@ -31,9 +34,6 @@ from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
-CHECK_COLS = ('raw_line_cost', 'dist_km', 'xformer_cost_per_mw',
-              'xformer_cost', 'sub_upgrade_cost', 'new_sub_cost',
-              'connection_cost', 'trans_gid', 'sc_point_gid')
 ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 N_SC_POINTS = 10  # number of sc_points to run, chosen at random for each test
 DEFAULT_CONFIG = XmissionConfig()
@@ -67,12 +67,15 @@ def check_length_mults(test, lmk):
             >= test.iloc[:-1]["length_mult"].values).all()
 
 
-def check_baseline(truth, test, check_cols=CHECK_COLS, lmk="linear"):
+def check_baseline(truth, test, lmk="linear"):
     """
     Compare values in truth and test for given columns
     """
-    if check_cols is None:
-        check_cols = truth.columns.values
+    check_baseline_cols = ['raw_line_cost', 'dist_km', 'trans_gid',
+                           'sc_point_gid']
+    check_cost_cols = ['xformer_cost_per_mw', 'xformer_cost',
+                       'sub_upgrade_cost', 'new_sub_cost', 'connection_cost']
+    ckeck_no_lm_cols = ["tie_line_cost", "trans_cap_cost"]
 
     msg = 'Unique sc_point gids do not match!'
     assert np.allclose(truth['sc_point_gid'].unique(),
@@ -89,33 +92,55 @@ def check_baseline(truth, test, check_cols=CHECK_COLS, lmk="linear"):
         assert np.allclose(p_true['trans_gid'].unique(),
                            p_test['trans_gid'].unique()), msg
 
-        for c in check_cols:
+        for c in check_baseline_cols:
             msg = f'values for {c} do not match for sc_point {gid}!'
             c_truth = p_true[c].values.astype('float32')
             c_test = p_test[c].values.astype('float32')
             assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
-        for c in ["tie_line_cost", "trans_cap_cost"]:
+        for c in check_cost_cols:
             msg = f'values for {c} do not match for sc_point {gid}!'
-            # truth set has incorrect mults
-            mask = p_true["dist_km"].astype('float32') >= cutoff
+            # truth set has incorrect regions for tlines
+            mask = ~p_true["category"].isin({TRANS_LINE_CAT})
             c_truth = p_true.loc[mask, c].values.astype('float32')
-            mask = p_test["dist_km"].astype('float32') >= cutoff
+            mask = ~p_test["category"].isin({TRANS_LINE_CAT})
             c_test = p_test.loc[mask, c].values.astype('float32')
             assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
-    for c in check_cols:
+        for c in ckeck_no_lm_cols:
+            msg = f'values for {c} do not match for sc_point {gid}!'
+            # truth set has incorrect mults
+            mask = ((p_true["dist_km"].astype('float32') >= cutoff)
+                    & (~p_true["category"].isin({TRANS_LINE_CAT})))
+            c_truth = p_true.loc[mask, c].values.astype('float32')
+            mask = ((p_test["dist_km"].astype('float32') >= cutoff)
+                    & (~p_test["category"].isin({TRANS_LINE_CAT})))
+            c_test = p_test.loc[mask, c].values.astype('float32')
+            assert np.allclose(c_truth, c_test, equal_nan=True), msg
+
+    for c in check_baseline_cols:
         msg = f'values for {c} do not match!'
         c_truth = truth[c].values.astype('float32')
         c_test = test[c].values.astype('float32')
         assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
-    for c in ["tie_line_cost", "trans_cap_cost"]:
+    for c in check_cost_cols:
+        msg = f'values for {c} do not match!'
+        # truth set has incorrect regions for tlines
+        mask = ~truth["category"].isin({TRANS_LINE_CAT})
+        c_truth = truth.loc[mask, c].values.astype('float32')
+        mask = ~test["category"].isin({TRANS_LINE_CAT})
+        c_test = test.loc[mask, c].values.astype('float32')
+        assert np.allclose(c_truth, c_test, equal_nan=True), msg
+
+    for c in ckeck_no_lm_cols:
         msg = f'values for {c} do not match!'
         # truth set has incorrect mults
-        mask = truth["dist_km"].astype('float32') >= cutoff
+        mask = ((truth["dist_km"].astype('float32') >= cutoff)
+                & (~truth["category"].isin({TRANS_LINE_CAT})))
         c_truth = truth.loc[mask, c].values.astype('float32')
-        mask = test["dist_km"].astype('float32') >= cutoff
+        mask = ((test["dist_km"].astype('float32') >= cutoff)
+                & (~test["category"].isin({TRANS_LINE_CAT})))
         c_test = test.loc[mask, c].values.astype('float32')
         assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
@@ -168,6 +193,16 @@ def test_capacity_class(capacity, lmk):
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=5.76, length_mult_kind=lmk)
     SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
+
+    assert f"{cost_layer}_cost" in test
+    assert f"{cost_layer}_dist_km" in test
+    assert "poi_gid" in test
+
+    mask = (test["dist_km"] > 5.76) & (test["raw_line_cost"] < 1e12)
+    assert np.allclose(test.loc[mask, f"{cost_layer}_cost"].astype(float),
+                       test.loc[mask, "raw_line_cost"].astype(float))
+    assert np.allclose(test.loc[mask, f"{cost_layer}_dist_km"].astype(float),
+                       test.loc[mask, "dist_km"].astype(float))
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
@@ -245,6 +280,53 @@ def test_resolution(resolution, lmk):
     check_baseline(truth, test, lmk=lmk)
 
 
+def test_tracked_layers():
+    """
+    Test tracked layers functionality
+    """
+    capacity = 200
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_{capacity}MW.csv')
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    sc_point_gids = None
+    if os.path.exists(truth):
+        truth = pd.read_csv(truth)
+        sc_point_gids = truth['sc_point_gid'].unique()
+        sc_point_gids = np.random.choice(sc_point_gids,
+                                         size=N_SC_POINTS, replace=False)
+
+    with tempfile.TemporaryDirectory() as td:
+        cost_h5_path = os.path.join(td, 'costs.h5')
+        shutil.copy(COST_H5, cost_h5_path)
+
+        with h5py.File(cost_h5_path, "a") as fh:
+            data_shape = fh["ISO_regions"].shape
+
+            fh.create_dataset("layer1", data=np.ones(data_shape))
+            fh.create_dataset("layer2", data=np.ones(data_shape) * 2)
+            fh.create_dataset("layer4", data=np.ones(data_shape) * 4)
+            fh.create_dataset("layer5", data=np.ones(data_shape))
+
+        test = LeastCostXmission.run(cost_h5_path, FEATURES, capacity,
+                                     [cost_layer], sc_point_gids=sc_point_gids,
+                                     min_line_length=0,
+                                     tracked_layers={"layer1": "sum",
+                                                     "layer2": "max",
+                                                     "layer3": "min",
+                                                     "layer4": "dne",
+                                                     "layer5": "mean"})
+
+    assert "layer1_sum" in test
+    assert "layer2_max" in test
+    assert "layer3_min" not in test
+    assert "layer4_dne" not in test
+    assert "layer5_mean" in test
+
+    assert (test["layer1_sum"] <= test["dist_km"] / 90 * 1000 + 1).all()
+    assert np.allclose(test["layer2_max"], 2)
+    assert np.allclose(test["layer5_mean"], 1)
+
+
 @pytest.mark.parametrize('lmk', ["step", "linear"])
 @pytest.mark.parametrize("save_paths", [False, True])
 def test_cli(runner, save_paths, lmk):
@@ -296,9 +378,9 @@ def test_cli(runner, save_paths, lmk):
 
 
 @pytest.mark.parametrize("save_paths", [False, True])
-def test_reinforcement_cli(runner, ri_ba, save_paths):
+def test_regional_cli(runner, ri_ba, save_paths):
     """
-    Test Reinforcement cost routines and CLI
+    Test Regional cost routines and CLI
     """
     ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
 
@@ -356,16 +438,127 @@ def test_reinforcement_cli(runner, ri_ba, save_paths):
             test = os.path.join(td, test)
             test = pd.read_csv(test)
 
-        assert len(test) == 13
-        assert set(test.trans_gid.unique()) == {69130}
-        assert set(test.ba_str.unique()) == {"p4"}
+        assert "poi_lat" in test
+        assert "poi_lon" in test
+        assert "ba_str" in test
+
+        assert len(test) == 1036
+        # trans_gid has 1 duplicate substation entry
+        assert len(set(test.trans_gid.unique())) == 69
+        assert len(set(test.poi_gid.unique())) == 68
+        assert set(test.ba_str.unique()) == {"p1", "p2", "p3", "p4"}
+
+        mask = test['max_volts'] >= 500
+
+        assert len(test[mask]) == 13
+        assert set(test[mask].trans_gid.unique()) == {69130}
+        assert set(test[mask].ba_str.unique()) == {"p4"}
+
+        assert len(test[mask].poi_lat.unique()) == 1
+        assert len(test[mask].poi_lon.unique()) == 1
+
+        assert np.allclose(test["tie_line_costs_1500MW_cost"].astype(float),
+                           test["raw_line_cost"].astype(float))
+        assert np.allclose(test["tie_line_costs_1500MW_dist_km"].astype(float),
+                           test["dist_km"].astype(float))
+
+    LOGGERS.clear()
+
+
+def test_regional_cli_new_layer_names(runner, ri_ba):
+    """
+    Test Regional cost routines and CLI
+    """
+    ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
+
+    with tempfile.TemporaryDirectory() as td:
+        ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
+        ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
+
+        ri_ba_path = os.path.join(td, 'ri_ba.gpkg')
+        ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
+
+        ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
+        result = runner.invoke(lcp_main,
+                               ['map-ss-to-rr',
+                                '-feats', ri_feats_path,
+                                '-regs', ri_ba_path,
+                                '-rid', "ba_str",
+                                '-of', ri_substations_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        cost_h5_path = os.path.join(td, 'costs.h5')
+        shutil.copy(COST_H5, cost_h5_path)
+
+        with h5py.File(cost_h5_path, "a") as fh:
+            tb = fh["transmission_barrier"][:]
+            iso = fh["ISO_regions"][:]
+
+            del fh["transmission_barrier"]
+            del fh["ISO_regions"]
+            assert "transmission_barrier" not in fh.keys()
+            assert "ISO_regions" not in fh.keys()
+
+            fh.create_dataset("tb", data=tb)
+            fh.create_dataset("iso", data=iso)
+
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+            },
+            "cost_fpath": cost_h5_path,
+            "features_fpath": ri_substations_path,
+            "regions_fpath": ri_ba_path,
+            "region_identifier_column": "ba_str",
+            "capacity_class": 1000,
+            "cost_layers": ["tie_line_costs_1500MW"],
+            "barrier_mult": 100,
+            "min_line_length": 0,
+            "save_paths": False,
+            "tb_layer_name": "tb",
+            "iso_regions_layer_name": "iso",
+        }
+
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_1000_128.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
 
         assert "poi_lat" in test
         assert "poi_lon" in test
         assert "ba_str" in test
 
-        assert len(test.poi_lat.unique()) == 1
-        assert len(test.poi_lon.unique()) == 1
+        assert len(test) == 1036
+        # trans_gid has 1 duplicate substation entry
+        assert len(set(test.trans_gid.unique())) == 69
+        assert len(set(test.poi_gid.unique())) == 68
+        assert set(test.ba_str.unique()) == {"p1", "p2", "p3", "p4"}
+
+        mask = test['max_volts'] >= 500
+
+        assert len(test[mask]) == 13
+        assert set(test[mask].trans_gid.unique()) == {69130}
+        assert set(test[mask].ba_str.unique()) == {"p4"}
+
+        assert len(test[mask].poi_lat.unique()) == 1
+        assert len(test[mask].poi_lon.unique()) == 1
+
+        assert np.allclose(test["tie_line_costs_1500MW_cost"].astype(float),
+                           test["raw_line_cost"].astype(float))
+        assert np.allclose(test["tie_line_costs_1500MW_dist_km"].astype(float),
+                           test["dist_km"].astype(float))
 
     LOGGERS.clear()
 

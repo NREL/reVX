@@ -76,7 +76,7 @@ The keys below represent layer creation actions. Mostly analyses will need all l
 
 ## Layer Creation Config File Examples
 The below example JSON file shows all possible keys with example values. The formal config file definition is the `TransmissionLayerCreationConfig` class in the [`transmission_layer_creation.py`](https://github.com/NREL/reVX/tree/main/reVX/config/transmission_layer_creation.py) file.
-```
+```JSON5
 {
     "template_raster_fpath": "bathymetry.tif",
     "h5_fpath": "./new_xmission_routing_layers.h5",
@@ -149,7 +149,7 @@ The below example JSON file shows all possible keys with example values. The for
                 "mpa.tif": { "map": {"2": 5, "3": 7}, "extent": "all" },
             }
         },
-    ]
+    ],
 
     "merge_friction_and_barriers": {
         "friction_layer": "friction",
@@ -158,19 +158,17 @@ The below example JSON file shows all possible keys with example values. The for
     },
 
     "dry_costs": {
-        "iso_region_tiff": "/path/to/nlcd/ISO/regions/ISO_regions.tif",
+        "iso_region_tiff": "/path/to/nlcd/ISO/regions/iso_regions.tif",
         "nlcd_tiff": "/path/to/nlcd/raster.tiff",
         "slope_tiff": "/path/to/slope/raster.tiff",
         "cost_configs": "/optional/path/to/xmission/cost/config.json",
         "extra_tiffs": [
-            /optional/path/to/extra/layer1.tif",
-            /optional/path/to/extra/layer2.tif"
+            "/optional/path/to/extra/layer1.tif",
+            "/optional/path/to/extra/layer2.tif"
         ]
     }
 }
 ```
-
-Note that the "iso_region_tiff" input tiff file must be called "ISO_regions.tif" (capitalization is important).
 
 ## Running the Layer Creator
 Prior to running the layer creating command, we must initialize an HDF5 file that will hold the cost layers.
@@ -202,14 +200,14 @@ All examples assume that reVX was installed using `pip` so that the CLI commands
 
 ## Costs
 The below file can be used as a template to compute the costs to be used in a Least Cost Path analysis described in more detail below.
-```
+```JSON5
 {
     "h5_fpath": "./new_transmission_cost_file_name.h5",
     "template_raster_fpath": "/path/to/template/raster.tif",
     "output_tiff_dir": "./output_transmission_tiffs",
 
     "dry_costs": {
-        "iso_region_tiff": "/path/to/ISO_regions.tif",
+        "iso_region_tiff": "/path/to/iso_regions.tif",
         "nlcd_tiff": "/path/to/nlcd.tif",
         "slope_tiff": "/path/to/slope.tif",
         "extra_tiffs": [
@@ -220,11 +218,11 @@ The below file can be used as a template to compute the costs to be used in a Le
     }
   }
 ```
-Note that the "iso_region_tiff" input tiff file must be called "ISO_regions.tif" (capitalization is important).
+
 See [`transmission_layer_creator_cli.from_config`](https://github.com/NREL/reVX/tree/main/reVX/least_cost_xmission/transmission_layer_creator_cli.py) for more info about these inputs. Your cost H5 file output should look something like this:
 ```
 another_extra_layer      Dataset {1, 33792, 48640}
-ISO_regions              Dataset {1, 33792, 48640}
+iso_regions              Dataset {1, 33792, 48640}
 latitude                 Dataset {33792, 48640}
 longitude                Dataset {33792, 48640}
 slope                    Dataset {1, 33792, 48640}
@@ -253,7 +251,7 @@ $ least-cost-xmission local \
 ### Run onshore analysis from a config file
 The below file can be used to start a full CONUS analysis for the 1000MW power class. The setting `nodes` in `execution_control` will split the processing across five eagle nodes.
 
-```
+```JSON5
 {
   "execution_control": {
     "allocation": "YOUR_SLURM_ALLOCATION",
@@ -267,11 +265,16 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
   "cost_layers": ["tie_line_costs_{}MW"],
+  "iso_regions_layer_name": "iso_regions",
   "barrier_mult": "100",
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
 }
 ```
+
+Note that the `iso_regions_layer_name` input is needed because our nayer name
+is not the expected default value of `"ISO_regions"` (our layer name is
+lowercase).
 
 Assuming the above config file is saved as `config_conus.json` in the current directory, it can be kicked off with:
 
@@ -286,13 +289,12 @@ In this methodology, total interconnection costs are comprised of two components
 
 - Area of interest (e.g. CONUS) is broken up into "Reinforcement Regions" (i.e. Balancing Areas, States, Counties, etc.)
 - Each reinforcement region has one or more "Network Node" (typically a city or highly populated area)
-- SC points **may only connect to substations**
-- Substations that a SC point connects to **must be in the same reinforcement regions as the SC point**
-- Reinforcement costs are calculated based on the distance between the substation a SC point connected to and the Network Node in that reinforcement region
+- Substations or transmission lines (i.e. new substations) that a SC point connects to **must be in the same reinforcement regions as the SC point**
+- Reinforcement costs are calculated based on the distance between the substation (existing or new) a SC point connected to and the Network Node in that reinforcement region
     - The path used to calculate reinforcement costs is traced along existing transmission lines **for as long as possible**.
     - The reinforcement cost is taken to be half (50%) of the total greenfield cost of the transmission line being traced. If a reinforcement path traces along multiple transmission lines, the corresponding greenfield costs are used for each segment. If multiple transmission lines are available in a single raster pixel, the cost for the highest-voltage line is used. Wherever there is no transmission line, a default greenfield cost assumption (specified by the user; typically 230 kV) is used.
 
-An example plot of this method is shown below (credit: Anthony Lopez):
+An example plot of this method is shown below (map credit: Anthony Lopez):
 
 ![sample_r_im](../../examples/least_cost_paths/sample_r_im.png "Sample Reinforcement Results")
 
@@ -301,19 +303,21 @@ In this plot, (light) grey lines represent existing transmission, orange lines r
 
 ## Calculating Reinforced Transmission Tables
 
+Reinforcement costs can be computes in several ways. The older but simpler approach is to allow supply curve points to only connect to existing substations.
+The newer but more complex approach allows supply curve points to connect to existing substations or transmission lines, simulating the build of a new
+substation at the connection point for the latter case.
+
+
+### Substation connections only (OLD)
 First, map the substations in your data set to the reinforcement regions using the following reVX command:
 
 ```
-$ least-cost-paths map-ss-to-rr \
-    --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
-    --regions_fpath /shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg \
-    --region_identifier_column ba_str \
-    --out_file substations_with_ba.gpkg
+$ least-cost-paths map-ss-to-rr --features_fpath ./conus_allconns.gpkg --regions_fpath ./regions.gpkg --region_identifier_column rr_id --out_file ./substations_with_ba.gpkg
 ```
 
 Next, compute the reinforcement paths on multiple nodes. Use the file below as a template (`reinforcement_path_costs_config.json`):
 
-```
+```JSON5
 {
     "execution_control": {
       "allocation": "YOUR_SLURM_ALLOCATION",
@@ -323,11 +327,11 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
       "nodes": 10,
       "walltime": 1
     },
-    "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
-    "features_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs/substations_with_ba.gpkg",
-    "network_nodes_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/data/transmission_endpoints",
-    "transmission_lines_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
-    "region_identifier_column": "ba_str",
+    "cost_fpath": "/path/to/cost.h5",
+    "features_fpath": "./substations_with_ba.gpkg",
+    "network_nodes_fpath": "./nn.gpkg",
+    "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
+    "region_identifier_column": "rr_id",
     "capacity_class": "400",
     "cost_layers": ["tie_line_costs_{}MW"],
     "barrier_mult": "100",
@@ -347,14 +351,12 @@ $ least-cost-paths from-config -c reinforcement_path_costs_config.json
 
 This will generate 10 chunked files (since we used 10 nodes in the config above). To merge the data, simply call
 ```
-$ least-cost-xmission merge-output -of reinforcement_costs_400MW_230kV.gpkg \
-    -od /shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs \
-    reinforcement_costs_*_lcp.csv
+$ least-cost-xmission merge-output -of reinforcement_costs_400MW_230kV.gpkg -od ./ reinforcement_costs_*_lcp.csv
 ```
 
 You should now have a file containing all of the reinforcement costs for the substations in your dataset. Next, compute the spur line transmission costs for these substations using the following template config (`least_cost_transmission_1000MW.json`):
 
-```
+```JSON5
 {
     "execution_control": {
       "allocation": "YOUR_SLURM_ALLOCATION",
@@ -364,12 +366,13 @@ You should now have a file containing all of the reinforcement costs for the sub
       "max_workers": 36,
       "walltime": 1
     },
-    "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
-    "features_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs/substations_with_ba.gpkg",
-    "regions_fpath": "/shared-projects/rev/transmission_tables/reinforced_transmission/data/ReEDS_BA.gpkg",
-    "region_identifier_column": "ba_str",
+    "cost_fpath": "/path/to/cost.h5",
+    "features_fpath": "./substations_with_ba.gpkg",
+    "regions_fpath": "./regions.gpkg",
+    "region_identifier_column": "rr_id",
     "capacity_class": "1000",
     "cost_layers": ["tie_line_costs_{}MW"],
+    "iso_regions_layer_name": "iso_regions",
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
@@ -386,22 +389,115 @@ $ least-cost-xmission from-config -c least_cost_transmission_1000MW.json
 You may need to run this command multiple times - once for each transmission line capacity.
 As before the data will come split into multiple files (in this case 100, since we used 100 nodes). To merge the data, run a command similar to the one above:
 ```
-$ least-cost-xmission merge-output -of transmission_1000MW_128.csv \
-    -od /shared-projects/rev/transmission_tables/reinforced_transmission/least_cost_transmission \
-    least_cost_transmission_*_1000_128.csv
+$ least-cost-xmission merge-output -of transmission_1000MW_128.csv -od ./ least_cost_transmission_*_1000_128.csv
 ```
 Finally, combine the spur line transmission costs and the reinforcement costs into a single transmission table:
 
 ```
-$ least-cost-xmission merge-reinforcement-costs \
-    -of transmission_reinforced_1000MW_128.csv \
-    -f /shared-projects/rev/transmission_tables/reinforced_transmission/least_cost_transmission/transmission_1000MW_128.csv \
-    -r /shared-projects/rev/transmission_tables/reinforced_transmission/reinforcement_costs/reinforcement_costs_400MW_230kV.csv
+$ least-cost-xmission merge-reinforcement-costs -of transmission_reinforced_1000MW_128.csv -f ./transmission_1000MW_128.csv -r ./reinforcement_costs_400MW_230kV.csv
 ```
 
 Again, you may need to run this command multiple times - once for each transmission line capacity.
 
 The resulting tables can be passed directly to `reV`, which will automatically detect reinforcement costs and take them into account during the supply curve computation.
+
+
+### Substation and tie-line connections (New)
+Since we want to allow tie-line connecitons, we must first run LCP to determine where new substation will be built:
+
+```JSON5
+{
+    "execution_control": {
+      "allocation": "YOUR_SLURM_ALLOCATION",
+      "memory": 500,
+      "nodes": 100,
+      "option": "eagle",
+      "max_workers": 36,
+      "walltime": 1
+    },
+    "cost_fpath": "/path/to/cost.h5",
+    "features_fpath": "/path/to/substations_and_tlines.gpkg",
+    "regions_fpath": "/path/to/regions.gpkg",
+    "region_identifier_column": "rr_id",
+    "capacity_class": "200",  // 138 kV
+    "barrier_mult": "5000",
+    "cost_layers": ["tie_line_costs_{}MW", "swca_cultural_resources_risk", "swca_natural_resources_risk"],
+    "iso_regions_layer_name": "iso_regions",
+    "log_directory": "./logs",
+    "log_level": "INFO",
+    "resolution": 128,
+    "radius": 278,  // 25 km in pixels: 25,000m / 90m = 277.777777777777778
+    "clipping_buffer": 1.1,  // default is 1.05 but since we go down to 25km radius, we can make this slightly bigger
+    "expand_radius": true,
+    "min_line_length": 0
+}
+```
+
+The data will come split into multiple files (in this case 100, since we used 100 nodes). To merge the data, run:
+```
+$ least-cost-xmission merge-output -of transmission_200MW_128.gpkg -od ./ least_cost_transmission_*_200_128.gpkg
+```
+
+Once you have the connecitons table, extract the substation locations using the following reVX command:
+
+```
+$ least-cost-paths ss-from-conn -con ./transmission_200MW_128.gpkg -rid rr_id -of ./ss_from_conns_200_128.gpkg
+```
+
+If your netwrok nodes file is missing the region identified column, you can add it now:
+
+```
+$ least-cost-paths add-rr-to-nn -nodes ./nn.gpkg -regs ./regions.gpkg -rid rr_id
+```
+
+Now you can cpmpute the reinforcement paths the same way as the method above:
+
+```JSON5
+{
+    "execution_control": {
+      "allocation": "YOUR_SLURM_ALLOCATION",
+      "memory": 178,
+      "option": "eagle",
+      "max_workers": 1,
+      "nodes": 10,
+      "walltime": 1
+    },
+    "cost_fpath": "/path/to/cost.h5",
+    "features_fpath": "./ss_from_conns_200_128.gpkg",
+    "network_nodes_fpath": "./nn.gpkg",
+    "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
+    "region_identifier_column": "rr_id",
+    "capacity_class": "200",
+    "cost_layers": ["tie_line_costs_{}MW"],
+    "barrier_mult": "5000",
+    "log_directory": "./logs",
+    "log_level": "INFO",
+    "save_paths": true,
+}
+```
+
+Note that we are specifying ``"capacity_class": "200"`` (which then fills in the ``{}`` in ``"tie_line_costs_{}MW"``) to use the 138 kV (205 MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+"region_identifier_column" and the values in that column should match the region containing the substations and network nodes.
+
+After putting together your config file, simply call
+```
+$ least-cost-paths from-config -c reinforcement_path_costs_config.json
+```
+
+This will generate 10 chunked files (since we used 10 nodes in the config above). To merge the data, simply call
+```
+$ least-cost-xmission merge-output -of reinforcement_costs_200MW_138kkV.gpkg -od ./ reinforcement_costs_*_lcp.gpkg
+```
+
+You should now have a file containing all of the reinforcement costs for the substations in your dataset.
+Finally, combine the spur line transmission costs and the reinforcement costs into a single transmission table:
+
+```
+$ least-cost-xmission merge-reinforcement-costs -of transmission_reinforced_200MW_128.csv  -f ./transmission_200MW_128.csv -r ./reinforcement_costs_200MW_138kV.csv
+```
+
+The resulting tables can be passed directly to `reV`, which will automatically detect reinforcement costs and take them into account during the supply curve computation.
+
 
 # Offshore Least Cost Paths
 ## Nomenclature Note
@@ -412,7 +508,7 @@ General steps to run an offshore analysis:
 
 1. Create cost, friction, and barrier layers as described above.
 2. Convert points-of-interconnection (POI) (grid connections on land) to transmission feature lines. See example below.
-4. Determine desired sc\_point_gids to process.
+4. Determine desired sc\_point\_gids to process.
 5. Select appropriate clipping radius. Unlike a CONUS analysis, which clips the cost raster by proximity to infinite sinks, offshore analyses have typically used a fixed search radius. 5000 km is a good starting point. Note that memory usage increases with the square of radius.
 6. Run analysis. See examples below.
 7. Convert the output to GeoJSON (optional). See post processing below.

@@ -8,6 +8,7 @@ TODO - add cmd line doc
 """
 import os
 import sys
+import time
 import click
 import logging
 import warnings
@@ -18,12 +19,12 @@ from typing import List
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
-from rex.utilities.utilities import get_class_properties
+from rex.utilities.utilities import get_class_properties, dict_str_load
 
 from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
-                                                          ReinforcedXmission)
+                                                          RegionalXmission)
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        LOAD_CENTER_CAT,
                                                        SINK_CAT,
@@ -31,7 +32,9 @@ from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        MINIMUM_SPUR_DIST_KM,
                                                        BARRIERS_MULT,
                                                        CLIP_RASTER_BUFFER,
-                                                       NUM_NN_SINKS)
+                                                       NUM_NN_SINKS,
+                                                       BARRIER_H5_LAYER_NAME,
+                                                       ISO_H5_LAYER_NAME)
 from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
 
 TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
@@ -153,10 +156,20 @@ def from_config(ctx, config, verbose):
 @click.option('--clipping_buffer', '-buffer', type=float,
               show_default=True, default=CLIP_RASTER_BUFFER,
               help=("Buffer to expand clipping radius by"))
+@click.option('--tb_layer_name', '-tbln', default=BARRIER_H5_LAYER_NAME,
+              type=STR, show_default=True,
+              help='Name of transmission barrier layer in `cost_fpath` file. '
+                   'This layer defines the multipliers applied to the cost '
+                   'layer to determine LCP routing (but does not actually '
+                   'affect output costs')
 @click.option('--barrier_mult', '-bmult', type=float,
               show_default=True, default=BARRIERS_MULT,
               help=("Tranmission barrier multiplier, used when computing the "
                     "least cost tie-line path"))
+@click.option('--iso_regions_layer_name', '-irln', default=ISO_H5_LAYER_NAME,
+              type=STR, show_default=True,
+              help='Name of ISO regions layer in `cost_fpath` file. The '
+                   "layer maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .")
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -175,6 +188,9 @@ def from_config(ctx, config, verbose):
               show_default=True, default=None,
               help=("Radius to clip costs raster to in pixels This overrides "
                     "--nn_sinks if set."))
+@click.option('--mp_delay', '-mpd', type=FLOAT, show_default=True, default=3.0,
+              help=("Delay in seconds between starting multi-process workers. "
+                    "Useful for reducing memory spike at working startup."))
 @click.option('--expand_radius', '-er', is_flag=True,
               help='Flag to expand radius until at least one transmission '
                    'feature is included for connection. Has no effect if '
@@ -196,6 +212,11 @@ def from_config(ctx, config, verbose):
                    'raster used for routing. These costs do not scale with '
                    'distance traversed acroiss the cell. Multiple layers may '
                    'be specified.')
+@click.option('--tracked_layers', '-trl', type=STR, default=None,
+              show_default=True,
+              help=('Dictionary mapping layer names to strings, where the '
+                    'strings are numpy methods that should be applied to '
+                    'the layer along the LCP.'))
 @click.option('--length_mult_kind', '-lmk', type=STR, default='linear',
               show_default=True,
               help='Type of length multiplier calcualtion. "step" computes '
@@ -206,12 +227,15 @@ def from_config(ctx, config, verbose):
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
-          clipping_buffer, barrier_mult, max_workers, out_dir, log_dir,
-          verbose, save_paths, radius, expand_radius, simplify_geo,
-          cost_layers: List[str], li_cost_layers, length_mult_kind):
+          clipping_buffer, tb_layer_name, barrier_mult,
+          iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
+          save_paths, radius, expand_radius, mp_delay, simplify_geo,
+          cost_layers: List[str], li_cost_layers, tracked_layers,
+          length_mult_kind):
     """
     Run Least Cost Xmission on local hardware
     """
+    start_time = time.time()
     name = ctx.obj['NAME']
     if 'VERBOSE' in ctx.obj:
         verbose = any((ctx.obj['VERBOSE'], verbose))
@@ -222,26 +246,34 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     create_dirs(out_dir)
     logger.info('Computing Least Cost Xmission connections and writing them {}'
                 .format(out_dir))
+
+    if isinstance(tracked_layers, str):
+        tracked_layers = dict_str_load(tracked_layers)
+
     kwargs = {"resolution": resolution,
               "xmission_config": xmission_config,
               "min_line_length": min_line_length,
               "sc_point_gids": sc_point_gids,
               "clipping_buffer": clipping_buffer,
+              "tb_layer_name": tb_layer_name,
               "barrier_mult": barrier_mult,
+              "iso_regions_layer_name": iso_regions_layer_name,
               "max_workers": max_workers,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
               "radius": radius,
               "expand_radius": expand_radius,
+              "mp_delay": mp_delay,
               "length_invariant_cost_layers": li_cost_layers,
-              "length_mult_kind": length_mult_kind}
+              "length_mult_kind": length_mult_kind,
+              "tracked_layers": tracked_layers}
 
     if regions_fpath is not None:
-        least_costs = ReinforcedXmission.run(cost_fpath, features_fpath,
-                                             regions_fpath,
-                                             region_identifier_column,
-                                             capacity_class, cost_layers,
-                                             **kwargs)
+        least_costs = RegionalXmission.run(cost_fpath, features_fpath,
+                                           regions_fpath,
+                                           region_identifier_column,
+                                           capacity_class, cost_layers,
+                                           **kwargs)
     else:
         kwargs["nn_sinks"] = nn_sinks
         least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
@@ -255,12 +287,15 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     fn_out = '{}_{}_{}.{}'.format(name, capacity_class, resolution, ext)
     fpath_out = os.path.join(out_dir, fn_out)
 
-    logger.info('Writing output to {}'.format(fpath_out))
+    logger.info('Writing output to %s', fpath_out)
     if save_paths:
         least_costs.to_file(fpath_out, driver='GPKG')
     else:
         least_costs.to_csv(fpath_out, index=False)
+
     logger.info('Writing output complete')
+    elapsed_time = (time.time() - start_time) / 60
+    logger.info("Processing took %.2f minutes", elapsed_time)
 
 
 @main.command()
@@ -280,11 +315,15 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help='Simplify path geometries by a value before exporting.')
+@click.option('--ss_id_col', '-ssid', default=None, type=STR,
+              show_default=True,
+              help='Name of column used to unqiuely identify substations. '
+                   'Used for reinforcement calcaultions only. ')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
 # flake8: noqa: C901
 def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
-                 out_dir, drop, simplify_geo, files):
+                 out_dir, drop, simplify_geo, ss_id_col, files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON
     """
@@ -298,8 +337,8 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
     if drop:
         for cat in drop:
             if cat not in TRANS_CAT_TYPES:
-                logger.info('--drop options must on or more of {}, received {}'
-                            .format(TRANS_CAT_TYPES, drop))
+                logger.info('--drop options must be one or more of %s, '
+                            'received %s', TRANS_CAT_TYPES, drop)
                 return
 
     warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -308,13 +347,14 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
         logger.info('Loading %s (%i/%i)', file, i, len(files))
         df_tmp = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
         dfs.append(df_tmp)
+
     df = pd.concat(dfs)
     warnings.filterwarnings('default', category=RuntimeWarning)
 
     if drop:
         mask = df['category'].isin(drop)
-        logger.info('Dropping {} of {} total features with category(ies): {}'
-                    .format(mask.sum(), len(df), ", ".join(drop)))
+        logger.info('Dropping %d of %d total features with category(ies): %s',
+                    mask.sum(), len(df), ", ".join(drop))
         df = df[~mask]
 
     df = df.reset_index()
@@ -327,8 +367,9 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
         logger.info('Simplifying geometries by {}'.format(simplify_geo))
         df.geometry = df.geometry.simplify(simplify_geo)
 
-    if all(col in df for col in ["gid", "reinforcement_cost_per_mw"]):
-        df = min_reinforcement_costs(df)
+    if ss_id_col is not None:
+        logger.info('Computing minimum reinforcement cost')
+        df = min_reinforcement_costs(df, group_col=ss_id_col)
 
     create_dirs(out_dir)
 
@@ -370,11 +411,14 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
               help=("Path to GeoPackage/CSV file with calculated "
                     "reinforcement costs. This file must have a 'gid' column "
                     "that will be used to merge in the reinforcement costs."))
+@click.option('--merge_column', '-mc', default="trans_gid", type=STR,
+              help=("Name of column in `cost_fpath` and "
+                    "`reinforcement_cost_fpath` files to merge on."))
 @click.option('--out_file', '-of', default=None, type=STR,
               help='Name for output GeoPackage/CSV file.')
 @click.pass_context
 def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
-                              out_file):
+                              merge_column, out_file):
     """
     Merge reinforcement costs into transmission costs.
     """
@@ -382,28 +426,32 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
     init_logger('reVX', log_level=log_level)
     logger.info("Merging reinforcement costs into transmission costs...")
 
+    logger.debug("Reading in transmission costs from %s", str(cost_fpath))
     costs = (gpd.read_file(cost_fpath)
              if "gpkg" in cost_fpath
              else pd.read_csv(cost_fpath))
+
+    logger.debug("Reading in reinforcement costs from %s",
+                 str(reinforcement_cost_fpath))
     r_costs = (gpd.read_file(reinforcement_cost_fpath)
                if "gpkg" in reinforcement_cost_fpath
                else pd.read_csv(reinforcement_cost_fpath))
 
-    logger.info("Loaded spur-line costs for {:,} substations and "
-                "reinforcement costs for {:,} substations"
-                .format(len(costs["trans_gid"].unique()),
-                        len(r_costs["gid"].unique())))
+    logger.info("Loaded spur-line costs for %d substations and "
+                "reinforcement costs for %d substations",
+                len(costs[merge_column].unique()),
+                len(r_costs[merge_column].unique()))
 
-    r_costs.index = r_costs.gid
-    costs = costs[costs["trans_gid"].isin(r_costs.gid)].copy()
+    r_costs.index = r_costs[merge_column].values
+    costs = costs[costs[merge_column].isin(r_costs[merge_column])].copy()
 
-    logger.info("Found {:,} substations with both spur-line and "
-                "reinforcement costs"
-                .format(len(costs["trans_gid"].unique())))
+    logger.info("Found %d substations with both spur-line and "
+                "reinforcement costs",
+                len(costs[merge_column].unique()))
 
     r_cols = ["reinforcement_poi_lat", "reinforcement_poi_lon",
               "reinforcement_dist_km", "reinforcement_cost_per_mw"]
-    costs[r_cols] = r_costs.loc[costs["trans_gid"], r_cols].values
+    costs[r_cols] = r_costs.loc[costs[merge_column], r_cols].values
 
     logger.info("Writing output to {!r}".format(out_file))
 
@@ -442,11 +490,14 @@ def get_node_cmd(config, gids):
             '-gids {}'.format(SLURM.s(gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
+            '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
             '-bmult {}'.format(SLURM.s(config.barrier_mult)),
+            '-irln {}'.format(SLURM.s(config.iso_regions_layer_name)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
             '-lmk {}'.format(SLURM.s(config.length_mult_kind)),
+            '-mpd {}'.format(SLURM.s(config.mp_delay)),
             ]
 
     for layer in config.cost_layers:
@@ -462,6 +513,8 @@ def get_node_cmd(config, gids):
         args.append('-er')
     if config.simplify_geo:
         args.append('--simplify-geo {}'.format(config.simplify_geo))
+    if config.tracked_layers:
+        args.append('-trl {}'.format(SLURM.s(config.tracked_layers)))
 
     if config.log_level == logging.DEBUG:
         args.append('-v')
@@ -496,7 +549,9 @@ def run_local(ctx, config):
                sc_point_gids=config.sc_point_gids,
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
+               tb_layer_name=config.tb_layer_name,
                barrier_mult=config.barrier_mult,
+               iso_regions_layer_name=config.iso_regions_layer_name,
                region_identifier_column=config.region_identifier_column,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
@@ -504,12 +559,13 @@ def run_local(ctx, config):
                verbose=config.log_level,
                radius=config.radius,
                expand_radius=config.expand_radius,
+               mp_delay=config.mp_delay,
                save_paths=config.save_paths,
                simplify_geo=config.simplify_geo,
                cost_layers=config.cost_layers,
                li_cost_layers=config.length_invariant_cost_layers,
-               length_mult_kind=config.length_mult_kind,
-               )
+               tracked_layers=config.tracked_layers,
+               length_mult_kind=config.length_mult_kind)
 
 
 def eagle(config, gids):

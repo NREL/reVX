@@ -19,8 +19,8 @@ from rex.utilities.loggers import log_mem
 
 from reVX.handlers.layered_h5 import crs_match
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
-                                                       SUBSTATION_CAT,
-                                                       BARRIERS_MULT)
+                                                       BARRIERS_MULT,
+                                                       BARRIER_H5_LAYER_NAME)
 from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
                                                       ReinforcementLineCosts)
 
@@ -31,9 +31,9 @@ class LeastCostPaths:
     """
     Compute least cost paths between desired locations
     """
-    REQUIRED_LAYERS = ['transmission_barrier']
 
-    def __init__(self, cost_fpath, features_fpath, clip_buffer=0):
+    def __init__(self, cost_fpath, features_fpath, clip_buffer=0,
+                 tb_layer_name=BARRIER_H5_LAYER_NAME):
         """
         Parameters
         ----------
@@ -46,13 +46,20 @@ class LeastCostPaths:
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         """
-        self._check_layers(cost_fpath)
+        self._cost_fpath = cost_fpath
+        self._tb_layer_name = tb_layer_name
+        self._check_layers()
+
         out = self._map_to_costs(cost_fpath, gpd.read_file(features_fpath),
                                  clip_buffer=clip_buffer)
         self._features, self._row_slice, self._col_slice, self._shape = out
         self._features = self._features.drop(columns='geometry')
-        self._cost_fpath = cost_fpath
         self._start_feature_ind = 0
 
         logger.debug('{} initialized'.format(self))
@@ -73,19 +80,30 @@ class LeastCostPaths:
         """
         return self._features
 
+    def _check_layers(self):
+        """Check to make sure the required layers are in cost_fpath. """
+        self._check_layers_in_h5(self._cost_fpath, [self._tb_layer_name])
+
     @classmethod
-    def _check_layers(cls, cost_fpath):
+    def _check_layers_in_h5(cls, cost_fpath, layers):
         """
-        Check to make sure the REQUIRED_LAYERS are in cost_fpath
+        Check to make sure the required layers are in cost_fpath
 
         Parameters
         ----------
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers
+        layers : iter
+            Iterable of required layer names.
+
+        Raises
+        ------
+        RuntimeError
+            If the required layers are not found in the cost H5.
         """
         with ExclusionLayers(cost_fpath) as f:
             missing = []
-            for lyr in cls.REQUIRED_LAYERS:
+            for lyr in layers:
                 if lyr not in f:
                     missing.append(lyr)
 
@@ -124,16 +142,19 @@ class LeastCostPaths:
         feat_crs = features.crs.to_dict()
         cost_crs = crs.to_dict()
         if not crs_match(cost_crs, feat_crs):
-            msg = ('input crs ({}) does not match cost raster crs ({})'
-                   ' and will be transformed!'.format(feat_crs, cost_crs))
+            msg = ('input crs ({}) does not match cost raster crs ({}) '
+                   'and will be transformed!'.format(feat_crs, cost_crs))
             logger.warning(msg)
             warn(msg)
             features = features.to_crs(crs)
 
-        logger.debug('Map features to cost raster')
+        logger.debug('Map %d features to cost raster', len(features))
+        logger.debug('First few features:\n%s', str(features.head()))
+        logger.debug('Transform:\n%s', str(transform))
         coords = features['geometry'].centroid
         row, col = rasterio.transform.rowcol(transform, coords.x.values,
                                              coords.y.values)
+        logger.debug('Mapping done!')
         row = np.array(row)
         col = np.array(col)
 
@@ -143,6 +164,7 @@ class LeastCostPaths:
         mask &= col >= 0
         mask &= col < shape[1]
 
+        logger.debug('Mask computed!')
         return row, col, mask
 
     @staticmethod
@@ -219,8 +241,10 @@ class LeastCostPaths:
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)
 
+        logger.debug('Getting clip size...')
         row_slice, col_slice = cls._get_clip_slice(row, col, shape,
                                                    clip_buffer=clip_buffer)
+        logger.debug('Done!')
 
         features['row'] = row - row_slice.start
         features['col'] = col - col_slice.start
@@ -282,7 +306,8 @@ class LeastCostPaths:
     def process_least_cost_paths(self, cost_layers, barrier_mult=BARRIERS_MULT,
                                  indices=None, max_workers=None,
                                  save_paths=False,
-                                 length_invariant_cost_layers=None):
+                                 length_invariant_cost_layers=None,
+                                 tracked_layers=None):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -312,6 +337,23 @@ class LeastCostPaths:
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
 
         Returns
         -------
@@ -331,7 +373,7 @@ class LeastCostPaths:
                                   loggers=loggers) as exe:
                 least_cost_paths = self._compute_paths_in_chunks(
                     exe, max_workers, indices, cost_layers, barrier_mult,
-                    save_paths, length_invariant_cost_layers)
+                    save_paths, length_invariant_cost_layers, tracked_layers)
         else:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
@@ -343,9 +385,11 @@ class LeastCostPaths:
                                        self.start_indices, self.end_indices,
                                        cost_layers,
                                        self._row_slice, self._col_slice,
+                                       tb_layer_name=self._tb_layer_name,
                                        barrier_mult=barrier_mult,
                                        save_paths=save_paths,
-                                       length_invariant_cost_layers=licl)
+                                       length_invariant_cost_layers=licl,
+                                       tracked_layers=tracked_layers)
                 end_features = self.end_features.drop(columns=['row', 'col'],
                                                       errors="ignore")
                 lcp = pd.concat((lcp, end_features), axis=1)
@@ -361,7 +405,7 @@ class LeastCostPaths:
 
     def _compute_paths_in_chunks(self, exe, max_submissions, indices,
                                  cost_layers, barrier_mult, save_paths,
-                                 licl):
+                                 licl, tracked_layers):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -371,9 +415,11 @@ class LeastCostPaths:
                                 self.start_indices, self.end_indices,
                                 cost_layers,
                                 self._row_slice, self._col_slice,
+                                tb_layer_name=self._tb_layer_name,
                                 barrier_mult=barrier_mult,
                                 save_paths=save_paths,
-                                length_invariant_cost_layers=licl)
+                                length_invariant_cost_layers=licl,
+                                tracked_layers=tracked_layers)
             futures[future] = self.end_features
             logger.debug('Submitted {} of {} futures'
                          .format(ind, len(indices)))
@@ -385,9 +431,10 @@ class LeastCostPaths:
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, cost_layers,
-            clip_buffer=0, barrier_mult=BARRIERS_MULT, indices=None,
-            max_workers=None, save_paths=False,
-            length_invariant_cost_layers=None):
+            clip_buffer=0, tb_layer_name=BARRIER_H5_LAYER_NAME,
+            barrier_mult=BARRIERS_MULT, indices=None, max_workers=None,
+            save_paths=False, length_invariant_cost_layers=None,
+            tracked_layers=None):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -406,6 +453,11 @@ class LeastCostPaths:
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
@@ -424,6 +476,23 @@ class LeastCostPaths:
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
 
         Returns
         -------
@@ -432,14 +501,16 @@ class LeastCostPaths:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        lcp = cls(cost_fpath, features_fpath, clip_buffer=clip_buffer)
+        lcp = cls(cost_fpath, features_fpath, clip_buffer=clip_buffer,
+                  tb_layer_name=tb_layer_name)
         least_cost_paths = lcp.process_least_cost_paths(
             cost_layers,
             barrier_mult=barrier_mult,
             indices=indices,
             save_paths=save_paths,
             max_workers=max_workers,
-            length_invariant_cost_layers=length_invariant_cost_layers)
+            length_invariant_cost_layers=length_invariant_cost_layers,
+            tracked_layers=tracked_layers)
 
         logger.info('{} paths were computed in {:.4f} hours'
                     .format(len(least_cost_paths),
@@ -454,7 +525,7 @@ class ReinforcementPaths(LeastCostPaths):
     balancing area network node.
     """
     def __init__(self, cost_fpath, features, transmission_lines,
-                 clip_buffer=0):
+                 clip_buffer=0, tb_layer_name=BARRIER_H5_LAYER_NAME):
         """
         Parameters
         ----------
@@ -475,13 +546,19 @@ class ReinforcementPaths(LeastCostPaths):
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         """
-        self._check_layers(cost_fpath)
+        self._cost_fpath = cost_fpath
+        self._tb_layer_name = tb_layer_name
+        self._check_layers()
 
         self._features, self._row_slice, self._col_slice, self._shape = \
             self._map_to_costs(cost_fpath, features, clip_buffer)
         self._features = self._features.drop(columns='geometry')
-        self._cost_fpath = cost_fpath
 
         network_node = (self._features.iloc[0:1]
                         .dropna(axis="columns", how="all"))
@@ -490,7 +567,10 @@ class ReinforcementPaths(LeastCostPaths):
                           .reset_index(drop=True)
                           .dropna(axis="columns", how="all"))
 
-        self._transmission_lines = transmission_lines
+        self._transmission_lines = {
+            capacity_mw: lines[self._row_slice, self._col_slice]
+            for capacity_mw, lines in transmission_lines.items()
+        }
 
     @property
     def start_indices(self):
@@ -526,8 +606,10 @@ class ReinforcementPaths(LeastCostPaths):
         return self._features[['row', 'col']].values
 
     def process_least_cost_paths(self, capacity_class, cost_layers,
-                                 barrier_mult=BARRIERS_MULT, save_paths=False,
-                                 length_invariant_cost_layers=None):
+                                 barrier_mult=BARRIERS_MULT, max_workers=None,
+                                 save_paths=False,
+                                 length_invariant_cost_layers=None,
+                                 tracked_layers=None):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -559,6 +641,23 @@ class ReinforcementPaths(LeastCostPaths):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
 
         Returns
         -------
@@ -571,27 +670,74 @@ class ReinforcementPaths(LeastCostPaths):
         logger.info('Computing reinforcement path costs for start index {}'
                     .format(self._start_indices))
         log_mem(logger)
+        max_workers = os.cpu_count() if max_workers is None else max_workers
+        max_workers = int(max_workers)
 
         licl = length_invariant_cost_layers
-        lcp = ReinforcementLineCosts.run(self._transmission_lines,
-                                         self._cost_fpath,
-                                         self.start_indices, self.end_indices,
-                                         capacity_class, cost_layers,
-                                         self._row_slice, self._col_slice,
-                                         barrier_mult=barrier_mult,
-                                         save_paths=save_paths,
-                                         length_invariant_cost_layers=licl)
-        feats = self._features.drop(columns=['row', 'col'])
-        least_cost_paths = pd.concat((lcp, feats), axis=1)
+        least_cost_paths = []
+        if max_workers > 1:
+            logger.info('Computing Reinforcement Cost Paths in parallel on '
+                        '%d workers', max_workers)
+            log_mem(logger)
+            loggers = [__name__, 'reV', 'reVX']
+            with SpawnProcessPool(max_workers=max_workers,
+                                  loggers=loggers) as exe:
 
-        return least_cost_paths.drop("index", axis="columns", errors="ignore")
+                futures = {}
+                for ind in range(max_workers):
+                    feats = self._features.iloc[ind::max_workers]
+                    future = exe.submit(ReinforcementLineCosts.run,
+                                        self._transmission_lines,
+                                        self._cost_fpath,
+                                        self.start_indices,
+                                        feats[['row', 'col']].values,
+                                        capacity_class,
+                                        cost_layers,
+                                        self._row_slice,
+                                        self._col_slice,
+                                        tb_layer_name=self._tb_layer_name,
+                                        barrier_mult=barrier_mult,
+                                        save_paths=save_paths,
+                                        length_invariant_cost_layers=licl,
+                                        tracked_layers=tracked_layers)
+                    futures[future] = feats
+                    logger.debug('Submitted %d of %d futures',
+                                 ind + 1, max_workers)
+                    log_mem(logger)
+
+                least_cost_paths = _collect_future_chunks(futures,
+                                                          least_cost_paths)
+                least_cost_paths = pd.concat(least_cost_paths,
+                                             ignore_index=True)
+
+        else:
+            lcp = ReinforcementLineCosts.run(self._transmission_lines,
+                                             self._cost_fpath,
+                                             self.start_indices,
+                                             self.end_indices,
+                                             capacity_class,
+                                             cost_layers,
+                                             self._row_slice,
+                                             self._col_slice,
+                                             tb_layer_name=self._tb_layer_name,
+                                             barrier_mult=barrier_mult,
+                                             save_paths=save_paths,
+                                             length_invariant_cost_layers=licl,
+                                             tracked_layers=tracked_layers)
+            least_cost_paths = lcp.merge(self._features, on=["row", "col"])
+
+        least_cost_paths = least_cost_paths.dropna(axis="columns", how="all")
+        drop_cols = ['index', 'row', 'col']
+        return least_cost_paths.drop(columns=drop_cols, errors="ignore")
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
-            barrier_mult=BARRIERS_MULT, indices=None, save_paths=False,
-            length_invariant_cost_layers=None):
+            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            indices=None, max_workers=None, save_paths=False,
+            length_invariant_cost_layers=None, tracked_layers=None,
+            ss_id_col="poi_gid"):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -635,6 +781,11 @@ class ReinforcementPaths(LeastCostPaths):
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -653,6 +804,28 @@ class ReinforcementPaths(LeastCostPaths):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
+        ss_id_col : str, default="poi_gid"
+            Name of column containing unique identifier for each
+            substation. This column will be used to compute minimum
+            reinforcement cost per substation.
+            By default, ``"poi_gid"``.
 
         Returns
         -------
@@ -668,26 +841,38 @@ class ReinforcementPaths(LeastCostPaths):
                       "cost_layers": cost_layers,
                       "length_invariant_cost_layers": licl,
                       "barrier_mult": barrier_mult,
-                      "save_paths": save_paths}
+                      "save_paths": save_paths,
+                      "max_workers": max_workers,
+                      "tracked_layers": tracked_layers}
         with ExclusionLayers(cost_fpath) as f:
             cost_crs = CRS.from_string(f.crs)
             cost_shape = f.shape
             cost_transform = rasterio.Affine(*f.profile['transform'])
 
+        logger.info('Loading features from %s', features_fpath)
         features = gpd.read_file(features_fpath).to_crs(cost_crs)
-        substations = (features[features.category == SUBSTATION_CAT]
-                       .reset_index(drop=True)
-                       .dropna(axis="columns", how="all"))
+        mapping = {'gid': ss_id_col}
+        substations = features.rename(columns=mapping)
+        substations = substations.dropna(axis="columns", how="all")
+        logger.info('Loaded %d features from %s', len(substations),
+                    features_fpath)
 
+        logger.info('Loading tline shapes from %s', transmission_lines_fpath)
         lines = gpd.read_file(transmission_lines_fpath).to_crs(cost_crs)
+        mapping = {'VOLTAGE': 'voltage'}
+        lines = lines.rename(columns=mapping)
         transmission_lines = (lines[lines.category == TRANS_LINE_CAT]
                               .reset_index(drop=True))
+        logger.info('Loaded %d tline shapes from %s', len(transmission_lines),
+                    transmission_lines_fpath)
 
+        logger.debug("Rasterizing transmission lines onto grid...")
         transmission_lines = _rasterize_transmission(transmission_lines,
                                                      xmission_config,
                                                      cost_shape,
                                                      cost_transform)
 
+        logger.info('Loading network nodes from %s', network_nodes_fpath)
         network_nodes = gpd.read_file(network_nodes_fpath).to_crs(cost_crs)
         indices = network_nodes.index if indices is None else indices
         for loop_ind, index in enumerate(indices, start=1):
@@ -695,26 +880,36 @@ class ReinforcementPaths(LeastCostPaths):
                             .reset_index(drop=True))
             rid = network_node[region_identifier_column].values[0]
             mask = substations[region_identifier_column] == rid
+            logger.debug('Computing reinfocements to %s in region %s',
+                         str(network_node), rid)
             node_substations = substations[mask].reset_index(drop=True)
             if len(node_substations) == 0:
                 continue
-            logger.info('Working on {} substations in region {}'
-                        .format(len(node_substations), rid))
+
+            logger.debug('Found %d unique %s',
+                         node_substations[ss_id_col].unique().shape[0],
+                         ss_id_col)
+            logger.info('Working on %d substations in region %s',
+                        len(node_substations), rid)
             node_features = pd.concat([network_node, node_substations])
             rp = cls(cost_fpath, node_features, transmission_lines,
-                     clip_buffer=clip_buffer)
+                     clip_buffer=clip_buffer, tb_layer_name=tb_layer_name)
             node_least_cost_paths = rp.process_least_cost_paths(**lcp_kwargs)
             node_least_cost_paths[region_identifier_column] = rid
             least_cost_paths += [node_least_cost_paths]
 
-            logger.debug('Computed {}/{} reinforcement paths'
+            logger.debug('Found %d reinforcement paths for network node',
+                         len(node_least_cost_paths))
+            logger.debug('Computed reinforcements for {}/{} network nodes'
                          .format(loop_ind, len(indices)))
 
-        logger.info('{} paths were computed in {:.4f} hours'
+        logger.info('Paths to {} network node(s) were computed in {:.4f} hours'
                     .format(len(least_cost_paths), (time.time() - ts) / 3600))
 
         costs = pd.concat(least_cost_paths, ignore_index=True)
-        return min_reinforcement_costs(costs)
+        logger.debug('Computed %d reinforcement paths for %d unique POIs',
+                     len(costs), costs[ss_id_col].unique().shape[0])
+        return min_reinforcement_costs(costs, group_col=ss_id_col)
 
 
 def _rasterize_transmission(transmission_lines, xmission_config, cost_shape,
@@ -753,25 +948,37 @@ def _rasterize_transmission_layer(transmission_lines, cost_shape,
     return out
 
 
-def min_reinforcement_costs(table):
+def min_reinforcement_costs(table, group_col="poi_gid"):
     """Filter table down to cheapest reinforcement per substation.
 
     Parameters
     ----------
     table : pd.DataFrame | gpd.GeoDataFrame
         Table containing costs for reinforced transmission. Must contain
-        a `gid` column identifying each substation with its own unique
-        ID and a `reinforcement_cost_per_mw` column with the
+        a `group_col` column identifying each substation with its own
+        unique ID and a `reinforcement_cost_per_mw` column with the
         reinforcement costs to minimize.
+    group_col : str, default="poi_gid"
+        Name of column containing unique identifier for each substation.
+        This column will be used to group costs and select the minimum
+        one.
 
     Returns
     -------
     pd.DataFrame | gpd.GeoDataFrame
-        Table with a single entry for each `gid` with the least
+        Table with a single entry for each `group_col` with the least
         `reinforcement_cost_per_mw`.
     """
+    logger.debug("Computing min reinforcement cost grouped by %s", group_col)
+    logger.debug("Reinforcement table contains %d paths", len(table))
 
-    grouped = table.groupby('gid')
+    logger.debug("Dropping NA reinforcement costs")
+    table = table[~table["reinforcement_cost_per_mw"].isna()]
+    logger.debug("Reinforcement table with no NA costs contains %d paths",
+                 len(table))
+    grouped = table.groupby(group_col)
+    logger.debug("Reinforcement table contains %d groups of %s",
+                 len(grouped), group_col)
     table = table.loc[grouped["reinforcement_cost_per_mw"].idxmin()]
     return table.reset_index(drop=True)
 
@@ -782,12 +989,14 @@ def _collect_future_chunks(futures, least_cost_paths):
     num_to_collect = len(futures)
     for i, future in enumerate(as_completed(futures), start=1):
         end_features = futures.pop(future)
-        end_features = end_features.drop(columns=['row', 'col'],
-                                         errors="ignore")
         lcp = future.result()
-        lcp = pd.concat((lcp, end_features), axis=1)
+        logger.debug("Joining feautres of shape %s with results of shape %s",
+                     str(end_features.shape), str(lcp.shape))
+        logger.debug("Feature cols: %s", str(end_features.columns))
+        logger.debug("Results cols: %s", str(lcp.columns))
+        lcp = lcp.merge(end_features, on=["row", "col"])
         least_cost_paths.append(lcp)
-        logger.debug('Collected {} of {} futures!'.format(i, num_to_collect))
+        logger.debug('Collected %d of %d futures!', i, num_to_collect)
         log_mem(logger)
 
     return least_cost_paths

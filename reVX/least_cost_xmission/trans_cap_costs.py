@@ -3,6 +3,7 @@
 Module to compute least cost transmission paths, distances, and costs
 for a clipped area.
 """
+from itertools import chain
 import geopandas as gpd
 import logging
 import numpy as np
@@ -31,7 +32,9 @@ from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SHORT_CUTOFF,
                                                        MEDIUM_CUTOFF,
                                                        MINIMUM_SPUR_DIST_KM,
-                                                       BARRIERS_MULT)
+                                                       BARRIERS_MULT,
+                                                       BARRIER_H5_LAYER_NAME,
+                                                       ISO_H5_LAYER_NAME)
 from reVX.utilities.exceptions import (InvalidMCPStartValueError,
                                        LeastCostPathNotFoundError)
 
@@ -44,13 +47,11 @@ class TieLineCosts:
     locations
     """
 
-    TB_LAYER_NAME = 'transmission_barrier'
-    """Expected name of transmission barrier layer in cost HDF5 file. """
-
     def __init__(self, cost_fpath, start_indices, cost_layers,
                  row_slice, col_slice, xmission_config=None,
+                 tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None):
+                 length_invariant_cost_layers=None, tracked_layers=None):
         """
         Parameters
         ----------
@@ -87,6 +88,11 @@ class TieLineCosts:
             transmission config JSONs, or preloaded XmissionConfig
             objects. If ``None``, the default config is used.
             By default, ``None``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier applied to the cost data to create transmission
             barrier costs. By default, ``100``.
@@ -95,8 +101,26 @@ class TieLineCosts:
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         """
         self._cost_fpath = cost_fpath
+        self._tb_layer_name = tb_layer_name
         self._config = self._parse_config(xmission_config=xmission_config)
         self._start_indices = start_indices
         self._row_slice = row_slice
@@ -104,10 +128,15 @@ class TieLineCosts:
         self._clip_shape = self._mcp = self._cost = self._mcp_cost = None
         self._cost_layer_map = {}
         self._li_cost_layer_map = {}
+        self._tracked_layers = tracked_layers or {}
+        self._tracked_layer_map = {}
+        self._cumulative_costs = None
+        self.transform = None
+        self._full_shape = None
+        self._cost_crs = None
 
-        with ExclusionLayers(self._cost_fpath) as f:
-            self.transform = rasterio.Affine(*f.profile['transform'])
-            self._full_shape = f.shape
+        with ExclusionLayers(self._cost_fpath) as fh:
+            self._extract_data_from_cost_h5(fh)
 
         licl = length_invariant_cost_layers
         self._clip_costs(cost_layers, length_invariant_cost_layers=licl,
@@ -118,6 +147,12 @@ class TieLineCosts:
                                          self._start_indices)
 
         return msg
+
+    def _extract_data_from_cost_h5(self, fh):
+        """Extract extra info from cost H5 file. """
+        self.transform = rasterio.Affine(*fh.profile['transform'])
+        self._full_shape = fh.shape
+        self._cost_crs = fh.crs
 
     @property
     def row_offset(self):
@@ -213,7 +248,8 @@ class TieLineCosts:
             logger.debug('Building MCP instance for size {}'
                          .format(self.mcp_cost.shape))
             self._mcp = MCP_Geometric(self.mcp_cost)
-            self._mcp.find_costs(starts=[(self.row, self.col)])
+            self._cumulative_costs, __ = self._mcp.find_costs(
+                starts=[(self.row, self.col)])
 
         return self._mcp
 
@@ -308,7 +344,24 @@ class TieLineCosts:
                 overlap += li_cost > 0
                 self._li_cost_layer_map[li_cost_layer] = li_cost
 
-            barrier = f[self.TB_LAYER_NAME, self._row_slice, self._col_slice]
+            for tracked_layer, method in self._tracked_layers.items():
+                if getattr(np, method, None) is None:
+                    msg = (f"Did not find method {method!r} in numpy! "
+                           f"Skipping tracked layer {tracked_layer!r}")
+                    logger.warning(msg)
+                    warn(msg)
+                    continue
+                if tracked_layer not in f.layers:
+                    msg = (f"Did not find layer {tracked_layer!r} in cost "
+                           f"file {str(self._cost_fpath)!r}. Skipping...")
+                    logger.warning(msg)
+                    warn(msg)
+                    continue
+
+                layer = f[tracked_layer, self._row_slice, self._col_slice]
+                self._tracked_layer_map[tracked_layer] = layer
+
+            barrier = f[self._tb_layer_name, self._row_slice, self._col_slice]
             barrier = barrier * barrier_mult
 
         if (overlap > 1).any():
@@ -449,6 +502,7 @@ class TieLineCosts:
 
         # Determine parial costs for any cost layers
         cl_results = self._compute_by_layer_results(indices, lens, cost)
+        cl_results = self._compute_tracked_layer_values(cl_results, indices)
 
         with ExclusionLayers(self._cost_fpath) as f:
             poi_lat = f['latitude', self._row_slice, self._col_slice][row, col]
@@ -486,9 +540,20 @@ class TieLineCosts:
         if round(test_total_cost) != round(cost):
             msg = (f'Sum of cost_layers costs ({test_total_cost:,}) does '
                    f'not equal cost calculated with composite cost layer '
-                   f'({cost:,}')
+                   f'({cost:,})')
             logger.warning(msg)
             warn(msg)
+
+        return cl_results
+
+    def _compute_tracked_layer_values(self, cl_results, indices):
+        """Compute aggregate values over tracked layers. """
+
+        for layer_name, layer_values_arr in self._tracked_layer_map.items():
+            layer_values = layer_values_arr[indices[:, 0], indices[:, 1]]
+            method = self._tracked_layers[layer_name]
+            aggregate = getattr(np, method)(layer_values)
+            cl_results[f'{layer_name}_{method}'] = aggregate
 
         return cl_results
 
@@ -499,8 +564,11 @@ class TieLineCosts:
         Parameters
         ----------
         end_indices : tuple | list
-            (row, col) index or list of (row, col) indices of end
-            point(s) to connect and compute least cost path to
+            Tuple (row, col) index or list of (row, col) indices in the
+            **clipped** cost array indicating the end location(s) to
+            compute least cost path paths to. Paths are computed from
+            the `start_indices` that this class was initialized with to
+            each of the individual pairs of `end_indices`.
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
@@ -519,30 +587,45 @@ class TieLineCosts:
         paths = []
         poi_lats = []
         poi_lons = []
+        rows = []
+        cols = []
         for end_idx in end_indices:
-            out = self.least_cost_path(end_idx, save_path=save_paths)
+            rows.append(end_idx[0])
+            cols.append(end_idx[1])
+            try:
+                out = self.least_cost_path(end_idx, save_path=save_paths)
+            except LeastCostPathNotFoundError as ex:
+                msg = ('Unable to find path from start {} to {}: {}\n'
+                       'Skipping...'.format((self.row, self.col), end_idx, ex))
+                logger.warning(msg)
+                warn(msg)
+                out = [None] * 6
+
             lengths.append(out[0])
             costs.append(out[1])
             poi_lats.append(out[2])
             poi_lons.append(out[3])
             if save_paths:
+                shape = out[4]
+                if shape is None:
+                    shape = Point(*end_idx)
                 paths.append(out[4])
 
         tie_lines = pd.DataFrame({'length_km': lengths, 'cost': costs,
-                                  'poi_lat': poi_lats, 'poi_lon': poi_lons})
+                                  'poi_lat': poi_lats, 'poi_lon': poi_lons,
+                                  'row': rows, 'col': cols})
         if save_paths:
-            with ExclusionLayers(self._cost_fpath) as f:
-                crs = f.crs
-
-            tie_lines = gpd.GeoDataFrame(tie_lines, geometry=paths, crs=crs)
+            tie_lines = gpd.GeoDataFrame(tie_lines, geometry=paths,
+                                         crs=self._cost_crs)
 
         return tie_lines
 
     @classmethod
     def run(cls, cost_fpath, start_indices, end_indices, cost_layers,
             row_slice, col_slice, xmission_config=None,
-            barrier_mult=BARRIERS_MULT, save_paths=False,
-            length_invariant_cost_layers=None):
+            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            save_paths=False, length_invariant_cost_layers=None,
+            tracked_layers=None):
         """
         Compute least cost tie-line path to all features to be connected
         a single supply curve point.
@@ -582,6 +665,11 @@ class TieLineCosts:
             transmission config JSONs, or preloaded XmissionConfig
             objects. If ``None``, the default config is used.
             By default, ``None``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier applied to the cost data to create transmission
             barrier costs. By default, ``100``.
@@ -593,6 +681,23 @@ class TieLineCosts:
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
 
         Returns
         -------
@@ -603,8 +708,9 @@ class TieLineCosts:
         ts = time.time()
         tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
                   col_slice, xmission_config=xmission_config,
-                  barrier_mult=barrier_mult,
-                  length_invariant_cost_layers=length_invariant_cost_layers)
+                  tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
+                  length_invariant_cost_layers=length_invariant_cost_layers,
+                  tracked_layers=tracked_layers)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
 
@@ -620,11 +726,14 @@ class TransCapCosts(TieLineCosts):
     (least-cost tie-line cost + connection cost) for all features to be
     connected a single supply curve point
     """
+    _CHECK_FOR_INVALID_REGION = True
 
     def __init__(self, cost_fpath, sc_point, features, capacity_class,
                  cost_layers, radius=None, xmission_config=None,
+                 tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None):
+                 iso_regions_layer_name=ISO_H5_LAYER_NAME,
+                 length_invariant_cost_layers=None, tracked_layers=None):
         """
         Parameters
         ----------
@@ -633,7 +742,11 @@ class TransCapCosts(TieLineCosts):
         sc_point : gpd.GeoSeries
             Supply Curve Point meta data
         features : pandas.DataFrame
-            Table of transmission features
+            Table of transmission features to connect to supply curve
+            point. Must have "row" and "col" columns that point to the
+            indexs of the feature **in the original cost array**. Must
+            also have a "category" column that distinguishes between
+            substations and transmission lines.
         capacity_class : int | str
             Transmission feature ``capacity_class`` class. Used to look
             up connection costs.
@@ -647,25 +760,61 @@ class TransCapCosts(TieLineCosts):
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
+        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
+            Name of ISO regions layer in `cost_fpath` file. The layer
+            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
+            By default, :obj:`ISO_H5_LAYER_NAME`.
         length_invariant_cost_layers : List[str] | None, optional
             List of layers in H5 to be added to the cost raster. The
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         """
         self._sc_point = sc_point
+        self._region_layer = None
+        self._iso_regions_layer_name = iso_regions_layer_name
         start_indices, row_slice, col_slice = self._get_clipping_slices(
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
         licl = length_invariant_cost_layers
         super().__init__(cost_fpath, start_indices, cost_layers, row_slice,
                          col_slice, xmission_config=xmission_config,
+                         tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
-                         length_invariant_cost_layers=licl)
+                         length_invariant_cost_layers=licl,
+                         tracked_layers=tracked_layers)
         self._capacity_class = self._config._parse_cap_class(capacity_class)
         self._features = self._prep_features(features)
         self._clip_mask = None
+
+    def _extract_data_from_cost_h5(self, fh):
+        """Extract extra info from cost H5 file. """
+        super()._extract_data_from_cost_h5(fh)
+        self._region_layer = fh[self._iso_regions_layer_name,
+                                self._row_slice, self._col_slice]
 
     @property
     def sc_point(self):
@@ -691,7 +840,7 @@ class TransCapCosts(TieLineCosts):
         -------
         int
         """
-        return self.sc_point['sc_point_gid']
+        return int(self.sc_point['sc_point_gid'])
 
     @property
     def features(self) -> pd.DataFrame:
@@ -803,8 +952,7 @@ class TransCapCosts(TieLineCosts):
 
         return start_indices, row_slice, col_slice
 
-    @staticmethod
-    def _calc_xformer_cost(features, tie_line_voltage, config=None):
+    def _calc_xformer_cost(self, features):
         """
         Compute transformer costs in $/MW for needed features, all
         others will be 0
@@ -824,38 +972,36 @@ class TransCapCosts(TieLineCosts):
         xformer_costs : ndarray
             vector of $/MW transformer costs
         """
-        if not isinstance(config, XmissionConfig):
-            config = XmissionConfig(config=config)
 
         mask = features['category'] == SUBSTATION_CAT
-        mask &= features['max_volts'] < tie_line_voltage
+        mask &= features['max_volts'] < self.tie_line_voltage
         if np.any(mask):
             msg = ('Voltages for substations {} do not exceed tie-line '
                    'voltage of {}'
                    .format(features.loc[mask, 'trans_gid'].values,
-                           tie_line_voltage))
+                           self.tie_line_voltage))
             logger.error(msg)
             raise RuntimeError(msg)
 
         xformer_costs = np.zeros(len(features))
         for volts, df in features.groupby('min_volts'):
             idx = df.index.values
-            xformer_costs[idx] = config.xformer_cost(volts, tie_line_voltage)
+            xformer_costs[idx] = self._config.xformer_cost(
+                volts, self.tie_line_voltage)
 
         mask = features['category'] == TRANS_LINE_CAT
-        mask &= features['max_volts'] < tie_line_voltage
+        mask &= features['max_volts'] < self.tie_line_voltage
         xformer_costs[mask] = 0
 
-        mask = features['min_volts'] <= tie_line_voltage
+        mask = features['min_volts'] <= self.tie_line_voltage
         xformer_costs[mask] = 0
 
-        mask = features['region'] == config['iso_lookup']['TEPPC']
+        mask = features['region'] == self._config['iso_lookup']['TEPPC']
         xformer_costs[mask] = 0
 
         return xformer_costs
 
-    @staticmethod
-    def _calc_sub_upgrade_cost(features, tie_line_voltage, config=None):
+    def _calc_sub_upgrade_cost(self, features):
         """
         Compute substation upgrade costs for needed features, all others
         will be 0
@@ -865,21 +1011,15 @@ class TransCapCosts(TieLineCosts):
         features : pd.DataFrame
             Table of transmission features to compute transformer costs
             for
-        tie_line_voltage : int
-            Tie-line voltage in kV
-        config : str | dict | XmissionConfig
-            Transmission configuration
 
         Returns
         -------
         sub_upgrade_costs : ndarray
             Substation upgrade costs in $
         """
-        if not isinstance(config, XmissionConfig):
-            config = XmissionConfig(config=config)
 
         sub_upgrade_cost = np.zeros(len(features))
-        if np.any(features['region'] == 0):
+        if self._CHECK_FOR_INVALID_REGION and np.any(features['region'] == 0):
             mask = features['region'] == 0
             msg = ('Features {} have an invalid region! Region must != 0!'
                    .format(features.loc[mask, 'trans_gid'].values))
@@ -890,13 +1030,12 @@ class TransCapCosts(TieLineCosts):
         if np.any(mask):
             for region, df in features.loc[mask].groupby('region'):
                 idx = df.index.values
-                sub_upgrade_cost[idx] = config.sub_upgrade_cost(
-                    region, tie_line_voltage)
+                sub_upgrade_cost[idx] = self._config.sub_upgrade_cost(
+                    region, self.tie_line_voltage)
 
         return sub_upgrade_cost
 
-    @staticmethod
-    def _calc_new_sub_cost(features, tie_line_voltage, config=None):
+    def _calc_new_sub_cost(self, features):
         """
         Compute new substation costs for needed features, all others
         will be 0
@@ -906,21 +1045,15 @@ class TransCapCosts(TieLineCosts):
         features : pd.DataFrame
             Table of transmission features to compute transformer costs
             for
-        tie_line_voltage : int
-            Tie-line voltage in kV
-        config : str | dict | XmissionConfig
-            Transmission configuration
 
         Returns
         -------
         new_sub_cost : ndarray
             new substation costs in $
         """
-        if not isinstance(config, XmissionConfig):
-            config = XmissionConfig(config=config)
 
         new_sub_cost = np.zeros(len(features))
-        if np.any(features['region'] == 0):
+        if self._CHECK_FOR_INVALID_REGION and np.any(features['region'] == 0):
             mask = features['region'] == 0
             msg = ('Features {} have an invalid region! Region must != 0!'
                    .format(features.loc[mask, 'trans_gid'].values))
@@ -931,8 +1064,8 @@ class TransCapCosts(TieLineCosts):
         if np.any(mask):
             for region, df in features.loc[mask].groupby('region'):
                 idx = df.index.values
-                new_sub_cost[idx] = config.new_sub_cost(
-                    region, tie_line_voltage)
+                new_sub_cost[idx] = self._config.new_sub_cost(
+                    region, self.tie_line_voltage)
 
         return new_sub_cost
 
@@ -946,10 +1079,6 @@ class TransCapCosts(TieLineCosts):
         ----------
         features : pandas.DataFrame
             Table of transmission features
-        clip_lines : bool, optional # TODO this appears to be obsolete
-            Flag to clip transmission lines to clipped raster bounds,
-            set to false when clipping radius is None,
-            by default True
 
         Returns
         -------
@@ -1016,6 +1145,18 @@ class TransCapCosts(TieLineCosts):
 
         return [row, col]
 
+    def _check_tline_voltage(self, cost, feat):
+        """Return large cost if tie line voltage is too low. """
+        if feat['max_volts'] < self.tie_line_voltage:
+            msg = ('Tie-line {} voltage of {}kV is less than tie line '
+                   'voltage of {}kV.'
+                   .format(feat['trans_gid'], feat['max_volts'],
+                           self.tie_line_voltage))
+            logger.debug(msg)
+            cost = 1e12
+
+        return cost
+
     def compute_tie_line_costs(self,  # noqa: C901
                                min_line_length=MINIMUM_SPUR_DIST_KM,
                                save_paths=False,
@@ -1038,39 +1179,50 @@ class TransCapCosts(TieLineCosts):
             Updated table of transmission features with the tie-line
             cost and distance added
         """
-        tie_voltage = self.tie_line_voltage
         features = self.features.copy()
         features['raw_line_cost'] = None
         features['dist_km'] = None
+        features['poi_gid'] = None
         if save_paths:
             paths = []
 
-        for layer in self._cost_layer_map:
-            features[f'{layer}_line_cost'] = None
+        for layer in chain(self._cost_layer_map, self._li_cost_layer_map):
+            features[f'{layer}_cost'] = None
             features[f'{layer}_dist_km'] = None
 
-        logger.debug('Determining path lengths and costs')
+        logger.info('Computing paths to %d features for SC Point %d',
+                    len(features), self.sc_point_gid)
+        for iter_ind, (index, feat) in enumerate(features.iterrows(), start=1):
+            logger.debug('Determining path length and cost to feature:\n%s',
+                         feat)
 
-        for index, feat in features.iterrows():
-            if feat['category'] == TRANS_LINE_CAT:
-                t_line = True
+            t_line = feat['category'] == TRANS_LINE_CAT
+            if t_line:
                 feat_idx = self._get_trans_line_idx(feat)
             else:
-                t_line = False
                 feat_idx = feat[['row', 'col']].values
+
+            logger.debug('Feat index is: %s', feat_idx)
+
+            row, col = feat_idx
+            region = self._region_layer[row, col]
+            row += self.row_offset
+            col += self.col_offset
+            poi_gid = self._full_shape[1] * row + col
+            logger.debug('Adding row, col, poi_gid, region: %d, %d, %d, %s',
+                         row, col, poi_gid, str(region))
+
+            features.loc[index, 'row'] = row
+            features.loc[index, 'col'] = col
+            features.loc[index, 'poi_gid'] = poi_gid
+            features.loc[index, 'region'] = region
 
             try:
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
                 (length, cost, poi_lat, poi_lon, path, cl_results) = result
 
-                if t_line and feat['max_volts'] < tie_voltage:
-                    msg = ('Tie-line {} voltage of {}kV is less than tie line '
-                           'voltage of {}kV.'
-                           .format(feat['trans_gid'], feat['max_volts'],
-                                   tie_voltage))
-                    logger.debug(msg)
-
-                    cost = 1e12
+                if t_line:
+                    cost = self._check_tline_voltage(cost, feat)
 
                 if length < min_line_length:
                     msg = ('Tie-line length {} will be increased to the '
@@ -1083,7 +1235,6 @@ class TransCapCosts(TieLineCosts):
                     cost = cost * min_mult
                     length = min_line_length
 
-                # TODO - fix typing issues
                 features.loc[index, 'dist_km'] = length
                 features.loc[index, 'raw_line_cost'] = cost
                 features.loc[index, 'poi_lat'] = poi_lat
@@ -1108,16 +1259,22 @@ class TransCapCosts(TieLineCosts):
             except InvalidMCPStartValueError:
                 raise
             except Exception:
-                logger.exception('Could not connect SC point {} to '
-                                 'transmission features!'
-                                 .format(self.sc_point_gid))
+                logger.exception('Could not connect SC point %d to '
+                                 'transmission features!', self.sc_point_gid)
                 raise
 
-        if save_paths:
-            with ExclusionLayers(self._cost_fpath) as el:
-                crs = el.crs
-            features = gpd.GeoDataFrame(features, geometry=paths, crs=crs)
+            logger.info('Processed %d out of %d features (%.2f%%) for SC '
+                        'point %d',
+                        iter_ind, len(features),
+                        iter_ind / len(features) * 100,
+                        self.sc_point_gid)
 
+        if save_paths:
+            features = gpd.GeoDataFrame(features, geometry=paths,
+                                        crs=self._cost_crs)
+
+        for int_col in ["row", "col", "poi_gid"]:
+            features[int_col] = features[int_col].astype("Int64")
         return features
 
     def compute_connection_costs(self, features=None,
@@ -1153,17 +1310,14 @@ class TransCapCosts(TieLineCosts):
                                      * features['length_mult'])
 
         # Transformer costs
-        features['xformer_cost_per_mw'] = self._calc_xformer_cost(
-            features, self.tie_line_voltage, config=self._config)
+        features['xformer_cost_per_mw'] = self._calc_xformer_cost(features)
         capacity = int(self.capacity_class.strip('MW'))
         features['xformer_cost'] = (features['xformer_cost_per_mw']
                                     * capacity)
 
         # Substation costs
-        features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost(
-            features, self.tie_line_voltage, config=self._config)
-        features['new_sub_cost'] = self._calc_new_sub_cost(
-            features, self.tie_line_voltage, config=self._config)
+        features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost(features)
+        features['new_sub_cost'] = self._calc_new_sub_cost(features)
 
         # Sink costs
         mask = features['category'] == SINK_CAT
@@ -1223,11 +1377,9 @@ class TransCapCosts(TieLineCosts):
 
         features['trans_cap_cost'] = (features['tie_line_cost']
                                       + features['connection_cost'])
-        drop_cols = ['row', 'col']
         if not save_paths:
-            drop_cols.append('geometry')
-        features = features.drop(columns=drop_cols,
-                                 errors='ignore').reset_index(drop=True)
+            features = features.drop(columns=['geometry'],
+                                     errors='ignore').reset_index(drop=True)
 
         features['sc_row_ind'] = self.sc_point['sc_row_ind']
         features['sc_col_ind'] = self.sc_point['sc_col_ind']
@@ -1240,10 +1392,12 @@ class TransCapCosts(TieLineCosts):
 
     @classmethod
     def run(cls, cost_fpath, sc_point, features, capacity_class, cost_layers,
-            radius=None, xmission_config=None, barrier_mult=BARRIERS_MULT,
+            radius=None, xmission_config=None,
+            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            iso_regions_layer_name=ISO_H5_LAYER_NAME,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
             simplify_geo=None, length_invariant_cost_layers=None,
-            length_mult_kind="linear"):
+            tracked_layers=None, length_mult_kind="linear"):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1256,7 +1410,11 @@ class TransCapCosts(TieLineCosts):
         sc_point : gpd.GeoSeries
             Supply Curve Point meta data
         features : pandas.DataFrame
-            Table of transmission features
+            Table of transmission features to connect to supply curve
+            point. Must have "row" and "col" columns that point to the
+            indexs of the feature **in the original cost array**. Must
+            also have a "category" column that distinguishes between
+            substations and transmission lines.
         capacity_class : int | str
             Transmission feature capacity_class class
         cost_layers : List[str]
@@ -1269,8 +1427,17 @@ class TransCapCosts(TieLineCosts):
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects, by default None
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs, by default 100
+        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
+            Name of ISO regions layer in `cost_fpath` file. The layer
+            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
+            By default, :obj:`ISO_H5_LAYER_NAME`.
         min_line_length : float, optional
             Minimum line length in km, by default 0
         save_paths : bool, optional
@@ -1283,6 +1450,23 @@ class TransCapCosts(TieLineCosts):
             costs specified by these layers are not scaled with distance
             traversed across the cell (i.e. fixed one-time costs for
             crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         length_mult_kind : {"step", "linear"}, default="linear"
             Type of length multiplier calcualtion. "step" computes
             length multipliers using a step function, while "linear"
@@ -1306,7 +1490,10 @@ class TransCapCosts(TieLineCosts):
             tcc = cls(cost_fpath, sc_point, features, capacity_class,
                       cost_layers, radius=radius,
                       xmission_config=xmission_config,
+                      tb_layer_name=tb_layer_name,
                       barrier_mult=barrier_mult,
+                      iso_regions_layer_name=iso_regions_layer_name,
+                      tracked_layers=tracked_layers,
                       length_invariant_cost_layers=length_invariant_cost_layers
                       )
 
@@ -1331,6 +1518,75 @@ class TransCapCosts(TieLineCosts):
         return features
 
 
+class RegionalTransCapCosts(TransCapCosts):
+    """Compute tie-line costs when connections are limitred to a region.
+
+    This class also allows for costs for region values of 0.
+    Additionally, the `trans_gid`, `min_volt` and `max_volt` columns are
+    no longer required in the features input.
+    """
+    TRANSFORMER_COST_VOLTAGE = 69
+    _CHECK_FOR_INVALID_REGION = False
+
+    def _get_trans_line_idx(self, trans_line):
+        """Get the cheapest point on each transmission line.
+
+        Parameters
+        ----------
+        trans_lines : GeoPandas.GeoSeries
+            Transmission lines to be connected to each supply curve
+            point.
+
+        Returns
+        -------
+        [row, col] : list
+            Row, col index of the cheapest point on the transmission
+            line to route to from the supply curve point.
+        """
+        window = rasterio.windows.from_bounds(*self.clip_mask.bounds,
+                                              transform=self.transform)
+        window_transform = rasterio.windows.transform(window=window,
+                                                      transform=self.transform)
+
+        mask = rasterio.features.geometry_mask([trans_line.geometry],
+                                               out_shape=self.cost.shape,
+                                               transform=window_transform,
+                                               invert=True)
+        rows, cols = np.where(mask)
+
+        __ = self.mcp  # ensures self._cumulative_costs is not `None`
+        point_ind = np.argmin(self._cumulative_costs[rows, cols])
+
+        return [rows[point_ind], cols[point_ind]]
+
+    def _check_tline_voltage(self, cost, *__, **___):
+        """No adjustments. """
+        return cost
+
+    def _calc_xformer_cost(self, features):
+        """Compute transformer costs in $/MW
+
+        Parameters
+        ----------
+        features : pd.DataFrame
+            Table of transmission features to compute transformer costs
+            for
+
+        Returns
+        -------
+        xformer_costs : ndarray
+            vector of $/MW transformer costs
+        """
+        cost = self._config.xformer_cost(self.TRANSFORMER_COST_VOLTAGE,
+                                         self.tie_line_voltage)
+        xformer_costs = np.full(len(features), cost)
+
+        mask = features['region'] == self._config['iso_lookup']['TEPPC']
+        xformer_costs[mask] = 0
+
+        return xformer_costs
+
+
 class ReinforcementLineCosts(TieLineCosts):
     """
     Compute Least Cost Reinforcement Line cost from substations to
@@ -1347,16 +1603,17 @@ class ReinforcementLineCosts(TieLineCosts):
     """
     def __init__(self, transmission_lines, cost_fpath, start_indices,
                  capacity_class, cost_layers, row_slice, col_slice,
-                 xmission_config=None, barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None):
+                 xmission_config=None, tb_layer_name=BARRIER_H5_LAYER_NAME,
+                 barrier_mult=BARRIERS_MULT,
+                 length_invariant_cost_layers=None, tracked_layers=None):
         """
 
         Parameters
         ----------
         transmission_lines : dict
             Dictionary where the keys are the names of cost layers in
-            the cost HDF5 file and values are arrays with the
-            corresponding existing transmission lines rastered into
+            the cost HDF5 file and values are **clipped** arrays with
+            the corresponding existing transmission lines rastered into
             them (i.e. array value is 1 at a pixel if there is a
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
@@ -1364,13 +1621,13 @@ class ReinforcementLineCosts(TieLineCosts):
         cost_fpath : str
             Full path of .h5 file with cost arrays.
         start_indices : tuple
-            Tuple of (row_idx, col_idx) in the cost array indicating the
-            start position of all reinforcement line paths to compute
-            (typically, this is the location of the network node in the
-            BA). Paths will be computed from this start location to each
-            of the `end_indices`, which are also locations in the cost
-            array (typically substations within the BA of the network
-            node).
+            Tuple of (row_idx, col_idx) in the **clipped** cost array
+            indicating the start position of all reinforcement line
+            paths to compute (typically, this is the location of the
+            network node in the BA). Paths will be computed from this
+            start location to each of the `end_indices`, which are also
+            locations in the cost array (typically substations within
+            the BA of the network node).
         capacity_class : int | str
             Capacity class of the 'base' greenfield costs layer. Costs
             will be scaled by the capacity corresponding to this class
@@ -1389,6 +1646,11 @@ class ReinforcementLineCosts(TieLineCosts):
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
             By default, ``None``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -1397,22 +1659,43 @@ class ReinforcementLineCosts(TieLineCosts):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         """
         licl = length_invariant_cost_layers
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
                          cost_layers=cost_layers,
                          row_slice=row_slice, col_slice=col_slice,
                          xmission_config=xmission_config,
+                         tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
-                         length_invariant_cost_layers=licl)
+                         length_invariant_cost_layers=licl,
+                         tracked_layers=tracked_layers)
         capacity_class = self._config._parse_cap_class(capacity_class)
         line_cap_mw = self._config['power_classes'][capacity_class]
         self._cost = self._cost / line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
             for capacity_mw, lines in transmission_lines.items():
-                t_lines = np.where(lines[row_slice, col_slice])
+                t_lines = np.where(lines)
                 cost_layer = 'tie_line_costs_{}MW'.format(capacity_mw)
                 costs = f[cost_layer, row_slice, col_slice][t_lines]
+                # allow crossing of barriers along existing transmission lines
+                costs[costs <= 0] = 1
                 self._mcp_cost[t_lines] = costs * 1e-9  # 0 not allowed
                 self._cost[t_lines] = costs / capacity_mw
 
@@ -1423,8 +1706,9 @@ class ReinforcementLineCosts(TieLineCosts):
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
             capacity_class, cost_layers, row_slice, col_slice,
-            xmission_config=None, barrier_mult=BARRIERS_MULT, save_paths=False,
-            length_invariant_cost_layers=None):
+            xmission_config=None, tb_layer_name=BARRIER_H5_LAYER_NAME,
+            barrier_mult=BARRIERS_MULT, save_paths=False,
+            length_invariant_cost_layers=None, tracked_layers=None):
         """
         Compute reinforcement line path to all features to be connected
         a single supply curve point.
@@ -1433,8 +1717,8 @@ class ReinforcementLineCosts(TieLineCosts):
         ----------
         transmission_lines : dict
             Dictionary where the keys are the names of cost layers in
-            the cost HDF5 file and values are arrays with the
-            corresponding existing transmission lines rastered into
+            the cost HDF5 file and values are **clipped** arrays with
+            the corresponding existing transmission lines rastered into
             them (i.e. array value is 1 at a pixel if there is a
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
@@ -1442,20 +1726,20 @@ class ReinforcementLineCosts(TieLineCosts):
         cost_fpath : str
             Full path of .h5 file with cost arrays.
         start_indices : tuple
-            Tuple of (row_idx, col_idx) in the cost array indicating the
-            start position of all reinforcement line paths to compute
-            (typically, this is the location of the network node in the
-            BA). Paths will be computed from this start location to each
-            of the `end_indices`, which are also locations in the cost
-            array (typically substations within the BA of the network
-            node).
+            Tuple of (row_idx, col_idx) in the **clipped** cost array
+            indicating the start position of all reinforcement line
+            paths to compute (typically, this is the location of the
+            network node in the BA). Paths will be computed from this
+            start location to each of the `end_indices`, which are also
+            locations in the cost array (typically substations within
+            the BA of the network node).
         end_indices : tuple | list
             Tuple (row, col) index or list of (row, col) indices in the
-            cost array indicating the end location(s) to compute
-            reinforcement line paths to (typically substations within a
-            single BA). Paths are computed from the `start_indices`
-            (typically the network node of the BA) to each of the
-            individual pairs of `end_indices`.
+            **clipped** cost array indicating the end location(s) to
+            compute reinforcement line paths to (typically substations
+            within a single BA). Paths are computed from the
+            `start_indices` (typically the network node of the BA) to
+            each of the individual pairs of `end_indices`.
         capacity_class : int | str
             Capacity class of the 'base' greenfield costs layer. Costs
             will be scaled by the capacity corresponding to this class
@@ -1474,6 +1758,11 @@ class ReinforcementLineCosts(TieLineCosts):
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
             By default, ``None``.
+        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
+            Name of transmission barrier layer in `cost_fpath` file.
+            This layer defines the multipliers applied to the cost layer
+            to determine LCP routing (but does not actually affect
+            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -1485,6 +1774,23 @@ class ReinforcementLineCosts(TieLineCosts):
             cost raster. The costs specified by these layers are not
             scaled with distance traversed across the cell (i.e. fixed
             one-time costs for crossing these cells).
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
 
         Returns
         -------
@@ -1496,8 +1802,10 @@ class ReinforcementLineCosts(TieLineCosts):
         ts = time.time()
         tlc = cls(transmission_lines, cost_fpath, start_indices,
                   capacity_class, cost_layers, row_slice, col_slice,
-                  xmission_config=xmission_config, barrier_mult=barrier_mult,
-                  length_invariant_cost_layers=length_invariant_cost_layers)
+                  xmission_config=xmission_config,
+                  tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
+                  length_invariant_cost_layers=length_invariant_cost_layers,
+                  tracked_layers=tracked_layers)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
         tie_lines['cost'] = tie_lines['cost'] * 0.5
@@ -1515,8 +1823,10 @@ class ReinforcementLineCosts(TieLineCosts):
                                       'poi_lon': 'reinforcement_poi_lon'},
                                      axis=1)
 
-        logger.debug('Reinforcement Path Cost computed in {:.4f} min'
-                     .format((time.time() - ts) / 60))
+        logger.debug('Reinforcement Path Cost computed in %.4f min',
+                     (time.time() - ts) / 60)
+        logger.debug('Reinforcement tie-line columns: %s',
+                     str(tie_lines.columns))
 
         return tie_lines
 
@@ -1556,7 +1866,7 @@ def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
 
         # Get path length in km only where layer costs are > 0
         layer_length = np.sum(lens[layer_costs > 0]) * CELL_SIZE / 1000
-        results[f'{layer_name}_length_km'] = layer_length
+        results[f'{layer_name}_dist_km'] = layer_length
 
     return results
 
