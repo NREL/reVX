@@ -88,7 +88,7 @@ setup(
                             ],
     },
     include_package_data=True,
-    package_data={'': ['*.json']},
+    package_data={'': ['**/*.json']},
     license="BSD 3-Clause",
     zip_safe=False,
     keywords="reVX",
