@@ -87,7 +87,7 @@ setup(
                              "transmission_layer_creator_cli:main"),
                             ],
     },
-    include_package_data=False,
+    include_package_data=True,
     package_data={'': ['**/*.json']},
     license="BSD 3-Clause",
     zip_safe=False,
@@ -103,7 +103,7 @@ setup(
         "Programming Language :: Python :: 3.10",
     ],
     test_suite="tests",
-    install_requires=install_requires,
+    install_requires=install_requires + ["setuptools-git"],
     extras_require={
         "test": test_requires,
         "dev": test_requires + ["flake8", "pre-commit", "pylint"],
