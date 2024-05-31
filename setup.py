@@ -87,7 +87,7 @@ setup(
                              "transmission_layer_creator_cli:main"),
                             ],
     },
-    include_package_data=True,
+    include_package_data=False,
     package_data={'': ['**/*.json']},
     license="BSD 3-Clause",
     zip_safe=False,
