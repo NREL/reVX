@@ -13,6 +13,7 @@ import traceback
 
 from rex import Resource
 from rex.utilities.loggers import LOGGERS
+from reV.utilities import SupplyCurveField
 
 from reVX import TESTDATADIR
 from reVX.wind_dirs.mean_wind_dirs_cli import main
@@ -52,6 +53,8 @@ def check_h5(test_h5, baseline_h5):
                     for c in ['source_gids', 'gid_counts']:
                         test[c] = test[c].astype(str)
 
+                    truth = truth.rename(
+                        columns=SupplyCurveField.map_from_legacy())
                     assert_frame_equal(truth, test, check_dtype=False,
                                        rtol=RTOL, atol=ATOL)
                 elif dset == 'time_index':
