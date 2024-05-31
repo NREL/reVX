@@ -13,6 +13,7 @@ import tempfile
 import traceback
 
 from rex.utilities.loggers import LOGGERS
+from reV.utilities import SupplyCurveField
 from reV.supply_curve.extent import SupplyCurveExtent
 
 from reVX import TESTDATADIR
@@ -60,6 +61,7 @@ def test_prominent_wind_directions():
     Test prominent wind direction computation
     """
     baseline = pd.read_csv(BASELINE)
+    baseline = baseline.rename(columns=SupplyCurveField.map_from_legacy())
 
     test = ProminentWindDirections.run(PR_H5, EXCL_H5, resolution=64,
                                        sites_per_worker=10)
@@ -101,6 +103,7 @@ def test_cli(runner):
         assert result.exit_code == 0, msg
 
         baseline = pd.read_csv(BASELINE)
+        baseline = baseline.rename(columns=SupplyCurveField.map_from_legacy())
         test = os.path.basename(PR_H5).replace('.h5', '_prominent_dir_64.csv')
         test = os.path.join(td, test)
         test = pd.read_csv(os.path.join(td, test))
@@ -110,7 +113,7 @@ def test_cli(runner):
                 test[c] = test[c].astype(str)
 
     ignore = ['state', 'country']
-    cols = [c for c in test.columns if c not in ignore]
+    cols = [c for c in test.columns if not any(i in c for i in ignore)]
 
     assert_frame_equal(baseline[cols], test[cols],
                        check_dtype=False, rtol=0.0001)
