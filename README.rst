@@ -7,10 +7,10 @@ Welcome to the `reV <https://nrel.github.io/reV>`_ eXchange (reVX) tool!
 .. |Docs| image:: https://github.com/NREL/reVX/workflows/Documentation/badge.svg
     :target: https://nrel.github.io/reVX/
 
-.. |Tests| image:: https://github.com/NREL/reVX/workflows/Pytests/badge.svg
+.. |Tests| image:: https://github.com/NREL/reVX/actions/workflows/pull_request_tests.yml/badge.svg
     :target: https://github.com/NREL/reVX/actions?query=workflow%3A%22Pytests%22
 
-.. |Linter| image:: https://github.com/NREL/reVX/workflows/linter.yml/badge.svg
+.. |Linter| image:: https://github.com/NREL/reVX/actions/workflows/linter.yml/badge.svg
     :target: https://github.com/NREL/reVX/actions?query=workflow%3A%22Lint+Code+Base%22
 
 .. |PythonV| image:: https://img.shields.io/pypi/pyversions/NREL-reVX.svg
