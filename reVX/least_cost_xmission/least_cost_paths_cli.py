@@ -254,6 +254,8 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     logger.debug("Tracked layers input: %r", tracked_layers)
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
+    cost_layers = list(cost_layers)
+    li_cost_layers = list(li_cost_layers)
 
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)

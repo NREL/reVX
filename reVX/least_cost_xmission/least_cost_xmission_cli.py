@@ -247,6 +247,8 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     logger.info('Computing Least Cost Xmission connections and writing them {}'
                 .format(out_dir))
 
+    cost_layers = list(cost_layers)
+    li_cost_layers = list(li_cost_layers)
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
 
