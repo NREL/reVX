@@ -25,7 +25,8 @@ from reVX import __version__
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
                                                           RegionalXmission)
-from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
+                                                       TRANS_LINE_CAT,
                                                        LOAD_CENTER_CAT,
                                                        SINK_CAT,
                                                        SUBSTATION_CAT,
@@ -223,6 +224,10 @@ def from_config(ctx, config, verbose):
                    'length multipliers using a step function, while "linear" '
                    'computes the length multiplier using a linear '
                    'interpolation between 0 amd 10 mile spur-line lengths.')
+@click.option('--cell_size', '-cs', type=INT,
+              show_default=True, default=CELL_SIZE,
+              help=("Side length of a single cell in meters. Cells are "
+                    "assumed to be square. Default is"))
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
@@ -231,7 +236,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
           iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
           save_paths, radius, expand_radius, mp_delay, simplify_geo,
           cost_layers: List[str], li_cost_layers, tracked_layers,
-          length_mult_kind):
+          length_mult_kind, cell_size):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -268,7 +273,8 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "mp_delay": mp_delay,
               "length_invariant_cost_layers": li_cost_layers,
               "length_mult_kind": length_mult_kind,
-              "tracked_layers": tracked_layers}
+              "tracked_layers": tracked_layers,
+              "cell_size": cell_size}
 
     if regions_fpath is not None:
         least_costs = RegionalXmission.run(cost_fpath, features_fpath,
@@ -500,6 +506,7 @@ def get_node_cmd(config, gids):
             '-log {}'.format(SLURM.s(config.log_directory)),
             '-lmk {}'.format(SLURM.s(config.length_mult_kind)),
             '-mpd {}'.format(SLURM.s(config.mp_delay)),
+            '-cs {}'.format(SLURM.s(config.cell_size)),
             ]
 
     for layer in config.cost_layers:
@@ -567,7 +574,8 @@ def run_local(ctx, config):
                cost_layers=config.cost_layers,
                li_cost_layers=config.length_invariant_cost_layers,
                tracked_layers=config.tracked_layers,
-               length_mult_kind=config.length_mult_kind)
+               length_mult_kind=config.length_mult_kind,
+               cell_size=config.cell_size)
 
 
 def eagle(config, gids):

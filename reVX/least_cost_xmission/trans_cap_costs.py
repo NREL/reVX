@@ -51,7 +51,8 @@ class TieLineCosts:
                  row_slice, col_slice, xmission_config=None,
                  tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None, tracked_layers=None):
+                 length_invariant_cost_layers=None, tracked_layers=None,
+                 cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -118,6 +119,9 @@ class TieLineCosts:
                 - std
 
             By default, ``None``, which does not track any extra layers.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
         """
         self._cost_fpath = cost_fpath
         self._tb_layer_name = tb_layer_name
@@ -125,6 +129,7 @@ class TieLineCosts:
         self._start_indices = start_indices
         self._row_slice = row_slice
         self._col_slice = col_slice
+        self._cell_size = cell_size
         self._clip_shape = self._mcp = self._cost = self._mcp_cost = None
         self._cost_layer_map = {}
         self._li_cost_layer_map = {}
@@ -303,6 +308,7 @@ class TieLineCosts:
         if not isinstance(xmission_config, XmissionConfig):
             xmission_config = XmissionConfig(config=xmission_config)
 
+        logger.debug("Xmissing config:\n%s", xmission_config)
         return xmission_config
 
     def _clip_costs(self, cost_layers, length_invariant_cost_layers=None,
@@ -389,9 +395,7 @@ class TieLineCosts:
                      np.min(self._mcp_cost), np.max(self._mcp_cost),
                      np.median(self._mcp_cost))
 
-    @staticmethod
-    def _compute_path_length(indices: npt.NDArray) \
-            -> Tuple[float, npt.NDArray]:
+    def _compute_path_length(self, indices: npt.NDArray):
         """
         Compute the total length and cell by cell length of the lease
         cost path defined by 'indices'
@@ -412,7 +416,7 @@ class TieLineCosts:
         # Use Pythagorean theorem to calculate lengths between cells (km)
         # Use c**2 = a**2 + b**2 to determine length of individual paths
         lens = np.sqrt(np.sum(np.diff(indices, axis=0)**2, axis=1))
-        length = np.sum(lens) * CELL_SIZE / 1000
+        length = np.sum(lens) * self._cell_size / 1000
 
         # Need to determine distance coming into and out of any cell. Assume
         # paths start and end at the center of a cell. Therefore, distance
@@ -528,10 +532,10 @@ class TieLineCosts:
 
         cl_results = _compute_individual_layers_costs_lens(
             self._cost_layer_map, indices, lens, cl_results,
-            scale_by_length=True)
+            scale_by_length=True, cell_size=self._cell_size)
         cl_results = _compute_individual_layers_costs_lens(
             self._li_cost_layer_map, indices, lens, cl_results,
-            scale_by_length=False)
+            scale_by_length=False, cell_size=self._cell_size)
         test_total_cost = sum(layer
                               for layer_name, layer in cl_results.items()
                               if layer_name.endswith("_cost"))
@@ -552,7 +556,7 @@ class TieLineCosts:
         for layer_name, layer_values_arr in self._tracked_layer_map.items():
             layer_values = layer_values_arr[indices[:, 0], indices[:, 1]]
             method = self._tracked_layers[layer_name]
-            aggregate = getattr(np, method)(layer_values)
+            aggregate = getattr(np, method)(layer_values).astype(float)
             cl_results[f'{layer_name}_{method}'] = aggregate
 
         return cl_results
@@ -625,7 +629,7 @@ class TieLineCosts:
             row_slice, col_slice, xmission_config=None,
             tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
             save_paths=False, length_invariant_cost_layers=None,
-            tracked_layers=None):
+            tracked_layers=None, cell_size=CELL_SIZE):
         """
         Compute least cost tie-line path to all features to be connected
         a single supply curve point.
@@ -698,6 +702,9 @@ class TieLineCosts:
                 - std
 
             By default, ``None``, which does not track any extra layers.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -710,7 +717,7 @@ class TieLineCosts:
                   col_slice, xmission_config=xmission_config,
                   tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
                   length_invariant_cost_layers=length_invariant_cost_layers,
-                  tracked_layers=tracked_layers)
+                  tracked_layers=tracked_layers, cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
 
@@ -733,7 +740,8 @@ class TransCapCosts(TieLineCosts):
                  tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
                  iso_regions_layer_name=ISO_H5_LAYER_NAME,
-                 length_invariant_cost_layers=None, tracked_layers=None):
+                 length_invariant_cost_layers=None, tracked_layers=None,
+                 cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -793,6 +801,9 @@ class TransCapCosts(TieLineCosts):
                 - std
 
             By default, ``None``, which does not track any extra layers.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
         """
         self._sc_point = sc_point
         self._region_layer = None
@@ -805,7 +816,8 @@ class TransCapCosts(TieLineCosts):
                          tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
                          length_invariant_cost_layers=licl,
-                         tracked_layers=tracked_layers)
+                         tracked_layers=tracked_layers,
+                         cell_size=cell_size)
         self._capacity_class = self._config._parse_cap_class(capacity_class)
         self._features = self._prep_features(features)
         self._clip_mask = None
@@ -1397,7 +1409,8 @@ class TransCapCosts(TieLineCosts):
             iso_regions_layer_name=ISO_H5_LAYER_NAME,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
             simplify_geo=None, length_invariant_cost_layers=None,
-            tracked_layers=None, length_mult_kind="linear"):
+            tracked_layers=None, length_mult_kind="linear",
+            cell_size=CELL_SIZE):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1473,6 +1486,9 @@ class TransCapCosts(TieLineCosts):
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
             By default, ``"linear"``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -1487,6 +1503,7 @@ class TransCapCosts(TieLineCosts):
                              save_paths))
 
         try:
+            licl = length_invariant_cost_layers
             tcc = cls(cost_fpath, sc_point, features, capacity_class,
                       cost_layers, radius=radius,
                       xmission_config=xmission_config,
@@ -1494,8 +1511,8 @@ class TransCapCosts(TieLineCosts):
                       barrier_mult=barrier_mult,
                       iso_regions_layer_name=iso_regions_layer_name,
                       tracked_layers=tracked_layers,
-                      length_invariant_cost_layers=length_invariant_cost_layers
-                      )
+                      length_invariant_cost_layers=licl,
+                      cell_size=cell_size)
 
             features = tcc.compute(min_line_length=min_line_length,
                                    save_paths=save_paths,
@@ -1605,7 +1622,8 @@ class ReinforcementLineCosts(TieLineCosts):
                  capacity_class, cost_layers, row_slice, col_slice,
                  xmission_config=None, tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None, tracked_layers=None):
+                 length_invariant_cost_layers=None, tracked_layers=None,
+                 cell_size=CELL_SIZE):
         """
 
         Parameters
@@ -1676,6 +1694,9 @@ class ReinforcementLineCosts(TieLineCosts):
                 - std
 
             By default, ``None``, which does not track any extra layers.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
         """
         licl = length_invariant_cost_layers
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
@@ -1685,7 +1706,8 @@ class ReinforcementLineCosts(TieLineCosts):
                          tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
                          length_invariant_cost_layers=licl,
-                         tracked_layers=tracked_layers)
+                         tracked_layers=tracked_layers,
+                         cell_size=cell_size)
         capacity_class = self._config._parse_cap_class(capacity_class)
         line_cap_mw = self._config['power_classes'][capacity_class]
         self._cost = self._cost / line_cap_mw
@@ -1708,7 +1730,8 @@ class ReinforcementLineCosts(TieLineCosts):
             capacity_class, cost_layers, row_slice, col_slice,
             xmission_config=None, tb_layer_name=BARRIER_H5_LAYER_NAME,
             barrier_mult=BARRIERS_MULT, save_paths=False,
-            length_invariant_cost_layers=None, tracked_layers=None):
+            length_invariant_cost_layers=None, tracked_layers=None,
+            cell_size=CELL_SIZE):
         """
         Compute reinforcement line path to all features to be connected
         a single supply curve point.
@@ -1791,6 +1814,9 @@ class ReinforcementLineCosts(TieLineCosts):
                 - std
 
             By default, ``None``, which does not track any extra layers.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -1805,7 +1831,7 @@ class ReinforcementLineCosts(TieLineCosts):
                   xmission_config=xmission_config,
                   tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
                   length_invariant_cost_layers=length_invariant_cost_layers,
-                  tracked_layers=tracked_layers)
+                  tracked_layers=tracked_layers, cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
         tie_lines['cost'] = tie_lines['cost'] * 0.5
@@ -1832,7 +1858,8 @@ class ReinforcementLineCosts(TieLineCosts):
 
 
 def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
-                                          scale_by_length=True):
+                                          scale_by_length=True,
+                                          cell_size=CELL_SIZE):
     """Compute costs and dists by layer.
 
     Parameters
@@ -1849,6 +1876,9 @@ def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
         added.
     scale_by_length : bool, optional
         Option to scale costs by length. By default, ``True``.
+    cell_size : int, optional
+        Side length of each cell, in meters. Cells are assumed to be
+        square. By default, :obj:`CELL_SIZE`.
 
     Returns
     -------
@@ -1862,11 +1892,11 @@ def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
             layer_cost = np.sum(layer_costs * lens)
         else:
             layer_cost = np.sum(layer_costs)
-        results[f'{layer_name}_cost'] = layer_cost
+        results[f'{layer_name}_cost'] = layer_cost.astype(float)
 
         # Get path length in km only where layer costs are > 0
-        layer_length = np.sum(lens[layer_costs > 0]) * CELL_SIZE / 1000
-        results[f'{layer_name}_dist_km'] = layer_length
+        layer_length = np.sum(lens[layer_costs > 0]) * cell_size / 1000
+        results[f'{layer_name}_dist_km'] = layer_length.astype(float)
 
     return results
 

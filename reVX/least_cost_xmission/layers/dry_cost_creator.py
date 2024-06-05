@@ -42,7 +42,8 @@ class DryCostCreator(BaseLayerCreator):
     """
     def __init__(self, io_handler: LayeredTransmissionH5,
                  mask, output_tiff_dir=".",
-                 dtype: npt.DTypeLike = DEFAULT_DTYPE):
+                 dtype: npt.DTypeLike = DEFAULT_DTYPE,
+                 cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -55,9 +56,13 @@ class DryCostCreator(BaseLayerCreator):
             By default, ``"."``.
         dtype : np.dtype, optional
             Data type for final dataset. By default, ``float32``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
         """
         super().__init__(io_handler=io_handler, mask=mask,
-                         output_tiff_dir=output_tiff_dir, dtype=dtype)
+                         output_tiff_dir=output_tiff_dir, dtype=dtype,
+                         cell_size=cell_size)
         self._iso_lookup: Dict[str, int] = {}
 
     def build(self, iso_region_tiff: str, nlcd_tiff: str, slope_tiff: str,
@@ -363,7 +368,7 @@ class DryCostCreator(BaseLayerCreator):
             logger.info('Processing costs for %s for %sMW', iso, capacity)
             iso_code = self._iso_lookup[iso]
             cost_per_mile = base_line_costs[iso][str(capacity)]
-            cost_per_cell = cost_per_mile / METERS_IN_MILE * CELL_SIZE
+            cost_per_cell = cost_per_mile / METERS_IN_MILE * self._cell_size
 
             logger.debug('Base line $/mile is %s, $/cell is %s', cost_per_mile,
                          cost_per_cell)

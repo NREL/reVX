@@ -7,7 +7,7 @@ from typing import Optional, Dict, List, Literal
 from pydantic import BaseModel, DirectoryPath, FilePath
 
 from reVX.least_cost_xmission.config import IsoMultipliers
-from reVX.least_cost_xmission.config.constants import ALL
+from reVX.least_cost_xmission.config.constants import ALL, CELL_SIZE
 
 
 # Terms for specifying masks. 'wet+' and 'dry+' indicated 'wet' + 'landfall'
@@ -253,3 +253,8 @@ class TransmissionLayerCreationConfig(BaseModel):
     At least one of `layers`, `dry_costs`, or
     `merge_friction_and_barriers` must be defined.
     """
+
+    cell_size: int = CELL_SIZE
+    """Side length of each cell, in meters.
+
+    Cells are assumed to be square. By default, :obj:`CELL_SIZE`."""

@@ -30,7 +30,8 @@ from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
                                                        ReinforcementPaths)
 from reVX.least_cost_xmission.least_cost_xmission import region_mapper
-from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
+                                                       TRANS_LINE_CAT,
                                                        SUBSTATION_CAT,
                                                        BARRIERS_MULT,
                                                        BARRIER_H5_LAYER_NAME)
@@ -96,7 +97,8 @@ def run_local(ctx, config):
                ss_id_col=config.ss_id_col,
                verbose=config.log_level,
                li_cost_layers=config.length_invariant_cost_layers,
-               tracked_layers=config.tracked_layers)
+               tracked_layers=config.tracked_layers,
+               cell_size=config.cell_size)
 
 
 @main.command()
@@ -230,12 +232,16 @@ def from_config(ctx, config, verbose):
               help=('Dictionary mapping layer names to strings, where the '
                     'strings are numpy methods that should be applied to '
                     'the layer along the LCP.'))
+@click.option('--cell_size', '-cs', type=INT,
+              show_default=True, default=CELL_SIZE,
+              help=("Side length of a single cell in meters. Cells are "
+                    "assumed to be square. Default is"))
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
           clip_buffer, start_index, step_index, tb_layer_name, barrier_mult,
           max_workers, region_identifier_column, save_paths, out_dir, log_dir,
-          ss_id_col, verbose, li_cost_layers, tracked_layers):
+          ss_id_col, verbose, li_cost_layers, tracked_layers, cell_size):
     """
     Run Least Cost Paths on local hardware
     """
@@ -266,7 +272,8 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
               "save_paths": save_paths,
               "max_workers": max_workers,
               "length_invariant_cost_layers": li_cost_layers,
-              "tracked_layers": tracked_layers}
+              "tracked_layers": tracked_layers,
+              "cell_size": cell_size}
 
     if is_reinforcement_run:
         logger.info('Detected reinforcement run!')
@@ -567,6 +574,7 @@ def get_node_cmd(config, start_index=0):
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
+            '-cs {}'.format(SLURM.s(config.cell_size)),
             ]
 
     for layer in config.cost_layers:
