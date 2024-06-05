@@ -73,7 +73,8 @@ def from_config(config_fpath: str):  # noqa: C901
     masks = _load_masks(config, h5_io_handler)
 
     # Perform actions in config
-    builder = LayerCreator(h5_io_handler, masks, output_tiff_dir)
+    builder = LayerCreator(h5_io_handler, masks, output_tiff_dir,
+                           cell_size=config.cell_size)
     for lc in config.layers or []:
         builder.build(lc.layer_name, lc.build,
                       values_are_costs_per_mile=lc.values_are_costs_per_mile,
@@ -91,7 +92,8 @@ def from_config(config_fpath: str):  # noqa: C901
             warn(msg)
             dry_mask = np.full(h5_io_handler.shape, True)
 
-        dcc = DryCostCreator(h5_io_handler, dry_mask, output_tiff_dir)
+        dcc = DryCostCreator(h5_io_handler, dry_mask, output_tiff_dir,
+                             cell_size=config.cell_size)
         cost_configs = None if not dc.cost_configs else str(dc.cost_configs)
         dcc.build(str(dc.iso_region_tiff), str(dc.nlcd_tiff),
                   str(dc.slope_tiff), cost_configs=cost_configs,

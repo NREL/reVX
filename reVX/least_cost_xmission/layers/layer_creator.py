@@ -30,7 +30,8 @@ class LayerCreator(BaseLayerCreator):
 
     def __init__(self, io_handler: LayeredTransmissionH5,
                  masks: Masks, output_tiff_dir=".",
-                 dtype: npt.DTypeLike = DEFAULT_DTYPE):
+                 dtype: npt.DTypeLike=DEFAULT_DTYPE,
+                 cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -44,10 +45,14 @@ class LayerCreator(BaseLayerCreator):
             By default, ``"."``.
         dtype : np.dtype, optional
             Data type for final dataset. By default, ``float32``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
         """
         self._masks = masks
         super().__init__(io_handler=io_handler, mask=None,
-                         output_tiff_dir=output_tiff_dir, dtype=dtype)
+                         output_tiff_dir=output_tiff_dir, dtype=dtype,
+                         cell_size=cell_size)
 
     def build(self, layer_name, build_config: LayerBuildComponents,
               values_are_costs_per_mile=False, write_to_h5=True,
@@ -97,7 +102,7 @@ class LayerCreator(BaseLayerCreator):
 
         result = self._process_forced_inclusions(result, fi_layers)
         if values_are_costs_per_mile:
-            result = result / METERS_IN_MILE * CELL_SIZE
+            result = result / METERS_IN_MILE * self._cell_size
 
         out_filename = self.output_tiff_dir / f"{layer_name}.tif"
         logger.debug('Writing combined %s layers to %s', layer_name,
