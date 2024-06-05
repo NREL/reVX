@@ -552,7 +552,7 @@ class TieLineCosts:
         for layer_name, layer_values_arr in self._tracked_layer_map.items():
             layer_values = layer_values_arr[indices[:, 0], indices[:, 1]]
             method = self._tracked_layers[layer_name]
-            aggregate = getattr(np, method)(layer_values)
+            aggregate = getattr(np, method)(layer_values).astype(float)
             cl_results[f'{layer_name}_{method}'] = aggregate
 
         return cl_results
@@ -1862,11 +1862,11 @@ def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
             layer_cost = np.sum(layer_costs * lens)
         else:
             layer_cost = np.sum(layer_costs)
-        results[f'{layer_name}_cost'] = layer_cost
+        results[f'{layer_name}_cost'] = layer_cost.astype(float)
 
         # Get path length in km only where layer costs are > 0
         layer_length = np.sum(lens[layer_costs > 0]) * CELL_SIZE / 1000
-        results[f'{layer_name}_dist_km'] = layer_length
+        results[f'{layer_name}_dist_km'] = layer_length.astype(float)
 
     return results
 
