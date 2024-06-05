@@ -495,8 +495,8 @@ class LeastCostXmission(LeastCostPaths):
             clipped_sc_features = sc_features.clip(buffer)
 
         logger.info('{} transmission features found in clipped area with '
-                     'radius {}'
-                     .format(len(clipped_sc_features), radius_m))
+                    'radius {}'
+                    .format(len(clipped_sc_features), radius_m))
         return clipped_sc_features.copy(deep=True)
 
     def process_sc_points(self, capacity_class, cost_layers,
@@ -611,7 +611,7 @@ class LeastCostXmission(LeastCostPaths):
         if max_workers > 1:
             logger.info('Computing Least Cost Transmission for %d SC points '
                         'in parallel on %d workers',
-                        len(sc_point_gids),  max_workers)
+                        len(sc_point_gids), max_workers)
             least_costs = self._process_multi_core(
                 capacity_class,
                 cost_layers,
@@ -1230,7 +1230,7 @@ class RegionalXmission(LeastCostXmission):
                           clipping_buffer=CLIP_RASTER_BUFFER, radius=None,
                           expand_radius=True, **___):
         """Clip features to be substations in the region of the sc point.  """
-        logger.debug('Clipping features to sc_point %d',sc_point.sc_point_gid)
+        logger.debug('Clipping features to sc_point %d', sc_point.sc_point_gid)
 
         point = self.sc_points.loc[sc_point.name:sc_point.name].centroid
         map_func = region_mapper(self._regions, self._rid_column)
@@ -1476,7 +1476,6 @@ def _starting_costs(cost_fpath, points, cost_layers,
         costs = np.where(costs <= 0, -1, costs)
 
     return costs
-
 
 
 def _compute_radius(sc_features, sc_point, transform, clipping_buffer):
