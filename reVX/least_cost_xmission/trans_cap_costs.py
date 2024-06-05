@@ -303,6 +303,7 @@ class TieLineCosts:
         if not isinstance(xmission_config, XmissionConfig):
             xmission_config = XmissionConfig(config=xmission_config)
 
+        logger.debug("Xmissing config:\n%s", xmission_config)
         return xmission_config
 
     def _clip_costs(self, cost_layers, length_invariant_cost_layers=None,
