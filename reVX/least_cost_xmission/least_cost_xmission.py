@@ -23,7 +23,8 @@ from reV.supply_curve.extent import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
-from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
+                                                       TRANS_LINE_CAT,
                                                        LOAD_CENTER_CAT,
                                                        SINK_CAT,
                                                        SUBSTATION_CAT,
@@ -505,7 +506,8 @@ class LeastCostXmission(LeastCostPaths):
                           max_workers=None, save_paths=False, radius=None,
                           expand_radius=True, mp_delay=3, simplify_geo=None,
                           length_invariant_cost_layers=None,
-                          tracked_layers=None, length_mult_kind="linear"):
+                          tracked_layers=None, length_mult_kind="linear",
+                          cell_size=CELL_SIZE):
         """
         Compute Least Cost Transmission for desired sc_points
 
@@ -581,6 +583,9 @@ class LeastCostXmission(LeastCostPaths):
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
             By default, ``"linear"``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -623,7 +628,8 @@ class LeastCostXmission(LeastCostPaths):
                 max_workers=max_workers,
                 length_invariant_cost_layers=length_invariant_cost_layers,
                 tracked_layers=tracked_layers,
-                length_mult_kind=length_mult_kind)
+                length_mult_kind=length_mult_kind,
+                cell_size=cell_size)
         else:
             logger.info('Computing Least Cost Transmission for {:,} SC points '
                         'in serial'.format(len(sc_point_gids)))
@@ -641,7 +647,8 @@ class LeastCostXmission(LeastCostPaths):
                 simplify_geo=simplify_geo,
                 length_invariant_cost_layers=length_invariant_cost_layers,
                 tracked_layers=tracked_layers,
-                length_mult_kind=length_mult_kind)
+                length_mult_kind=length_mult_kind,
+                cell_size=cell_size)
 
         if not least_costs:
             return pd.DataFrame(columns=['sc_point_gid'])
@@ -666,7 +673,8 @@ class LeastCostXmission(LeastCostPaths):
                             mp_delay=3, simplify_geo=None,
                             length_invariant_cost_layers=None,
                             tracked_layers=None,
-                            length_mult_kind="linear"):
+                            length_mult_kind="linear",
+                            cell_size=CELL_SIZE):
         """
         Compute Least Cost Transmission for desired sc_points using
         multiple cores.
@@ -744,6 +752,9 @@ class LeastCostXmission(LeastCostPaths):
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
             By default, ``"linear"``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -759,7 +770,7 @@ class LeastCostXmission(LeastCostPaths):
                 nn_sinks, clipping_buffer, radius, expand_radius, mp_delay,
                 capacity_class, cost_layers, barrier_mult, save_paths,
                 simplify_geo, length_invariant_cost_layers, tracked_layers,
-                length_mult_kind)
+                length_mult_kind, cell_size)
 
         return least_costs
 
@@ -768,7 +779,7 @@ class LeastCostXmission(LeastCostPaths):
                                  radius, expand_radius, mp_delay,
                                  capacity_class, cost_layers, barrier_mult,
                                  save_paths, simplify_geo, li_cost_layers,
-                                 tracked_layers, length_mult_kind):
+                                 tracked_layers, length_mult_kind, cell_size):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -816,7 +827,8 @@ class LeastCostXmission(LeastCostPaths):
                                 simplify_geo=simplify_geo,
                                 length_invariant_cost_layers=li_cost_layers,
                                 length_mult_kind=length_mult_kind,
-                                tracked_layers=tracked_layers)
+                                tracked_layers=tracked_layers,
+                                cell_size=cell_size)
             futures[future] = None
             num_jobs += 1
             if mp_delay > 0 and num_jobs <= max_submissions:
@@ -836,7 +848,8 @@ class LeastCostXmission(LeastCostPaths):
                              radius=None, expand_radius=True,
                              simplify_geo=None,
                              length_invariant_cost_layers=None,
-                             tracked_layers=None, length_mult_kind="linear"):
+                             tracked_layers=None, length_mult_kind="linear",
+                             cell_size=CELL_SIZE):
         """
         Compute Least Cost Transmission for desired sc_points with a
         single core.
@@ -909,6 +922,9 @@ class LeastCostXmission(LeastCostPaths):
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
             By default, ``"linear"``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -943,7 +959,8 @@ class LeastCostXmission(LeastCostPaths):
                     cost_layers=cost_layers,
                     length_invariant_cost_layers=length_invariant_cost_layers,
                     length_mult_kind=length_mult_kind,
-                    tracked_layers=tracked_layers)
+                    tracked_layers=tracked_layers,
+                    cell_size=cell_size)
 
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
@@ -963,7 +980,8 @@ class LeastCostXmission(LeastCostPaths):
             iso_regions_layer_name=ISO_H5_LAYER_NAME, max_workers=None,
             save_paths=False, radius=None, expand_radius=True, mp_delay=3,
             simplify_geo=None, length_invariant_cost_layers=None,
-            tracked_layers=None, length_mult_kind="linear"):
+            tracked_layers=None, length_mult_kind="linear",
+            cell_size=CELL_SIZE):
         """
         Find Least Cost Transmission connections between desired
         sc_points to given transmission features for desired capacity
@@ -1061,6 +1079,9 @@ class LeastCostXmission(LeastCostPaths):
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
             By default, ``"linear"``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -1091,7 +1112,8 @@ class LeastCostXmission(LeastCostPaths):
                                             simplify_geo=simplify_geo,
                                             length_invariant_cost_layers=licl,
                                             tracked_layers=tracked_layers,
-                                            length_mult_kind=length_mult_kind)
+                                            length_mult_kind=length_mult_kind,
+                                            cell_size=cell_size)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'
@@ -1251,7 +1273,8 @@ class RegionalXmission(LeastCostXmission):
             iso_regions_layer_name=ISO_H5_LAYER_NAME, max_workers=None,
             simplify_geo=None, save_paths=False, radius=None,
             expand_radius=True, mp_delay=3, length_invariant_cost_layers=None,
-            tracked_layers=None, length_mult_kind="linear"):
+            tracked_layers=None, length_mult_kind="linear",
+            cell_size=CELL_SIZE):
         """
         Find Least Cost Transmission connections between desired
         sc_points and substations in their region.
@@ -1357,6 +1380,9 @@ class RegionalXmission(LeastCostXmission):
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
             By default, ``"linear"``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -1383,7 +1409,8 @@ class RegionalXmission(LeastCostXmission):
                                             simplify_geo=simplify_geo,
                                             length_invariant_cost_layers=licl,
                                             tracked_layers=tracked_layers,
-                                            length_mult_kind=length_mult_kind)
+                                            length_mult_kind=length_mult_kind,
+                                            cell_size=cell_size)
 
         logger.info('{} connections were made to {} SC points in {:.4f} '
                     'minutes'

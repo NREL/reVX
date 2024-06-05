@@ -7,7 +7,8 @@ import logging
 import pandas as pd
 from typing import List
 
-from reVX.least_cost_xmission.config.constants import (RESOLUTION,
+from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
+                                                       RESOLUTION,
                                                        NUM_NN_SINKS,
                                                        CLIP_RASTER_BUFFER,
                                                        BARRIERS_MULT,
@@ -233,6 +234,13 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get("tracked_layers")
 
     @property
+    def cell_size(self):
+        """
+        Side length of each cell, in meters.
+        """
+        return self.get('cell_size', CELL_SIZE)
+
+    @property
     def sc_point_gids(self):
         """
         List of sc_point_gids to compute Least Cost Xmission for
@@ -373,6 +381,13 @@ class LeastCostPathsConfig(AnalysisConfig):
         numpy methods that should be applied to the layer along the LCP.
         """
         return self.get("tracked_layers")
+
+    @property
+    def cell_size(self):
+        """
+        Side length of each cell, in meters.
+        """
+        return self.get('cell_size', CELL_SIZE)
 
     @property
     def xmission_config(self):

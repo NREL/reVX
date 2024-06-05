@@ -18,7 +18,8 @@ from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
 from reVX.handlers.layered_h5 import crs_match
-from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
+from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
+                                                       TRANS_LINE_CAT,
                                                        BARRIERS_MULT,
                                                        BARRIER_H5_LAYER_NAME)
 from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
@@ -307,7 +308,7 @@ class LeastCostPaths:
                                  indices=None, max_workers=None,
                                  save_paths=False,
                                  length_invariant_cost_layers=None,
-                                 tracked_layers=None):
+                                 tracked_layers=None, cell_size=CELL_SIZE):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -354,6 +355,9 @@ class LeastCostPaths:
                 - std
 
             By default, ``None``, which does not track any extra layers.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -373,7 +377,8 @@ class LeastCostPaths:
                                   loggers=loggers) as exe:
                 least_cost_paths = self._compute_paths_in_chunks(
                     exe, max_workers, indices, cost_layers, barrier_mult,
-                    save_paths, length_invariant_cost_layers, tracked_layers)
+                    save_paths, length_invariant_cost_layers, tracked_layers,
+                    cell_size=cell_size)
         else:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
@@ -389,7 +394,8 @@ class LeastCostPaths:
                                        barrier_mult=barrier_mult,
                                        save_paths=save_paths,
                                        length_invariant_cost_layers=licl,
-                                       tracked_layers=tracked_layers)
+                                       tracked_layers=tracked_layers,
+                                       cell_size=cell_size)
                 end_features = self.end_features.drop(columns=['row', 'col'],
                                                       errors="ignore")
                 lcp = pd.concat((lcp, end_features), axis=1)
@@ -405,7 +411,7 @@ class LeastCostPaths:
 
     def _compute_paths_in_chunks(self, exe, max_submissions, indices,
                                  cost_layers, barrier_mult, save_paths,
-                                 licl, tracked_layers):
+                                 licl, tracked_layers, cell_size):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -419,7 +425,8 @@ class LeastCostPaths:
                                 barrier_mult=barrier_mult,
                                 save_paths=save_paths,
                                 length_invariant_cost_layers=licl,
-                                tracked_layers=tracked_layers)
+                                tracked_layers=tracked_layers,
+                                cell_size=cell_size)
             futures[future] = self.end_features
             logger.debug('Submitted {} of {} futures'
                          .format(ind, len(indices)))
@@ -434,7 +441,7 @@ class LeastCostPaths:
             clip_buffer=0, tb_layer_name=BARRIER_H5_LAYER_NAME,
             barrier_mult=BARRIERS_MULT, indices=None, max_workers=None,
             save_paths=False, length_invariant_cost_layers=None,
-            tracked_layers=None):
+            tracked_layers=None, cell_size=CELL_SIZE):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -493,6 +500,9 @@ class LeastCostPaths:
                 - std
 
             By default, ``None``, which does not track any extra layers.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -510,7 +520,7 @@ class LeastCostPaths:
             save_paths=save_paths,
             max_workers=max_workers,
             length_invariant_cost_layers=length_invariant_cost_layers,
-            tracked_layers=tracked_layers)
+            tracked_layers=tracked_layers, cell_size=cell_size)
 
         logger.info('{} paths were computed in {:.4f} hours'
                     .format(len(least_cost_paths),
@@ -609,7 +619,7 @@ class ReinforcementPaths(LeastCostPaths):
                                  barrier_mult=BARRIERS_MULT, max_workers=None,
                                  save_paths=False,
                                  length_invariant_cost_layers=None,
-                                 tracked_layers=None):
+                                 tracked_layers=None, cell_size=CELL_SIZE):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -658,6 +668,9 @@ class ReinforcementPaths(LeastCostPaths):
                 - std
 
             By default, ``None``, which does not track any extra layers.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -699,7 +712,8 @@ class ReinforcementPaths(LeastCostPaths):
                                         barrier_mult=barrier_mult,
                                         save_paths=save_paths,
                                         length_invariant_cost_layers=licl,
-                                        tracked_layers=tracked_layers)
+                                        tracked_layers=tracked_layers,
+                                        cell_size=cell_size)
                     futures[future] = feats
                     logger.debug('Submitted %d of %d futures',
                                  ind + 1, max_workers)
@@ -723,7 +737,8 @@ class ReinforcementPaths(LeastCostPaths):
                                              barrier_mult=barrier_mult,
                                              save_paths=save_paths,
                                              length_invariant_cost_layers=licl,
-                                             tracked_layers=tracked_layers)
+                                             tracked_layers=tracked_layers,
+                                             cell_size=cell_size)
             least_cost_paths = lcp.merge(self._features, on=["row", "col"])
 
         least_cost_paths = least_cost_paths.dropna(axis="columns", how="all")
@@ -737,7 +752,7 @@ class ReinforcementPaths(LeastCostPaths):
             tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
             indices=None, max_workers=None, save_paths=False,
             length_invariant_cost_layers=None, tracked_layers=None,
-            ss_id_col="poi_gid"):
+            ss_id_col="poi_gid", cell_size=CELL_SIZE):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -826,6 +841,9 @@ class ReinforcementPaths(LeastCostPaths):
             substation. This column will be used to compute minimum
             reinforcement cost per substation.
             By default, ``"poi_gid"``.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
 
         Returns
         -------
@@ -843,7 +861,8 @@ class ReinforcementPaths(LeastCostPaths):
                       "barrier_mult": barrier_mult,
                       "save_paths": save_paths,
                       "max_workers": max_workers,
-                      "tracked_layers": tracked_layers}
+                      "tracked_layers": tracked_layers,
+                      "cell_size": cell_size}
         with ExclusionLayers(cost_fpath) as f:
             cost_crs = CRS.from_string(f.crs)
             cost_shape = f.shape
