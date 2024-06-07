@@ -7,7 +7,9 @@ from typing import Optional, Dict, List, Literal
 from pydantic import BaseModel, DirectoryPath, FilePath
 
 from reVX.least_cost_xmission.config import IsoMultipliers
-from reVX.least_cost_xmission.config.constants import ALL, CELL_SIZE
+from reVX.least_cost_xmission.config.constants import (ALL,
+                                                       CELL_SIZE,
+                                                       BARRIER_H5_LAYER_NAME)
 
 
 # Terms for specifying masks. 'wet+' and 'dry+' indicated 'wet' + 'landfall'
@@ -164,8 +166,10 @@ class MergeFrictionBarriers(BaseModel, extra='forbid'):
     tiff directory with the same name and '.tif' extension.
     """
 
-    output_layer_name: Optional[str] = 'transmission_barrier'
-    """Name of combined output layer. By default, `'transmission_barrier'`."""
+    output_layer_name: Optional[str] = BARRIER_H5_LAYER_NAME
+    """Name of combined output layer.
+
+    By default, :obj:`BARRIER_H5_LAYER_NAME`."""
 
     barrier_multiplier: float = 1e6
     """Value to multiply barrier layer by during merge with friction.
