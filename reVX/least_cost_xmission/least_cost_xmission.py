@@ -1213,6 +1213,12 @@ class RegionalXmission(LeastCostXmission):
                                  errors='ignore')
         mapping = {'gid': 'trans_gid'}
         features = features.rename(columns=mapping)
+        mask = features["category"].isna()
+        if mask.any():
+            msg = f"Dropping {mask.sum():,} features with NaN category!"
+            logger.warning(msg)
+            warn(msg)
+            features = features[~mask].reset_index(drop=True)
 
         return features, None
 
