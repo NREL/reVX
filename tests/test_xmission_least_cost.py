@@ -20,6 +20,7 @@ from click.testing import CliRunner
 
 from rex.utilities.loggers import LOGGERS
 from reV.supply_curve.supply_curve import SupplyCurve
+from reV.utilities import SupplyCurveField
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.config import XmissionConfig
@@ -192,7 +193,8 @@ def test_capacity_class(capacity, lmk):
     test = LeastCostXmission.run(COST_H5, FEATURES, capacity, [cost_layer],
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=5.76, length_mult_kind=lmk)
-    SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
+    test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
+    SupplyCurve._check_substation_conns(test_rev, sc_cols='sc_point_gid')
 
     assert f"{cost_layer}_cost" in test
     assert f"{cost_layer}_dist_km" in test
@@ -234,7 +236,8 @@ def test_parallel(max_workers, lmk):
                                  max_workers=max_workers,
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=5.76, length_mult_kind=lmk)
-    SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
+    test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
+    SupplyCurve._check_substation_conns(test_rev, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
@@ -271,7 +274,8 @@ def test_resolution(resolution, lmk):
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=resolution * 0.09 / 2,
                                  length_mult_kind=lmk)
-    SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
+    test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
+    SupplyCurve._check_substation_conns(test_rev, sc_cols='sc_point_gid')
 
     if not isinstance(truth, pd.DataFrame):
         test.to_csv(truth, index=False)
@@ -371,7 +375,8 @@ def test_cli(runner, save_paths, lmk):
             test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
             test = os.path.join(td, test)
             test = pd.read_csv(test)
-        SupplyCurve._check_substation_conns(test, sc_cols='sc_point_gid')
+        test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
+        SupplyCurve._check_substation_conns(test_rev, sc_cols='sc_point_gid')
         check_baseline(truth, test, lmk=lmk)
 
     LOGGERS.clear()
