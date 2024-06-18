@@ -298,6 +298,92 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
     LOGGERS.clear()
 
 
+def test_reinforcement_cli_single_tline_coltage(runner,
+                                                ba_regions_and_network_nodes):
+    """
+    Test Reinforcement cost routines when tlines have only a single voltage
+    """
+    ri_ba, ri_network_nodes = ba_regions_and_network_nodes
+    ri_feats = gpd.clip(gpd.read_file(ALLCONNS_FEATURES), ri_ba.buffer(10_000))
+
+    with tempfile.TemporaryDirectory() as td:
+        ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
+        ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
+
+        ri_ba_path = os.path.join(td, 'ri_ba.gpkg')
+        ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
+
+        ri_network_nodes_path = os.path.join(td, 'ri_network_nodes.gpkg')
+        ri_network_nodes.to_file(ri_network_nodes_path, driver="GPKG",
+                                 index=False)
+
+        ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
+        result = runner.invoke(main,
+                               ['map-ss-to-rr',
+                                '-feats', ri_feats_path,
+                                '-regs', ri_ba_path,
+                                '-rid', "ba_str",
+                                '-of', ri_substations_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        assert "ri_subs.gpkg" in os.listdir(td)
+        ri_subs = gpd.read_file(ri_substations_path)
+        assert len(ri_subs) < len(ri_feats)
+        assert (ri_subs["category"] == "Substation").all()
+        counts = ri_subs["ba_str"].value_counts()
+
+        assert (counts.index == ['p4', 'p1', 'p3', 'p2']).all()
+        assert (counts == [50, 34, 10, 5]).all()
+
+        ri_tlines_path = os.path.join(td, 'ri_tlines.gpkg')
+        tlines = gpd.read_file(ALLCONNS_FEATURES)
+        tlines["voltage"] = 138
+        tlines.to_file(ri_tlines_path, driver="GPKG", index=False)
+
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+            },
+            "cost_fpath": COST_H5,
+            "features_fpath": ri_substations_path,
+            "network_nodes_fpath": ri_network_nodes_path,
+            "transmission_lines_fpath": ri_tlines_path,
+            "region_identifier_column": "ba_str",
+            "capacity_class": 400,
+            "cost_layers": ["tie_line_costs_{}MW"],
+            "barrier_mult": 100,
+            "save_paths": False,
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_lcp.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+
+        assert "reinforcement_poi_lat" in test
+        assert "reinforcement_poi_lon" in test
+        assert "poi_lat" not in test
+        assert "poi_lon" not in test
+        assert "ba_str" in test
+
+        assert len(test) == 69
+        assert len(test["reinforcement_poi_lat"].unique()) == 4
+        assert len(test["reinforcement_poi_lon"].unique()) == 4
+
+    LOGGERS.clear()
+
+
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 

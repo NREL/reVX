@@ -147,6 +147,14 @@ class TieLineCosts:
         self._clip_costs(cost_layers, length_invariant_cost_layers=licl,
                          barrier_mult=barrier_mult)
 
+        self._null_extras = {}
+        for layer in chain(self._cost_layer_map, self._li_cost_layer_map):
+            self._null_extras[f'{layer}_cost'] = np.nan
+            self._null_extras[f'{layer}_dist_km'] = np.nan
+        for layer_name in self._tracked_layer_map:
+            method = self._tracked_layers[layer_name]
+            self._null_extras[f'{layer_name}_{method}'] = np.nan
+
     def __repr__(self):
         msg = "{} starting at {}".format(self.__class__.__name__,
                                          self._start_indices)
@@ -593,6 +601,7 @@ class TieLineCosts:
         poi_lons = []
         rows = []
         cols = []
+        extras = {}
         for end_idx in end_indices:
             rows.append(end_idx[0])
             cols.append(end_idx[1])
@@ -603,7 +612,7 @@ class TieLineCosts:
                        'Skipping...'.format((self.row, self.col), end_idx, ex))
                 logger.warning(msg)
                 warn(msg)
-                out = [None] * 6
+                out = [None] * 5 + [self._null_extras]
 
             lengths.append(out[0])
             costs.append(out[1])
@@ -615,9 +624,15 @@ class TieLineCosts:
                     shape = Point(*end_idx)
                 paths.append(out[4])
 
-        tie_lines = pd.DataFrame({'length_km': lengths, 'cost': costs,
-                                  'poi_lat': poi_lats, 'poi_lon': poi_lons,
-                                  'row': rows, 'col': cols})
+            for k, v in out[-1].items():
+                extras.setdefault(k, []).append(v)
+
+        final_output = {'length_km': lengths, 'cost': costs,
+                        'poi_lat': poi_lats, 'poi_lon': poi_lons,
+                        'row': rows, 'col': cols}
+        final_output.update(extras)
+        tie_lines = pd.DataFrame(final_output)
+
         if save_paths:
             tie_lines = gpd.GeoDataFrame(tie_lines, geometry=paths,
                                          crs=self._cost_crs)
@@ -1198,9 +1213,8 @@ class TransCapCosts(TieLineCosts):
         if save_paths:
             paths = []
 
-        for layer in chain(self._cost_layer_map, self._li_cost_layer_map):
-            features[f'{layer}_cost'] = None
-            features[f'{layer}_dist_km'] = None
+        for col, val in self._null_extras.items():
+            features[col] = val
 
         logger.info('Computing paths to %d features for SC Point %d',
                     len(features), self.sc_point_gid)

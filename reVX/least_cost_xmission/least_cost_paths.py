@@ -944,12 +944,17 @@ def _rasterize_transmission(transmission_lines, xmission_config, cost_shape,
             (transmission_lines["voltage"] > v_min)
             & (transmission_lines["voltage"] <= v_max)
         ]
+        if len(curr_lines) == 0:
+            continue
         out = _rasterize_transmission_layer(curr_lines, cost_shape,
                                             cost_transform)
         transmission_lines_dict[int(capacity)] = out
         v_min = v_max
 
     curr_lines = transmission_lines[transmission_lines["voltage"] > v_min]
+    if len(curr_lines) == 0:
+        return transmission_lines_dict
+
     out = _rasterize_transmission_layer(curr_lines, cost_shape, cost_transform)
     transmission_lines_dict[int(capacities[-1])] = out
     return transmission_lines_dict
