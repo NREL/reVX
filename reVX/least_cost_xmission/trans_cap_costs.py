@@ -149,11 +149,11 @@ class TieLineCosts:
 
         self._null_extras = {}
         for layer in chain(self._cost_layer_map, self._li_cost_layer_map):
-            self._null_extras[f'{layer}_cost'] = None
-            self._null_extras[f'{layer}_dist_km'] = None
+            self._null_extras[f'{layer}_cost'] = np.nan
+            self._null_extras[f'{layer}_dist_km'] = np.nan
         for layer_name in self._tracked_layer_map:
             method = self._tracked_layers[layer_name]
-            self._null_extras[f'{layer_name}_{method}'] = None
+            self._null_extras[f'{layer_name}_{method}'] = np.nan
 
     def __repr__(self):
         msg = "{} starting at {}".format(self.__class__.__name__,
