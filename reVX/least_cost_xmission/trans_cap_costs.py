@@ -1722,6 +1722,8 @@ class ReinforcementLineCosts(TieLineCosts):
                          length_invariant_cost_layers=licl,
                          tracked_layers=tracked_layers,
                          cell_size=cell_size)
+        self._null_extras = {}
+
         capacity_class = self._config._parse_cap_class(capacity_class)
         line_cap_mw = self._config['power_classes'][capacity_class]
         self._cost = self._cost / line_cap_mw
@@ -1738,6 +1740,10 @@ class ReinforcementLineCosts(TieLineCosts):
     def _compute_by_layer_results(self, *__, **___):
         """By-layer results not supported for reinforcement run. """
         return {}
+
+    def _compute_tracked_layer_values(self, cl_results, *__, **___):
+        """Tracked layer results not supported for reinforcement run.  """
+        return cl_results
 
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
