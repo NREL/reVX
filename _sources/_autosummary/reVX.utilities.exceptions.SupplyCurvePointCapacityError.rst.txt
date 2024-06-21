@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.SupplyCurvePointCapacityError
+=======================================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: SupplyCurvePointCapacityError

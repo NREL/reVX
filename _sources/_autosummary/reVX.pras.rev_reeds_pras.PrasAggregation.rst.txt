@@ -1,0 +1,58 @@
+reVX.pras.rev\_reeds\_pras.PrasAggregation
+==========================================
+
+.. currentmodule:: reVX.pras.rev_reeds_pras
+
+.. autoclass:: PrasAggregation
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PrasAggregation.enforce_tech_constraint
+      ~PrasAggregation.export
+      ~PrasAggregation.get_missing_zones
+      ~PrasAggregation.get_pras_classes
+      ~PrasAggregation.get_pras_meta
+      ~PrasAggregation.get_unique_plant_names
+      ~PrasAggregation.make_profiles
+      ~PrasAggregation.qa
+      ~PrasAggregation.run
+      ~PrasAggregation.tz_convert_profiles
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PrasAggregation.available_res_gids
+      ~PrasAggregation.built_capacity
+      ~PrasAggregation.complete_pras_meta
+      ~PrasAggregation.forecast_map
+      ~PrasAggregation.found_build_zones
+      ~PrasAggregation.found_pras_zones
+      ~PrasAggregation.n_plexos_nodes
+      ~PrasAggregation.node_map
+      ~PrasAggregation.plexos_meta
+      ~PrasAggregation.pras_indices
+      ~PrasAggregation.pras_meta
+      ~PrasAggregation.pras_names
+      ~PrasAggregation.pras_zones
+      ~PrasAggregation.sc_build
+      ~PrasAggregation.sc_build_indices
+      ~PrasAggregation.sc_build_zones
+      ~PrasAggregation.sc_res_gids
+      ~PrasAggregation.time_index
+      ~PrasAggregation.tz_alias
+      ~PrasAggregation.zone_index_map
+   
+   

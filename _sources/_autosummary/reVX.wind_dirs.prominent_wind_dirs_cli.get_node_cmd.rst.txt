@@ -1,0 +1,6 @@
+reVX.wind\_dirs.prominent\_wind\_dirs\_cli.get\_node\_cmd
+=========================================================
+
+.. currentmodule:: reVX.wind_dirs.prominent_wind_dirs_cli
+
+.. autofunction:: get_node_cmd

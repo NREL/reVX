@@ -1,0 +1,36 @@
+reVX.plexos.base.BaseProfileAggregation
+=======================================
+
+.. currentmodule:: reVX.plexos.base
+
+.. autoclass:: BaseProfileAggregation
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~BaseProfileAggregation.export
+      ~BaseProfileAggregation.get_unique_plant_names
+      ~BaseProfileAggregation.tz_convert_profiles
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BaseProfileAggregation.available_res_gids
+      ~BaseProfileAggregation.forecast_map
+      ~BaseProfileAggregation.node_map
+      ~BaseProfileAggregation.time_index
+      ~BaseProfileAggregation.tz_alias
+   
+   

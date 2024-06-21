@@ -1,0 +1,6 @@
+reVX.handlers.layered\_h5.check\_geotiff
+========================================
+
+.. currentmodule:: reVX.handlers.layered_h5
+
+.. autofunction:: check_geotiff

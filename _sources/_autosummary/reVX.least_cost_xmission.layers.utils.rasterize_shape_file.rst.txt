@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.layers.utils.rasterize\_shape\_file
+==============================================================
+
+.. currentmodule:: reVX.least_cost_xmission.layers.utils
+
+.. autofunction:: rasterize_shape_file

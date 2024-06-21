@@ -1,0 +1,31 @@
+reVX.wind\_dirs.mean\_wind\_dirs\_point
+=======================================
+
+.. automodule:: reVX.wind_dirs.mean_wind_dirs_point
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      MeanWindDirectionsPoint
+   
+   
+
+   
+   
+   
+
+
+

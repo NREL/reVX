@@ -1,0 +1,6 @@
+reVX.utilities.reeds\_cols.add\_extra\_data
+===========================================
+
+.. currentmodule:: reVX.utilities.reeds_cols
+
+.. autofunction:: add_extra_data

@@ -1,0 +1,42 @@
+reVX.plexos.rev\_reeds\_plexos.PlexosAggregation
+================================================
+
+.. currentmodule:: reVX.plexos.rev_reeds_plexos
+
+.. autoclass:: PlexosAggregation
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PlexosAggregation.export
+      ~PlexosAggregation.get_unique_plant_names
+      ~PlexosAggregation.make_profiles
+      ~PlexosAggregation.run
+      ~PlexosAggregation.tz_convert_profiles
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PlexosAggregation.available_res_gids
+      ~PlexosAggregation.forecast_map
+      ~PlexosAggregation.n_plexos_nodes
+      ~PlexosAggregation.node_map
+      ~PlexosAggregation.plexos_meta
+      ~PlexosAggregation.sc_build
+      ~PlexosAggregation.sc_res_gids
+      ~PlexosAggregation.time_index
+      ~PlexosAggregation.tz_alias
+   
+   
