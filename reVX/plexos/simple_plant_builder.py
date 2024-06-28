@@ -27,7 +27,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
 
     def __init__(self, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
                  plant_name_col=None, tech_tag=None, timezone='UTC',
-                 share_resource=True, max_workers=None):
+                 share_resource=True, max_workers=None,
+                 sc_mean_cf_col='mean_cf', sc_cap_col='capacity',
+                 dset_tag=None, bespoke=False):
         """Run plexos aggregation.
 
         Parameters
@@ -64,7 +66,21 @@ class SimplePlantBuilder(BaseProfileAggregation):
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
+        sc_mean_cf_col : str
+            Mean capacity factor column name in the rev_sc table
+        sc_cap_col : str
+            Supply curve point capacity column name in the rev_sc table
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
+        bespoke : bool
+            Flag if rev_sc and cf_fpath are bespoke outputs. This means that
+            each supply curve point only corresponds to a single generation
+            profile in cf_fpath
         """
+
         logger.info('Initializing SimplePlantBuilder.')
         super().__init__()
         self._res_gids = None
@@ -79,9 +95,13 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._timezone = timezone
         self.max_workers = max_workers
 
+        self.sc_mean_cf_col = sc_mean_cf_col
+        self.sc_cap_col = sc_cap_col
+        self._dset_tag = dset_tag if dset_tag is not None else ""
+
         required = ('sc_gid', 'latitude', 'longitude', 'res_gids',
-                    'gid_counts', 'mean_cf')
-        missing = [r not in self._sc_table for r in required]
+                    'gid_counts', sc_mean_cf_col, sc_cap_col)
+        missing = [r for r in required if r not in self._sc_table]
         if any(missing):
             msg = ('SimplePlantBuilder needs the following missing columns '
                    'in the rev_sc input: {}'.format(missing))
@@ -100,7 +120,26 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._forecast_map = self._make_forecast_map(self._cf_fpath,
                                                      self._forecast_fpath)
         self._compute_gid_capacities()
+        self._sc_table['potential_capacity'] = self._sc_table[self.sc_cap_col]
+
+        if bespoke:
+            self.bespoke_mods()
+
         logger.info('Finished initializing SimplePlantBuilder.')
+
+    def bespoke_mods(self):
+        """Hack the supply curve table to be able to pull cf_profile from a
+        bespoke .h5 file.
+
+        Plant builder expects res_gids in the supply curve table to map to the
+        gid column in the meta data of the cf_fpath. When cf_fpath is a bespoke
+        file, gid is really the supply curve gid, so just set res_gids to gid,
+        gid_counts to 1, and gid_capacity to the full sc point capacity
+        """
+        for gid, row in self._sc_table.iterrows():
+            self._sc_table.loc[gid, 'res_gids'] = [row['gid']]
+            self._sc_table.loc[gid, 'gid_counts'] = [1]
+            self._sc_table.loc[gid, 'gid_capacity'] = [row[self.sc_cap_col]]
 
     def _compute_gid_capacities(self):
         """Compute the individual resource gid capacities and make a new
@@ -113,7 +152,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._sc_table['gid_capacity'] = None
         for i, row in self._sc_table.iterrows():
             gid_counts = row['gid_counts']
-            gid_capacity = gid_counts / np.sum(gid_counts) * row['capacity']
+            gid_capacity = gid_counts / np.sum(gid_counts) * row[self.sc_cap_col]
             self._sc_table.at[i, 'gid_capacity'] = list(gid_capacity)
 
     def _make_node_map(self):
@@ -198,7 +237,7 @@ class SimplePlantBuilder(BaseProfileAggregation):
             # March through the SC table in order of the node map
             for sc_loc in self.node_map[i]:
                 sc_point = self._sc_table.loc[sc_loc].copy()
-                sc_capacity = sc_point['capacity']
+                sc_capacity = sc_point[self.sc_cap_col]
 
                 # Buildout capacity in this sc point
                 if sc_capacity >= 0:
@@ -233,15 +272,15 @@ class SimplePlantBuilder(BaseProfileAggregation):
                         cap_build = cap_build.tolist()
                         cap_orig = cap_orig.tolist()
 
-                        sc_point['capacity'] = sum(cap_build)
+                        sc_point[self.sc_cap_col] = sum(cap_build)
                         sc_point['built_capacity'] = sum(cap_build)
                         sc_point['gid_capacity'] = cap_build
                         single_plant_sc = pd.concat([single_plant_sc,
                                                      sc_point.to_frame().T],
                                                     axis=0)
 
-                        self._sc_table.at[sc_loc, 'capacity'] -= sum(cap_build)
-                        self._sc_table.at[sc_loc, 'gid_capacity'] = cap_remain
+                        self._sc_table.at[sc_loc, self.sc_cap_col] -= sum(cap_build)
+                        self._sc_table.at[sc_loc, 'gid_capacity'] = cap_remain.tolist()
 
                 # buildout for this plant is fully complete
                 if plant_cap_to_build <= 0:
@@ -322,7 +361,8 @@ class SimplePlantBuilder(BaseProfileAggregation):
                                plant_sc_subset, self._cf_fpath,
                                res_gids=self.available_res_gids,
                                forecast_fpath=self._forecast_fpath,
-                               forecast_map=self._forecast_map)
+                               forecast_map=self._forecast_map,
+                               dset_tag=self._dset_tag)
                 futures[f] = i
 
             for n, f in enumerate(as_completed(futures)):
@@ -359,8 +399,8 @@ class SimplePlantBuilder(BaseProfileAggregation):
                 plant_sc_subset, self._cf_fpath,
                 res_gids=self.available_res_gids,
                 forecast_fpath=self._forecast_fpath,
-                forecast_map=self._forecast_map)
-
+                forecast_map=self._forecast_map,
+                dset_tag=self._dset_tag)
             profile, sc_gids, res_gids, gen_gids, res_built = p
             profiles[:, i] = profile
             self._ammend_output_meta(i, sc_gids, res_gids, gen_gids, res_built)
@@ -378,7 +418,9 @@ class SimplePlantBuilder(BaseProfileAggregation):
     @classmethod
     def run(cls, plant_meta, rev_sc, cf_fpath, forecast_fpath=None,
             plant_name_col=None, tech_tag=None, timezone='UTC',
-            share_resource=True, max_workers=None, out_fpath=None):
+            share_resource=True, max_workers=None, out_fpath=None,
+            sc_mean_cf_col='mean_cf', sc_cap_col='capacity',
+            dset_tag=None, bespoke=False):
         """Build profiles and meta data.
 
         Parameters
@@ -419,6 +461,19 @@ class SimplePlantBuilder(BaseProfileAggregation):
             Path to .h5 file into which plant buildout should be saved. A
             plexos-formatted csv will also be written in the same directory.
             By default None.
+        sc_mean_cf_col : str
+            Mean capacity factor column name in the rev_sc table
+        sc_cap_col : str
+            Supply curve point capacity column name in the rev_sc table
+        dset_tag : str
+            Dataset tag to append to dataset names in cf profile file. e.g. If
+            the cf profile file is a multi year file using dset_tag="-2008"
+            will enable us to select the corresponding datasets
+            (cf_mean-2008, cf_profile-2008, etc)
+        bespoke : bool
+            Flag if rev_sc and cf_fpath are bespoke outputs. This means that
+            each supply curve point only corresponds to a single generation
+            profile in cf_fpath
 
         Returns
         -------
@@ -434,7 +489,8 @@ class SimplePlantBuilder(BaseProfileAggregation):
         pb = cls(plant_meta, rev_sc, cf_fpath, forecast_fpath=forecast_fpath,
                  plant_name_col=plant_name_col, tech_tag=tech_tag,
                  timezone=timezone, share_resource=share_resource,
-                 max_workers=max_workers)
+                 max_workers=max_workers, sc_mean_cf_col=sc_mean_cf_col,
+                 sc_cap_col=sc_cap_col, dset_tag=dset_tag, bespoke=bespoke)
 
         plant_sc_builds = pb.assign_plant_buildouts()
         pb.check_valid_buildouts(plant_sc_builds)
