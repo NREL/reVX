@@ -23,6 +23,8 @@ REV_SC = os.path.join(
     TESTDATADIR,
     'reV_sc/wtk_coe_2017_cem_v3_wind_conus_multiyear_colorado.csv')
 
+BESPOKE = os.path.join(TESTDATADIR, 'bespoke/bespoke_out.h5')
+
 REEDS_0 = os.path.join(TESTDATADIR, 'reeds/',
                        'BAU_wtk_coe_2017_cem_v3_wind_conus_'
                        'multiyear_US_wind_reeds_to_rev.csv')
@@ -355,6 +357,51 @@ def test_dup_names():
     names = PlexosAggregation.get_unique_plant_names(table, 'plant_name',
                                                      tech_tag='pv')
     assert names == ['a pv 0', 'a pv 1', 'c pv']
+
+
+def test_bespoke_build():
+    """Test various rev-reeds-plexos builds from a reV bespoke output"""
+    build_year = 2050
+    with Resource(BESPOKE) as res:
+        rev_sc = res.meta
+        source_prof = res['cf_profile-2012']
+
+    pnodes = pd.DataFrame({'gid': np.arange(len(rev_sc)),
+                           'latitude': rev_sc['latitude'].values,
+                           'longitude': rev_sc['longitude'].values,
+                           })
+    reeds = pd.DataFrame({'gid': rev_sc['gid'].values,
+                          'year': [build_year] * len(rev_sc),
+                          'capacity_reV': [1] * len(rev_sc)})
+
+    # test basic bespoke build error and bespoke=True flag
+    with pytest.raises(IndexError):
+        PlexosAggregation.run(pnodes, rev_sc, reeds, BESPOKE,
+                              dset_tag='-2012', max_workers=1)
+    prof = PlexosAggregation.run(pnodes, rev_sc, reeds, BESPOKE,
+                                 dset_tag='-2012', max_workers=1,
+                                 bespoke=True)[-1]
+    assert np.allclose(source_prof, prof)
+
+    # test build bigger than available bespoke capacity
+    reeds['capacity_reV'] *= 1e6
+    with pytest.raises(RuntimeError):
+        PlexosAggregation.run(pnodes, rev_sc, reeds, BESPOKE, dset_tag='-2012',
+                              max_workers=1, bespoke=True)
+    prof = PlexosAggregation.run(pnodes, rev_sc, reeds, BESPOKE,
+                                 dset_tag='-2012', max_workers=1,
+                                 bespoke=True, force_full_build=True)[-1]
+    assert np.allclose(source_prof * 1e6, prof)
+
+    # Test plexos node build aggregating from multiple sc points.
+    pnodes = pd.DataFrame({'gid': [0],
+                           'latitude': rev_sc['latitude'].values.mean(),
+                           'longitude': rev_sc['longitude'].values.mean(),
+                           })
+    prof = PlexosAggregation.run(pnodes, rev_sc, reeds, BESPOKE,
+                                 dset_tag='-2012', max_workers=1,
+                                 bespoke=True, force_full_build=True)[-1]
+    assert np.allclose((source_prof * 1e6).sum(axis=1), prof.flatten())
 
 
 def execute_pytest(capture='all', flags='-rapP'):

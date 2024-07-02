@@ -779,7 +779,7 @@ class PlantProfileAggregation:
                  offshore=False, max_workers=None,
                  plants_per_worker=40, points_per_worker=400,
                  plant_name_col=None, tech_tag=None, dset_tag='',
-                 timezone='UTC'):
+                 timezone='UTC', bespoke=False):
         """
         Parameters
         ----------
@@ -834,6 +834,12 @@ class PlantProfileAggregation:
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
             US/Central, US/Eastern, or UTC. For a list of all available
             timezones, see pytz.all_timezones
+        bespoke : bool
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
         """
         log_versions(logger)
         logger.info('Initializing PlantProfileAggregation')
@@ -850,6 +856,11 @@ class PlantProfileAggregation:
         self._cf_gid_map = self._parse_cf_gid_map(cf_fpath)
         self._sc_table = SupplyCurvePoints._parse_sc_table(sc_table,
                                                            offshore=offshore)
+
+        if bespoke:
+            self._sc_table = BaseProfileAggregation.convert_bespoke_sc(
+                self._sc_table, 'gid')
+
         if plants is None:
             self._plants = PlexosPlants(self._plexos_table, self._sc_table,
                                         mymean_fpath,
@@ -1348,7 +1359,7 @@ class PlantProfileAggregation:
             lcoe_col='total_lcoe', lcoe_thresh=1.3,
             max_workers=None, points_per_worker=400, plants_per_worker=40,
             offshore=False, plant_name_col=None, tech_tag=None, dset_tag='',
-            timezone='UTC'):
+            timezone='UTC', bespoke=False):
         """
         Find, fill, and save profiles for Plants associated with given PLEXOS
         buses
@@ -1409,6 +1420,12 @@ class PlantProfileAggregation:
             be passed to pytz.timezone() e.g. US/Pacific, US/Mountain,
             US/Central, US/Eastern, or UTC. For a list of all available
             timezones, see pytz.all_timezones
+        bespoke : bool
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
         """
         pp = cls(plexos_table, sc_table, mymean_fpath, cf_fpath,
                  offshore=offshore,
@@ -1422,6 +1439,7 @@ class PlantProfileAggregation:
                  plant_name_col=plant_name_col,
                  tech_tag=tech_tag,
                  dset_tag=dset_tag,
-                 timezone=timezone)
+                 timezone=timezone,
+                 bespoke=bespoke)
 
         pp.aggregate_profiles(out_fpath)
