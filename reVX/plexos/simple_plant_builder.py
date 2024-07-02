@@ -63,6 +63,12 @@ class SimplePlantBuilder(BaseProfileAggregation):
         share_resource : bool
             Flag to share available capacity within a single resource GID
             between multiple plants.
+        bespoke : bool
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -119,6 +125,10 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._node_map = self._make_node_map()
         self._forecast_map = self._make_forecast_map(self._cf_fpath,
                                                      self._forecast_fpath)
+
+        if bespoke:
+            self._sc_table = self.convert_bespoke_sc(self._sc_table)
+
         self._compute_gid_capacities()
         self._sc_table['potential_capacity'] = self._sc_table[self.sc_cap_col]
 
@@ -454,6 +464,12 @@ class SimplePlantBuilder(BaseProfileAggregation):
         share_resource : bool
             Flag to share available capacity within a single resource GID
             between multiple plants.
+        bespoke : bool
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
