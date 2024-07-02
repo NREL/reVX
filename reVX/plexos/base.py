@@ -55,8 +55,8 @@ class PlexosNode:
             File path to capacity factor file (reV gen output) to
             get profiles from.
         gid_column: str, optional
-            Reference column to use for supply curve gid. Valid options are sc_gid 
-            and sc_point_gid.
+            Reference column to use for supply curve gid. Valid options are
+            sc_gid and sc_point_gid.
         res_gids : list | np.ndarray, optional
             Resource GID's available in cf_fpath, if None pull from cf_fpath,
             by default None
@@ -361,7 +361,7 @@ class PlexosNode:
 
     @classmethod
     def run(cls, sc_build, cf_fpath, res_gids=None, force_full_build=False,
-            forecast_fpath=None, forecast_map=None, dset_tag=None, 
+            forecast_fpath=None, forecast_map=None, dset_tag=None,
             gid_column="sc_gid"):
         """Make an aggregated generation profile for a single plexos node.
 
@@ -398,8 +398,8 @@ class PlexosNode:
             will enable us to select the corresponding datasets
             (cf_mean-2008, cf_profile-2008, etc)
         gid_column: str, optional
-            Reference column to use for supply curve gid. Valid options are sc_gid 
-            and sc_point_gid.
+            Reference column to use for supply curve gid. Valid options are
+            sc_gid and sc_point_gid.
 
         Returns
         -------
@@ -743,7 +743,7 @@ class BaseProfileAggregation(ABC):
             if isinstance(df['gid_counts'].values[0], str):
                 df['gid_counts'] = df['gid_counts'].apply(json.loads)
 
-            df['gid_counts'] = [[np.sum(n)] for n in df['gid_counts']]
+            df['gid_counts'] = [[np.sum(count)] for count in df['gid_counts']]
             df['n_gids'] = df['gid_counts'].copy()
 
         return df

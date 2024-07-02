@@ -859,7 +859,7 @@ class PlantProfileAggregation:
 
         if bespoke:
             self._sc_table = BaseProfileAggregation.convert_bespoke_sc(
-                self._sc_table)
+                self._sc_table, 'gid')
 
         if plants is None:
             self._plants = PlexosPlants(self._plexos_table, self._sc_table,

@@ -42,8 +42,8 @@ class PlexosAggregation(BaseProfileAggregation):
                  forecast_fpath=None, build_year=2050, plexos_columns=None,
                  force_full_build=False, force_shape_map=False,
                  plant_name_col=None, tech_tag=None, res_class=None,
-                 timezone='UTC', dset_tag=None, bespoke=False, gid_column='sc_gid',
-                 max_workers=None):
+                 timezone='UTC', dset_tag=None, bespoke=False,
+                 gid_column='sc_gid', max_workers=None):
         """
         Parameters
         ----------
@@ -115,8 +115,8 @@ class PlexosAggregation(BaseProfileAggregation):
             than traditional reV generation outputs that are on the resource
             grid resolution.
         gid_column: str, optional
-            Reference column to use for supply curve gid. Valid options are sc_gid 
-            and sc_point_gid.
+            Reference column to use for supply curve gid. Valid options are
+            sc_gid and sc_point_gid.
         max_workers : int | None
             Max workers for parallel profile aggregation. None uses all
             available workers. 1 will run in serial.
@@ -289,7 +289,8 @@ class PlexosAggregation(BaseProfileAggregation):
         return plexos_nodes
 
     @staticmethod
-    def _check_rev_reeds_coordinates(rev_sc, reeds_build, atol=0.5, gid_column='sc_gid'):
+    def _check_rev_reeds_coordinates(rev_sc, reeds_build, atol=0.5,
+                                     gid_column='sc_gid'):
         """Check that the coordinates are the same in rev and reeds buildouts.
 
         Parameters
@@ -307,8 +308,8 @@ class PlexosAggregation(BaseProfileAggregation):
             supply curve point buildout to a single plexos node. If included,
             all points must be assigned to plexos nodes.
         gid_column: str, optional
-            Reference column to use for supply curve gid. Valid options are sc_gid 
-            and sc_point_gid.
+            Reference column to use for supply curve gid. Valid options are
+            sc_gid and sc_point_gid.
         atol : float
             Maximum difference in coord matching.
 
@@ -401,9 +402,8 @@ class PlexosAggregation(BaseProfileAggregation):
         if gid_column not in rev_sc or gid_column not in reeds_build:
             raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
 
-        rev_sc, reeds_build = cls._check_rev_reeds_coordinates(rev_sc,
-                                                               reeds_build,
-                                                               gid_column=gid_column)
+        rev_sc, reeds_build = cls._check_rev_reeds_coordinates(
+            rev_sc, reeds_build, gid_column=gid_column)
 
         check_isin = np.isin(reeds_build[gid_column].values,
                              rev_sc[gid_column].values)
@@ -453,7 +453,8 @@ class PlexosAggregation(BaseProfileAggregation):
 
             for i, sc_gid in enumerate(gid_col):
                 if any(m in sc_gid for m in missing):
-                    bad_sc_points.append(self.sc_build.iloc[i][self._gid_column])
+                    bad_point = self.sc_build.iloc[i][self._gid_column]
+                    bad_sc_points.append(bad_point)
 
             wmsg = ('There are {} SC points with missing gids: {}'
                     .format(len(bad_sc_points), bad_sc_points))
@@ -777,8 +778,8 @@ class PlexosAggregation(BaseProfileAggregation):
             than traditional reV generation outputs that are on the resource
             grid resolution.
         gid_column: str, optional
-            Reference column to use for supply curve gid. Valid options are sc_gid 
-            and sc_point_gid.
+            Reference column to use for supply curve gid. Valid options are
+            sc_gid and sc_point_gid.
         out_fpath : str, optional
             Path to .h5 file into which plant buildout should be saved. A
             plexos-formatted csv will also be written in the same directory.

@@ -76,9 +76,11 @@ class SimplePlantBuilder(BaseProfileAggregation):
             will enable us to select the corresponding datasets
             (cf_mean-2008, cf_profile-2008, etc)
         bespoke : bool
-            Flag if rev_sc and cf_fpath are bespoke outputs. This means that
-            each supply curve point only corresponds to a single generation
-            profile in cf_fpath
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
         """
 
         logger.info('Initializing SimplePlantBuilder.')
@@ -121,29 +123,12 @@ class SimplePlantBuilder(BaseProfileAggregation):
                                                      self._forecast_fpath)
 
         if bespoke:
-            self._sc_table = self.convert_bespoke_sc(self._sc_table)
+            self._sc_table = self.convert_bespoke_sc(self._sc_table, 'gid')
 
         self._compute_gid_capacities()
         self._sc_table['potential_capacity'] = self._sc_table[self.sc_cap_col]
 
-        if bespoke:
-            self.bespoke_mods()
-
         logger.info('Finished initializing SimplePlantBuilder.')
-
-    def bespoke_mods(self):
-        """Hack the supply curve table to be able to pull cf_profile from a
-        bespoke .h5 file.
-
-        Plant builder expects res_gids in the supply curve table to map to the
-        gid column in the meta data of the cf_fpath. When cf_fpath is a bespoke
-        file, gid is really the supply curve gid, so just set res_gids to gid,
-        gid_counts to 1, and gid_capacity to the full sc point capacity
-        """
-        for gid, row in self._sc_table.iterrows():
-            self._sc_table.loc[gid, 'res_gids'] = [row['gid']]
-            self._sc_table.loc[gid, 'gid_counts'] = [1]
-            self._sc_table.loc[gid, 'gid_capacity'] = [row[self.sc_cap_col]]
 
     def _compute_gid_capacities(self):
         """Compute the individual resource gid capacities and make a new
@@ -479,9 +464,11 @@ class SimplePlantBuilder(BaseProfileAggregation):
             will enable us to select the corresponding datasets
             (cf_mean-2008, cf_profile-2008, etc)
         bespoke : bool
-            Flag if rev_sc and cf_fpath are bespoke outputs. This means that
-            each supply curve point only corresponds to a single generation
-            profile in cf_fpath
+            Flag to signify if the cf_fpath file was generated using the reV
+            bespoke wind module. The bespoke output files have generation
+            profiles at the supply curve grid resolution which is different
+            than traditional reV generation outputs that are on the resource
+            grid resolution.
 
         Returns
         -------
