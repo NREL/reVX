@@ -162,7 +162,8 @@ class SimplePlantBuilder(BaseProfileAggregation):
         self._sc_table['gid_capacity'] = None
         for i, row in self._sc_table.iterrows():
             gid_counts = row['gid_counts']
-            gid_capacity = gid_counts / np.sum(gid_counts) * row[self.sc_cap_col]
+            total_counts = np.sum(gid_counts)
+            gid_capacity = gid_counts / total_counts * row[self.sc_cap_col]
             self._sc_table.at[i, 'gid_capacity'] = list(gid_capacity)
 
     def _make_node_map(self):
@@ -289,8 +290,11 @@ class SimplePlantBuilder(BaseProfileAggregation):
                                                      sc_point.to_frame().T],
                                                     axis=0)
 
-                        self._sc_table.at[sc_loc, self.sc_cap_col] -= sum(cap_build)
-                        self._sc_table.at[sc_loc, 'gid_capacity'] = cap_remain.tolist()
+                        cap_built = sum(cap_build)
+                        cap_remain = cap_remain.tolist()
+
+                        self._sc_table.at[sc_loc, self.sc_cap_col] -= cap_built
+                        self._sc_table.at[sc_loc, 'gid_capacity'] = cap_remain
 
                 # buildout for this plant is fully complete
                 if plant_cap_to_build <= 0:
