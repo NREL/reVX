@@ -341,15 +341,18 @@ class Geotiff:
         lon : ndarray
             Projected longitude coordinates
         """
-        y_slice, x_slice = self._unpack_slices(*ds_slice)
+        row_slice, col_slice = self._unpack_slices(*ds_slice)
 
-        cols, rows = np.meshgrid(np.arange(self.n_cols),
-                                 np.arange(self.n_rows))
+        if any(isinstance(s, slice) for s in [row_slice, col_slice]):
+            cols, rows = np.meshgrid(np.arange(self.n_cols)[col_slice],
+                                     np.arange(self.n_rows)[row_slice])
+        else:
+            cols = np.arange(self.n_cols)[col_slice]
+            rows = np.arange(self.n_rows)[row_slice]
 
         pixel_center_translation = Affine.translation(0.5, 0.5)
         adjusted_transform = self._src.transform * pixel_center_translation
-        lon, lat = adjusted_transform * [cols[y_slice, x_slice],
-                                         rows[y_slice, x_slice]]
+        lon, lat = adjusted_transform * [cols, rows]
 
         transformer = Transformer.from_crs(self._src.profile["crs"],
                                            'epsg:4326', always_xy=True)

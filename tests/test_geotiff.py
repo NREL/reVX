@@ -140,12 +140,32 @@ def test_geotiff_lat_lon(use_prop):
         assert lat.max() < 42.0189
 
 
-@pytest.mark.parametrize("inds", [([1, 5, 10], [3, 4, 5]),
-                                  (slice(1, 20), slice(None))])
-def test_geotiff_lat_lon_sliced(inds):
+@pytest.mark.parametrize("x_slice", [slice(100, 200), slice(1000, 1400)])
+@pytest.mark.parametrize("y_slice", [slice(275, 324), slice(-100, None)])
+def test_geotiff_lat_lon_sliced(x_slice, y_slice):
     """Test Geotiff Lat/Lon sliced accessor"""
+    geotiff = os.path.join(DIR, "ri_padus.tif")
+    with Geotiff(geotiff) as f:
+        lat, lon = f["lat_lon", x_slice, y_slice]
+        cols, rows = np.meshgrid(np.arange(f.n_cols), np.arange(f.n_rows))
+        transform = rasterio.transform.Affine(*f.profile["transform"])
+        xs, ys = rasterio.transform.xy(transform, rows, cols)
+        transformer = Transformer.from_crs(f.profile["crs"],
+                                           'epsg:4326', always_xy=True)
+        # pylint: disable=unpacking-non-sequence
+        lon_truth, lat_truth = transformer.transform(np.array(xs),
+                                                     np.array(ys))
+        lon_truth = lon_truth[x_slice, y_slice]
+        lat_truth = lat_truth[x_slice, y_slice]
+        assert np.allclose(lon, lon_truth)
+        assert np.allclose(lat, lat_truth)
+
+
+@pytest.mark.parametrize("x_inds", ([1, 5, 10], slice(1, 20)))
+@pytest.mark.parametrize("y_inds", ([3, 4, 5], slice(None)))
+def test_geotiff_lat_lon_components_sliced(x_inds, y_inds):
+    """Test Geotiff Lat/Lon components with sliced accessor"""
     geotiff = os.path.join(DIR, 'ri_padus.tif')
-    x_inds, y_inds = inds
     with Geotiff(geotiff) as f:
         lat_truth, lon_truth = f.lat_lon
         lat = f["latitude", x_inds, y_inds]
