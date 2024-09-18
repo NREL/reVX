@@ -343,22 +343,29 @@ class Geotiff:
         """
         row_slice, col_slice = self._unpack_slices(*ds_slice)
 
-        if any(isinstance(s, slice) for s in [row_slice, col_slice]):
-            cols, rows = np.meshgrid(np.arange(self.n_cols)[col_slice],
-                                     np.arange(self.n_rows)[row_slice])
+        if all(np.iinfo("uint16").max > dim for dim in self.shape):
+            dtype = "uint16"
         else:
-            cols = np.arange(self.n_cols)[col_slice]
-            rows = np.arange(self.n_rows)[row_slice]
+            dtype = "uint32"
+
+        rows = np.arange(self.n_rows, dtype=dtype)
+        cols = np.arange(self.n_cols, dtype=dtype)
+
+        if any(isinstance(s, slice) for s in [row_slice, col_slice]):
+            cols, rows = np.meshgrid(cols[col_slice], rows[row_slice])
+        else:
+            rows = rows[row_slice]
+            cols = cols[col_slice]
 
         pixel_center_translation = Affine.translation(0.5, 0.5)
         adjusted_transform = self._src.transform * pixel_center_translation
-        lon, lat = adjusted_transform * [cols, rows]
+        cols, rows = adjusted_transform * [cols, rows]
 
         transformer = Transformer.from_crs(self._src.profile["crs"],
                                            'epsg:4326', always_xy=True)
 
-        lon, lat = transformer.transform(lon, lat)
-        return lat.astype(np.float32), lon.astype(np.float32)
+        cols, rows = transformer.transform(cols, rows)
+        return rows.astype(np.float32), cols.astype(np.float32)
 
     def _get_data(self, ds, *ds_slice):
         """Get the flattened geotiff layer data.
