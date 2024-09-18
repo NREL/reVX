@@ -118,11 +118,12 @@ def test_geotiff_profile():
         assert f.profile["width"] == profile["width"]
 
 
-def test_geotiff_lat_lon():
+@pytest.mark.parametrize("use_prop", [True, False])
+def test_geotiff_lat_lon(use_prop):
     """Test Geotiff Lat/Lon"""
-    geotiff = os.path.join(DIR, 'ri_padus.tif')
+    geotiff = os.path.join(DIR, "ri_padus.tif")
     with Geotiff(geotiff) as f:
-        lat, lon = f.lat_lon
+        lat, lon = f.lat_lon if use_prop else f["lAt_LON"]
         cols, rows = np.meshgrid(np.arange(f.n_cols), np.arange(f.n_rows))
         transform = rasterio.transform.Affine(*f.profile["transform"])
         xs, ys = rasterio.transform.xy(transform, rows, cols)

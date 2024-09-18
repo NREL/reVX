@@ -71,6 +71,8 @@ class Geotiff:
         if isinstance(ds, str):
             if ds == 'meta':
                 out = self._get_meta(*ds_slice)
+            elif ds.casefold() == 'lat_lon':
+                out = self._get_lat_lon(*ds_slice)
             elif ds.lower().startswith('lat'):
                 out = self._get_lat_lon(*ds_slice)[0]
             elif ds.lower().startswith('lon'):
