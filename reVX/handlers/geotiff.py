@@ -71,6 +71,8 @@ class Geotiff:
         if isinstance(ds, str):
             if ds == 'meta':
                 out = self._get_meta(*ds_slice)
+            elif ds.casefold() == 'lat_lon':
+                out = self._get_lat_lon(*ds_slice)
             elif ds.lower().startswith('lat'):
                 out = self._get_lat_lon(*ds_slice)[0]
             elif ds.lower().startswith('lon'):
@@ -339,21 +341,31 @@ class Geotiff:
         lon : ndarray
             Projected longitude coordinates
         """
-        y_slice, x_slice = self._unpack_slices(*ds_slice)
+        row_slice, col_slice = self._unpack_slices(*ds_slice)
 
-        cols, rows = np.meshgrid(np.arange(self.n_cols),
-                                 np.arange(self.n_rows))
+        if all(np.iinfo("uint16").max > dim for dim in self.shape):
+            dtype = "uint16"
+        else:
+            dtype = "uint32"
+
+        rows = np.arange(self.n_rows, dtype=dtype)
+        cols = np.arange(self.n_cols, dtype=dtype)
+
+        if any(isinstance(s, slice) for s in [row_slice, col_slice]):
+            cols, rows = np.meshgrid(cols[col_slice], rows[row_slice])
+        else:
+            rows = rows[row_slice]
+            cols = cols[col_slice]
 
         pixel_center_translation = Affine.translation(0.5, 0.5)
         adjusted_transform = self._src.transform * pixel_center_translation
-        lon, lat = adjusted_transform * [cols[y_slice, x_slice],
-                                         rows[y_slice, x_slice]]
+        cols, rows = adjusted_transform * [cols, rows]
 
         transformer = Transformer.from_crs(self._src.profile["crs"],
                                            'epsg:4326', always_xy=True)
 
-        lon, lat = transformer.transform(lon, lat)
-        return lat.astype(np.float32), lon.astype(np.float32)
+        cols, rows = transformer.transform(cols, rows)
+        return rows.astype(np.float32), cols.astype(np.float32)
 
     def _get_data(self, ds, *ds_slice):
         """Get the flattened geotiff layer data.
