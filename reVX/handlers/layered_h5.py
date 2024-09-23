@@ -526,7 +526,7 @@ class LayeredH5:
             logger.info('- Extracting %s', layer_name)
             self.layer_to_geotiff(layer_name, geotiff)
 
-    def extract_all_layers(self, out_dir):
+    def extract_all_layers(self, out_dir, extract_lat_lon=False):
         """Extract all layers from HDF5 file and save to disk as GeoTIFFs.
 
         Parameters
@@ -534,12 +534,20 @@ class LayeredH5:
         out_dir : str
             Path to output directory into which layers should be saved
             as GeoTIFFs.
+        extract_lat_lon : bool, default=False
+            Option to extract latitude and longitude layers in addition
+            to all other layers. By default, ``False``.
         """
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
+        layer_names = self.layers
+        if not extract_lat_lon:
+            layer_names = [layer for layer in layer_names
+                           if layer not in {self.LATITUDE, self.LONGITUDE}]
+
         layers = {layer_name: os.path.join(out_dir, f"{layer_name}.tif")
-                  for layer_name in self.layers}
+                  for layer_name in layer_names}
         self.extract_layers(layers)
 
 
