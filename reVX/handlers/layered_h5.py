@@ -130,8 +130,8 @@ class LayeredH5:
         return self._template_file
 
     @template_file.setter
-    def template_file(self, new_tempalte_file):
-        self._template_file = new_tempalte_file
+    def template_file(self, new_template_file):
+        self._template_file = new_template_file
         self._validate_template()
 
     @property
@@ -201,15 +201,15 @@ class LayeredH5:
                                         dtype=np.float32, data=lat,
                                         chunks=self._chunks)
                 ds.attrs['profile'] = json.dumps(profile)
-                logger.debug('\t- latitude coordiantes created')
+                logger.debug('\t- latitude coordinates created')
 
                 ds = dst.create_dataset(self.LONGITUDE, shape=lon.shape,
                                         dtype=np.float32, data=lon,
                                         chunks=self._chunks)
                 ds.attrs['profile'] = json.dumps(profile)
-                logger.debug('\t- longitude coordiantes created')
+                logger.debug('\t- longitude coordinates created')
         except Exception as e:
-            logger.error("Error initilizing %s", self.h5_file)
+            logger.error("Error initializing %s", self.h5_file)
             logger.exception(e)
             if os.path.exists(self.h5_file):
                 os.remove(self.h5_file)
@@ -465,7 +465,7 @@ class LayeredH5:
         Parameters
         ----------
         layers : list | dict
-            List of geotiffs to load or dictionary mapping goetiffs to
+            List of GeoTIFFs to load or dictionary mapping GeoTIFFs to
             the layers to load.
         replace : bool, optional
             Option to replace existing layers if needed.
@@ -496,7 +496,7 @@ class LayeredH5:
 
         logger.info('Moving layers to %s', self.h5_file)
         for layer_name, geotiff in layers.items():
-            logger.info('- Transfering %s', layer_name)
+            logger.info('- Transferring %s', layer_name)
             description = descriptions.get(layer_name, None)
             scale = scale_factors.get(layer_name, None)
             if scale is not None:
@@ -581,7 +581,7 @@ class LayeredTransmissionH5(LayeredH5):
             (``*.h5``) file containing the profile and transform to be
             used for the layered transmission file. If ``None``, then
             the `h5_file` input is used as the template. If ``None`` and
-            the `h5_file` input is also ``Nonee``, an error is thrown.
+            the `h5_file` input is also ``None``, an error is thrown.
             By default, ``None``.
         layer_dir : path-like, optional
             Directory to search for layers in, if not found in current
