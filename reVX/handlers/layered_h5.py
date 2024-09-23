@@ -195,14 +195,18 @@ class LayeredH5:
                 dst.attrs['chunks'] = self._chunks
                 logger.debug('\t- Default chunks:\n%s', self._chunks)
 
-                dst.create_dataset('latitude', shape=lat.shape,
-                                   dtype=np.float32, data=lat,
-                                   chunks=self._chunks)
+                profile['dtype'] = str(np.float32)
+                profile['count'] = 1
+                ds = dst.create_dataset(self.LATITUDE, shape=lat.shape,
+                                        dtype=np.float32, data=lat,
+                                        chunks=self._chunks)
+                ds.attrs['profile'] = json.dumps(profile)
                 logger.debug('\t- latitude coordiantes created')
 
-                dst.create_dataset('longitude', shape=lon.shape,
-                                   dtype=np.float32, data=lon,
-                                   chunks=self._chunks)
+                ds = dst.create_dataset(self.LONGITUDE, shape=lon.shape,
+                                        dtype=np.float32, data=lon,
+                                        chunks=self._chunks)
+                ds.attrs['profile'] = json.dumps(profile)
                 logger.debug('\t- longitude coordiantes created')
         except Exception as e:
             logger.error("Error initilizing %s", self.h5_file)
