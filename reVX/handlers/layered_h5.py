@@ -31,6 +31,13 @@ class LayeredH5:
     SUPPORTED_FILE_ENDINGS = {".h5", ".tif", ".tiff"}
     """Supported template file endings."""
 
+    LATITUDE = "latitude"
+    """Name of latitude values layer in HDF5 file."""
+
+    LONGITUDE = "longitude"
+    """Name of longitude values layer in HDF5 file."""
+
+
     def __init__(self, h5_file, hsds=False, chunks=(128, 128),
                  template_file=None):
         """
