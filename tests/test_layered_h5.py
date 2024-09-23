@@ -247,6 +247,27 @@ def test_write_geotiff_to_h5():
             assert h5.attrs["iso_regions"]["description"] == "ISO"
 
 
+@pytest.mark.parametrize('include_lat_lon', [True, False])
+def test_extract_all_layers_to_geotiff(include_lat_lon):
+    """Test extracting all layer data from HDF5 file. """
+
+    values, profile = extract_geotiff(ISO_TIFF)
+
+    expected_files = {'iso_regions.tif', 'test.h5'}
+    if include_lat_lon:
+        expected_files |= {f'{LayeredH5.LATITUDE}.tif',
+                           f'{LayeredH5.LONGITUDE}.tif'}
+
+    with tempfile.TemporaryDirectory() as td:
+        h5_file = os.path.join(td, 'test.h5')
+        lh5 = LayeredH5(h5_file, template_file=XMISSION_H5)
+        lh5.write_layer_to_h5(values, "iso_regions", profile=profile,
+                              description="ISO")
+
+        lh5.extract_all_layers(td, extract_lat_lon=include_lat_lon)
+        assert set(os.listdir(td)) == expected_files
+
+
 @pytest.mark.parametrize('layer',
                          ['ri_padus', 'ri_reeds_regions', 'ri_smod',
                           'ri_srtm_slope'])
