@@ -31,6 +31,13 @@ class LayeredH5:
     SUPPORTED_FILE_ENDINGS = {".h5", ".tif", ".tiff"}
     """Supported template file endings."""
 
+    LATITUDE = "latitude"
+    """Name of latitude values layer in HDF5 file."""
+
+    LONGITUDE = "longitude"
+    """Name of longitude values layer in HDF5 file."""
+
+
     def __init__(self, h5_file, hsds=False, chunks=(128, 128),
                  template_file=None):
         """
@@ -112,7 +119,7 @@ class LayeredH5:
         """Extract template lat/lons. """
         if str(self.template_file).endswith(".h5"):
             with Resource(self.template_file, hsds=self._hsds) as h5:
-                return h5['latitude'], h5['longitude']
+                return h5[self.LATITUDE], h5[self.LONGITUDE]
 
         with Geotiff(self.template_file) as geo:
             return geo.lat_lon
@@ -123,8 +130,8 @@ class LayeredH5:
         return self._template_file
 
     @template_file.setter
-    def template_file(self, new_tempalte_file):
-        self._template_file = new_tempalte_file
+    def template_file(self, new_template_file):
+        self._template_file = new_template_file
         self._validate_template()
 
     @property
@@ -188,17 +195,21 @@ class LayeredH5:
                 dst.attrs['chunks'] = self._chunks
                 logger.debug('\t- Default chunks:\n%s', self._chunks)
 
-                dst.create_dataset('latitude', shape=lat.shape,
-                                   dtype=np.float32, data=lat,
-                                   chunks=self._chunks)
-                logger.debug('\t- latitude coordiantes created')
+                profile['dtype'] = str(np.float32)
+                profile['count'] = 1
+                ds = dst.create_dataset(self.LATITUDE, shape=lat.shape,
+                                        dtype=np.float32, data=lat,
+                                        chunks=self._chunks)
+                ds.attrs['profile'] = json.dumps(profile)
+                logger.debug('\t- latitude coordinates created')
 
-                dst.create_dataset('longitude', shape=lon.shape,
-                                   dtype=np.float32, data=lon,
-                                   chunks=self._chunks)
-                logger.debug('\t- longitude coordiantes created')
+                ds = dst.create_dataset(self.LONGITUDE, shape=lon.shape,
+                                        dtype=np.float32, data=lon,
+                                        chunks=self._chunks)
+                ds.attrs['profile'] = json.dumps(profile)
+                logger.debug('\t- longitude coordinates created')
         except Exception as e:
-            logger.error("Error initilizing %s", self.h5_file)
+            logger.error("Error initializing %s", self.h5_file)
             logger.exception(e)
             if os.path.exists(self.h5_file):
                 os.remove(self.h5_file)
@@ -454,7 +465,7 @@ class LayeredH5:
         Parameters
         ----------
         layers : list | dict
-            List of geotiffs to load or dictionary mapping goetiffs to
+            List of GeoTIFFs to load or dictionary mapping GeoTIFFs to
             the layers to load.
         replace : bool, optional
             Option to replace existing layers if needed.
@@ -485,7 +496,7 @@ class LayeredH5:
 
         logger.info('Moving layers to %s', self.h5_file)
         for layer_name, geotiff in layers.items():
-            logger.info('- Transfering %s', layer_name)
+            logger.info('- Transferring %s', layer_name)
             description = descriptions.get(layer_name, None)
             scale = scale_factors.get(layer_name, None)
             if scale is not None:
@@ -515,7 +526,7 @@ class LayeredH5:
             logger.info('- Extracting %s', layer_name)
             self.layer_to_geotiff(layer_name, geotiff)
 
-    def extract_all_layers(self, out_dir):
+    def extract_all_layers(self, out_dir, extract_lat_lon=False):
         """Extract all layers from HDF5 file and save to disk as GeoTIFFs.
 
         Parameters
@@ -523,12 +534,20 @@ class LayeredH5:
         out_dir : str
             Path to output directory into which layers should be saved
             as GeoTIFFs.
+        extract_lat_lon : bool, default=False
+            Option to extract latitude and longitude layers in addition
+            to all other layers. By default, ``False``.
         """
         if not os.path.exists(out_dir):
             os.makedirs(out_dir)
 
+        layer_names = self.layers
+        if not extract_lat_lon:
+            layer_names = [layer for layer in layer_names
+                           if layer not in {self.LATITUDE, self.LONGITUDE}]
+
         layers = {layer_name: os.path.join(out_dir, f"{layer_name}.tif")
-                  for layer_name in self.layers}
+                  for layer_name in layer_names}
         self.extract_layers(layers)
 
 
@@ -562,7 +581,7 @@ class LayeredTransmissionH5(LayeredH5):
             (``*.h5``) file containing the profile and transform to be
             used for the layered transmission file. If ``None``, then
             the `h5_file` input is used as the template. If ``None`` and
-            the `h5_file` input is also ``Nonee``, an error is thrown.
+            the `h5_file` input is also ``None``, an error is thrown.
             By default, ``None``.
         layer_dir : path-like, optional
             Directory to search for layers in, if not found in current
