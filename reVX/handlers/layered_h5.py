@@ -119,7 +119,7 @@ class LayeredH5:
         """Extract template lat/lons. """
         if str(self.template_file).endswith(".h5"):
             with Resource(self.template_file, hsds=self._hsds) as h5:
-                return h5['latitude'], h5['longitude']
+                return h5[self.LATITUDE], h5[self.LONGITUDE]
 
         with Geotiff(self.template_file) as geo:
             return geo.lat_lon
