@@ -1,0 +1,47 @@
+reVX.least\_cost\_xmission.trans\_cap\_costs.TransCapCosts
+==========================================================
+
+.. currentmodule:: reVX.least_cost_xmission.trans_cap_costs
+
+.. autoclass:: TransCapCosts
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TransCapCosts.compute
+      ~TransCapCosts.compute_connection_costs
+      ~TransCapCosts.compute_tie_line_costs
+      ~TransCapCosts.least_cost_path
+      ~TransCapCosts.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TransCapCosts.capacity_class
+      ~TransCapCosts.clip_mask
+      ~TransCapCosts.clip_shape
+      ~TransCapCosts.col
+      ~TransCapCosts.col_offset
+      ~TransCapCosts.cost
+      ~TransCapCosts.features
+      ~TransCapCosts.mcp
+      ~TransCapCosts.mcp_cost
+      ~TransCapCosts.row
+      ~TransCapCosts.row_offset
+      ~TransCapCosts.sc_point
+      ~TransCapCosts.sc_point_gid
+      ~TransCapCosts.tie_line_voltage
+   
+   

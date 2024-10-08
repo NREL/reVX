@@ -1,0 +1,6 @@
+reVX.utilities.utilities.load\_fips\_to\_state\_map
+===================================================
+
+.. currentmodule:: reVX.utilities.utilities
+
+.. autofunction:: load_fips_to_state_map

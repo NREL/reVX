@@ -1,0 +1,25 @@
+reVX.plexos.rev\_reeds\_plexos.RevReedsPlexosManager
+====================================================
+
+.. currentmodule:: reVX.plexos.rev_reeds_plexos
+
+.. autoclass:: RevReedsPlexosManager
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RevReedsPlexosManager.main
+      ~RevReedsPlexosManager.run
+   
+   
+
+   
+   
+   

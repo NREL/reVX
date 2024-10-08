@@ -1,0 +1,41 @@
+reVX.hybrid\_stats.hybrid\_stats.HybridCrossCorrelation
+=======================================================
+
+.. currentmodule:: reVX.hybrid_stats.hybrid_stats
+
+.. autoclass:: HybridCrossCorrelation
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~HybridCrossCorrelation.cf_profile
+      ~HybridCrossCorrelation.compute_stats
+      ~HybridCrossCorrelation.cross_correlation
+      ~HybridCrossCorrelation.run
+      ~HybridCrossCorrelation.save_stats
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~HybridCrossCorrelation.STATS
+      ~HybridCrossCorrelation.lat_lon
+      ~HybridCrossCorrelation.meta
+      ~HybridCrossCorrelation.res_cls
+      ~HybridCrossCorrelation.solar_h5
+      ~HybridCrossCorrelation.statistics
+      ~HybridCrossCorrelation.time_index
+      ~HybridCrossCorrelation.wind_h5
+   
+   

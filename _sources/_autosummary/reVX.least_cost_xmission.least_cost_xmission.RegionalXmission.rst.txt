@@ -1,0 +1,39 @@
+reVX.least\_cost\_xmission.least\_cost\_xmission.RegionalXmission
+=================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.least_cost_xmission
+
+.. autoclass:: RegionalXmission
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RegionalXmission.process_least_cost_paths
+      ~RegionalXmission.process_sc_points
+      ~RegionalXmission.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RegionalXmission.end_features
+      ~RegionalXmission.end_indices
+      ~RegionalXmission.features
+      ~RegionalXmission.sc_points
+      ~RegionalXmission.sink_coords
+      ~RegionalXmission.sink_tree
+      ~RegionalXmission.start_indices
+      ~RegionalXmission.sub_lines_mapping
+   
+   
