@@ -304,18 +304,44 @@ def compute_setbacks(excl_fpath, node_feature_type, node_file_path,
         are computed. By default, ``None``.
     regulations_fpath : str, optional
         Path to regulations ``.csv`` or ``.gpkg`` file. At a minimum,
-        this file must contain the following columns: ``Feature Type``,
-        which contains labels for the type of setback that each row
-        represents, ``Feature Subtype``, which contains labels for
-        feature subtypes, ``Value Type``, which specifies wether the
-        value is a multiplier or static height, ``Value``, which
-        specifies the numeric value of the setback or multiplier, and
-        ``FIPS``, which specifies a unique 5-digit code for each county
-        (this can be an integer - no leading zeros required). See
-        :obj:`~reVX.setbacks.regulations.SetbackRegulations` (if using
-        only ``base_setback_dist`` input) or
-        :obj:`~reVX.setbacks.regulations.WindSetbackRegulations` (if
-        using ``hub_height`` + ``rotor_diameter`` input) for more info.
+        this file must contain the following columns:
+
+            - ``Feature Type``: Contains labels for the type of setback
+              that each row represents. This should be a
+              `"feature_type"` label that can be found in the
+              :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS` dictionary
+              (e.g. ``"structures"``, ``"roads"``, ``"water"``, etc.),
+              unless you have created your own setback calculator using
+              :func:`~reVX.setbacks.setbacks.setbacks_calculator`, in
+              which case this label can match the `feature_type` input
+              you used for that function call.
+            - ``Feature Subtype``: Contains labels for feature subtypes.
+              The feature subtypes are only used for down-selecting the
+              local regulations that should be applied for a particular
+              feature, so often you can leave this blank or set it to
+              ``None``. If you do specify this value, it should be a
+              `"feature_subtypes_to_exclude"` label that can be found in
+              the
+              :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS` dictionary,
+              unless you have created your own setback calculator using
+              :func:`~reVX.setbacks.setbacks.setbacks_calculator`, in
+              which case this label can match the
+              `feature_subtypes_to_exclude` input you used for that
+              function call.
+            - ``Value Type``: Specifies wether the value is a multiplier
+              or static height.  See
+              :obj:`~reVX.setbacks.regulations.SetbackRegulations` (if
+              using only ``base_setback_dist`` input) or
+              :obj:`~reVX.setbacks.regulations.WindSetbackRegulations`
+              (if using ``hub_height`` + ``rotor_diameter`` input) for
+              more info.
+            - ``Value``: Numeric value of the setback or multiplier.
+            - ``FIPS``: Specifies a unique 5-digit code for each county
+              (this can be an integer - no leading zeros required). This
+              is used along side the ``cnty_fips`` layer in the
+              `excl_fpath` to match the county regulations to the
+              county's spatial extent.
+
         This option overrides the ``generic_setback_multiplier`` input,
         but only for counties that are listed in the input CSV file.
         This means both ``regulations_fpath`` and

@@ -28,16 +28,42 @@ class SetbackRegulations(AbstractBaseRegulations):
         regulations_fpath : str | None, optional
             Path to regulations ``.csv`` or ``.gpkg`` file. At a
             minimum, this file must contain the following columns:
-            ``Feature Type``, which contains labels for the type of
-            setback that each row represents, ``Feature Subtype``, which
-            contains labels for feature subtypes, ``Value Type``, which
-            specifies wether the value is a multiplier or static height,
-            ``Value``, which specifies the numeric value of the setback
-            or multiplier, and ``FIPS``, which specifies a unique
-            5-digit code for each county (this can be an integer - no
-            leading zeros required). Valid options for the
-            ``Value Type`` are (case-insensitive; dashes, underscores,
-            and spaces are interchangeable):
+
+                - ``Feature Type``: Contains labels for the type of
+                  setback that each row represents. This should be a
+                  `"feature_type"` label that can be found in the
+                  :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS`
+                  dictionary (e.g. ``"structures"``, ``"roads"``,
+                  ``"water"``, etc.), unless you have created your own
+                  setback calculator using
+                  :func:`~reVX.setbacks.setbacks.setbacks_calculator`,
+                  in which case this label can match the `feature_type`
+                  input you used for that function call.
+                - ``Feature Subtype``: Contains labels for feature
+                  subtypes. The feature subtypes are only used for
+                  down-selecting the local regulations that should be
+                  applied for a particular feature, so often you can
+                  leave this blank or set it to ``None``. If you do
+                  specify this value, it should be a
+                  `"feature_subtypes_to_exclude"` label that can be
+                  found in the
+                  :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS`
+                  dictionary,  unless you have created your own setback
+                  calculator using
+                  :func:`~reVX.setbacks.setbacks.setbacks_calculator`,
+                  in which case this label can match the
+                  `feature_subtypes_to_exclude` input you used for that
+                  function call.
+                - ``Value Type``: Specifies wether the value is a
+                  multiplier or static height. See below for more info.
+                - ``Value``: Numeric value of the setback or multiplier.
+                - ``FIPS``: Specifies a unique 5-digit code for each
+                  county (this can be an integer - no leading zeros
+                  required). This is used to match the county
+                  regulations to the county's spatial extent.
+
+            Valid options for the ``Value Type`` are (case-insensitive;
+            dashes, underscores, and spaces are interchangeable):
 
                 - "Structure Height Multiplier"
                 - "Meters"
@@ -143,16 +169,42 @@ class WindSetbackRegulations(SetbackRegulations):
         regulations_fpath : str | None, optional
             Path to regulations ``.csv`` or ``.gpkg`` file. At a
             minimum, this file must contain the following columns:
-            ``Feature Type``, which contains labels for the type of
-            setback that each row represents, ``Feature Subtype``, which
-            contains labels for feature subtypes, ``Value Type``, which
-            specifies wether the value is a multiplier or static height,
-            ``Value``, which specifies the numeric value of the setback
-            or multiplier, and ``FIPS``, which specifies a unique
-            5-digit code for each county (this can be an integer - no
-            leading zeros required). Valid options for the
-            ``Value Type`` are (case-insensitive; dashes, underscores,
-            and spaces are interchangeable):
+
+                - ``Feature Type``: Contains labels for the type of
+                  setback that each row represents. This should be a
+                  `"feature_type"` label that can be found in the
+                  :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS`
+                  dictionary (e.g. ``"structures"``, ``"roads"``,
+                  ``"water"``, etc.), unless you have created your own
+                  setback calculator using
+                  :func:`~reVX.setbacks.setbacks.setbacks_calculator`,
+                  in which case this label can match the `feature_type`
+                  input you used for that function call.
+                - ``Feature Subtype``: Contains labels for feature
+                  subtypes. The feature subtypes are only used for
+                  down-selecting the local regulations that should be
+                  applied for a particular feature, so often you can
+                  leave this blank or set it to ``None``. If you do
+                  specify this value, it should be a
+                  `"feature_subtypes_to_exclude"` label that can be
+                  found in the
+                  :attr:`~reVX.setbacks.setbacks.SETBACK_SPECS`
+                  dictionary,  unless you have created your own setback
+                  calculator using
+                  :func:`~reVX.setbacks.setbacks.setbacks_calculator`,
+                  in which case this label can match the
+                  `feature_subtypes_to_exclude` input you used for that
+                  function call.
+                - ``Value Type``: Specifies wether the value is a
+                  multiplier or static height. See below for more info.
+                - ``Value``: Numeric value of the setback or multiplier.
+                - ``FIPS``: Specifies a unique 5-digit code for each
+                  county (this can be an integer - no leading zeros
+                  required). This is used to match the county
+                  regulations to the county's spatial extent.
+
+            Valid options for the ``Value Type`` are (case-insensitive;
+            dashes, underscores, and spaces are interchangeable):
 
                 - "Max-tip Height Multiplier"
                 - "Rotor-Diameter Multiplier"
