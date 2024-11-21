@@ -737,6 +737,12 @@ class BaseProfileAggregation(ABC):
             taken based on the bespoke indexing.
         """
 
+        if gid_column != 'sc_gid':
+            msg = ('Only option for `gid_column` input with bespoke is '
+                   f'"sc_gid" but received: "{gid_column}"')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
         df['res_gids'] = [[g] for g in df[gid_column]]
 
         if 'gid_counts' in df:

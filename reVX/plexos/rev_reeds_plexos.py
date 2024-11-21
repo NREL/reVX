@@ -400,7 +400,10 @@ class PlexosAggregation(BaseProfileAggregation):
         reeds_build = reeds_build[year_mask]
 
         if gid_column not in rev_sc or gid_column not in reeds_build:
-            raise KeyError('GID must be in reV SC and REEDS Buildout tables!')
+            msg = (f'GID column name {gid_column} must be in reV SC and '
+                   'REEDS Buildout tables!')
+            logger.error(msg)
+            raise KeyError(msg)
 
         rev_sc, reeds_build = cls._check_rev_reeds_coordinates(
             rev_sc, reeds_build, gid_column=gid_column)
