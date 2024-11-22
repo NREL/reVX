@@ -132,8 +132,8 @@ def test_geotiff_lat_lon(use_prop):
         # pylint: disable=unpacking-non-sequence
         lon_truth, lat_truth = transformer.transform(np.array(xs),
                                                      np.array(ys))
-        assert np.allclose(lon, lon_truth)
-        assert np.allclose(lat, lat_truth)
+        assert np.allclose(lon.flatten(), lon_truth.flatten())
+        assert np.allclose(lat.flatten(), lat_truth.flatten())
         assert lon.min() > -71.912
         assert lon.max() < -70.856
         assert lat.min() > 40.8558
@@ -155,6 +155,8 @@ def test_geotiff_lat_lon_sliced(x_slice, y_slice):
         # pylint: disable=unpacking-non-sequence
         lon_truth, lat_truth = transformer.transform(np.array(xs),
                                                      np.array(ys))
+        lon_truth = lon_truth.reshape(rows.shape)
+        lat_truth = lat_truth.reshape(rows.shape)
         lon_truth = lon_truth[x_slice, y_slice]
         lat_truth = lat_truth[x_slice, y_slice]
         assert np.allclose(lon, lon_truth)
