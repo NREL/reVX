@@ -1,0 +1,42 @@
+reVX.hybrid\_stats.hybrid\_stats
+================================
+
+.. automodule:: reVX.hybrid_stats.hybrid_stats
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      kendall_tau
+      pearson_correlation
+      spearman_correlation
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      HybridCrossCorrelation
+      HybridStabilityCoefficient
+      HybridStats
+   
+   
+
+   
+   
+   
+
+
+

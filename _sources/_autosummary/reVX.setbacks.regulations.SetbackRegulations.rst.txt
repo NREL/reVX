@@ -1,0 +1,35 @@
+reVX.setbacks.regulations.SetbackRegulations
+============================================
+
+.. currentmodule:: reVX.setbacks.regulations
+
+.. autoclass:: SetbackRegulations
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~SetbackRegulations.REQUIRED_COLUMNS
+      ~SetbackRegulations.base_setback_dist
+      ~SetbackRegulations.df
+      ~SetbackRegulations.generic
+      ~SetbackRegulations.generic_exists
+      ~SetbackRegulations.locals_exist
+      ~SetbackRegulations.multiplier
+   
+   

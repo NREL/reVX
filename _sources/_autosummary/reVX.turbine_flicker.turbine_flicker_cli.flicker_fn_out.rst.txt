@@ -1,0 +1,6 @@
+reVX.turbine\_flicker.turbine\_flicker\_cli.flicker\_fn\_out
+============================================================
+
+.. currentmodule:: reVX.turbine_flicker.turbine_flicker_cli
+
+.. autofunction:: flicker_fn_out

@@ -1,0 +1,58 @@
+reVX.config.rpm.RepProfilesConfigGroup
+======================================
+
+.. currentmodule:: reVX.config.rpm
+
+.. autoclass:: RepProfilesConfigGroup
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RepProfilesConfigGroup.check_files
+      ~RepProfilesConfigGroup.check_overwrite_keys
+      ~RepProfilesConfigGroup.clear
+      ~RepProfilesConfigGroup.copy
+      ~RepProfilesConfigGroup.fromkeys
+      ~RepProfilesConfigGroup.get
+      ~RepProfilesConfigGroup.items
+      ~RepProfilesConfigGroup.keys
+      ~RepProfilesConfigGroup.pop
+      ~RepProfilesConfigGroup.popitem
+      ~RepProfilesConfigGroup.resolve_path
+      ~RepProfilesConfigGroup.set_self_dict
+      ~RepProfilesConfigGroup.setdefault
+      ~RepProfilesConfigGroup.str_replace_and_resolve
+      ~RepProfilesConfigGroup.update
+      ~RepProfilesConfigGroup.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RepProfilesConfigGroup.REQUIREMENTS
+      ~RepProfilesConfigGroup.STR_REP
+      ~RepProfilesConfigGroup.config_dir
+      ~RepProfilesConfigGroup.config_keys
+      ~RepProfilesConfigGroup.excl_dict
+      ~RepProfilesConfigGroup.exclusions
+      ~RepProfilesConfigGroup.forecast_fpath
+      ~RepProfilesConfigGroup.log_level
+      ~RepProfilesConfigGroup.n_profiles
+      ~RepProfilesConfigGroup.name
+      ~RepProfilesConfigGroup.rpm_clusters
+      ~RepProfilesConfigGroup.techmap_dset
+      ~RepProfilesConfigGroup.trg_bins
+      ~RepProfilesConfigGroup.trg_dset
+   
+   

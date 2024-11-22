@@ -1,0 +1,39 @@
+reVX.least\_cost\_xmission.config.xmission\_config.XmissionConfig
+=================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.xmission_config
+
+.. autoclass:: XmissionConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~XmissionConfig.capacity_to_kv
+      ~XmissionConfig.clear
+      ~XmissionConfig.copy
+      ~XmissionConfig.fromkeys
+      ~XmissionConfig.get
+      ~XmissionConfig.items
+      ~XmissionConfig.keys
+      ~XmissionConfig.kv_to_capacity
+      ~XmissionConfig.new_sub_cost
+      ~XmissionConfig.pop
+      ~XmissionConfig.popitem
+      ~XmissionConfig.setdefault
+      ~XmissionConfig.sub_upgrade_cost
+      ~XmissionConfig.update
+      ~XmissionConfig.values
+      ~XmissionConfig.xformer_cost
+   
+   
+
+   
+   
+   

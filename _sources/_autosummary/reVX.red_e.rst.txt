@@ -1,0 +1,30 @@
+reVX.red\_e
+===========
+
+.. automodule:: reVX.red_e
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   reVX.red_e.tech_potential
+

@@ -1,0 +1,31 @@
+reVX.hybrid\_stats
+==================
+
+.. automodule:: reVX.hybrid_stats
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   reVX.hybrid_stats.hybrid_stats
+   reVX.hybrid_stats.temporal_agg
+

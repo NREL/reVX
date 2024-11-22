@@ -1,0 +1,6 @@
+reVX.rpm.rpm\_cli.get\_node\_cmd
+================================
+
+.. currentmodule:: reVX.rpm.rpm_cli
+
+.. autofunction:: get_node_cmd
