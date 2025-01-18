@@ -576,7 +576,8 @@ def _load_features(features_ids, features_fp, col, crs):
     logger.debug("  Loading {} features from {}".format(len(features_ids),
                                                         features_fp))
     features = gpd.read_file(features_fp,
-                             where="{} in ({})".format(col, ids))
+                             where="{} in ({})".format(col, ids),
+                             engine="pyogrio")
     features = features.to_crs(crs=crs)
     features["geometry"] = features.apply(_make_row_shape_valid, axis=1)
 
