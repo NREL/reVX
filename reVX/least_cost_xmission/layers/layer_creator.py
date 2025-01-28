@@ -173,6 +173,15 @@ class LayerCreator(BaseLayerCreator):
 
             return processed
 
+        if config.pass_through:
+            if config.extent == ALL:
+                return data
+
+            mask = self._get_mask(config.extent)
+            processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
+            processed[mask] = data[mask]
+            return processed
+
         # No bins specified, has to be map. Assign cells values based on map.
         temp = np.zeros(self._io_handler.shape, dtype=self._dtype)
         for key, val in config.map.items():  # type: ignore[union-attr]
