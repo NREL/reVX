@@ -335,16 +335,17 @@ class LayerCreator(BaseLayerCreator):
 
         mutex_entries = [config.map, config.bins, config.global_value]
         num_entries = sum(entry is not None for entry in mutex_entries)
+        num_entries += int(config.pass_through)
         if num_entries > 1:
-            raise ValueError('Keys "global_value", "map", and "bins" are '
-                             'mutually exclusive but more than one was '
-                             'found in raster config '
+            raise ValueError('Keys "global_value", "map", "bins", and '
+                             '"pass_through" are mutually exclusive but '
+                             'more than one was found in raster config '
                              f'{config}')
 
         if num_entries < 1:
-            raise ValueError('Either "global_value", "map", or "bins" must '
-                             'be specified fora raster, but none were found '
-                             'in config '
+            raise ValueError('Either "global_value", "map", "bins", and '
+                             '"pass_through" must be specified fora raster, '
+                             'but none were found in config '
                              f'{config}')
 
 
