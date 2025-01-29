@@ -173,6 +173,15 @@ class LayerCreator(BaseLayerCreator):
 
             return processed
 
+        if config.pass_through:
+            if config.extent == ALL:
+                return data
+
+            mask = self._get_mask(config.extent)
+            processed = np.zeros(self._io_handler.shape, dtype=self._dtype)
+            processed[mask] = data[mask]
+            return processed
+
         # No bins specified, has to be map. Assign cells values based on map.
         temp = np.zeros(self._io_handler.shape, dtype=self._dtype)
         for key, val in config.map.items():  # type: ignore[union-attr]
@@ -335,16 +344,17 @@ class LayerCreator(BaseLayerCreator):
 
         mutex_entries = [config.map, config.bins, config.global_value]
         num_entries = sum(entry is not None for entry in mutex_entries)
+        num_entries += int(config.pass_through)
         if num_entries > 1:
-            raise ValueError('Keys "global_value", "map", and "bins" are '
-                             'mutually exclusive but more than one was '
-                             'found in raster config '
+            raise ValueError('Keys "global_value", "map", "bins", and '
+                             '"pass_through" are mutually exclusive but '
+                             'more than one was found in raster config '
                              f'{config}')
 
         if num_entries < 1:
-            raise ValueError('Either "global_value", "map", or "bins" must '
-                             'be specified fora raster, but none were found '
-                             'in config '
+            raise ValueError('Either "global_value", "map", "bins", and '
+                             '"pass_through" must be specified fora raster, '
+                             'but none were found in config '
                              f'{config}')
 
 

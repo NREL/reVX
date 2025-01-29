@@ -145,6 +145,28 @@ def test_map():
                                 [0, 9, 0]])).all()
 
 
+def test_pass_through():
+    """Test pass through key in LayerBuildConfig """
+    data = np.array([[1, 1, 1],
+                     [2, 2, 2],
+                     [3, 3, 3]])
+    config = LayerBuildConfig(extent='wet', pass_through=True)
+    result = builder._process_raster_layer(data, config)
+    assert (result == np.array([[1, 0, 0],
+                                [2, 0, 0],
+                                [3, 0, 0]])).all()
+
+    config = LayerBuildConfig(extent='landfall', pass_through=True)
+    result = builder._process_raster_layer(data, config)
+    assert (result == np.array([[0, 1, 0],
+                                [0, 2, 0],
+                                [0, 3, 0]])).all()
+
+    config = LayerBuildConfig(extent='all', pass_through=True)
+    result = builder._process_raster_layer(data, config)
+    assert (result == data).all()
+
+
 def test_bin_config_sanity_checking():
     """
     Test cost binning config sanity checking.
