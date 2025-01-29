@@ -1,0 +1,32 @@
+reVX.turbine\_flicker
+=====================
+
+.. automodule:: reVX.turbine_flicker
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   reVX.turbine_flicker.regulations
+   reVX.turbine_flicker.turbine_flicker
+   reVX.turbine_flicker.turbine_flicker_cli
+

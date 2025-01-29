@@ -1,0 +1,32 @@
+reVX.wind\_dirs.prominent\_wind\_dirs\_cli
+==========================================
+
+.. automodule:: reVX.wind_dirs.prominent_wind_dirs_cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      eagle
+      get_node_cmd
+      run_local
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

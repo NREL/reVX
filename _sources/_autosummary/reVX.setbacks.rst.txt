@@ -1,0 +1,35 @@
+reVX.setbacks
+=============
+
+.. automodule:: reVX.setbacks
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   reVX.setbacks.base
+   reVX.setbacks.functions
+   reVX.setbacks.regulations
+   reVX.setbacks.setbacks
+   reVX.setbacks.setbacks_cli
+   reVX.setbacks.setbacks_converter
+

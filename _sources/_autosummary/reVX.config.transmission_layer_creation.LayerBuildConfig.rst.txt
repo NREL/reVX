@@ -1,0 +1,63 @@
+reVX.config.transmission\_layer\_creation.LayerBuildConfig
+==========================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: LayerBuildConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LayerBuildConfig.construct
+      ~LayerBuildConfig.copy
+      ~LayerBuildConfig.dict
+      ~LayerBuildConfig.from_orm
+      ~LayerBuildConfig.json
+      ~LayerBuildConfig.model_construct
+      ~LayerBuildConfig.model_copy
+      ~LayerBuildConfig.model_dump
+      ~LayerBuildConfig.model_dump_json
+      ~LayerBuildConfig.model_json_schema
+      ~LayerBuildConfig.model_parametrized_name
+      ~LayerBuildConfig.model_post_init
+      ~LayerBuildConfig.model_rebuild
+      ~LayerBuildConfig.model_validate
+      ~LayerBuildConfig.model_validate_json
+      ~LayerBuildConfig.model_validate_strings
+      ~LayerBuildConfig.parse_file
+      ~LayerBuildConfig.parse_obj
+      ~LayerBuildConfig.parse_raw
+      ~LayerBuildConfig.schema
+      ~LayerBuildConfig.schema_json
+      ~LayerBuildConfig.update_forward_refs
+      ~LayerBuildConfig.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LayerBuildConfig.model_computed_fields
+      ~LayerBuildConfig.model_config
+      ~LayerBuildConfig.model_extra
+      ~LayerBuildConfig.model_fields
+      ~LayerBuildConfig.model_fields_set
+      ~LayerBuildConfig.extent
+      ~LayerBuildConfig.global_value
+      ~LayerBuildConfig.map
+      ~LayerBuildConfig.bins
+      ~LayerBuildConfig.pass_through
+      ~LayerBuildConfig.rasterize
+      ~LayerBuildConfig.forced_inclusion
+   
+   

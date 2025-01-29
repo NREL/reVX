@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.config.constants.NUM\_NN\_SINKS
+==========================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.constants
+
+.. autodata:: NUM_NN_SINKS

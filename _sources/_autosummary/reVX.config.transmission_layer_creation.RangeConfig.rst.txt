@@ -1,0 +1,59 @@
+reVX.config.transmission\_layer\_creation.RangeConfig
+=====================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: RangeConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RangeConfig.construct
+      ~RangeConfig.copy
+      ~RangeConfig.dict
+      ~RangeConfig.from_orm
+      ~RangeConfig.json
+      ~RangeConfig.model_construct
+      ~RangeConfig.model_copy
+      ~RangeConfig.model_dump
+      ~RangeConfig.model_dump_json
+      ~RangeConfig.model_json_schema
+      ~RangeConfig.model_parametrized_name
+      ~RangeConfig.model_post_init
+      ~RangeConfig.model_rebuild
+      ~RangeConfig.model_validate
+      ~RangeConfig.model_validate_json
+      ~RangeConfig.model_validate_strings
+      ~RangeConfig.parse_file
+      ~RangeConfig.parse_obj
+      ~RangeConfig.parse_raw
+      ~RangeConfig.schema
+      ~RangeConfig.schema_json
+      ~RangeConfig.update_forward_refs
+      ~RangeConfig.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RangeConfig.model_computed_fields
+      ~RangeConfig.model_config
+      ~RangeConfig.model_extra
+      ~RangeConfig.model_fields
+      ~RangeConfig.model_fields_set
+      ~RangeConfig.min
+      ~RangeConfig.max
+      ~RangeConfig.value
+   
+   

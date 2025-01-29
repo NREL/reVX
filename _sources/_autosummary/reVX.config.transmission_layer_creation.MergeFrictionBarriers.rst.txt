@@ -1,0 +1,60 @@
+reVX.config.transmission\_layer\_creation.MergeFrictionBarriers
+===============================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: MergeFrictionBarriers
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~MergeFrictionBarriers.construct
+      ~MergeFrictionBarriers.copy
+      ~MergeFrictionBarriers.dict
+      ~MergeFrictionBarriers.from_orm
+      ~MergeFrictionBarriers.json
+      ~MergeFrictionBarriers.model_construct
+      ~MergeFrictionBarriers.model_copy
+      ~MergeFrictionBarriers.model_dump
+      ~MergeFrictionBarriers.model_dump_json
+      ~MergeFrictionBarriers.model_json_schema
+      ~MergeFrictionBarriers.model_parametrized_name
+      ~MergeFrictionBarriers.model_post_init
+      ~MergeFrictionBarriers.model_rebuild
+      ~MergeFrictionBarriers.model_validate
+      ~MergeFrictionBarriers.model_validate_json
+      ~MergeFrictionBarriers.model_validate_strings
+      ~MergeFrictionBarriers.parse_file
+      ~MergeFrictionBarriers.parse_obj
+      ~MergeFrictionBarriers.parse_raw
+      ~MergeFrictionBarriers.schema
+      ~MergeFrictionBarriers.schema_json
+      ~MergeFrictionBarriers.update_forward_refs
+      ~MergeFrictionBarriers.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~MergeFrictionBarriers.model_computed_fields
+      ~MergeFrictionBarriers.model_config
+      ~MergeFrictionBarriers.model_extra
+      ~MergeFrictionBarriers.model_fields
+      ~MergeFrictionBarriers.model_fields_set
+      ~MergeFrictionBarriers.friction_layer
+      ~MergeFrictionBarriers.barrier_layer
+      ~MergeFrictionBarriers.output_layer_name
+      ~MergeFrictionBarriers.barrier_multiplier
+   
+   

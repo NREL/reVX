@@ -1,0 +1,6 @@
+reVX.offshore.dist\_to\_ports\_cli.eagle
+========================================
+
+.. currentmodule:: reVX.offshore.dist_to_ports_cli
+
+.. autofunction:: eagle

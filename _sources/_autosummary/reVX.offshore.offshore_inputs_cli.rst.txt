@@ -1,0 +1,32 @@
+reVX.offshore.offshore\_inputs\_cli
+===================================
+
+.. automodule:: reVX.offshore.offshore_inputs_cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      eagle
+      get_node_cmd
+      run_local
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

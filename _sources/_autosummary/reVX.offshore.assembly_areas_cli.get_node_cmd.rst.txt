@@ -1,0 +1,6 @@
+reVX.offshore.assembly\_areas\_cli.get\_node\_cmd
+=================================================
+
+.. currentmodule:: reVX.offshore.assembly_areas_cli
+
+.. autofunction:: get_node_cmd

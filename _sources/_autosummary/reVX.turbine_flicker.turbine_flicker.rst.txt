@@ -1,0 +1,38 @@
+reVX.turbine\_flicker.turbine\_flicker
+======================================
+
+.. automodule:: reVX.turbine_flicker.turbine_flicker
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      compute_flicker_exclusions
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      TurbineFlicker
+   
+   
+
+   
+   
+   
+
+
+
