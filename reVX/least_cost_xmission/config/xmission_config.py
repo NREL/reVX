@@ -311,3 +311,24 @@ class XmissionConfig(dict):
             v_class = classes[-1]
 
         return costs[str(v_class)]
+
+
+def parse_config(xmission_config=None):
+    """
+    Load Xmission config if needed
+
+    Parameters
+    ----------
+    config : str | dict | XmissionConfig, optional
+        Path to Xmission config .json, dictionary of Xmission config
+        .jsons, or preloaded XmissionConfig objects, by default None
+
+    Returns
+    -------
+    XmissionConfig
+    """
+    if not isinstance(xmission_config, XmissionConfig):
+        xmission_config = XmissionConfig(config=xmission_config)
+
+    logger.debug("Xmissing config:\n%s", xmission_config)
+    return xmission_config
