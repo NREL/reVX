@@ -395,7 +395,7 @@ class TieLineCosts:
 
         self._mcp_cost = self._cost.copy()
         for li_cost_layer in self._li_cost_layer_map.values():
-            self._mcp_cost += li_cost_layer
+            self._mcp_cost += li_cost_layer / self._cell_size  # routing only
 
         self._mcp_cost *= 1 + barrier
         self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
