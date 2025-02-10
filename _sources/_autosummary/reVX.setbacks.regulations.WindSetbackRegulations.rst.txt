@@ -1,0 +1,38 @@
+reVX.setbacks.regulations.WindSetbackRegulations
+================================================
+
+.. currentmodule:: reVX.setbacks.regulations
+
+.. autoclass:: WindSetbackRegulations
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~WindSetbackRegulations.MULTIPLIERS
+      ~WindSetbackRegulations.REQUIRED_COLUMNS
+      ~WindSetbackRegulations.base_setback_dist
+      ~WindSetbackRegulations.df
+      ~WindSetbackRegulations.generic
+      ~WindSetbackRegulations.generic_exists
+      ~WindSetbackRegulations.hub_height
+      ~WindSetbackRegulations.locals_exist
+      ~WindSetbackRegulations.multiplier
+      ~WindSetbackRegulations.rotor_diameter
+   
+   

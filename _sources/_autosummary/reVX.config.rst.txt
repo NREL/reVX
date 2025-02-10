@@ -1,0 +1,36 @@
+reVX.config
+===========
+
+.. automodule:: reVX.config
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   reVX.config.least_cost_xmission
+   reVX.config.offshore
+   reVX.config.reeds
+   reVX.config.rpm
+   reVX.config.transmission_layer_creation
+   reVX.config.turbine_flicker
+   reVX.config.wind_dirs
+

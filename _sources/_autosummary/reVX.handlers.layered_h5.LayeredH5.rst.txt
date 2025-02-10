@@ -1,0 +1,45 @@
+reVX.handlers.layered\_h5.LayeredH5
+===================================
+
+.. currentmodule:: reVX.handlers.layered_h5
+
+.. autoclass:: LayeredH5
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LayeredH5.create_new
+      ~LayeredH5.extract_all_layers
+      ~LayeredH5.extract_layers
+      ~LayeredH5.layer_to_geotiff
+      ~LayeredH5.layers_to_h5
+      ~LayeredH5.load_data_using_h5_profile
+      ~LayeredH5.reproject
+      ~LayeredH5.save_data_using_h5_profile
+      ~LayeredH5.write_geotiff_to_h5
+      ~LayeredH5.write_layer_to_h5
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LayeredH5.LATITUDE
+      ~LayeredH5.LONGITUDE
+      ~LayeredH5.SUPPORTED_FILE_ENDINGS
+      ~LayeredH5.layers
+      ~LayeredH5.profile
+      ~LayeredH5.shape
+      ~LayeredH5.template_file
+   
+   

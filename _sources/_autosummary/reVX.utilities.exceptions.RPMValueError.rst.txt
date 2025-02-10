@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.RPMValueError
+=======================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: RPMValueError

@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.config.constants.SUBSTATION\_CAT
+===========================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.constants
+
+.. autodata:: SUBSTATION_CAT

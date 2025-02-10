@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.config.constants.SHORT\_CUTOFF
+=========================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.constants
+
+.. autodata:: SHORT_CUTOFF
