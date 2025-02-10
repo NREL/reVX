@@ -23,6 +23,7 @@ from reV.supply_curve.extent import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
+from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT,
                                                        LOAD_CENTER_CAT,
@@ -82,8 +83,7 @@ class LeastCostXmission(LeastCostPaths):
         self._iso_layer_name = iso_regions_layer_name
         self._check_layers()
 
-        self._config = self._TCC_CLASS._parse_config(
-            xmission_config=xmission_config)
+        self._config = parse_config(xmission_config=xmission_config)
 
         (self._sc_points, self._features,
          self._sub_lines_mapping, self._shape) =\
