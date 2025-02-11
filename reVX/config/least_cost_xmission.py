@@ -11,9 +11,7 @@ from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        RESOLUTION,
                                                        NUM_NN_SINKS,
                                                        CLIP_RASTER_BUFFER,
-                                                       BARRIERS_MULT,
                                                        MINIMUM_SPUR_DIST_KM,
-                                                       BARRIER_H5_LAYER_NAME,
                                                        ISO_H5_LAYER_NAME)
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig

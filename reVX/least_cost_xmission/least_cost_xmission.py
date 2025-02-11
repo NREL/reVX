@@ -27,19 +27,16 @@ from rex.utilities.loggers import log_mem
 
 from reVX.least_cost_xmission.trans_cap_costs import LCP_AGG_COST_LAYER_NAME
 from reVX.least_cost_xmission.config import parse_config
-from reVX.least_cost_xmission.config.constants import (
-    CELL_SIZE,
-    TRANS_LINE_CAT,
-    LOAD_CENTER_CAT,
-    SINK_CAT,
-    SUBSTATION_CAT,
-    CLIP_RASTER_BUFFER,
-    NUM_NN_SINKS,
-    RESOLUTION,
-    MINIMUM_SPUR_DIST_KM,
-    BARRIER_H5_LAYER_NAME,
-    ISO_H5_LAYER_NAME,
-)
+from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
+                                                       TRANS_LINE_CAT,
+                                                       LOAD_CENTER_CAT,
+                                                       SINK_CAT,
+                                                       SUBSTATION_CAT,
+                                                       CLIP_RASTER_BUFFER,
+                                                       NUM_NN_SINKS,
+                                                       RESOLUTION,
+                                                       MINIMUM_SPUR_DIST_KM,
+                                                       ISO_H5_LAYER_NAME)
 from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
 from reVX.least_cost_xmission.trans_cap_costs import (
     TransCapCosts,

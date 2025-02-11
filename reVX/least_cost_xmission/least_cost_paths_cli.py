@@ -32,9 +32,7 @@ from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
 from reVX.least_cost_xmission.least_cost_xmission import region_mapper
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT,
-                                                       SUBSTATION_CAT,
-                                                       BARRIERS_MULT,
-                                                       BARRIER_H5_LAYER_NAME)
+                                                       SUBSTATION_CAT)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -195,7 +193,7 @@ def from_config(ctx, config, verbose):
                    'This layer defines the multipliers applied to the final '
                    'cost layer')
 @click.option('--cost_multiplier_scalar', '-cmult', type=float,
-              show_default=True, default=BARRIERS_MULT,
+              show_default=True, default=1,
               help=("Final cost layer multiplier"))
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,

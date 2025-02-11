@@ -32,8 +32,6 @@ from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SHORT_CUTOFF,
                                                        MEDIUM_CUTOFF,
                                                        MINIMUM_SPUR_DIST_KM,
-                                                       BARRIERS_MULT,
-                                                       BARRIER_H5_LAYER_NAME,
                                                        ISO_H5_LAYER_NAME)
 from reVX.utilities.exceptions import (InvalidMCPStartValueError,
                                        LeastCostPathNotFoundError)

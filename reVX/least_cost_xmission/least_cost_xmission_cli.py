@@ -31,10 +31,8 @@ from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        SINK_CAT,
                                                        SUBSTATION_CAT,
                                                        MINIMUM_SPUR_DIST_KM,
-                                                       BARRIERS_MULT,
                                                        CLIP_RASTER_BUFFER,
                                                        NUM_NN_SINKS,
-                                                       BARRIER_H5_LAYER_NAME,
                                                        ISO_H5_LAYER_NAME)
 from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
 
@@ -162,8 +160,7 @@ def from_config(ctx, config, verbose):
                    'This layer defines the multipliers applied to the final '
                    'cost layer')
 @click.option('--cost_multiplier_scalar', '-cmult', type=float,
-              show_default=True, default=BARRIERS_MULT,
-              help=("Final cost layer multiplier"))
+              show_default=True, default=1, help="Final cost layer multiplier")
 @click.option('--iso_regions_layer_name', '-irln', default=ISO_H5_LAYER_NAME,
               type=STR, show_default=True,
               help='Name of ISO regions layer in `cost_fpath` file. The '
