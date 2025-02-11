@@ -84,15 +84,15 @@ class LeastCostXmissionConfig(AnalysisConfig):
     @property
     def simplify_geo(self):
         """
-        Optional float to use to simplify path geometries before saving to
-        geopackage
+        Optional float to use to simplify path geometries before saving
+        to GeoPackage
         """
         return self.get('simplify_geo', None)
 
     @property
     def save_paths(self):
         """
-        Save paths as GPKG if true
+        Save paths as GeoPackage if true
         """
         return self.get('save_paths', False)
 
@@ -106,14 +106,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
     @property
     def features_fpath(self):
         """
-        Tranmission feature .gpkg
+        Transmission feature GeoPackage
         """
         return self['features_fpath']
 
     @property
     def regions_fpath(self):
         """
-        Reinforcement regions .gpkg
+        Reinforcement regions GeoPackage
         """
         return self.get('regions_fpath', None)
 
@@ -153,7 +153,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
     @property
     def length_mult_kind(self):
         """
-        Type of length multiplier calcualtion.
+        Type of length multiplier calculation.
 
         "step" computes length multipliers using a step function, while
         "linear" computes the length multiplier using a linear
@@ -364,7 +364,7 @@ class LeastCostPathsConfig(AnalysisConfig):
     @property
     def features_fpath(self):
         """
-        Tranmission feature .gpkg
+        Transmission feature GeoPackage
         """
         return self['features_fpath']
 
