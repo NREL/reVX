@@ -608,7 +608,7 @@ A sample config for WOWTS would look very similar:
     "walltime": 4
   },
   "log_directory": "/scratch/USER_NAME/log",
-  "log_level": "INFO"
+  "log_level": "INFO",
   "cost_fpath": "/projects/rev/data/transmission/north_america/conus/least_cost/offshore/processing/conus_20240221.h5",
   "features_fpath": "/projects/rev/projects/wowts/data/20240223_poi_trans_feats.gpkg",
   "capacity_class": "1000",
