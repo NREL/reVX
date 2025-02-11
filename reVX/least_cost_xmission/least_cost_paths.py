@@ -320,11 +320,11 @@ class LeastCostPaths:
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
+            determining path using main cost layer.
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
-        indices : iterable, optonal
+        indices : iterable, optional
             Indices of the transmission features input that should be
             processed. By default ``None``, which process all
             transmission features.
@@ -457,7 +457,7 @@ class LeastCostPaths:
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
+            determining path using main cost layer.
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
@@ -469,7 +469,7 @@ class LeastCostPaths:
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
-        indices : iterable, optonal
+        indices : iterable, optional
             Indices of the transmission features input that should be
             processed. By default ``None``, which process all
             transmission features.
@@ -549,7 +549,7 @@ class ReinforcementPaths(LeastCostPaths):
         transmission_lines :dict
             Dictionary where the keys are the names of cost layers in
             the cost HDF5 file and values are arrays with the
-            corresponding existing transmission lines rastered into
+            corresponding existing transmission lines rasterized into
             them (i.e. array value is 1 at a pixel if there is a
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
@@ -805,7 +805,7 @@ class ReinforcementPaths(LeastCostPaths):
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
-        indices : iterable, optonal
+        indices : iterable, optional
             Indices corresponding to the network nodes that should be
             processed. By default ``None``, which process all network
             nodes.
@@ -905,7 +905,7 @@ class ReinforcementPaths(LeastCostPaths):
                             .reset_index(drop=True))
             rid = network_node[region_identifier_column].values[0]
             mask = substations[region_identifier_column] == rid
-            logger.debug('Computing reinfocements to %s in region %s',
+            logger.debug('Computing reinforcements to %s in region %s',
                          str(network_node), rid)
             node_substations = substations[mask].reset_index(drop=True)
             if len(node_substations) == 0:
@@ -1020,7 +1020,7 @@ def _collect_future_chunks(futures, least_cost_paths):
     for i, future in enumerate(as_completed(futures), start=1):
         end_features = futures.pop(future)
         lcp = future.result()
-        logger.debug("Joining feautres of shape %s with results of shape %s",
+        logger.debug("Joining features of shape %s with results of shape %s",
                      str(end_features.shape), str(lcp.shape))
         logger.debug("Feature cols: %s", str(end_features.columns))
         logger.debug("Results cols: %s", str(lcp.columns))

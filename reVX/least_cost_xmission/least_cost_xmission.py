@@ -541,7 +541,7 @@ class LeastCostXmission(LeastCostPaths):
             Flag to return least cost paths as a multi-line geometry,
             by default False
         radius : None | int, optional
-            Force clipping radius. Trasmission features beyond this
+            Force clipping radius. Transmission features beyond this
             radius will not be considered for connection with supply
             curve point. If ``None``, no radius is forced, and
             connections to all available  transmission features are
@@ -578,7 +578,7 @@ class LeastCostXmission(LeastCostPaths):
 
             By default, ``None``, which does not track any extra layers.
         length_mult_kind : {"step", "linear"}, default="linear"
-            Type of length multiplier calcualtion. "step" computes
+            Type of length multiplier calculation. "step" computes
             length multipliers using a step function, while "linear"
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
@@ -747,7 +747,7 @@ class LeastCostXmission(LeastCostPaths):
 
             By default, ``None``, which does not track any extra layers.
         length_mult_kind : {"step", "linear"}, default="linear"
-            Type of length multiplier calcualtion. "step" computes
+            Type of length multiplier calculation. "step" computes
             length multipliers using a step function, while "linear"
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
@@ -917,7 +917,7 @@ class LeastCostXmission(LeastCostPaths):
 
             By default, ``None``, which does not track any extra layers.
         length_mult_kind : {"step", "linear"}, default="linear"
-            Type of length multiplier calcualtion. "step" computes
+            Type of length multiplier calculation. "step" computes
             length multipliers using a step function, while "linear"
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
@@ -1074,7 +1074,7 @@ class LeastCostXmission(LeastCostPaths):
 
             By default, ``None``, which does not track any extra layers.
         length_mult_kind : {"step", "linear"}, default="linear"
-            Type of length multiplier calcualtion. "step" computes
+            Type of length multiplier calculation. "step" computes
             length multipliers using a step function, while "linear"
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
@@ -1381,7 +1381,7 @@ class RegionalXmission(LeastCostXmission):
 
             By default, ``None``, which does not track any extra layers.
         length_mult_kind : {"step", "linear"}, default="linear"
-            Type of length multiplier calcualtion. "step" computes
+            Type of length multiplier calculation. "step" computes
             length multipliers using a step function, while "linear"
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.

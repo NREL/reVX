@@ -75,7 +75,7 @@ class TieLineCosts:
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
+            determining path using main cost layer.
         row_slice, col_slice : slice
             Slices into the cost raster array used to clip the area that
             should be considered when computing a least cost path. This
@@ -301,7 +301,7 @@ class TieLineCosts:
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
+            determining path using main cost layer.
         length_invariant_cost_layers : List[str] | None, optional
             List of layers in H5 to be added to the cost raster. The
             costs specified by these layers are not scaled with distance
@@ -312,7 +312,7 @@ class TieLineCosts:
             By default, ``100``.
         """
         li_cost_layers = length_invariant_cost_layers or []
-        logger.debug("Building cost layer with the folowing inputs:"
+        logger.debug("Building cost layer with the following inputs:"
                      f"\n\t- cost_layers: {cost_layers}"
                      f"\n\t- length_invariant_cost_layers: {li_cost_layers}"
                      f"\n\t- barrier_mult: {barrier_mult}")
@@ -484,7 +484,7 @@ class TieLineCosts:
             li_cell_costs = li_costs[indices[:, 0], indices[:, 1]]
             cost += np.sum(li_cell_costs)
 
-        # Determine parial costs for any cost layers
+        # Determine partial costs for any cost layers
         cl_results = self._compute_by_layer_results(indices, lens, cost)
         cl_results = self._compute_tracked_layer_values(cl_results, indices)
 
@@ -505,7 +505,7 @@ class TieLineCosts:
 
     def _compute_by_layer_results(self, indices, lens, cost):
         """Compute costs and dists by individual layer. """
-        # Determine parial costs for any cost layers
+        # Determine partial costs for any cost layers
         cl_results: Dict[str, float] = {}
         logger.debug('Calculating partial costs and lengths for: %s',
                      list(self._cost_layer_map.keys()))
@@ -643,7 +643,7 @@ class TieLineCosts:
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
+            determining path using main cost layer.
         row_slice, col_slice : slice
             Slices into the cost raster array used to clip the area that
             should be considered when computing a least cost path. This
@@ -734,7 +734,7 @@ class TransCapCosts(TieLineCosts):
         features : pandas.DataFrame
             Table of transmission features to connect to supply curve
             point. Must have "row" and "col" columns that point to the
-            indexs of the feature **in the original cost array**. Must
+            indices of the feature **in the original cost array**. Must
             also have a "category" column that distinguishes between
             substations and transmission lines.
         capacity_class : int | str
@@ -744,7 +744,7 @@ class TransCapCosts(TieLineCosts):
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
+            determining path using main cost layer.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -1282,7 +1282,7 @@ class TransCapCosts(TieLineCosts):
             Optional features input. If ``None``, features held by this
             object are used.
         length_mult_kind : {"step", "linear"}, default="linear"
-            Type of length multiplier calcualtion. "step" computes
+            Type of length multiplier calculation. "step" computes
             length multipliers using a step function, while "linear"
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
@@ -1341,7 +1341,7 @@ class TransCapCosts(TieLineCosts):
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
         length_mult_kind : {"step", "linear"}, default="linear"
-            Type of length multiplier calcualtion. "step" computes
+            Type of length multiplier calculation. "step" computes
             length multipliers using a step function, while "linear"
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
@@ -1407,7 +1407,7 @@ class TransCapCosts(TieLineCosts):
         features : pandas.DataFrame
             Table of transmission features to connect to supply curve
             point. Must have "row" and "col" columns that point to the
-            indexs of the feature **in the original cost array**. Must
+            indices of the feature **in the original cost array**. Must
             also have a "category" column that distinguishes between
             substations and transmission lines.
         capacity_class : int | str
@@ -1416,7 +1416,7 @@ class TransCapCosts(TieLineCosts):
             List of layers in H5 that are summed to determine total
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
+            determining path using main cost layer.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -1463,7 +1463,7 @@ class TransCapCosts(TieLineCosts):
 
             By default, ``None``, which does not track any extra layers.
         length_mult_kind : {"step", "linear"}, default="linear"
-            Type of length multiplier calcualtion. "step" computes
+            Type of length multiplier calculation. "step" computes
             length multipliers using a step function, while "linear"
             computes the length multiplier using a linear interpolation
             between 0 amd 10 mile spur-line lengths.
@@ -1518,7 +1518,7 @@ class TransCapCosts(TieLineCosts):
 
 
 class RegionalTransCapCosts(TransCapCosts):
-    """Compute tie-line costs when connections are limitred to a region.
+    """Compute tie-line costs when connections are limited to a region.
 
     This class also allows for costs for region values of 0.
     Additionally, the `trans_gid`, `min_volt` and `max_volt` columns are
@@ -1613,8 +1613,8 @@ class ReinforcementLineCosts(TieLineCosts):
         transmission_lines : dict
             Dictionary where the keys are the names of cost layers in
             the cost HDF5 file and values are **clipped** arrays with
-            the corresponding existing transmission lines rastered into
-            them (i.e. array value is 1 at a pixel if there is a
+            the corresponding existing transmission lines rasterized
+            into them (i.e. array value is 1 at a pixel if there is a
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
             transmission lines of differing voltages.
@@ -1721,8 +1721,8 @@ class ReinforcementLineCosts(TieLineCosts):
         transmission_lines : dict
             Dictionary where the keys are the names of cost layers in
             the cost HDF5 file and values are **clipped** arrays with
-            the corresponding existing transmission lines rastered into
-            them (i.e. array value is 1 at a pixel if there is a
+            the corresponding existing transmission lines rasterized
+            into them (i.e. array value is 1 at a pixel if there is a
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
             transmission lines of differing voltages.
@@ -1877,7 +1877,7 @@ def _compute_individual_layers_costs_lens(layer_map, indices, lens, results,
 
 
 def _compute_length_mult(features, kind="linear"):
-    """Compute length mults based on user input.
+    """Compute length multipliers based on user input.
 
     Length multiplier data source:
     https://www.wecc.org/Administrative/TEPPC_TransCapCostCalculator_E3_2019_Update.xlsx
@@ -1892,13 +1892,13 @@ def _compute_length_mult(features, kind="linear"):
 
 
 def _compute_step_wise_lm(features):
-    """Compute length mults using step function.
+    """Compute length multipliers using step function.
 
-    This was the _intented_ original implementation, though the first
-    pass was bugged and not fixed before the switch the linear mults
-    was made.
+    This was the _intended_ original implementation, though the first
+    pass was bugged and not fixed before the switch the linear
+    multipliers was made.
 
-    The implemetnation below works as originally intended.
+    The implementation below works as originally intended.
     """
     # Length multiplier
     features['length_mult'] = 1.0
@@ -1912,7 +1912,7 @@ def _compute_step_wise_lm(features):
 
 
 def _compute_linear_lm(features):
-    """Compute length mults using linear interpolatiuon below 10 miles."""
+    """Compute length multipliers using linear interpolation below 10 miles."""
 
     # Length multiplier
     features['length_mult'] = 1.0
