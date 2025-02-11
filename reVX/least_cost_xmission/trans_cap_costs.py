@@ -325,17 +325,6 @@ class TieLineCosts:
             self._build_mcp_cost(extra_routing_layers, f)
             self._build_tracked_layers(f)
 
-            barrier = f[self._tb_layer_name, self._row_slice, self._col_slice]
-            barrier = barrier * barrier_mult
-
-        # self._mcp_cost *= 1 + barrier
-        # self._mcp_cost = self._mcp_cost * (1 + barrier)
-        self._mcp_cost += self._mcp_cost * barrier
-        self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
-        logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
-                     np.min(self._mcp_cost), np.max(self._mcp_cost),
-                     np.median(self._mcp_cost))
-
     def _build_cost_layer(self, cost_layers, cost_file):
         """Build out the main cost layer"""
         self._cost = np.zeros(self.clip_shape, dtype=np.float32)
@@ -384,7 +373,7 @@ class TieLineCosts:
             routing_layer = self._extract_and_scale_layer(layer_info,
                                                           cost_file,
                                                           allow_cl=True)
-            if layer_info.get("include_in_report", True):
+            if layer_info.get("include_in_report", False):
                 self._extra_routing_layer_map[layer_name] = routing_layer
 
             extra_routing_costs += routing_layer
@@ -392,6 +381,11 @@ class TieLineCosts:
         # Must happen at end of loop so that "lcp_agg_cost"
         # remains constant
         self._mcp_cost += extra_routing_costs
+
+        self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
+        logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
+                     np.min(self._mcp_cost), np.max(self._mcp_cost),
+                     np.median(self._mcp_cost))
 
     def _extract_and_scale_layer(self, layer_info, cost_file, allow_cl=False):
         """Extract layer based on name and scale according to user input"""
@@ -409,7 +403,7 @@ class TieLineCosts:
     def _extract_layer(self, layer_name, cost_file, allow_cl=False):
         """Extract layer based on name"""
         if allow_cl and layer_name == LCP_AGG_COST_LAYER_NAME:
-            return self._mcp_cost
+            return self._mcp_cost.copy()
         _verify_layer_exists(layer_name, cost_file)
         return cost_file[layer_name, self._row_slice, self._col_slice]
 
