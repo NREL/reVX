@@ -265,8 +265,10 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
   "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+  "extra_routing_layers": [
+    {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
+  ],
   "iso_regions_layer_name": "iso_regions",
-  "barrier_mult": "100",
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
 }
@@ -334,7 +336,9 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
     "region_identifier_column": "rr_id",
     "capacity_class": "400",
     "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-    "barrier_mult": "100",
+    "extra_routing_layers": [
+      {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
+    ],
     "log_directory": "./logs",
     "log_level": "INFO",
 }
@@ -372,8 +376,10 @@ You should now have a file containing all of the reinforcement costs for the sub
     "region_identifier_column": "rr_id",
     "capacity_class": "1000",
     "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+    "extra_routing_layers": [
+      {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
+    ],
     "iso_regions_layer_name": "iso_regions",
-    "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
     "min_line_length": 0,
@@ -403,7 +409,7 @@ The resulting tables can be passed directly to `reV`, which will automatically d
 
 
 ### Substation and tie-line connections (New)
-Since we want to allow tie-line connecitons, we must first run LCP to determine where new substation will be built:
+Since we want to allow tie-line connections, we must first run LCP to determine where new substation will be built:
 
 ```JSON5
 {
@@ -420,11 +426,13 @@ Since we want to allow tie-line connecitons, we must first run LCP to determine 
     "regions_fpath": "/path/to/regions.gpkg",
     "region_identifier_column": "rr_id",
     "capacity_class": "200",  // 138 kV
-    "barrier_mult": "5000",
     "cost_layers": [
         {"layer_name": "tie_line_costs_{}MW"},
         {"layer_name": "swca_cultural_resources_risk"},
         {"layer_name": "swca_natural_resources_risk"}
+    ],
+    "extra_routing_layers": [
+      {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
     ],
     "iso_regions_layer_name": "iso_regions",
     "log_directory": "./logs",
@@ -473,7 +481,9 @@ Now you can compute the reinforcement paths the same way as the method above:
     "region_identifier_column": "rr_id",
     "capacity_class": "200",
     "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-    "barrier_mult": "5000",
+    "extra_routing_layers": [
+      {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
+    ],
     "log_directory": "./logs",
     "log_level": "INFO",
     "save_paths": true,
@@ -549,7 +559,7 @@ Using a config file is the preferred method of running an analysis. The below fi
 
 The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
 
-```
+```JSON
 {
   "execution_control": {
     "allocation": "YOUR_SLURM_ALLOCATION",
@@ -564,7 +574,12 @@ The value for `allocation` should be set to the desired SLURM allocation. The `m
   "cost_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5",
   "features_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg",
   "capacity_class": "100",
-  "barrier_mult": "100",
+  "cost_layers": [
+    {"layer_name": "tie_line_costs_{}MW"},
+  ],
+  "extra_routing_layers": [
+    {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
+  ],
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "DEBUG",
   "sc_point_gids": [40139],
@@ -602,7 +617,9 @@ A sample config for WOWTS would look very similar:
     {"layer_name": "wet_costs"},
     {"layer_name": "landfall_costs", "is_invariant": true},
   ],
-  "barrier_mult": "5000",
+  "extra_routing_layers": [
+    {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
+  ],
   "resolution": 157,
   "radius": 777,
   "expand_radius": false,
