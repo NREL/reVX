@@ -272,7 +272,7 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
 }
 ```
 
-Note that the `iso_regions_layer_name` input is needed because our nayer name
+Note that the `iso_regions_layer_name` input is needed because our layer name
 is not the expected default value of `"ISO_regions"` (our layer name is
 lowercase).
 
@@ -438,19 +438,19 @@ The data will come split into multiple files (in this case 100, since we used 10
 $ least-cost-xmission merge-output -of transmission_200MW_128.gpkg -od ./ least_cost_transmission_*_200_128.gpkg
 ```
 
-Once you have the connecitons table, extract the substation locations using the following reVX command:
+Once you have the connections table, extract the substation locations using the following reVX command:
 
 ```
 $ least-cost-paths ss-from-conn -con ./transmission_200MW_128.gpkg -rid rr_id -of ./ss_from_conns_200_128.gpkg
 ```
 
-If your netwrok nodes file is missing the region identified column, you can add it now:
+If your network nodes file is missing the region identified column, you can add it now:
 
 ```
 $ least-cost-paths add-rr-to-nn -nodes ./nn.gpkg -regs ./regions.gpkg -rid rr_id
 ```
 
-Now you can cpmpute the reinforcement paths the same way as the method above:
+Now you can compute the reinforcement paths the same way as the method above:
 
 ```JSON5
 {
