@@ -264,7 +264,7 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
-  "cost_layers": ["tie_line_costs_{}MW"],
+  "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
   "iso_regions_layer_name": "iso_regions",
   "barrier_mult": "100",
   "log_directory": "/scratch/USER_NAME/log",
@@ -333,7 +333,7 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
     "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
     "region_identifier_column": "rr_id",
     "capacity_class": "400",
-    "cost_layers": ["tie_line_costs_{}MW"],
+    "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
     "barrier_mult": "100",
     "log_directory": "./logs",
     "log_level": "INFO",
@@ -371,7 +371,7 @@ You should now have a file containing all of the reinforcement costs for the sub
     "regions_fpath": "./regions.gpkg",
     "region_identifier_column": "rr_id",
     "capacity_class": "1000",
-    "cost_layers": ["tie_line_costs_{}MW"],
+    "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
     "iso_regions_layer_name": "iso_regions",
     "barrier_mult": "100",
     "log_directory": "./logs",
@@ -421,7 +421,11 @@ Since we want to allow tie-line connecitons, we must first run LCP to determine 
     "region_identifier_column": "rr_id",
     "capacity_class": "200",  // 138 kV
     "barrier_mult": "5000",
-    "cost_layers": ["tie_line_costs_{}MW", "swca_cultural_resources_risk", "swca_natural_resources_risk"],
+    "cost_layers": [
+        {"layer_name": "tie_line_costs_{}MW"},
+        {"layer_name": "swca_cultural_resources_risk"},
+        {"layer_name": "swca_natural_resources_risk"}
+    ],
     "iso_regions_layer_name": "iso_regions",
     "log_directory": "./logs",
     "log_level": "INFO",
@@ -468,7 +472,7 @@ Now you can compute the reinforcement paths the same way as the method above:
     "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
     "region_identifier_column": "rr_id",
     "capacity_class": "200",
-    "cost_layers": ["tie_line_costs_{}MW"],
+    "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
     "barrier_mult": "5000",
     "log_directory": "./logs",
     "log_level": "INFO",
@@ -579,7 +583,7 @@ $ least-cost-xmission from-config --config ./config_aoswt.json
 
 A sample config for WOWTS would look very similar:
 
-```
+```JSON
 {
   "execution_control": {
     "allocation": "YOUR_SLURM_ALLOCATION",
@@ -593,8 +597,11 @@ A sample config for WOWTS would look very similar:
   "cost_fpath": "/projects/rev/data/transmission/north_america/conus/least_cost/offshore/processing/conus_20240221.h5",
   "features_fpath": "/projects/rev/projects/wowts/data/20240223_poi_trans_feats.gpkg",
   "capacity_class": "1000",
-  "cost_layers": ["tie_line_costs_{}MW", "wet_costs"],
-  "length_invariant_cost_layers": ["landfall_costs"],
+  "cost_layers": [
+    {"layer_name": "tie_line_costs_{}MW"},
+    {"layer_name": "wet_costs"},
+    {"layer_name": "landfall_costs", "is_invariant": true},
+  ],
   "barrier_mult": "5000",
   "resolution": 157,
   "radius": 777,

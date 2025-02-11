@@ -260,7 +260,9 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     logger.debug("Tracked layers input: %r", tracked_layers)
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
-    cost_layers = list(cost_layers)
+
+    cost_layers = [dict_str_load(layer_info) if isinstance(layer_info, str)
+                   else layer_info for layer_info in cost_layers]
     li_cost_layers = list(li_cost_layers)
 
     is_reinforcement_run = (network_nodes_fpath is not None
@@ -281,7 +283,8 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
         kwargs["xmission_config"] = xmission_config
         cc_str = xmission_config._parse_cap_class(capacity_class)
         cap = xmission_config['power_classes'][cc_str]
-        cost_layers = [layer.format(cap) for layer in cost_layers]
+        for layer_info in cost_layers:
+            layer_info["layer_name"] = layer_info["layer_name"].format(cap)
         logger.debug('Xmission Config: {}'.format(xmission_config))
         features = gpd.read_file(network_nodes_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
@@ -578,7 +581,7 @@ def get_node_cmd(config, start_index=0):
             ]
 
     for layer in config.cost_layers:
-        args.append(f'-cl {layer}')
+        args.append(f'-cl {SLURM.s(layer)}')
     for layer in config.length_invariant_cost_layers:
         args.append(f'-licl {layer}')
 

@@ -316,11 +316,12 @@ class LeastCostPaths:
 
         Parameters
         ----------
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            determining path using main cost layer.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine total costs raster used for routing.
+            See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input.
         barrier_mult : int, optional
             Transmission barrier multiplier, used when computing the
             least cost tie-line path, by default 100
@@ -453,11 +454,12 @@ class LeastCostPaths:
             Path to h5 file with cost rasters and other required layers
         features_fpath : str
             Path to GeoPackage with transmission features
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            determining path using main cost layer.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine total costs raster used for routing.
+            See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input.
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
@@ -631,13 +633,16 @@ class ReinforcementPaths(LeastCostPaths):
             Capacity (MW) of the line that is being used for the 'base'
             greenfield costs layer. Costs will be normalized by this
             input to report reinforcement costs as $/MW.
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            'base' greenfield costs raster used for routing. 'Base'
-            greenfield costs are only used if the reinforcement path
-            *must* deviate from existing transmission lines. Typically,
-            a capacity class of 400 MW (230kV transmission line) is used
-            for the base greenfield costs.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine the 'base' greenfield costs raster
+            used for routing. See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input. 'Base' greenfield costs are
+            only used if the reinforcement path *must* deviate from
+            existing transmission lines. Typically, a capacity class of
+            400 MW (230kV transmission line) is used for the base
+            greenfield costs.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
@@ -783,13 +788,16 @@ class ReinforcementPaths(LeastCostPaths):
             Capacity class of the 'base' greenfield costs layer. Costs
             will be scaled by the capacity corresponding to this class
             to report reinforcement costs as $/MW.
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            'base' greenfield costs raster used for routing. 'Base'
-            greenfield costs are only used if the reinforcement path
-            *must* deviate from existing transmission lines. Typically,
-            a capacity class of 400 MW (230kV transmission line) is used
-            for the base greenfield costs.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine the 'base' greenfield costs raster
+            used for routing. See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input. 'Base' greenfield costs are
+            only used if the reinforcement path *must* deviate from
+            existing transmission lines. Typically, a capacity class of
+            400 MW (230kV transmission line) is used for the base
+            greenfield costs.
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.

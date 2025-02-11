@@ -71,11 +71,12 @@ class TieLineCosts:
             Paths will be computed from this start location to each of
             the ``end_indices``, which are also locations in the cost
             array (typically transmission feature locations).
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            determining path using main cost layer.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine total costs raster used for routing.
+            See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input.
         row_slice, col_slice : slice
             Slices into the cost raster array used to clip the area that
             should be considered when computing a least cost path. This
@@ -319,16 +320,39 @@ class TieLineCosts:
         self._cost = np.zeros(self.clip_shape, dtype=np.float32)
         overlap = np.zeros(self.clip_shape, dtype=np.uint8)
         with ExclusionLayers(self._cost_fpath) as f:
-            for cost_layer in cost_layers:
-                cost = f[cost_layer, self._row_slice, self._col_slice]
-                self._cost += cost
-                overlap += cost > 0
-                self._cost_layer_map[cost_layer] = cost
+            for layer_info in cost_layers:
+                layer_name = layer_info["layer_name"]
+                if layer_name not in f.layers:
+                    msg = (f"Did not find layer {layer_name!r} in cost "
+                           f"file {str(self._cost_fpath)!r}")
+                    logger.error()(msg)
+                    raise KeyError(msg)
 
-            for li_cost_layer in li_cost_layers:
-                li_cost = f[li_cost_layer, self._row_slice, self._col_slice]
-                overlap += li_cost > 0
-                self._li_cost_layer_map[li_cost_layer] = li_cost
+                cost = f[layer_name, self._row_slice, self._col_slice]
+
+                multiplier_layer_name = layer_info.get("multiplier_layer")
+                if multiplier_layer_name:
+                    if multiplier_layer_name not in f.layers:
+                        msg = (f"Did not find layer {multiplier_layer_name!r} "
+                               f"in cost file {str(self._cost_fpath)!r}")
+                        logger.error()(msg)
+                        raise KeyError(msg)
+                    cost *= f[multiplier_layer_name,
+                              self._row_slice, self._col_slice]
+
+                cost *= layer_info.get("multiplier_scalar", 1)
+                overlap += cost > 0
+                if layer_info.get("is_invariant", False):
+                    self._li_cost_layer_map[layer_name] = cost
+                else:
+                    self._cost += cost
+                    if layer_info.get("include_in_report", True):
+                        self._cost_layer_map[layer_name] = cost
+
+            # for li_cost_layer in li_cost_layers:
+            #     li_cost = f[li_cost_layer, self._row_slice, self._col_slice]
+            #     overlap += li_cost > 0
+            #     self._li_cost_layer_map[li_cost_layer] = li_cost
 
             for tracked_layer, method in self._tracked_layers.items():
                 if getattr(np, method, None) is None:
@@ -351,7 +375,8 @@ class TieLineCosts:
             barrier = barrier * barrier_mult
 
         if (overlap > 1).any():
-            all_layers = cost_layers + li_cost_layers
+            cl_names = [layer_info["layer_name"] for layer_info in cost_layers]
+            all_layers = cl_names + li_cost_layers
             msg = (f"Found overlap in cost layers: {all_layers}! Some cells "
                    "may contain double-counted costs. If you intentionally "
                    "specified cost layers that overlap, please ignore this "
@@ -639,11 +664,12 @@ class TieLineCosts:
             Paths will be computed from this start location to each of
             the ``end_indices``, which are also locations in the cost
             array (typically transmission feature locations).
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            determining path using main cost layer.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine total costs raster used for routing.
+            See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input.
         row_slice, col_slice : slice
             Slices into the cost raster array used to clip the area that
             should be considered when computing a least cost path. This
@@ -740,11 +766,12 @@ class TransCapCosts(TieLineCosts):
         capacity_class : int | str
             Transmission feature ``capacity_class`` class. Used to look
             up connection costs.
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            determining path using main cost layer.
+       cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine total costs raster used for routing.
+            See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostXmissionConfig`
+            for more details on this input.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -1412,11 +1439,12 @@ class TransCapCosts(TieLineCosts):
             substations and transmission lines.
         capacity_class : int | str
             Transmission feature capacity_class class
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            determining path using main cost layer.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine total costs raster used for routing.
+            See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostXmissionConfig`
+            for more details on this input.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
         xmission_config : str | dict | XmissionConfig, optional
@@ -1632,13 +1660,16 @@ class ReinforcementLineCosts(TieLineCosts):
             Capacity (MW) of the line that is being used for the 'base'
             greenfield costs layer. Costs will be normalized by this
             input to report reinforcement costs as $/MW.
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            'base' greenfield costs raster used for routing. 'Base'
-            greenfield costs are only used if the reinforcement path
-            *must* deviate from existing transmission lines. Typically,
-            a capacity class of 400 MW (230kV transmission line) is used
-            for the base greenfield costs.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine the 'base' greenfield costs raster
+            used for routing. See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input. 'Base' greenfield costs are
+            only used if the reinforcement path *must* deviate from
+            existing transmission lines. Typically, a capacity class of
+            400 MW (230kV transmission line) is used for the base
+            greenfield costs.
         row_slice, col_slice : slice
             Row and column slices into the cost array representing the
             window to compute reinforcement line path within.
@@ -1747,13 +1778,16 @@ class ReinforcementLineCosts(TieLineCosts):
             Capacity (MW) of the line that is being used for the 'base'
             greenfield costs layer. Costs will be normalized by this
             input to report reinforcement costs as $/MW.
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            'base' greenfield costs raster used for routing. 'Base'
-            greenfield costs are only used if the reinforcement path
-            *must* deviate from existing transmission lines. Typically,
-            a capacity class of 400 MW (230kV transmission line) is used
-            for the base greenfield costs.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine the 'base' greenfield costs raster
+            used for routing. See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input. 'Base' greenfield costs are
+            only used if the reinforcement path *must* deviate from
+            existing transmission lines. Typically, a capacity class of
+            400 MW (230kV transmission line) is used for the base
+            greenfield costs.
         row_slice, col_slice : slice
             Row and column slices into the cost array representing the
             window to compute reinforcement line path within.

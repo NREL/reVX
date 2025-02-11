@@ -205,11 +205,31 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('iso_regions_layer_name', ISO_H5_LAYER_NAME)
 
     @property
-    def cost_layers(self) -> List[str]:
+    def cost_layers(self) -> List[dict]:
         """
         List of H5 layers that are summed to determine total costs
         raster used for routing. Costs and distances for each individual
-        layer are also reported (e.g. wet and dry costs).
+        layer are also reported as requested (e.g. wet and dry costs).
+        Each dict in the list should have the following keys:
+
+            - "layer_name": (REQUIRED) Name of layer in HDF5 file
+              containing cost data. Layer names may have curly brackets
+              (``{}``), which will be filled in based on the capacity
+              class input (e.g. "tie_line_costs_{}MW").
+            - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
+              containing spatially explicit multiplier values to apply
+              to this cost layer before summing it with the others.
+              Default is ``None``.
+            - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
+              this layer by before summing it with the others. Default
+              is ``1``.
+            - "is_invariant": (OPTIONAL) Boolean flag indicating wether
+              this layer is length invariant (i.e. should NOT be
+              multiplied by path length; values should be $). Default is
+              ``False``.
+            - "include_in_report": (OPTIONAL) Boolean flag indicating
+              wether the costs and distances for this layer should be
+              output in the final LCP table. Default is ``True``.
         """
         return self['cost_layers']
 
@@ -358,7 +378,27 @@ class LeastCostPathsConfig(AnalysisConfig):
     def cost_layers(self):
         """
         List of H5 layers that are summed to determine total costs
-        raster used for routing.
+        raster used for routing. Costs and distances for each individual
+        layer are also reported as requested (e.g. wet and dry costs).
+        Each dict in the list should have the following keys:
+
+            - "layer_name": (REQUIRED) Name of layer in HDF5 file
+              containing cost data.
+            - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
+              containing spatially explicit multiplier values to apply
+              to this cost layer before summing it with the others.
+              Default is ``None``.
+            - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
+              this layer by before summing it with the others. Default
+              is ``1``.
+            - "is_invariant": (OPTIONAL) Boolean flag indicating wether
+              this layer is length invariant (i.e. should NOT be
+              multiplied by path length; values should be $). Default is
+              ``False``.
+            - "include_in_report": (OPTIONAL) Boolean flag indicating
+              wether the costs and distances for this layer should be
+              output in the final LCP table. Default is ``True``.
+
         """
         return self['cost_layers']
 

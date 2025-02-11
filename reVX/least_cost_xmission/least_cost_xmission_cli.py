@@ -235,7 +235,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
           clipping_buffer, tb_layer_name, barrier_mult,
           iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
           save_paths, radius, expand_radius, mp_delay, simplify_geo,
-          cost_layers: List[str], li_cost_layers, tracked_layers,
+          cost_layers, li_cost_layers, tracked_layers,
           length_mult_kind, cell_size):
     """
     Run Least Cost Xmission on local hardware
@@ -252,7 +252,8 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     logger.info('Computing Least Cost Xmission connections and writing them {}'
                 .format(out_dir))
 
-    cost_layers = list(cost_layers)
+    cost_layers = [dict_str_load(layer_info) if isinstance(layer_info, str)
+                   else layer_info for layer_info in cost_layers]
     li_cost_layers = list(li_cost_layers)
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
@@ -510,7 +511,7 @@ def get_node_cmd(config, gids):
             ]
 
     for layer in config.cost_layers:
-        args.append(f'-cl {layer}')
+        args.append(f'-cl {SLURM.s(layer)}')
     for layer in config.length_invariant_cost_layers:
         args.append(f'-licl {layer}')
 

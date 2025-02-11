@@ -95,7 +95,8 @@ def test_capacity_class(capacity):
     """
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_paths_{capacity}MW.csv')
-    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
     test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer])
 
     if not os.path.exists(truth):
@@ -114,7 +115,8 @@ def test_parallel(max_workers):
     capacity = random.choice([100, 200, 400, 1000, 3000])
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_paths_{capacity}MW.csv')
-    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
     test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer],
                               max_workers=max_workers)
 
@@ -148,13 +150,13 @@ def test_clip_buffer():
         with ExclusionLayers(out_cost_fp) as excl:
             assert np.allclose(excl['tie_line_costs_102MW'], costs)
 
+        cost_layer = {"layer_name": "tie_line_costs_102MW"}
         out_no_buffer = LeastCostPaths.run(out_cost_fp, out_features_fp,
-                                           ["tie_line_costs_102MW"],
-                                           max_workers=1)
+                                           [cost_layer], max_workers=1)
         assert out_no_buffer["length_km"].isna().all()
 
         out = LeastCostPaths.run(out_cost_fp, out_features_fp,
-                                 ["tie_line_costs_102MW"], max_workers=1,
+                                 [cost_layer], max_workers=1,
                                  clip_buffer=10)
         assert (out["length_km"] > 193).all()
 
@@ -179,7 +181,7 @@ def test_cli(runner, save_paths):
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "save_paths": save_paths,
-            "cost_layers": [cost_layer]
+            "cost_layers": [{"layer_name": cost_layer}]
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -255,7 +257,7 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "transmission_lines_fpath": ALLCONNS_FEATURES,
             "region_identifier_column": "ba_str",
             "capacity_class": 400,
-            "cost_layers": ["tie_line_costs_{}MW"],
+            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
             "barrier_mult": 100,
             "save_paths": save_paths
         }
@@ -353,7 +355,7 @@ def test_reinforcement_cli_single_tline_coltage(runner,
             "transmission_lines_fpath": ri_tlines_path,
             "region_identifier_column": "ba_str",
             "capacity_class": 400,
-            "cost_layers": ["tie_line_costs_{}MW"],
+            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
             "barrier_mult": 100,
             "save_paths": False,
         }
