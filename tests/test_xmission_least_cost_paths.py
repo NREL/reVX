@@ -26,7 +26,7 @@ from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.least_cost_paths_cli import main
 from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
-from reVX.utilities.exceptions import LeastCostPathNotFoundError
+
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_county_centroids.gpkg')
@@ -126,6 +126,30 @@ def test_parallel(max_workers):
     truth = pd.read_csv(truth)
 
     check(truth, test)
+
+
+def test_invariant_costs():
+    """
+    Test least cost xmission for invariant cost layer
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW',
+                  "is_invariant": True, "multiplier_scalar": 90}
+    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer],
+                              max_workers=1)
+
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    truth = truth.sort_values(['start_index', 'index'])
+    test = test.sort_values(['start_index', 'index'])
+
+    assert np.allclose(test["length_km"], truth["length_km"])
+    assert ((test["cost"] / 90).values < truth["cost"].values).all()
 
 
 def test_clip_buffer():
