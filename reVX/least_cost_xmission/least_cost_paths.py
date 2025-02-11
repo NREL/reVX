@@ -18,6 +18,7 @@ from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
 from reVX.handlers.layered_h5 import crs_match
+from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT,
                                                        BARRIERS_MULT,
@@ -615,7 +616,7 @@ class ReinforcementPaths(LeastCostPaths):
         """
         return self._features[['row', 'col']].values
 
-    def process_least_cost_paths(self, capacity_class, cost_layers,
+    def process_least_cost_paths(self, line_cap_mw, cost_layers,
                                  barrier_mult=BARRIERS_MULT, max_workers=None,
                                  save_paths=False,
                                  length_invariant_cost_layers=None,
@@ -626,10 +627,10 @@ class ReinforcementPaths(LeastCostPaths):
 
         Parameters
         ----------
-        capacity_class : int | str
-            Capacity class of the 'base' greenfield costs layer. Costs
-            will be scaled by the capacity corresponding to this class
-            to report reinforcement costs as $/MW.
+        line_cap_mw : int | str
+            Capacity (MW) of the line that is being used for the 'base'
+            greenfield costs layer. Costs will be normalized by this
+            input to report reinforcement costs as $/MW.
         cost_layers : List[str]
             List of layers in H5 that are summed to determine total
             'base' greenfield costs raster used for routing. 'Base'
@@ -704,7 +705,7 @@ class ReinforcementPaths(LeastCostPaths):
                                         self._cost_fpath,
                                         self.start_indices,
                                         feats[['row', 'col']].values,
-                                        capacity_class,
+                                        line_cap_mw,
                                         cost_layers,
                                         self._row_slice,
                                         self._col_slice,
@@ -729,7 +730,7 @@ class ReinforcementPaths(LeastCostPaths):
                                              self._cost_fpath,
                                              self.start_indices,
                                              self.end_indices,
-                                             capacity_class,
+                                             line_cap_mw,
                                              cost_layers,
                                              self._row_slice,
                                              self._col_slice,
@@ -855,7 +856,12 @@ class ReinforcementPaths(LeastCostPaths):
         ts = time.time()
         least_cost_paths = []
         licl = length_invariant_cost_layers
-        lcp_kwargs = {"capacity_class": capacity_class,
+
+        xmission_config = parse_config(xmission_config=xmission_config)
+        capacity_class = xmission_config._parse_cap_class(capacity_class)
+        line_cap_mw = xmission_config['power_classes'][capacity_class]
+
+        lcp_kwargs = {"line_cap_mw": line_cap_mw,
                       "cost_layers": cost_layers,
                       "length_invariant_cost_layers": licl,
                       "barrier_mult": barrier_mult,

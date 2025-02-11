@@ -1601,8 +1601,8 @@ class ReinforcementLineCosts(TieLineCosts):
     greenfield cost of the ``cost_layers`` input is used.
     """
     def __init__(self, transmission_lines, cost_fpath, start_indices,
-                 capacity_class, cost_layers, row_slice, col_slice,
-                 xmission_config=None, tb_layer_name=BARRIER_H5_LAYER_NAME,
+                 line_cap_mw, cost_layers, row_slice, col_slice,
+                 tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
                  length_invariant_cost_layers=None, tracked_layers=None,
                  cell_size=CELL_SIZE):
@@ -1628,10 +1628,10 @@ class ReinforcementLineCosts(TieLineCosts):
             start location to each of the `end_indices`, which are also
             locations in the cost array (typically substations within
             the BA of the network node).
-        capacity_class : int | str
-            Capacity class of the 'base' greenfield costs layer. Costs
-            will be scaled by the capacity corresponding to this class
-            to report reinforcement costs as $/MW.
+        line_cap_mw : int | str
+            Capacity (MW) of the line that is being used for the 'base'
+            greenfield costs layer. Costs will be normalized by this
+            input to report reinforcement costs as $/MW.
         cost_layers : List[str]
             List of layers in H5 that are summed to determine total
             'base' greenfield costs raster used for routing. 'Base'
@@ -1642,10 +1642,6 @@ class ReinforcementLineCosts(TieLineCosts):
         row_slice, col_slice : slice
             Row and column slices into the cost array representing the
             window to compute reinforcement line path within.
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects.
-            By default, ``None``.
         tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
             Name of transmission barrier layer in `cost_fpath` file.
             This layer defines the multipliers applied to the cost layer
@@ -1691,9 +1687,6 @@ class ReinforcementLineCosts(TieLineCosts):
                          cell_size=cell_size)
         self._null_extras = {}
 
-        x_config = parse_config(xmission_config=xmission_config)
-        capacity_class = x_config._parse_cap_class(capacity_class)
-        line_cap_mw = x_config['power_classes'][capacity_class]
         self._cost = self._cost / line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
             for capacity_mw, lines in transmission_lines.items():
@@ -1715,11 +1708,10 @@ class ReinforcementLineCosts(TieLineCosts):
 
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
-            capacity_class, cost_layers, row_slice, col_slice,
-            xmission_config=None, tb_layer_name=BARRIER_H5_LAYER_NAME,
-            barrier_mult=BARRIERS_MULT, save_paths=False,
-            length_invariant_cost_layers=None, tracked_layers=None,
-            cell_size=CELL_SIZE):
+            line_cap_mw, cost_layers, row_slice, col_slice,
+            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            save_paths=False, length_invariant_cost_layers=None,
+            tracked_layers=None, cell_size=CELL_SIZE):
         """
         Compute reinforcement line path to all features to be connected
         a single supply curve point.
@@ -1751,10 +1743,10 @@ class ReinforcementLineCosts(TieLineCosts):
             within a single BA). Paths are computed from the
             `start_indices` (typically the network node of the BA) to
             each of the individual pairs of `end_indices`.
-        capacity_class : int | str
-            Capacity class of the 'base' greenfield costs layer. Costs
-            will be scaled by the capacity corresponding to this class
-            to report reinforcement costs as $/MW.
+        line_cap_mw : int | str
+            Capacity (MW) of the line that is being used for the 'base'
+            greenfield costs layer. Costs will be normalized by this
+            input to report reinforcement costs as $/MW.
         cost_layers : List[str]
             List of layers in H5 that are summed to determine total
             'base' greenfield costs raster used for routing. 'Base'
@@ -1765,10 +1757,6 @@ class ReinforcementLineCosts(TieLineCosts):
         row_slice, col_slice : slice
             Row and column slices into the cost array representing the
             window to compute reinforcement line path within.
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects.
-            By default, ``None``.
         tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
             Name of transmission barrier layer in `cost_fpath` file.
             This layer defines the multipliers applied to the cost layer
@@ -1815,8 +1803,7 @@ class ReinforcementLineCosts(TieLineCosts):
         """
         ts = time.time()
         tlc = cls(transmission_lines, cost_fpath, start_indices,
-                  capacity_class, cost_layers, row_slice, col_slice,
-                  xmission_config=xmission_config,
+                  line_cap_mw, cost_layers, row_slice, col_slice,
                   tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
                   length_invariant_cost_layers=length_invariant_cost_layers,
                   tracked_layers=tracked_layers, cell_size=cell_size)
