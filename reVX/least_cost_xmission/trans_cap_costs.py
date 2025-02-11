@@ -20,7 +20,7 @@ from typing import Union, Optional, Tuple, Dict
 
 from reV.handlers.exclusions import ExclusionLayers
 
-from reVX.least_cost_xmission.config import XmissionConfig
+from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SINK_CAT,
                                                        SINK_CONNECTION_COST,
@@ -48,8 +48,7 @@ class TieLineCosts:
     """
 
     def __init__(self, cost_fpath, start_indices, cost_layers,
-                 row_slice, col_slice, xmission_config=None,
-                 tb_layer_name=BARRIER_H5_LAYER_NAME,
+                 row_slice, col_slice, tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
                  length_invariant_cost_layers=None, tracked_layers=None,
                  cell_size=CELL_SIZE):
@@ -84,11 +83,6 @@ class TieLineCosts:
             computation. Note that the start and end indices must
             be given w.r.t. the cost raster that is "clipped" using
             these slices.
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to transmission config JSON files, dictionary of
-            transmission config JSONs, or preloaded XmissionConfig
-            objects. If ``None``, the default config is used.
-            By default, ``None``.
         tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
             Name of transmission barrier layer in `cost_fpath` file.
             This layer defines the multipliers applied to the cost layer
@@ -125,7 +119,6 @@ class TieLineCosts:
         """
         self._cost_fpath = cost_fpath
         self._tb_layer_name = tb_layer_name
-        self._config = self._parse_config(xmission_config=xmission_config)
         self._start_indices = start_indices
         self._row_slice = row_slice
         self._col_slice = col_slice
@@ -297,27 +290,6 @@ class TieLineCosts:
             self._clip_shape = (row_shape, col_shape)
 
         return self._clip_shape
-
-    @staticmethod
-    def _parse_config(xmission_config=None):
-        """
-        Load Xmission config if needed
-
-        Parameters
-        ----------
-        config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
-
-        Returns
-        -------
-        XmissionConfig
-        """
-        if not isinstance(xmission_config, XmissionConfig):
-            xmission_config = XmissionConfig(config=xmission_config)
-
-        logger.debug("Xmissing config:\n%s", xmission_config)
-        return xmission_config
 
     def _clip_costs(self, cost_layers, length_invariant_cost_layers=None,
                     barrier_mult=BARRIERS_MULT):
@@ -641,10 +613,10 @@ class TieLineCosts:
 
     @classmethod
     def run(cls, cost_fpath, start_indices, end_indices, cost_layers,
-            row_slice, col_slice, xmission_config=None,
-            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
-            save_paths=False, length_invariant_cost_layers=None,
-            tracked_layers=None, cell_size=CELL_SIZE):
+            row_slice, col_slice, tb_layer_name=BARRIER_H5_LAYER_NAME,
+            barrier_mult=BARRIERS_MULT, save_paths=False,
+            length_invariant_cost_layers=None, tracked_layers=None,
+            cell_size=CELL_SIZE):
         """
         Compute least cost tie-line path to all features to be connected
         a single supply curve point.
@@ -679,11 +651,6 @@ class TieLineCosts:
             computation. Note that the start and end indices must
             be given w.r.t. the cost raster that is "clipped" using
             these slices.
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to transmission config JSON files, dictionary of
-            transmission config JSONs, or preloaded XmissionConfig
-            objects. If ``None``, the default config is used.
-            By default, ``None``.
         tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
             Name of transmission barrier layer in `cost_fpath` file.
             This layer defines the multipliers applied to the cost layer
@@ -729,8 +696,8 @@ class TieLineCosts:
         """
         ts = time.time()
         tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
-                  col_slice, xmission_config=xmission_config,
-                  tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
+                  col_slice, tb_layer_name=tb_layer_name,
+                  barrier_mult=barrier_mult,
                   length_invariant_cost_layers=length_invariant_cost_layers,
                   tracked_layers=tracked_layers, cell_size=cell_size)
 
@@ -827,12 +794,13 @@ class TransCapCosts(TieLineCosts):
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
         licl = length_invariant_cost_layers
         super().__init__(cost_fpath, start_indices, cost_layers, row_slice,
-                         col_slice, xmission_config=xmission_config,
-                         tb_layer_name=tb_layer_name,
+                         col_slice, tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
                          length_invariant_cost_layers=licl,
                          tracked_layers=tracked_layers,
                          cell_size=cell_size)
+
+        self._config = parse_config(xmission_config=xmission_config)
         self._capacity_class = self._config._parse_cap_class(capacity_class)
         self._features = self._prep_features(features)
         self._clip_mask = None
@@ -1716,7 +1684,6 @@ class ReinforcementLineCosts(TieLineCosts):
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
                          cost_layers=cost_layers,
                          row_slice=row_slice, col_slice=col_slice,
-                         xmission_config=xmission_config,
                          tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
                          length_invariant_cost_layers=licl,
@@ -1724,8 +1691,9 @@ class ReinforcementLineCosts(TieLineCosts):
                          cell_size=cell_size)
         self._null_extras = {}
 
-        capacity_class = self._config._parse_cap_class(capacity_class)
-        line_cap_mw = self._config['power_classes'][capacity_class]
+        x_config = parse_config(xmission_config=xmission_config)
+        capacity_class = x_config._parse_cap_class(capacity_class)
+        line_cap_mw = x_config['power_classes'][capacity_class]
         self._cost = self._cost / line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
             for capacity_mw, lines in transmission_lines.items():
