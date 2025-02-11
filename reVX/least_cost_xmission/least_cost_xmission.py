@@ -24,6 +24,7 @@ from reV.supply_curve.extent import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
+from reVX.least_cost_xmission.trans_cap_costs import LCP_AGG_COST_LAYER_NAME
 from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (
     CELL_SIZE,
@@ -889,14 +890,8 @@ class LeastCostXmission(LeastCostPaths):
         if sc_points.empty:
             return paths
 
-        costs = _starting_costs(
-            self._cost_fpath,
-            sc_points,
-            cost_layers,
-            extra_routing_layers,
-            barrier_mult,
-            self._tb_layer_name,
-        )
+        costs = _starting_costs(self._cost_fpath, sc_points, cost_layers,
+                                extra_routing_layers)
         if (costs < 0).any():
             bad_points = sc_points[costs < 0]
             bad_sc_ids = list(bad_points["sc_point_gid"].values)
@@ -1665,27 +1660,37 @@ def _collect_future_chunks(futures, least_cost_paths):
     return least_cost_paths
 
 
-def _starting_costs(
-    cost_fpath,
-    points,
-    cost_layers,
-    extra_routing_layers,
-    barrier_mult,
-    tb_layer_name=BARRIER_H5_LAYER_NAME,
-):
+def _starting_costs(cost_fpath, points, cost_layers, extra_routing_layers):
     """Extract the starting point cost"""
     costs = 0
     rows, cols = points["row"].values, points["col"].values
     with ExclusionLayers(cost_fpath) as f:
         for layer_info in cost_layers or []:
-            costs += f[layer_info["layer_name"]][rows, cols]
+            layer_cost = f[layer_info["layer_name"]][rows, cols]
+            multiplier_layer_name = layer_info.get("multiplier_layer")
+            if multiplier_layer_name:
+                layer_cost *= f[multiplier_layer_name][rows, cols]
+            layer_cost *= layer_info.get("multiplier_scalar", 1)
+            costs += layer_cost
 
+        extra_routing_costs = 0
         for layer_info in extra_routing_layers or []:
-            costs += f[layer_info["layer_name"]][rows, cols]
+            layer_name = layer_info["layer_name"]
+            if layer_name == LCP_AGG_COST_LAYER_NAME:
+                layer_cost = costs.copy()
+            else:
+                layer_cost = f[layer_name][rows, cols]
 
-        barrier = f[tb_layer_name, rows, cols]
-        barrier = barrier * float(barrier_mult)
-        costs *= 1 + barrier
+            multiplier_layer_name = layer_info.get("multiplier_layer")
+            if multiplier_layer_name:
+                if multiplier_layer_name == LCP_AGG_COST_LAYER_NAME:
+                    layer_cost *= costs.copy()
+                else:
+                    layer_cost *= f[multiplier_layer_name][rows, cols]
+            layer_cost *= layer_info.get("multiplier_scalar", 1)
+            extra_routing_costs += layer_cost
+
+        costs += extra_routing_costs
         costs = np.where(costs <= 0, -1, costs)
 
     return costs
