@@ -230,6 +230,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
             - "include_in_report": (OPTIONAL) Boolean flag indicating
               wether the costs and distances for this layer should be
               output in the final LCP table. Default is ``True``.
+
         """
         return self['cost_layers']
 
@@ -237,7 +238,25 @@ class LeastCostXmissionConfig(AnalysisConfig):
     def extra_routing_layers(self):
         """
         Layers to be added to costs to influence routing but NOT
-        reported in final cost (i.e. friction, barriers, etc.).
+        reported in final cost (i.e. friction, barriers, etc.). Each
+        item in this list should be a dictionary containing the
+        following keys:
+
+            - "layer_name": (REQUIRED) Name of layer in HDF5 file
+              containing routing data. Layer names may have curly
+              brackets (``{}``), which will be filled in based on the
+              capacity class input (e.g. "barriers_{}MW").
+            - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
+              containing spatially explicit multiplier values to apply
+              to this routing layer before summing it with the others.
+              Default is ``None``.
+            - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
+              this layer by before summing it with the others. Default
+              is ``1``.
+            - "include_in_report": (OPTIONAL) Boolean flag indicating
+              wether the routing and distances for this layer should be
+              output in the final LCP table. Default is ``True``.
+
         """
         # self.get('extra_routing_layers', []) does not work!!
         if 'extra_routing_layers' not in self:
@@ -405,7 +424,23 @@ class LeastCostPathsConfig(AnalysisConfig):
     def extra_routing_layers(self):
         """
         Layers to be added to costs to influence routing but NOT
-        reported in final cost (i.e. friction, barriers, etc.).
+        reported in final cost (i.e. friction, barriers, etc.). Each
+        item in this list should be a dictionary containing the
+        following keys:
+
+            - "layer_name": (REQUIRED) Name of layer in HDF5 file
+              containing routing data.
+            - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
+              containing spatially explicit multiplier values to apply
+              to this routing layer before summing it with the others.
+              Default is ``None``.
+            - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
+              this layer by before summing it with the others. Default
+              is ``1``.
+            - "include_in_report": (OPTIONAL) Boolean flag indicating
+              wether the routing and distances for this layer should be
+              output in the final LCP table. Default is ``True``.
+
         """
         # self.get('extra_routing_layers', []) does not work!!
         if 'extra_routing_layers' not in self:
