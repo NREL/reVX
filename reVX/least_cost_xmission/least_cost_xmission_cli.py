@@ -157,12 +157,10 @@ def from_config(ctx, config, verbose):
 @click.option('--clipping_buffer', '-buffer', type=float,
               show_default=True, default=CLIP_RASTER_BUFFER,
               help=("Buffer to expand clipping radius by"))
-@click.option('--tb_layer_name', '-tbln', default=BARRIER_H5_LAYER_NAME,
-              type=STR, show_default=True,
-              help='Name of transmission barrier layer in `cost_fpath` file. '
-                   'This layer defines the multipliers applied to the cost '
-                   'layer to determine LCP routing (but does not actually '
-                   'affect output costs')
+@click.option('--cost_multiplier_layer', '-cml', default=None, type=STR,
+              help='Name of cost multiplier layer in `cost_fpath` file. '
+                   'This layer defines the multipliers applied to the final '
+                   'cost layer')
 @click.option('--cost_multiplier_scalar', '-cmult', type=float,
               show_default=True, default=BARRIERS_MULT,
               help=("Final cost layer multiplier"))
@@ -230,7 +228,7 @@ def from_config(ctx, config, verbose):
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
-          clipping_buffer, tb_layer_name, cost_multiplier_scalar,
+          clipping_buffer, cost_multiplier_layer, cost_multiplier_scalar,
           iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
           save_paths, radius, expand_radius, mp_delay, simplify_geo,
           cost_layers, routing_layers, tracked_layers,
@@ -265,7 +263,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "min_line_length": min_line_length,
               "sc_point_gids": sc_point_gids,
               "clipping_buffer": clipping_buffer,
-              "tb_layer_name": tb_layer_name,
+              "cost_multiplier_layer": cost_multiplier_layer,
               "cost_multiplier_scalar": cost_multiplier_scalar,
               "iso_regions_layer_name": iso_regions_layer_name,
               "max_workers": max_workers,
@@ -501,7 +499,7 @@ def get_node_cmd(config, gids):
             '-gids {}'.format(SLURM.s(gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
-            '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
+            '-cml {}'.format(SLURM.s(config.cost_multiplier_layer)),
             '-cmult {}'.format(SLURM.s(config.cost_multiplier_scalar)),
             '-irln {}'.format(SLURM.s(config.iso_regions_layer_name)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
@@ -561,7 +559,7 @@ def run_local(ctx, config):
                sc_point_gids=config.sc_point_gids,
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
-               tb_layer_name=config.tb_layer_name,
+               cost_multiplier_layer=config.cost_multiplier_layer,
                cost_multiplier_scalar=config.cost_multiplier_scalar,
                iso_regions_layer_name=config.iso_regions_layer_name,
                region_identifier_column=config.region_identifier_column,

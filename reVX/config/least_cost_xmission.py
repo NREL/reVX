@@ -184,11 +184,12 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('clipping_buffer', CLIP_RASTER_BUFFER)
 
     @property
-    def tb_layer_name(self):
+    def cost_multiplier_layer(self):
         """
-        Name of transmission barrier layer in `cost_fpath` file.
+        Name of layer containing final cost layer spatial multipliers,
+        defaults to ``None``.
         """
-        return self.get('tb_layer_name', BARRIER_H5_LAYER_NAME)
+        return self.get('cost_multiplier_layer', None)
 
     @property
     def cost_multiplier_scalar(self):
@@ -478,11 +479,12 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self.get('xmission_config', None)
 
     @property
-    def tb_layer_name(self):
+    def cost_multiplier_layer(self):
         """
-        Name of transmission barrier layer in `cost_fpath` file.
+        Name of layer containing final cost layer spatial multipliers,
+        defaults to ``None``.
         """
-        return self.get('tb_layer_name', BARRIER_H5_LAYER_NAME)
+        return self.get('cost_multiplier_layer', None)
 
     @property
     def clip_buffer(self):

@@ -87,7 +87,7 @@ def run_local(ctx, config):
                capacity_class=config.capacity_class,
                clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
-               tb_layer_name=config.tb_layer_name,
+               cost_multiplier_layer=config.cost_multiplier_layer,
                cost_multiplier_scalar=config.cost_multiplier_scalar,
                max_workers=config.execution_control.max_workers,
                region_identifier_column=config.region_identifier_column,
@@ -190,12 +190,10 @@ def from_config(ctx, config, verbose):
 @click.option('--step_index', '-step', type=int,
               show_default=True, default=1,
               help=("Step index of features to run."))
-@click.option('--tb_layer_name', '-tbln', default=BARRIER_H5_LAYER_NAME,
-              type=STR, show_default=True,
-              help='Name of transmission barrier layer in `cost_fpath` file. '
-                   'This layer defines the multipliers applied to the cost '
-                   'layer to determine LCP routing (but does not actually '
-                   'affect output costs')
+@click.option('--cost_multiplier_layer', '-cml', default=None, type=STR,
+              help='Name of cost multiplier layer in `cost_fpath` file. '
+                   'This layer defines the multipliers applied to the final '
+                   'cost layer')
 @click.option('--cost_multiplier_scalar', '-cmult', type=float,
               show_default=True, default=BARRIERS_MULT,
               help=("Final cost layer multiplier"))
@@ -237,7 +235,7 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
-          clip_buffer, start_index, step_index, tb_layer_name,
+          clip_buffer, start_index, step_index, cost_multiplier_layer,
           cost_multiplier_scalar, max_workers, region_identifier_column,
           save_paths, out_dir, log_dir, ss_id_col, verbose, routing_layers,
           tracked_layers, cell_size):
@@ -271,7 +269,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
                             and transmission_lines_fpath is not None)
 
     kwargs = {"clip_buffer": int(clip_buffer),
-              "tb_layer_name": tb_layer_name,
+              "cost_multiplier_layer": cost_multiplier_layer,
               "cost_multiplier_scalar": cost_multiplier_scalar,
               "save_paths": save_paths,
               "max_workers": max_workers,
@@ -573,7 +571,7 @@ def get_node_cmd(config, start_index=0):
             '-cb {}'.format(SLURM.s(config.clip_buffer)),
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
-            '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
+            '-cml {}'.format(SLURM.s(config.cost_multiplier_layer)),
             '-cmult {}'.format(SLURM.s(config.cost_multiplier_scalar)),
             '-ssid {}'.format(SLURM.s(config.ss_id_col)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),

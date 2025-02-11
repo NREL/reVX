@@ -35,7 +35,7 @@ class LeastCostPaths:
     """
 
     def __init__(self, cost_fpath, features_fpath, clip_buffer=0,
-                 tb_layer_name=BARRIER_H5_LAYER_NAME):
+                 cost_multiplier_layer=None):
         """
         Parameters
         ----------
@@ -48,14 +48,12 @@ class LeastCostPaths:
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         """
         self._cost_fpath = cost_fpath
-        self._tb_layer_name = tb_layer_name
+        self._cost_multiplier_layer = cost_multiplier_layer
         self._check_layers()
 
         out = self._map_to_costs(cost_fpath, gpd.read_file(features_fpath),
@@ -84,7 +82,8 @@ class LeastCostPaths:
 
     def _check_layers(self):
         """Check to make sure the required layers are in cost_fpath. """
-        self._check_layers_in_h5(self._cost_fpath, [self._tb_layer_name])
+        self._check_layers_in_h5(self._cost_fpath,
+                                 [self._cost_multiplier_layer])
 
     @classmethod
     def _check_layers_in_h5(cls, cost_fpath, layers):
@@ -106,7 +105,7 @@ class LeastCostPaths:
         with ExclusionLayers(cost_fpath) as f:
             missing = []
             for lyr in layers:
-                if lyr not in f:
+                if lyr and lyr not in f:
                     missing.append(lyr)
 
             if missing:
@@ -389,7 +388,8 @@ class LeastCostPaths:
                                        self.start_indices, self.end_indices,
                                        cost_layers,
                                        self._row_slice, self._col_slice,
-                                       tb_layer_name=self._tb_layer_name,
+                                       cost_multiplier_layer=(
+                                           self._cost_multiplier_layer),
                                        cost_multiplier_scalar=(
                                            cost_multiplier_scalar),
                                        save_paths=save_paths,
@@ -423,7 +423,8 @@ class LeastCostPaths:
                                 self.start_indices, self.end_indices,
                                 cost_layers,
                                 self._row_slice, self._col_slice,
-                                tb_layer_name=self._tb_layer_name,
+                                cost_multiplier_layer=(
+                                    self._cost_multiplier_layer),
                                 cost_multiplier_scalar=cost_multiplier_scalar,
                                 save_paths=save_paths,
                                 extra_routing_layers=extra_routing_layers,
@@ -440,7 +441,7 @@ class LeastCostPaths:
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, cost_layers,
-            clip_buffer=0, tb_layer_name=BARRIER_H5_LAYER_NAME,
+            clip_buffer=0, cost_multiplier_layer=None,
             cost_multiplier_scalar=1, indices=None, max_workers=None,
             save_paths=False, extra_routing_layers=None,
             tracked_layers=None, cell_size=CELL_SIZE):
@@ -463,11 +464,9 @@ class LeastCostPaths:
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
         indices : iterable, optional
@@ -514,7 +513,7 @@ class LeastCostPaths:
         """
         ts = time.time()
         lcp = cls(cost_fpath, features_fpath, clip_buffer=clip_buffer,
-                  tb_layer_name=tb_layer_name)
+                  cost_multiplier_layer=cost_multiplier_layer)
         least_cost_paths = lcp.process_least_cost_paths(
             cost_layers,
             cost_multiplier_scalar=cost_multiplier_scalar,
@@ -537,7 +536,7 @@ class ReinforcementPaths(LeastCostPaths):
     balancing area network node.
     """
     def __init__(self, cost_fpath, features, transmission_lines,
-                 clip_buffer=0, tb_layer_name=BARRIER_H5_LAYER_NAME):
+                 clip_buffer=0, cost_multiplier_layer=None):
         """
         Parameters
         ----------
@@ -558,14 +557,12 @@ class ReinforcementPaths(LeastCostPaths):
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         """
         self._cost_fpath = cost_fpath
-        self._tb_layer_name = tb_layer_name
+        self._cost_multiplier_layer = cost_multiplier_layer
         self._check_layers()
 
         self._features, self._row_slice, self._col_slice, self._shape = \
@@ -710,7 +707,8 @@ class ReinforcementPaths(LeastCostPaths):
                                         cost_layers,
                                         self._row_slice,
                                         self._col_slice,
-                                        tb_layer_name=self._tb_layer_name,
+                                        cost_multiplier_layer=(
+                                            self._cost_multiplier_layer),
                                         cost_multiplier_scalar=(
                                             cost_multiplier_scalar),
                                         save_paths=save_paths,
@@ -737,7 +735,8 @@ class ReinforcementPaths(LeastCostPaths):
                                              cost_layers,
                                              self._row_slice,
                                              self._col_slice,
-                                             tb_layer_name=self._tb_layer_name,
+                                             cost_multiplier_layer=(
+                                                 self._cost_multiplier_layer),
                                              cost_multiplier_scalar=(
                                                  cost_multiplier_scalar),
                                              save_paths=save_paths,
@@ -755,7 +754,7 @@ class ReinforcementPaths(LeastCostPaths):
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
-            tb_layer_name=BARRIER_H5_LAYER_NAME, cost_multiplier_scalar=1,
+            cost_multiplier_layer=None, cost_multiplier_scalar=1,
             indices=None, max_workers=None, save_paths=False,
             extra_routing_layers=None, tracked_layers=None,
             ss_id_col="poi_gid", cell_size=CELL_SIZE):
@@ -805,11 +804,9 @@ class ReinforcementPaths(LeastCostPaths):
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
         indices : iterable, optional
@@ -924,7 +921,8 @@ class ReinforcementPaths(LeastCostPaths):
                         len(node_substations), rid)
             node_features = pd.concat([network_node, node_substations])
             rp = cls(cost_fpath, node_features, transmission_lines,
-                     clip_buffer=clip_buffer, tb_layer_name=tb_layer_name)
+                     clip_buffer=clip_buffer,
+                     cost_multiplier_layer=cost_multiplier_layer)
             node_least_cost_paths = rp.process_least_cost_paths(**lcp_kwargs)
             node_least_cost_paths[region_identifier_column] = rid
             least_cost_paths += [node_least_cost_paths]

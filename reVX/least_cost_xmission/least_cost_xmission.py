@@ -59,7 +59,7 @@ class LeastCostXmission(LeastCostPaths):
 
     def __init__(self, cost_fpath, features_fpath, resolution=RESOLUTION,
                  xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM,
-                 tb_layer_name=BARRIER_H5_LAYER_NAME,
+                 cost_multiplier_layer=None,
                  iso_regions_layer_name=ISO_H5_LAYER_NAME):
         """
         Parameters
@@ -75,18 +75,16 @@ class LeastCostXmission(LeastCostPaths):
             .jsons, or preloaded XmissionConfig objects, by default None
         min_line_length : int | float, optional
             Minimum line length in km, by default 0.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
             Name of ISO regions layer in `cost_fpath` file. The layer
             maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
             By default, :obj:`ISO_H5_LAYER_NAME`.
         """
         self._cost_fpath = cost_fpath
-        self._tb_layer_name = tb_layer_name
+        self._cost_multiplier_layer = cost_multiplier_layer
         self._iso_layer_name = iso_regions_layer_name
         self._check_layers()
 
@@ -111,7 +109,8 @@ class LeastCostXmission(LeastCostPaths):
     def _check_layers(self):
         """Check to make sure the required layers are in cost_fpath."""
         self._check_layers_in_h5(self._cost_fpath,
-                                 [self._tb_layer_name, self._iso_layer_name])
+                                 [self._cost_multiplier_layer,
+                                  self._iso_layer_name])
 
     @property
     def sc_points(self):
@@ -803,7 +802,9 @@ class LeastCostXmission(LeastCostPaths):
             return paths
 
         costs = _starting_costs(self._cost_fpath, sc_points, cost_layers,
-                                extra_routing_layers)
+                                extra_routing_layers,
+                                self._cost_multiplier_layer,
+                                cost_multiplier_scalar)
         if (costs < 0).any():
             bad_points = sc_points[costs < 0]
             bad_sc_ids = list(bad_points["sc_point_gid"].values)
@@ -829,7 +830,8 @@ class LeastCostXmission(LeastCostPaths):
                                 sc_point.copy(deep=True), sc_features,
                                 capacity_class, cost_layers, radius=sc_radius,
                                 xmission_config=self._config,
-                                tb_layer_name=self._tb_layer_name,
+                                cost_multiplier_layer=(
+                                    self._cost_multiplier_layer),
                                 cost_multiplier_scalar=cost_multiplier_scalar,
                                 iso_regions_layer_name=self._iso_layer_name,
                                 min_line_length=self._min_line_len,
@@ -956,7 +958,7 @@ class LeastCostXmission(LeastCostPaths):
                     self._cost_fpath, sc_point.copy(deep=True), sc_features,
                     capacity_class, radius=sc_radius,
                     xmission_config=self._config,
-                    tb_layer_name=self._tb_layer_name,
+                    cost_multiplier_layer=self._cost_multiplier_layer,
                     cost_multiplier_scalar=cost_multiplier_scalar,
                     iso_regions_layer_name=self._iso_layer_name,
                     min_line_length=self._min_line_len,
@@ -980,12 +982,11 @@ class LeastCostXmission(LeastCostPaths):
             resolution=RESOLUTION, xmission_config=None,
             min_line_length=MINIMUM_SPUR_DIST_KM, sc_point_gids=None,
             nn_sinks=NUM_NN_SINKS, clipping_buffer=CLIP_RASTER_BUFFER,
-            tb_layer_name=BARRIER_H5_LAYER_NAME, cost_multiplier_scalar=1,
+            cost_multiplier_layer=None, cost_multiplier_scalar=1,
             iso_regions_layer_name=ISO_H5_LAYER_NAME, max_workers=None,
             save_paths=False, radius=None, expand_radius=True, mp_delay=3,
             simplify_geo=None, extra_routing_layers=None, tracked_layers=None,
-            length_mult_kind="linear", cell_size=CELL_SIZE,
-    ):
+            length_mult_kind="linear", cell_size=CELL_SIZE):
         """
         Find Least Cost Transmission connections between desired
         sc_points to given transmission features for desired capacity
@@ -1020,11 +1021,9 @@ class LeastCostXmission(LeastCostPaths):
             calculation, by default 2
         clipping_buffer : float, optional
             Buffer to expand clipping radius by, by default 1.05
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
         iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
@@ -1096,9 +1095,8 @@ class LeastCostXmission(LeastCostPaths):
         lcx = cls(cost_fpath, features_fpath, resolution=resolution,
                   xmission_config=xmission_config,
                   min_line_length=min_line_length,
-                  tb_layer_name=tb_layer_name,
-                  iso_regions_layer_name=iso_regions_layer_name,
-        )
+                  cost_multiplier_layer=cost_multiplier_layer,
+                  iso_regions_layer_name=iso_regions_layer_name)
 
         least_costs = lcx.process_sc_points(capacity_class, cost_layers,
                                             sc_point_gids=sc_point_gids,
@@ -1116,8 +1114,7 @@ class LeastCostXmission(LeastCostPaths):
                                                 extra_routing_layers),
                                             tracked_layers=tracked_layers,
                                             length_mult_kind=length_mult_kind,
-                                            cell_size=cell_size,
-        )
+                                            cell_size=cell_size)
 
         logger.info("{} connections were made to {} SC points in "
                     "{:.4f} minutes"
@@ -1148,9 +1145,8 @@ class RegionalXmission(LeastCostXmission):
     def __init__(self, cost_fpath, features_fpath, regions,
                  region_identifier_column, resolution=RESOLUTION,
                  xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM,
-                 tb_layer_name=BARRIER_H5_LAYER_NAME,
-                 iso_regions_layer_name=ISO_H5_LAYER_NAME,
-    ):
+                 cost_multiplier_layer=None,
+                 iso_regions_layer_name=ISO_H5_LAYER_NAME):
         """
         Parameters
         ----------
@@ -1178,11 +1174,9 @@ class RegionalXmission(LeastCostXmission):
             By default, ``None``.
         min_line_length : int | float, optional
             Minimum line length in km. By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
             Name of ISO regions layer in `cost_fpath` file. The layer
             maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
@@ -1193,7 +1187,7 @@ class RegionalXmission(LeastCostXmission):
                          resolution=resolution,
                          xmission_config=xmission_config,
                          min_line_length=min_line_length,
-                         tb_layer_name=tb_layer_name,
+                         cost_multiplier_layer=cost_multiplier_layer,
                          iso_regions_layer_name=iso_regions_layer_name)
 
         with ExclusionLayers(cost_fpath) as f:
@@ -1279,7 +1273,7 @@ class RegionalXmission(LeastCostXmission):
             resolution=RESOLUTION, xmission_config=None,
             min_line_length=MINIMUM_SPUR_DIST_KM, sc_point_gids=None,
             clipping_buffer=CLIP_RASTER_BUFFER,
-            tb_layer_name=BARRIER_H5_LAYER_NAME, cost_multiplier_scalar=1,
+            cost_multiplier_layer=None, cost_multiplier_scalar=1,
             iso_regions_layer_name=ISO_H5_LAYER_NAME, max_workers=None,
             simplify_geo=None, save_paths=False, radius=None,
             expand_radius=True, mp_delay=3, extra_routing_layers=None,
@@ -1329,11 +1323,9 @@ class RegionalXmission(LeastCostXmission):
             which processes all points.
         clipping_buffer : float, optional
             Buffer to expand clipping radius by. By default, ``1.05``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
         iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
@@ -1404,9 +1396,8 @@ class RegionalXmission(LeastCostXmission):
         ts = time.time()
         lcx = cls(cost_fpath, features_fpath, regions_fpath,
                   region_identifier_column, resolution, xmission_config,
-                  min_line_length, tb_layer_name=tb_layer_name,
-                  iso_regions_layer_name=iso_regions_layer_name,
-        )
+                  min_line_length, cost_multiplier_layer=cost_multiplier_layer,
+                  iso_regions_layer_name=iso_regions_layer_name)
         least_costs = lcx.process_sc_points(capacity_class, cost_layers,
                                             sc_point_gids=sc_point_gids,
                                             clipping_buffer=clipping_buffer,
@@ -1422,8 +1413,7 @@ class RegionalXmission(LeastCostXmission):
                                                 extra_routing_layers),
                                             tracked_layers=tracked_layers,
                                             length_mult_kind=length_mult_kind,
-                                            cell_size=cell_size,
-        )
+                                            cell_size=cell_size)
 
         logger.info("{} connections were made to {} SC points in {:.4f} "
                     "minutes"
@@ -1471,7 +1461,8 @@ def _collect_future_chunks(futures, least_cost_paths):
     return least_cost_paths
 
 
-def _starting_costs(cost_fpath, points, cost_layers, extra_routing_layers):
+def _starting_costs(cost_fpath, points, cost_layers, extra_routing_layers,
+                    cost_multiplier_layer, cost_multiplier_scalar):
     """Extract the starting point cost"""
     costs = 0
     rows, cols = points["row"].values, points["col"].values
@@ -1483,6 +1474,10 @@ def _starting_costs(cost_fpath, points, cost_layers, extra_routing_layers):
                 layer_cost *= f[multiplier_layer_name][rows, cols]
             layer_cost *= layer_info.get("multiplier_scalar", 1)
             costs += layer_cost
+
+        if cost_multiplier_layer:
+            costs *= f[cost_multiplier_layer][rows, cols]
+        costs *= cost_multiplier_scalar
 
         extra_routing_costs = 0
         for layer_info in extra_routing_layers or []:

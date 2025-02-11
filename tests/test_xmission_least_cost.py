@@ -538,7 +538,6 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
                                       "multiplier_scalar": 100}],
             "min_line_length": 0,
             "save_paths": False,
-            "tb_layer_name": "tb",
             "iso_regions_layer_name": "iso",
         }
 
