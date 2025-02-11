@@ -10,6 +10,7 @@ import random
 import tempfile
 import traceback
 
+import h5py
 import pytest
 import rasterio
 import numpy as np
@@ -24,9 +25,10 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.config import XmissionConfig
+from reVX.least_cost_xmission.trans_cap_costs import LCP_AGG_COST_LAYER_NAME
 from reVX.least_cost_xmission.least_cost_paths_cli import main
 from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
-from reVX.utilities.exceptions import LeastCostPathNotFoundError
+
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_county_centroids.gpkg')
@@ -34,6 +36,9 @@ ALLCONNS_FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
 ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 CHECK_COLS = ('start_index', 'length_km', 'cost', 'index')
 DEFAULT_CONFIG = XmissionConfig()
+DEFAULT_BARRIER  = {"layer_name": LCP_AGG_COST_LAYER_NAME,
+                    "multiplier_layer": "transmission_barrier",
+                    "multiplier_scalar": 100}
 
 
 def _cap_class_to_cap(capacity):
@@ -95,8 +100,10 @@ def test_capacity_class(capacity):
     """
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_paths_{capacity}MW.csv')
-    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
-    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer])
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
+    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
+                              extra_routing_layers=[DEFAULT_BARRIER])
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -114,8 +121,10 @@ def test_parallel(max_workers):
     capacity = random.choice([100, 200, 400, 1000, 3000])
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_paths_{capacity}MW.csv')
-    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
     test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer],
+                              extra_routing_layers=[DEFAULT_BARRIER],
                               max_workers=max_workers)
 
     if not os.path.exists(truth):
@@ -124,6 +133,88 @@ def test_parallel(max_workers):
     truth = pd.read_csv(truth)
 
     check(truth, test)
+
+
+def test_invariant_costs():
+    """
+    Test least cost xmission for invariant cost layer
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW',
+                  "is_invariant": True, "multiplier_scalar": 90}
+    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
+                              extra_routing_layers=[DEFAULT_BARRIER])
+
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    truth = truth.sort_values(['start_index', 'index'])
+    test = test.sort_values(['start_index', 'index'])
+
+    assert np.allclose(test["length_km"], truth["length_km"])
+    assert ((test["cost"] / 90).values < truth["cost"].values).all()
+
+
+def test_cost_multiplier_layer():
+    """
+    Test least cost xmission with a cost_multiplier_layer
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
+
+    with tempfile.TemporaryDirectory() as td:
+        cost_h5_path = os.path.join(td, 'costs.h5')
+        shutil.copy(COST_H5, cost_h5_path)
+        with h5py.File(cost_h5_path, "a") as fh:
+            shape = fh["transmission_barrier"].shape
+            fh.create_dataset("test_layer",
+                              data=np.ones(shape, dtype="float32") * 7)
+
+        test = LeastCostPaths.run(cost_h5_path, FEATURES, [cost_layer],
+                                  max_workers=1,
+                                  extra_routing_layers=[DEFAULT_BARRIER],
+                                  cost_multiplier_layer="test_layer")
+
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    truth = truth.sort_values(['start_index', 'index'])
+    test = test.sort_values(['start_index', 'index'])
+
+    assert np.allclose(test["length_km"], truth["length_km"])
+    assert np.allclose(test["cost"].values, truth["cost"].values * 7)
+
+
+def test_cost_multiplier_scalar():
+    """
+    Test least cost xmission with a cost_multiplier_scalar
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
+    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
+                              extra_routing_layers=[DEFAULT_BARRIER],
+                              cost_multiplier_scalar=5)
+
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    truth = truth.sort_values(['start_index', 'index'])
+    test = test.sort_values(['start_index', 'index'])
+
+    assert np.allclose(test["length_km"], truth["length_km"])
+    assert np.allclose(test["cost"].values, truth["cost"].values * 5)
 
 
 def test_clip_buffer():
@@ -148,13 +239,16 @@ def test_clip_buffer():
         with ExclusionLayers(out_cost_fp) as excl:
             assert np.allclose(excl['tie_line_costs_102MW'], costs)
 
+        cost_layer = {"layer_name": "tie_line_costs_102MW"}
         out_no_buffer = LeastCostPaths.run(out_cost_fp, out_features_fp,
-                                           ["tie_line_costs_102MW"],
-                                           max_workers=1)
+                                           [cost_layer], max_workers=1,
+                                           extra_routing_layers=(
+                                               [DEFAULT_BARRIER]))
         assert out_no_buffer["length_km"].isna().all()
 
         out = LeastCostPaths.run(out_cost_fp, out_features_fp,
-                                 ["tie_line_costs_102MW"], max_workers=1,
+                                 [cost_layer], max_workers=1,
+                                 extra_routing_layers=[DEFAULT_BARRIER],
                                  clip_buffer=10)
         assert (out["length_km"] > 193).all()
 
@@ -175,11 +269,13 @@ def test_cli(runner, save_paths):
             "log_directory": td,
             "execution_control": {
                 "option": "local",
+                "max_workers": 1,
             },
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
             "save_paths": save_paths,
-            "cost_layers": [cost_layer]
+            "cost_layers": [{"layer_name": cost_layer}],
+            "extra_routing_layers": [DEFAULT_BARRIER],
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -248,6 +344,7 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "log_directory": td,
             "execution_control": {
                 "option": "local",
+                "max_workers": 1,
             },
             "cost_fpath": COST_H5,
             "features_fpath": ri_substations_path,
@@ -255,8 +352,8 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "transmission_lines_fpath": ALLCONNS_FEATURES,
             "region_identifier_column": "ba_str",
             "capacity_class": 400,
-            "cost_layers": ["tie_line_costs_{}MW"],
-            "barrier_mult": 100,
+            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+            "extra_routing_layers": [DEFAULT_BARRIER],
             "save_paths": save_paths
         }
         config_path = os.path.join(td, 'config.json')
@@ -346,6 +443,7 @@ def test_reinforcement_cli_single_tline_coltage(runner,
             "log_directory": td,
             "execution_control": {
                 "option": "local",
+                "max_workers": 1,
             },
             "cost_fpath": COST_H5,
             "features_fpath": ri_substations_path,
@@ -353,8 +451,8 @@ def test_reinforcement_cli_single_tline_coltage(runner,
             "transmission_lines_fpath": ri_tlines_path,
             "region_identifier_column": "ba_str",
             "capacity_class": 400,
-            "cost_layers": ["tie_line_costs_{}MW"],
-            "barrier_mult": 100,
+            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+            "extra_routing_layers": [DEFAULT_BARRIER],
             "save_paths": False,
         }
         config_path = os.path.join(td, 'config.json')
