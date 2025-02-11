@@ -163,10 +163,9 @@ def from_config(ctx, config, verbose):
                    'This layer defines the multipliers applied to the cost '
                    'layer to determine LCP routing (but does not actually '
                    'affect output costs')
-@click.option('--barrier_mult', '-bmult', type=float,
+@click.option('--cost_multiplier_scalar', '-cmult', type=float,
               show_default=True, default=BARRIERS_MULT,
-              help=("Tranmission barrier multiplier, used when computing the "
-                    "least cost tie-line path"))
+              help=("Final cost layer multiplier"))
 @click.option('--iso_regions_layer_name', '-irln', default=ISO_H5_LAYER_NAME,
               type=STR, show_default=True,
               help='Name of ISO regions layer in `cost_fpath` file. The '
@@ -231,7 +230,7 @@ def from_config(ctx, config, verbose):
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
-          clipping_buffer, tb_layer_name, barrier_mult,
+          clipping_buffer, tb_layer_name, cost_multiplier_scalar,
           iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
           save_paths, radius, expand_radius, mp_delay, simplify_geo,
           cost_layers, routing_layers, tracked_layers,
@@ -267,7 +266,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "sc_point_gids": sc_point_gids,
               "clipping_buffer": clipping_buffer,
               "tb_layer_name": tb_layer_name,
-              "barrier_mult": barrier_mult,
+              "cost_multiplier_scalar": cost_multiplier_scalar,
               "iso_regions_layer_name": iso_regions_layer_name,
               "max_workers": max_workers,
               "save_paths": save_paths,
@@ -503,7 +502,7 @@ def get_node_cmd(config, gids):
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
             '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
-            '-bmult {}'.format(SLURM.s(config.barrier_mult)),
+            '-cmult {}'.format(SLURM.s(config.cost_multiplier_scalar)),
             '-irln {}'.format(SLURM.s(config.iso_regions_layer_name)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
@@ -563,7 +562,7 @@ def run_local(ctx, config):
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
                tb_layer_name=config.tb_layer_name,
-               barrier_mult=config.barrier_mult,
+               cost_multiplier_scalar=config.cost_multiplier_scalar,
                iso_regions_layer_name=config.iso_regions_layer_name,
                region_identifier_column=config.region_identifier_column,
                max_workers=config.execution_control.max_workers,

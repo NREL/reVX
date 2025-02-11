@@ -432,7 +432,6 @@ def test_regional_cli(runner, ri_ba, save_paths):
             "capacity_class": 1000,
             "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
             "extra_routing_layers": [DEFAULT_BARRIER],
-            "barrier_mult": 100,
             "min_line_length": 0,
             "save_paths": save_paths,
         }
@@ -537,7 +536,6 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
             "extra_routing_layers": [{"layer_name": LCP_AGG_COST_LAYER_NAME,
                                       "multiplier_layer": "tb",
                                       "multiplier_scalar": 100}],
-            "barrier_mult": 100,
             "min_line_length": 0,
             "save_paths": False,
             "tb_layer_name": "tb",

@@ -553,7 +553,7 @@ class LeastCostXmission(LeastCostPaths):
         sc_point_gids=None,
         nn_sinks=NUM_NN_SINKS,
         clipping_buffer=CLIP_RASTER_BUFFER,
-        barrier_mult=BARRIERS_MULT,
+        cost_multiplier_scalar=1,
         max_workers=None,
         save_paths=False,
         radius=None,
@@ -587,9 +587,8 @@ class LeastCostXmission(LeastCostPaths):
             calculation, by default 2
         clipping_buffer : float, optional
             Buffer to expand clipping radius by, by default 1.05
-        barrier_mult : int, optional
-            Transmission barrier multiplier, used when computing the
-            least cost tie-line path, by default 100
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -663,7 +662,8 @@ class LeastCostXmission(LeastCostPaths):
         for layer_info in cost_layers:
             layer_info["layer_name"] = layer_info["layer_name"].format(cap)
 
-        logger.debug("Using a barrier multiplier of %s", barrier_mult)
+        logger.debug("Using a cost_multiplier_scalar of %s",
+                     cost_multiplier_scalar)
 
         if max_workers > 1:
             logger.info(
@@ -679,7 +679,7 @@ class LeastCostXmission(LeastCostPaths):
                 sc_point_gids=sc_point_gids,
                 nn_sinks=nn_sinks,
                 clipping_buffer=clipping_buffer,
-                barrier_mult=barrier_mult,
+                cost_multiplier_scalar=cost_multiplier_scalar,
                 save_paths=save_paths,
                 radius=radius,
                 expand_radius=expand_radius,
@@ -704,7 +704,7 @@ class LeastCostXmission(LeastCostPaths):
                 sc_point_gids=sc_point_gids,
                 nn_sinks=nn_sinks,
                 clipping_buffer=clipping_buffer,
-                barrier_mult=barrier_mult,
+                cost_multiplier_scalar=cost_multiplier_scalar,
                 save_paths=save_paths,
                 radius=radius,
                 expand_radius=expand_radius,
@@ -737,7 +737,7 @@ class LeastCostXmission(LeastCostPaths):
         sc_point_gids,
         nn_sinks=NUM_NN_SINKS,
         clipping_buffer=CLIP_RASTER_BUFFER,
-        barrier_mult=BARRIERS_MULT,
+        cost_multiplier_scalar=1,
         max_workers=2,
         save_paths=False,
         radius=None,
@@ -774,9 +774,8 @@ class LeastCostXmission(LeastCostPaths):
             calculation, by default 2
         clipping_buffer : float, optional
             Buffer to expand clipping radius by, by default 1.05
-        barrier_mult : int, optional
-            Transmission barrier multiplier, used when computing the
-            least cost tie-line path, by default 100
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         max_workers : int, optional
             Number of workers to use for processing
         save_paths : bool, optional
@@ -850,7 +849,7 @@ class LeastCostXmission(LeastCostPaths):
                 mp_delay,
                 capacity_class,
                 cost_layers,
-                barrier_mult,
+                cost_multiplier_scalar,
                 save_paths,
                 simplify_geo,
                 extra_routing_layers,
@@ -874,7 +873,7 @@ class LeastCostXmission(LeastCostPaths):
         mp_delay,
         capacity_class,
         cost_layers,
-        barrier_mult,
+        cost_multiplier_scalar,
         save_paths,
         simplify_geo,
         extra_routing_layers,
@@ -929,7 +928,7 @@ class LeastCostXmission(LeastCostPaths):
                 radius=sc_radius,
                 xmission_config=self._config,
                 tb_layer_name=self._tb_layer_name,
-                barrier_mult=barrier_mult,
+                cost_multiplier_scalar=cost_multiplier_scalar,
                 iso_regions_layer_name=self._iso_layer_name,
                 min_line_length=self._min_line_len,
                 save_paths=save_paths,
@@ -958,7 +957,7 @@ class LeastCostXmission(LeastCostPaths):
         sc_point_gids,
         nn_sinks=NUM_NN_SINKS,
         clipping_buffer=CLIP_RASTER_BUFFER,
-        barrier_mult=BARRIERS_MULT,
+        cost_multiplier_scalar=1,
         save_paths=False,
         radius=None,
         expand_radius=True,
@@ -993,9 +992,8 @@ class LeastCostXmission(LeastCostPaths):
             calculation, by default 2
         clipping_buffer : float, optional
             Buffer to expand clipping radius by, by default 1.05
-        barrier_mult : int, optional
-            Transmission barrier multiplier, used when computing the
-            least cost tie-line path, by default 100
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         save_paths : bool, optional
             Flag to return least cost paths as a multi-line geometry,
             by default False
@@ -1073,7 +1071,7 @@ class LeastCostXmission(LeastCostPaths):
                     radius=sc_radius,
                     xmission_config=self._config,
                     tb_layer_name=self._tb_layer_name,
-                    barrier_mult=barrier_mult,
+                    cost_multiplier_scalar=cost_multiplier_scalar,
                     iso_regions_layer_name=self._iso_layer_name,
                     min_line_length=self._min_line_len,
                     save_paths=save_paths,
@@ -1109,7 +1107,7 @@ class LeastCostXmission(LeastCostPaths):
         nn_sinks=NUM_NN_SINKS,
         clipping_buffer=CLIP_RASTER_BUFFER,
         tb_layer_name=BARRIER_H5_LAYER_NAME,
-        barrier_mult=BARRIERS_MULT,
+        cost_multiplier_scalar=1,
         iso_regions_layer_name=ISO_H5_LAYER_NAME,
         max_workers=None,
         save_paths=False,
@@ -1161,9 +1159,8 @@ class LeastCostXmission(LeastCostPaths):
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Transmission barrier multiplier, used when computing the
-            least cost tie-line path, by default 100
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
             Name of ISO regions layer in `cost_fpath` file. The layer
             maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
@@ -1246,7 +1243,7 @@ class LeastCostXmission(LeastCostPaths):
             sc_point_gids=sc_point_gids,
             nn_sinks=nn_sinks,
             clipping_buffer=clipping_buffer,
-            barrier_mult=barrier_mult,
+            cost_multiplier_scalar=cost_multiplier_scalar,
             max_workers=max_workers,
             save_paths=save_paths,
             radius=radius,
@@ -1452,7 +1449,7 @@ class RegionalXmission(LeastCostXmission):
         sc_point_gids=None,
         clipping_buffer=CLIP_RASTER_BUFFER,
         tb_layer_name=BARRIER_H5_LAYER_NAME,
-        barrier_mult=BARRIERS_MULT,
+        cost_multiplier_scalar=1,
         iso_regions_layer_name=ISO_H5_LAYER_NAME,
         max_workers=None,
         simplify_geo=None,
@@ -1514,9 +1511,8 @@ class RegionalXmission(LeastCostXmission):
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs.
-            By default, ``100``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
             Name of ISO regions layer in `cost_fpath` file. The layer
             maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
@@ -1599,7 +1595,7 @@ class RegionalXmission(LeastCostXmission):
             cost_layers,
             sc_point_gids=sc_point_gids,
             clipping_buffer=clipping_buffer,
-            barrier_mult=barrier_mult,
+            cost_multiplier_scalar=cost_multiplier_scalar,
             max_workers=max_workers,
             save_paths=save_paths,
             radius=radius,

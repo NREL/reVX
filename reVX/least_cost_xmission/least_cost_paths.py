@@ -305,7 +305,7 @@ class LeastCostPaths:
         """
         return self.end_features[['row', 'col']].values
 
-    def process_least_cost_paths(self, cost_layers, barrier_mult=BARRIERS_MULT,
+    def process_least_cost_paths(self, cost_layers, cost_multiplier_scalar=1,
                                  indices=None, max_workers=None,
                                  save_paths=False, extra_routing_layers=None,
                                  tracked_layers=None, cell_size=CELL_SIZE):
@@ -321,9 +321,8 @@ class LeastCostPaths:
             See the `cost_layers` property of
             :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
             for more details on this input.
-        barrier_mult : int, optional
-            Transmission barrier multiplier, used when computing the
-            least cost tie-line path, by default 100
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         indices : iterable, optional
             Indices of the transmission features input that should be
             processed. By default ``None``, which process all
@@ -377,9 +376,9 @@ class LeastCostPaths:
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 least_cost_paths = self._compute_paths_in_chunks(
-                    exe, max_workers, indices, cost_layers, barrier_mult,
-                    save_paths, extra_routing_layers, tracked_layers,
-                    cell_size=cell_size)
+                    exe, max_workers, indices, cost_layers,
+                    cost_multiplier_scalar, save_paths, extra_routing_layers,
+                    tracked_layers, cell_size=cell_size)
         else:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
@@ -391,7 +390,8 @@ class LeastCostPaths:
                                        cost_layers,
                                        self._row_slice, self._col_slice,
                                        tb_layer_name=self._tb_layer_name,
-                                       barrier_mult=barrier_mult,
+                                       cost_multiplier_scalar=(
+                                           cost_multiplier_scalar),
                                        save_paths=save_paths,
                                        extra_routing_layers=(
                                            extra_routing_layers),
@@ -411,9 +411,9 @@ class LeastCostPaths:
         return least_cost_paths
 
     def _compute_paths_in_chunks(self, exe, max_submissions, indices,
-                                 cost_layers, barrier_mult, save_paths,
-                                 extra_routing_layers, tracked_layers,
-                                 cell_size):
+                                 cost_layers, cost_multiplier_scalar,
+                                 save_paths, extra_routing_layers,
+                                 tracked_layers, cell_size):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -424,7 +424,7 @@ class LeastCostPaths:
                                 cost_layers,
                                 self._row_slice, self._col_slice,
                                 tb_layer_name=self._tb_layer_name,
-                                barrier_mult=barrier_mult,
+                                cost_multiplier_scalar=cost_multiplier_scalar,
                                 save_paths=save_paths,
                                 extra_routing_layers=extra_routing_layers,
                                 tracked_layers=tracked_layers,
@@ -441,7 +441,7 @@ class LeastCostPaths:
     @classmethod
     def run(cls, cost_fpath, features_fpath, cost_layers,
             clip_buffer=0, tb_layer_name=BARRIER_H5_LAYER_NAME,
-            barrier_mult=BARRIERS_MULT, indices=None, max_workers=None,
+            cost_multiplier_scalar=1, indices=None, max_workers=None,
             save_paths=False, extra_routing_layers=None,
             tracked_layers=None, cell_size=CELL_SIZE):
         """
@@ -468,9 +468,8 @@ class LeastCostPaths:
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Transmission barrier multiplier, used when computing the
-            least cost tie-line path, by default 100
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         indices : iterable, optional
             Indices of the transmission features input that should be
             processed. By default ``None``, which process all
@@ -518,7 +517,7 @@ class LeastCostPaths:
                   tb_layer_name=tb_layer_name)
         least_cost_paths = lcp.process_least_cost_paths(
             cost_layers,
-            barrier_mult=barrier_mult,
+            cost_multiplier_scalar=cost_multiplier_scalar,
             indices=indices,
             save_paths=save_paths,
             max_workers=max_workers,
@@ -619,7 +618,7 @@ class ReinforcementPaths(LeastCostPaths):
         return self._features[['row', 'col']].values
 
     def process_least_cost_paths(self, line_cap_mw, cost_layers,
-                                 barrier_mult=BARRIERS_MULT, max_workers=None,
+                                 cost_multiplier_scalar=1, max_workers=None,
                                  save_paths=False, extra_routing_layers=None,
                                  tracked_layers=None, cell_size=CELL_SIZE):
         """
@@ -642,9 +641,8 @@ class ReinforcementPaths(LeastCostPaths):
             existing transmission lines. Typically, a capacity class of
             400 MW (230kV transmission line) is used for the base
             greenfield costs.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs.
-            By default, ``100``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         max_workers : int, optional
             Number of workers to use for processing. If 1 run in serial,
             if ``None`` use all available cores. By default, ``None``.
@@ -713,7 +711,8 @@ class ReinforcementPaths(LeastCostPaths):
                                         self._row_slice,
                                         self._col_slice,
                                         tb_layer_name=self._tb_layer_name,
-                                        barrier_mult=barrier_mult,
+                                        cost_multiplier_scalar=(
+                                            cost_multiplier_scalar),
                                         save_paths=save_paths,
                                         extra_routing_layers=(
                                             extra_routing_layers),
@@ -739,7 +738,8 @@ class ReinforcementPaths(LeastCostPaths):
                                              self._row_slice,
                                              self._col_slice,
                                              tb_layer_name=self._tb_layer_name,
-                                             barrier_mult=barrier_mult,
+                                             cost_multiplier_scalar=(
+                                                 cost_multiplier_scalar),
                                              save_paths=save_paths,
                                              extra_routing_layers=(
                                                  extra_routing_layers),
@@ -755,7 +755,7 @@ class ReinforcementPaths(LeastCostPaths):
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
-            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            tb_layer_name=BARRIER_H5_LAYER_NAME, cost_multiplier_scalar=1,
             indices=None, max_workers=None, save_paths=False,
             extra_routing_layers=None, tracked_layers=None,
             ss_id_col="poi_gid", cell_size=CELL_SIZE):
@@ -810,9 +810,8 @@ class ReinforcementPaths(LeastCostPaths):
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs.
-            By default, ``100``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         indices : iterable, optional
             Indices corresponding to the network nodes that should be
             processed. By default ``None``, which process all network
@@ -871,7 +870,7 @@ class ReinforcementPaths(LeastCostPaths):
         lcp_kwargs = {"line_cap_mw": line_cap_mw,
                       "cost_layers": cost_layers,
                       "extra_routing_layers": extra_routing_layers,
-                      "barrier_mult": barrier_mult,
+                      "cost_multiplier_scalar": cost_multiplier_scalar,
                       "save_paths": save_paths,
                       "max_workers": max_workers,
                       "tracked_layers": tracked_layers,

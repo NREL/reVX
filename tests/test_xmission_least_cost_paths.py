@@ -158,6 +158,30 @@ def test_invariant_costs():
     assert ((test["cost"] / 90).values < truth["cost"].values).all()
 
 
+def test_cost_multiplier_scalar():
+    """
+    Test least cost xmission with a cost_multiplier_scalar
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
+    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
+                              extra_routing_layers=[DEFAULT_BARRIER],
+                              cost_multiplier_scalar=5)
+
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    truth = truth.sort_values(['start_index', 'index'])
+    test = test.sort_values(['start_index', 'index'])
+
+    assert np.allclose(test["length_km"], truth["length_km"])
+    assert np.allclose(test["cost"].values, truth["cost"].values * 5)
+
+
 def test_clip_buffer():
     """Test using clip buffer for points that would otherwise be cut off. """
     with tempfile.TemporaryDirectory() as td:
@@ -295,7 +319,6 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "capacity_class": 400,
             "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
             "extra_routing_layers": [DEFAULT_BARRIER],
-            # "barrier_mult": 100,
             "save_paths": save_paths
         }
         config_path = os.path.join(td, 'config.json')
@@ -395,7 +418,6 @@ def test_reinforcement_cli_single_tline_coltage(runner,
             "capacity_class": 400,
             "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
             "extra_routing_layers": [DEFAULT_BARRIER],
-            # "barrier_mult": 100,
             "save_paths": False,
         }
         config_path = os.path.join(td, 'config.json')

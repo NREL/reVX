@@ -88,7 +88,7 @@ def run_local(ctx, config):
                clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
                tb_layer_name=config.tb_layer_name,
-               barrier_mult=config.barrier_mult,
+               cost_multiplier_scalar=config.cost_multiplier_scalar,
                max_workers=config.execution_control.max_workers,
                region_identifier_column=config.region_identifier_column,
                save_paths=config.save_paths,
@@ -196,10 +196,9 @@ def from_config(ctx, config, verbose):
                    'This layer defines the multipliers applied to the cost '
                    'layer to determine LCP routing (but does not actually '
                    'affect output costs')
-@click.option('--barrier_mult', '-bmult', type=float,
+@click.option('--cost_multiplier_scalar', '-cmult', type=float,
               show_default=True, default=BARRIERS_MULT,
-              help=("Transmission barrier multiplier, used when computing the "
-                    "least cost tie-line path"))
+              help=("Final cost layer multiplier"))
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -238,9 +237,10 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
-          clip_buffer, start_index, step_index, tb_layer_name, barrier_mult,
-          max_workers, region_identifier_column, save_paths, out_dir, log_dir,
-          ss_id_col, verbose, routing_layers, tracked_layers, cell_size):
+          clip_buffer, start_index, step_index, tb_layer_name,
+          cost_multiplier_scalar, max_workers, region_identifier_column,
+          save_paths, out_dir, log_dir, ss_id_col, verbose, routing_layers,
+          tracked_layers, cell_size):
     """
     Run Least Cost Paths on local hardware
     """
@@ -272,7 +272,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
 
     kwargs = {"clip_buffer": int(clip_buffer),
               "tb_layer_name": tb_layer_name,
-              "barrier_mult": barrier_mult,
+              "cost_multiplier_scalar": cost_multiplier_scalar,
               "save_paths": save_paths,
               "max_workers": max_workers,
               "extra_routing_layers": extra_routing_layers,
@@ -574,7 +574,7 @@ def get_node_cmd(config, start_index=0):
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
             '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
-            '-bmult {}'.format(SLURM.s(config.barrier_mult)),
+            '-cmult {}'.format(SLURM.s(config.cost_multiplier_scalar)),
             '-ssid {}'.format(SLURM.s(config.ss_id_col)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),

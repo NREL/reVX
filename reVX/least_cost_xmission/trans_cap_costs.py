@@ -51,7 +51,7 @@ class TieLineCosts:
 
     def __init__(self, cost_fpath, start_indices, cost_layers,
                  row_slice, col_slice, tb_layer_name=BARRIER_H5_LAYER_NAME,
-                 barrier_mult=BARRIERS_MULT, extra_routing_layers=None,
+                 cost_multiplier_scalar=1, extra_routing_layers=None,
                  tracked_layers=None, cell_size=CELL_SIZE):
         """
         Parameters
@@ -90,9 +90,8 @@ class TieLineCosts:
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier applied to the cost data to create transmission
-            barrier costs. By default, ``100``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         extra_routing_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
             influence routing but NOT reported in final cost (i.e.
@@ -140,7 +139,7 @@ class TieLineCosts:
             self._extract_data_from_cost_h5(fh)
 
         self._clip_costs(cost_layers, extra_routing_layers,
-                         barrier_mult=barrier_mult)
+                         cost_multiplier_scalar=cost_multiplier_scalar)
 
         self._null_extras = {}
         for layer in chain(self._cost_layer_map, self._li_cost_layer_map,
@@ -295,7 +294,7 @@ class TieLineCosts:
         return self._clip_shape
 
     def _clip_costs(self, cost_layers, extra_routing_layers=None,
-                    barrier_mult=BARRIERS_MULT):
+                    cost_multiplier_scalar=1):
         """Extract clipped cost arrays from exclusion .h5 files
 
         Parameters
@@ -310,22 +309,22 @@ class TieLineCosts:
             influence routing but NOT reported in final cost (i.e.
             friction, barriers, etc.). Should have the same format as
             the `cost_layers` input. By default, ``None``.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs.
-            By default, ``100``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         """
         extra_routing_layers = extra_routing_layers or []
         logger.debug("Building cost layer with the following inputs:"
                      f"\n\t- cost_layers: {cost_layers}"
                      f"\n\t- extra_routing_layers: {extra_routing_layers}"
-                     f"\n\t- barrier_mult: {barrier_mult}")
+                     f"\n\t- cost_multiplier_scalar: {cost_multiplier_scalar}")
 
         with ExclusionLayers(self._cost_fpath) as f:
-            self._build_cost_layer(cost_layers, f)
+            self._build_cost_layer(cost_layers, f, cost_multiplier_scalar)
             self._build_mcp_cost(extra_routing_layers, f)
             self._build_tracked_layers(f)
 
-    def _build_cost_layer(self, cost_layers, cost_file):
+    def _build_cost_layer(self, cost_layers, cost_file,
+                          cost_multiplier_scalar):
         """Build out the main cost layer"""
         self._cost = np.zeros(self.clip_shape, dtype=np.float32)
         for layer in self._iter_scaled_layers_track_overlap(cost_layers,
@@ -339,6 +338,8 @@ class TieLineCosts:
                 self._cost += cost
                 if layer_info.get("include_in_report", True):
                     self._cost_layer_map[layer_name] = cost
+
+        self._cost *= cost_multiplier_scalar
 
     def _iter_scaled_layers_track_overlap(self, layers, cost_file):
         """Iterate over layers and track overlap; throw warning"""
@@ -669,7 +670,7 @@ class TieLineCosts:
     @classmethod
     def run(cls, cost_fpath, start_indices, end_indices, cost_layers,
             row_slice, col_slice, tb_layer_name=BARRIER_H5_LAYER_NAME,
-            barrier_mult=BARRIERS_MULT, save_paths=False,
+            cost_multiplier_scalar=1, save_paths=False,
             extra_routing_layers=None, tracked_layers=None,
             cell_size=CELL_SIZE):
         """
@@ -712,9 +713,8 @@ class TieLineCosts:
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier applied to the cost data to create transmission
-            barrier costs. By default, ``100``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry.
             By default, ``False``.
@@ -753,7 +753,7 @@ class TieLineCosts:
         ts = time.time()
         tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
                   col_slice, tb_layer_name=tb_layer_name,
-                  barrier_mult=barrier_mult,
+                  cost_multiplier_scalar=cost_multiplier_scalar,
                   extra_routing_layers=extra_routing_layers,
                   tracked_layers=tracked_layers, cell_size=cell_size)
 
@@ -776,7 +776,7 @@ class TransCapCosts(TieLineCosts):
     def __init__(self, cost_fpath, sc_point, features, capacity_class,
                  cost_layers, radius=None, xmission_config=None,
                  tb_layer_name=BARRIER_H5_LAYER_NAME,
-                 barrier_mult=BARRIERS_MULT,
+                 cost_multiplier_scalar=1,
                  iso_regions_layer_name=ISO_H5_LAYER_NAME,
                  extra_routing_layers=None, tracked_layers=None,
                  cell_size=CELL_SIZE):
@@ -812,8 +812,8 @@ class TransCapCosts(TieLineCosts):
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs, by default 100
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
             Name of ISO regions layer in `cost_fpath` file. The layer
             maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
@@ -851,7 +851,7 @@ class TransCapCosts(TieLineCosts):
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
         super().__init__(cost_fpath, start_indices, cost_layers, row_slice,
                          col_slice, tb_layer_name=tb_layer_name,
-                         barrier_mult=barrier_mult,
+                         cost_multiplier_scalar=cost_multiplier_scalar,
                          extra_routing_layers=extra_routing_layers,
                          tracked_layers=tracked_layers,
                          cell_size=cell_size)
@@ -1443,7 +1443,7 @@ class TransCapCosts(TieLineCosts):
     @classmethod
     def run(cls, cost_fpath, sc_point, features, capacity_class, cost_layers,
             radius=None, xmission_config=None,
-            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            tb_layer_name=BARRIER_H5_LAYER_NAME, cost_multiplier_scalar=1,
             iso_regions_layer_name=ISO_H5_LAYER_NAME,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
             simplify_geo=None, extra_routing_layers=None,
@@ -1484,8 +1484,8 @@ class TransCapCosts(TieLineCosts):
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs, by default 100
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
             Name of ISO regions layer in `cost_fpath` file. The layer
             maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
@@ -1546,7 +1546,7 @@ class TransCapCosts(TieLineCosts):
                       cost_layers, radius=radius,
                       xmission_config=xmission_config,
                       tb_layer_name=tb_layer_name,
-                      barrier_mult=barrier_mult,
+                      cost_multiplier_scalar=cost_multiplier_scalar,
                       iso_regions_layer_name=iso_regions_layer_name,
                       tracked_layers=tracked_layers,
                       extra_routing_layers=extra_routing_layers,
@@ -1659,7 +1659,7 @@ class ReinforcementLineCosts(TieLineCosts):
     def __init__(self, transmission_lines, cost_fpath, start_indices,
                  line_cap_mw, cost_layers, row_slice, col_slice,
                  tb_layer_name=BARRIER_H5_LAYER_NAME,
-                 barrier_mult=BARRIERS_MULT, extra_routing_layers=None,
+                 cost_multiplier_scalar=1, extra_routing_layers=None,
                  tracked_layers=None, cell_size=CELL_SIZE):
         """
 
@@ -1705,9 +1705,8 @@ class ReinforcementLineCosts(TieLineCosts):
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs.
-            By default, ``100``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         extra_routing_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
             influence routing but NOT reported in final cost (i.e.
@@ -1738,7 +1737,7 @@ class ReinforcementLineCosts(TieLineCosts):
                          cost_layers=cost_layers,
                          row_slice=row_slice, col_slice=col_slice,
                          tb_layer_name=tb_layer_name,
-                         barrier_mult=barrier_mult,
+                         cost_multiplier_scalar=cost_multiplier_scalar,
                          extra_routing_layers=extra_routing_layers,
                          tracked_layers=tracked_layers,
                          cell_size=cell_size)
@@ -1766,7 +1765,7 @@ class ReinforcementLineCosts(TieLineCosts):
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
             line_cap_mw, cost_layers, row_slice, col_slice,
-            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            tb_layer_name=BARRIER_H5_LAYER_NAME, cost_multiplier_scalar=1,
             save_paths=False, extra_routing_layers=None, tracked_layers=None,
             cell_size=CELL_SIZE):
         """
@@ -1822,9 +1821,8 @@ class ReinforcementLineCosts(TieLineCosts):
             This layer defines the multipliers applied to the cost layer
             to determine LCP routing (but does not actually affect
             output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs.
-            By default, ``100``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
@@ -1864,7 +1862,8 @@ class ReinforcementLineCosts(TieLineCosts):
         ts = time.time()
         tlc = cls(transmission_lines, cost_fpath, start_indices,
                   line_cap_mw, cost_layers, row_slice, col_slice,
-                  tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
+                  tb_layer_name=tb_layer_name,
+                  cost_multiplier_scalar=cost_multiplier_scalar,
                   extra_routing_layers=extra_routing_layers,
                   tracked_layers=tracked_layers, cell_size=cell_size)
 

@@ -191,11 +191,11 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('tb_layer_name', BARRIER_H5_LAYER_NAME)
 
     @property
-    def barrier_mult(self):
+    def cost_multiplier_scalar(self):
         """
-        Transmission barrier multiplier to use for MCP costs
+        Final cost layer multiplier, defaults to ``1``.
         """
-        return float(self.get('barrier_mult', BARRIERS_MULT))
+        return float(self.get('cost_multiplier_scalar', 1))
 
     @property
     def iso_regions_layer_name(self):
@@ -492,11 +492,11 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self.get('clip_buffer', 0)
 
     @property
-    def barrier_mult(self):
+    def cost_multiplier_scalar(self):
         """
-        Transmission barrier multiplier to use for MCP costs
+        Final cost layer multiplier, defaults to ``1``.
         """
-        return self.get('barrier_mult', BARRIERS_MULT)
+        return self.get('cost_multiplier_scalar', 1)
 
     @property
     def is_reinforcement_run(self):
