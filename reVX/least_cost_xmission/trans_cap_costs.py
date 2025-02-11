@@ -49,9 +49,8 @@ class TieLineCosts:
 
     def __init__(self, cost_fpath, start_indices, cost_layers,
                  row_slice, col_slice, tb_layer_name=BARRIER_H5_LAYER_NAME,
-                 barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None, tracked_layers=None,
-                 cell_size=CELL_SIZE):
+                 barrier_mult=BARRIERS_MULT, extra_routing_layers=None,
+                 tracked_layers=None, cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -92,11 +91,11 @@ class TieLineCosts:
         barrier_mult : int, optional
             Multiplier applied to the cost data to create transmission
             barrier costs. By default, ``100``.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -127,6 +126,7 @@ class TieLineCosts:
         self._clip_shape = self._mcp = self._cost = self._mcp_cost = None
         self._cost_layer_map = {}
         self._li_cost_layer_map = {}
+        self._extra_routing_layer_map = {}
         self._tracked_layers = tracked_layers or {}
         self._tracked_layer_map = {}
         self._cumulative_costs = None
@@ -137,12 +137,12 @@ class TieLineCosts:
         with ExclusionLayers(self._cost_fpath) as fh:
             self._extract_data_from_cost_h5(fh)
 
-        licl = length_invariant_cost_layers
-        self._clip_costs(cost_layers, length_invariant_cost_layers=licl,
+        self._clip_costs(cost_layers, extra_routing_layers,
                          barrier_mult=barrier_mult)
 
         self._null_extras = {}
-        for layer in chain(self._cost_layer_map, self._li_cost_layer_map):
+        for layer in chain(self._cost_layer_map, self._li_cost_layer_map,
+                           self._extra_routing_layer_map):
             self._null_extras[f'{layer}_cost'] = np.nan
             self._null_extras[f'{layer}_dist_km'] = np.nan
         for layer_name in self._tracked_layer_map:
@@ -292,7 +292,7 @@ class TieLineCosts:
 
         return self._clip_shape
 
-    def _clip_costs(self, cost_layers, length_invariant_cost_layers=None,
+    def _clip_costs(self, cost_layers, extra_routing_layers=None,
                     barrier_mult=BARRIERS_MULT):
         """Extract clipped cost arrays from exclusion .h5 files
 
@@ -303,19 +303,19 @@ class TieLineCosts:
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
             determining path using main cost layer.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
         """
-        li_cost_layers = length_invariant_cost_layers or []
+        extra_routing_layers = extra_routing_layers or []
         logger.debug("Building cost layer with the following inputs:"
                      f"\n\t- cost_layers: {cost_layers}"
-                     f"\n\t- length_invariant_cost_layers: {li_cost_layers}"
+                     f"\n\t- extra_routing_layers: {extra_routing_layers}"
                      f"\n\t- barrier_mult: {barrier_mult}")
         self._cost = np.zeros(self.clip_shape, dtype=np.float32)
         overlap = np.zeros(self.clip_shape, dtype=np.uint8)
@@ -325,7 +325,7 @@ class TieLineCosts:
                 if layer_name not in f.layers:
                     msg = (f"Did not find layer {layer_name!r} in cost "
                            f"file {str(self._cost_fpath)!r}")
-                    logger.error()(msg)
+                    logger.error(msg)
                     raise KeyError(msg)
 
                 cost = f[layer_name, self._row_slice, self._col_slice]
@@ -335,7 +335,7 @@ class TieLineCosts:
                     if multiplier_layer_name not in f.layers:
                         msg = (f"Did not find layer {multiplier_layer_name!r} "
                                f"in cost file {str(self._cost_fpath)!r}")
-                        logger.error()(msg)
+                        logger.error(msg)
                         raise KeyError(msg)
                     cost *= f[multiplier_layer_name,
                               self._row_slice, self._col_slice]
@@ -349,10 +349,37 @@ class TieLineCosts:
                     if layer_info.get("include_in_report", True):
                         self._cost_layer_map[layer_name] = cost
 
-            # for li_cost_layer in li_cost_layers:
-            #     li_cost = f[li_cost_layer, self._row_slice, self._col_slice]
-            #     overlap += li_cost > 0
-            #     self._li_cost_layer_map[li_cost_layer] = li_cost
+            self._mcp_cost = self._cost.copy()
+            for li_cost_layer in self._li_cost_layer_map.values():
+                # normalize by cell size for routing only
+                self._mcp_cost += li_cost_layer / self._cell_size
+
+            # self._extra_routing_layer_map
+            for layer_info in extra_routing_layers:
+                layer_name = layer_info["layer_name"]
+                if layer_name not in f.layers:
+                    msg = (f"Did not find layer {layer_name!r} in cost "
+                           f"file {str(self._cost_fpath)!r}")
+                    logger.error(msg)
+                    raise KeyError(msg)
+
+                routing_layer = f[layer_name, self._row_slice, self._col_slice]
+
+                multiplier_layer_name = layer_info.get("multiplier_layer")
+                if multiplier_layer_name:
+                    if multiplier_layer_name not in f.layers:
+                        msg = (f"Did not find layer {multiplier_layer_name!r} "
+                               f"in cost file {str(self._cost_fpath)!r}")
+                        logger.error(msg)
+                        raise KeyError(msg)
+                    routing_layer *= f[multiplier_layer_name,
+                                       self._row_slice, self._col_slice]
+
+                routing_layer *= layer_info.get("multiplier_scalar", 1)
+                if layer_info.get("include_in_report", True):
+                    self._extra_routing_layer_map[layer_name] = routing_layer
+
+                self._mcp_cost += routing_layer
 
             for tracked_layer, method in self._tracked_layers.items():
                 if getattr(np, method, None) is None:
@@ -374,10 +401,15 @@ class TieLineCosts:
             barrier = f[self._tb_layer_name, self._row_slice, self._col_slice]
             barrier = barrier * barrier_mult
 
+        self._mcp_cost *= 1 + barrier
+        self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
+        logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
+                     np.min(self._mcp_cost), np.max(self._mcp_cost),
+                     np.median(self._mcp_cost))
+
         if (overlap > 1).any():
             cl_names = [layer_info["layer_name"] for layer_info in cost_layers]
-            all_layers = cl_names + li_cost_layers
-            msg = (f"Found overlap in cost layers: {all_layers}! Some cells "
+            msg = (f"Found overlap in cost layers: {cl_names}! Some cells "
                    "may contain double-counted costs. If you intentionally "
                    "specified cost layers that overlap, please ignore this "
                    "message. Otherwise, verify that all cost layers are "
@@ -385,20 +417,20 @@ class TieLineCosts:
             logger.warning(msg)
             warn(msg)
 
-        self._set_mcp_cost(barrier)
+    # def _set_mcp_cost(self, barrier):
+    #     """Compute routing costs. """
 
-    def _set_mcp_cost(self, barrier):
-        """Compute routing costs. """
+    #     self._mcp_cost = self._cost.copy()
+    #     for li_cost_layer in self._li_cost_layer_map.values():
+    #         self._mcp_cost += li_cost_layer / self._cell_size  # routing only
 
-        self._mcp_cost = self._cost.copy()
-        for li_cost_layer in self._li_cost_layer_map.values():
-            self._mcp_cost += li_cost_layer / self._cell_size  # routing only
+    #     # self._extra_routing_layer_map
 
-        self._mcp_cost *= 1 + barrier
-        self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
-        logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
-                     np.min(self._mcp_cost), np.max(self._mcp_cost),
-                     np.median(self._mcp_cost))
+    #     self._mcp_cost *= 1 + barrier
+    #     self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
+    #     logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
+    #                  np.min(self._mcp_cost), np.max(self._mcp_cost),
+    #                  np.median(self._mcp_cost))
 
     def _compute_path_length(self, indices: npt.NDArray):
         """
@@ -541,6 +573,9 @@ class TieLineCosts:
         cl_results = _compute_individual_layers_costs_lens(
             self._li_cost_layer_map, indices, lens, cl_results,
             scale_by_length=False, cell_size=self._cell_size)
+        cl_results = _compute_individual_layers_costs_lens(
+            self._extra_routing_layer_map, indices, lens, cl_results,
+            scale_by_length=True, cell_size=self._cell_size)
         test_total_cost = sum(layer
                               for layer_name, layer in cl_results.items()
                               if layer_name.endswith("_cost"))
@@ -640,7 +675,7 @@ class TieLineCosts:
     def run(cls, cost_fpath, start_indices, end_indices, cost_layers,
             row_slice, col_slice, tb_layer_name=BARRIER_H5_LAYER_NAME,
             barrier_mult=BARRIERS_MULT, save_paths=False,
-            length_invariant_cost_layers=None, tracked_layers=None,
+            extra_routing_layers=None, tracked_layers=None,
             cell_size=CELL_SIZE):
         """
         Compute least cost tie-line path to all features to be connected
@@ -688,11 +723,11 @@ class TieLineCosts:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry.
             By default, ``False``.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -724,7 +759,7 @@ class TieLineCosts:
         tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
                   col_slice, tb_layer_name=tb_layer_name,
                   barrier_mult=barrier_mult,
-                  length_invariant_cost_layers=length_invariant_cost_layers,
+                  extra_routing_layers=extra_routing_layers,
                   tracked_layers=tracked_layers, cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
@@ -748,7 +783,7 @@ class TransCapCosts(TieLineCosts):
                  tb_layer_name=BARRIER_H5_LAYER_NAME,
                  barrier_mult=BARRIERS_MULT,
                  iso_regions_layer_name=ISO_H5_LAYER_NAME,
-                 length_invariant_cost_layers=None, tracked_layers=None,
+                 extra_routing_layers=None, tracked_layers=None,
                  cell_size=CELL_SIZE):
         """
         Parameters
@@ -788,11 +823,11 @@ class TransCapCosts(TieLineCosts):
             Name of ISO regions layer in `cost_fpath` file. The layer
             maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
             By default, :obj:`ISO_H5_LAYER_NAME`.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -819,11 +854,10 @@ class TransCapCosts(TieLineCosts):
         self._iso_regions_layer_name = iso_regions_layer_name
         start_indices, row_slice, col_slice = self._get_clipping_slices(
             cost_fpath, sc_point[['row', 'col']].values, radius=radius)
-        licl = length_invariant_cost_layers
         super().__init__(cost_fpath, start_indices, cost_layers, row_slice,
                          col_slice, tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
-                         length_invariant_cost_layers=licl,
+                         extra_routing_layers=extra_routing_layers,
                          tracked_layers=tracked_layers,
                          cell_size=cell_size)
 
@@ -1417,7 +1451,7 @@ class TransCapCosts(TieLineCosts):
             tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
             iso_regions_layer_name=ISO_H5_LAYER_NAME,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
-            simplify_geo=None, length_invariant_cost_layers=None,
+            simplify_geo=None, extra_routing_layers=None,
             tracked_layers=None, length_mult_kind="linear",
             cell_size=CELL_SIZE):
         """
@@ -1468,11 +1502,11 @@ class TransCapCosts(TieLineCosts):
             by default False
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1513,7 +1547,6 @@ class TransCapCosts(TieLineCosts):
                              save_paths))
 
         try:
-            licl = length_invariant_cost_layers
             tcc = cls(cost_fpath, sc_point, features, capacity_class,
                       cost_layers, radius=radius,
                       xmission_config=xmission_config,
@@ -1521,7 +1554,7 @@ class TransCapCosts(TieLineCosts):
                       barrier_mult=barrier_mult,
                       iso_regions_layer_name=iso_regions_layer_name,
                       tracked_layers=tracked_layers,
-                      length_invariant_cost_layers=licl,
+                      extra_routing_layers=extra_routing_layers,
                       cell_size=cell_size)
 
             features = tcc.compute(min_line_length=min_line_length,
@@ -1631,9 +1664,8 @@ class ReinforcementLineCosts(TieLineCosts):
     def __init__(self, transmission_lines, cost_fpath, start_indices,
                  line_cap_mw, cost_layers, row_slice, col_slice,
                  tb_layer_name=BARRIER_H5_LAYER_NAME,
-                 barrier_mult=BARRIERS_MULT,
-                 length_invariant_cost_layers=None, tracked_layers=None,
-                 cell_size=CELL_SIZE):
+                 barrier_mult=BARRIERS_MULT, extra_routing_layers=None,
+                 tracked_layers=None, cell_size=CELL_SIZE):
         """
 
         Parameters
@@ -1681,11 +1713,11 @@ class ReinforcementLineCosts(TieLineCosts):
         barrier_mult : int, optional
             Multiplier on transmission barrier costs.
             By default, ``100``.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the 'base' greenfield
-            cost raster. The costs specified by these layers are not
-            scaled with distance traversed across the cell (i.e. fixed
-            one-time costs for crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1707,13 +1739,12 @@ class ReinforcementLineCosts(TieLineCosts):
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
         """
-        licl = length_invariant_cost_layers
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
                          cost_layers=cost_layers,
                          row_slice=row_slice, col_slice=col_slice,
                          tb_layer_name=tb_layer_name,
                          barrier_mult=barrier_mult,
-                         length_invariant_cost_layers=licl,
+                         extra_routing_layers=extra_routing_layers,
                          tracked_layers=tracked_layers,
                          cell_size=cell_size)
         self._null_extras = {}
@@ -1741,8 +1772,8 @@ class ReinforcementLineCosts(TieLineCosts):
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
             line_cap_mw, cost_layers, row_slice, col_slice,
             tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
-            save_paths=False, length_invariant_cost_layers=None,
-            tracked_layers=None, cell_size=CELL_SIZE):
+            save_paths=False, extra_routing_layers=None, tracked_layers=None,
+            cell_size=CELL_SIZE):
         """
         Compute reinforcement line path to all features to be connected
         a single supply curve point.
@@ -1802,11 +1833,11 @@ class ReinforcementLineCosts(TieLineCosts):
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the 'base' greenfield
-            cost raster. The costs specified by these layers are not
-            scaled with distance traversed across the cell (i.e. fixed
-            one-time costs for crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1839,7 +1870,7 @@ class ReinforcementLineCosts(TieLineCosts):
         tlc = cls(transmission_lines, cost_fpath, start_indices,
                   line_cap_mw, cost_layers, row_slice, col_slice,
                   tb_layer_name=tb_layer_name, barrier_mult=barrier_mult,
-                  length_invariant_cost_layers=length_invariant_cost_layers,
+                  extra_routing_layers=extra_routing_layers,
                   tracked_layers=tracked_layers, cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)

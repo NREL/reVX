@@ -234,16 +234,15 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self['cost_layers']
 
     @property
-    def length_invariant_cost_layers(self):
+    def extra_routing_layers(self):
         """
-        Layers to be added to the cost raster whose costs do not scale
-        with distance traversed (i.e. fixed one-time costs for crossing
-        these cells).
+        Layers to be added to costs to influence routing but NOT
+        reported in final cost (i.e. friction, barriers, etc.).
         """
-        # self.get('length_invariant_cost_layers', []) does not work!!
-        if 'length_invariant_cost_layers' not in self:
+        # self.get('extra_routing_layers', []) does not work!!
+        if 'extra_routing_layers' not in self:
             return []
-        return self['length_invariant_cost_layers']
+        return self['extra_routing_layers']
 
     @property
     def tracked_layers(self):
@@ -403,16 +402,15 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self['cost_layers']
 
     @property
-    def length_invariant_cost_layers(self):
+    def extra_routing_layers(self):
         """
-        Layers to be added to the cost raster whose costs do not scale
-        with distance traversed (i.e. fixed one-time costs for crossing
-        these cells).
+        Layers to be added to costs to influence routing but NOT
+        reported in final cost (i.e. friction, barriers, etc.).
         """
-        # self.get('length_invariant_cost_layers', []) does not work!!
-        if 'length_invariant_cost_layers' not in self:
+        # self.get('extra_routing_layers', []) does not work!!
+        if 'extra_routing_layers' not in self:
             return []
-        return self['length_invariant_cost_layers']
+        return self['extra_routing_layers']
 
     @property
     def tracked_layers(self):

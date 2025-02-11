@@ -559,7 +559,7 @@ class LeastCostXmission(LeastCostPaths):
         expand_radius=True,
         mp_delay=3,
         simplify_geo=None,
-        length_invariant_cost_layers=None,
+        extra_routing_layers=None,
         tracked_layers=None,
         length_mult_kind="linear",
         cell_size=CELL_SIZE,
@@ -610,11 +610,11 @@ class LeastCostXmission(LeastCostPaths):
             Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -685,7 +685,7 @@ class LeastCostXmission(LeastCostPaths):
                 mp_delay=mp_delay,
                 simplify_geo=simplify_geo,
                 max_workers=max_workers,
-                length_invariant_cost_layers=length_invariant_cost_layers,
+                extra_routing_layers=extra_routing_layers,
                 tracked_layers=tracked_layers,
                 length_mult_kind=length_mult_kind,
                 cell_size=cell_size,
@@ -708,7 +708,7 @@ class LeastCostXmission(LeastCostPaths):
                 radius=radius,
                 expand_radius=expand_radius,
                 simplify_geo=simplify_geo,
-                length_invariant_cost_layers=length_invariant_cost_layers,
+                extra_routing_layers=extra_routing_layers,
                 tracked_layers=tracked_layers,
                 length_mult_kind=length_mult_kind,
                 cell_size=cell_size,
@@ -743,7 +743,7 @@ class LeastCostXmission(LeastCostPaths):
         expand_radius=True,
         mp_delay=3,
         simplify_geo=None,
-        length_invariant_cost_layers=None,
+        extra_routing_layers=None,
         tracked_layers=None,
         length_mult_kind="linear",
         cell_size=CELL_SIZE,
@@ -796,11 +796,11 @@ class LeastCostXmission(LeastCostPaths):
             Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -852,7 +852,7 @@ class LeastCostXmission(LeastCostPaths):
                 barrier_mult,
                 save_paths,
                 simplify_geo,
-                length_invariant_cost_layers,
+                extra_routing_layers,
                 tracked_layers,
                 length_mult_kind,
                 cell_size,
@@ -876,7 +876,7 @@ class LeastCostXmission(LeastCostPaths):
         barrier_mult,
         save_paths,
         simplify_geo,
-        li_cost_layers,
+        extra_routing_layers,
         tracked_layers,
         length_mult_kind,
         cell_size,
@@ -893,7 +893,7 @@ class LeastCostXmission(LeastCostPaths):
             self._cost_fpath,
             sc_points,
             cost_layers,
-            li_cost_layers,
+            extra_routing_layers,
             barrier_mult,
             self._tb_layer_name,
         )
@@ -939,7 +939,7 @@ class LeastCostXmission(LeastCostPaths):
                 min_line_length=self._min_line_len,
                 save_paths=save_paths,
                 simplify_geo=simplify_geo,
-                length_invariant_cost_layers=li_cost_layers,
+                extra_routing_layers=extra_routing_layers,
                 length_mult_kind=length_mult_kind,
                 tracked_layers=tracked_layers,
                 cell_size=cell_size,
@@ -968,7 +968,7 @@ class LeastCostXmission(LeastCostPaths):
         radius=None,
         expand_radius=True,
         simplify_geo=None,
-        length_invariant_cost_layers=None,
+        extra_routing_layers=None,
         tracked_layers=None,
         length_mult_kind="linear",
         cell_size=CELL_SIZE,
@@ -1016,11 +1016,11 @@ class LeastCostXmission(LeastCostPaths):
             By default, ``True``.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1084,7 +1084,7 @@ class LeastCostXmission(LeastCostPaths):
                     save_paths=save_paths,
                     simplify_geo=simplify_geo,
                     cost_layers=cost_layers,
-                    length_invariant_cost_layers=length_invariant_cost_layers,
+                    extra_routing_layers=extra_routing_layers,
                     length_mult_kind=length_mult_kind,
                     tracked_layers=tracked_layers,
                     cell_size=cell_size,
@@ -1122,7 +1122,7 @@ class LeastCostXmission(LeastCostPaths):
         expand_radius=True,
         mp_delay=3,
         simplify_geo=None,
-        length_invariant_cost_layers=None,
+        extra_routing_layers=None,
         tracked_layers=None,
         length_mult_kind="linear",
         cell_size=CELL_SIZE,
@@ -1195,11 +1195,11 @@ class LeastCostXmission(LeastCostPaths):
             Useful for reducing memory spike at working startup.
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1245,7 +1245,6 @@ class LeastCostXmission(LeastCostPaths):
             iso_regions_layer_name=iso_regions_layer_name,
         )
 
-        licl = length_invariant_cost_layers
         least_costs = lcx.process_sc_points(
             capacity_class,
             cost_layers,
@@ -1259,7 +1258,7 @@ class LeastCostXmission(LeastCostPaths):
             expand_radius=expand_radius,
             mp_delay=mp_delay,
             simplify_geo=simplify_geo,
-            length_invariant_cost_layers=licl,
+            extra_routing_layers=extra_routing_layers,
             tracked_layers=tracked_layers,
             length_mult_kind=length_mult_kind,
             cell_size=cell_size,
@@ -1466,7 +1465,7 @@ class RegionalXmission(LeastCostXmission):
         radius=None,
         expand_radius=True,
         mp_delay=3,
-        length_invariant_cost_layers=None,
+        extra_routing_layers=None,
         tracked_layers=None,
         length_mult_kind="linear",
         cell_size=CELL_SIZE,
@@ -1549,11 +1548,11 @@ class RegionalXmission(LeastCostXmission):
         mp_delay : float, optional
             Delay in seconds between starting multi-process workers.
             Useful for reducing memory spike at working startup.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the 'base' greenfield
-            cost raster. The costs specified by these layers are not
-            scaled with distance traversed across the cell (i.e. fixed
-            one-time costs for crossing these cells).
+        extra_routing_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost (i.e.
+            friction, barriers, etc.). Should have the same format as
+            the `cost_layers` input. By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1600,7 +1599,6 @@ class RegionalXmission(LeastCostXmission):
             tb_layer_name=tb_layer_name,
             iso_regions_layer_name=iso_regions_layer_name,
         )
-        licl = length_invariant_cost_layers
         least_costs = lcx.process_sc_points(
             capacity_class,
             cost_layers,
@@ -1613,7 +1611,7 @@ class RegionalXmission(LeastCostXmission):
             expand_radius=expand_radius,
             mp_delay=mp_delay,
             simplify_geo=simplify_geo,
-            length_invariant_cost_layers=licl,
+            extra_routing_layers=extra_routing_layers,
             tracked_layers=tracked_layers,
             length_mult_kind=length_mult_kind,
             cell_size=cell_size,
@@ -1671,7 +1669,7 @@ def _starting_costs(
     cost_fpath,
     points,
     cost_layers,
-    length_invariant_cost_layers,
+    extra_routing_layers,
     barrier_mult,
     tb_layer_name=BARRIER_H5_LAYER_NAME,
 ):
@@ -1682,8 +1680,8 @@ def _starting_costs(
         for layer_info in cost_layers or []:
             costs += f[layer_info["layer_name"]][rows, cols]
 
-        for layer in length_invariant_cost_layers or []:
-            costs += f[layer][rows, cols]
+        for layer_info in extra_routing_layers or []:
+            costs += f[layer_info["layer_name"]][rows, cols]
 
         barrier = f[tb_layer_name, rows, cols]
         barrier = barrier * float(barrier_mult)
