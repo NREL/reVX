@@ -259,7 +259,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
               is ``1``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
               wether the routing and distances for this layer should be
-              output in the final LCP table. Default is ``True``.
+              output in the final LCP table. Default is ``False``.
 
         """
         # self.get('extra_routing_layers', []) does not work!!
@@ -447,7 +447,7 @@ class LeastCostPathsConfig(AnalysisConfig):
               is ``1``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
               wether the routing and distances for this layer should be
-              output in the final LCP table. Default is ``True``.
+              output in the final LCP table. Default is ``False``.
 
         """
         # self.get('extra_routing_layers', []) does not work!!
