@@ -10,6 +10,7 @@ import random
 import tempfile
 import traceback
 
+import h5py
 import pytest
 import rasterio
 import numpy as np
@@ -156,6 +157,40 @@ def test_invariant_costs():
 
     assert np.allclose(test["length_km"], truth["length_km"])
     assert ((test["cost"] / 90).values < truth["cost"].values).all()
+
+
+def test_cost_multiplier_layer():
+    """
+    Test least cost xmission with a cost_multiplier_layer
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    cap = _cap_class_to_cap(capacity)
+    cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
+
+    with tempfile.TemporaryDirectory() as td:
+        cost_h5_path = os.path.join(td, 'costs.h5')
+        shutil.copy(COST_H5, cost_h5_path)
+        with h5py.File(cost_h5_path, "a") as fh:
+            shape = fh["transmission_barrier"].shape
+            fh.create_dataset("test_layer",
+                              data=np.ones(shape, dtype="float32") * 7)
+
+        test = LeastCostPaths.run(cost_h5_path, FEATURES, [cost_layer],
+                                  max_workers=1,
+                                  extra_routing_layers=[DEFAULT_BARRIER],
+                                  cost_multiplier_layer="test_layer")
+
+    if not os.path.exists(truth):
+        test.to_csv(truth, index=False)
+
+    truth = pd.read_csv(truth)
+    truth = truth.sort_values(['start_index', 'index'])
+    test = test.sort_values(['start_index', 'index'])
+
+    assert np.allclose(test["length_km"], truth["length_km"])
+    assert np.allclose(test["cost"].values, truth["cost"].values * 7)
 
 
 def test_cost_multiplier_scalar():
