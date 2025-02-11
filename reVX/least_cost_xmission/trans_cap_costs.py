@@ -39,6 +39,8 @@ from reVX.utilities.exceptions import (InvalidMCPStartValueError,
                                        LeastCostPathNotFoundError)
 
 logger = logging.getLogger(__name__)
+LCP_AGG_COST_LAYER_NAME = "lcp_agg_costs"
+"""Special name reserved for internally-built cost layer"""
 
 
 class TieLineCosts:
@@ -326,7 +328,9 @@ class TieLineCosts:
             barrier = f[self._tb_layer_name, self._row_slice, self._col_slice]
             barrier = barrier * barrier_mult
 
-        self._mcp_cost *= 1 + barrier
+        # self._mcp_cost *= 1 + barrier
+        # self._mcp_cost = self._mcp_cost * (1 + barrier)
+        self._mcp_cost += self._mcp_cost * barrier
         self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
         logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
                      np.min(self._mcp_cost), np.max(self._mcp_cost),
@@ -374,29 +378,40 @@ class TieLineCosts:
             # normalize by cell size for routing only
             self._mcp_cost += li_cost_layer / self._cell_size
 
+        extra_routing_costs = np.zeros(self.clip_shape, dtype=np.float32)
         for layer_info in extra_routing_layers:
             layer_name = layer_info["layer_name"]
             routing_layer = self._extract_and_scale_layer(layer_info,
-                                                          cost_file)
+                                                          cost_file,
+                                                          allow_cl=True)
             if layer_info.get("include_in_report", True):
                 self._extra_routing_layer_map[layer_name] = routing_layer
 
-            self._mcp_cost += routing_layer
+            extra_routing_costs += routing_layer
 
-    def _extract_and_scale_layer(self, layer_info, cost_file):
+        # Must happen at end of loop so that "lcp_agg_cost"
+        # remains constant
+        self._mcp_cost += extra_routing_costs
+
+    def _extract_and_scale_layer(self, layer_info, cost_file, allow_cl=False):
         """Extract layer based on name and scale according to user input"""
-        layer_name = layer_info["layer_name"]
-        _verify_layer_exists(layer_name, cost_file)
-        cost = cost_file[layer_name, self._row_slice, self._col_slice]
+        cost = self._extract_layer(layer_info["layer_name"], cost_file,
+                                   allow_cl=allow_cl)
 
         multiplier_layer_name = layer_info.get("multiplier_layer")
         if multiplier_layer_name:
-            _verify_layer_exists(multiplier_layer_name, cost_file)
-            cost *= cost_file[multiplier_layer_name, self._row_slice,
-                              self._col_slice]
+            cost *= self._extract_layer(multiplier_layer_name, cost_file,
+                                        allow_cl=allow_cl)
 
         cost *= layer_info.get("multiplier_scalar", 1)
         return cost
+
+    def _extract_layer(self, layer_name, cost_file, allow_cl=False):
+        """Extract layer based on name"""
+        if allow_cl and layer_name == LCP_AGG_COST_LAYER_NAME:
+            return self._mcp_cost
+        _verify_layer_exists(layer_name, cost_file)
+        return cost_file[layer_name, self._row_slice, self._col_slice]
 
     def _build_tracked_layers(self, cost_file):
         """Build out a dictionary of tracked layers"""

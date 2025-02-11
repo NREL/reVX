@@ -245,11 +245,15 @@ class LeastCostXmissionConfig(AnalysisConfig):
             - "layer_name": (REQUIRED) Name of layer in HDF5 file
               containing routing data. Layer names may have curly
               brackets (``{}``), which will be filled in based on the
-              capacity class input (e.g. "barriers_{}MW").
+              capacity class input (e.g. "barriers_{}MW"). This can also
+              be "lcp_agg_costs", which represents the layer built out
+              using the `cost_layers` input.
             - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
               containing spatially explicit multiplier values to apply
               to this routing layer before summing it with the others.
-              Default is ``None``.
+              Default is ``None``. This can also be "lcp_agg_costs",
+              which represents the layer built out using the
+              `cost_layers` input.
             - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
               this layer by before summing it with the others. Default
               is ``1``.
@@ -429,11 +433,15 @@ class LeastCostPathsConfig(AnalysisConfig):
         following keys:
 
             - "layer_name": (REQUIRED) Name of layer in HDF5 file
-              containing routing data.
+              containing routing data. This can also be "lcp_agg_costs",
+              which represents the layer built out using the
+              `cost_layers` input.
             - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
               containing spatially explicit multiplier values to apply
               to this routing layer before summing it with the others.
-              Default is ``None``.
+              Default is ``None``. This can also be "lcp_agg_costs",
+              which represents the layer built out using the
+              `cost_layers` input.
             - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
               this layer by before summing it with the others. Default
               is ``1``.
