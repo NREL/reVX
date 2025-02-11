@@ -1981,6 +1981,6 @@ def _verify_layer_exists(layer_name, cost_file):
     """Verify that layer exists in cost file"""
     if layer_name not in cost_file.layers:
         msg = (f"Did not find layer {layer_name!r} in cost "
-                f"file {str(cost_file.h5_file)!r}")
+               f"file {str(cost_file.h5_file)!r}")
         logger.error(msg)
         raise KeyError(msg)
