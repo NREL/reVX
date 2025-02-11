@@ -317,86 +317,11 @@ class TieLineCosts:
                      f"\n\t- cost_layers: {cost_layers}"
                      f"\n\t- extra_routing_layers: {extra_routing_layers}"
                      f"\n\t- barrier_mult: {barrier_mult}")
-        self._cost = np.zeros(self.clip_shape, dtype=np.float32)
-        overlap = np.zeros(self.clip_shape, dtype=np.uint8)
+
         with ExclusionLayers(self._cost_fpath) as f:
-            for layer_info in cost_layers:
-                layer_name = layer_info["layer_name"]
-                if layer_name not in f.layers:
-                    msg = (f"Did not find layer {layer_name!r} in cost "
-                           f"file {str(self._cost_fpath)!r}")
-                    logger.error(msg)
-                    raise KeyError(msg)
-
-                cost = f[layer_name, self._row_slice, self._col_slice]
-
-                multiplier_layer_name = layer_info.get("multiplier_layer")
-                if multiplier_layer_name:
-                    if multiplier_layer_name not in f.layers:
-                        msg = (f"Did not find layer {multiplier_layer_name!r} "
-                               f"in cost file {str(self._cost_fpath)!r}")
-                        logger.error(msg)
-                        raise KeyError(msg)
-                    cost *= f[multiplier_layer_name,
-                              self._row_slice, self._col_slice]
-
-                cost *= layer_info.get("multiplier_scalar", 1)
-                overlap += cost > 0
-                if layer_info.get("is_invariant", False):
-                    self._li_cost_layer_map[layer_name] = cost
-                else:
-                    self._cost += cost
-                    if layer_info.get("include_in_report", True):
-                        self._cost_layer_map[layer_name] = cost
-
-            self._mcp_cost = self._cost.copy()
-            for li_cost_layer in self._li_cost_layer_map.values():
-                # normalize by cell size for routing only
-                self._mcp_cost += li_cost_layer / self._cell_size
-
-            # self._extra_routing_layer_map
-            for layer_info in extra_routing_layers:
-                layer_name = layer_info["layer_name"]
-                if layer_name not in f.layers:
-                    msg = (f"Did not find layer {layer_name!r} in cost "
-                           f"file {str(self._cost_fpath)!r}")
-                    logger.error(msg)
-                    raise KeyError(msg)
-
-                routing_layer = f[layer_name, self._row_slice, self._col_slice]
-
-                multiplier_layer_name = layer_info.get("multiplier_layer")
-                if multiplier_layer_name:
-                    if multiplier_layer_name not in f.layers:
-                        msg = (f"Did not find layer {multiplier_layer_name!r} "
-                               f"in cost file {str(self._cost_fpath)!r}")
-                        logger.error(msg)
-                        raise KeyError(msg)
-                    routing_layer *= f[multiplier_layer_name,
-                                       self._row_slice, self._col_slice]
-
-                routing_layer *= layer_info.get("multiplier_scalar", 1)
-                if layer_info.get("include_in_report", True):
-                    self._extra_routing_layer_map[layer_name] = routing_layer
-
-                self._mcp_cost += routing_layer
-
-            for tracked_layer, method in self._tracked_layers.items():
-                if getattr(np, method, None) is None:
-                    msg = (f"Did not find method {method!r} in numpy! "
-                           f"Skipping tracked layer {tracked_layer!r}")
-                    logger.warning(msg)
-                    warn(msg)
-                    continue
-                if tracked_layer not in f.layers:
-                    msg = (f"Did not find layer {tracked_layer!r} in cost "
-                           f"file {str(self._cost_fpath)!r}. Skipping...")
-                    logger.warning(msg)
-                    warn(msg)
-                    continue
-
-                layer = f[tracked_layer, self._row_slice, self._col_slice]
-                self._tracked_layer_map[tracked_layer] = layer
+            self._build_cost_layer(cost_layers, f)
+            self._build_mcp_cost(extra_routing_layers, f)
+            self._build_tracked_layers(f)
 
             barrier = f[self._tb_layer_name, self._row_slice, self._col_slice]
             barrier = barrier * barrier_mult
@@ -407,9 +332,34 @@ class TieLineCosts:
                      np.min(self._mcp_cost), np.max(self._mcp_cost),
                      np.median(self._mcp_cost))
 
+    def _build_cost_layer(self, cost_layers, cost_file):
+        """Build out the main cost layer"""
+        self._cost = np.zeros(self.clip_shape, dtype=np.float32)
+        for layer in self._iter_scaled_layers_track_overlap(cost_layers,
+                                                            cost_file):
+            layer_info, cost = layer
+            layer_name = layer_info["layer_name"]
+
+            if layer_info.get("is_invariant", False):
+                self._li_cost_layer_map[layer_name] = cost
+            else:
+                self._cost += cost
+                if layer_info.get("include_in_report", True):
+                    self._cost_layer_map[layer_name] = cost
+
+    def _iter_scaled_layers_track_overlap(self, layers, cost_file):
+        """Iterate over layers and track overlap; throw warning"""
+        overlap = np.zeros(self.clip_shape, dtype=np.uint8)
+        layer_names = []
+
+        for layer_info in layers:
+            layer_names.append(layer_info["layer_name"])
+            layer_data = self._extract_and_scale_layer(layer_info, cost_file)
+            overlap += layer_data > 0
+            yield layer_info, layer_data
+
         if (overlap > 1).any():
-            cl_names = [layer_info["layer_name"] for layer_info in cost_layers]
-            msg = (f"Found overlap in cost layers: {cl_names}! Some cells "
+            msg = (f"Found overlap in cost layers: {layer_names}! Some cells "
                    "may contain double-counted costs. If you intentionally "
                    "specified cost layers that overlap, please ignore this "
                    "message. Otherwise, verify that all cost layers are "
@@ -417,20 +367,56 @@ class TieLineCosts:
             logger.warning(msg)
             warn(msg)
 
-    # def _set_mcp_cost(self, barrier):
-    #     """Compute routing costs. """
+    def _build_mcp_cost(self, extra_routing_layers, cost_file):
+        """Build out the routing array"""
+        self._mcp_cost = self._cost.copy()
+        for li_cost_layer in self._li_cost_layer_map.values():
+            # normalize by cell size for routing only
+            self._mcp_cost += li_cost_layer / self._cell_size
 
-    #     self._mcp_cost = self._cost.copy()
-    #     for li_cost_layer in self._li_cost_layer_map.values():
-    #         self._mcp_cost += li_cost_layer / self._cell_size  # routing only
+        for layer_info in extra_routing_layers:
+            layer_name = layer_info["layer_name"]
+            routing_layer = self._extract_and_scale_layer(layer_info,
+                                                          cost_file)
+            if layer_info.get("include_in_report", True):
+                self._extra_routing_layer_map[layer_name] = routing_layer
 
-    #     # self._extra_routing_layer_map
+            self._mcp_cost += routing_layer
 
-    #     self._mcp_cost *= 1 + barrier
-    #     self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
-    #     logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
-    #                  np.min(self._mcp_cost), np.max(self._mcp_cost),
-    #                  np.median(self._mcp_cost))
+    def _extract_and_scale_layer(self, layer_info, cost_file):
+        """Extract layer based on name and scale according to user input"""
+        layer_name = layer_info["layer_name"]
+        _verify_layer_exists(layer_name, cost_file)
+        cost = cost_file[layer_name, self._row_slice, self._col_slice]
+
+        multiplier_layer_name = layer_info.get("multiplier_layer")
+        if multiplier_layer_name:
+            _verify_layer_exists(multiplier_layer_name, cost_file)
+            cost *= cost_file[multiplier_layer_name, self._row_slice,
+                              self._col_slice]
+
+        cost *= layer_info.get("multiplier_scalar", 1)
+        return cost
+
+    def _build_tracked_layers(self, cost_file):
+        """Build out a dictionary of tracked layers"""
+        for tracked_layer, method in self._tracked_layers.items():
+            if getattr(np, method, None) is None:
+                msg = (f"Did not find method {method!r} in numpy! "
+                       f"Skipping tracked layer {tracked_layer!r}")
+                logger.warning(msg)
+                warn(msg)
+                continue
+
+            if tracked_layer not in cost_file.layers:
+                msg = (f"Did not find layer {tracked_layer!r} in cost "
+                       f"file {str(self._cost_fpath)!r}. Skipping...")
+                logger.warning(msg)
+                warn(msg)
+                continue
+
+            layer = cost_file[tracked_layer, self._row_slice, self._col_slice]
+            self._tracked_layer_map[tracked_layer] = layer
 
     def _compute_path_length(self, indices: npt.NDArray):
         """
@@ -1989,3 +1975,12 @@ def _compute_linear_lm(features):
     )
 
     return features
+
+
+def _verify_layer_exists(layer_name, cost_file):
+    """Verify that layer exists in cost file"""
+    if layer_name not in cost_file.layers:
+        msg = (f"Did not find layer {layer_name!r} in cost "
+                f"file {str(cost_file.h5_file)!r}")
+        logger.error(msg)
+        raise KeyError(msg)
