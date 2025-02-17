@@ -39,9 +39,9 @@ FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
 ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 N_SC_POINTS = 10  # number of sc_points to run, chosen at random for each test
 DEFAULT_CONFIG = XmissionConfig()
-DEFAULT_BARRIER  = {"layer_name": LCP_AGG_COST_LAYER_NAME,
-                    "multiplier_layer": "transmission_barrier",
-                    "multiplier_scalar": 100}
+DEFAULT_BARRIER = {"layer_name": LCP_AGG_COST_LAYER_NAME,
+                   "multiplier_layer": "transmission_barrier",
+                   "multiplier_scalar": 100}
 
 
 def _cap_class_to_cap(capacity):
