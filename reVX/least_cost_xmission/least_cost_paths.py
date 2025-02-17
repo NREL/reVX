@@ -304,7 +304,7 @@ class LeastCostPaths:
 
     def process_least_cost_paths(self, cost_layers, cost_multiplier_scalar=1,
                                  indices=None, max_workers=None,
-                                 save_paths=False, extra_routing_layers=None,
+                                 save_paths=False, friction_layers=None,
                                  tracked_layers=None, cell_size=CELL_SIZE):
         """
         Find Least Cost Paths between all pairs of provided features for
@@ -330,11 +330,11 @@ class LeastCostPaths:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -374,7 +374,7 @@ class LeastCostPaths:
                                   loggers=loggers) as exe:
                 least_cost_paths = self._compute_paths_in_chunks(
                     exe, max_workers, indices, cost_layers,
-                    cost_multiplier_scalar, save_paths, extra_routing_layers,
+                    cost_multiplier_scalar, save_paths, friction_layers,
                     tracked_layers, cell_size=cell_size)
         else:
             least_cost_paths = []
@@ -391,8 +391,7 @@ class LeastCostPaths:
                                        cost_multiplier_scalar=(
                                            cost_multiplier_scalar),
                                        save_paths=save_paths,
-                                       extra_routing_layers=(
-                                           extra_routing_layers),
+                                       friction_layers=friction_layers,
                                        tracked_layers=tracked_layers,
                                        cell_size=cell_size)
                 end_features = self.end_features.drop(columns=['row', 'col'],
@@ -410,8 +409,8 @@ class LeastCostPaths:
 
     def _compute_paths_in_chunks(self, exe, max_submissions, indices,
                                  cost_layers, cost_multiplier_scalar,
-                                 save_paths, extra_routing_layers,
-                                 tracked_layers, cell_size):
+                                 save_paths, friction_layers, tracked_layers,
+                                 cell_size):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -425,7 +424,7 @@ class LeastCostPaths:
                                     self._cost_multiplier_layer),
                                 cost_multiplier_scalar=cost_multiplier_scalar,
                                 save_paths=save_paths,
-                                extra_routing_layers=extra_routing_layers,
+                                friction_layers=friction_layers,
                                 tracked_layers=tracked_layers,
                                 cell_size=cell_size)
             futures[future] = self.end_features
@@ -441,8 +440,8 @@ class LeastCostPaths:
     def run(cls, cost_fpath, features_fpath, cost_layers,
             clip_buffer=0, cost_multiplier_layer=None,
             cost_multiplier_scalar=1, indices=None, max_workers=None,
-            save_paths=False, extra_routing_layers=None,
-            tracked_layers=None, cell_size=CELL_SIZE):
+            save_paths=False, friction_layers=None, tracked_layers=None,
+            cell_size=CELL_SIZE):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -477,11 +476,11 @@ class LeastCostPaths:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -518,7 +517,7 @@ class LeastCostPaths:
             indices=indices,
             save_paths=save_paths,
             max_workers=max_workers,
-            extra_routing_layers=extra_routing_layers,
+            friction_layers=friction_layers,
             tracked_layers=tracked_layers, cell_size=cell_size)
 
         logger.info('{} paths were computed in {:.4f} hours'
@@ -614,7 +613,7 @@ class ReinforcementPaths(LeastCostPaths):
 
     def process_least_cost_paths(self, line_cap_mw, cost_layers,
                                  cost_multiplier_scalar=1, max_workers=None,
-                                 save_paths=False, extra_routing_layers=None,
+                                 save_paths=False, friction_layers=None,
                                  tracked_layers=None, cell_size=CELL_SIZE):
         """
         Find the reinforcement line paths between the network node and
@@ -644,11 +643,11 @@ class ReinforcementPaths(LeastCostPaths):
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -710,8 +709,7 @@ class ReinforcementPaths(LeastCostPaths):
                                         cost_multiplier_scalar=(
                                             cost_multiplier_scalar),
                                         save_paths=save_paths,
-                                        extra_routing_layers=(
-                                            extra_routing_layers),
+                                        friction_layers=friction_layers,
                                         tracked_layers=tracked_layers,
                                         cell_size=cell_size)
                     futures[future] = feats
@@ -738,8 +736,7 @@ class ReinforcementPaths(LeastCostPaths):
                                              cost_multiplier_scalar=(
                                                  cost_multiplier_scalar),
                                              save_paths=save_paths,
-                                             extra_routing_layers=(
-                                                 extra_routing_layers),
+                                             friction_layers=friction_layers,
                                              tracked_layers=tracked_layers,
                                              cell_size=cell_size)
             least_cost_paths = lcp.merge(self._features, on=["row", "col"])
@@ -754,8 +751,8 @@ class ReinforcementPaths(LeastCostPaths):
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
             cost_multiplier_layer=None, cost_multiplier_scalar=1,
             indices=None, max_workers=None, save_paths=False,
-            extra_routing_layers=None, tracked_layers=None,
-            ss_id_col="poi_gid", cell_size=CELL_SIZE):
+            friction_layers=None, tracked_layers=None, ss_id_col="poi_gid",
+            cell_size=CELL_SIZE):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -817,11 +814,11 @@ class ReinforcementPaths(LeastCostPaths):
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -864,7 +861,7 @@ class ReinforcementPaths(LeastCostPaths):
 
         lcp_kwargs = {"line_cap_mw": line_cap_mw,
                       "cost_layers": cost_layers,
-                      "extra_routing_layers": extra_routing_layers,
+                      "friction_layers": friction_layers,
                       "cost_multiplier_scalar": cost_multiplier_scalar,
                       "save_paths": save_paths,
                       "max_workers": max_workers,

@@ -94,7 +94,7 @@ def run_local(ctx, config):
                log_dir=config.log_directory,
                ss_id_col=config.ss_id_col,
                verbose=config.log_level,
-               routing_layers=config.extra_routing_layers,
+               friction_layers=config.friction_layers,
                tracked_layers=config.tracked_layers,
                cell_size=config.cell_size)
 
@@ -216,7 +216,7 @@ def from_config(ctx, config, verbose):
                    'Used for reinforcement calcaultions only. ')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
-@click.option('--routing_layers', '-rl', required=False, multiple=True,
+@click.option('--friction_layers', '-fl', required=False, multiple=True,
               default=(),
               help='Layers to be added to costs to influence routing but '
                    'NOT reported in final cost (i.e. friction, barriers, '
@@ -235,7 +235,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
           clip_buffer, start_index, step_index, cost_multiplier_layer,
           cost_multiplier_scalar, max_workers, region_identifier_column,
-          save_paths, out_dir, log_dir, ss_id_col, verbose, routing_layers,
+          save_paths, out_dir, log_dir, ss_id_col, verbose, friction_layers,
           tracked_layers, cell_size):
     """
     Run Least Cost Paths on local hardware
@@ -258,10 +258,10 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
 
     cost_layers = [dict_str_load(layer_info) if isinstance(layer_info, str)
                    else layer_info for layer_info in cost_layers]
-    extra_routing_layers = [dict_str_load(layer_info)
-                            if isinstance(layer_info, str)
-                            else layer_info
-                            for layer_info in routing_layers]
+    friction_layers = [dict_str_load(layer_info)
+                       if isinstance(layer_info, str)
+                       else layer_info
+                       for layer_info in friction_layers]
 
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
@@ -271,7 +271,7 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
               "cost_multiplier_scalar": cost_multiplier_scalar,
               "save_paths": save_paths,
               "max_workers": max_workers,
-              "extra_routing_layers": extra_routing_layers,
+              "friction_layers": friction_layers,
               "tracked_layers": tracked_layers,
               "cell_size": cell_size}
 
@@ -580,8 +580,8 @@ def get_node_cmd(config, start_index=0):
 
     for layer in config.cost_layers:
         args.append(f'-cl {SLURM.s(layer)}')
-    for layer in config.extra_routing_layers:
-        args.append(f'-rl {SLURM.s(layer)}')
+    for layer in config.friction_layers:
+        args.append(f'-fl {SLURM.s(layer)}')
 
     if config.save_paths:
         args.append('-paths')

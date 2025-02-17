@@ -201,7 +201,7 @@ def from_config(ctx, config, verbose):
                    'curly brackets (``{}``), which will be filled in '
                    'based on the capacity class input (e.g. '
                    '"tie_line_costs_{}MW")')
-@click.option('--routing_layers', '-rl', required=False, multiple=True,
+@click.option('--friction_layers', '-fl', required=False, multiple=True,
               default=(),
               help='Layers to be added to costs to influence routing but '
                    'NOT reported in final cost (i.e. friction, barriers, '
@@ -228,7 +228,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
           clipping_buffer, cost_multiplier_layer, cost_multiplier_scalar,
           iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
           save_paths, radius, expand_radius, mp_delay, simplify_geo,
-          cost_layers, routing_layers, tracked_layers,
+          cost_layers, friction_layers, tracked_layers,
           length_mult_kind, cell_size):
     """
     Run Least Cost Xmission on local hardware
@@ -247,10 +247,10 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
 
     cost_layers = [dict_str_load(layer_info) if isinstance(layer_info, str)
                    else layer_info for layer_info in cost_layers]
-    extra_routing_layers = [dict_str_load(layer_info)
-                            if isinstance(layer_info, str)
-                            else layer_info
-                            for layer_info in routing_layers]
+    friction_layers = [dict_str_load(layer_info)
+                       if isinstance(layer_info, str)
+                       else layer_info
+                       for layer_info in friction_layers]
 
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
@@ -269,7 +269,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "radius": radius,
               "expand_radius": expand_radius,
               "mp_delay": mp_delay,
-              "extra_routing_layers": extra_routing_layers,
+              "friction_layers": friction_layers,
               "length_mult_kind": length_mult_kind,
               "tracked_layers": tracked_layers,
               "cell_size": cell_size}
@@ -509,8 +509,8 @@ def get_node_cmd(config, gids):
 
     for layer in config.cost_layers:
         args.append(f'-cl {SLURM.s(layer)}')
-    for layer in config.extra_routing_layers:
-        args.append(f'-licl {SLURM.s(layer)}')
+    for layer in config.friction_layers:
+        args.append(f'-fl {SLURM.s(layer)}')
 
     if config.save_paths:
         args.append('--save_paths')
@@ -570,7 +570,7 @@ def run_local(ctx, config):
                save_paths=config.save_paths,
                simplify_geo=config.simplify_geo,
                cost_layers=config.cost_layers,
-               routing_layers=config.extra_routing_layers,
+               friction_layers=config.friction_layers,
                tracked_layers=config.tracked_layers,
                length_mult_kind=config.length_mult_kind,
                cell_size=config.cell_size)

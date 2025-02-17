@@ -234,7 +234,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self['cost_layers']
 
     @property
-    def extra_routing_layers(self):
+    def friction_layers(self):
         """
         Layers to be added to costs to influence routing but NOT
         reported in final cost (i.e. friction, barriers, etc.). Each
@@ -261,10 +261,10 @@ class LeastCostXmissionConfig(AnalysisConfig):
               output in the final LCP table. Default is ``False``.
 
         """
-        # self.get('extra_routing_layers', []) does not work!!
-        if 'extra_routing_layers' not in self:
+        # self.get('friction_layers', []) does not work!!
+        if 'friction_layers' not in self:
             return []
-        return self['extra_routing_layers']
+        return self['friction_layers']
 
     @property
     def tracked_layers(self):
@@ -424,7 +424,7 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self['cost_layers']
 
     @property
-    def extra_routing_layers(self):
+    def friction_layers(self):
         """
         Layers to be added to costs to influence routing but NOT
         reported in final cost (i.e. friction, barriers, etc.). Each
@@ -449,10 +449,10 @@ class LeastCostPathsConfig(AnalysisConfig):
               output in the final LCP table. Default is ``False``.
 
         """
-        # self.get('extra_routing_layers', []) does not work!!
-        if 'extra_routing_layers' not in self:
+        # self.get('friction_layers', []) does not work!!
+        if 'friction_layers' not in self:
             return []
-        return self['extra_routing_layers']
+        return self['friction_layers']
 
     @property
     def tracked_layers(self):

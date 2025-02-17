@@ -103,7 +103,7 @@ def test_capacity_class(capacity):
     cap = _cap_class_to_cap(capacity)
     cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
     test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
-                              extra_routing_layers=[DEFAULT_BARRIER])
+                              friction_layers=[DEFAULT_BARRIER])
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -124,7 +124,7 @@ def test_parallel(max_workers):
     cap = _cap_class_to_cap(capacity)
     cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
     test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer],
-                              extra_routing_layers=[DEFAULT_BARRIER],
+                              friction_layers=[DEFAULT_BARRIER],
                               max_workers=max_workers)
 
     if not os.path.exists(truth):
@@ -146,7 +146,7 @@ def test_invariant_costs():
     cost_layer = {"layer_name": f'tie_line_costs_{cap}MW',
                   "is_invariant": True, "multiplier_scalar": 90}
     test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
-                              extra_routing_layers=[DEFAULT_BARRIER])
+                              friction_layers=[DEFAULT_BARRIER])
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -179,7 +179,7 @@ def test_cost_multiplier_layer():
 
         test = LeastCostPaths.run(cost_h5_path, FEATURES, [cost_layer],
                                   max_workers=1,
-                                  extra_routing_layers=[DEFAULT_BARRIER],
+                                  friction_layers=[DEFAULT_BARRIER],
                                   cost_multiplier_layer="test_layer")
 
     if not os.path.exists(truth):
@@ -203,7 +203,7 @@ def test_cost_multiplier_scalar():
     cap = _cap_class_to_cap(capacity)
     cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
     test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
-                              extra_routing_layers=[DEFAULT_BARRIER],
+                              friction_layers=[DEFAULT_BARRIER],
                               cost_multiplier_scalar=5)
 
     if not os.path.exists(truth):
@@ -242,13 +242,12 @@ def test_clip_buffer():
         cost_layer = {"layer_name": "tie_line_costs_102MW"}
         out_no_buffer = LeastCostPaths.run(out_cost_fp, out_features_fp,
                                            [cost_layer], max_workers=1,
-                                           extra_routing_layers=(
-                                               [DEFAULT_BARRIER]))
+                                           friction_layers=[DEFAULT_BARRIER])
         assert out_no_buffer["length_km"].isna().all()
 
         out = LeastCostPaths.run(out_cost_fp, out_features_fp,
                                  [cost_layer], max_workers=1,
-                                 extra_routing_layers=[DEFAULT_BARRIER],
+                                 friction_layers=[DEFAULT_BARRIER],
                                  clip_buffer=10)
         assert (out["length_km"] > 193).all()
 
@@ -275,7 +274,7 @@ def test_cli(runner, save_paths):
             "features_fpath": FEATURES,
             "save_paths": save_paths,
             "cost_layers": [{"layer_name": cost_layer}],
-            "extra_routing_layers": [DEFAULT_BARRIER],
+            "friction_layers": [DEFAULT_BARRIER],
         }
         config_path = os.path.join(td, 'config.json')
         with open(config_path, 'w') as f:
@@ -353,7 +352,7 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "region_identifier_column": "ba_str",
             "capacity_class": 400,
             "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-            "extra_routing_layers": [DEFAULT_BARRIER],
+            "friction_layers": [DEFAULT_BARRIER],
             "save_paths": save_paths
         }
         config_path = os.path.join(td, 'config.json')
@@ -452,7 +451,7 @@ def test_reinforcement_cli_single_tline_coltage(runner,
             "region_identifier_column": "ba_str",
             "capacity_class": 400,
             "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-            "extra_routing_layers": [DEFAULT_BARRIER],
+            "friction_layers": [DEFAULT_BARRIER],
             "save_paths": False,
         }
         config_path = os.path.join(td, 'config.json')

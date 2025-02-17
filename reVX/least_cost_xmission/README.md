@@ -265,7 +265,7 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
   "capacity_class": "1000",
   "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-  "extra_routing_layers": [
+  "friction_layers": [
     {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
   ],
   "iso_regions_layer_name": "iso_regions",
@@ -336,7 +336,7 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
     "region_identifier_column": "rr_id",
     "capacity_class": "400",
     "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-    "extra_routing_layers": [
+    "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
     ],
     "log_directory": "./logs",
@@ -376,7 +376,7 @@ You should now have a file containing all of the reinforcement costs for the sub
     "region_identifier_column": "rr_id",
     "capacity_class": "1000",
     "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-    "extra_routing_layers": [
+    "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
     ],
     "iso_regions_layer_name": "iso_regions",
@@ -431,7 +431,7 @@ Since we want to allow tie-line connections, we must first run LCP to determine 
         {"layer_name": "swca_cultural_resources_risk"},
         {"layer_name": "swca_natural_resources_risk"}
     ],
-    "extra_routing_layers": [
+    "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
     ],
     "iso_regions_layer_name": "iso_regions",
@@ -481,7 +481,7 @@ Now you can compute the reinforcement paths the same way as the method above:
     "region_identifier_column": "rr_id",
     "capacity_class": "200",
     "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-    "extra_routing_layers": [
+    "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
     ],
     "log_directory": "./logs",
@@ -577,7 +577,7 @@ The value for `allocation` should be set to the desired SLURM allocation. The `m
   "cost_layers": [
     {"layer_name": "tie_line_costs_{}MW"},
   ],
-  "extra_routing_layers": [
+  "friction_layers": [
     {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
   ],
   "log_directory": "/scratch/USER_NAME/log",
@@ -617,7 +617,7 @@ A sample config for WOWTS would look very similar:
     {"layer_name": "wet_costs"},
     {"layer_name": "landfall_costs", "is_invariant": true},
   ],
-  "extra_routing_layers": [
+  "friction_layers": [
     {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
   ],
   "resolution": 157,

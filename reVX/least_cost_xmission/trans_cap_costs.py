@@ -49,7 +49,7 @@ class TieLineCosts:
 
     def __init__(self, cost_fpath, start_indices, cost_layers,
                  row_slice, col_slice, cost_multiplier_layer=None,
-                 cost_multiplier_scalar=1, extra_routing_layers=None,
+                 cost_multiplier_scalar=1, friction_layers=None,
                  tracked_layers=None, cell_size=CELL_SIZE):
         """
         Parameters
@@ -88,11 +88,11 @@ class TieLineCosts:
             multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -122,7 +122,7 @@ class TieLineCosts:
         self._clip_shape = self._mcp = self._cost = self._mcp_cost = None
         self._cost_layer_map = {}
         self._li_cost_layer_map = {}
-        self._extra_routing_layer_map = {}
+        self._friction_layer_map = {}
         self._tracked_layers = tracked_layers or {}
         self._tracked_layer_map = {}
         self._cumulative_costs = None
@@ -133,13 +133,13 @@ class TieLineCosts:
         with ExclusionLayers(self._cost_fpath) as fh:
             self._extract_data_from_cost_h5(fh)
 
-        self._clip_costs(cost_layers, extra_routing_layers,
+        self._clip_costs(cost_layers, friction_layers,
                          cost_multiplier_layer=cost_multiplier_layer,
                          cost_multiplier_scalar=cost_multiplier_scalar)
 
         self._null_extras = {}
         for layer in chain(self._cost_layer_map, self._li_cost_layer_map,
-                           self._extra_routing_layer_map):
+                           self._friction_layer_map):
             self._null_extras[f'{layer}_cost'] = np.nan
             self._null_extras[f'{layer}_dist_km'] = np.nan
         for layer_name in self._tracked_layer_map:
@@ -289,7 +289,7 @@ class TieLineCosts:
 
         return self._clip_shape
 
-    def _clip_costs(self, cost_layers, extra_routing_layers=None,
+    def _clip_costs(self, cost_layers, friction_layers=None,
                     cost_multiplier_layer=None, cost_multiplier_scalar=1):
         """Extract clipped cost arrays from exclusion .h5 files
 
@@ -300,28 +300,28 @@ class TieLineCosts:
             costs raster used for routing. Costs and distances for each
             individual layer are also reported (e.g. wet and dry costs).
             determining path using main cost layer.
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         cost_multiplier_layer : str, optional
             Name of layer containing final cost layer spatial
             multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
         """
-        extra_routing_layers = extra_routing_layers or []
+        friction_layers = friction_layers or []
         logger.debug("Building cost layer with the following inputs:"
                      f"\n\t- cost_layers: {cost_layers}"
-                     f"\n\t- extra_routing_layers: {extra_routing_layers}"
+                     f"\n\t- friction_layers: {friction_layers}"
                      f"\n\t- cost_multiplier_layer: {cost_multiplier_layer}"
                      f"\n\t- cost_multiplier_scalar: {cost_multiplier_scalar}")
 
         with ExclusionLayers(self._cost_fpath) as f:
             self._build_cost_layer(cost_layers, f, cost_multiplier_layer,
                                    cost_multiplier_scalar)
-            self._build_mcp_cost(extra_routing_layers, f)
+            self._build_mcp_cost(friction_layers, f)
             self._build_tracked_layers(f)
 
     def _build_cost_layer(self, cost_layers, cost_file, cost_multiplier_layer,
@@ -366,27 +366,27 @@ class TieLineCosts:
             logger.warning(msg)
             warn(msg)
 
-    def _build_mcp_cost(self, extra_routing_layers, cost_file):
+    def _build_mcp_cost(self, friction_layers, cost_file):
         """Build out the routing array"""
         self._mcp_cost = self._cost.copy()
         for li_cost_layer in self._li_cost_layer_map.values():
             # normalize by cell size for routing only
             self._mcp_cost += li_cost_layer / self._cell_size
 
-        extra_routing_costs = np.zeros(self.clip_shape, dtype=np.float32)
-        for layer_info in extra_routing_layers:
+        friction_costs = np.zeros(self.clip_shape, dtype=np.float32)
+        for layer_info in friction_layers:
             layer_name = layer_info["layer_name"]
-            routing_layer = self._extract_and_scale_layer(layer_info,
-                                                          cost_file,
-                                                          allow_cl=True)
+            friction_layer = self._extract_and_scale_layer(layer_info,
+                                                           cost_file,
+                                                           allow_cl=True)
             if layer_info.get("include_in_report", False):
-                self._extra_routing_layer_map[layer_name] = routing_layer
+                self._friction_layer_map[layer_name] = friction_layer
 
-            extra_routing_costs += routing_layer
+            friction_costs += friction_layer
 
         # Must happen at end of loop so that "lcp_agg_cost"
         # remains constant
-        self._mcp_cost += extra_routing_costs
+        self._mcp_cost += friction_costs
 
         self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
         logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
@@ -575,7 +575,7 @@ class TieLineCosts:
             self._li_cost_layer_map, indices, lens, cl_results,
             scale_by_length=False, cell_size=self._cell_size)
         cl_results = _compute_individual_layers_costs_lens(
-            self._extra_routing_layer_map, indices, lens, cl_results,
+            self._friction_layer_map, indices, lens, cl_results,
             scale_by_length=True, cell_size=self._cell_size)
         test_total_cost = sum(layer
                               for layer_name, layer in cl_results.items()
@@ -676,7 +676,7 @@ class TieLineCosts:
     def run(cls, cost_fpath, start_indices, end_indices, cost_layers,
             row_slice, col_slice, cost_multiplier_layer=None,
             cost_multiplier_scalar=1, save_paths=False,
-            extra_routing_layers=None, tracked_layers=None,
+            friction_layers=None, tracked_layers=None,
             cell_size=CELL_SIZE):
         """
         Compute least cost tie-line path to all features to be connected
@@ -721,11 +721,11 @@ class TieLineCosts:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry.
             By default, ``False``.
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -757,7 +757,7 @@ class TieLineCosts:
         tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
                   col_slice, cost_multiplier_layer=cost_multiplier_layer,
                   cost_multiplier_scalar=cost_multiplier_scalar,
-                  extra_routing_layers=extra_routing_layers,
+                  friction_layers=friction_layers,
                   tracked_layers=tracked_layers, cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
@@ -780,7 +780,7 @@ class TransCapCosts(TieLineCosts):
                  cost_layers, radius=None, xmission_config=None,
                  cost_multiplier_layer=None, cost_multiplier_scalar=1,
                  iso_regions_layer_name=ISO_H5_LAYER_NAME,
-                 extra_routing_layers=None, tracked_layers=None,
+                 friction_layers=None, tracked_layers=None,
                  cell_size=CELL_SIZE):
         """
         Parameters
@@ -818,11 +818,11 @@ class TransCapCosts(TieLineCosts):
             Name of ISO regions layer in `cost_fpath` file. The layer
             maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
             By default, :obj:`ISO_H5_LAYER_NAME`.
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -853,7 +853,7 @@ class TransCapCosts(TieLineCosts):
                          col_slice,
                          cost_multiplier_layer=cost_multiplier_layer,
                          cost_multiplier_scalar=cost_multiplier_scalar,
-                         extra_routing_layers=extra_routing_layers,
+                         friction_layers=friction_layers,
                          tracked_layers=tracked_layers,
                          cell_size=cell_size)
 
@@ -1446,7 +1446,7 @@ class TransCapCosts(TieLineCosts):
             radius=None, xmission_config=None, cost_multiplier_layer=None,
             cost_multiplier_scalar=1, iso_regions_layer_name=ISO_H5_LAYER_NAME,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
-            simplify_geo=None, extra_routing_layers=None, tracked_layers=None,
+            simplify_geo=None, friction_layers=None, tracked_layers=None,
             length_mult_kind="linear", cell_size=CELL_SIZE):
         """
         Compute Transmission capital cost of connecting SC point to
@@ -1494,11 +1494,11 @@ class TransCapCosts(TieLineCosts):
             by default False
         simplify_geo : float | None, optional
             If float, simplify geometries using this value
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1546,7 +1546,7 @@ class TransCapCosts(TieLineCosts):
                       cost_multiplier_scalar=cost_multiplier_scalar,
                       iso_regions_layer_name=iso_regions_layer_name,
                       tracked_layers=tracked_layers,
-                      extra_routing_layers=extra_routing_layers,
+                      friction_layers=friction_layers,
                       cell_size=cell_size)
 
             features = tcc.compute(min_line_length=min_line_length,
@@ -1656,7 +1656,7 @@ class ReinforcementLineCosts(TieLineCosts):
     def __init__(self, transmission_lines, cost_fpath, start_indices,
                  line_cap_mw, cost_layers, row_slice, col_slice,
                  cost_multiplier_layer=None, cost_multiplier_scalar=1,
-                 extra_routing_layers=None, tracked_layers=None,
+                 friction_layers=None, tracked_layers=None,
                  cell_size=CELL_SIZE):
         """
 
@@ -1702,11 +1702,11 @@ class ReinforcementLineCosts(TieLineCosts):
             multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1733,7 +1733,7 @@ class ReinforcementLineCosts(TieLineCosts):
                          row_slice=row_slice, col_slice=col_slice,
                          cost_multiplier_layer=cost_multiplier_layer,
                          cost_multiplier_scalar=cost_multiplier_scalar,
-                         extra_routing_layers=extra_routing_layers,
+                         friction_layers=friction_layers,
                          tracked_layers=tracked_layers,
                          cell_size=cell_size)
         self._null_extras = {}
@@ -1761,7 +1761,7 @@ class ReinforcementLineCosts(TieLineCosts):
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
             line_cap_mw, cost_layers, row_slice, col_slice,
             cost_multiplier_layer=None, cost_multiplier_scalar=1,
-            save_paths=False, extra_routing_layers=None, tracked_layers=None,
+            save_paths=False, friction_layers=None, tracked_layers=None,
             cell_size=CELL_SIZE):
         """
         Compute reinforcement line path to all features to be connected
@@ -1819,11 +1819,11 @@ class ReinforcementLineCosts(TieLineCosts):
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
-        extra_routing_layers : List[dict] | None, optional
+        friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost (i.e.
-            friction, barriers, etc.). Should have the same format as
-            the `cost_layers` input. By default, ``None``.
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -1857,7 +1857,7 @@ class ReinforcementLineCosts(TieLineCosts):
                   line_cap_mw, cost_layers, row_slice, col_slice,
                   cost_multiplier_layer=cost_multiplier_layer,
                   cost_multiplier_scalar=cost_multiplier_scalar,
-                  extra_routing_layers=extra_routing_layers,
+                  friction_layers=friction_layers,
                   tracked_layers=tracked_layers, cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
