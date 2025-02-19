@@ -1,0 +1,69 @@
+reVX.config.turbine\_flicker.TurbineFlickerConfig
+=================================================
+
+.. currentmodule:: reVX.config.turbine_flicker
+
+.. autoclass:: TurbineFlickerConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TurbineFlickerConfig.check_files
+      ~TurbineFlickerConfig.check_overwrite_keys
+      ~TurbineFlickerConfig.clear
+      ~TurbineFlickerConfig.copy
+      ~TurbineFlickerConfig.fromkeys
+      ~TurbineFlickerConfig.get
+      ~TurbineFlickerConfig.items
+      ~TurbineFlickerConfig.keys
+      ~TurbineFlickerConfig.pop
+      ~TurbineFlickerConfig.popitem
+      ~TurbineFlickerConfig.resolve_path
+      ~TurbineFlickerConfig.set_self_dict
+      ~TurbineFlickerConfig.setdefault
+      ~TurbineFlickerConfig.str_replace_and_resolve
+      ~TurbineFlickerConfig.update
+      ~TurbineFlickerConfig.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TurbineFlickerConfig.NAME
+      ~TurbineFlickerConfig.REQUIREMENTS
+      ~TurbineFlickerConfig.STR_REP
+      ~TurbineFlickerConfig.analysis_years
+      ~TurbineFlickerConfig.building_layer
+      ~TurbineFlickerConfig.building_threshold
+      ~TurbineFlickerConfig.config_dir
+      ~TurbineFlickerConfig.config_keys
+      ~TurbineFlickerConfig.excl_fpath
+      ~TurbineFlickerConfig.execution_control
+      ~TurbineFlickerConfig.flicker_threshold
+      ~TurbineFlickerConfig.grid_cell_size
+      ~TurbineFlickerConfig.hsds
+      ~TurbineFlickerConfig.hub_height
+      ~TurbineFlickerConfig.log_directory
+      ~TurbineFlickerConfig.log_level
+      ~TurbineFlickerConfig.max_flicker_exclusion_range
+      ~TurbineFlickerConfig.name
+      ~TurbineFlickerConfig.out_layer
+      ~TurbineFlickerConfig.regulations_fpath
+      ~TurbineFlickerConfig.replace
+      ~TurbineFlickerConfig.res_fpath
+      ~TurbineFlickerConfig.resolution
+      ~TurbineFlickerConfig.rotor_diameter
+      ~TurbineFlickerConfig.tm_dset
+   
+   

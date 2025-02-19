@@ -1,0 +1,37 @@
+reVX.plexos.utilities.DataCleaner
+=================================
+
+.. currentmodule:: reVX.plexos.utilities
+
+.. autoclass:: DataCleaner
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DataCleaner.merge_extent
+      ~DataCleaner.merge_multiple_extents
+      ~DataCleaner.merge_small
+      ~DataCleaner.pre_filter_plexos_meta
+      ~DataCleaner.reduce_df
+      ~DataCleaner.rename_cols
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DataCleaner.PLEXOS_META_COLS
+      ~DataCleaner.REEDS_NAME_MAP
+      ~DataCleaner.REV_NAME_MAP
+   
+   

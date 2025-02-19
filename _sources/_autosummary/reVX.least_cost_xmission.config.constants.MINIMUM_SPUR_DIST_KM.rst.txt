@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.config.constants.MINIMUM\_SPUR\_DIST\_KM
+===================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.constants
+
+.. autodata:: MINIMUM_SPUR_DIST_KM

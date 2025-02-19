@@ -1,0 +1,48 @@
+reVX.least\_cost\_xmission.trans\_cap\_costs.RegionalTransCapCosts
+==================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.trans_cap_costs
+
+.. autoclass:: RegionalTransCapCosts
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RegionalTransCapCosts.compute
+      ~RegionalTransCapCosts.compute_connection_costs
+      ~RegionalTransCapCosts.compute_tie_line_costs
+      ~RegionalTransCapCosts.least_cost_path
+      ~RegionalTransCapCosts.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RegionalTransCapCosts.TRANSFORMER_COST_VOLTAGE
+      ~RegionalTransCapCosts.capacity_class
+      ~RegionalTransCapCosts.clip_mask
+      ~RegionalTransCapCosts.clip_shape
+      ~RegionalTransCapCosts.col
+      ~RegionalTransCapCosts.col_offset
+      ~RegionalTransCapCosts.cost
+      ~RegionalTransCapCosts.features
+      ~RegionalTransCapCosts.mcp
+      ~RegionalTransCapCosts.mcp_cost
+      ~RegionalTransCapCosts.row
+      ~RegionalTransCapCosts.row_offset
+      ~RegionalTransCapCosts.sc_point
+      ~RegionalTransCapCosts.sc_point_gid
+      ~RegionalTransCapCosts.tie_line_voltage
+   
+   

@@ -1,0 +1,65 @@
+reVX.config.transmission\_layer\_creation.TransmissionLayerCreationConfig
+=========================================================================
+
+.. currentmodule:: reVX.config.transmission_layer_creation
+
+.. autoclass:: TransmissionLayerCreationConfig
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TransmissionLayerCreationConfig.construct
+      ~TransmissionLayerCreationConfig.copy
+      ~TransmissionLayerCreationConfig.dict
+      ~TransmissionLayerCreationConfig.from_orm
+      ~TransmissionLayerCreationConfig.json
+      ~TransmissionLayerCreationConfig.model_construct
+      ~TransmissionLayerCreationConfig.model_copy
+      ~TransmissionLayerCreationConfig.model_dump
+      ~TransmissionLayerCreationConfig.model_dump_json
+      ~TransmissionLayerCreationConfig.model_json_schema
+      ~TransmissionLayerCreationConfig.model_parametrized_name
+      ~TransmissionLayerCreationConfig.model_post_init
+      ~TransmissionLayerCreationConfig.model_rebuild
+      ~TransmissionLayerCreationConfig.model_validate
+      ~TransmissionLayerCreationConfig.model_validate_json
+      ~TransmissionLayerCreationConfig.model_validate_strings
+      ~TransmissionLayerCreationConfig.parse_file
+      ~TransmissionLayerCreationConfig.parse_obj
+      ~TransmissionLayerCreationConfig.parse_raw
+      ~TransmissionLayerCreationConfig.schema
+      ~TransmissionLayerCreationConfig.schema_json
+      ~TransmissionLayerCreationConfig.update_forward_refs
+      ~TransmissionLayerCreationConfig.validate
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TransmissionLayerCreationConfig.model_computed_fields
+      ~TransmissionLayerCreationConfig.model_config
+      ~TransmissionLayerCreationConfig.model_extra
+      ~TransmissionLayerCreationConfig.model_fields
+      ~TransmissionLayerCreationConfig.model_fields_set
+      ~TransmissionLayerCreationConfig.template_raster_fpath
+      ~TransmissionLayerCreationConfig.h5_fpath
+      ~TransmissionLayerCreationConfig.layer_dir
+      ~TransmissionLayerCreationConfig.masks_dir
+      ~TransmissionLayerCreationConfig.output_tiff_dir
+      ~TransmissionLayerCreationConfig.layers
+      ~TransmissionLayerCreationConfig.dry_costs
+      ~TransmissionLayerCreationConfig.merge_friction_and_barriers
+      ~TransmissionLayerCreationConfig.cell_size
+   
+   
