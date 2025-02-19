@@ -23,6 +23,7 @@ from reV.supply_curve.supply_curve import SupplyCurve
 from reV.utilities import SupplyCurveField
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
+from reVX.least_cost_xmission.trans_cap_costs import LCP_AGG_COST_LAYER_NAME
 from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SHORT_CUTOFF,
@@ -38,6 +39,9 @@ FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
 ISO_REGIONS_F = os.path.join(TESTDATADIR, 'xmission', 'ri_regions.tif')
 N_SC_POINTS = 10  # number of sc_points to run, chosen at random for each test
 DEFAULT_CONFIG = XmissionConfig()
+DEFAULT_BARRIER = {"layer_name": LCP_AGG_COST_LAYER_NAME,
+                   "multiplier_layer": "transmission_barrier",
+                   "multiplier_scalar": 100}
 
 
 def _cap_class_to_cap(capacity):
@@ -190,7 +194,9 @@ def test_capacity_class(capacity, lmk):
         mask = truth['sc_point_gid'].isin(sc_point_gids)
         truth = truth.loc[mask]
 
-    test = LeastCostXmission.run(COST_H5, FEATURES, capacity, [cost_layer],
+    test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
+                                 [{"layer_name": cost_layer}],
+                                 friction_layers=[DEFAULT_BARRIER],
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=5.76, length_mult_kind=lmk)
     test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
@@ -232,7 +238,9 @@ def test_parallel(max_workers, lmk):
         mask = truth['sc_point_gid'].isin(sc_point_gids)
         truth = truth.loc[mask]
 
-    test = LeastCostXmission.run(COST_H5, FEATURES, capacity, [cost_layer],
+    test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
+                                 [{"layer_name": cost_layer}],
+                                 friction_layers=[DEFAULT_BARRIER],
                                  max_workers=max_workers,
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=5.76, length_mult_kind=lmk)
@@ -269,7 +277,9 @@ def test_resolution(resolution, lmk):
         truth = truth.loc[mask]
 
     cost_layer = f'tie_line_costs_{_cap_class_to_cap(100)}MW'
-    test = LeastCostXmission.run(COST_H5, FEATURES, 100, [cost_layer],
+    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
+                                 [{"layer_name": cost_layer}],
+                                 friction_layers=[DEFAULT_BARRIER],
                                  resolution=resolution,
                                  sc_point_gids=sc_point_gids,
                                  min_line_length=resolution * 0.09 / 2,
@@ -312,7 +322,9 @@ def test_tracked_layers():
             fh.create_dataset("layer5", data=np.ones(data_shape))
 
         test = LeastCostXmission.run(cost_h5_path, FEATURES, capacity,
-                                     [cost_layer], sc_point_gids=sc_point_gids,
+                                     [{"layer_name": cost_layer}],
+                                     friction_layers=[DEFAULT_BARRIER],
+                                     sc_point_gids=sc_point_gids,
                                      min_line_length=0,
                                      tracked_layers={"layer1": "sum",
                                                      "layer2": "max",
@@ -353,7 +365,8 @@ def test_cli(runner, save_paths, lmk):
             "capacity_class": f'{capacity}MW',
             "min_line_length": 5.76,
             "save_paths": save_paths,
-            "cost_layers": ["tie_line_costs_{}MW"],
+            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+            "friction_layers": [DEFAULT_BARRIER],
             "length_mult_kind": lmk
         }
         config_path = os.path.join(td, 'config.json')
@@ -417,8 +430,8 @@ def test_regional_cli(runner, ri_ba, save_paths):
             "regions_fpath": ri_ba_path,
             "region_identifier_column": "ba_str",
             "capacity_class": 1000,
-            "cost_layers": ["tie_line_costs_1500MW"],
-            "barrier_mult": 100,
+            "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
+            "friction_layers": [DEFAULT_BARRIER],
             "min_line_length": 0,
             "save_paths": save_paths,
         }
@@ -519,11 +532,12 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
             "regions_fpath": ri_ba_path,
             "region_identifier_column": "ba_str",
             "capacity_class": 1000,
-            "cost_layers": ["tie_line_costs_1500MW"],
-            "barrier_mult": 100,
+            "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
+            "friction_layers": [{"layer_name": LCP_AGG_COST_LAYER_NAME,
+                                 "multiplier_layer": "tb",
+                                 "multiplier_scalar": 100}],
             "min_line_length": 0,
             "save_paths": False,
-            "tb_layer_name": "tb",
             "iso_regions_layer_name": "iso",
         }
 

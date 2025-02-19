@@ -32,9 +32,7 @@ from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
 from reVX.least_cost_xmission.least_cost_xmission import region_mapper
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT,
-                                                       SUBSTATION_CAT,
-                                                       BARRIERS_MULT,
-                                                       BARRIER_H5_LAYER_NAME)
+                                                       SUBSTATION_CAT)
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -87,8 +85,8 @@ def run_local(ctx, config):
                capacity_class=config.capacity_class,
                clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
-               tb_layer_name=config.tb_layer_name,
-               barrier_mult=config.barrier_mult,
+               cost_multiplier_layer=config.cost_multiplier_layer,
+               cost_multiplier_scalar=config.cost_multiplier_scalar,
                max_workers=config.execution_control.max_workers,
                region_identifier_column=config.region_identifier_column,
                save_paths=config.save_paths,
@@ -96,7 +94,7 @@ def run_local(ctx, config):
                log_dir=config.log_directory,
                ss_id_col=config.ss_id_col,
                verbose=config.log_level,
-               li_cost_layers=config.length_invariant_cost_layers,
+               friction_layers=config.friction_layers,
                tracked_layers=config.tracked_layers,
                cell_size=config.cell_size)
 
@@ -190,16 +188,13 @@ def from_config(ctx, config, verbose):
 @click.option('--step_index', '-step', type=int,
               show_default=True, default=1,
               help=("Step index of features to run."))
-@click.option('--tb_layer_name', '-tbln', default=BARRIER_H5_LAYER_NAME,
-              type=STR, show_default=True,
-              help='Name of transmission barrier layer in `cost_fpath` file. '
-                   'This layer defines the multipliers applied to the cost '
-                   'layer to determine LCP routing (but does not actually '
-                   'affect output costs')
-@click.option('--barrier_mult', '-bmult', type=float,
-              show_default=True, default=BARRIERS_MULT,
-              help=("Transmission barrier multiplier, used when computing the "
-                    "least cost tie-line path"))
+@click.option('--cost_multiplier_layer', '-cml', default=None, type=STR,
+              help='Name of cost multiplier layer in `cost_fpath` file. '
+                   'This layer defines the multipliers applied to the final '
+                   'cost layer')
+@click.option('--cost_multiplier_scalar', '-cmult', type=float,
+              show_default=True, default=1,
+              help=("Final cost layer multiplier"))
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -221,12 +216,11 @@ def from_config(ctx, config, verbose):
                    'Used for reinforcement calcaultions only. ')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
-@click.option('--li-cost-layers', '-licl', required=False, multiple=True,
+@click.option('--friction_layers', '-fl', required=False, multiple=True,
               default=(),
-              help='Length-invariant cost layer in H5 to add to total cost '
-                   'raster used for routing. These costs do not scale with '
-                   'distance traversed acroiss the cell. Multiple layers may '
-                   'be specified.')
+              help='Layers to be added to costs to influence routing but '
+                   'NOT reported in final cost (i.e. friction, barriers, '
+                   'etc.)')
 @click.option('--tracked_layers', '-trl', type=STR, default=None,
               show_default=True,
               help=('Dictionary mapping layer names to strings, where the '
@@ -239,9 +233,10 @@ def from_config(ctx, config, verbose):
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
-          clip_buffer, start_index, step_index, tb_layer_name, barrier_mult,
-          max_workers, region_identifier_column, save_paths, out_dir, log_dir,
-          ss_id_col, verbose, li_cost_layers, tracked_layers, cell_size):
+          clip_buffer, start_index, step_index, cost_multiplier_layer,
+          cost_multiplier_scalar, max_workers, region_identifier_column,
+          save_paths, out_dir, log_dir, ss_id_col, verbose, friction_layers,
+          tracked_layers, cell_size):
     """
     Run Least Cost Paths on local hardware
     """
@@ -260,18 +255,23 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     logger.debug("Tracked layers input: %r", tracked_layers)
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
-    cost_layers = list(cost_layers)
-    li_cost_layers = list(li_cost_layers)
+
+    cost_layers = [dict_str_load(layer_info) if isinstance(layer_info, str)
+                   else layer_info for layer_info in cost_layers]
+    friction_layers = [dict_str_load(layer_info)
+                       if isinstance(layer_info, str)
+                       else layer_info
+                       for layer_info in friction_layers]
 
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
 
     kwargs = {"clip_buffer": int(clip_buffer),
-              "tb_layer_name": tb_layer_name,
-              "barrier_mult": barrier_mult,
+              "cost_multiplier_layer": cost_multiplier_layer,
+              "cost_multiplier_scalar": cost_multiplier_scalar,
               "save_paths": save_paths,
               "max_workers": max_workers,
-              "length_invariant_cost_layers": li_cost_layers,
+              "friction_layers": friction_layers,
               "tracked_layers": tracked_layers,
               "cell_size": cell_size}
 
@@ -281,7 +281,8 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
         kwargs["xmission_config"] = xmission_config
         cc_str = xmission_config._parse_cap_class(capacity_class)
         cap = xmission_config['power_classes'][cc_str]
-        cost_layers = [layer.format(cap) for layer in cost_layers]
+        for layer_info in cost_layers:
+            layer_info["layer_name"] = layer_info["layer_name"].format(cap)
         logger.debug('Xmission Config: {}'.format(xmission_config))
         features = gpd.read_file(network_nodes_fpath)
         features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
@@ -568,8 +569,8 @@ def get_node_cmd(config, start_index=0):
             '-cb {}'.format(SLURM.s(config.clip_buffer)),
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
-            '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
-            '-bmult {}'.format(SLURM.s(config.barrier_mult)),
+            '-cml {}'.format(SLURM.s(config.cost_multiplier_layer)),
+            '-cmult {}'.format(SLURM.s(config.cost_multiplier_scalar)),
             '-ssid {}'.format(SLURM.s(config.ss_id_col)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
@@ -578,9 +579,9 @@ def get_node_cmd(config, start_index=0):
             ]
 
     for layer in config.cost_layers:
-        args.append(f'-cl {layer}')
-    for layer in config.length_invariant_cost_layers:
-        args.append(f'-licl {layer}')
+        args.append(f'-cl {SLURM.s(layer)}')
+    for layer in config.friction_layers:
+        args.append(f'-fl {SLURM.s(layer)}')
 
     if config.save_paths:
         args.append('-paths')

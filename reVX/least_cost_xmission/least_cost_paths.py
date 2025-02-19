@@ -18,10 +18,9 @@ from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
 from reVX.handlers.layered_h5 import crs_match
+from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
-                                                       TRANS_LINE_CAT,
-                                                       BARRIERS_MULT,
-                                                       BARRIER_H5_LAYER_NAME)
+                                                       TRANS_LINE_CAT)
 from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
                                                       ReinforcementLineCosts)
 
@@ -34,7 +33,7 @@ class LeastCostPaths:
     """
 
     def __init__(self, cost_fpath, features_fpath, clip_buffer=0,
-                 tb_layer_name=BARRIER_H5_LAYER_NAME):
+                 cost_multiplier_layer=None):
         """
         Parameters
         ----------
@@ -47,14 +46,12 @@ class LeastCostPaths:
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         """
         self._cost_fpath = cost_fpath
-        self._tb_layer_name = tb_layer_name
+        self._cost_multiplier_layer = cost_multiplier_layer
         self._check_layers()
 
         out = self._map_to_costs(cost_fpath, gpd.read_file(features_fpath),
@@ -83,7 +80,8 @@ class LeastCostPaths:
 
     def _check_layers(self):
         """Check to make sure the required layers are in cost_fpath. """
-        self._check_layers_in_h5(self._cost_fpath, [self._tb_layer_name])
+        self._check_layers_in_h5(self._cost_fpath,
+                                 [self._cost_multiplier_layer])
 
     @classmethod
     def _check_layers_in_h5(cls, cost_fpath, layers):
@@ -105,7 +103,7 @@ class LeastCostPaths:
         with ExclusionLayers(cost_fpath) as f:
             missing = []
             for lyr in layers:
-                if lyr not in f:
+                if lyr and lyr not in f:
                     missing.append(lyr)
 
             if missing:
@@ -304,10 +302,9 @@ class LeastCostPaths:
         """
         return self.end_features[['row', 'col']].values
 
-    def process_least_cost_paths(self, cost_layers, barrier_mult=BARRIERS_MULT,
+    def process_least_cost_paths(self, cost_layers, cost_multiplier_scalar=1,
                                  indices=None, max_workers=None,
-                                 save_paths=False,
-                                 length_invariant_cost_layers=None,
+                                 save_paths=False, friction_layers=None,
                                  tracked_layers=None, cell_size=CELL_SIZE):
         """
         Find Least Cost Paths between all pairs of provided features for
@@ -315,15 +312,15 @@ class LeastCostPaths:
 
         Parameters
         ----------
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
-        barrier_mult : int, optional
-            Transmission barrier multiplier, used when computing the
-            least cost tie-line path, by default 100
-        indices : iterable, optonal
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine total costs raster used for routing.
+            See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
+        indices : iterable, optional
             Indices of the transmission features input that should be
             processed. By default ``None``, which process all
             transmission features.
@@ -333,11 +330,11 @@ class LeastCostPaths:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        friction_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -376,24 +373,25 @@ class LeastCostPaths:
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
                 least_cost_paths = self._compute_paths_in_chunks(
-                    exe, max_workers, indices, cost_layers, barrier_mult,
-                    save_paths, length_invariant_cost_layers, tracked_layers,
-                    cell_size=cell_size)
+                    exe, max_workers, indices, cost_layers,
+                    cost_multiplier_scalar, save_paths, friction_layers,
+                    tracked_layers, cell_size=cell_size)
         else:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
             log_mem(logger)
-            licl = length_invariant_cost_layers
             for ind, start in enumerate(indices, start=1):
                 self._start_feature_ind = start
                 lcp = TieLineCosts.run(self._cost_fpath,
                                        self.start_indices, self.end_indices,
                                        cost_layers,
                                        self._row_slice, self._col_slice,
-                                       tb_layer_name=self._tb_layer_name,
-                                       barrier_mult=barrier_mult,
+                                       cost_multiplier_layer=(
+                                           self._cost_multiplier_layer),
+                                       cost_multiplier_scalar=(
+                                           cost_multiplier_scalar),
                                        save_paths=save_paths,
-                                       length_invariant_cost_layers=licl,
+                                       friction_layers=friction_layers,
                                        tracked_layers=tracked_layers,
                                        cell_size=cell_size)
                 end_features = self.end_features.drop(columns=['row', 'col'],
@@ -410,8 +408,9 @@ class LeastCostPaths:
         return least_cost_paths
 
     def _compute_paths_in_chunks(self, exe, max_submissions, indices,
-                                 cost_layers, barrier_mult, save_paths,
-                                 licl, tracked_layers, cell_size):
+                                 cost_layers, cost_multiplier_scalar,
+                                 save_paths, friction_layers, tracked_layers,
+                                 cell_size):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -421,10 +420,11 @@ class LeastCostPaths:
                                 self.start_indices, self.end_indices,
                                 cost_layers,
                                 self._row_slice, self._col_slice,
-                                tb_layer_name=self._tb_layer_name,
-                                barrier_mult=barrier_mult,
+                                cost_multiplier_layer=(
+                                    self._cost_multiplier_layer),
+                                cost_multiplier_scalar=cost_multiplier_scalar,
                                 save_paths=save_paths,
-                                length_invariant_cost_layers=licl,
+                                friction_layers=friction_layers,
                                 tracked_layers=tracked_layers,
                                 cell_size=cell_size)
             futures[future] = self.end_features
@@ -438,10 +438,10 @@ class LeastCostPaths:
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, cost_layers,
-            clip_buffer=0, tb_layer_name=BARRIER_H5_LAYER_NAME,
-            barrier_mult=BARRIERS_MULT, indices=None, max_workers=None,
-            save_paths=False, length_invariant_cost_layers=None,
-            tracked_layers=None, cell_size=CELL_SIZE):
+            clip_buffer=0, cost_multiplier_layer=None,
+            cost_multiplier_scalar=1, indices=None, max_workers=None,
+            save_paths=False, friction_layers=None, tracked_layers=None,
+            cell_size=CELL_SIZE):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -452,23 +452,21 @@ class LeastCostPaths:
             Path to h5 file with cost rasters and other required layers
         features_fpath : str
             Path to GeoPackage with transmission features
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            deteremining path using main cost layer.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine total costs raster used for routing.
+            See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input.
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Transmission barrier multiplier, used when computing the
-            least cost tie-line path, by default 100
-        indices : iterable, optonal
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
+        indices : iterable, optional
             Indices of the transmission features input that should be
             processed. By default ``None``, which process all
             transmission features.
@@ -478,11 +476,11 @@ class LeastCostPaths:
         save_paths : bool, optional
             Flag to save least cost path as a multi-line geometry,
             by default False
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the cost raster. The
-            costs specified by these layers are not scaled with distance
-            traversed across the cell (i.e. fixed one-time costs for
-            crossing these cells).
+        friction_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -512,14 +510,14 @@ class LeastCostPaths:
         """
         ts = time.time()
         lcp = cls(cost_fpath, features_fpath, clip_buffer=clip_buffer,
-                  tb_layer_name=tb_layer_name)
+                  cost_multiplier_layer=cost_multiplier_layer)
         least_cost_paths = lcp.process_least_cost_paths(
             cost_layers,
-            barrier_mult=barrier_mult,
+            cost_multiplier_scalar=cost_multiplier_scalar,
             indices=indices,
             save_paths=save_paths,
             max_workers=max_workers,
-            length_invariant_cost_layers=length_invariant_cost_layers,
+            friction_layers=friction_layers,
             tracked_layers=tracked_layers, cell_size=cell_size)
 
         logger.info('{} paths were computed in {:.4f} hours'
@@ -535,7 +533,7 @@ class ReinforcementPaths(LeastCostPaths):
     balancing area network node.
     """
     def __init__(self, cost_fpath, features, transmission_lines,
-                 clip_buffer=0, tb_layer_name=BARRIER_H5_LAYER_NAME):
+                 clip_buffer=0, cost_multiplier_layer=None):
         """
         Parameters
         ----------
@@ -548,7 +546,7 @@ class ReinforcementPaths(LeastCostPaths):
         transmission_lines :dict
             Dictionary where the keys are the names of cost layers in
             the cost HDF5 file and values are arrays with the
-            corresponding existing transmission lines rastered into
+            corresponding existing transmission lines rasterized into
             them (i.e. array value is 1 at a pixel if there is a
             transmission line, otherwise 0). These arrays will be used
             to compute the reinforcement costs along existing
@@ -556,14 +554,12 @@ class ReinforcementPaths(LeastCostPaths):
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
         """
         self._cost_fpath = cost_fpath
-        self._tb_layer_name = tb_layer_name
+        self._cost_multiplier_layer = cost_multiplier_layer
         self._check_layers()
 
         self._features, self._row_slice, self._col_slice, self._shape = \
@@ -615,10 +611,9 @@ class ReinforcementPaths(LeastCostPaths):
         """
         return self._features[['row', 'col']].values
 
-    def process_least_cost_paths(self, capacity_class, cost_layers,
-                                 barrier_mult=BARRIERS_MULT, max_workers=None,
-                                 save_paths=False,
-                                 length_invariant_cost_layers=None,
+    def process_least_cost_paths(self, line_cap_mw, cost_layers,
+                                 cost_multiplier_scalar=1, max_workers=None,
+                                 save_paths=False, friction_layers=None,
                                  tracked_layers=None, cell_size=CELL_SIZE):
         """
         Find the reinforcement line paths between the network node and
@@ -626,31 +621,33 @@ class ReinforcementPaths(LeastCostPaths):
 
         Parameters
         ----------
-        capacity_class : int | str
-            Capacity class of the 'base' greenfield costs layer. Costs
-            will be scaled by the capacity corresponding to this class
-            to report reinforcement costs as $/MW.
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            'base' greenfield costs raster used for routing. 'Base'
-            greenfield costs are only used if the reinforcement path
-            *must* deviate from existing transmission lines. Typically,
-            a capacity class of 400 MW (230kV transmission line) is used
-            for the base greenfield costs.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs.
-            By default, ``100``.
+        line_cap_mw : int | str
+            Capacity (MW) of the line that is being used for the 'base'
+            greenfield costs layer. Costs will be normalized by this
+            input to report reinforcement costs as $/MW.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine the 'base' greenfield costs raster
+            used for routing. See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input. 'Base' greenfield costs are
+            only used if the reinforcement path *must* deviate from
+            existing transmission lines. Typically, a capacity class of
+            400 MW (230kV transmission line) is used for the base
+            greenfield costs.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
         max_workers : int, optional
             Number of workers to use for processing. If 1 run in serial,
             if ``None`` use all available cores. By default, ``None``.
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the 'base' greenfield
-            cost raster. The costs specified by these layers are not
-            scaled with distance traversed across the cell (i.e. fixed
-            one-time costs for crossing these cells).
+        friction_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -686,7 +683,6 @@ class ReinforcementPaths(LeastCostPaths):
         max_workers = os.cpu_count() if max_workers is None else max_workers
         max_workers = int(max_workers)
 
-        licl = length_invariant_cost_layers
         least_cost_paths = []
         if max_workers > 1:
             logger.info('Computing Reinforcement Cost Paths in parallel on '
@@ -704,14 +700,16 @@ class ReinforcementPaths(LeastCostPaths):
                                         self._cost_fpath,
                                         self.start_indices,
                                         feats[['row', 'col']].values,
-                                        capacity_class,
+                                        line_cap_mw,
                                         cost_layers,
                                         self._row_slice,
                                         self._col_slice,
-                                        tb_layer_name=self._tb_layer_name,
-                                        barrier_mult=barrier_mult,
+                                        cost_multiplier_layer=(
+                                            self._cost_multiplier_layer),
+                                        cost_multiplier_scalar=(
+                                            cost_multiplier_scalar),
                                         save_paths=save_paths,
-                                        length_invariant_cost_layers=licl,
+                                        friction_layers=friction_layers,
                                         tracked_layers=tracked_layers,
                                         cell_size=cell_size)
                     futures[future] = feats
@@ -729,14 +727,16 @@ class ReinforcementPaths(LeastCostPaths):
                                              self._cost_fpath,
                                              self.start_indices,
                                              self.end_indices,
-                                             capacity_class,
+                                             line_cap_mw,
                                              cost_layers,
                                              self._row_slice,
                                              self._col_slice,
-                                             tb_layer_name=self._tb_layer_name,
-                                             barrier_mult=barrier_mult,
+                                             cost_multiplier_layer=(
+                                                 self._cost_multiplier_layer),
+                                             cost_multiplier_scalar=(
+                                                 cost_multiplier_scalar),
                                              save_paths=save_paths,
-                                             length_invariant_cost_layers=licl,
+                                             friction_layers=friction_layers,
                                              tracked_layers=tracked_layers,
                                              cell_size=cell_size)
             least_cost_paths = lcp.merge(self._features, on=["row", "col"])
@@ -749,10 +749,10 @@ class ReinforcementPaths(LeastCostPaths):
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
-            tb_layer_name=BARRIER_H5_LAYER_NAME, barrier_mult=BARRIERS_MULT,
+            cost_multiplier_layer=None, cost_multiplier_scalar=1,
             indices=None, max_workers=None, save_paths=False,
-            length_invariant_cost_layers=None, tracked_layers=None,
-            ss_id_col="poi_gid", cell_size=CELL_SIZE):
+            friction_layers=None, tracked_layers=None, ss_id_col="poi_gid",
+            cell_size=CELL_SIZE):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -782,13 +782,16 @@ class ReinforcementPaths(LeastCostPaths):
             Capacity class of the 'base' greenfield costs layer. Costs
             will be scaled by the capacity corresponding to this class
             to report reinforcement costs as $/MW.
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            'base' greenfield costs raster used for routing. 'Base'
-            greenfield costs are only used if the reinforcement path
-            *must* deviate from existing transmission lines. Typically,
-            a capacity class of 400 MW (230kV transmission line) is used
-            for the base greenfield costs.
+        cost_layers : List[dict]
+            List of dictionaries giving info about the layers in H5 that
+            are summed to determine the 'base' greenfield costs raster
+            used for routing. See the `cost_layers` property of
+            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
+            for more details on this input. 'Base' greenfield costs are
+            only used if the reinforcement path *must* deviate from
+            existing transmission lines. Typically, a capacity class of
+            400 MW (230kV transmission line) is used for the base
+            greenfield costs.
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
@@ -796,15 +799,12 @@ class ReinforcementPaths(LeastCostPaths):
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
-        tb_layer_name : str, default=:obj:`BARRIER_H5_LAYER_NAME`
-            Name of transmission barrier layer in `cost_fpath` file.
-            This layer defines the multipliers applied to the cost layer
-            to determine LCP routing (but does not actually affect
-            output costs). By default, :obj:`BARRIER_H5_LAYER_NAME`.
-        barrier_mult : int, optional
-            Multiplier on transmission barrier costs.
-            By default, ``100``.
-        indices : iterable, optonal
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
+        indices : iterable, optional
             Indices corresponding to the network nodes that should be
             processed. By default ``None``, which process all network
             nodes.
@@ -814,11 +814,11 @@ class ReinforcementPaths(LeastCostPaths):
         save_paths : bool, optional
             Flag to save reinforcement line path as a multi-line
             geometry. By default, ``False``.
-        length_invariant_cost_layers : List[str] | None, optional
-            List of layers in H5 to be added to the 'base' greenfield
-            cost raster. The costs specified by these layers are not
-            scaled with distance traversed across the cell (i.e. fixed
-            one-time costs for crossing these cells).
+        friction_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
         tracked_layers : dict, optional
             Dictionary mapping layer names to strings, where the strings
             are numpy methods that should be applied to the layer along
@@ -854,11 +854,15 @@ class ReinforcementPaths(LeastCostPaths):
         """
         ts = time.time()
         least_cost_paths = []
-        licl = length_invariant_cost_layers
-        lcp_kwargs = {"capacity_class": capacity_class,
+
+        xmission_config = parse_config(xmission_config=xmission_config)
+        capacity_class = xmission_config._parse_cap_class(capacity_class)
+        line_cap_mw = xmission_config['power_classes'][capacity_class]
+
+        lcp_kwargs = {"line_cap_mw": line_cap_mw,
                       "cost_layers": cost_layers,
-                      "length_invariant_cost_layers": licl,
-                      "barrier_mult": barrier_mult,
+                      "friction_layers": friction_layers,
+                      "cost_multiplier_scalar": cost_multiplier_scalar,
                       "save_paths": save_paths,
                       "max_workers": max_workers,
                       "tracked_layers": tracked_layers,
@@ -899,7 +903,7 @@ class ReinforcementPaths(LeastCostPaths):
                             .reset_index(drop=True))
             rid = network_node[region_identifier_column].values[0]
             mask = substations[region_identifier_column] == rid
-            logger.debug('Computing reinfocements to %s in region %s',
+            logger.debug('Computing reinforcements to %s in region %s',
                          str(network_node), rid)
             node_substations = substations[mask].reset_index(drop=True)
             if len(node_substations) == 0:
@@ -912,7 +916,8 @@ class ReinforcementPaths(LeastCostPaths):
                         len(node_substations), rid)
             node_features = pd.concat([network_node, node_substations])
             rp = cls(cost_fpath, node_features, transmission_lines,
-                     clip_buffer=clip_buffer, tb_layer_name=tb_layer_name)
+                     clip_buffer=clip_buffer,
+                     cost_multiplier_layer=cost_multiplier_layer)
             node_least_cost_paths = rp.process_least_cost_paths(**lcp_kwargs)
             node_least_cost_paths[region_identifier_column] = rid
             least_cost_paths += [node_least_cost_paths]
@@ -1014,7 +1019,7 @@ def _collect_future_chunks(futures, least_cost_paths):
     for i, future in enumerate(as_completed(futures), start=1):
         end_features = futures.pop(future)
         lcp = future.result()
-        logger.debug("Joining feautres of shape %s with results of shape %s",
+        logger.debug("Joining features of shape %s with results of shape %s",
                      str(end_features.shape), str(lcp.shape))
         logger.debug("Feature cols: %s", str(end_features.columns))
         logger.debug("Results cols: %s", str(lcp.columns))
