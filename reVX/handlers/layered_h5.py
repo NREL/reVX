@@ -38,7 +38,6 @@ class LayeredH5:
     LONGITUDE = "longitude"
     """Name of longitude values layer in HDF5 file."""
 
-
     def __init__(self, h5_file, hsds=False, chunks=(128, 128),
                  template_file=None, block_size=None):
         """
@@ -122,6 +121,7 @@ class LayeredH5:
         with Geotiff(self.template_file) as geo:
             return geo.profile
 
+    # pylint: disable=unpacking-non-sequence
     def _extract_lat_lon(self):
         """Extract template lat/lons. """
         if str(self.template_file).endswith(".h5"):
