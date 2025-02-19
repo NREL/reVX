@@ -149,6 +149,17 @@ The below example JSON file shows all possible keys with example values. The for
                 "mpa.tif": { "map": {"2": 5, "3": 7}, "extent": "all" },
             }
         },
+        {
+            "layer_name": "ROW",
+            "description": "Right of way fractional values",
+            "include_in_h5": false,
+            "values_are_costs_per_mile": false,  // This is the default; Should be `false` if you wish to avoid any extra processing
+            "build": {
+                "ROW.tif": {
+                    "pass_through": true
+                },
+            }
+        },
     ],
 
     "merge_friction_and_barriers": {
