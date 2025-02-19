@@ -16,6 +16,7 @@ from rex import Resource, Outputs
 from reVX.handlers.geotiff import Geotiff
 from reVX.utilities.exceptions import ProfileCheckError
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -37,9 +38,8 @@ class LayeredH5:
     LONGITUDE = "longitude"
     """Name of longitude values layer in HDF5 file."""
 
-
     def __init__(self, h5_file, hsds=False, chunks=(128, 128),
-                 template_file=None):
+                 template_file=None, block_size=None):
         """
 
         Parameters
@@ -60,12 +60,18 @@ class LayeredH5:
             (``*.h5``) file containing the profile and transform to be
             used for the layered file. If ``None``, then the `h5_file`
             input is used as the template. By default, ``None``.
+        block_size : int, optional
+            Optional block size to use when building lat/lon datasets.
+            Setting this value can help reduce memory issues when
+            building a ``LayeredH5`` file. If ``None``, the lat/lon
+            arrays are processed in full. By default, ``None``.
         """
         self.h5_file = h5_file
         self._hsds = hsds
         self._chunks = chunks
         self._profile = None
         self._template_file = template_file or h5_file
+        self._block_size = block_size
 
     def __repr__(self):
         return "{} for {}".format(self.__class__.__name__, self.h5_file)
@@ -115,6 +121,7 @@ class LayeredH5:
         with Geotiff(self.template_file) as geo:
             return geo.profile
 
+    # pylint: disable=unpacking-non-sequence
     def _extract_lat_lon(self):
         """Extract template lat/lons. """
         if str(self.template_file).endswith(".h5"):
@@ -122,7 +129,23 @@ class LayeredH5:
                 return h5[self.LATITUDE], h5[self.LONGITUDE]
 
         with Geotiff(self.template_file) as geo:
-            return geo.lat_lon
+            if not self._block_size:
+                return geo.lat_lon
+
+            nrows, ncols = geo.shape
+            out_lat = np.zeros((nrows, ncols), dtype="float32")
+            out_lon = np.zeros((nrows, ncols), dtype="float32")
+            for x in range(0, nrows, self._block_size):
+                for y in range(0, ncols, self._block_size):
+                    logger.debug("Loading lat/lon starting at inds %d, %d",
+                                 x, y)
+                    r_slice = slice(x, x + self._block_size)
+                    c_slice = slice(y, y + self._block_size)
+                    lat, lon = geo["lat_lon", r_slice, c_slice]
+                    out_lat[r_slice, c_slice] = lat
+                    out_lon[r_slice, c_slice] = lon
+
+        return out_lat, out_lon
 
     @property
     def template_file(self):
@@ -557,7 +580,7 @@ class LayeredTransmissionH5(LayeredH5):
     """
 
     def __init__(self, h5_file=None, hsds=False, chunks=(128, 128),
-                 template_file=None, layer_dir='.'):
+                 template_file=None, layer_dir='.', block_size=None):
         """
 
         Parameters
@@ -586,9 +609,14 @@ class LayeredTransmissionH5(LayeredH5):
         layer_dir : path-like, optional
             Directory to search for layers in, if not found in current
             directory. By default, ``'.'``.
+        block_size : int, optional
+            Optional block size to use when building lat/lon datasets.
+            Setting this value can help reduce memory issues when
+            building a ``LayeredH5`` file. If ``None``, the lat/lon
+            arrays are processed in full. By default, ``None``.
         """
         super().__init__(h5_file=h5_file, hsds=hsds, chunks=chunks,
-                         template_file=template_file)
+                         template_file=template_file, block_size=block_size)
         self._layer_dir = layer_dir
         if self.h5_file is None and self.template_file is None:
             msg = "One of `h5_file` or `template_file` must be provided!"
