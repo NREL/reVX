@@ -89,8 +89,8 @@ class LeastCostXmission(LeastCostPaths):
 
         (self._sc_points, self._features, self._sub_lines_mapping,
          self._shape) = self._map_to_costs(cost_fpath, features_fpath,
-                                     resolution=resolution,
-                                     iso_layer_name=self._iso_layer_name)
+                                           resolution=resolution,
+                                           iso_layer_name=self._iso_layer_name)
         self._tree = None
         self._sink_coords = None
         self._min_line_len = min_line_length
@@ -193,7 +193,8 @@ class LeastCostXmission(LeastCostPaths):
         """
         logger.debug("Loading transmission features")
         features = gpd.read_file(features_fpath)
-        features = features.drop(columns=["bgid", "egid", "cap_left"], errors="ignore")
+        features = features.drop(columns=["bgid", "egid", "cap_left"],
+                                 errors="ignore")
         mapping = {"gid": "trans_gid", "trans_gids": "trans_line_gids"}
         features = features.rename(columns=mapping)
 
@@ -495,10 +496,8 @@ class LeastCostXmission(LeastCostPaths):
             buffer = sc_point["geometry"].buffer(radius_m)
             clipped_sc_features = sc_features.clip(buffer)
 
-        logger.info(
-            "{} transmission features found in clipped area with radius {}"
-            .format( len(clipped_sc_features), radius_m)
-        )
+        logger.info("{} transmission features found in clipped area with "
+                    "radius {}".format(len(clipped_sc_features), radius_m))
         return clipped_sc_features.copy(deep=True)
 
     def process_sc_points(self, capacity_class, cost_layers,
@@ -856,8 +855,7 @@ class LeastCostXmission(LeastCostPaths):
                              radius=None, expand_radius=True,
                              simplify_geo=None, friction_layers=None,
                              tracked_layers=None, length_mult_kind="linear",
-                             cell_size=CELL_SIZE,
-    ):
+                             cell_size=CELL_SIZE):
         """
         Compute Least Cost Transmission for desired sc_points with a
         single core.
@@ -1232,7 +1230,7 @@ class RegionalXmission(LeastCostXmission):
         """Clip features to be substations in the region of the sc point."""
         logger.debug("Clipping features to sc_point %d", sc_point.sc_point_gid)
 
-        point = self.sc_points.loc[sc_point.name : sc_point.name].centroid
+        point = self.sc_points.loc[sc_point.name:sc_point.name].centroid
         map_func = region_mapper(self._regions, self._rid_column)
         rid = point.apply(map_func).values[0]
         logger.debug("  - Clipping features to region: %s", rid)
@@ -1410,10 +1408,9 @@ class RegionalXmission(LeastCostXmission):
                                             cell_size=cell_size)
 
         logger.info("{} connections were made to {} SC points in {:.4f} "
-                    "minutes"
-                    .format(len(least_costs),
-                    len(least_costs["sc_point_gid"].unique()),
-                    (time.time() - ts) / 60))
+                    "minutes".format(len(least_costs),
+                                     len(least_costs["sc_point_gid"].unique()),
+                                     (time.time() - ts) / 60))
 
         return least_costs
 
