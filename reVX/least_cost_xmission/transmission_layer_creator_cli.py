@@ -156,13 +156,17 @@ def create_masks(land_mask_vector: str, template_raster: str, masks_dir: str,
               help='Raster to extract CRS, transform, and shape from.')
 @click.option('--h5-file', '-h', type=click.Path(exists=False), required=True,
               help='Name of H5 file to create.')
-def create_h5(template_raster: str, h5_file: str):
+@click.option('--block_size', '-bs', type=int, required=False, default=None,
+              help='Block size used to build lat/lon datasets.')
+def create_h5(template_raster: str, h5_file: str, block_size: int):
     """
     Create a new H5 file to store layers in.
     """
     logger.info('Using raster %s to create new H5 file %s', template_raster,
                 h5_file)
-    LayeredTransmissionH5(h5_file, template_file=template_raster).create_new()
+    lth5 = LayeredTransmissionH5(h5_file, template_file=template_raster,
+                                 block_size=block_size)
+    lth5.create_new()
 
 
 def _load_masks(config, h5_io_handler):
