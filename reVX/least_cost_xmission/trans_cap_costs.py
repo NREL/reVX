@@ -388,7 +388,10 @@ class TieLineCosts:
         # remains constant
         self._mcp_cost += friction_costs
 
-        self._mcp_cost = np.where(self._mcp_cost <= 0, -1, self._mcp_cost)
+        # TODO: Add user option of specifying wether 0 and neg should
+        # be hard barriers.
+        max_val = np.max(self._mcp_cost)
+        self._mcp_cost = np.where(self._mcp_cost <= 0, max_val, self._mcp_cost)
         logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
                      np.min(self._mcp_cost), np.max(self._mcp_cost),
                      np.median(self._mcp_cost))
