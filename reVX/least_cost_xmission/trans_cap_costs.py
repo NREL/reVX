@@ -255,7 +255,7 @@ class CostLayer:
 
         # TODO: Add user option of specifying wether 0 and neg should
         # be hard barriers.
-        max_val = max(1e15, np.max(self._mcp_cost))
+        max_val = max(1e15, np.max(self.mcp_cost))
         self.mcp_cost = np.where(self.mcp_cost <= 0, max_val, self.mcp_cost)
         logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
                      np.min(self.mcp_cost), np.max(self.mcp_cost),
