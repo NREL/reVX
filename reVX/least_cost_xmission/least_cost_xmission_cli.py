@@ -14,14 +14,16 @@ import logging
 import warnings
 import pandas as pd
 import geopandas as gpd
-from typing import List
+from pathlib import Path
 
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, dict_str_load
+from reV.handlers.exclusions import ExclusionLayers
 
 from reVX import __version__
+from reVX.handlers.geotiff import Geotiff
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
 from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
                                                           RegionalXmission)
@@ -35,6 +37,7 @@ from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        NUM_NN_SINKS,
                                                        ISO_H5_LAYER_NAME)
 from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
+from reVX.least_cost_xmission.trans_cap_costs import CostLayer
 
 TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
 
@@ -465,6 +468,30 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
         costs.to_file(out_file, driver="GPKG", index=False)
     else:
         costs.to_csv(out_file, index=False)
+
+
+@main.command()
+@click.option('--config', '-c', required=True,
+              type=click.Path(exists=True),
+              help='Filepath to Least Cost Xmission config json file.')
+@click.option('--out_dir', '-o', type=STR, default='./out',
+              show_default=True, help='Directory to save cost layers to')
+def build_cost_layer(config, out_dir):
+    config = LeastCostXmissionConfig(config)
+    cl = CostLayer(config.cost_fpath, slice(None), slice(None),
+                   cell_size=config.cell_size)
+    cl.build(cost_layers=config.cost_layers,
+             friction_layers=config.friction_layers,
+             tracked_layers=config.tracked_layers,
+             cost_multiplier_layer=config.cost_multiplier_layer,
+             cost_multiplier_scalar=config.cost_multiplier_layer)
+
+    with ExclusionLayers(config.cost_fpath) as fh:
+        profile = fh.profile
+
+    out_dir = Path(out_dir).mkdir(exist_ok=True, parents=True)
+    Geotiff.write(out_dir / "add_costs.tif", profile, cl.cost)
+    Geotiff.write(out_dir / "final_routing_layer.tif", profile, cl.mcp_cost)
 
 
 def get_node_cmd(config, gids):
