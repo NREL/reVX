@@ -33,6 +33,7 @@ from reVX.least_cost_xmission.least_cost_xmission import region_mapper
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT,
                                                        SUBSTATION_CAT)
+from reVX.least_cost_xmission.trans_cap_costs import CostLayer
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -314,6 +315,40 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     logger.info('Writing output complete')
     elapsed_time = (time.time() - start_time) / 60
     logger.info("Processing took %.2f minutes", elapsed_time)
+
+
+@main.command()
+@click.option('--config', '-c', required=True,
+              type=click.Path(exists=True),
+              help='Filepath to Least Cost Xmission config json file.')
+@click.option('--out_dir', '-o', type=STR, default=None,
+              help='Directory to save cost layers to. Default is config '
+              'directory')
+@click.pass_context
+def build_cost_layer(ctx, config, out_dir):
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    if out_dir is None:
+        out_dir = Path(config).parent
+    else:
+        out_dir = Path(out_dir)
+
+    config = LeastCostPathsConfig(config)
+    cl = CostLayer(config.cost_fpath, slice(None), slice(None),
+                   cell_size=config.cell_size)
+    cl.build(cost_layers=config.cost_layers,
+             friction_layers=config.friction_layers,
+             tracked_layers=config.tracked_layers,
+             cost_multiplier_layer=config.cost_multiplier_layer,
+             cost_multiplier_scalar=config.cost_multiplier_scalar)
+
+    with ExclusionLayers(config.cost_fpath) as fh:
+        profile = fh.profile
+
+    out_dir.mkdir(exist_ok=True, parents=True)
+    Geotiff.write(out_dir / "agg_costs.tif", profile, cl.cost)
+    Geotiff.write(out_dir / "final_routing_layer.tif", profile, cl.mcp_cost)
 
 
 @main.command()

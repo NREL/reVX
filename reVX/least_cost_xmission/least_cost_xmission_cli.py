@@ -474,9 +474,19 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
 @click.option('--config', '-c', required=True,
               type=click.Path(exists=True),
               help='Filepath to Least Cost Xmission config json file.')
-@click.option('--out_dir', '-o', type=STR, default='./out',
-              show_default=True, help='Directory to save cost layers to')
-def build_cost_layer(config, out_dir):
+@click.option('--out_dir', '-o', type=STR, default=None,
+              help='Directory to save cost layers to. Default is config '
+              'directory')
+@click.pass_context
+def build_cost_layer(ctx, config, out_dir):
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    if out_dir is None:
+        out_dir = Path(config).parent
+    else:
+        out_dir = Path(out_dir)
+
     config = LeastCostXmissionConfig(config)
     cl = CostLayer(config.cost_fpath, slice(None), slice(None),
                    cell_size=config.cell_size)
@@ -484,13 +494,13 @@ def build_cost_layer(config, out_dir):
              friction_layers=config.friction_layers,
              tracked_layers=config.tracked_layers,
              cost_multiplier_layer=config.cost_multiplier_layer,
-             cost_multiplier_scalar=config.cost_multiplier_layer)
+             cost_multiplier_scalar=config.cost_multiplier_scalar)
 
     with ExclusionLayers(config.cost_fpath) as fh:
         profile = fh.profile
 
-    out_dir = Path(out_dir).mkdir(exist_ok=True, parents=True)
-    Geotiff.write(out_dir / "add_costs.tif", profile, cl.cost)
+    out_dir.mkdir(exist_ok=True, parents=True)
+    Geotiff.write(out_dir / "agg_costs.tif", profile, cl.cost)
     Geotiff.write(out_dir / "final_routing_layer.tif", profile, cl.mcp_cost)
 
 
