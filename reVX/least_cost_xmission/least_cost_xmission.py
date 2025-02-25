@@ -1488,7 +1488,8 @@ def _starting_costs(cost_fpath, points, cost_layers, friction_layers,
             friction_costs += layer_cost
 
         costs += friction_costs
-        costs = np.where(costs <= 0, -1, costs)
+        max_val = max(1e15, np.max(costs))
+        costs = np.where(costs <= 0, max_val, costs)
 
     return costs
 
