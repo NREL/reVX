@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 """Handler for H5 file containing GeoTIFF layers. """
-import os
 import json
 import logging
-from pathlib import Path
+import os
+import psutil
+
 from copy import deepcopy
+from pathlib import Path
 from warnings import warn
 
 import h5py
 import numpy as np
+
 from pyproj.crs import CRS
 from rasterio.warp import reproject, Resampling
 
@@ -465,16 +468,25 @@ class LayeredH5:
         array-like
             Source data reprojected into the template projection.
         """
+        # Set a warp memory limit to avoid crashes on smaller computers
+        total_memory = psutil.virtual_memory().total / (1024 ** 2)
+        warp_mem_limit = total_memory / 2
+
+        # Initialize the target array and reproject in memory
         dest_raster = np.zeros(self.shape, dtype=dtype)
-        reproject(src_raster,
-                  destination=dest_raster,
-                  src_transform=src_profile['transform'],
-                  src_crs=src_profile['crs'],
-                  dst_transform=self.profile['transform'],
-                  dst_crs=self.profile['crs'],
-                  num_threads=4,
-                  resampling=Resampling.nearest,
-                  INIT_DEST=init_dest)
+        reproject(
+            src_raster,
+            destination=dest_raster,
+            src_transform=src_profile['transform'],
+            src_crs=src_profile['crs'],
+            dst_transform=self.profile['transform'],
+            dst_crs=self.profile['crs'],
+            num_threads=4,
+            resampling=Resampling.nearest,
+            warp_mem_limit=warp_mem_limit,
+            INIT_DEST=init_dest
+        )
+
         return dest_raster
 
     def layers_to_h5(self, layers, replace=True, check_tiff=True,
