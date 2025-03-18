@@ -16,6 +16,7 @@ import rasterio
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+from pyproj.crs import CRS
 from shapely.geometry import shape, Point
 from click.testing import CliRunner
 
@@ -47,6 +48,34 @@ def _cap_class_to_cap(capacity):
     return DEFAULT_CONFIG['power_classes'][capacity_class]
 
 
+def _features_to_route_table(features):
+    """Convert features GDF into route start/end point table"""
+    coords = features['geometry'].centroid.to_crs("EPSG:4326")
+    all_routes = []
+    for start_ind, start_coord in enumerate(coords[:-1]):
+        start_lat, start_lon = start_coord.y, start_coord.x
+        end_coords = coords[start_ind + 1:]
+        end_idx = range(start_ind + 1, len(coords))
+        new_routes = pd.DataFrame(
+            {"end_lat": end_coords.y,
+             "end_lon": end_coords.x,
+             "index": end_idx}
+        )
+        new_routes["start_lat"] = start_lat
+        new_routes["start_lon"] = start_lon
+        new_routes["start_index"] = start_ind
+        all_routes.append(new_routes)
+    all_routes = pd.concat(all_routes, axis=0).reset_index(drop=True)
+    all_routes.index.name = "rid"
+    return all_routes.reset_index(drop=False)
+
+
+def _permute_results(res):
+    """Add route permutations to results"""
+    return pd.concat([res, res.rename(columns={"start_index": "index",
+                                               "index": "start_index"})])
+
+
 def check(truth, test, check_cols=CHECK_COLS):
     """
     Compare values in truth and test for given columns
@@ -62,6 +91,16 @@ def check(truth, test, check_cols=CHECK_COLS):
         c_truth = truth[c].values
         c_test = test[c].values
         assert np.allclose(c_truth, c_test, equal_nan=True), msg
+
+
+@pytest.fixture(scope="module")
+def route_table():
+    """Generate test BA regions and network nodes from ISO shapes. """
+    with ExclusionLayers(COST_H5) as f:
+        cost_crs = CRS.from_string(f.crs)
+
+    route_feats = gpd.read_file(FEATURES).to_crs(cost_crs)
+    return _features_to_route_table(route_feats)
 
 
 @pytest.fixture
@@ -94,7 +133,7 @@ def runner():
 
 
 @pytest.mark.parametrize('capacity', [100, 200, 400, 1000, 3000])
-def test_capacity_class(capacity):
+def test_capacity_class(capacity, route_table):
     """
     Test least cost xmission and compare with baseline data
     """
@@ -102,8 +141,10 @@ def test_capacity_class(capacity):
                          f'least_cost_paths_{capacity}MW.csv')
     cap = _cap_class_to_cap(capacity)
     cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
-    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
+    test = LeastCostPaths.run(COST_H5, route_table, [cost_layer],
+                              max_workers=1,
                               friction_layers=[DEFAULT_BARRIER])
+    test = _permute_results(test)
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -114,7 +155,7 @@ def test_capacity_class(capacity):
 
 
 @pytest.mark.parametrize('max_workers', [1, None])
-def test_parallel(max_workers):
+def test_parallel(max_workers, route_table):
     """
     Test least cost xmission and compare with baseline data
     """
@@ -123,9 +164,10 @@ def test_parallel(max_workers):
                          f'least_cost_paths_{capacity}MW.csv')
     cap = _cap_class_to_cap(capacity)
     cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
-    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer],
+    test = LeastCostPaths.run(COST_H5, route_table, [cost_layer],
                               friction_layers=[DEFAULT_BARRIER],
                               max_workers=max_workers)
+    test = _permute_results(test)
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -135,7 +177,7 @@ def test_parallel(max_workers):
     check(truth, test)
 
 
-def test_invariant_costs():
+def test_invariant_costs(route_table):
     """
     Test least cost xmission for invariant cost layer
     """
@@ -145,8 +187,10 @@ def test_invariant_costs():
     cap = _cap_class_to_cap(capacity)
     cost_layer = {"layer_name": f'tie_line_costs_{cap}MW',
                   "is_invariant": True, "multiplier_scalar": 90}
-    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
+    test = LeastCostPaths.run(COST_H5, route_table, [cost_layer],
+                              max_workers=1,
                               friction_layers=[DEFAULT_BARRIER])
+    test = _permute_results(test)
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -159,7 +203,7 @@ def test_invariant_costs():
     assert ((test["cost"] / 90).values < truth["cost"].values).all()
 
 
-def test_cost_multiplier_layer():
+def test_cost_multiplier_layer(route_table):
     """
     Test least cost xmission with a cost_multiplier_layer
     """
@@ -177,11 +221,12 @@ def test_cost_multiplier_layer():
             fh.create_dataset("test_layer",
                               data=np.ones(shape, dtype="float32") * 7)
 
-        test = LeastCostPaths.run(cost_h5_path, FEATURES, [cost_layer],
+        test = LeastCostPaths.run(cost_h5_path, route_table, [cost_layer],
                                   max_workers=1,
                                   friction_layers=[DEFAULT_BARRIER],
                                   cost_multiplier_layer="test_layer")
 
+    test = _permute_results(test)
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
 
@@ -193,7 +238,7 @@ def test_cost_multiplier_layer():
     assert np.allclose(test["cost"].values, truth["cost"].values * 7)
 
 
-def test_cost_multiplier_scalar():
+def test_cost_multiplier_scalar(route_table):
     """
     Test least cost xmission with a cost_multiplier_scalar
     """
@@ -202,9 +247,11 @@ def test_cost_multiplier_scalar():
                          f'least_cost_paths_{capacity}MW.csv')
     cap = _cap_class_to_cap(capacity)
     cost_layer = {"layer_name": f'tie_line_costs_{cap}MW'}
-    test = LeastCostPaths.run(COST_H5, FEATURES, [cost_layer], max_workers=1,
+    test = LeastCostPaths.run(COST_H5, route_table, [cost_layer],
+                              max_workers=1,
                               friction_layers=[DEFAULT_BARRIER],
                               cost_multiplier_scalar=5)
+    test = _permute_results(test)
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -254,7 +301,7 @@ def test_cost_multiplier_scalar():
 
 
 @pytest.mark.parametrize("save_paths", [False, True])
-def test_cli(runner, save_paths):
+def test_cli(runner, save_paths, route_table):
     """
     Test CostCreator CLI
     """
@@ -265,6 +312,8 @@ def test_cli(runner, save_paths):
     truth = pd.read_csv(truth)
 
     with tempfile.TemporaryDirectory() as td:
+        routes_fp = os.path.join(td, 'routes.csv')
+        route_table.to_csv(routes_fp, index=False)
         config = {
             "log_directory": td,
             "execution_control": {
@@ -272,7 +321,7 @@ def test_cli(runner, save_paths):
                 "max_workers": 1,
             },
             "cost_fpath": COST_H5,
-            "features_fpath": FEATURES,
+            "features_fpath": routes_fp,
             "save_paths": save_paths,
             "cost_layers": [{"layer_name": cost_layer}],
             "friction_layers": [DEFAULT_BARRIER],
@@ -296,6 +345,8 @@ def test_cli(runner, save_paths):
             test = '{}_lcp.csv'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = pd.read_csv(test)
+
+        test = _permute_results(test)
         check(truth, test)
 
     LOGGERS.clear()

@@ -665,7 +665,7 @@ class TieLineCosts:
 
         final_output = {'length_km': lengths, 'cost': costs,
                         'poi_lat': poi_lats, 'poi_lon': poi_lons,
-                        'row': rows, 'col': cols}
+                        'end_row': rows, 'end_col': cols}
         final_output.update(extras)
         tie_lines = pd.DataFrame(final_output)
 
@@ -1146,10 +1146,10 @@ class TransCapCosts(TieLineCosts):
                                                          errors='ignore')
 
         if self.row_offset is not None:
-            features['row'] -= self.row_offset
+            features['end_row'] -= self.row_offset
 
         if self.col_offset is not None:
-            features['col'] -= self.col_offset
+            features['end_col'] -= self.col_offset
 
         return features.reset_index(drop=True)
 
@@ -1254,7 +1254,7 @@ class TransCapCosts(TieLineCosts):
             if t_line:
                 feat_idx = self._get_trans_line_idx(feat)
             else:
-                feat_idx = feat[['row', 'col']].values
+                feat_idx = feat[['end_row', 'end_col']].values
 
             logger.debug('Feat index is: %s', feat_idx)
 
@@ -1266,8 +1266,8 @@ class TransCapCosts(TieLineCosts):
             logger.debug('Adding row, col, poi_gid, region: %d, %d, %d, %s',
                          row, col, poi_gid, str(region))
 
-            features.loc[index, 'row'] = row
-            features.loc[index, 'col'] = col
+            features.loc[index, 'end_row'] = row
+            features.loc[index, 'end_col'] = col
             features.loc[index, 'poi_gid'] = poi_gid
             features.loc[index, 'region'] = region
 
