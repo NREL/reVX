@@ -342,57 +342,57 @@ def test_tracked_layers():
     assert np.allclose(test["layer2_max"], 2)
     assert np.allclose(test["layer5_mean"], 1)
 
+# TODO: Uncomment when user can specify hard barriers again
+# @pytest.mark.parametrize('lmk', ["step", "linear"])
+# @pytest.mark.parametrize("save_paths", [False, True])
+# def test_cli(runner, save_paths, lmk):
+#     """
+#     Test CostCreator CLI
+#     """
+#     capacity = random.choice([100, 200, 400, 1000])
+#     truth = os.path.join(TESTDATADIR, 'xmission',
+#                          f'least_cost_{capacity}MW.csv')
+#     truth = pd.read_csv(truth)
 
-@pytest.mark.parametrize('lmk', ["step", "linear"])
-@pytest.mark.parametrize("save_paths", [False, True])
-def test_cli(runner, save_paths, lmk):
-    """
-    Test CostCreator CLI
-    """
-    capacity = random.choice([100, 200, 400, 1000])
-    truth = os.path.join(TESTDATADIR, 'xmission',
-                         f'least_cost_{capacity}MW.csv')
-    truth = pd.read_csv(truth)
+#     with tempfile.TemporaryDirectory() as td:
+#         config = {
+#             "log_directory": td,
+#             "execution_control": {
+#                 "option": "local",
+#             },
+#             "cost_fpath": COST_H5,
+#             "features_fpath": FEATURES,
+#             "capacity_class": f'{capacity}MW',
+#             "min_line_length": 5.76,
+#             "save_paths": save_paths,
+#             "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+#             "friction_layers": [DEFAULT_BARRIER],
+#             "length_mult_kind": lmk
+#         }
+#         config_path = os.path.join(td, 'config.json')
+#         with open(config_path, 'w') as f:
+#             json.dump(config, f)
 
-    with tempfile.TemporaryDirectory() as td:
-        config = {
-            "log_directory": td,
-            "execution_control": {
-                "option": "local",
-            },
-            "cost_fpath": COST_H5,
-            "features_fpath": FEATURES,
-            "capacity_class": f'{capacity}MW',
-            "min_line_length": 5.76,
-            "save_paths": save_paths,
-            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-            "friction_layers": [DEFAULT_BARRIER],
-            "length_mult_kind": lmk
-        }
-        config_path = os.path.join(td, 'config.json')
-        with open(config_path, 'w') as f:
-            json.dump(config, f)
+#         result = runner.invoke(main, ['from-config',
+#                                       '-c', config_path, '-v'])
+#         msg = ('Failed with error {}'
+#                .format(traceback.print_exception(*result.exc_info)))
+#         assert result.exit_code == 0, msg
 
-        result = runner.invoke(main, ['from-config',
-                                      '-c', config_path, '-v'])
-        msg = ('Failed with error {}'
-               .format(traceback.print_exception(*result.exc_info)))
-        assert result.exit_code == 0, msg
+#         if save_paths:
+#             test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
+#             test = os.path.join(td, test)
+#             test = gpd.read_file(test)
+#             assert test.geometry is not None
+#         else:
+#             test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+#             test = os.path.join(td, test)
+#             test = pd.read_csv(test)
+#         test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
+#         SupplyCurve._check_substation_conns(test_rev, sc_cols='sc_point_gid')
+#         check_baseline(truth, test, lmk=lmk)
 
-        if save_paths:
-            test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
-            test = os.path.join(td, test)
-            test = gpd.read_file(test)
-            assert test.geometry is not None
-        else:
-            test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
-            test = os.path.join(td, test)
-            test = pd.read_csv(test)
-        test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
-        SupplyCurve._check_substation_conns(test_rev, sc_cols='sc_point_gid')
-        check_baseline(truth, test, lmk=lmk)
-
-    LOGGERS.clear()
+#     LOGGERS.clear()
 
 
 @pytest.mark.parametrize("save_paths", [False, True])
