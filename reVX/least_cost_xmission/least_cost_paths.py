@@ -228,7 +228,7 @@ class LeastCostPaths:
         """
         try:
             route_points = pd.read_csv(route_points)
-        except TypeError:
+        except (TypeError, UnicodeDecodeError):
             pass
 
         with ExclusionLayers(cost_fpath) as f:
