@@ -474,8 +474,9 @@ class LeastCostXmission(LeastCostPaths):
         if sc_features.empty:
             return sc_features, None
 
-        dists = sc_features[["end_row", "end_col"]] - sc_point[["row", "col"]]
-        radius = int(np.ceil(dists.abs().values.max() * clipping_buffer))
+        dists = np.abs(sc_features[["end_row", "end_col"]].values
+                       - sc_point[["row", "col"]].values)
+        radius = int(np.ceil(dists.max() * clipping_buffer))
         logger.debug("{} transmission features found in clipped area with "
                      "radius {} and minimum max voltage of {}"
                      .format(len(sc_features), radius, tie_line_voltage))
