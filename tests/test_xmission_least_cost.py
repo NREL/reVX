@@ -342,245 +342,244 @@ def test_tracked_layers():
     assert np.allclose(test["layer2_max"], 2)
     assert np.allclose(test["layer5_mean"], 1)
 
-# TODO: Uncomment when user can specify hard barriers again
-# @pytest.mark.parametrize('lmk', ["step", "linear"])
-# @pytest.mark.parametrize("save_paths", [False, True])
-# def test_cli(runner, save_paths, lmk):
-#     """
-#     Test CostCreator CLI
-#     """
-#     capacity = random.choice([100, 200, 400, 1000])
-#     truth = os.path.join(TESTDATADIR, 'xmission',
-#                          f'least_cost_{capacity}MW.csv')
-#     truth = pd.read_csv(truth)
 
-#     with tempfile.TemporaryDirectory() as td:
-#         config = {
-#             "log_directory": td,
-#             "execution_control": {
-#                 "option": "local",
-#             },
-#             "cost_fpath": COST_H5,
-#             "features_fpath": FEATURES,
-#             "capacity_class": f'{capacity}MW',
-#             "min_line_length": 5.76,
-#             "save_paths": save_paths,
-#             "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
-#             "friction_layers": [DEFAULT_BARRIER],
-#             "length_mult_kind": lmk
-#         }
-#         config_path = os.path.join(td, 'config.json')
-#         with open(config_path, 'w') as f:
-#             json.dump(config, f)
+@pytest.mark.parametrize('lmk', ["step", "linear"])
+@pytest.mark.parametrize("save_paths", [False, True])
+def test_cli(runner, save_paths, lmk):
+    """
+    Test CostCreator CLI
+    """
+    capacity = random.choice([100, 200, 400, 1000])
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_{capacity}MW.csv')
+    truth = pd.read_csv(truth)
 
-#         result = runner.invoke(main, ['from-config',
-#                                       '-c', config_path, '-v'])
-#         msg = ('Failed with error {}'
-#                .format(traceback.print_exception(*result.exc_info)))
-#         assert result.exit_code == 0, msg
+    with tempfile.TemporaryDirectory() as td:
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+            },
+            "cost_fpath": COST_H5,
+            "features_fpath": FEATURES,
+            "capacity_class": f'{capacity}MW',
+            "min_line_length": 5.76,
+            "save_paths": save_paths,
+            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+            "friction_layers": [DEFAULT_BARRIER],
+            "length_mult_kind": lmk
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
 
-#         if save_paths:
-#             test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
-#             test = os.path.join(td, test)
-#             test = gpd.read_file(test)
-#             assert test.geometry is not None
-#         else:
-#             test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
-#             test = os.path.join(td, test)
-#             test = pd.read_csv(test)
-#         test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
-#         SupplyCurve._check_substation_conns(test_rev, sc_cols='sc_point_gid')
-#         check_baseline(truth, test, lmk=lmk)
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
 
-#     LOGGERS.clear()
+        if save_paths:
+            test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
+        test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
+        SupplyCurve._check_substation_conns(test_rev, sc_cols='sc_point_gid')
+        check_baseline(truth, test, lmk=lmk)
+
+    LOGGERS.clear()
 
 
-# TODO: Uncomment when user can specify hard barriers again
-# @pytest.mark.parametrize("save_paths", [False, True])
-# def test_regional_cli(runner, ri_ba, save_paths):
-#     """
-#     Test Regional cost routines and CLI
-#     """
-#     ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
+@pytest.mark.parametrize("save_paths", [False, True])
+def test_regional_cli(runner, ri_ba, save_paths):
+    """
+    Test Regional cost routines and CLI
+    """
+    ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
 
-#     with tempfile.TemporaryDirectory() as td:
-#         ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
-#         ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
+    with tempfile.TemporaryDirectory() as td:
+        ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
+        ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
 
-#         ri_ba_path = os.path.join(td, 'ri_ba.gpkg')
-#         ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
+        ri_ba_path = os.path.join(td, 'ri_ba.gpkg')
+        ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
 
-#         ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
-#         result = runner.invoke(lcp_main,
-#                                ['map-ss-to-rr',
-#                                 '-feats', ri_feats_path,
-#                                 '-regs', ri_ba_path,
-#                                 '-rid', "ba_str",
-#                                 '-of', ri_substations_path])
-#         msg = ('Failed with error {}'
-#                .format(traceback.print_exception(*result.exc_info)))
-#         assert result.exit_code == 0, msg
+        ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
+        result = runner.invoke(lcp_main,
+                               ['map-ss-to-rr',
+                                '-feats', ri_feats_path,
+                                '-regs', ri_ba_path,
+                                '-rid', "ba_str",
+                                '-of', ri_substations_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
 
-#         config = {
-#             "log_directory": td,
-#             "execution_control": {
-#                 "option": "local",
-#             },
-#             "cost_fpath": COST_H5,
-#             "features_fpath": ri_substations_path,
-#             "regions_fpath": ri_ba_path,
-#             "region_identifier_column": "ba_str",
-#             "capacity_class": 1000,
-#             "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
-#             "friction_layers": [DEFAULT_BARRIER],
-#             "min_line_length": 0,
-#             "save_paths": save_paths,
-#         }
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+            },
+            "cost_fpath": COST_H5,
+            "features_fpath": ri_substations_path,
+            "regions_fpath": ri_ba_path,
+            "region_identifier_column": "ba_str",
+            "capacity_class": 1000,
+            "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
+            "friction_layers": [DEFAULT_BARRIER],
+            "min_line_length": 0,
+            "save_paths": save_paths,
+        }
 
-#         config_path = os.path.join(td, 'config.json')
-#         with open(config_path, 'w') as f:
-#             json.dump(config, f)
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
 
-#         result = runner.invoke(main, ['from-config',
-#                                       '-c', config_path, '-v'])
-#         msg = ('Failed with error {}'
-#                .format(traceback.print_exception(*result.exc_info)))
-#         assert result.exit_code == 0, msg
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
 
-#         if save_paths:
-#             test = '{}_1000_128.gpkg'.format(os.path.basename(td))
-#             test = os.path.join(td, test)
-#             test = gpd.read_file(test)
-#             assert test.geometry is not None
-#         else:
-#             test = '{}_1000_128.csv'.format(os.path.basename(td))
-#             test = os.path.join(td, test)
-#             test = pd.read_csv(test)
+        if save_paths:
+            test = '{}_1000_128.gpkg'.format(os.path.basename(td))
+            test = os.path.join(td, test)
+            test = gpd.read_file(test)
+            assert test.geometry is not None
+        else:
+            test = '{}_1000_128.csv'.format(os.path.basename(td))
+            test = os.path.join(td, test)
+            test = pd.read_csv(test)
 
-#         assert "poi_lat" in test
-#         assert "poi_lon" in test
-#         assert "ba_str" in test
+        assert "poi_lat" in test
+        assert "poi_lon" in test
+        assert "ba_str" in test
 
-#         assert len(test) == 1036
-#         # trans_gid has 1 duplicate substation entry
-#         assert len(set(test.trans_gid.unique())) == 69
-#         assert len(set(test.poi_gid.unique())) == 68
-#         assert set(test.ba_str.unique()) == {"p1", "p2", "p3", "p4"}
+        assert len(test) == 1036
+        # trans_gid has 1 duplicate substation entry
+        assert len(set(test.trans_gid.unique())) == 69
+        assert len(set(test.poi_gid.unique())) == 68
+        assert set(test.ba_str.unique()) == {"p1", "p2", "p3", "p4"}
 
-#         mask = test['max_volts'] >= 500
+        mask = test['max_volts'] >= 500
 
-#         assert len(test[mask]) == 13
-#         assert set(test[mask].trans_gid.unique()) == {69130}
-#         assert set(test[mask].ba_str.unique()) == {"p4"}
+        assert len(test[mask]) == 13
+        assert set(test[mask].trans_gid.unique()) == {69130}
+        assert set(test[mask].ba_str.unique()) == {"p4"}
 
-#         assert len(test[mask].poi_lat.unique()) == 1
-#         assert len(test[mask].poi_lon.unique()) == 1
+        assert len(test[mask].poi_lat.unique()) == 1
+        assert len(test[mask].poi_lon.unique()) == 1
 
-#         assert np.allclose(test["tie_line_costs_1500MW_cost"].astype(float),
-#                            test["raw_line_cost"].astype(float))
-#         assert np.allclose(test["tie_line_costs_1500MW_dist_km"].astype(float),
-#                            test["dist_km"].astype(float))
+        assert np.allclose(test["tie_line_costs_1500MW_cost"].astype(float),
+                           test["raw_line_cost"].astype(float))
+        assert np.allclose(test["tie_line_costs_1500MW_dist_km"].astype(float),
+                           test["dist_km"].astype(float))
 
-#     LOGGERS.clear()
+    LOGGERS.clear()
 
-# TODO: Uncomment when user can specify hard barriers again
-# def test_regional_cli_new_layer_names(runner, ri_ba):
-#     """
-#     Test Regional cost routines and CLI
-#     """
-#     ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
 
-#     with tempfile.TemporaryDirectory() as td:
-#         ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
-#         ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
+def test_regional_cli_new_layer_names(runner, ri_ba):
+    """
+    Test Regional cost routines and CLI
+    """
+    ri_feats = gpd.clip(gpd.read_file(FEATURES), ri_ba.buffer(10_000))
 
-#         ri_ba_path = os.path.join(td, 'ri_ba.gpkg')
-#         ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
+    with tempfile.TemporaryDirectory() as td:
+        ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
+        ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
 
-#         ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
-#         result = runner.invoke(lcp_main,
-#                                ['map-ss-to-rr',
-#                                 '-feats', ri_feats_path,
-#                                 '-regs', ri_ba_path,
-#                                 '-rid', "ba_str",
-#                                 '-of', ri_substations_path])
-#         msg = ('Failed with error {}'
-#                .format(traceback.print_exception(*result.exc_info)))
-#         assert result.exit_code == 0, msg
+        ri_ba_path = os.path.join(td, 'ri_ba.gpkg')
+        ri_ba.to_file(ri_ba_path, driver="GPKG", index=False)
 
-#         cost_h5_path = os.path.join(td, 'costs.h5')
-#         shutil.copy(COST_H5, cost_h5_path)
+        ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
+        result = runner.invoke(lcp_main,
+                               ['map-ss-to-rr',
+                                '-feats', ri_feats_path,
+                                '-regs', ri_ba_path,
+                                '-rid', "ba_str",
+                                '-of', ri_substations_path])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
 
-#         with h5py.File(cost_h5_path, "a") as fh:
-#             tb = fh["transmission_barrier"][:]
-#             iso = fh["ISO_regions"][:]
+        cost_h5_path = os.path.join(td, 'costs.h5')
+        shutil.copy(COST_H5, cost_h5_path)
 
-#             del fh["transmission_barrier"]
-#             del fh["ISO_regions"]
-#             assert "transmission_barrier" not in fh.keys()
-#             assert "ISO_regions" not in fh.keys()
+        with h5py.File(cost_h5_path, "a") as fh:
+            tb = fh["transmission_barrier"][:]
+            iso = fh["ISO_regions"][:]
 
-#             fh.create_dataset("tb", data=tb)
-#             fh.create_dataset("iso", data=iso)
+            del fh["transmission_barrier"]
+            del fh["ISO_regions"]
+            assert "transmission_barrier" not in fh.keys()
+            assert "ISO_regions" not in fh.keys()
 
-#         config = {
-#             "log_directory": td,
-#             "execution_control": {
-#                 "option": "local",
-#             },
-#             "cost_fpath": cost_h5_path,
-#             "features_fpath": ri_substations_path,
-#             "regions_fpath": ri_ba_path,
-#             "region_identifier_column": "ba_str",
-#             "capacity_class": 1000,
-#             "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
-#             "friction_layers": [{"layer_name": LCP_AGG_COST_LAYER_NAME,
-#                                  "multiplier_layer": "tb",
-#                                  "multiplier_scalar": 100}],
-#             "min_line_length": 0,
-#             "save_paths": False,
-#             "iso_regions_layer_name": "iso",
-#         }
+            fh.create_dataset("tb", data=tb)
+            fh.create_dataset("iso", data=iso)
 
-#         config_path = os.path.join(td, 'config.json')
-#         with open(config_path, 'w') as f:
-#             json.dump(config, f)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+            },
+            "cost_fpath": cost_h5_path,
+            "features_fpath": ri_substations_path,
+            "regions_fpath": ri_ba_path,
+            "region_identifier_column": "ba_str",
+            "capacity_class": 1000,
+            "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
+            "friction_layers": [{"layer_name": LCP_AGG_COST_LAYER_NAME,
+                                 "multiplier_layer": "tb",
+                                 "multiplier_scalar": 100}],
+            "min_line_length": 0,
+            "save_paths": False,
+            "iso_regions_layer_name": "iso",
+        }
 
-#         result = runner.invoke(main, ['from-config',
-#                                       '-c', config_path, '-v'])
-#         msg = ('Failed with error {}'
-#                .format(traceback.print_exception(*result.exc_info)))
-#         assert result.exit_code == 0, msg
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
 
-#         test = '{}_1000_128.csv'.format(os.path.basename(td))
-#         test = os.path.join(td, test)
-#         test = pd.read_csv(test)
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
 
-#         assert "poi_lat" in test
-#         assert "poi_lon" in test
-#         assert "ba_str" in test
+        test = '{}_1000_128.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
 
-#         assert len(test) == 1036
-#         # trans_gid has 1 duplicate substation entry
-#         assert len(set(test.trans_gid.unique())) == 69
-#         assert len(set(test.poi_gid.unique())) == 68
-#         assert set(test.ba_str.unique()) == {"p1", "p2", "p3", "p4"}
+        assert "poi_lat" in test
+        assert "poi_lon" in test
+        assert "ba_str" in test
 
-#         mask = test['max_volts'] >= 500
+        assert len(test) == 1036
+        # trans_gid has 1 duplicate substation entry
+        assert len(set(test.trans_gid.unique())) == 69
+        assert len(set(test.poi_gid.unique())) == 68
+        assert set(test.ba_str.unique()) == {"p1", "p2", "p3", "p4"}
 
-#         assert len(test[mask]) == 13
-#         assert set(test[mask].trans_gid.unique()) == {69130}
-#         assert set(test[mask].ba_str.unique()) == {"p4"}
+        mask = test['max_volts'] >= 500
 
-#         assert len(test[mask].poi_lat.unique()) == 1
-#         assert len(test[mask].poi_lon.unique()) == 1
+        assert len(test[mask]) == 13
+        assert set(test[mask].trans_gid.unique()) == {69130}
+        assert set(test[mask].ba_str.unique()) == {"p4"}
 
-#         assert np.allclose(test["tie_line_costs_1500MW_cost"].astype(float),
-#                            test["raw_line_cost"].astype(float))
-#         assert np.allclose(test["tie_line_costs_1500MW_dist_km"].astype(float),
-#                            test["dist_km"].astype(float))
+        assert len(test[mask].poi_lat.unique()) == 1
+        assert len(test[mask].poi_lon.unique()) == 1
 
-#     LOGGERS.clear()
+        assert np.allclose(test["tie_line_costs_1500MW_cost"].astype(float),
+                           test["raw_line_cost"].astype(float))
+        assert np.allclose(test["tie_line_costs_1500MW_dist_km"].astype(float),
+                           test["dist_km"].astype(float))
+
+    LOGGERS.clear()
 
 
 def execute_pytest(capture='all', flags='-rapP'):
