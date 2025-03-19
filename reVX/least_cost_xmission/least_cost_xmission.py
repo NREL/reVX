@@ -25,6 +25,7 @@ from reV.supply_curve.extent import SupplyCurveExtent
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
+from reVX.handlers.layered_h5 import crs_match
 from reVX.least_cost_xmission.trans_cap_costs import LCP_AGG_COST_LAYER_NAME
 from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
@@ -154,7 +155,8 @@ class LeastCostXmission(LeastCostPaths):
         """
         if self._sink_coords is None:
             mask = self.features["category"] == SINK_CAT
-            self._sink_coords = self.features.loc[mask, ["row", "col"]].values
+            coord_cols = ["end_row", "end_col"]
+            self._sink_coords = self.features.loc[mask, coord_cols].values
 
         return self._sink_coords
 
@@ -304,9 +306,33 @@ class LeastCostXmission(LeastCostPaths):
         mask : ndarray
             Boolean mask of features with indices outside of cost raster
         """
-        row, col, mask = (super(LeastCostXmission, LeastCostXmission)
-                          ._get_feature_cost_indices(features, crs, transform,
-                                                     shape))
+
+        feat_crs = features.crs.to_dict()
+        cost_crs = crs.to_dict()
+        if not crs_match(cost_crs, feat_crs):
+            msg = ('input crs ({}) does not match cost raster crs ({}) '
+                   'and will be transformed!'.format(feat_crs, cost_crs))
+            logger.warning(msg)
+            warn(msg)
+            features = features.to_crs(crs)
+
+        logger.debug('Map %d features to cost raster', len(features))
+        logger.debug('First few features:\n%s', str(features.head()))
+        logger.debug('Transform:\n%s', str(transform))
+        coords = features['geometry'].centroid
+        row, col = rasterio.transform.rowcol(transform, coords.x.values,
+                                             coords.y.values)
+        logger.debug('Mapping done!')
+        row = np.array(row)
+        col = np.array(col)
+
+        # Remove features outside of the cost domain
+        mask = row >= 0
+        mask &= row < shape[0]
+        mask &= col >= 0
+        mask &= col < shape[1]
+
+        logger.debug('Mask computed!')
 
         t_lines = features["category"] == TRANS_LINE_CAT
         mask |= t_lines
@@ -371,8 +397,8 @@ class LeastCostXmission(LeastCostPaths):
             col = col[mask]
             features = features.loc[mask].reset_index(drop=True)
 
-        features["row"] = row
-        features["col"] = col
+        features["end_row"] = row
+        features["end_col"] = col
         features["region"] = regions[row, col]
 
         logger.debug("Converting SC points to GeoDataFrame")
@@ -448,7 +474,7 @@ class LeastCostXmission(LeastCostPaths):
         if sc_features.empty:
             return sc_features, None
 
-        dists = sc_features[["row", "col"]] - sc_point[["row", "col"]]
+        dists = sc_features[["end_row", "end_col"]] - sc_point[["row", "col"]]
         radius = int(np.ceil(dists.abs().values.max() * clipping_buffer))
         logger.debug("{} transmission features found in clipped area with "
                      "radius {} and minimum max voltage of {}"
