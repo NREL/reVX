@@ -282,6 +282,46 @@ def test_clip_buffer():
         assert (out["length_km"] > 193).all()
 
 
+def test_not_hard_barrier():
+    """Test routing to cut off points using `use_hard_barrier=False` """
+    with ExclusionLayers(COST_H5) as f:
+        cost_crs = CRS.from_string(f.crs)
+
+    with tempfile.TemporaryDirectory() as td:
+        out_cost_fp = os.path.join(td, "costs.h5")
+        shutil.copy(COST_H5, out_cost_fp)
+        feats = gpd.GeoDataFrame(data={"index": [0, 1]},
+                                 geometry=[Point(-70.868065, 40.85588),
+                                           Point(-71.9096, 42.016506)],
+                                 crs="EPSG:4326").to_crs(cost_crs)
+        route_table = features_to_route_table(feats)
+        route_table_fp = os.path.join(td, "feats.csv")
+        route_table.to_csv(route_table_fp, index=False)
+
+        costs = np.ones(shape=(1434, 972))
+        costs[0, 3] = costs[1, 3] = costs[2, 3] = costs[3, 3] = -1
+        costs[3, 1] = costs[3, 2] = -1
+
+        with Outputs(out_cost_fp, "a") as out:
+            out['tie_line_costs_102MW'] = costs
+
+        with ExclusionLayers(out_cost_fp) as excl:
+            assert np.allclose(excl['tie_line_costs_102MW'], costs)
+
+        cost_layer = {"layer_name": "tie_line_costs_102MW"}
+        out_no_buffer = LeastCostPaths.run(out_cost_fp, route_table_fp,
+                                           [cost_layer], max_workers=1,
+                                           friction_layers=[DEFAULT_BARRIER],
+                                           use_hard_barrier=True)
+        assert out_no_buffer["length_km"].isna().all()
+
+        out = LeastCostPaths.run(out_cost_fp, route_table_fp,
+                                 [cost_layer], max_workers=1,
+                                 friction_layers=[DEFAULT_BARRIER],
+                                 use_hard_barrier=False)
+        assert (out["length_km"] > 193).all()
+
+
 @pytest.mark.parametrize("save_paths", [False, True])
 def test_cli(runner, save_paths, route_table):
     """
