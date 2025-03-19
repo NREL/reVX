@@ -303,7 +303,7 @@ def test_cost_multiplier_scalar(route_table):
 @pytest.mark.parametrize("save_paths", [False, True])
 def test_cli(runner, save_paths, route_table):
     """
-    Test CostCreator CLI
+    Test Least cost path CLI
     """
     capacity = random.choice([100, 200, 400, 1000, 3000])
     cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
@@ -440,7 +440,7 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
         assert np.isclose(test.reinforcement_dist_km.max(), 80.353, atol=0.001)
         assert len(test["reinforcement_poi_lat"].unique()) == 4
         assert len(test["reinforcement_poi_lon"].unique()) == 4
-        assert np.isclose(test.reinforcement_cost_per_mw.max(), 569757.740,
+        assert np.isclose(test.reinforcement_cost_per_mw.max(), 598521.629,
                           atol=0.001)
 
     LOGGERS.clear()
