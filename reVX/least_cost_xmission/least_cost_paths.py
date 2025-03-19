@@ -252,6 +252,9 @@ class LeastCostPaths:
             end_col = end_col[mask]
             route_points = route_points.loc[mask].reset_index(drop=True)
 
+        if route_points.empty:
+            return route_points, slice(0, 0), slice(0, 0), shape
+
         logger.debug('Getting clip size...')
         row_slice, col_slice = cls._get_clip_slice(start_row, start_col,
                                                    end_row, end_col, shape,
@@ -327,6 +330,10 @@ class LeastCostPaths:
         max_workers = os.cpu_count() if max_workers is None else max_workers
         if indices is not None:
             self._route_points = self._route_points.loc[indices]
+
+        if self._route_points.empty:
+            return self._route_points
+
         num_iters = len(self._route_points.groupby(["start_row", "start_col"]))
         least_cost_paths = []
         if max_workers > 1:
