@@ -446,7 +446,7 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
     LOGGERS.clear()
 
 
-def test_reinforcement_cli_single_tline_coltage(runner,
+def test_reinforcement_cli_single_tline_voltage(runner,
                                                 ba_regions_and_network_nodes):
     """
     Test Reinforcement cost routines when tlines have only a single voltage
