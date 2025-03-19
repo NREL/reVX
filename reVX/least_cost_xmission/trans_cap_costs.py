@@ -794,10 +794,10 @@ class TransCapCosts(TieLineCosts):
             Supply Curve Point meta data
         features : pandas.DataFrame
             Table of transmission features to connect to supply curve
-            point. Must have "row" and "col" columns that point to the
-            indices of the feature **in the original cost array**. Must
-            also have a "category" column that distinguishes between
-            substations and transmission lines.
+            point. Must have "end_row" and "end_col" columns that point
+            to the indices of the feature **in the original cost
+            array**. Must also have a "category" column that
+            distinguishes between substations and transmission lines.
         capacity_class : int | str
             Transmission feature ``capacity_class`` class. Used to look
             up connection costs.
@@ -851,7 +851,7 @@ class TransCapCosts(TieLineCosts):
         self._region_layer = None
         self._iso_regions_layer_name = iso_regions_layer_name
         start_indices, row_slice, col_slice = self._get_clipping_slices(
-            cost_fpath, sc_point[['row', 'col']].values, radius=radius)
+            cost_fpath, sc_point[["row", "col"]].values, radius=radius)
         super().__init__(cost_fpath, start_indices, cost_layers, row_slice,
                          col_slice,
                          cost_multiplier_layer=cost_multiplier_layer,
@@ -1327,7 +1327,7 @@ class TransCapCosts(TieLineCosts):
             features = gpd.GeoDataFrame(features, geometry=paths,
                                         crs=self._cost_crs)
 
-        for int_col in ["row", "col", "poi_gid"]:
+        for int_col in ["end_row", "end_col", "poi_gid"]:
             features[int_col] = features[int_col].astype("Int64")
         return features
 
@@ -1464,10 +1464,10 @@ class TransCapCosts(TieLineCosts):
             Supply Curve Point meta data
         features : pandas.DataFrame
             Table of transmission features to connect to supply curve
-            point. Must have "row" and "col" columns that point to the
-            indices of the feature **in the original cost array**. Must
-            also have a "category" column that distinguishes between
-            substations and transmission lines.
+            point. Must have "end_row" and "end_col" columns that point
+            to the indices of the feature **in the original cost
+            array**. Must also have a "category" column that
+            distinguishes between substations and transmission lines.
         capacity_class : int | str
             Transmission feature capacity_class class
         cost_layers : List[dict]
