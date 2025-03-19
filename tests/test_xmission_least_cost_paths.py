@@ -28,7 +28,8 @@ from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.trans_cap_costs import LCP_AGG_COST_LAYER_NAME
 from reVX.least_cost_xmission.least_cost_paths_cli import main
-from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
+from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
+                                                       features_to_route_table)
 
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
@@ -46,28 +47,6 @@ def _cap_class_to_cap(capacity):
     """Get capacity for a capacity class. """
     capacity_class = DEFAULT_CONFIG._parse_cap_class(capacity)
     return DEFAULT_CONFIG['power_classes'][capacity_class]
-
-
-def _features_to_route_table(features):
-    """Convert features GDF into route start/end point table"""
-    coords = features['geometry'].centroid.to_crs("EPSG:4326")
-    all_routes = []
-    for start_ind, start_coord in enumerate(coords[:-1]):
-        start_lat, start_lon = start_coord.y, start_coord.x
-        end_coords = coords[start_ind + 1:]
-        end_idx = range(start_ind + 1, len(coords))
-        new_routes = pd.DataFrame(
-            {"end_lat": end_coords.y,
-             "end_lon": end_coords.x,
-             "index": end_idx}
-        )
-        new_routes["start_lat"] = start_lat
-        new_routes["start_lon"] = start_lon
-        new_routes["start_index"] = start_ind
-        all_routes.append(new_routes)
-    all_routes = pd.concat(all_routes, axis=0).reset_index(drop=True)
-    all_routes.index.name = "rid"
-    return all_routes.reset_index(drop=False)
 
 
 def _permute_results(res):
@@ -100,7 +79,7 @@ def route_table():
         cost_crs = CRS.from_string(f.crs)
 
     route_feats = gpd.read_file(FEATURES).to_crs(cost_crs)
-    return _features_to_route_table(route_feats)
+    return features_to_route_table(route_feats)
 
 
 @pytest.fixture
@@ -276,7 +255,7 @@ def test_clip_buffer():
                                  geometry=[Point(-70.868065, 40.85588),
                                            Point(-71.9096, 42.016506)],
                                  crs="EPSG:4326").to_crs(cost_crs)
-        route_table = _features_to_route_table(feats)
+        route_table = features_to_route_table(feats)
         route_table_fp = os.path.join(td, "feats.csv")
         route_table.to_csv(route_table_fp, index=False)
 
