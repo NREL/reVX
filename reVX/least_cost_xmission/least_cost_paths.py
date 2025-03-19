@@ -270,7 +270,8 @@ class LeastCostPaths:
     def process_least_cost_paths(self, cost_layers, cost_multiplier_scalar=1,
                                  indices=None, max_workers=None,
                                  save_paths=False, friction_layers=None,
-                                 tracked_layers=None, cell_size=CELL_SIZE):
+                                 tracked_layers=None, cell_size=CELL_SIZE,
+                                 use_hard_barrier=True):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -319,6 +320,11 @@ class LeastCostPaths:
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -345,7 +351,8 @@ class LeastCostPaths:
                 least_cost_paths = self._compute_paths_in_chunks(
                     exe, max_workers, num_iters, cost_layers,
                     cost_multiplier_scalar, save_paths, friction_layers,
-                    tracked_layers, cell_size=cell_size)
+                    tracked_layers, cell_size=cell_size,
+                    use_hard_barrier=use_hard_barrier)
         else:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
@@ -362,7 +369,8 @@ class LeastCostPaths:
                                        save_paths=save_paths,
                                        friction_layers=friction_layers,
                                        tracked_layers=tracked_layers,
-                                       cell_size=cell_size)
+                                       cell_size=cell_size,
+                                       use_hard_barrier=use_hard_barrier)
                 routes = routes.drop(columns=['start_row', 'start_col',
                                               'end_row', 'end_col'],
                                      errors="ignore")
@@ -380,7 +388,7 @@ class LeastCostPaths:
     def _compute_paths_in_chunks(self, exe, max_submissions, num_iters,
                                  cost_layers, cost_multiplier_scalar,
                                  save_paths, friction_layers, tracked_layers,
-                                 cell_size):
+                                 cell_size, use_hard_barrier):
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -395,7 +403,8 @@ class LeastCostPaths:
                                 save_paths=save_paths,
                                 friction_layers=friction_layers,
                                 tracked_layers=tracked_layers,
-                                cell_size=cell_size)
+                                cell_size=cell_size,
+                                use_hard_barrier=use_hard_barrier)
             futures[future] = routes
             logger.debug('Submitted {} of {} futures'
                          .format(ind, num_iters))
@@ -418,7 +427,7 @@ class LeastCostPaths:
             clip_buffer=0, cost_multiplier_layer=None,
             cost_multiplier_scalar=1, indices=None, max_workers=None,
             save_paths=False, friction_layers=None, tracked_layers=None,
-            cell_size=CELL_SIZE):
+            cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -485,6 +494,11 @@ class LeastCostPaths:
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -502,7 +516,8 @@ class LeastCostPaths:
             save_paths=save_paths,
             max_workers=max_workers,
             friction_layers=friction_layers,
-            tracked_layers=tracked_layers, cell_size=cell_size)
+            tracked_layers=tracked_layers, cell_size=cell_size,
+            use_hard_barrier=use_hard_barrier)
 
         logger.info('{} paths were computed in {:.4f} hours'
                     .format(len(least_cost_paths),
@@ -521,7 +536,7 @@ class ReinforcementPaths(LeastCostPaths):
                                  cost_layers, cost_multiplier_scalar=1,
                                  max_workers=None, save_paths=False,
                                  friction_layers=None, tracked_layers=None,
-                                 cell_size=CELL_SIZE):
+                                 cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -583,6 +598,11 @@ class ReinforcementPaths(LeastCostPaths):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -614,7 +634,7 @@ class ReinforcementPaths(LeastCostPaths):
                     exe, max_workers, num_iters, transmission_lines,
                     line_cap_mw, cost_layers, cost_multiplier_scalar,
                     save_paths, friction_layers, tracked_layers,
-                    cell_size=cell_size)
+                    cell_size=cell_size, use_hard_barrier=use_hard_barrier)
 
         else:
             reinforcement_cost_paths = []
@@ -623,6 +643,7 @@ class ReinforcementPaths(LeastCostPaths):
             cml = self._cost_multiplier_layer
             cms = cost_multiplier_scalar
             fl = friction_layers
+            uhb = use_hard_barrier
             for ind, start_idx, routes in self._paths_to_compute():
                 end_indices = routes[['end_row', 'end_col']].values
                 rcp = ReinforcementLineCosts.run(transmission_lines,
@@ -638,7 +659,8 @@ class ReinforcementPaths(LeastCostPaths):
                                                  save_paths=save_paths,
                                                  friction_layers=fl,
                                                  tracked_layers=tracked_layers,
-                                                 cell_size=cell_size)
+                                                 cell_size=cell_size,
+                                                 use_hard_barrier=uhb)
                 rcp = rcp.merge(routes, on=["end_row", "end_col"])
                 reinforcement_cost_paths.append(rcp)
                 logger.debug('Reinforcement cost path {} of {} complete!'
@@ -658,7 +680,7 @@ class ReinforcementPaths(LeastCostPaths):
                                  transmission_lines, line_cap_mw,
                                  cost_layers, cost_multiplier_scalar,
                                  save_paths, friction_layers, tracked_layers,
-                                 cell_size):
+                                 cell_size, use_hard_barrier):
         """Compute RCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -674,7 +696,8 @@ class ReinforcementPaths(LeastCostPaths):
                                 save_paths=save_paths,
                                 friction_layers=friction_layers,
                                 tracked_layers=tracked_layers,
-                                cell_size=cell_size)
+                                cell_size=cell_size,
+                                use_hard_barrier=use_hard_barrier)
             futures[future] = routes
             logger.debug('Submitted {} of {} futures'
                          .format(ind, num_iters))
@@ -691,7 +714,7 @@ class ReinforcementPaths(LeastCostPaths):
             cost_multiplier_layer=None, cost_multiplier_scalar=1,
             indices=None, max_workers=None, save_paths=False,
             friction_layers=None, tracked_layers=None, ss_id_col="poi_gid",
-            cell_size=CELL_SIZE):
+            cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
@@ -783,6 +806,11 @@ class ReinforcementPaths(LeastCostPaths):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -803,7 +831,8 @@ class ReinforcementPaths(LeastCostPaths):
                       "save_paths": save_paths,
                       "max_workers": max_workers,
                       "tracked_layers": tracked_layers,
-                      "cell_size": cell_size}
+                      "cell_size": cell_size,
+                      "use_hard_barrier": use_hard_barrier}
         with ExclusionLayers(cost_fpath) as f:
             cost_crs = CRS.from_string(f.crs)
             cost_shape = f.shape

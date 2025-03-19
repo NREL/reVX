@@ -305,6 +305,16 @@ class LeastCostXmissionConfig(AnalysisConfig):
 
         return self._sc_point_gids
 
+    @property
+    def use_hard_barrier(self):
+        """
+        Optional flag to treat any cost values of <= 0 as a hard barrier
+        (i.e. no paths can ever cross this). If False, the cost values
+        of <= 0 are set to a large value to simulate a strong but
+        permeable barrier.
+        """
+        return self.get('use_hard_barrier', True)
+
 
 class LeastCostPathsConfig(AnalysisConfig):
     """Config framework for Least Cost Paths"""
@@ -535,3 +545,13 @@ class LeastCostPathsConfig(AnalysisConfig):
         lengths
         """
         return self.get('save_paths', False)
+
+    @property
+    def use_hard_barrier(self):
+        """
+        Optional flag to treat any cost values of <= 0 as a hard barrier
+        (i.e. no paths can ever cross this). If ``False``, cost values
+        of <= 0 are set to a large value to simulate a strong but
+        permeable barrier.
+        """
+        return self.get('use_hard_barrier', True)

@@ -534,7 +534,7 @@ class LeastCostXmission(LeastCostPaths):
                           save_paths=False, radius=None, expand_radius=True,
                           mp_delay=3, simplify_geo=None, friction_layers=None,
                           tracked_layers=None, length_mult_kind="linear",
-                          cell_size=CELL_SIZE):
+                          cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Compute Least Cost Transmission for desired sc_points
 
@@ -611,6 +611,11 @@ class LeastCostXmission(LeastCostPaths):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -656,7 +661,8 @@ class LeastCostXmission(LeastCostPaths):
                 friction_layers=friction_layers,
                 tracked_layers=tracked_layers,
                 length_mult_kind=length_mult_kind,
-                cell_size=cell_size)
+                cell_size=cell_size,
+                use_hard_barrier=use_hard_barrier)
         else:
             logger.info("Computing Least Cost Transmission for {:,} SC "
                         "points in serial".format(len(sc_point_gids)))
@@ -675,7 +681,8 @@ class LeastCostXmission(LeastCostPaths):
                 friction_layers=friction_layers,
                 tracked_layers=tracked_layers,
                 length_mult_kind=length_mult_kind,
-                cell_size=cell_size)
+                cell_size=cell_size,
+                use_hard_barrier=use_hard_barrier)
 
         if not least_costs:
             return pd.DataFrame(columns=["sc_point_gid"])
@@ -699,7 +706,8 @@ class LeastCostXmission(LeastCostPaths):
                             max_workers=2, save_paths=False, radius=None,
                             expand_radius=True, mp_delay=3, simplify_geo=None,
                             friction_layers=None, tracked_layers=None,
-                            length_mult_kind="linear", cell_size=CELL_SIZE):
+                            length_mult_kind="linear", cell_size=CELL_SIZE,
+                            use_hard_barrier=True):
         """
         Compute Least Cost Transmission for desired sc_points using
         multiple cores.
@@ -778,6 +786,11 @@ class LeastCostXmission(LeastCostPaths):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -805,7 +818,8 @@ class LeastCostXmission(LeastCostPaths):
                                                         friction_layers,
                                                         tracked_layers,
                                                         length_mult_kind,
-                                                        cell_size)
+                                                        cell_size,
+                                                        use_hard_barrier)
 
         return least_costs
 
@@ -815,7 +829,8 @@ class LeastCostXmission(LeastCostPaths):
                                  capacity_class, cost_layers,
                                  cost_multiplier_scalar, save_paths,
                                  simplify_geo, friction_layers,
-                                 tracked_layers, length_mult_kind, cell_size):
+                                 tracked_layers, length_mult_kind, cell_size,
+                                 use_hard_barrier):
         """Compute LCP's in parallel using futures."""
         futures, paths = {}, []
 
@@ -862,7 +877,8 @@ class LeastCostXmission(LeastCostPaths):
                                 friction_layers=friction_layers,
                                 length_mult_kind=length_mult_kind,
                                 tracked_layers=tracked_layers,
-                                cell_size=cell_size)
+                                cell_size=cell_size,
+                                use_hard_barrier=use_hard_barrier)
             futures[future] = None
             num_jobs += 1
             if mp_delay > 0 and num_jobs <= max_submissions:
@@ -882,7 +898,7 @@ class LeastCostXmission(LeastCostPaths):
                              radius=None, expand_radius=True,
                              simplify_geo=None, friction_layers=None,
                              tracked_layers=None, length_mult_kind="linear",
-                             cell_size=CELL_SIZE):
+                             cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Compute Least Cost Transmission for desired sc_points with a
         single core.
@@ -956,6 +972,11 @@ class LeastCostXmission(LeastCostPaths):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -987,7 +1008,8 @@ class LeastCostXmission(LeastCostPaths):
                     cost_layers=cost_layers,
                     friction_layers=friction_layers,
                     length_mult_kind=length_mult_kind,
-                    tracked_layers=tracked_layers, cell_size=cell_size)
+                    tracked_layers=tracked_layers, cell_size=cell_size,
+                    use_hard_barrier=use_hard_barrier)
 
                 if sc_costs is not None:
                     least_costs.append(sc_costs)
@@ -1007,7 +1029,8 @@ class LeastCostXmission(LeastCostPaths):
             iso_regions_layer_name=ISO_H5_LAYER_NAME, max_workers=None,
             save_paths=False, radius=None, expand_radius=True, mp_delay=3,
             simplify_geo=None, friction_layers=None, tracked_layers=None,
-            length_mult_kind="linear", cell_size=CELL_SIZE):
+            length_mult_kind="linear", cell_size=CELL_SIZE,
+            use_hard_barrier=True):
         """
         Find Least Cost Transmission connections between desired
         sc_points to given transmission features for desired capacity
@@ -1104,6 +1127,11 @@ class LeastCostXmission(LeastCostPaths):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -1134,7 +1162,8 @@ class LeastCostXmission(LeastCostPaths):
                                             friction_layers=friction_layers,
                                             tracked_layers=tracked_layers,
                                             length_mult_kind=length_mult_kind,
-                                            cell_size=cell_size)
+                                            cell_size=cell_size,
+                                            use_hard_barrier=use_hard_barrier)
 
         logger.info("{} connections were made to {} SC points in "
                     "{:.4f} minutes"
@@ -1298,7 +1327,7 @@ class RegionalXmission(LeastCostXmission):
             simplify_geo=None, save_paths=False, radius=None,
             expand_radius=True, mp_delay=3, friction_layers=None,
             tracked_layers=None, length_mult_kind="linear",
-            cell_size=CELL_SIZE):
+            cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Find Least Cost Transmission connections between desired
         sc_points and substations in their region.
@@ -1405,6 +1434,11 @@ class RegionalXmission(LeastCostXmission):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -1432,7 +1466,8 @@ class RegionalXmission(LeastCostXmission):
                                             friction_layers=friction_layers,
                                             tracked_layers=tracked_layers,
                                             length_mult_kind=length_mult_kind,
-                                            cell_size=cell_size)
+                                            cell_size=cell_size,
+                                            use_hard_barrier=use_hard_barrier)
 
         logger.info("{} connections were made to {} SC points in {:.4f} "
                     "minutes".format(len(least_costs),

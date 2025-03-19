@@ -221,6 +221,9 @@ def from_config(ctx, config, verbose):
               show_default=True, default=CELL_SIZE,
               help=("Side length of a single cell in meters. Cells are "
                     "assumed to be square. Default is"))
+@click.option('--use_hard_barrier', '-uhb', is_flag=True,
+              help='Optional flag to treat any cost values of <= 0 as a '
+                   'hard barrier')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
@@ -229,7 +232,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
           iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
           save_paths, radius, expand_radius, mp_delay, simplify_geo,
           cost_layers, friction_layers, tracked_layers,
-          length_mult_kind, cell_size):
+          length_mult_kind, cell_size, use_hard_barrier):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -272,7 +275,8 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "friction_layers": friction_layers,
               "length_mult_kind": length_mult_kind,
               "tracked_layers": tracked_layers,
-              "cell_size": cell_size}
+              "cell_size": cell_size,
+              "use_hard_barrier": use_hard_barrier}
 
     if regions_fpath is not None:
         least_costs = RegionalXmission.run(cost_fpath, features_fpath,
@@ -514,6 +518,8 @@ def get_node_cmd(config, gids):
 
     if config.save_paths:
         args.append('--save_paths')
+    if config.use_hard_barrier:
+        args.append('-uhb')
     if config.radius:
         args.append('-rad {}'.format(config.radius))
     if config.expand_radius:
@@ -573,7 +579,8 @@ def run_local(ctx, config):
                friction_layers=config.friction_layers,
                tracked_layers=config.tracked_layers,
                length_mult_kind=config.length_mult_kind,
-               cell_size=config.cell_size)
+               cell_size=config.cell_size,
+               use_hard_barrier=config.use_hard_barrier)
 
 
 def eagle(config, gids):

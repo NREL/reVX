@@ -97,7 +97,8 @@ def run_local(ctx, config):
                verbose=config.log_level,
                friction_layers=config.friction_layers,
                tracked_layers=config.tracked_layers,
-               cell_size=config.cell_size)
+               cell_size=config.cell_size,
+               use_hard_barrier=config.use_hard_barrier)
 
 
 @main.command()
@@ -231,13 +232,16 @@ def from_config(ctx, config, verbose):
               show_default=True, default=CELL_SIZE,
               help=("Side length of a single cell in meters. Cells are "
                     "assumed to be square. Default is"))
+@click.option('--use_hard_barrier', '-uhb', is_flag=True,
+              help='Optional flag to treat any cost values of <= 0 as a '
+                   'hard barrier')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
           clip_buffer, start_index, step_index, cost_multiplier_layer,
           cost_multiplier_scalar, max_workers, region_identifier_column,
           save_paths, out_dir, log_dir, ss_id_col, verbose, friction_layers,
-          tracked_layers, cell_size):
+          tracked_layers, cell_size, use_hard_barrier):
     """
     Run Least Cost Paths on local hardware
     """
@@ -274,7 +278,8 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
               "max_workers": max_workers,
               "friction_layers": friction_layers,
               "tracked_layers": tracked_layers,
-              "cell_size": cell_size}
+              "cell_size": cell_size,
+              "use_hard_barrier": use_hard_barrier}
 
     if is_reinforcement_run:
         logger.info('Detected reinforcement run!')
@@ -597,6 +602,9 @@ def get_node_cmd(config, start_index=0):
 
     if config.save_paths:
         args.append('-paths')
+
+    if config.use_hard_barrier:
+        args.append('-uhb')
 
     if config.tracked_layers:
         args.append('-trl {}'.format(SLURM.s(config.tracked_layers)))
