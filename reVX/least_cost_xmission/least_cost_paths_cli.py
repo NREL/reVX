@@ -285,7 +285,6 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
             layer_info["layer_name"] = layer_info["layer_name"].format(cap)
         logger.debug('Xmission Config: {}'.format(xmission_config))
         features = gpd.read_file(network_nodes_fpath)
-        features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
         kwargs["indices"] = features.index[start_index::step_index]
         kwargs["ss_id_col"] = ss_id_col
         least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
@@ -296,7 +295,6 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
                                              **kwargs)
     else:
         features = gpd.read_file(features_fpath)
-        features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
         kwargs["indices"] = features.index[start_index::step_index]
         least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
                                          cost_layers, **kwargs)
