@@ -8,6 +8,7 @@ import click
 import logging
 import os
 import json
+from math import ceil
 from pathlib import Path
 from warnings import warn
 
@@ -284,8 +285,12 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
         for layer_info in cost_layers:
             layer_info["layer_name"] = layer_info["layer_name"].format(cap)
         logger.debug('Xmission Config: {}'.format(xmission_config))
-        features = gpd.read_file(network_nodes_fpath)
-        kwargs["indices"] = features.index[start_index::step_index]
+        inds = _get_indices(network_nodes_fpath, sort_cols="geometry",
+                            start_ind=start_index, n_chunks=step_index)
+        if len(inds) == 0:
+            logger.info('No indices to process: %s', str(inds))
+            return
+        kwargs["indices"] = inds
         kwargs["ss_id_col"] = ss_id_col
         least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
                                              network_nodes_fpath,
@@ -294,8 +299,13 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
                                              capacity_class, cost_layers,
                                              **kwargs)
     else:
-        features = gpd.read_file(features_fpath)
-        kwargs["indices"] = features.index[start_index::step_index]
+        inds = _get_indices(features_fpath,
+                            sort_cols=["start_lat", "start_lon"],
+                            start_ind=start_index, n_chunks=step_index)
+        if len(inds) == 0:
+            logger.info('No indices to process: %s', str(inds))
+            return
+        kwargs["indices"] = inds
         least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
                                          cost_layers, **kwargs)
 
@@ -642,6 +652,15 @@ def eagle(config, start_index=0):
 
     click.echo(msg)
     logger.info(msg)
+
+
+def _get_indices(features_fp, sort_cols, start_ind, n_chunks):
+    """Get indices of points that are sorted by location"""
+    features = gpd.read_file(features_fp)
+    features = features.sort_values(sort_cols)
+
+    chunk_size = int(ceil(len(features) / n_chunks))
+    return features.index[start_ind * chunk_size:(start_ind + 1) * chunk_size]
 
 
 if __name__ == '__main__':
