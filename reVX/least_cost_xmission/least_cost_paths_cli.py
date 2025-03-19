@@ -301,6 +301,10 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
         least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
                                          cost_layers, **kwargs)
 
+    if least_costs is None or least_costs.empty:
+        logger.info('No paths found')
+        return
+
     fpath_out = os.path.join(out_dir, f'{name}_lcp')
     if save_paths:
         fpath_out += '.gpkg'
