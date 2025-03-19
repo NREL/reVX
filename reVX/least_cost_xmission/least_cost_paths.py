@@ -596,19 +596,15 @@ class ReinforcementPaths(LeastCostPaths):
         if self._route_points.empty:
             return self._route_points
 
-        __, start_idx, routes = next(self._paths_to_compute())
         transmission_lines = {
             capacity_mw: lines[self._row_slice, self._col_slice]
             for capacity_mw, lines in transmission_lines.items()
         }
 
-        logger.info('Computing reinforcement path costs for start index {}'
-                    .format(start_idx))
-        log_mem(logger)
         max_workers = os.cpu_count() if max_workers is None else max_workers
         max_workers = int(max_workers)
 
-        least_cost_paths = []
+        num_iters = len(self._route_points.groupby(["start_row", "start_col"]))
         if max_workers > 1:
             logger.info('Computing Reinforcement Cost Paths in parallel on '
                         '%d workers', max_workers)
@@ -616,61 +612,78 @@ class ReinforcementPaths(LeastCostPaths):
             loggers = [__name__, 'reV', 'reVX']
             with SpawnProcessPool(max_workers=max_workers,
                                   loggers=loggers) as exe:
-
-                futures = {}
-                for ind in range(max_workers):
-                    feats = routes.iloc[ind::max_workers]
-                    end_indices = feats[['end_row', 'end_col']].values
-                    future = exe.submit(ReinforcementLineCosts.run,
-                                        transmission_lines,
-                                        self._cost_fpath,
-                                        start_idx,
-                                        end_indices,
-                                        line_cap_mw,
-                                        cost_layers,
-                                        self._row_slice,
-                                        self._col_slice,
-                                        cost_multiplier_layer=(
-                                            self._cost_multiplier_layer),
-                                        cost_multiplier_scalar=(
-                                            cost_multiplier_scalar),
-                                        save_paths=save_paths,
-                                        friction_layers=friction_layers,
-                                        tracked_layers=tracked_layers,
-                                        cell_size=cell_size)
-                    futures[future] = feats
-                    logger.debug('Submitted %d of %d futures',
-                                 ind + 1, max_workers)
-                    log_mem(logger)
-
-                least_cost_paths = _collect_future_chunks(futures,
-                                                          least_cost_paths)
-                least_cost_paths = pd.concat(least_cost_paths,
-                                             ignore_index=True)
+                reinforcement_cost_paths = self._compute_paths_in_chunks(
+                    exe, max_workers, num_iters, transmission_lines,
+                    line_cap_mw, cost_layers, cost_multiplier_scalar,
+                    save_paths, friction_layers, tracked_layers,
+                    cell_size=cell_size)
 
         else:
-            end_indices = routes[['end_row', 'end_col']].values
-            lcp = ReinforcementLineCosts.run(transmission_lines,
-                                             self._cost_fpath,
-                                             start_idx,
-                                             end_indices,
-                                             line_cap_mw,
-                                             cost_layers,
-                                             self._row_slice,
-                                             self._col_slice,
-                                             cost_multiplier_layer=(
-                                                 self._cost_multiplier_layer),
-                                             cost_multiplier_scalar=(
-                                                 cost_multiplier_scalar),
-                                             save_paths=save_paths,
-                                             friction_layers=friction_layers,
-                                             tracked_layers=tracked_layers,
-                                             cell_size=cell_size)
-            least_cost_paths = lcp.merge(routes, on=["end_row", "end_col"])
+            reinforcement_cost_paths = []
+            logger.info('Computing Reinforcement Cost Paths in serial')
+            log_mem(logger)
+            for ind, start_idx, routes in self._paths_to_compute():
+                end_indices = routes[['end_row', 'end_col']].values
+                rcp = ReinforcementLineCosts.run(transmission_lines,
+                                                self._cost_fpath,
+                                                start_idx,
+                                                end_indices,
+                                                line_cap_mw,
+                                                cost_layers,
+                                                self._row_slice,
+                                                self._col_slice,
+                                                cost_multiplier_layer=(
+                                                    self._cost_multiplier_layer),
+                                                cost_multiplier_scalar=(
+                                                    cost_multiplier_scalar),
+                                                save_paths=save_paths,
+                                                friction_layers=friction_layers,
+                                                tracked_layers=tracked_layers,
+                                                cell_size=cell_size)
+                rcp = rcp.merge(routes, on=["end_row", "end_col"])
+                reinforcement_cost_paths.append(rcp)
+                logger.debug('Reinforcement cost path {} of {} complete!'
+                             .format(ind, num_iters))
+                log_mem(logger)
 
-        least_cost_paths = least_cost_paths.dropna(axis="columns", how="all")
-        drop_cols = ['index', 'end_row', 'end_col']
-        return least_cost_paths.drop(columns=drop_cols, errors="ignore")
+            reinforcement_cost_paths = pd.concat(reinforcement_cost_paths,
+                                                 ignore_index=True)
+
+        reinforcement_cost_paths = reinforcement_cost_paths.dropna(
+            axis="columns", how="all")
+        drop_cols = ['index', 'start_row', 'start_col', 'end_row', 'end_col']
+        return reinforcement_cost_paths.drop(columns=drop_cols,
+                                             errors="ignore")
+
+    def _compute_paths_in_chunks(self, exe, max_submissions, num_iters,
+                                 transmission_lines, line_cap_mw,
+                                 cost_layers, cost_multiplier_scalar,
+                                 save_paths, friction_layers, tracked_layers,
+                                 cell_size):
+        """Compute RCP's in parallel using futures. """
+        futures, paths = {}, []
+
+        for ind, start_idx, routes in self._paths_to_compute():
+            end_indices = routes[['end_row', 'end_col']].values
+            future = exe.submit(ReinforcementLineCosts.run,
+                                transmission_lines, self._cost_fpath,
+                                start_idx, end_indices, line_cap_mw,
+                                cost_layers, self._row_slice, self._col_slice,
+                                cost_multiplier_layer=(
+                                    self._cost_multiplier_layer),
+                                cost_multiplier_scalar=cost_multiplier_scalar,
+                                save_paths=save_paths,
+                                friction_layers=friction_layers,
+                                tracked_layers=tracked_layers,
+                                cell_size=cell_size)
+            futures[future] = routes
+            logger.debug('Submitted {} of {} futures'
+                         .format(ind, num_iters))
+            log_mem(logger)
+            if ind % max_submissions == 0:
+                paths = _collect_future_chunks(futures, paths)
+        paths = _collect_future_chunks(futures, paths)
+        return paths
 
     @classmethod
     def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
@@ -780,8 +793,6 @@ class ReinforcementPaths(LeastCostPaths):
             reinforcement line path.
         """
         ts = time.time()
-        least_cost_paths = []
-
         xmission_config = parse_config(xmission_config=xmission_config)
         capacity_class = xmission_config._parse_cap_class(capacity_class)
         line_cap_mw = xmission_config['power_classes'][capacity_class]
@@ -825,22 +836,19 @@ class ReinforcementPaths(LeastCostPaths):
         logger.info('Loading network nodes from %s', network_nodes_fpath)
         network_nodes = gpd.read_file(network_nodes_fpath).to_crs(cost_crs)
         indices = network_nodes.index if indices is None else indices
-        for loop_ind, index in enumerate(indices, start=1):
+        all_ss_data = []
+        for index in indices:
             network_node = (network_nodes.iloc[index:index + 1]
                             .reset_index(drop=True))
             rid = network_node[region_identifier_column].values[0]
             mask = substations[region_identifier_column] == rid
-            logger.debug('Computing reinforcements to %s in region %s',
-                         str(network_node), rid)
             node_substations = substations[mask].reset_index(drop=True)
             if len(node_substations) == 0:
                 continue
 
-            logger.debug('Found %d unique %s',
+            logger.debug('Found %d unique %s in region %s',
                          node_substations[ss_id_col].unique().shape[0],
-                         ss_id_col)
-            logger.info('Working on %d substations in region %s',
-                        len(node_substations), rid)
+                         ss_id_col, rid)
             coords = node_substations['geometry'].centroid.to_crs("EPSG:4326")
             node_substations["end_lat"] = coords.y
             node_substations["end_lon"] = coords.x
@@ -848,31 +856,32 @@ class ReinforcementPaths(LeastCostPaths):
             nn_coord = network_node.centroid.to_crs("EPSG:4326")
             node_substations["start_lat"] = nn_coord.y[0]
             node_substations["start_lon"] = nn_coord.x[0]
+            node_substations[region_identifier_column] = rid
             node_substations = node_substations.drop(columns='geometry')
+            all_ss_data.append(node_substations)
 
-            rp = cls(cost_fpath, node_substations, clip_buffer=clip_buffer,
-                     cost_multiplier_layer=cost_multiplier_layer)
-            node_least_cost_paths = rp.process_least_cost_paths(
-                transmission_lines,**lcp_kwargs)
-            if node_least_cost_paths.empty:
-                continue
-            node_least_cost_paths[region_identifier_column] = rid
-            least_cost_paths += [node_least_cost_paths]
-
-            logger.debug('Found %d reinforcement paths for network node',
-                         len(node_least_cost_paths))
-            logger.debug('Computed reinforcements for {}/{} network nodes'
-                         .format(loop_ind, len(indices)))
-
-        logger.info('Paths to {} network node(s) were computed in {:.4f} hours'
-                    .format(len(least_cost_paths), (time.time() - ts) / 3600))
-        if not least_cost_paths:
+        if not all_ss_data:
             return
 
-        costs = pd.concat(least_cost_paths, ignore_index=True)
+        all_ss_data = pd.concat(all_ss_data, axis=0, ignore_index=True)
+        all_ss_data = all_ss_data.reset_index(drop=True)
+
+        rp = cls(cost_fpath, all_ss_data, clip_buffer=clip_buffer,
+                 cost_multiplier_layer=cost_multiplier_layer)
+        node_least_cost_paths = rp.process_least_cost_paths(transmission_lines,
+                                                            **lcp_kwargs)
+        if node_least_cost_paths.empty:
+            logger.info('No paths found!')
+            return
+
+        logger.info('Paths to {} network node(s) were computed in {:.4f} hours'
+                    .format(len(network_nodes), (time.time() - ts) / 3600))
+
         logger.debug('Computed %d reinforcement paths for %d unique POIs',
-                     len(costs), costs[ss_id_col].unique().shape[0])
-        return min_reinforcement_costs(costs, group_col=ss_id_col)
+                     len(node_least_cost_paths),
+                     node_least_cost_paths[ss_id_col].unique().shape[0])
+        return min_reinforcement_costs(node_least_cost_paths,
+                                       group_col=ss_id_col)
 
 
 def _rasterize_transmission(transmission_lines, xmission_config, cost_shape,
