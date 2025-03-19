@@ -18,7 +18,6 @@ from reV.handlers.exclusions import ExclusionLayers
 from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
-from reVX.handlers.layered_h5 import crs_match
 from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT)
