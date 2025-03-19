@@ -413,7 +413,6 @@ class LeastCostPaths:
             yield ind, start_idx, routes.reset_index(drop=True)
             ind += 1
 
-
     @classmethod
     def run(cls, cost_fpath, route_points, cost_layers,
             clip_buffer=0, cost_multiplier_layer=None,
@@ -621,24 +620,25 @@ class ReinforcementPaths(LeastCostPaths):
             reinforcement_cost_paths = []
             logger.info('Computing Reinforcement Cost Paths in serial')
             log_mem(logger)
+            cml = self._cost_multiplier_layer
+            cms = cost_multiplier_scalar
+            fl = friction_layers
             for ind, start_idx, routes in self._paths_to_compute():
                 end_indices = routes[['end_row', 'end_col']].values
                 rcp = ReinforcementLineCosts.run(transmission_lines,
-                                                self._cost_fpath,
-                                                start_idx,
-                                                end_indices,
-                                                line_cap_mw,
-                                                cost_layers,
-                                                self._row_slice,
-                                                self._col_slice,
-                                                cost_multiplier_layer=(
-                                                    self._cost_multiplier_layer),
-                                                cost_multiplier_scalar=(
-                                                    cost_multiplier_scalar),
-                                                save_paths=save_paths,
-                                                friction_layers=friction_layers,
-                                                tracked_layers=tracked_layers,
-                                                cell_size=cell_size)
+                                                 self._cost_fpath,
+                                                 start_idx,
+                                                 end_indices,
+                                                 line_cap_mw,
+                                                 cost_layers,
+                                                 self._row_slice,
+                                                 self._col_slice,
+                                                 cost_multiplier_layer=cml,
+                                                 cost_multiplier_scalar=cms,
+                                                 save_paths=save_paths,
+                                                 friction_layers=fl,
+                                                 tracked_layers=tracked_layers,
+                                                 cell_size=cell_size)
                 rcp = rcp.merge(routes, on=["end_row", "end_col"])
                 reinforcement_cost_paths.append(rcp)
                 logger.debug('Reinforcement cost path {} of {} complete!'
