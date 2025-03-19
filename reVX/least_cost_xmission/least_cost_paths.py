@@ -708,7 +708,7 @@ class ReinforcementPaths(LeastCostPaths):
         return paths
 
     @classmethod
-    def run(cls, cost_fpath, features_fpath, network_nodes_fpath,
+    def run(cls, cost_fpath, route_table, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
             capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
             cost_multiplier_layer=None, cost_multiplier_scalar=1,
@@ -723,7 +723,7 @@ class ReinforcementPaths(LeastCostPaths):
         ----------
         cost_fpath : str
             Path to h5 file with cost rasters and other required layers.
-        features_fpath : str
+        route_table : str
             Path to GeoPackage with transmission features. The network
             node must be the first row of the GeoPackage - the rest
             should be substations that need to connect to that node.
@@ -838,13 +838,13 @@ class ReinforcementPaths(LeastCostPaths):
             cost_shape = f.shape
             cost_transform = rasterio.Affine(*f.profile['transform'])
 
-        logger.info('Loading features from %s', features_fpath)
-        features = gpd.read_file(features_fpath).to_crs(cost_crs)
+        logger.info('Loading features from %s', route_table)
+        features = gpd.read_file(route_table).to_crs(cost_crs)
         mapping = {'gid': ss_id_col}
         substations = features.rename(columns=mapping)
         substations = substations.dropna(axis="columns", how="all")
         logger.info('Loaded %d features from %s', len(substations),
-                    features_fpath)
+                    route_table)
 
         logger.info('Loading tline shapes from %s', transmission_lines_fpath)
         lines = gpd.read_file(transmission_lines_fpath).to_crs(cost_crs)

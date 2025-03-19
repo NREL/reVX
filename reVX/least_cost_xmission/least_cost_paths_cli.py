@@ -78,7 +78,7 @@ def run_local(ctx, config):
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
                cost_fpath=config.cost_fpath,
-               features_fpath=config.features_fpath,
+               route_table=config.route_table,
                cost_layers=config.cost_layers,
                network_nodes_fpath=config.network_nodes_fpath,
                transmission_lines_fpath=config.transmission_lines_fpath,
@@ -149,7 +149,7 @@ def from_config(ctx, config, verbose):
               required=True,
               help=("Path to h5 file with cost rasters and other required "
                     "layers"))
-@click.option('--features_fpath', '-feats', required=True,
+@click.option('--route_table', '-routes', required=True,
               type=click.Path(exists=True),
               help="Path to GeoPackage with transmission features")
 @click.option('--cost-layers', '-cl', required=True, multiple=True,
@@ -236,7 +236,7 @@ def from_config(ctx, config, verbose):
               help='Optional flag to treat any cost values of <= 0 as a '
                    'hard barrier')
 @click.pass_context
-def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
+def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
           clip_buffer, start_index, step_index, cost_multiplier_layer,
           cost_multiplier_scalar, max_workers, region_identifier_column,
@@ -297,21 +297,21 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
             return
         kwargs["indices"] = inds
         kwargs["ss_id_col"] = ss_id_col
-        least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
+        least_costs = ReinforcementPaths.run(cost_fpath, route_table,
                                              network_nodes_fpath,
                                              region_identifier_column,
                                              transmission_lines_fpath,
                                              capacity_class, cost_layers,
                                              **kwargs)
     else:
-        inds = _get_indices(features_fpath,
+        inds = _get_indices(route_table,
                             sort_cols=["start_lat", "start_lon"],
                             start_ind=start_index, n_chunks=step_index)
         if len(inds) == 0:
             logger.info('No indices to process: %s', str(inds))
             return
         kwargs["indices"] = inds
-        least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
+        least_costs = LeastCostPaths.run(cost_fpath, route_table,
                                          cost_layers, **kwargs)
 
     if least_costs is None or least_costs.empty:
@@ -578,7 +578,7 @@ def get_node_cmd(config, start_index=0):
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-cost {}'.format(SLURM.s(config.cost_fpath)),
-            '-feats {}'.format(SLURM.s(config.features_fpath)),
+            '-routes {}'.format(SLURM.s(config.route_table)),
             '-nn {}'.format(SLURM.s(config.network_nodes_fpath)),
             '-tl {}'.format(SLURM.s(config.transmission_lines_fpath)),
             '-rid {}'.format(SLURM.s(config.region_identifier_column)),

@@ -320,7 +320,7 @@ class LeastCostPathsConfig(AnalysisConfig):
     """Config framework for Least Cost Paths"""
 
     NAME = 'LeastCostPaths'
-    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'cost_layers')
+    REQUIREMENTS = ('cost_fpath', 'route_table', 'cost_layers')
 
     def __init__(self, config):
         """
@@ -375,11 +375,18 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self['cost_fpath']
 
     @property
-    def features_fpath(self):
+    def route_table(self):
         """
-        Transmission feature GeoPackage
+        Path to CSV file defining the start and
+        end points of all routes. Must have the following columns:
+
+            "start_lat": Stating point latitude
+            "start_lon": Stating point longitude
+            "end_lat": Ending point latitude
+            "end_lon": Ending point longitude
+
         """
-        return self['features_fpath']
+        return self['route_table']
 
     @property
     def network_nodes_fpath(self):

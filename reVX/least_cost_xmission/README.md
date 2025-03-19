@@ -341,7 +341,7 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
       "walltime": 1
     },
     "cost_fpath": "/path/to/cost.h5",
-    "features_fpath": "./substations_with_ba.gpkg",
+    "route_table": "./substations_with_ba.gpkg",
     "network_nodes_fpath": "./nn.gpkg",
     "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
     "region_identifier_column": "rr_id",
@@ -486,7 +486,7 @@ Now you can compute the reinforcement paths the same way as the method above:
       "walltime": 1
     },
     "cost_fpath": "/path/to/cost.h5",
-    "features_fpath": "./ss_from_conns_200_128.gpkg",
+    "route_table": "./ss_from_conns_200_128.gpkg",
     "network_nodes_fpath": "./nn.gpkg",
     "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
     "region_identifier_column": "rr_id",
@@ -665,7 +665,7 @@ $ least-cost-xmission merge-output --drop TransLine --split-to-geojson \
 ### Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage
 The processing can also be run within Python. This example uses `contextily` to add a base map to the plot, but is not required. Offshore needs an aggregation "resolution" of 118.
 
-```
+```python
 import contextily as cx
 from rex.utilities.loggers import init_mult
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
