@@ -222,12 +222,12 @@ class LeastCostXmissionConfig(AnalysisConfig):
             - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
               this layer by before summing it with the others. Default
               is ``1``.
-            - "is_invariant": (OPTIONAL) Boolean flag indicating wether
+            - "is_invariant": (OPTIONAL) Boolean flag indicating whether
               this layer is length invariant (i.e. should NOT be
               multiplied by path length; values should be $). Default is
               ``False``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
-              wether the costs and distances for this layer should be
+              whether the costs and distances for this layer should be
               output in the final LCP table. Default is ``True``.
 
         """
@@ -257,7 +257,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
               this layer by before summing it with the others. Default
               is ``1``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
-              wether the routing and distances for this layer should be
+              whether the routing and distances for this layer should be
               output in the final LCP table. Default is ``False``.
 
         """
@@ -429,12 +429,12 @@ class LeastCostPathsConfig(AnalysisConfig):
             - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
               this layer by before summing it with the others. Default
               is ``1``.
-            - "is_invariant": (OPTIONAL) Boolean flag indicating wether
+            - "is_invariant": (OPTIONAL) Boolean flag indicating whether
               this layer is length invariant (i.e. should NOT be
               multiplied by path length; values should be $). Default is
               ``False``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
-              wether the costs and distances for this layer should be
+              whether the costs and distances for this layer should be
               output in the final LCP table. Default is ``True``.
 
         """
@@ -462,7 +462,7 @@ class LeastCostPathsConfig(AnalysisConfig):
               this layer by before summing it with the others. Default
               is ``1``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
-              wether the routing and distances for this layer should be
+              whether the routing and distances for this layer should be
               output in the final LCP table. Default is ``False``.
 
         """
@@ -518,7 +518,7 @@ class LeastCostPathsConfig(AnalysisConfig):
     @property
     def is_reinforcement_run(self):
         """
-        Boolean flag indicating wether this run is for reinforcement
+        Boolean flag indicating whether this run is for reinforcement
         path computation
         """
         return (self.network_nodes_fpath is not None
