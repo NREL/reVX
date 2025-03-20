@@ -5,6 +5,7 @@ Module to compute least cost transmission paths and distances
 import logging
 import os
 import time
+from copy import deepcopy
 from warnings import warn
 from concurrent.futures import as_completed
 
@@ -32,8 +33,8 @@ class LeastCostPaths:
     Compute least cost paths between desired locations
     """
 
-    def __init__(self, cost_fpath, route_points, clip_buffer=0,
-                 cost_multiplier_layer=None):
+    def __init__(self, cost_fpath, route_points, xmission_config=None,
+                 clip_buffer=0, cost_multiplier_layer=None):
         """
         Parameters
         ----------
@@ -48,6 +49,9 @@ class LeastCostPaths:
                 "end_lat": Ending point latitude
                 "end_lon": Ending point longitude
 
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects, by default None
         resolution : int, optional
             SC point resolution, by default 128
         clip_buffer : int, optional
@@ -60,6 +64,8 @@ class LeastCostPaths:
         self._cost_fpath = cost_fpath
         self._cost_multiplier_layer = cost_multiplier_layer
         self._check_layers()
+
+        self._config = parse_config(xmission_config=xmission_config)
 
         out = self._map_to_costs(cost_fpath, route_points,
                                  clip_buffer=clip_buffer)
@@ -357,17 +363,22 @@ class LeastCostPaths:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
             log_mem(logger)
-            for ind, start_idx, routes in self._paths_to_compute():
+            for ind, info, routes in self._paths_to_compute():
+                *start_idx, polarity, voltage = info
+                route_cl = _update_multipliers(cost_layers, polarity, voltage,
+                                               self._config)
+                route_fl = _update_multipliers(friction_layers, polarity,
+                                               voltage, self._config)
                 end_indices = routes[['end_row', 'end_col']].values
                 lcp = TieLineCosts.run(self._cost_fpath, start_idx,
-                                       end_indices, cost_layers,
+                                       end_indices, route_cl,
                                        self._row_slice, self._col_slice,
                                        cost_multiplier_layer=(
                                            self._cost_multiplier_layer),
                                        cost_multiplier_scalar=(
                                            cost_multiplier_scalar),
                                        save_paths=save_paths,
-                                       friction_layers=friction_layers,
+                                       friction_layers=route_fl,
                                        tracked_layers=tracked_layers,
                                        cell_size=cell_size,
                                        use_hard_barrier=use_hard_barrier)
@@ -392,16 +403,21 @@ class LeastCostPaths:
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
-        for ind, start_idx, routes in self._paths_to_compute():
+        for ind, info, routes in self._paths_to_compute():
+            *start_idx, polarity, voltage = info
+            route_cl = _update_multipliers(cost_layers, polarity, voltage,
+                                           self._config)
+            route_fl = _update_multipliers(friction_layers, polarity,
+                                           voltage, self._config)
             end_indices = routes[['end_row', 'end_col']].values
             future = exe.submit(TieLineCosts.run, self._cost_fpath,
-                                start_idx, end_indices, cost_layers,
+                                start_idx, end_indices, route_cl,
                                 self._row_slice, self._col_slice,
                                 cost_multiplier_layer=(
                                     self._cost_multiplier_layer),
                                 cost_multiplier_scalar=cost_multiplier_scalar,
                                 save_paths=save_paths,
-                                friction_layers=friction_layers,
+                                friction_layers=route_fl,
                                 tracked_layers=tracked_layers,
                                 cell_size=cell_size,
                                 use_hard_barrier=use_hard_barrier)
@@ -416,14 +432,19 @@ class LeastCostPaths:
 
     def _paths_to_compute(self):
         """Iterate over the paths that should be computed"""
-        group_cols = ["start_row", "start_col"]
+        group_cols = ["start_row", "start_col", "polarity", "voltage"]
+
+        for check_col in ["polarity", "voltage"]:
+            if check_col not in self._route_points.columns:
+                self._route_points[check_col] = "unknown"
+
         ind = 1
-        for start_idx, routes in self._route_points.groupby(group_cols):
-            yield ind, start_idx, routes.reset_index(drop=True)
+        for group_info, routes in self._route_points.groupby(group_cols):
+            yield ind, group_info, routes.reset_index(drop=True)
             ind += 1
 
     @classmethod
-    def run(cls, cost_fpath, route_points, cost_layers,
+    def run(cls, cost_fpath, route_points, cost_layers, xmission_config=None,
             clip_buffer=0, cost_multiplier_layer=None,
             cost_multiplier_scalar=1, indices=None, max_workers=None,
             save_paths=False, friction_layers=None, tracked_layers=None,
@@ -451,6 +472,9 @@ class LeastCostPaths:
             See the `cost_layers` property of
             :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
             for more details on this input.
+        xmission_config : str | dict | XmissionConfig, optional
+            Path to Xmission config .json, dictionary of Xmission config
+            .jsons, or preloaded XmissionConfig objects, by default None
         clip_buffer : int, optional
             Optional number of array elements to buffer clip area by.
             By default, ``0``.
@@ -507,7 +531,8 @@ class LeastCostPaths:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        lcp = cls(cost_fpath, route_points, clip_buffer=clip_buffer,
+        lcp = cls(cost_fpath, route_points, xmission_config=xmission_config,
+                  clip_buffer=clip_buffer,
                   cost_multiplier_layer=cost_multiplier_layer)
         least_cost_paths = lcp.process_least_cost_paths(
             cost_layers,
@@ -642,22 +667,26 @@ class ReinforcementPaths(LeastCostPaths):
             log_mem(logger)
             cml = self._cost_multiplier_layer
             cms = cost_multiplier_scalar
-            fl = friction_layers
             uhb = use_hard_barrier
-            for ind, start_idx, routes in self._paths_to_compute():
+            for ind, info, routes in self._paths_to_compute():
+                *start_idx, polarity, voltage = info
+                route_cl = _update_multipliers(cost_layers, polarity, voltage,
+                                               self._config)
+                route_fl = _update_multipliers(friction_layers, polarity,
+                                               voltage, self._config)
                 end_indices = routes[['end_row', 'end_col']].values
                 rcp = ReinforcementLineCosts.run(transmission_lines,
                                                  self._cost_fpath,
                                                  start_idx,
                                                  end_indices,
                                                  line_cap_mw,
-                                                 cost_layers,
+                                                 route_cl,
                                                  self._row_slice,
                                                  self._col_slice,
                                                  cost_multiplier_layer=cml,
                                                  cost_multiplier_scalar=cms,
                                                  save_paths=save_paths,
-                                                 friction_layers=fl,
+                                                 friction_layers=route_fl,
                                                  tracked_layers=tracked_layers,
                                                  cell_size=cell_size,
                                                  use_hard_barrier=uhb)
@@ -684,17 +713,22 @@ class ReinforcementPaths(LeastCostPaths):
         """Compute RCP's in parallel using futures. """
         futures, paths = {}, []
 
-        for ind, start_idx, routes in self._paths_to_compute():
+        for ind, info, routes in self._paths_to_compute():
+            *start_idx, polarity, voltage = info
+            route_cl = _update_multipliers(cost_layers, polarity, voltage,
+                                           self._config)
+            route_fl = _update_multipliers(friction_layers, polarity,
+                                           voltage, self._config)
             end_indices = routes[['end_row', 'end_col']].values
             future = exe.submit(ReinforcementLineCosts.run,
                                 transmission_lines, self._cost_fpath,
                                 start_idx, end_indices, line_cap_mw,
-                                cost_layers, self._row_slice, self._col_slice,
+                                route_cl, self._row_slice, self._col_slice,
                                 cost_multiplier_layer=(
                                     self._cost_multiplier_layer),
                                 cost_multiplier_scalar=cost_multiplier_scalar,
                                 save_paths=save_paths,
-                                friction_layers=friction_layers,
+                                friction_layers=route_fl,
                                 tracked_layers=tracked_layers,
                                 cell_size=cell_size,
                                 use_hard_barrier=use_hard_barrier)
@@ -894,7 +928,8 @@ class ReinforcementPaths(LeastCostPaths):
         all_ss_data = pd.concat(all_ss_data, axis=0, ignore_index=True)
         all_ss_data = all_ss_data.reset_index(drop=True)
 
-        rp = cls(cost_fpath, all_ss_data, clip_buffer=clip_buffer,
+        rp = cls(cost_fpath, all_ss_data, xmission_config=xmission_config,
+                 clip_buffer=clip_buffer,
                  cost_multiplier_layer=cost_multiplier_layer)
         node_least_cost_paths = rp.process_least_cost_paths(transmission_lines,
                                                             **lcp_kwargs)
@@ -1050,6 +1085,7 @@ def _collect_future_chunks(futures, least_cost_paths):
 
 
 def _transform_lat_lon_to_row_col(transform, cost_crs, lat, lon):
+    """Transform lat/lon info to a row/col index into cost raster"""
     feats = gpd.GeoDataFrame(geometry=[Point(*p) for p in zip(lon, lat)])
     coords = feats.set_crs("EPSG:4326").to_crs(cost_crs)['geometry'].centroid
     row, col = rasterio.transform.rowcol(transform, coords.x.values,
@@ -1057,3 +1093,24 @@ def _transform_lat_lon_to_row_col(transform, cost_crs, lat, lon):
     row = np.array(row)
     col = np.array(col)
     return row, col
+
+
+def _update_multipliers(layers, polarity, voltage, xmission_config):
+    """update layer multipliers based on user input"""
+    output_layers = deepcopy(layers)
+    polarity = str(polarity)
+    voltage = str(int(voltage)) if voltage != "unknown" else "unknown"
+
+    for layer in output_layers:
+        if layer.pop("apply_row_mult", False):
+            row_multiplier = xmission_config["row_width"][voltage]
+            layer["multiplier_scalar"] = (layer.get("multiplier_scalar", 1)
+                                          * row_multiplier)
+
+        if layer.pop("apply_polarity_mult", False):
+            polarity_config = xmission_config["voltage_polarity_mult"]
+            polarity_multiplier = polarity_config[voltage][polarity]
+            layer["multiplier_scalar"] = (layer.get("multiplier_scalar", 1)
+                                          * polarity_multiplier)
+
+    return output_layers
