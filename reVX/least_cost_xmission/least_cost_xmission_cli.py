@@ -261,6 +261,10 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
 
+    logger.debug("Xmission_config input: %r", xmission_config)
+    if isinstance(xmission_config, str) and "{" in xmission_config:
+        xmission_config = dict_str_load(xmission_config)
+
     kwargs = {"resolution": resolution,
               "xmission_config": xmission_config,
               "min_line_length": min_line_length,

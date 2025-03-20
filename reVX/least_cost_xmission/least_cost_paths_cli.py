@@ -272,6 +272,10 @@ def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
 
+    logger.debug("Xmission_config input: %r", xmission_config)
+    if isinstance(xmission_config, str) and "{" in xmission_config:
+        xmission_config = dict_str_load(xmission_config)
+
     xmission_config = XmissionConfig(config=xmission_config)
     logger.debug('Xmission Config: {}'.format(xmission_config))
     kwargs = {"xmission_config": xmission_config,
