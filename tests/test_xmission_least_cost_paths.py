@@ -555,6 +555,382 @@ def test_reinforcement_cli_single_tline_voltage(runner,
     LOGGERS.clear()
 
 
+def test_config_given_but_no_mult_in_layers(runner, route_table):
+    """
+    Test Least cost path with xmission config but no voltage in points
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    truth = pd.read_csv(truth)
+
+    with tempfile.TemporaryDirectory() as td:
+        row_config_path = os.path.join(td, 'config_row.json')
+        row_config = {"138": 2}
+        with open(row_config_path, 'w') as f:
+            json.dump(row_config, f)
+
+        routes_fp = os.path.join(td, 'routes.csv')
+        route_table["voltage"] = 138
+        route_table.to_csv(routes_fp, index=False)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+                "max_workers": 1,
+            },
+            "xmission_config": {"row_width": row_config_path},
+            "cost_fpath": COST_H5,
+            "route_table": routes_fp,
+            "save_paths": False,
+            "cost_layers": [{"layer_name": cost_layer}],
+            "friction_layers": [DEFAULT_BARRIER],
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_lcp.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+
+        test = _permute_results(test)
+        check(truth, test)
+
+    LOGGERS.clear()
+
+
+def test_apply_row_mult(runner, route_table):
+    """
+    Test applying row multiplier
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    truth = pd.read_csv(truth)
+
+    with tempfile.TemporaryDirectory() as td:
+        row_config_path = os.path.join(td, 'config_row.json')
+        row_config = {"138": 2}
+        with open(row_config_path, 'w') as f:
+            json.dump(row_config, f)
+
+        routes_fp = os.path.join(td, 'routes.csv')
+        route_table["voltage"] = 138
+        route_table.to_csv(routes_fp, index=False)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+                "max_workers": 1,
+            },
+            "xmission_config": {"row_width": row_config_path},
+            "cost_fpath": COST_H5,
+            "route_table": routes_fp,
+            "save_paths": False,
+            "cost_layers": [{"layer_name": cost_layer,
+                             "apply_row_mult": True}],
+            "friction_layers": [DEFAULT_BARRIER],
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_lcp.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+        test["cost"] /= 2
+
+        test = _permute_results(test)
+        check(truth, test)
+
+    LOGGERS.clear()
+
+
+def test_apply_polarity_mult(runner, route_table):
+    """
+    Test applying polarity multiplier
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    truth = pd.read_csv(truth)
+
+    with tempfile.TemporaryDirectory() as td:
+        row_config_path = os.path.join(td, 'config_row.json')
+        row_config = {"138": 2}
+        with open(row_config_path, 'w') as f:
+            json.dump(row_config, f)
+
+        polarity_config_path = os.path.join(td, 'config_polarity.json')
+        polarity_config = {"138": {"ac": 2, "dc": 3}}
+        with open(polarity_config_path, 'w') as f:
+            json.dump(polarity_config, f)
+
+        routes_fp = os.path.join(td, 'routes.csv')
+        route_table["voltage"] = 138
+        route_table["polarity"] = "dc"
+        route_table.to_csv(routes_fp, index=False)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+                "max_workers": 1,
+            },
+            "xmission_config": {"row_width": row_config_path,
+                                "voltage_polarity_mult": polarity_config_path},
+            "cost_fpath": COST_H5,
+            "route_table": routes_fp,
+            "save_paths": False,
+            "cost_layers": [{"layer_name": cost_layer,
+                             "apply_polarity_mult": True}],
+            "friction_layers": [DEFAULT_BARRIER],
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_lcp.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+        test["cost"] /= 3
+
+        test = _permute_results(test)
+        check(truth, test)
+
+    LOGGERS.clear()
+
+
+def test_apply_row_and_polarity_mult(runner, route_table):
+    """
+    Test applying both row and polarity multiplier
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    truth = pd.read_csv(truth)
+
+    with tempfile.TemporaryDirectory() as td:
+        row_config_path = os.path.join(td, 'config_row.json')
+        row_config = {"138": 2}
+        with open(row_config_path, 'w') as f:
+            json.dump(row_config, f)
+
+        polarity_config_path = os.path.join(td, 'config_polarity.json')
+        polarity_config = {"138": {"ac": 4, "dc": 3}}
+        with open(polarity_config_path, 'w') as f:
+            json.dump(polarity_config, f)
+
+        routes_fp = os.path.join(td, 'routes.csv')
+        route_table["voltage"] = 138
+        route_table["polarity"] = "dc"
+        route_table.to_csv(routes_fp, index=False)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+                "max_workers": 1,
+            },
+            "xmission_config": {"row_width": row_config_path,
+                                "voltage_polarity_mult": polarity_config_path},
+            "cost_fpath": COST_H5,
+            "route_table": routes_fp,
+            "save_paths": False,
+            "cost_layers": [{"layer_name": cost_layer,
+                             "apply_row_mult": True,
+                             "apply_polarity_mult": True}],
+            "friction_layers": [DEFAULT_BARRIER],
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_lcp.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+        test["cost"] /= 6
+
+        test = _permute_results(test)
+        check(truth, test)
+
+    LOGGERS.clear()
+
+
+def test_apply_row_and_polarity_with_existing_mult(runner, route_table):
+    """
+    Test applying both row and polarity multiplier when mult exists
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    truth = pd.read_csv(truth)
+
+    with tempfile.TemporaryDirectory() as td:
+        row_config_path = os.path.join(td, 'config_row.json')
+        row_config = {"138": 2}
+        with open(row_config_path, 'w') as f:
+            json.dump(row_config, f)
+
+        polarity_config_path = os.path.join(td, 'config_polarity.json')
+        polarity_config = {"138": {"ac": 4, "dc": 3}}
+        with open(polarity_config_path, 'w') as f:
+            json.dump(polarity_config, f)
+
+        routes_fp = os.path.join(td, 'routes.csv')
+        route_table["voltage"] = 138
+        route_table["polarity"] = "dc"
+        route_table.to_csv(routes_fp, index=False)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+                "max_workers": 1,
+            },
+            "xmission_config": {"row_width": row_config_path,
+                                "voltage_polarity_mult": polarity_config_path},
+            "cost_fpath": COST_H5,
+            "route_table": routes_fp,
+            "save_paths": False,
+            "cost_layers": [{"layer_name": cost_layer,
+                             "multiplier_scalar": 5,
+                             "apply_row_mult": True,
+                             "apply_polarity_mult": True}],
+            "friction_layers": [DEFAULT_BARRIER],
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_lcp.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+        test["cost"] /= 30
+
+        test = _permute_results(test)
+        check(truth, test)
+
+    LOGGERS.clear()
+
+
+def test_apply_mults_by_route(runner, route_table):
+    """
+    Test applying unique multipliers per route
+    """
+    capacity = random.choice([100, 200, 400, 1000, 3000])
+    cost_layer = f'tie_line_costs_{_cap_class_to_cap(capacity)}MW'
+    truth = os.path.join(TESTDATADIR, 'xmission',
+                         f'least_cost_paths_{capacity}MW.csv')
+    truth = pd.read_csv(truth)
+
+    idx_to_volt = {0: 138, 1: 69, 2: 345, 3: 500}
+    idx_to_polarity = {0: "ac", 1: "dc", 2: "ac", 3: "dc", 4: "dc"}
+
+    with tempfile.TemporaryDirectory() as td:
+        row_config_path = os.path.join(td, 'config_row.json')
+        row_config = {"138": 2, "69": 2.5, "345": 3, "500": 3.5}
+        with open(row_config_path, 'w') as f:
+            json.dump(row_config, f)
+
+        polarity_config_path = os.path.join(td, 'config_polarity.json')
+        polarity_config = {"138": {"ac": 4, "dc": 4.5},
+                            "69": {"ac": 5, "dc": 5.5},
+                           "345": {"ac": 6, "dc": 6.5},
+                           "500": {"ac": 7, "dc": 7.5}}
+        with open(polarity_config_path, 'w') as f:
+            json.dump(polarity_config, f)
+
+        routes_fp = os.path.join(td, 'routes.csv')
+        for idx, volt in idx_to_volt.items():
+            mask = route_table["start_index"] == idx
+            route_table.loc[mask, "voltage"] = volt
+
+        for idx, polarity in idx_to_polarity.items():
+            mask = route_table["index"] == idx
+            route_table.loc[mask, "polarity"] = polarity
+
+        route_table.to_csv(routes_fp, index=False)
+        config = {
+            "log_directory": td,
+            "execution_control": {
+                "option": "local",
+                "max_workers": 1,
+            },
+            "xmission_config": {"row_width": row_config_path,
+                                "voltage_polarity_mult": polarity_config_path},
+            "cost_fpath": COST_H5,
+            "route_table": routes_fp,
+            "save_paths": False,
+            "cost_layers": [{"layer_name": cost_layer,
+                             "multiplier_scalar": 1.2,
+                             "apply_row_mult": True,
+                             "apply_polarity_mult": True}],
+            "friction_layers": [DEFAULT_BARRIER],
+        }
+        config_path = os.path.join(td, 'config.json')
+        with open(config_path, 'w') as f:
+            json.dump(config, f)
+
+        result = runner.invoke(main, ['from-config',
+                                      '-c', config_path, '-v'])
+        msg = ('Failed with error {}'
+               .format(traceback.print_exception(*result.exc_info)))
+        assert result.exit_code == 0, msg
+
+        test = '{}_lcp.csv'.format(os.path.basename(td))
+        test = os.path.join(td, test)
+        test = pd.read_csv(test)
+
+        divisors = []
+        for __, row in test.iterrows():
+            voltage = str(int(row["voltage"]))
+            polarity = row["polarity"]
+            divisors.append(1.2
+                            * row_config[voltage]
+                            * polarity_config[voltage][polarity])
+
+        test["cost"] /= divisors
+
+        test = _permute_results(test)
+        check(truth, test)
+
+    LOGGERS.clear()
+
+
 def execute_pytest(capture='all', flags='-rapP'):
     """Execute module as pytest with detailed summary report.
 
