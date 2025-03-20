@@ -57,20 +57,6 @@ class CostLayer:
             least one of the integer capacity values represented by the
             keys in the ``power_classes`` portion of the transmission
             config).
-        start_indices : tuple
-            Tuple of (row_idx, col_idx) in the **clipped** cost array
-            (see `row_slice` and `col_slice` definitions below)
-            indicating the start position of all paths to compute
-            (typically, this is the centroid of the supply curve cell).
-            Paths will be computed from this start location to each of
-            the ``end_indices``, which are also locations in the cost
-            array (typically transmission feature locations).
-        cost_layers : List[dict]
-            List of dictionaries giving info about the layers in H5 that
-            are summed to determine total costs raster used for routing.
-            See the `cost_layers` property of
-            :obj:`~reVX.config.least_cost_xmission.LeastCostPathsConfig`
-            for more details on this input.
         row_slice, col_slice : slice
             Slices into the cost raster array used to clip the area that
             should be considered when computing a least cost path. This
@@ -78,33 +64,6 @@ class CostLayer:
             computation. Note that the start and end indices must
             be given w.r.t. the cost raster that is "clipped" using
             these slices.
-        cost_multiplier_layer : str, optional
-            Name of layer containing final cost layer spatial
-            multipliers. By default, ``None``.
-        cost_multiplier_scalar : int | float, optional
-            Final cost layer multiplier. By default, ``1``.
-        friction_layers : List[dict] | None, optional
-            List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost. Should
-            have the same format as the `cost_layers` input.
-            By default, ``None``.
-        tracked_layers : dict, optional
-            Dictionary mapping layer names to strings, where the strings
-            are numpy methods that should be applied to the layer along
-            the LCP. For example,
-            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
-            would report the average of ``layer_1`` values along the
-            least cost path and the max of ``layer_2`` values along the
-            least cost path. Examples of numpy methods (non-exhaustive):
-
-                - mean
-                - max
-                - min
-                - mode
-                - median
-                - std
-
-            By default, ``None``, which does not track any extra layers.
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
@@ -177,6 +136,23 @@ class CostLayer:
             influence routing but NOT reported in final cost. Should
             have the same format as the `cost_layers` input.
             By default, ``None``.
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
         cost_multiplier_layer : str, optional
             Name of layer containing final cost layer spatial
             multipliers. By default, ``None``.
