@@ -41,17 +41,261 @@ LCP_AGG_COST_LAYER_NAME = "lcp_agg_costs"
 """Special name reserved for internally-built cost layer"""
 
 
+
+class CostLayer:
+    """Class to build a cot/routing layer from user input"""
+
+    SOFT_BARRIER_VALUE = 1e20
+    """Value used in places where the cost <= 0
+
+    This value is only used if ``use_hard_barrier=False``.
+    """
+
+    def __init__(self, cost_fpath, row_slice, col_slice, cell_size=CELL_SIZE,
+                 use_hard_barrier=True):
+        """
+
+        Parameters
+        ----------
+        cost_fpath : str
+            Full path to HDF5 file containing cost arrays. The cost data
+            layers should be named ``"tie_line_costs_{capacity}MW"``,
+            where ``capacity`` is an integer value representing the
+            capacity of the line (the integer values must matches at
+            least one of the integer capacity values represented by the
+            keys in the ``power_classes`` portion of the transmission
+            config).
+        row_slice, col_slice : slice
+            Slices into the cost raster array used to clip the area that
+            should be considered when computing a least cost path. This
+            can be used to limit the consideration space and speed up
+            computation. Note that the start and end indices must
+            be given w.r.t. the cost raster that is "clipped" using
+            these slices.
+        cell_size : int, optional
+            Side length of each cell, in meters. Cells are assumed to be
+            square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
+        """
+        self._cost_fpath = cost_fpath
+        self._row_slice = row_slice
+        self._col_slice = col_slice
+        self._cell_size = cell_size
+        self._use_hard_barrier = use_hard_barrier
+        self._clip_shape = self.cost = self.mcp_cost = None
+        self.cost_layer_map = {}
+        self.li_cost_layer_map = {}
+        self.friction_layer_map = {}
+        self.tracked_layers = {}
+        self.tracked_layer_map = {}
+
+        with ExclusionLayers(self._cost_fpath) as fh:
+            self._full_shape = fh.shape
+
+    @property
+    def clip_shape(self):
+        """tuple: Shaped of clipped cost raster"""
+        if self._clip_shape is None:
+            if self._row_slice == slice(None):
+                row_shape = self._full_shape[0]
+            else:
+                row_max = (self._row_slice.stop if self._row_slice.stop
+                           else self._full_shape[0])
+                row_min = (self._row_slice.start if self._row_slice.start
+                           else 0)
+                row_shape = row_max - row_min
+
+            if self._col_slice == slice(None):
+                col_shape = self._full_shape[1]
+            else:
+                col_max = (self._col_slice.stop if self._col_slice.stop
+                           else self._full_shape[1])
+                col_min = (self._col_slice.start if self._col_slice.start
+                           else 0)
+                col_shape = col_max - col_min
+
+            self._clip_shape = (row_shape, col_shape)
+
+        return self._clip_shape
+
+    def build(self, cost_layers, friction_layers=None, tracked_layers=None,
+              cost_multiplier_layer=None, cost_multiplier_scalar=1):
+        """Extract clipped cost arrays from exclusion .h5 files
+
+        Parameters
+        ----------
+        cost_layers : List[str]
+            List of layers in H5 that are summed to determine total
+            costs raster used for routing. Costs and distances for each
+            individual layer are also reported (e.g. wet and dry costs).
+            determining path using main cost layer.
+        friction_layers : List[dict] | None, optional
+            List of layers in H5 to be added to the cost raster to
+            influence routing but NOT reported in final cost. Should
+            have the same format as the `cost_layers` input.
+            By default, ``None``.
+        tracked_layers : dict, optional
+            Dictionary mapping layer names to strings, where the strings
+            are numpy methods that should be applied to the layer along
+            the LCP. For example,
+            ``tracked_layers={'layer_1': 'mean', 'layer_2': 'max}``
+            would report the average of ``layer_1`` values along the
+            least cost path and the max of ``layer_2`` values along the
+            least cost path. Examples of numpy methods (non-exhaustive):
+
+                - mean
+                - max
+                - min
+                - mode
+                - median
+                - std
+
+            By default, ``None``, which does not track any extra layers.
+        cost_multiplier_layer : str, optional
+            Name of layer containing final cost layer spatial
+            multipliers. By default, ``None``.
+        cost_multiplier_scalar : int | float, optional
+            Final cost layer multiplier. By default, ``1``.
+        """
+        friction_layers = friction_layers or []
+        logger.debug("Building cost layer with the following inputs:"
+                     f"\n\t- cost_layers: {cost_layers}"
+                     f"\n\t- friction_layers: {friction_layers}"
+                     f"\n\t- cost_multiplier_layer: {cost_multiplier_layer}"
+                     f"\n\t- cost_multiplier_scalar: {cost_multiplier_scalar}")
+
+        with ExclusionLayers(self._cost_fpath) as f:
+            self._build_cost_layer(cost_layers, f, cost_multiplier_layer,
+                                   cost_multiplier_scalar)
+            self._build_mcp_cost(friction_layers, f)
+            self._build_tracked_layers(tracked_layers, f)
+
+    def _build_cost_layer(self, cost_layers, cost_file, cost_multiplier_layer,
+                          cost_multiplier_scalar):
+        """Build out the main cost layer"""
+        self.cost = np.zeros(self.clip_shape, dtype=np.float32)
+        for layer in self._iter_scaled_layers_track_overlap(cost_layers,
+                                                            cost_file):
+            layer_info, cost = layer
+            layer_name = layer_info["layer_name"]
+
+            if layer_info.get("is_invariant", False):
+                self.li_cost_layer_map[layer_name] = cost
+            else:
+                self.cost += cost
+                if layer_info.get("include_in_report", True):
+                    self.cost_layer_map[layer_name] = cost
+
+        if cost_multiplier_layer:
+            _verify_layer_exists(cost_multiplier_layer, cost_file)
+            self.cost *= cost_file[cost_multiplier_layer,
+                                   self._row_slice, self._col_slice]
+        self.cost *= cost_multiplier_scalar
+
+    def _iter_scaled_layers_track_overlap(self, layers, cost_file):
+        """Iterate over layers and track overlap; throw warning"""
+        overlap = np.zeros(self.clip_shape, dtype=np.uint8)
+        layer_names = []
+
+        for layer_info in layers:
+            layer_names.append(layer_info["layer_name"])
+            layer_data = self._extract_and_scale_layer(layer_info, cost_file)
+            overlap += layer_data > 0
+            yield layer_info, layer_data
+
+        if (overlap > 1).any():
+            msg = (f"Found overlap in cost layers: {layer_names}! Some cells "
+                   "may contain double-counted costs. If you intentionally "
+                   "specified cost layers that overlap, please ignore this "
+                   "message. Otherwise, verify that all cost layers are "
+                   "mutually exclusive!")
+            logger.warning(msg)
+            warn(msg)
+
+    def _build_mcp_cost(self, friction_layers, cost_file):
+        """Build out the routing array"""
+        self.mcp_cost = self.cost.copy()
+        for li_cost_layer in self.li_cost_layer_map.values():
+            # normalize by cell size for routing only
+            self.mcp_cost += li_cost_layer / self._cell_size
+
+        friction_costs = np.zeros(self.clip_shape, dtype=np.float32)
+        for layer_info in friction_layers:
+            layer_name = layer_info["layer_name"]
+            friction_layer = self._extract_and_scale_layer(layer_info,
+                                                           cost_file,
+                                                           allow_cl=True)
+            if layer_info.get("include_in_report", False):
+                self.friction_layer_map[layer_name] = friction_layer
+
+            friction_costs += friction_layer
+
+        # Must happen at end of loop so that "lcp_agg_cost"
+        # remains constant
+        self.mcp_cost += friction_costs
+
+        max_val = max(self.SOFT_BARRIER_VALUE, np.max(self.mcp_cost))
+        self.mcp_cost = np.where(self.mcp_cost <= 0,
+                                 -1 if self._use_hard_barrier else max_val,
+                                 self.mcp_cost)
+        logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
+                     np.min(self.mcp_cost), np.max(self.mcp_cost),
+                     np.median(self.mcp_cost))
+
+    def _extract_and_scale_layer(self, layer_info, cost_file, allow_cl=False):
+        """Extract layer based on name and scale according to user input"""
+        cost = self._extract_layer(layer_info["layer_name"], cost_file,
+                                   allow_cl=allow_cl)
+
+        multiplier_layer_name = layer_info.get("multiplier_layer")
+        if multiplier_layer_name:
+            cost *= self._extract_layer(multiplier_layer_name, cost_file,
+                                        allow_cl=allow_cl)
+
+        cost *= layer_info.get("multiplier_scalar", 1)
+        return cost
+
+    def _extract_layer(self, layer_name, cost_file, allow_cl=False):
+        """Extract layer based on name"""
+        if allow_cl and layer_name == LCP_AGG_COST_LAYER_NAME:
+            return self.mcp_cost.copy()
+        _verify_layer_exists(layer_name, cost_file)
+        return cost_file[layer_name, self._row_slice, self._col_slice]
+
+    def _build_tracked_layers(self, tracked_layers, cost_file):
+        """Build out a dictionary of tracked layers"""
+        self.tracked_layers = tracked_layers or {}
+        for tracked_layer, method in self.tracked_layers.items():
+            if getattr(np, method, None) is None:
+                msg = (f"Did not find method {method!r} in numpy! "
+                       f"Skipping tracked layer {tracked_layer!r}")
+                logger.warning(msg)
+                warn(msg)
+                continue
+
+            if tracked_layer not in cost_file.layers:
+                msg = (f"Did not find layer {tracked_layer!r} in cost "
+                       f"file {str(self._cost_fpath)!r}. Skipping...")
+                logger.warning(msg)
+                warn(msg)
+                continue
+
+            layer = cost_file[tracked_layer, self._row_slice, self._col_slice]
+            self.tracked_layer_map[tracked_layer] = layer
+
+
 class TieLineCosts:
     """
     Compute Least Cost Tie-line cost from start location to desired end
     locations
     """
 
-    def __init__(self, cost_fpath, start_indices, cost_layers,
-                 row_slice, col_slice, cost_multiplier_layer=None,
-                 cost_multiplier_scalar=1, friction_layers=None,
-                 tracked_layers=None, cell_size=CELL_SIZE,
-                 use_hard_barrier=True):
+    def __init__(self, cost_fpath, start_indices, cost_layer,
+                 row_slice, col_slice, cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -114,24 +358,14 @@ class TieLineCosts:
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
-        use_hard_barrier : bool, optional
-            Optional flag to treat any cost values of <= 0 as a hard
-            barrier (i.e. no paths can ever cross this). If ``False``,
-            cost values of <= 0 are set to a large value to simulate a
-            strong but permeable barrier. By default, ``True``.
         """
         self._cost_fpath = cost_fpath
         self._start_indices = start_indices
         self._row_slice = row_slice
         self._col_slice = col_slice
         self._cell_size = cell_size
-        self._use_hard_barrier = use_hard_barrier
-        self._clip_shape = self._mcp = self._cost = self._mcp_cost = None
-        self._cost_layer_map = {}
-        self._li_cost_layer_map = {}
-        self._friction_layer_map = {}
-        self._tracked_layers = tracked_layers or {}
-        self._tracked_layer_map = {}
+        self._mcp = None
+        self._cost_layer = cost_layer
         self._cumulative_costs = None
         self.transform = None
         self._full_shape = None
@@ -140,17 +374,14 @@ class TieLineCosts:
         with ExclusionLayers(self._cost_fpath) as fh:
             self._extract_data_from_cost_h5(fh)
 
-        self._clip_costs(cost_layers, friction_layers,
-                         cost_multiplier_layer=cost_multiplier_layer,
-                         cost_multiplier_scalar=cost_multiplier_scalar)
-
         self._null_extras = {}
-        for layer in chain(self._cost_layer_map, self._li_cost_layer_map,
-                           self._friction_layer_map):
+        for layer in chain(self._cost_layer.cost_layer_map,
+                           self._cost_layer.li_cost_layer_map,
+                           self._cost_layer.friction_layer_map):
             self._null_extras[f'{layer}_cost'] = np.nan
             self._null_extras[f'{layer}_dist_km'] = np.nan
-        for layer_name in self._tracked_layer_map:
-            method = self._tracked_layers[layer_name]
+        for layer_name in self._cost_layer.tracked_layer_map:
+            method = self._cost_layer.tracked_layers[layer_name]
             self._null_extras[f'{layer_name}_{method}'] = np.nan
 
     def __repr__(self):
@@ -218,28 +449,6 @@ class TieLineCosts:
         return self._start_indices[1]
 
     @property
-    def cost(self):
-        """
-        Tie line costs array
-
-        Returns
-        -------
-        ndarray
-        """
-        return self._cost
-
-    @property
-    def mcp_cost(self):
-        """
-        Tie line costs array with barrier costs applied for MCP analysis
-
-        Returns
-        -------
-        ndarray
-        """
-        return self._mcp_cost
-
-    @property
     def mcp(self):
         """
         MCP_Geometric instance initialized on mcp_cost array with
@@ -250,198 +459,19 @@ class TieLineCosts:
         MCP_Geometric
         """
         if self._mcp is None:
-            check = self.mcp_cost[self.row, self.col]
+            check = self._cost_layer.mcp_cost[self.row, self.col]
             if check < 0:
                 msg = ("Start idx {} does not have a valid cost!"
                        .format((self.row, self.col)))
                 raise InvalidMCPStartValueError(msg)
 
             logger.debug('Building MCP instance for size {}'
-                         .format(self.mcp_cost.shape))
-            self._mcp = MCP_Geometric(self.mcp_cost)
+                         .format(self._cost_layer.mcp_cost.shape))
+            self._mcp = MCP_Geometric(self._cost_layer.mcp_cost)
             self._cumulative_costs, __ = self._mcp.find_costs(
                 starts=[(self.row, self.col)])
 
         return self._mcp
-
-    @property
-    def clip_shape(self):
-        """
-        Shaped of clipped cost raster
-
-        Returns
-        -------
-        tuple
-        """
-        if self._clip_shape is None:
-            if self._row_slice == slice(None):
-                row_shape = self._full_shape[0]
-            else:
-                row_max = (self._row_slice.stop if self._row_slice.stop
-                           else self._full_shape[0])
-                row_min = (self._row_slice.start if self._row_slice.start
-                           else 0)
-                row_shape = row_max - row_min
-
-            if self._col_slice == slice(None):
-                col_shape = self._full_shape[1]
-            else:
-                col_max = (self._col_slice.stop if self._col_slice.stop
-                           else self._full_shape[1])
-                col_min = (self._col_slice.start if self._col_slice.start
-                           else 0)
-                col_shape = col_max - col_min
-
-            self._clip_shape = (row_shape, col_shape)
-
-        return self._clip_shape
-
-    def _clip_costs(self, cost_layers, friction_layers=None,
-                    cost_multiplier_layer=None, cost_multiplier_scalar=1):
-        """Extract clipped cost arrays from exclusion .h5 files
-
-        Parameters
-        ----------
-        cost_layers : List[str]
-            List of layers in H5 that are summed to determine total
-            costs raster used for routing. Costs and distances for each
-            individual layer are also reported (e.g. wet and dry costs).
-            determining path using main cost layer.
-        friction_layers : List[dict] | None, optional
-            List of layers in H5 to be added to the cost raster to
-            influence routing but NOT reported in final cost. Should
-            have the same format as the `cost_layers` input.
-            By default, ``None``.
-        cost_multiplier_layer : str, optional
-            Name of layer containing final cost layer spatial
-            multipliers. By default, ``None``.
-        cost_multiplier_scalar : int | float, optional
-            Final cost layer multiplier. By default, ``1``.
-        """
-        friction_layers = friction_layers or []
-        logger.debug("Building cost layer with the following inputs:"
-                     f"\n\t- cost_layers: {cost_layers}"
-                     f"\n\t- friction_layers: {friction_layers}"
-                     f"\n\t- cost_multiplier_layer: {cost_multiplier_layer}"
-                     f"\n\t- cost_multiplier_scalar: {cost_multiplier_scalar}")
-
-        with ExclusionLayers(self._cost_fpath) as f:
-            self._build_cost_layer(cost_layers, f, cost_multiplier_layer,
-                                   cost_multiplier_scalar)
-            self._build_mcp_cost(friction_layers, f)
-            self._build_tracked_layers(f)
-
-    def _build_cost_layer(self, cost_layers, cost_file, cost_multiplier_layer,
-                          cost_multiplier_scalar):
-        """Build out the main cost layer"""
-        self._cost = np.zeros(self.clip_shape, dtype=np.float32)
-        for layer in self._iter_scaled_layers_track_overlap(cost_layers,
-                                                            cost_file):
-            layer_info, cost = layer
-            layer_name = layer_info["layer_name"]
-
-            if layer_info.get("is_invariant", False):
-                self._li_cost_layer_map[layer_name] = cost
-            else:
-                self._cost += cost
-                if layer_info.get("include_in_report", True):
-                    self._cost_layer_map[layer_name] = cost
-
-        if cost_multiplier_layer:
-            _verify_layer_exists(cost_multiplier_layer, cost_file)
-            self._cost *= cost_file[cost_multiplier_layer,
-                                    self._row_slice, self._col_slice]
-        self._cost *= cost_multiplier_scalar
-
-    def _iter_scaled_layers_track_overlap(self, layers, cost_file):
-        """Iterate over layers and track overlap; throw warning"""
-        overlap = np.zeros(self.clip_shape, dtype=np.uint8)
-        layer_names = []
-
-        for layer_info in layers:
-            layer_names.append(layer_info["layer_name"])
-            layer_data = self._extract_and_scale_layer(layer_info, cost_file)
-            overlap += layer_data > 0
-            yield layer_info, layer_data
-
-        if (overlap > 1).any():
-            msg = (f"Found overlap in cost layers: {layer_names}! Some cells "
-                   "may contain double-counted costs. If you intentionally "
-                   "specified cost layers that overlap, please ignore this "
-                   "message. Otherwise, verify that all cost layers are "
-                   "mutually exclusive!")
-            logger.warning(msg)
-            warn(msg)
-
-    def _build_mcp_cost(self, friction_layers, cost_file):
-        """Build out the routing array"""
-        self._mcp_cost = self._cost.copy()
-        for li_cost_layer in self._li_cost_layer_map.values():
-            # normalize by cell size for routing only
-            self._mcp_cost += li_cost_layer / self._cell_size
-
-        friction_costs = np.zeros(self.clip_shape, dtype=np.float32)
-        for layer_info in friction_layers:
-            layer_name = layer_info["layer_name"]
-            friction_layer = self._extract_and_scale_layer(layer_info,
-                                                           cost_file,
-                                                           allow_cl=True)
-            if layer_info.get("include_in_report", False):
-                self._friction_layer_map[layer_name] = friction_layer
-
-            friction_costs += friction_layer
-
-        # Must happen at end of loop so that "lcp_agg_cost"
-        # remains constant
-        self._mcp_cost += friction_costs
-
-        max_val = max(1e20, np.max(self._mcp_cost))
-        self._mcp_cost = np.where(self._mcp_cost <= 0,
-                                  -1 if self._use_hard_barrier else max_val,
-                                  self._mcp_cost)
-        logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
-                     np.min(self._mcp_cost), np.max(self._mcp_cost),
-                     np.median(self._mcp_cost))
-
-    def _extract_and_scale_layer(self, layer_info, cost_file, allow_cl=False):
-        """Extract layer based on name and scale according to user input"""
-        cost = self._extract_layer(layer_info["layer_name"], cost_file,
-                                   allow_cl=allow_cl)
-
-        multiplier_layer_name = layer_info.get("multiplier_layer")
-        if multiplier_layer_name:
-            cost *= self._extract_layer(multiplier_layer_name, cost_file,
-                                        allow_cl=allow_cl)
-
-        cost *= layer_info.get("multiplier_scalar", 1)
-        return cost
-
-    def _extract_layer(self, layer_name, cost_file, allow_cl=False):
-        """Extract layer based on name"""
-        if allow_cl and layer_name == LCP_AGG_COST_LAYER_NAME:
-            return self._mcp_cost.copy()
-        _verify_layer_exists(layer_name, cost_file)
-        return cost_file[layer_name, self._row_slice, self._col_slice]
-
-    def _build_tracked_layers(self, cost_file):
-        """Build out a dictionary of tracked layers"""
-        for tracked_layer, method in self._tracked_layers.items():
-            if getattr(np, method, None) is None:
-                msg = (f"Did not find method {method!r} in numpy! "
-                       f"Skipping tracked layer {tracked_layer!r}")
-                logger.warning(msg)
-                warn(msg)
-                continue
-
-            if tracked_layer not in cost_file.layers:
-                msg = (f"Did not find layer {tracked_layer!r} in cost "
-                       f"file {str(self._cost_fpath)!r}. Skipping...")
-                logger.warning(msg)
-                warn(msg)
-                continue
-
-            layer = cost_file[tracked_layer, self._row_slice, self._col_slice]
-            self._tracked_layer_map[tracked_layer] = layer
 
     def _compute_path_length(self, indices: npt.NDArray):
         """
@@ -515,15 +545,16 @@ class TieLineCosts:
             Costs and lengths for individual sub-layers.
         """
         row, col = end_idx
-        check = (row < 0 or col < 0 or row >= self.clip_shape[0]
-                 or col >= self.clip_shape[1])
+        clip_shape = self._cost_layer.clip_shape
+        check = (row < 0 or col < 0 or row >= clip_shape[0]
+                 or col >= clip_shape[1])
         if check:
             msg = ('End point ({}, {}) is out side of clipped cost raster '
-                   'with shape {}'.format(row, col, self.clip_shape))
+                   'with shape {}'.format(row, col, clip_shape))
             logger.exception(msg)
             raise ValueError(msg)
 
-        check = self.mcp_cost[row, col]
+        check = self._cost_layer.mcp_cost[row, col]
         if check < 0:
             msg = ("End idx {} does not have a valid cost!"
                    .format(end_idx))
@@ -541,14 +572,14 @@ class TieLineCosts:
 
         # Extract costs of cells
         # pylint: disable=unsubscriptable-object
-        cell_costs = self.cost[indices[:, 0], indices[:, 1]]
+        cell_costs = self._cost_layer.cost[indices[:, 0], indices[:, 1]]
         length, lens = self._compute_path_length(indices)
 
         # Multiple distance travel through cell by cost and sum it!
         cost = np.sum(cell_costs * lens)
 
-        if self._li_cost_layer_map:
-            li_costs = sum(self._li_cost_layer_map.values())
+        if self._cost_layer.li_cost_layer_map:
+            li_costs = sum(self._cost_layer.li_cost_layer_map.values())
             li_cell_costs = li_costs[indices[:, 0], indices[:, 1]]
             cost += np.sum(li_cell_costs)
 
@@ -576,16 +607,16 @@ class TieLineCosts:
         # Determine partial costs for any cost layers
         cl_results: Dict[str, float] = {}
         logger.debug('Calculating partial costs and lengths for: %s',
-                     list(self._cost_layer_map.keys()))
+                     list(self._cost_layer.cost_layer_map.keys()))
 
         cl_results = _compute_individual_layers_costs_lens(
-            self._cost_layer_map, indices, lens, cl_results,
+            self._cost_layer.cost_layer_map, indices, lens, cl_results,
             scale_by_length=True, cell_size=self._cell_size)
         cl_results = _compute_individual_layers_costs_lens(
-            self._li_cost_layer_map, indices, lens, cl_results,
+            self._cost_layer.li_cost_layer_map, indices, lens, cl_results,
             scale_by_length=False, cell_size=self._cell_size)
         cl_results = _compute_individual_layers_costs_lens(
-            self._friction_layer_map, indices, lens, cl_results,
+            self._cost_layer.friction_layer_map, indices, lens, cl_results,
             scale_by_length=True, cell_size=self._cell_size)
         test_total_cost = sum(layer
                               for layer_name, layer in cl_results.items()
@@ -604,9 +635,10 @@ class TieLineCosts:
     def _compute_tracked_layer_values(self, cl_results, indices):
         """Compute aggregate values over tracked layers. """
 
-        for layer_name, layer_values_arr in self._tracked_layer_map.items():
+        layers = self._cost_layer.tracked_layer_map.items()
+        for layer_name, layer_values_arr in layers:
             layer_values = layer_values_arr[indices[:, 0], indices[:, 1]]
-            method = self._tracked_layers[layer_name]
+            method = self._cost_layer.tracked_layers[layer_name]
             aggregate = getattr(np, method)(layer_values).astype(float)
             cl_results[f'{layer_name}_{method}'] = aggregate
 
@@ -769,12 +801,15 @@ class TieLineCosts:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
-                  col_slice, cost_multiplier_layer=cost_multiplier_layer,
-                  cost_multiplier_scalar=cost_multiplier_scalar,
-                  friction_layers=friction_layers,
-                  tracked_layers=tracked_layers, cell_size=cell_size,
-                  use_hard_barrier=use_hard_barrier)
+        cl = CostLayer(cost_fpath, row_slice, col_slice, cell_size=cell_size,
+                       use_hard_barrier=use_hard_barrier)
+        cl.build(cost_layers=cost_layers, friction_layers=friction_layers,
+                 tracked_layers=tracked_layers,
+                 cost_multiplier_layer=cost_multiplier_layer,
+                 cost_multiplier_scalar=cost_multiplier_scalar)
+
+        tlc = cls(cost_fpath, start_indices, cl, row_slice, col_slice,
+                  cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
 
@@ -793,11 +828,10 @@ class TransCapCosts(TieLineCosts):
     _CHECK_FOR_INVALID_REGION = True
 
     def __init__(self, cost_fpath, sc_point, features, capacity_class,
-                 cost_layers, radius=None, xmission_config=None,
-                 cost_multiplier_layer=None, cost_multiplier_scalar=1,
+                 cost_layer, start_indices, row_slice, col_slice,
+                 xmission_config=None,
                  iso_regions_layer_name=ISO_H5_LAYER_NAME,
-                 friction_layers=None, tracked_layers=None,
-                 cell_size=CELL_SIZE, use_hard_barrier=True):
+                 cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -859,25 +893,12 @@ class TransCapCosts(TieLineCosts):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
-        use_hard_barrier : bool, optional
-            Optional flag to treat any cost values of <= 0 as a hard
-            barrier (i.e. no paths can ever cross this). If ``False``,
-            cost values of <= 0 are set to a large value to simulate a
-            strong but permeable barrier. By default, ``True``.
         """
         self._sc_point = sc_point
         self._region_layer = None
         self._iso_regions_layer_name = iso_regions_layer_name
-        start_indices, row_slice, col_slice = self._get_clipping_slices(
-            cost_fpath, sc_point[["row", "col"]].values, radius=radius)
-        super().__init__(cost_fpath, start_indices, cost_layers, row_slice,
-                         col_slice,
-                         cost_multiplier_layer=cost_multiplier_layer,
-                         cost_multiplier_scalar=cost_multiplier_scalar,
-                         friction_layers=friction_layers,
-                         tracked_layers=tracked_layers,
-                         cell_size=cell_size,
-                         use_hard_barrier=use_hard_barrier)
+        super().__init__(cost_fpath, start_indices, cost_layer, row_slice,
+                         col_slice, cell_size=cell_size)
 
         self._config = parse_config(xmission_config=xmission_config)
         self._capacity_class = self._config._parse_cap_class(capacity_class)
@@ -942,11 +963,13 @@ class TransCapCosts(TieLineCosts):
             row_bounds = [self._row_slice.start
                           if self._row_slice.start else 0,
                           self._row_slice.stop - 1
-                          if self._row_slice.stop else self.clip_shape[0] - 1]
+                          if self._row_slice.stop
+                          else self._cost_layer.clip_shape[0] - 1]
             col_bounds = [self._col_slice.start
                           if self._col_slice.start else 0,
                           self._col_slice.stop - 1
-                          if self._col_slice.stop else self.clip_shape[1] - 1]
+                          if self._col_slice.stop
+                          else self._cost_layer.clip_shape[1] - 1]
             x, y = rasterio.transform.xy(self.transform, row_bounds,
                                          col_bounds)
             self._clip_mask = Polygon([[x[0], y[0]],
@@ -1208,14 +1231,15 @@ class TransCapCosts(TieLineCosts):
 
         row -= self.row_offset
         col -= self.col_offset
+        clip_shape = self._cost_layer.clip_shape
         if not clip:
-            clip = (row < 0 or row >= self.clip_shape[0]
-                    or col < 0 or col >= self.clip_shape[1])
+            clip = (row < 0 or row >= clip_shape[0]
+                    or col < 0 or col >= clip_shape[1])
             if clip:
                 row, col = self._get_trans_line_idx(trans_line, clip=clip)
         else:
-            row = min(max(row, 0), self.clip_shape[0] - 1)
-            col = min(max(col, 0), self.clip_shape[1] - 1)
+            row = min(max(row, 0), clip_shape[0] - 1)
+            col = min(max(col, 0), clip_shape[1] - 1)
 
         return [row, col]
 
@@ -1567,15 +1591,23 @@ class TransCapCosts(TieLineCosts):
                              save_paths))
 
         try:
+            out = cls._get_clipping_slices(cost_fpath,
+                                           sc_point[['row', 'col']].values,
+                                           radius=radius)
+            start_indices, row_slice, col_slice = out
+            cl = CostLayer(cost_fpath, row_slice, col_slice,
+                           cell_size=cell_size,
+                           use_hard_barrier=use_hard_barrier)
+            cl.build(cost_layers=cost_layers, friction_layers=friction_layers,
+                     tracked_layers=tracked_layers,
+                     cost_multiplier_layer=cost_multiplier_layer,
+                     cost_multiplier_scalar=cost_multiplier_scalar)
             tcc = cls(cost_fpath, sc_point, features, capacity_class,
-                      cost_layers, radius=radius,
+                      cl, start_indices=start_indices,
+                      row_slice=row_slice, col_slice=col_slice,
                       xmission_config=xmission_config,
-                      cost_multiplier_layer=cost_multiplier_layer,
-                      cost_multiplier_scalar=cost_multiplier_scalar,
                       iso_regions_layer_name=iso_regions_layer_name,
-                      tracked_layers=tracked_layers,
-                      friction_layers=friction_layers,
-                      cell_size=cell_size, use_hard_barrier=use_hard_barrier)
+                      cell_size=cell_size)
 
             features = tcc.compute(min_line_length=min_line_length,
                                    save_paths=save_paths,
@@ -1628,8 +1660,9 @@ class RegionalTransCapCosts(TransCapCosts):
         window_transform = rasterio.windows.transform(window=window,
                                                       transform=self.transform)
 
+        out_shape = self._cost_layer.cost.shape
         mask = rasterio.features.geometry_mask([trans_line.geometry],
-                                               out_shape=self.cost.shape,
+                                               out_shape=out_shape,
                                                transform=window_transform,
                                                invert=True)
         rows, cols = np.where(mask)
@@ -1682,10 +1715,8 @@ class ReinforcementLineCosts(TieLineCosts):
     greenfield cost of the ``cost_layers`` input is used.
     """
     def __init__(self, transmission_lines, cost_fpath, start_indices,
-                 line_cap_mw, cost_layers, row_slice, col_slice,
-                 cost_multiplier_layer=None, cost_multiplier_scalar=1,
-                 friction_layers=None, tracked_layers=None,
-                 cell_size=CELL_SIZE, use_hard_barrier=True):
+                 line_cap_mw, cost_layer, row_slice, col_slice,
+                 cell_size=CELL_SIZE):
         """
 
         Parameters
@@ -1755,24 +1786,14 @@ class ReinforcementLineCosts(TieLineCosts):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
-        use_hard_barrier : bool, optional
-            Optional flag to treat any cost values of <= 0 as a hard
-            barrier (i.e. no paths can ever cross this). If ``False``,
-            cost values of <= 0 are set to a large value to simulate a
-            strong but permeable barrier. By default, ``True``.
         """
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
-                         cost_layers=cost_layers,
+                         cost_layer=cost_layer,
                          row_slice=row_slice, col_slice=col_slice,
-                         cost_multiplier_layer=cost_multiplier_layer,
-                         cost_multiplier_scalar=cost_multiplier_scalar,
-                         friction_layers=friction_layers,
-                         tracked_layers=tracked_layers,
-                         cell_size=cell_size,
-                         use_hard_barrier=use_hard_barrier)
+                         cell_size=cell_size)
         self._null_extras = {}
 
-        self._cost = self._cost / line_cap_mw
+        self._cost_layer.cost =  self._cost_layer.cost / line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
             for capacity_mw, lines in transmission_lines.items():
                 t_lines = np.where(lines)
@@ -1780,8 +1801,9 @@ class ReinforcementLineCosts(TieLineCosts):
                 costs = f[cost_layer, row_slice, col_slice][t_lines]
                 # allow crossing of barriers along existing transmission lines
                 costs[costs <= 0] = 1
-                self._mcp_cost[t_lines] = costs * 1e-9  # 0 not allowed
-                self._cost[t_lines] = costs / capacity_mw
+                routing_cost = costs * 1e-9  # 0 not allowed
+                self._cost_layer.mcp_cost[t_lines] = routing_cost
+                self._cost_layer.cost[t_lines] = costs / capacity_mw
 
     def _compute_by_layer_results(self, *__, **___):
         """By-layer results not supported for reinforcement run. """
@@ -1892,13 +1914,14 @@ class ReinforcementLineCosts(TieLineCosts):
             reinforcement line path.
         """
         ts = time.time()
+        cl = CostLayer(cost_fpath, row_slice, col_slice,
+                       cell_size=cell_size, use_hard_barrier=use_hard_barrier)
+        cl.build(cost_layers=cost_layers, friction_layers=friction_layers,
+                 tracked_layers=tracked_layers,
+                 cost_multiplier_layer=cost_multiplier_layer,
+                 cost_multiplier_scalar=cost_multiplier_scalar)
         tlc = cls(transmission_lines, cost_fpath, start_indices,
-                  line_cap_mw, cost_layers, row_slice, col_slice,
-                  cost_multiplier_layer=cost_multiplier_layer,
-                  cost_multiplier_scalar=cost_multiplier_scalar,
-                  friction_layers=friction_layers,
-                  tracked_layers=tracked_layers, cell_size=cell_size,
-                  use_hard_barrier=use_hard_barrier)
+                  line_cap_mw, cl, row_slice, col_slice, cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
         tie_lines['cost'] = tie_lines['cost'] * 0.5
