@@ -222,12 +222,12 @@ class LeastCostXmissionConfig(AnalysisConfig):
             - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
               this layer by before summing it with the others. Default
               is ``1``.
-            - "is_invariant": (OPTIONAL) Boolean flag indicating wether
+            - "is_invariant": (OPTIONAL) Boolean flag indicating whether
               this layer is length invariant (i.e. should NOT be
               multiplied by path length; values should be $). Default is
               ``False``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
-              wether the costs and distances for this layer should be
+              whether the costs and distances for this layer should be
               output in the final LCP table. Default is ``True``.
 
         """
@@ -257,7 +257,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
               this layer by before summing it with the others. Default
               is ``1``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
-              wether the routing and distances for this layer should be
+              whether the routing and distances for this layer should be
               output in the final LCP table. Default is ``False``.
 
         """
@@ -305,12 +305,22 @@ class LeastCostXmissionConfig(AnalysisConfig):
 
         return self._sc_point_gids
 
+    @property
+    def use_hard_barrier(self):
+        """
+        Optional flag to treat any cost values of <= 0 as a hard barrier
+        (i.e. no paths can ever cross this). If False, the cost values
+        of <= 0 are set to a large value to simulate a strong but
+        permeable barrier.
+        """
+        return self.get('use_hard_barrier', True)
+
 
 class LeastCostPathsConfig(AnalysisConfig):
     """Config framework for Least Cost Paths"""
 
     NAME = 'LeastCostPaths'
-    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'cost_layers')
+    REQUIREMENTS = ('cost_fpath', 'route_table', 'cost_layers')
 
     def __init__(self, config):
         """
@@ -365,11 +375,18 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self['cost_fpath']
 
     @property
-    def features_fpath(self):
+    def route_table(self):
         """
-        Transmission feature GeoPackage
+        Path to CSV file defining the start and
+        end points of all routes. Must have the following columns:
+
+            "start_lat": Stating point latitude
+            "start_lon": Stating point longitude
+            "end_lat": Ending point latitude
+            "end_lon": Ending point longitude
+
         """
-        return self['features_fpath']
+        return self['route_table']
 
     @property
     def network_nodes_fpath(self):
@@ -412,13 +429,36 @@ class LeastCostPathsConfig(AnalysisConfig):
             - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
               this layer by before summing it with the others. Default
               is ``1``.
-            - "is_invariant": (OPTIONAL) Boolean flag indicating wether
+            - "is_invariant": (OPTIONAL) Boolean flag indicating whether
               this layer is length invariant (i.e. should NOT be
               multiplied by path length; values should be $). Default is
               ``False``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
-              wether the costs and distances for this layer should be
+              whether the costs and distances for this layer should be
               output in the final LCP table. Default is ``True``.
+            - "apply_row_mult": (OPTIONAL) Boolean flag indicating
+              whether the right-of-way width multiplier should be
+              applied for this layer. If ``True``, then the xmission
+              config should have a "row_width" dictionary that maps
+              voltages to right-of-way width multipliers. Also, the
+              routing table input should have a "voltage" entry for
+              every route. Every "voltage" value in the routing table
+              must be given in the "row_width" dictionary in the
+              xmission config, otherwise an error will be thrown.
+              Default is ``False``.
+            - "apply_polarity_mult": (OPTIONAL) Boolean flag indicating
+              whether the polarity multiplier should be applied for this
+              layer. If ``True``, then the xmission config should have a
+              "voltage_polarity_mult" dictionary that maps voltages to
+              a new dictionary, the latter mapping polarities to
+              multipliers. For example, a valid "voltage_polarity_mult"
+              dictionary might be ``{"138": {"ac": 1.15, "dc": 2}}``.
+              In addition, the routing table input should have a
+              "voltage" **and** a "polarity" entry for every route.
+              Every "voltage" + "polarity" combination in the routing
+              table must be given in the "voltage_polarity_mult"
+              dictionary in the xmission config, otherwise an error will
+              be thrown. Default is ``False``.
 
         """
         return self['cost_layers']
@@ -445,8 +485,31 @@ class LeastCostPathsConfig(AnalysisConfig):
               this layer by before summing it with the others. Default
               is ``1``.
             - "include_in_report": (OPTIONAL) Boolean flag indicating
-              wether the routing and distances for this layer should be
+              whether the routing and distances for this layer should be
               output in the final LCP table. Default is ``False``.
+            - "apply_row_mult": (OPTIONAL) Boolean flag indicating
+              whether the right-of-way width multiplier should be
+              applied for this layer. If ``True``, then the xmission
+              config should have a "row_width" dictionary that maps
+              voltages to right-of-way width multipliers. Also, the
+              routing table input should have a "voltage" entry for
+              every route. Every "voltage" value in the routing table
+              must be given in the "row_width" dictionary in the
+              xmission config, otherwise an error will be thrown.
+              Default is ``False``.
+            - "apply_polarity_mult": (OPTIONAL) Boolean flag indicating
+              whether the polarity multiplier should be applied for this
+              layer. If ``True``, then the xmission config should have a
+              "voltage_polarity_mult" dictionary that maps voltages to
+              a new dictionary, the latter mapping polarities to
+              multipliers. For example, a valid "voltage_polarity_mult"
+              dictionary might be ``{"138": {"ac": 1.15, "dc": 2}}``.
+              In addition, the routing table input should have a
+              "voltage" **and** a "polarity" entry for every route.
+              Every "voltage" + "polarity" combination in the routing
+              table must be given in the "voltage_polarity_mult"
+              dictionary in the xmission config, otherwise an error will
+              be thrown. Default is ``False``.
 
         """
         # self.get('friction_layers', []) does not work!!
@@ -501,7 +564,7 @@ class LeastCostPathsConfig(AnalysisConfig):
     @property
     def is_reinforcement_run(self):
         """
-        Boolean flag indicating wether this run is for reinforcement
+        Boolean flag indicating whether this run is for reinforcement
         path computation
         """
         return (self.network_nodes_fpath is not None
@@ -535,3 +598,13 @@ class LeastCostPathsConfig(AnalysisConfig):
         lengths
         """
         return self.get('save_paths', False)
+
+    @property
+    def use_hard_barrier(self):
+        """
+        Optional flag to treat any cost values of <= 0 as a hard barrier
+        (i.e. no paths can ever cross this). If ``False``, cost values
+        of <= 0 are set to a large value to simulate a strong but
+        permeable barrier.
+        """
+        return self.get('use_hard_barrier', True)

@@ -8,6 +8,7 @@ import click
 import logging
 import os
 import json
+from math import ceil
 from pathlib import Path
 from warnings import warn
 
@@ -78,7 +79,7 @@ def run_local(ctx, config):
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
                cost_fpath=config.cost_fpath,
-               features_fpath=config.features_fpath,
+               route_table=config.route_table,
                cost_layers=config.cost_layers,
                network_nodes_fpath=config.network_nodes_fpath,
                transmission_lines_fpath=config.transmission_lines_fpath,
@@ -97,7 +98,8 @@ def run_local(ctx, config):
                verbose=config.log_level,
                friction_layers=config.friction_layers,
                tracked_layers=config.tracked_layers,
-               cell_size=config.cell_size)
+               cell_size=config.cell_size,
+               use_hard_barrier=config.use_hard_barrier)
 
 
 @main.command()
@@ -148,7 +150,7 @@ def from_config(ctx, config, verbose):
               required=True,
               help=("Path to h5 file with cost rasters and other required "
                     "layers"))
-@click.option('--features_fpath', '-feats', required=True,
+@click.option('--route_table', '-routes', required=True,
               type=click.Path(exists=True),
               help="Path to GeoPackage with transmission features")
 @click.option('--cost-layers', '-cl', required=True, multiple=True,
@@ -231,13 +233,16 @@ def from_config(ctx, config, verbose):
               show_default=True, default=CELL_SIZE,
               help=("Side length of a single cell in meters. Cells are "
                     "assumed to be square. Default is"))
+@click.option('--use_hard_barrier', '-uhb', is_flag=True,
+              help='Optional flag to treat any cost values of <= 0 as a '
+                   'hard barrier')
 @click.pass_context
-def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
+def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
           transmission_lines_fpath, xmission_config, capacity_class,
           clip_buffer, start_index, step_index, cost_multiplier_layer,
           cost_multiplier_scalar, max_workers, region_identifier_column,
           save_paths, out_dir, log_dir, ss_id_col, verbose, friction_layers,
-          tracked_layers, cell_size):
+          tracked_layers, cell_size, use_hard_barrier):
     """
     Run Least Cost Paths on local hardware
     """
@@ -267,40 +272,52 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
 
-    kwargs = {"clip_buffer": int(clip_buffer),
+    xmission_config = XmissionConfig(config=xmission_config)
+    logger.debug('Xmission Config: {}'.format(xmission_config))
+    kwargs = {"xmission_config": xmission_config,
+              "clip_buffer": int(clip_buffer),
               "cost_multiplier_layer": cost_multiplier_layer,
               "cost_multiplier_scalar": cost_multiplier_scalar,
               "save_paths": save_paths,
               "max_workers": max_workers,
               "friction_layers": friction_layers,
               "tracked_layers": tracked_layers,
-              "cell_size": cell_size}
+              "cell_size": cell_size,
+              "use_hard_barrier": use_hard_barrier}
 
     if is_reinforcement_run:
         logger.info('Detected reinforcement run!')
-        xmission_config = XmissionConfig(config=xmission_config)
-        kwargs["xmission_config"] = xmission_config
         cc_str = xmission_config._parse_cap_class(capacity_class)
         cap = xmission_config['power_classes'][cc_str]
         for layer_info in cost_layers:
             layer_info["layer_name"] = layer_info["layer_name"].format(cap)
-        logger.debug('Xmission Config: {}'.format(xmission_config))
-        features = gpd.read_file(network_nodes_fpath)
-        features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
-        kwargs["indices"] = features.index[start_index::step_index]
+        inds = _get_indices(network_nodes_fpath, sort_cols="geometry",
+                            start_ind=start_index, n_chunks=step_index)
+        if len(inds) == 0:
+            logger.info('No indices to process: %s', str(inds))
+            return
+        kwargs["indices"] = inds
         kwargs["ss_id_col"] = ss_id_col
-        least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
+        least_costs = ReinforcementPaths.run(cost_fpath, route_table,
                                              network_nodes_fpath,
                                              region_identifier_column,
                                              transmission_lines_fpath,
                                              capacity_class, cost_layers,
                                              **kwargs)
     else:
-        features = gpd.read_file(features_fpath)
-        features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
-        kwargs["indices"] = features.index[start_index::step_index]
-        least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
+        inds = _get_indices(route_table,
+                            sort_cols=["start_lat", "start_lon"],
+                            start_ind=start_index, n_chunks=step_index)
+        if len(inds) == 0:
+            logger.info('No indices to process: %s', str(inds))
+            return
+        kwargs["indices"] = inds
+        least_costs = LeastCostPaths.run(cost_fpath, route_table,
                                          cost_layers, **kwargs)
+
+    if least_costs is None or least_costs.empty:
+        logger.info('No paths found')
+        return
 
     fpath_out = os.path.join(out_dir, f'{name}_lcp')
     if save_paths:
@@ -596,7 +613,7 @@ def get_node_cmd(config, start_index=0):
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-cost {}'.format(SLURM.s(config.cost_fpath)),
-            '-feats {}'.format(SLURM.s(config.features_fpath)),
+            '-routes {}'.format(SLURM.s(config.route_table)),
             '-nn {}'.format(SLURM.s(config.network_nodes_fpath)),
             '-tl {}'.format(SLURM.s(config.transmission_lines_fpath)),
             '-rid {}'.format(SLURM.s(config.region_identifier_column)),
@@ -620,6 +637,9 @@ def get_node_cmd(config, start_index=0):
 
     if config.save_paths:
         args.append('-paths')
+
+    if config.use_hard_barrier:
+        args.append('-uhb')
 
     if config.tracked_layers:
         args.append('-trl {}'.format(SLURM.s(config.tracked_layers)))
@@ -675,6 +695,15 @@ def eagle(config, start_index=0):
 
     click.echo(msg)
     logger.info(msg)
+
+
+def _get_indices(features_fp, sort_cols, start_ind, n_chunks):
+    """Get indices of points that are sorted by location"""
+    features = gpd.read_file(features_fp)
+    features = features.sort_values(sort_cols)
+
+    chunk_size = int(ceil(len(features) / n_chunks))
+    return features.index[start_ind * chunk_size:(start_ind + 1) * chunk_size]
 
 
 if __name__ == '__main__':

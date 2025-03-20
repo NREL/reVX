@@ -44,7 +44,8 @@ LCP_AGG_COST_LAYER_NAME = "lcp_agg_costs"
 
 class CostLayer:
 
-    def __init__(self, cost_fpath, row_slice, col_slice, cell_size=CELL_SIZE):
+    def __init__(self, cost_fpath, row_slice, col_slice, cell_size=CELL_SIZE,
+                 use_hard_barrier=True):
         """
         Parameters
         ----------
@@ -107,11 +108,17 @@ class CostLayer:
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
         """
         self._cost_fpath = cost_fpath
         self._row_slice = row_slice
         self._col_slice = col_slice
         self._cell_size = cell_size
+        self._use_hard_barrier = use_hard_barrier
         self._clip_shape = self.cost = self.mcp_cost = None
         self.cost_layer_map = {}
         self.li_cost_layer_map = {}
@@ -253,13 +260,13 @@ class CostLayer:
         # remains constant
         self.mcp_cost += friction_costs
 
-        # TODO: Add user option of specifying wether 0 and neg should
-        # be hard barriers.
-        max_val = max(1e15, np.max(self.mcp_cost))
-        self.mcp_cost = np.where(self.mcp_cost <= 0, max_val, self.mcp_cost)
+        max_val = max(1e20, np.max(self._mcp_cost))
+        self._mcp_cost = np.where(self._mcp_cost <= 0,
+                                  -1 if self._use_hard_barrier else max_val,
+                                  self._mcp_cost)
         logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
-                     np.min(self.mcp_cost), np.max(self.mcp_cost),
-                     np.median(self.mcp_cost))
+                     np.min(self._mcp_cost), np.max(self._mcp_cost),
+                     np.median(self._mcp_cost))
 
     def _extract_and_scale_layer(self, layer_info, cost_file, allow_cl=False):
         """Extract layer based on name and scale according to user input"""
@@ -373,6 +380,11 @@ class TieLineCosts:
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
         """
         self._cost_fpath = cost_fpath
         self._start_indices = start_indices
@@ -648,6 +660,13 @@ class TieLineCosts:
     #    logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
     #                 np.min(self._mcp_cost), np.max(self._mcp_cost),
     #                 np.median(self._mcp_cost))
+        # max_val = max(1e20, np.max(self._mcp_cost))
+        # self._mcp_cost = np.where(self._mcp_cost <= 0,
+        #                           -1 if self._use_hard_barrier else max_val,
+        #                           self._mcp_cost)
+        # logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
+        #              np.min(self._mcp_cost), np.max(self._mcp_cost),
+        #              np.median(self._mcp_cost))
 
     # def _extract_and_scale_layer(self, layer_info, cost_file, allow_cl=False):
     #     """Extract layer based on name and scale according to user input"""
@@ -920,7 +939,7 @@ class TieLineCosts:
 
         final_output = {'length_km': lengths, 'cost': costs,
                         'poi_lat': poi_lats, 'poi_lon': poi_lons,
-                        'row': rows, 'col': cols}
+                        'end_row': rows, 'end_col': cols}
         final_output.update(extras)
         tie_lines = pd.DataFrame(final_output)
 
@@ -935,7 +954,7 @@ class TieLineCosts:
             row_slice, col_slice, cost_multiplier_layer=None,
             cost_multiplier_scalar=1, save_paths=False,
             friction_layers=None, tracked_layers=None,
-            cell_size=CELL_SIZE):
+            cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Compute least cost tie-line path to all features to be connected
         a single supply curve point.
@@ -1004,6 +1023,11 @@ class TieLineCosts:
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -1051,10 +1075,10 @@ class TransCapCosts(TieLineCosts):
             Supply Curve Point meta data
         features : pandas.DataFrame
             Table of transmission features to connect to supply curve
-            point. Must have "row" and "col" columns that point to the
-            indices of the feature **in the original cost array**. Must
-            also have a "category" column that distinguishes between
-            substations and transmission lines.
+            point. Must have "end_row" and "end_col" columns that point
+            to the indices of the feature **in the original cost
+            array**. Must also have a "category" column that
+            distinguishes between substations and transmission lines.
         capacity_class : int | str
             Transmission feature ``capacity_class`` class. Used to look
             up connection costs.
@@ -1103,6 +1127,11 @@ class TransCapCosts(TieLineCosts):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
         """
         self._sc_point = sc_point
         self._region_layer = None
@@ -1396,10 +1425,10 @@ class TransCapCosts(TieLineCosts):
                                                          errors='ignore')
 
         if self.row_offset is not None:
-            features['row'] -= self.row_offset
+            features['end_row'] -= self.row_offset
 
         if self.col_offset is not None:
-            features['col'] -= self.col_offset
+            features['end_col'] -= self.col_offset
 
         return features.reset_index(drop=True)
 
@@ -1505,7 +1534,7 @@ class TransCapCosts(TieLineCosts):
             if t_line:
                 feat_idx = self._get_trans_line_idx(feat)
             else:
-                feat_idx = feat[['row', 'col']].values
+                feat_idx = feat[['end_row', 'end_col']].values
 
             logger.debug('Feat index is: %s', feat_idx)
 
@@ -1517,8 +1546,8 @@ class TransCapCosts(TieLineCosts):
             logger.debug('Adding row, col, poi_gid, region: %d, %d, %d, %s',
                          row, col, poi_gid, str(region))
 
-            features.loc[index, 'row'] = row
-            features.loc[index, 'col'] = col
+            features.loc[index, 'end_row'] = row
+            features.loc[index, 'end_col'] = col
             features.loc[index, 'poi_gid'] = poi_gid
             features.loc[index, 'region'] = region
 
@@ -1578,7 +1607,7 @@ class TransCapCosts(TieLineCosts):
             features = gpd.GeoDataFrame(features, geometry=paths,
                                         crs=self._cost_crs)
 
-        for int_col in ["row", "col", "poi_gid"]:
+        for int_col in ["end_row", "end_col", "poi_gid"]:
             features[int_col] = features[int_col].astype("Int64")
         return features
 
@@ -1701,7 +1730,8 @@ class TransCapCosts(TieLineCosts):
             cost_multiplier_scalar=1, iso_regions_layer_name=ISO_H5_LAYER_NAME,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
             simplify_geo=None, friction_layers=None, tracked_layers=None,
-            length_mult_kind="linear", cell_size=CELL_SIZE):
+            length_mult_kind="linear", cell_size=CELL_SIZE,
+            use_hard_barrier=True):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1715,10 +1745,10 @@ class TransCapCosts(TieLineCosts):
             Supply Curve Point meta data
         features : pandas.DataFrame
             Table of transmission features to connect to supply curve
-            point. Must have "row" and "col" columns that point to the
-            indices of the feature **in the original cost array**. Must
-            also have a "category" column that distinguishes between
-            substations and transmission lines.
+            point. Must have "end_row" and "end_col" columns that point
+            to the indices of the feature **in the original cost
+            array**. Must also have a "category" column that
+            distinguishes between substations and transmission lines.
         capacity_class : int | str
             Transmission feature capacity_class class
         cost_layers : List[dict]
@@ -1779,6 +1809,11 @@ class TransCapCosts(TieLineCosts):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
@@ -1987,6 +2022,11 @@ class ReinforcementLineCosts(TieLineCosts):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
         """
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
                          cost_layer=cost_layer,
@@ -2018,7 +2058,7 @@ class ReinforcementLineCosts(TieLineCosts):
             line_cap_mw, cost_layers, row_slice, col_slice,
             cost_multiplier_layer=None, cost_multiplier_scalar=1,
             save_paths=False, friction_layers=None, tracked_layers=None,
-            cell_size=CELL_SIZE):
+            cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Compute reinforcement line path to all features to be connected
         a single supply curve point.
@@ -2100,6 +2140,11 @@ class ReinforcementLineCosts(TieLineCosts):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
+        use_hard_barrier : bool, optional
+            Optional flag to treat any cost values of <= 0 as a hard
+            barrier (i.e. no paths can ever cross this). If ``False``,
+            cost values of <= 0 are set to a large value to simulate a
+            strong but permeable barrier. By default, ``True``.
 
         Returns
         -------
