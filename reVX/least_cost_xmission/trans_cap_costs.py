@@ -41,7 +41,6 @@ LCP_AGG_COST_LAYER_NAME = "lcp_agg_costs"
 """Special name reserved for internally-built cost layer"""
 
 
-
 class CostLayer:
     """Class to build a cot/routing layer from user input"""
 
@@ -1793,7 +1792,7 @@ class ReinforcementLineCosts(TieLineCosts):
                          cell_size=cell_size)
         self._null_extras = {}
 
-        self._cost_layer.cost =  self._cost_layer.cost / line_cap_mw
+        self._cost_layer.cost = self._cost_layer.cost / line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
             for capacity_mw, lines in transmission_lines.items():
                 t_lines = np.where(lines)
