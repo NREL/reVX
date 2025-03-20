@@ -436,6 +436,29 @@ class LeastCostPathsConfig(AnalysisConfig):
             - "include_in_report": (OPTIONAL) Boolean flag indicating
               whether the costs and distances for this layer should be
               output in the final LCP table. Default is ``True``.
+            - "apply_row_mult": (OPTIONAL) Boolean flag indicating
+              whether the right-of-way width multiplier should be
+              applied for this layer. If ``True``, then the xmission
+              config should have a "row_width" dictionary that maps
+              voltages to right-of-way width multipliers. Also, the
+              routing table input should have a "voltage" entry for
+              every route. Every "voltage" value in the routing table
+              must be given in the "row_width" dictionary in the
+              xmission config, otherwise an error will be thrown.
+              Default is ``False``.
+            - "apply_polarity_mult": (OPTIONAL) Boolean flag indicating
+              whether the polarity multiplier should be applied for this
+              layer. If ``True``, then the xmission config should have a
+              "voltage_polarity_mult" dictionary that maps voltages to
+              a new dictionary, the latter mapping polarities to
+              multipliers. For example, a valid "voltage_polarity_mult"
+              dictionary might be ``{"138": {"ac": 1.15, "dc": 2}}``.
+              In addition, the routing table input should have a
+              "voltage" **and** a "polarity" entry for every route.
+              Every "voltage" + "polarity" combination in the routing
+              table must be given in the "voltage_polarity_mult"
+              dictionary in the xmission config, otherwise an error will
+              be thrown. Default is ``False``.
 
         """
         return self['cost_layers']
@@ -464,6 +487,29 @@ class LeastCostPathsConfig(AnalysisConfig):
             - "include_in_report": (OPTIONAL) Boolean flag indicating
               whether the routing and distances for this layer should be
               output in the final LCP table. Default is ``False``.
+            - "apply_row_mult": (OPTIONAL) Boolean flag indicating
+              whether the right-of-way width multiplier should be
+              applied for this layer. If ``True``, then the xmission
+              config should have a "row_width" dictionary that maps
+              voltages to right-of-way width multipliers. Also, the
+              routing table input should have a "voltage" entry for
+              every route. Every "voltage" value in the routing table
+              must be given in the "row_width" dictionary in the
+              xmission config, otherwise an error will be thrown.
+              Default is ``False``.
+            - "apply_polarity_mult": (OPTIONAL) Boolean flag indicating
+              whether the polarity multiplier should be applied for this
+              layer. If ``True``, then the xmission config should have a
+              "voltage_polarity_mult" dictionary that maps voltages to
+              a new dictionary, the latter mapping polarities to
+              multipliers. For example, a valid "voltage_polarity_mult"
+              dictionary might be ``{"138": {"ac": 1.15, "dc": 2}}``.
+              In addition, the routing table input should have a
+              "voltage" **and** a "polarity" entry for every route.
+              Every "voltage" + "polarity" combination in the routing
+              table must be given in the "voltage_polarity_mult"
+              dictionary in the xmission config, otherwise an error will
+              be thrown. Default is ``False``.
 
         """
         # self.get('friction_layers', []) does not work!!
