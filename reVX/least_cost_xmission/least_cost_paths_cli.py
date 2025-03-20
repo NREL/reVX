@@ -271,7 +271,10 @@ def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
 
-    kwargs = {"clip_buffer": int(clip_buffer),
+    xmission_config = XmissionConfig(config=xmission_config)
+    logger.debug('Xmission Config: {}'.format(xmission_config))
+    kwargs = {"xmission_config": xmission_config,
+              "clip_buffer": int(clip_buffer),
               "cost_multiplier_layer": cost_multiplier_layer,
               "cost_multiplier_scalar": cost_multiplier_scalar,
               "save_paths": save_paths,
@@ -283,13 +286,10 @@ def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
 
     if is_reinforcement_run:
         logger.info('Detected reinforcement run!')
-        xmission_config = XmissionConfig(config=xmission_config)
-        kwargs["xmission_config"] = xmission_config
         cc_str = xmission_config._parse_cap_class(capacity_class)
         cap = xmission_config['power_classes'][cc_str]
         for layer_info in cost_layers:
             layer_info["layer_name"] = layer_info["layer_name"].format(cap)
-        logger.debug('Xmission Config: {}'.format(xmission_config))
         inds = _get_indices(network_nodes_fpath, sort_cols="geometry",
                             start_ind=start_index, n_chunks=step_index)
         if len(inds) == 0:
