@@ -380,11 +380,6 @@ class TieLineCosts:
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
-        use_hard_barrier : bool, optional
-            Optional flag to treat any cost values of <= 0 as a hard
-            barrier (i.e. no paths can ever cross this). If ``False``,
-            cost values of <= 0 are set to a large value to simulate a
-            strong but permeable barrier. By default, ``True``.
         """
         self._cost_fpath = cost_fpath
         self._start_indices = start_indices
@@ -1036,7 +1031,8 @@ class TieLineCosts:
             of length, cost, and geometry for each path
         """
         ts = time.time()
-        cl = CostLayer(cost_fpath, row_slice, col_slice, cell_size=cell_size)
+        cl = CostLayer(cost_fpath, row_slice, col_slice, cell_size=cell_size,
+                       use_hard_barrier=use_hard_barrier)
         cl.build(cost_layers=cost_layers, friction_layers=friction_layers,
                  tracked_layers=tracked_layers,
                  cost_multiplier_layer=cost_multiplier_layer,
@@ -1127,11 +1123,6 @@ class TransCapCosts(TieLineCosts):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
-        use_hard_barrier : bool, optional
-            Optional flag to treat any cost values of <= 0 as a hard
-            barrier (i.e. no paths can ever cross this). If ``False``,
-            cost values of <= 0 are set to a large value to simulate a
-            strong but permeable barrier. By default, ``True``.
         """
         self._sc_point = sc_point
         self._region_layer = None
@@ -1833,7 +1824,8 @@ class TransCapCosts(TieLineCosts):
                                            radius=radius)
             start_indices, row_slice, col_slice = out
             cl = CostLayer(cost_fpath, row_slice, col_slice,
-                           cell_size=cell_size)
+                           cell_size=cell_size,
+                           use_hard_barrier=use_hard_barrier)
             cl.build(cost_layers=cost_layers, friction_layers=friction_layers,
                      tracked_layers=tracked_layers,
                      cost_multiplier_layer=cost_multiplier_layer,
@@ -2022,11 +2014,6 @@ class ReinforcementLineCosts(TieLineCosts):
         cell_size : int, optional
             Side length of each cell, in meters. Cells are assumed to be
             square. By default, :obj:`CELL_SIZE`.
-        use_hard_barrier : bool, optional
-            Optional flag to treat any cost values of <= 0 as a hard
-            barrier (i.e. no paths can ever cross this). If ``False``,
-            cost values of <= 0 are set to a large value to simulate a
-            strong but permeable barrier. By default, ``True``.
         """
         super().__init__(cost_fpath=cost_fpath, start_indices=start_indices,
                          cost_layer=cost_layer,
@@ -2155,7 +2142,7 @@ class ReinforcementLineCosts(TieLineCosts):
         """
         ts = time.time()
         cl = CostLayer(cost_fpath, row_slice, col_slice,
-                       cell_size=cell_size)
+                       cell_size=cell_size, use_hard_barrier=use_hard_barrier)
         cl.build(cost_layers=cost_layers, friction_layers=friction_layers,
                  tracked_layers=tracked_layers,
                  cost_multiplier_layer=cost_multiplier_layer,

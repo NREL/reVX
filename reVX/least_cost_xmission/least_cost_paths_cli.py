@@ -353,7 +353,8 @@ def build_cost_layer(ctx, config, out_dir):
 
     config = LeastCostPathsConfig(config)
     cl = CostLayer(config.cost_fpath, slice(None), slice(None),
-                   cell_size=config.cell_size)
+                   cell_size=config.cell_size,
+                   use_hard_barrier=config.use_hard_barrier)
     cl.build(cost_layers=config.cost_layers,
              friction_layers=config.friction_layers,
              tracked_layers=config.tracked_layers,
