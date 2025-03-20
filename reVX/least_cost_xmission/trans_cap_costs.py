@@ -362,7 +362,7 @@ class TieLineCosts:
         self._row_slice = row_slice
         self._col_slice = col_slice
         self._cell_size = cell_size
-        self._mcp = self._cost = self._mcp_cost = None
+        self._mcp = None
         self._cost_layer = cost_layer
         self._cumulative_costs = None
         self.transform = None
@@ -1997,7 +1997,7 @@ class ReinforcementLineCosts(TieLineCosts):
                          cell_size=cell_size)
         self._null_extras = {}
 
-        self._cost = self._cost / line_cap_mw
+        self._cost_layer.cost =  self._cost_layer.cost / line_cap_mw
         with ExclusionLayers(cost_fpath) as f:
             for capacity_mw, lines in transmission_lines.items():
                 t_lines = np.where(lines)
@@ -2005,8 +2005,9 @@ class ReinforcementLineCosts(TieLineCosts):
                 costs = f[cost_layer, row_slice, col_slice][t_lines]
                 # allow crossing of barriers along existing transmission lines
                 costs[costs <= 0] = 1
-                self._cost_layer.mcp_cost[t_lines] = costs * 1e-9  # 0 not allowed
-                self._cost[t_lines] = costs / capacity_mw
+                routing_cost = costs * 1e-9  # 0 not allowed
+                self._cost_layer.mcp_cost[t_lines] = routing_cost
+                self._cost_layer.cost[t_lines] = costs / capacity_mw
 
     def _compute_by_layer_results(self, *__, **___):
         """By-layer results not supported for reinforcement run. """
