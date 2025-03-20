@@ -236,13 +236,13 @@ class CostLayer:
         # remains constant
         self.mcp_cost += friction_costs
 
-        max_val = max(1e20, np.max(self._mcp_cost))
-        self._mcp_cost = np.where(self._mcp_cost <= 0,
-                                  -1 if self._use_hard_barrier else max_val,
-                                  self._mcp_cost)
+        max_val = max(1e20, np.max(self.mcp_cost))
+        self.mcp_cost = np.where(self.mcp_cost <= 0,
+                                 -1 if self._use_hard_barrier else max_val,
+                                 self.mcp_cost)
         logger.debug("MCP cost min: %.2f, max: %.2f, median: %.2f",
-                     np.min(self._mcp_cost), np.max(self._mcp_cost),
-                     np.median(self._mcp_cost))
+                     np.min(self.mcp_cost), np.max(self.mcp_cost),
+                     np.median(self.mcp_cost))
 
     def _extract_and_scale_layer(self, layer_info, cost_file, allow_cl=False):
         """Extract layer based on name and scale according to user input"""
@@ -1014,8 +1014,8 @@ class TieLineCosts:
                  cost_multiplier_layer=cost_multiplier_layer,
                  cost_multiplier_scalar=cost_multiplier_scalar)
 
-        tlc = cls(cost_fpath, start_indices, cost_layers, row_slice,
-                  col_slice, cell_size=cell_size)
+        tlc = cls(cost_fpath, start_indices, cl, row_slice, col_slice,
+                  cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
 
