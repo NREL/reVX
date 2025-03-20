@@ -963,11 +963,13 @@ class TransCapCosts(TieLineCosts):
             row_bounds = [self._row_slice.start
                           if self._row_slice.start else 0,
                           self._row_slice.stop - 1
-                          if self._row_slice.stop else self._cost_layer.clip_shape[0] - 1]
+                          if self._row_slice.stop
+                          else self._cost_layer.clip_shape[0] - 1]
             col_bounds = [self._col_slice.start
                           if self._col_slice.start else 0,
                           self._col_slice.stop - 1
-                          if self._col_slice.stop else self._cost_layer.clip_shape[1] - 1]
+                          if self._col_slice.stop
+                          else self._cost_layer.clip_shape[1] - 1]
             x, y = rasterio.transform.xy(self.transform, row_bounds,
                                          col_bounds)
             self._clip_mask = Polygon([[x[0], y[0]],
