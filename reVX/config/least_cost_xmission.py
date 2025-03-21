@@ -11,9 +11,7 @@ from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        RESOLUTION,
                                                        NUM_NN_SINKS,
                                                        CLIP_RASTER_BUFFER,
-                                                       BARRIERS_MULT,
                                                        MINIMUM_SPUR_DIST_KM,
-                                                       BARRIER_H5_LAYER_NAME,
                                                        ISO_H5_LAYER_NAME)
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig
@@ -84,15 +82,15 @@ class LeastCostXmissionConfig(AnalysisConfig):
     @property
     def simplify_geo(self):
         """
-        Optional float to use to simplify path geometries before saving to
-        geopackage
+        Optional float to use to simplify path geometries before saving
+        to GeoPackage
         """
         return self.get('simplify_geo', None)
 
     @property
     def save_paths(self):
         """
-        Save paths as GPKG if true
+        Save paths as GeoPackage if true
         """
         return self.get('save_paths', False)
 
@@ -106,14 +104,14 @@ class LeastCostXmissionConfig(AnalysisConfig):
     @property
     def features_fpath(self):
         """
-        Tranmission feature .gpkg
+        Transmission feature GeoPackage
         """
         return self['features_fpath']
 
     @property
     def regions_fpath(self):
         """
-        Reinforcement regions .gpkg
+        Reinforcement regions GeoPackage
         """
         return self.get('regions_fpath', None)
 
@@ -153,7 +151,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
     @property
     def length_mult_kind(self):
         """
-        Type of length multiplier calcualtion.
+        Type of length multiplier calculation.
 
         "step" computes length multipliers using a step function, while
         "linear" computes the length multiplier using a linear
@@ -184,18 +182,19 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('clipping_buffer', CLIP_RASTER_BUFFER)
 
     @property
-    def tb_layer_name(self):
+    def cost_multiplier_layer(self):
         """
-        Name of transmission barrier layer in `cost_fpath` file.
+        Name of layer containing final cost layer spatial multipliers,
+        defaults to ``None``.
         """
-        return self.get('tb_layer_name', BARRIER_H5_LAYER_NAME)
+        return self.get('cost_multiplier_layer', None)
 
     @property
-    def barrier_mult(self):
+    def cost_multiplier_scalar(self):
         """
-        Transmission barrier multiplier to use for MCP costs
+        Final cost layer multiplier, defaults to ``1``.
         """
-        return float(self.get('barrier_mult', BARRIERS_MULT))
+        return float(self.get('cost_multiplier_scalar', 1))
 
     @property
     def iso_regions_layer_name(self):
@@ -205,25 +204,67 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return self.get('iso_regions_layer_name', ISO_H5_LAYER_NAME)
 
     @property
-    def cost_layers(self) -> List[str]:
+    def cost_layers(self) -> List[dict]:
         """
         List of H5 layers that are summed to determine total costs
         raster used for routing. Costs and distances for each individual
-        layer are also reported (e.g. wet and dry costs).
+        layer are also reported as requested (e.g. wet and dry costs).
+        Each dict in the list should have the following keys:
+
+            - "layer_name": (REQUIRED) Name of layer in HDF5 file
+              containing cost data. Layer names may have curly brackets
+              (``{}``), which will be filled in based on the capacity
+              class input (e.g. "tie_line_costs_{}MW").
+            - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
+              containing spatially explicit multiplier values to apply
+              to this cost layer before summing it with the others.
+              Default is ``None``.
+            - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
+              this layer by before summing it with the others. Default
+              is ``1``.
+            - "is_invariant": (OPTIONAL) Boolean flag indicating whether
+              this layer is length invariant (i.e. should NOT be
+              multiplied by path length; values should be $). Default is
+              ``False``.
+            - "include_in_report": (OPTIONAL) Boolean flag indicating
+              whether the costs and distances for this layer should be
+              output in the final LCP table. Default is ``True``.
+
         """
         return self['cost_layers']
 
     @property
-    def length_invariant_cost_layers(self):
+    def friction_layers(self):
         """
-        Layers to be added to the cost raster whose costs do not scale
-        with distance traversed (i.e. fixed one-time costs for crossing
-        these cells).
+        Layers to be added to costs to influence routing but NOT
+        reported in final cost (i.e. friction, barriers, etc.). Each
+        item in this list should be a dictionary containing the
+        following keys:
+
+            - "layer_name": (REQUIRED) Name of layer in HDF5 file
+              containing routing data. Layer names may have curly
+              brackets (``{}``), which will be filled in based on the
+              capacity class input (e.g. "barriers_{}MW"). This can also
+              be "lcp_agg_costs", which represents the layer built out
+              using the `cost_layers` input.
+            - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
+              containing spatially explicit multiplier values to apply
+              to this routing layer before summing it with the others.
+              Default is ``None``. This can also be "lcp_agg_costs",
+              which represents the layer built out using the
+              `cost_layers` input.
+            - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
+              this layer by before summing it with the others. Default
+              is ``1``.
+            - "include_in_report": (OPTIONAL) Boolean flag indicating
+              whether the routing and distances for this layer should be
+              output in the final LCP table. Default is ``False``.
+
         """
-        # self.get('length_invariant_cost_layers', []) does not work!!
-        if 'length_invariant_cost_layers' not in self:
+        # self.get('friction_layers', []) does not work!!
+        if 'friction_layers' not in self:
             return []
-        return self['length_invariant_cost_layers']
+        return self['friction_layers']
 
     @property
     def tracked_layers(self):
@@ -264,12 +305,22 @@ class LeastCostXmissionConfig(AnalysisConfig):
 
         return self._sc_point_gids
 
+    @property
+    def use_hard_barrier(self):
+        """
+        Optional flag to treat any cost values of <= 0 as a hard barrier
+        (i.e. no paths can ever cross this). If False, the cost values
+        of <= 0 are set to a large value to simulate a strong but
+        permeable barrier.
+        """
+        return self.get('use_hard_barrier', True)
+
 
 class LeastCostPathsConfig(AnalysisConfig):
     """Config framework for Least Cost Paths"""
 
     NAME = 'LeastCostPaths'
-    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'cost_layers')
+    REQUIREMENTS = ('cost_fpath', 'route_table', 'cost_layers')
 
     def __init__(self, config):
         """
@@ -324,11 +375,18 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self['cost_fpath']
 
     @property
-    def features_fpath(self):
+    def route_table(self):
         """
-        Tranmission feature .gpkg
+        Path to CSV file defining the start and
+        end points of all routes. Must have the following columns:
+
+            "start_lat": Stating point latitude
+            "start_lon": Stating point longitude
+            "end_lat": Ending point latitude
+            "end_lon": Ending point longitude
+
         """
-        return self['features_fpath']
+        return self['route_table']
 
     @property
     def network_nodes_fpath(self):
@@ -358,21 +416,106 @@ class LeastCostPathsConfig(AnalysisConfig):
     def cost_layers(self):
         """
         List of H5 layers that are summed to determine total costs
-        raster used for routing.
+        raster used for routing. Costs and distances for each individual
+        layer are also reported as requested (e.g. wet and dry costs).
+        Each dict in the list should have the following keys:
+
+            - "layer_name": (REQUIRED) Name of layer in HDF5 file
+              containing cost data.
+            - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
+              containing spatially explicit multiplier values to apply
+              to this cost layer before summing it with the others.
+              Default is ``None``.
+            - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
+              this layer by before summing it with the others. Default
+              is ``1``.
+            - "is_invariant": (OPTIONAL) Boolean flag indicating whether
+              this layer is length invariant (i.e. should NOT be
+              multiplied by path length; values should be $). Default is
+              ``False``.
+            - "include_in_report": (OPTIONAL) Boolean flag indicating
+              whether the costs and distances for this layer should be
+              output in the final LCP table. Default is ``True``.
+            - "apply_row_mult": (OPTIONAL) Boolean flag indicating
+              whether the right-of-way width multiplier should be
+              applied for this layer. If ``True``, then the xmission
+              config should have a "row_width" dictionary that maps
+              voltages to right-of-way width multipliers. Also, the
+              routing table input should have a "voltage" entry for
+              every route. Every "voltage" value in the routing table
+              must be given in the "row_width" dictionary in the
+              xmission config, otherwise an error will be thrown.
+              Default is ``False``.
+            - "apply_polarity_mult": (OPTIONAL) Boolean flag indicating
+              whether the polarity multiplier should be applied for this
+              layer. If ``True``, then the xmission config should have a
+              "voltage_polarity_mult" dictionary that maps voltages to
+              a new dictionary, the latter mapping polarities to
+              multipliers. For example, a valid "voltage_polarity_mult"
+              dictionary might be ``{"138": {"ac": 1.15, "dc": 2}}``.
+              In addition, the routing table input should have a
+              "voltage" **and** a "polarity" entry for every route.
+              Every "voltage" + "polarity" combination in the routing
+              table must be given in the "voltage_polarity_mult"
+              dictionary in the xmission config, otherwise an error will
+              be thrown. Default is ``False``.
+
         """
         return self['cost_layers']
 
     @property
-    def length_invariant_cost_layers(self):
+    def friction_layers(self):
         """
-        Layers to be added to the cost raster whose costs do not scale
-        with distance traversed (i.e. fixed one-time costs for crossing
-        these cells).
+        Layers to be added to costs to influence routing but NOT
+        reported in final cost (i.e. friction, barriers, etc.). Each
+        item in this list should be a dictionary containing the
+        following keys:
+
+            - "layer_name": (REQUIRED) Name of layer in HDF5 file
+              containing routing data. This can also be "lcp_agg_costs",
+              which represents the layer built out using the
+              `cost_layers` input.
+            - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
+              containing spatially explicit multiplier values to apply
+              to this routing layer before summing it with the others.
+              Default is ``None``. This can also be "lcp_agg_costs",
+              which represents the layer built out using the
+              `cost_layers` input.
+            - "multiplier_scalar": (OPTIONAL) Scalar value to multiply
+              this layer by before summing it with the others. Default
+              is ``1``.
+            - "include_in_report": (OPTIONAL) Boolean flag indicating
+              whether the routing and distances for this layer should be
+              output in the final LCP table. Default is ``False``.
+            - "apply_row_mult": (OPTIONAL) Boolean flag indicating
+              whether the right-of-way width multiplier should be
+              applied for this layer. If ``True``, then the xmission
+              config should have a "row_width" dictionary that maps
+              voltages to right-of-way width multipliers. Also, the
+              routing table input should have a "voltage" entry for
+              every route. Every "voltage" value in the routing table
+              must be given in the "row_width" dictionary in the
+              xmission config, otherwise an error will be thrown.
+              Default is ``False``.
+            - "apply_polarity_mult": (OPTIONAL) Boolean flag indicating
+              whether the polarity multiplier should be applied for this
+              layer. If ``True``, then the xmission config should have a
+              "voltage_polarity_mult" dictionary that maps voltages to
+              a new dictionary, the latter mapping polarities to
+              multipliers. For example, a valid "voltage_polarity_mult"
+              dictionary might be ``{"138": {"ac": 1.15, "dc": 2}}``.
+              In addition, the routing table input should have a
+              "voltage" **and** a "polarity" entry for every route.
+              Every "voltage" + "polarity" combination in the routing
+              table must be given in the "voltage_polarity_mult"
+              dictionary in the xmission config, otherwise an error will
+              be thrown. Default is ``False``.
+
         """
-        # self.get('length_invariant_cost_layers', []) does not work!!
-        if 'length_invariant_cost_layers' not in self:
+        # self.get('friction_layers', []) does not work!!
+        if 'friction_layers' not in self:
             return []
-        return self['length_invariant_cost_layers']
+        return self['friction_layers']
 
     @property
     def tracked_layers(self):
@@ -397,11 +540,12 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self.get('xmission_config', None)
 
     @property
-    def tb_layer_name(self):
+    def cost_multiplier_layer(self):
         """
-        Name of transmission barrier layer in `cost_fpath` file.
+        Name of layer containing final cost layer spatial multipliers,
+        defaults to ``None``.
         """
-        return self.get('tb_layer_name', BARRIER_H5_LAYER_NAME)
+        return self.get('cost_multiplier_layer', None)
 
     @property
     def clip_buffer(self):
@@ -411,16 +555,16 @@ class LeastCostPathsConfig(AnalysisConfig):
         return self.get('clip_buffer', 0)
 
     @property
-    def barrier_mult(self):
+    def cost_multiplier_scalar(self):
         """
-        Transmission barrier multiplier to use for MCP costs
+        Final cost layer multiplier, defaults to ``1``.
         """
-        return self.get('barrier_mult', BARRIERS_MULT)
+        return self.get('cost_multiplier_scalar', 1)
 
     @property
     def is_reinforcement_run(self):
         """
-        Boolean flag indicating wether this run is for reinforcement
+        Boolean flag indicating whether this run is for reinforcement
         path computation
         """
         return (self.network_nodes_fpath is not None
@@ -454,3 +598,13 @@ class LeastCostPathsConfig(AnalysisConfig):
         lengths
         """
         return self.get('save_paths', False)
+
+    @property
+    def use_hard_barrier(self):
+        """
+        Optional flag to treat any cost values of <= 0 as a hard barrier
+        (i.e. no paths can ever cross this). If ``False``, cost values
+        of <= 0 are set to a large value to simulate a strong but
+        permeable barrier.
+        """
+        return self.get('use_hard_barrier', True)
