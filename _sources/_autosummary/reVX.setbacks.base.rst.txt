@@ -1,0 +1,40 @@
+reVX.setbacks.base
+==================
+
+.. automodule:: reVX.setbacks.base
+
+   
+   
+   .. rubric:: Module attributes
+
+   .. autosummary::
+      :toctree:
+   
+      BUFFERS
+      FEATURE_FILTERS
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      AbstractBaseSetbacks
+      Rasterizer
+   
+   
+
+   
+   
+   
+
+
+

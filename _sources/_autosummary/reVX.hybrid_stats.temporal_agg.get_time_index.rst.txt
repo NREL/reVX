@@ -1,0 +1,6 @@
+reVX.hybrid\_stats.temporal\_agg.get\_time\_index
+=================================================
+
+.. currentmodule:: reVX.hybrid_stats.temporal_agg
+
+.. autofunction:: get_time_index

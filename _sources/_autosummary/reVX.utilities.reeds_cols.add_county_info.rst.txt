@@ -1,0 +1,6 @@
+reVX.utilities.reeds\_cols.add\_county\_info
+============================================
+
+.. currentmodule:: reVX.utilities.reeds_cols
+
+.. autofunction:: add_county_info

@@ -1,0 +1,44 @@
+reVX.setbacks.base.AbstractBaseSetbacks
+=======================================
+
+.. currentmodule:: reVX.setbacks.base
+
+.. autoclass:: AbstractBaseSetbacks
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AbstractBaseSetbacks.compute_all_local_exclusions
+      ~AbstractBaseSetbacks.compute_exclusions
+      ~AbstractBaseSetbacks.compute_generic_exclusions
+      ~AbstractBaseSetbacks.compute_local_exclusions
+      ~AbstractBaseSetbacks.pre_process_regulations
+      ~AbstractBaseSetbacks.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AbstractBaseSetbacks.BUFFER_TYPE
+      ~AbstractBaseSetbacks.FEATURE_FILTER_TYPE
+      ~AbstractBaseSetbacks.FEATURE_SUBTYPES_TO_EXCLUDE
+      ~AbstractBaseSetbacks.FEATURE_TYPES
+      ~AbstractBaseSetbacks.NUM_FEATURES_PER_WORKER
+      ~AbstractBaseSetbacks.description
+      ~AbstractBaseSetbacks.exclusion_merge_func
+      ~AbstractBaseSetbacks.no_exclusions_array
+      ~AbstractBaseSetbacks.profile
+      ~AbstractBaseSetbacks.regulations_table
+   
+   

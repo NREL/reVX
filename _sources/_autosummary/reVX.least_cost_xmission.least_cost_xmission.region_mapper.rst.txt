@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.least\_cost\_xmission.region\_mapper
+===============================================================
+
+.. currentmodule:: reVX.least_cost_xmission.least_cost_xmission
+
+.. autofunction:: region_mapper

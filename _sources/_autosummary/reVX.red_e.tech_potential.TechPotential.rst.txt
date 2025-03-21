@@ -1,0 +1,44 @@
+reVX.red\_e.tech\_potential.TechPotential
+=========================================
+
+.. currentmodule:: reVX.red_e.tech_potential
+
+.. autoclass:: TechPotential
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TechPotential.add_layer
+      ~TechPotential.close
+      ~TechPotential.extract_inclusion_mask
+      ~TechPotential.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TechPotential.FILTER_KERNELS
+      ~TechPotential.excl_h5
+      ~TechPotential.excl_layers
+      ~TechPotential.generation
+      ~TechPotential.latitude
+      ~TechPotential.layer_names
+      ~TechPotential.layers
+      ~TechPotential.longitude
+      ~TechPotential.mask
+      ~TechPotential.nodata_lookup
+      ~TechPotential.profile
+      ~TechPotential.shape
+   
+   

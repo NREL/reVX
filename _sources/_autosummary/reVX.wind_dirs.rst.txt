@@ -1,0 +1,34 @@
+reVX.wind\_dirs
+===============
+
+.. automodule:: reVX.wind_dirs
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   reVX.wind_dirs.mean_wind_dirs
+   reVX.wind_dirs.mean_wind_dirs_cli
+   reVX.wind_dirs.mean_wind_dirs_point
+   reVX.wind_dirs.prominent_wind_dirs
+   reVX.wind_dirs.prominent_wind_dirs_cli
+

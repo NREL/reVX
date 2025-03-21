@@ -1,0 +1,34 @@
+reVX.plexos.dpv\_plexos.DpvPlexosAggregation
+============================================
+
+.. currentmodule:: reVX.plexos.dpv_plexos
+
+.. autoclass:: DpvPlexosAggregation
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DpvPlexosAggregation.get_mapped_node_data
+      ~DpvPlexosAggregation.get_node_gen_profiles
+      ~DpvPlexosAggregation.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DpvPlexosAggregation.cf_meta
+      ~DpvPlexosAggregation.kdtree
+      ~DpvPlexosAggregation.time_index
+   
+   

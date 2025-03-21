@@ -1,0 +1,42 @@
+reVX.least\_cost\_xmission.config.xmission\_config.IsoMultipliers
+=================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.xmission_config
+
+.. autoclass:: IsoMultipliers
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~IsoMultipliers.clear
+      ~IsoMultipliers.copy
+      ~IsoMultipliers.fromkeys
+      ~IsoMultipliers.get
+      ~IsoMultipliers.items
+      ~IsoMultipliers.keys
+      ~IsoMultipliers.pop
+      ~IsoMultipliers.popitem
+      ~IsoMultipliers.setdefault
+      ~IsoMultipliers.update
+      ~IsoMultipliers.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~IsoMultipliers.iso
+      ~IsoMultipliers.land_use
+      ~IsoMultipliers.slope
+   
+   
