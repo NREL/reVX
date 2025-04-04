@@ -49,7 +49,7 @@ on your machine and are using `conda <https://docs.conda.io/en/latest/index.html
 as your package/environment manager.
 
 #. Create a new environment:
-    ``conda create --name revx python=3.8``
+    ``conda create --name revx python=3.11``
 
 #. Activate your new environment:
     ``conda activate revx``
