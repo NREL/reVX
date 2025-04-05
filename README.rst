@@ -58,7 +58,7 @@ as your package/environment manager.
     From your home directory ``/home/{user}/`` or another directory that you have permissions in, run the command ``git clone git@github.com:NREL/reVX.git`` and then go into your cloned repository: ``cd reVX``
 
 #. Install reVX:
-    1) Follow the installation commands installation process that we use for our automated test suite `here <https://github.com/NREL/reVX/blob/main/.github/workflows/pull_request_tests.yml#L31-L34>`_. Make sure that you call ``pip install -e .`` from within the cloned repository directory e.g. ``/home/{user}/reVX/``. Don't forget to run ``pip install --upgrade setuptools``, especially if you run into any build errors.
+    1) Follow the installation commands installation process that we use for our automated test suite `here <https://github.com/NREL/reVX/blob/main/.github/workflows/pull_request_tests.yml#L34-L37>`_. Make sure that you call ``pip install -e .`` from within the cloned repository directory e.g. ``/home/{user}/reVX/``. Don't forget to run ``pip install --upgrade setuptools``, especially if you run into any build errors.
 
         - NOTE: If you install using pip and want to run `exclusion setbacks <https://nrel.github.io/reVX/_cli/reVX.setbacks.setbacks.html>`_ you will need to install rtree manually:
             * ``conda install rtree``
