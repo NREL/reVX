@@ -32,6 +32,7 @@ jobs:
       working-directory: ${{ github.workspace }}
       run: |
         conda install rtree pip pytest
+        pip install --upgrade setuptools
         pip install --no-build-isolation -e .
         pip install HOPP==0.0.5
     - name: Run pytest and Generate coverage report
