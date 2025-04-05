@@ -20,7 +20,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.ref }}
+        ref: ${{ github.event.pull_request.head.sha }}
     - name: Confirm git availability
       run: which git && git --version
     - name: Set up Python ${{ matrix.python-version }}
@@ -34,7 +34,7 @@ jobs:
       working-directory: ${{ github.workspace }}
       run: |
         conda install rtree pip pytest
-        pip install -e .
+        pip install --no-build-isolation -e .
         pip install HOPP==0.0.5
     - name: Run pytest and Generate coverage report
       shell: bash -l {0}
