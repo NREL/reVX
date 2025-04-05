@@ -92,6 +92,11 @@ find = { include = ["reVX*"] }
 [tool.setuptools.dynamic]
 version = {attr = "reVX.version.__version__"}
 
+[tool.setuptools_scm]
+# Don't try to guess anything from Git. Only use what is in the version file.
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
+
 [tool.coverage.run]
 branch = true
 
