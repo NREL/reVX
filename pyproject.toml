@@ -58,7 +58,7 @@ dev = [
   "pylint",
 ]
 build = [
-  "build>=0.10,<1",
+  "build>=1.2.2,<2",
   "pkginfo>=1.10.0,<2",
   "twine>=6.1.0,<7",
 ]
