@@ -27,7 +27,7 @@ jobs:
     - name: Run pytest and Generate coverage report
       shell: bash -l {0}
       run: |
-        pytest -v --disable-warnings --cov=./ --cov-report=xml:coverage.xml
+        pytest -v --cov=./ --cov-branch --cov-report=xml:coverage.xml
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
