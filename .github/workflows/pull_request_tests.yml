@@ -30,7 +30,6 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install rtree pip pytest
-        pip install pytest-cov
         pip install -e .
         pip install HOPP==0.0.5
     - name: Run pytest and Generate coverage report
