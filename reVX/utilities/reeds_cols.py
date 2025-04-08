@@ -16,11 +16,9 @@ from reVX.version import __version__
 
 UTILITY_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_DIR = os.path.join(UTILITY_DIR, "config")
-COUNTY_GDF_FP = ("https://www2.census.gov/geo/tiger/TIGER2021/COUNTY/"
-                 "tl_2021_us_county.zip")
 
 
-def add_county_info(data_frame, regions=COUNTY_GDF_FP):
+def add_county_info(data_frame, regions):
     """Add county info to a Pandas DataFrame with coordinates.
 
     The input DataFrame must have latitude and longitude columns.
@@ -54,7 +52,7 @@ def add_county_info(data_frame, regions=COUNTY_GDF_FP):
     return data_frame
 
 
-def _classify(data_frame, col, regions=COUNTY_GDF_FP):
+def _classify(data_frame, col, regions):
     """Classify a single county column for the input DataFrame"""
     classifier = RegionClassifier(data_frame, regions, col)
     data_frame = classifier.classify(force=True)
@@ -161,7 +159,7 @@ def add_extra_data(data_frame, extra_data, merge_col="sc_point_gid"):
 def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
                       extra_data=None, merge_col="sc_point_gid",
                       filter_out_zero_capacity=True, rename_mapping=None,
-                      regions=COUNTY_GDF_FP):
+                      regions=None):
     """Add columns to supply curve required by ReEDS.
 
     This method will add columns like "cnty_fips", "state", "county",
@@ -215,8 +213,9 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
         By default, ``None`` (no renaming).
     regions : str, optional
         Path to a regions shapefile containing county geometries labeled
-        with county FIPS values. Default value pulls the data from
-        ``www2.census.gov``.
+        with county FIPS values. You can download the data from
+        `www2.census.gov/geo/tiger/TIGER2021/COUNTY/tl_2021_us_county.zip`.
+        If ``None``, then no county info is added. By default, ``None``.
 
     Returns
     -------
@@ -225,8 +224,10 @@ def add_reeds_columns(supply_curve_fpath, out_fp=None, capacity_col="capacity",
     """
 
     sc = pd.read_csv(supply_curve_fpath)
-    sc = add_county_info(sc, regions)
-    sc = add_nrel_regions(sc)
+    if regions is not None:
+        sc = add_county_info(sc, regions)
+        sc = add_nrel_regions(sc)
+
     if extra_data:
         sc = add_extra_data(sc, extra_data, merge_col=merge_col)
 

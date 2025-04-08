@@ -12,8 +12,8 @@ import geopandas as gpd
 
 from reVX import TESTDATADIR
 from reVX.utilities.utilities import to_geo
-from reVX.utilities.reeds_cols import (add_county_info, add_nrel_regions,
-                                       add_extra_data, add_reeds_columns)
+from reVX.utilities.reeds_cols import (add_nrel_regions, add_extra_data,
+                                       add_reeds_columns)
 
 
 @pytest.mark.parametrize(('lat_col', 'lon_col'),
@@ -34,23 +34,6 @@ def test_to_geo_missing_cols():
     """Test that the `to_geo` throws error if missing lat/lon cols."""
     with pytest.raises(KeyError):
         to_geo(pd.DataFrame())
-
-
-def test_add_county_info():
-    """Test that the `add_county_info` function for NREL location."""
-    nrel_loc = pd.DataFrame(data={"latitude": [39.7407],
-                                  "longitude": [-105.1686],
-                                  "county": ["unknown"]})
-
-    nrel_loc = add_county_info(nrel_loc)
-
-    assert isinstance(nrel_loc, pd.DataFrame)
-    assert all(col in nrel_loc for col in ["cnty_fips", "state", "county"])
-    assert "geometry" not in nrel_loc
-
-    assert nrel_loc.iloc[0]["cnty_fips"] == "08059"
-    assert nrel_loc.iloc[0]["state"] == "Colorado"
-    assert nrel_loc.iloc[0]["county"] == "Jefferson"
 
 
 def test_add_nrel_regions():
@@ -112,8 +95,8 @@ def test_add_reeds_columns():
     assert out_fp == sc_fp
     assert isinstance(out_data, pd.DataFrame)
     assert len(out_data) == 1
-    expected_cols = ["cnty_fips", "state", "county", "nrel_region",
-                     "eos_mult", "reg_mult", "cf_mean", "my_output", "hh"]
+
+    expected_cols = ["eos_mult", "reg_mult", "cf_mean", "my_output", "hh"]
     assert all(col in out_data for col in expected_cols)
     assert "a value" not in out_data
     assert "geometry" not in out_data
@@ -122,11 +105,6 @@ def test_add_reeds_columns():
     assert np.allclose(out_data["cf_mean"], 0.178)
     assert np.allclose(out_data["my_output"], 42)
     assert np.allclose(out_data["hh"], 100)
-
-    assert out_data.iloc[0]["cnty_fips"] == 8059
-    assert out_data.iloc[0]["state"] == "Colorado"
-    assert out_data.iloc[0]["county"] == "Jefferson"
-    assert out_data.iloc[0]["nrel_region"] == "Mountain"
 
 
 def execute_pytest(capture='all', flags='-rapP'):

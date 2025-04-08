@@ -15,13 +15,12 @@ jobs:
             python-version: '3.10'
           - os: ubuntu-latest
             python-version: 3.9
-          - os: ubuntu-latest
-            python-version: 3.8
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
-        ref: ${{ github.event.pull_request.head.ref }}
+        fetch-depth: 0
+        ref: ${{ github.event.pull_request.head.sha }}
     - name: Set up Python ${{ matrix.python-version }}
       uses: conda-incubator/setup-miniconda@v2
       with:
@@ -32,20 +31,10 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install rtree pip pytest
-        pip install pytest-cov
-        pip install -e .
+        pip install --upgrade setuptools
+        pip install --no-build-isolation -e .
         pip install HOPP==0.0.5
     - name: Run pytest and Generate coverage report
       shell: bash -l {0}
       run: |
-        pytest -v --disable-warnings --cov=./ --cov-report=xml:coverage.xml
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        file: ./coverage.xml
-        flags: unittests
-        env_vars: OS,PYTHON
-        name: codecov-umbrella
-        fail_ci_if_error: false
-        verbose: true
+        pytest -v

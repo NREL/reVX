@@ -1,0 +1,150 @@
+[build-system]
+requires = [
+  "setuptools >= 78",
+  "setuptools_scm[toml] >= 8",
+]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name="NREL-reVX"
+dynamic = ["version"]
+description = "National Renewable Energy Laboratory's (NREL's) Renewable Energy Potential(V) eXchange Tool: reVX"
+readme = {file = "README.rst", content-type = "text/x-rst"}
+authors = [
+  {name = "Michael Rossol", email = "michael.rossol@nrel.gov"},
+]
+maintainers = [
+  {name = "Grant Buster", email = "gbuster@nrel.gov"},
+  {name = "Paul Pinchuk", email = "ppinchuk@nrel.gov"},
+]
+license = "BSD-3-Clause"
+keywords = ["reVX", "NREL"]
+requires-python = ">= 3.9"
+classifiers=[
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+  "addfips>=0.4.2,<0.5",
+  "dask>=2024.8.0,<2025",
+  "fiona~=1.9.0",
+  "geopandas>=0.14.4,<0.15",
+  "NREL-gaps>=0.7.0,<0.8",
+  "NREL-reV>=0.12.1,<0.13",
+  "NREL-rex>=0.2.99,<0.3",
+  "numpy<2.0.0",
+  "psycopg2-binary>=2.9.10,<3",
+  "pydantic>=2.10.6,<3",
+  "pyogrio~=0.5.1",
+  "pyproj~=3.5.0",
+  "pywavelets>=1.5,<1.6",
+  "rasterio~=1.3.11",
+  "scikit-image~=0.21.0",
+  "scikit-learn>=1.6.1,<2",
+  "shapely~=1.8.5",
+  "toolz>=1.0.0,<2",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.3.3,<9",
+]
+dev = [
+  "flake8",
+  "pre-commit",
+  "pylint",
+]
+build = [
+  "build>=1.2.2,<2",
+  "pkginfo>=1.10.0,<2",
+  "twine>=6.1.0,<7",
+]
+
+[project.urls]
+homepage = "https://www2.nrel.gov/gis/renewable-energy-potential"
+documentation = "https://nrel.github.io/reVX/"
+repository = "https://github.com/NREL/reVX"
+
+[project.scripts]
+reVX = "reVX.cli:main"
+reV-rpm = "reVX.rpm.rpm_cli:main"
+reV-plexos = "reVX.plexos.rev_reeds_plexos_cli:main"
+plexos-plants = "reVX.plexos.plexos_plants_cli:main"
+simple-plant-builder = "reVX.plexos.simple_plant_builder_cli:main"
+prominent-wind-dirs = "reVX.wind_dirs.prominent_wind_dirs_cli:main"
+mean-wind-dirs = "reVX.wind_dirs.mean_wind_dirs_cli:main"
+offshore-dist-to-ports = "reVX.offshore.dist_to_ports_cli:main"
+offshore-assembly-areas = "reVX.offshore.assembly_areas_cli:main"
+offshore-inputs = "reVX.offshore.offshore_inputs_cli:main"
+setbacks = "reVX.setbacks.setbacks_cli:cli"
+turbine-flicker = "reVX.turbine_flicker.turbine_flicker_cli:main"
+dry-cost-creator = "reVX.least_cost_xmission.dry_cost_creator_cli:main"
+least-cost-xmission = "reVX.least_cost_xmission.least_cost_xmission_cli:main"
+least-cost-paths = "reVX.least_cost_xmission.least_cost_paths_cli:main"
+transmission-layer-creator = "reVX.least_cost_xmission.transmission_layer_creator_cli:main"
+
+[tool.setuptools.packages]
+find = { include = ["reVX*"] }
+
+[tool.setuptools.dynamic]
+version = {attr = "reVX.version.__version__"}
+
+[tool.setuptools_scm]
+# Don't try to guess anything from Git. Only use what is in the version file.
+version_scheme = "no-guess-dev"
+local_scheme = "no-local-version"
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+# Regexes for lines to exclude from consideration
+exclude_also = [
+  # Have to re-enable the standard pragma
+  "pragma: no cover",
+
+  # Don't complain about missing debug-only code:
+  "if self\\.debug",
+
+  # Don't complain about repr methods
+  "def __repr__",
+  "def _repr_markdown_",
+
+  # Don't complain about data I/O code
+  "def load*",
+  "def _load*",
+
+  # Don't complain if tests don't hit defensive assertion code:
+  "raise AssertionError",
+  "raise NotImplementedError",
+
+  # Don't complain if non-runnable code isn't run:
+  "if __name__ == .__main__.:",
+
+  # Don't complain about abstract methods, they aren't run:
+  "@(abc\\.)?abstractmethod",
+
+  # Don't complain about logging debugging functions
+  "def print_logging_info*",
+  "def __cls_name",
+]
+
+omit = [
+  # omit test files
+  "tests/*",
+  # omit init files
+  "__init__.py",
+  # omit version file
+  "version.py",
+  # omit pixi files
+  ".pixi/*",
+]
+
+
+[tool.pytest.ini_options]
+addopts = "--disable-warnings"
+testpaths = ["tests"]
