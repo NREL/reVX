@@ -1,0 +1,6 @@
+reVX.setbacks.regulations.select\_setback\_regulations
+======================================================
+
+.. currentmodule:: reVX.setbacks.regulations
+
+.. autofunction:: select_setback_regulations

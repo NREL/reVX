@@ -1,0 +1,6 @@
+reVX.plexos.rev\_reeds\_plexos\_cli.get\_node\_cmd
+==================================================
+
+.. currentmodule:: reVX.plexos.rev_reeds_plexos_cli
+
+.. autofunction:: get_node_cmd

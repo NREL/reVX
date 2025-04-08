@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.LeastCostPathNotFoundError
+====================================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: LeastCostPathNotFoundError

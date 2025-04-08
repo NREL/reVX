@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.least\_cost\_paths.min\_reinforcement\_costs
+=======================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.least_cost_paths
+
+.. autofunction:: min_reinforcement_costs

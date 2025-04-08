@@ -1,0 +1,33 @@
+reVX.config.offshore
+====================
+
+.. automodule:: reVX.config.offshore
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      AssemblyAreasConfig
+      DistToPortsConfig
+      OffshoreInputsConfig
+   
+   
+
+   
+   
+   
+
+
+

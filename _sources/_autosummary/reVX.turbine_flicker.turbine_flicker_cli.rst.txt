@@ -1,0 +1,33 @@
+reVX.turbine\_flicker.turbine\_flicker\_cli
+===========================================
+
+.. automodule:: reVX.turbine_flicker.turbine_flicker_cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      eagle
+      flicker_fn_out
+      get_node_cmd
+      run_local
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

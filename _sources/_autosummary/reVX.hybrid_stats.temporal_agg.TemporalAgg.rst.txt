@@ -1,0 +1,31 @@
+reVX.hybrid\_stats.temporal\_agg.TemporalAgg
+============================================
+
+.. currentmodule:: reVX.hybrid_stats.temporal_agg
+
+.. autoclass:: TemporalAgg
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TemporalAgg.aggregate
+      ~TemporalAgg.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TemporalAgg.dsets
+   
+   
