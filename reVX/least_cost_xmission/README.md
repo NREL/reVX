@@ -3,8 +3,7 @@ Determine least cost transmission paths from land-based and offshore wind and so
 
 ## Files
 ### Python command-line interface (CLI) files
-* [`transmission_layer_creator_cli.py`](transmission_layer_creator_cli.py) - Create all layers for a transmission routing analysis: barriers, friction, and wet costs. Dry costs must currently be created with `dry_cost_creator_cli.py`.  If `reVX` has been installed with `pip`, the CLI command alias `transmission-layer-creator` is available for this file. Usage is discussed below.
-* [`dry_cost_creator_cli.py`](dry_cost_creator_cli.py) - Compute land-based transmission cost raster and save as HDF5. This includes creating slope and land use cost multipliers from source data and adding base transmission line construction costs. Final cost raster consists of line construction costs with all multipliers by ISO. CLI alias: `dry-cost-creator`
+* [`transmission_layer_creator_cli.py`](transmission_layer_creator_cli.py) - Create all layers for a transmission routing analysis: barriers, friction, and wet costs. If `reVX` has been installed with `pip`, the CLI command alias `transmission-layer-creator` is available for this file. Usage is discussed below.
 * [`least_cost_paths_cli.py`](least_cost_paths_cli.py) - Calculate least cost paths between a set of points. CLI alias: `least-cost-paths`
 * [`least_cost_xmission_cli.py`](least_cost_xmission_cli.py) - Calculate least cost transmission paths and connection costs. CLI alias: `least-cost-xmission`
 
