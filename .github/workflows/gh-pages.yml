@@ -3,10 +3,11 @@ name: Documentation
 on:
   push:
     branches: [main, master]
+  workflow_dispatch:
 
 permissions:
   id-token: write
-  contents: read
+  contents: write
 
 jobs:
   make-pages:
