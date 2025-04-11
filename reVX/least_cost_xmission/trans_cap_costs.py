@@ -263,7 +263,8 @@ class CostLayer:
         if allow_cl and layer_name == LCP_AGG_COST_LAYER_NAME:
             return self.mcp_cost.copy()
         _verify_layer_exists(layer_name, cost_file)
-        return cost_file[layer_name, self._row_slice, self._col_slice]
+        out_array = cost_file[layer_name, self._row_slice, self._col_slice]
+        return out_array.astype(np.float32)
 
     def _build_tracked_layers(self, tracked_layers, cost_file):
         """Build out a dictionary of tracked layers"""
