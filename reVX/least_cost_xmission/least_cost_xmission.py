@@ -36,8 +36,7 @@ from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        CLIP_RASTER_BUFFER,
                                                        NUM_NN_SINKS,
                                                        RESOLUTION,
-                                                       MINIMUM_SPUR_DIST_KM,
-                                                       ISO_H5_LAYER_NAME)
+                                                       MINIMUM_SPUR_DIST_KM)
 from reVX.least_cost_xmission.least_cost_paths import LeastCostPaths
 from reVX.least_cost_xmission.trans_cap_costs import (
     TransCapCosts,
@@ -57,8 +56,7 @@ class LeastCostXmission(LeastCostPaths):
 
     def __init__(self, cost_fpath, features_fpath, resolution=RESOLUTION,
                  xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM,
-                 cost_multiplier_layer=None,
-                 iso_regions_layer_name=ISO_H5_LAYER_NAME):
+                 cost_multiplier_layer=None):
         """
         Parameters
         ----------
@@ -76,22 +74,16 @@ class LeastCostXmission(LeastCostPaths):
         cost_multiplier_layer : str, optional
             Name of layer containing final cost layer spatial
             multipliers. By default, ``None``.
-        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
-            Name of ISO regions layer in `cost_fpath` file. The layer
-            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
-            By default, :obj:`ISO_H5_LAYER_NAME`.
         """
         self._cost_fpath = cost_fpath
         self._cost_multiplier_layer = cost_multiplier_layer
-        self._iso_layer_name = iso_regions_layer_name
         self._check_layers()
 
         self._config = parse_config(xmission_config=xmission_config)
 
         (self._sc_points, self._features, self._sub_lines_mapping,
          self._shape) = self._map_to_costs(cost_fpath, features_fpath,
-                                           resolution=resolution,
-                                           iso_layer_name=self._iso_layer_name)
+                                           resolution=resolution)
         self._tree = None
         self._sink_coords = None
         self._min_line_len = min_line_length
@@ -107,8 +99,7 @@ class LeastCostXmission(LeastCostPaths):
     def _check_layers(self):
         """Check to make sure the required layers are in cost_fpath."""
         self._check_layers_in_h5(self._cost_fpath,
-                                 [self._cost_multiplier_layer,
-                                  self._iso_layer_name])
+                                 [self._cost_multiplier_layer])
 
     @property
     def sc_points(self):
@@ -347,8 +338,7 @@ class LeastCostXmission(LeastCostPaths):
         return row, col, mask
 
     @classmethod
-    def _map_to_costs(cls, cost_fpath, features_fpath, resolution=RESOLUTION,
-                      iso_layer_name=ISO_H5_LAYER_NAME):
+    def _map_to_costs(cls, cost_fpath, features_fpath, resolution=RESOLUTION):
         """
         Map supply curve points and transmission features to cost array
         pixel indices
@@ -361,10 +351,6 @@ class LeastCostXmission(LeastCostPaths):
             Path to GeoPackage with transmission features
         resolution : int, optional
             SC point resolution, by default 128
-        iso_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
-            Name of ISO regions layer in `cost_fpath` file. The layer
-            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
-            By default, :obj:`ISO_H5_LAYER_NAME`.
 
         Returns
         -------
@@ -382,7 +368,6 @@ class LeastCostXmission(LeastCostPaths):
             crs = CRS.from_string(f.crs)
             transform = rasterio.Affine(*f.profile["transform"])
             shape = f.shape
-            regions = f[iso_layer_name]
 
         features, sub_lines_map = cls._load_trans_feats(features_fpath)
         row, col, mask = cls._get_feature_cost_indices(features, crs,
@@ -399,7 +384,6 @@ class LeastCostXmission(LeastCostPaths):
 
         features["end_row"] = row
         features["end_col"] = col
-        features["region"] = regions[row, col]
 
         logger.debug("Converting SC points to GeoDataFrame")
         sc_points = cls._create_sc_points(cost_fpath, resolution=resolution)
@@ -870,7 +854,6 @@ class LeastCostXmission(LeastCostPaths):
                                 cost_multiplier_layer=(
                                     self._cost_multiplier_layer),
                                 cost_multiplier_scalar=cost_multiplier_scalar,
-                                iso_regions_layer_name=self._iso_layer_name,
                                 min_line_length=self._min_line_len,
                                 save_paths=save_paths,
                                 simplify_geo=simplify_geo,
@@ -1002,7 +985,6 @@ class LeastCostXmission(LeastCostPaths):
                     xmission_config=self._config,
                     cost_multiplier_layer=self._cost_multiplier_layer,
                     cost_multiplier_scalar=cost_multiplier_scalar,
-                    iso_regions_layer_name=self._iso_layer_name,
                     min_line_length=self._min_line_len,
                     save_paths=save_paths, simplify_geo=simplify_geo,
                     cost_layers=cost_layers,
@@ -1026,9 +1008,9 @@ class LeastCostXmission(LeastCostPaths):
             min_line_length=MINIMUM_SPUR_DIST_KM, sc_point_gids=None,
             nn_sinks=NUM_NN_SINKS, clipping_buffer=CLIP_RASTER_BUFFER,
             cost_multiplier_layer=None, cost_multiplier_scalar=1,
-            iso_regions_layer_name=ISO_H5_LAYER_NAME, max_workers=None,
-            save_paths=False, radius=None, expand_radius=True, mp_delay=3,
-            simplify_geo=None, friction_layers=None, tracked_layers=None,
+            max_workers=None, save_paths=False, radius=None,
+            expand_radius=True, mp_delay=3, simplify_geo=None,
+            friction_layers=None, tracked_layers=None,
             length_mult_kind="linear", cell_size=CELL_SIZE,
             use_hard_barrier=True):
         """
@@ -1070,11 +1052,6 @@ class LeastCostXmission(LeastCostPaths):
             multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
-        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
-            Name of ISO regions layer in `cost_fpath` file. The layer
-            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
-            By default, :obj:`ISO_H5_LAYER_NAME`.
-            least cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -1144,8 +1121,7 @@ class LeastCostXmission(LeastCostPaths):
         lcx = cls(cost_fpath, features_fpath, resolution=resolution,
                   xmission_config=xmission_config,
                   min_line_length=min_line_length,
-                  cost_multiplier_layer=cost_multiplier_layer,
-                  iso_regions_layer_name=iso_regions_layer_name)
+                  cost_multiplier_layer=cost_multiplier_layer)
 
         least_costs = lcx.process_sc_points(capacity_class, cost_layers,
                                             sc_point_gids=sc_point_gids,
@@ -1194,8 +1170,7 @@ class RegionalXmission(LeastCostXmission):
     def __init__(self, cost_fpath, features_fpath, regions,
                  region_identifier_column, resolution=RESOLUTION,
                  xmission_config=None, min_line_length=MINIMUM_SPUR_DIST_KM,
-                 cost_multiplier_layer=None,
-                 iso_regions_layer_name=ISO_H5_LAYER_NAME):
+                 cost_multiplier_layer=None):
         """
         Parameters
         ----------
@@ -1226,18 +1201,12 @@ class RegionalXmission(LeastCostXmission):
         cost_multiplier_layer : str, optional
             Name of layer containing final cost layer spatial
             multipliers. By default, ``None``.
-        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
-            Name of ISO regions layer in `cost_fpath` file. The layer
-            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
-            By default, :obj:`ISO_H5_LAYER_NAME`.
-            least cost tie-line path, by default 100
         """
         super().__init__(cost_fpath=cost_fpath, features_fpath=features_fpath,
                          resolution=resolution,
                          xmission_config=xmission_config,
                          min_line_length=min_line_length,
-                         cost_multiplier_layer=cost_multiplier_layer,
-                         iso_regions_layer_name=iso_regions_layer_name)
+                         cost_multiplier_layer=cost_multiplier_layer)
 
         with ExclusionLayers(cost_fpath) as f:
             crs = CRS.from_string(f.crs)
@@ -1323,8 +1292,7 @@ class RegionalXmission(LeastCostXmission):
             min_line_length=MINIMUM_SPUR_DIST_KM, sc_point_gids=None,
             clipping_buffer=CLIP_RASTER_BUFFER,
             cost_multiplier_layer=None, cost_multiplier_scalar=1,
-            iso_regions_layer_name=ISO_H5_LAYER_NAME, max_workers=None,
-            simplify_geo=None, save_paths=False, radius=None,
+            max_workers=None, simplify_geo=None, save_paths=False, radius=None,
             expand_radius=True, mp_delay=3, friction_layers=None,
             tracked_layers=None, length_mult_kind="linear",
             cell_size=CELL_SIZE, use_hard_barrier=True):
@@ -1377,11 +1345,6 @@ class RegionalXmission(LeastCostXmission):
             multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
-        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
-            Name of ISO regions layer in `cost_fpath` file. The layer
-            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
-            By default, :obj:`ISO_H5_LAYER_NAME`.
-            least cost tie-line path, by default 100
         max_workers : int, optional
             Number of workers to use for processing. If 1 run in serial,
             if ``None`` use all available cores. By default, ``None``.
@@ -1450,8 +1413,7 @@ class RegionalXmission(LeastCostXmission):
         ts = time.time()
         lcx = cls(cost_fpath, features_fpath, regions_fpath,
                   region_identifier_column, resolution, xmission_config,
-                  min_line_length, cost_multiplier_layer=cost_multiplier_layer,
-                  iso_regions_layer_name=iso_regions_layer_name)
+                  min_line_length, cost_multiplier_layer=cost_multiplier_layer)
         least_costs = lcx.process_sc_points(capacity_class, cost_layers,
                                             sc_point_gids=sc_point_gids,
                                             clipping_buffer=clipping_buffer,
