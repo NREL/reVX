@@ -278,15 +278,10 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   "friction_layers": [
     {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
   ],
-  "iso_regions_layer_name": "iso_regions",
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
 }
 ```
-
-Note that the `iso_regions_layer_name` input is needed because our layer name
-is not the expected default value of `"ISO_regions"` (our layer name is
-lowercase).
 
 Assuming the above config file is saved as `config_conus.json` in the current directory, it can be kicked off with:
 
@@ -389,7 +384,6 @@ You should now have a file containing all of the reinforcement costs for the sub
     "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
     ],
-    "iso_regions_layer_name": "iso_regions",
     "log_directory": "./logs",
     "log_level": "INFO",
     "min_line_length": 0,
@@ -444,7 +438,6 @@ Since we want to allow tie-line connections, we must first run LCP to determine 
     "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
     ],
-    "iso_regions_layer_name": "iso_regions",
     "log_directory": "./logs",
     "log_level": "INFO",
     "resolution": 128,
