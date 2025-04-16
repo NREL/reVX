@@ -81,7 +81,7 @@ def check_baseline(truth, test, lmk="linear"):
                            'sc_point_gid']
     check_cost_cols = ['xformer_cost_per_mw', 'xformer_cost',
                        'sub_upgrade_cost', 'new_sub_cost', 'connection_cost']
-    ckeck_no_lm_cols = ["tie_line_cost", "trans_cap_cost"]
+    check_no_lm_cols = ["tie_line_cost", "trans_cap_cost"]
 
     msg = 'Unique sc_point gids do not match!'
     assert np.allclose(truth['sc_point_gid'].unique(),
@@ -93,41 +93,8 @@ def check_baseline(truth, test, lmk="linear"):
 
     for gid, p_true in truth_points:
         p_test = test_points.get_group(gid)
-
-        msg = f'Unique trans_gids do not match for sc_point {gid}!'
-        assert np.allclose(p_true['trans_gid'].unique(),
-                           p_test['trans_gid'].unique()), msg
-
-        for c in check_baseline_cols:
-            msg = f'values for {c} do not match for sc_point {gid}!'
-            c_truth = p_true[c].values.astype('float32')
-            c_test = p_test[c].values.astype('float32')
-            assert np.allclose(c_truth, c_test, equal_nan=True), msg
-
-        for c in check_cost_cols:
-            msg = f'values for {c} do not match for sc_point {gid}!'
-            c_test = test[c].values.astype('float32')
-            if c in {'new_sub_cost', 'connection_cost'}:
-                c_test[c_test>=SINK_CONNECTION_COST] = 0
-            assert np.allclose(c_test, 0, equal_nan=True), msg
-
-        for c in ckeck_no_lm_cols:
-            msg = f'values for {c} do not match for sc_point {gid}!'
-            # truth set has incorrect mults
-            true_mask = ((p_true["dist_km"].astype('float32') >= cutoff)
-                         & (~p_true["category"].isin({TRANS_LINE_CAT})))
-            c_truth = p_true.loc[true_mask, c].values.astype('float32')
-            test_mask = ((p_test["dist_km"].astype('float32') >= cutoff)
-                         & (~p_test["category"].isin({TRANS_LINE_CAT})))
-            c_test = p_test.loc[test_mask, c].values.astype('float32')
-
-            if c == "trans_cap_cost":
-                c_truth -= (p_true.loc[true_mask, "connection_cost"]
-                            .values.astype('float32'))
-                c_truth += (p_test.loc[test_mask, "connection_cost"]
-                            .values.astype('float32'))
-
-            assert np.allclose(c_truth, c_test, equal_nan=True), msg
+        _check_baseline_for_gid(gid, p_true, p_test, check_baseline_cols,
+                                check_cost_cols, check_no_lm_cols, cutoff)
 
     for c in check_baseline_cols:
         msg = f'values for {c} do not match!'
@@ -139,10 +106,10 @@ def check_baseline(truth, test, lmk="linear"):
         msg = f'values for {c} do not match!'
         c_test = test[c].values.astype('float32')
         if c in {'new_sub_cost', 'connection_cost'}:
-            c_test[c_test>=SINK_CONNECTION_COST] = 0
+            c_test[c_test >= SINK_CONNECTION_COST] = 0
         assert np.allclose(c_test, 0, equal_nan=True), msg
 
-    for c in ckeck_no_lm_cols:
+    for c in check_no_lm_cols:
         msg = f'values for {c} do not match!'
         # truth set has incorrect mults
         true_mask = ((truth["dist_km"].astype('float32') >= cutoff)
@@ -160,6 +127,46 @@ def check_baseline(truth, test, lmk="linear"):
         assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
     check_length_mults(test, lmk=lmk)
+
+
+def _check_baseline_for_gid(gid, p_true, p_test, check_baseline_cols,
+                            check_cost_cols, check_no_lm_cols, cutoff):
+    """Check baseline values for a single gid"""
+
+    msg = f'Unique trans_gids do not match for sc_point {gid}!'
+    assert np.allclose(p_true['trans_gid'].unique(),
+                       p_test['trans_gid'].unique()), msg
+
+    for c in check_baseline_cols:
+        msg = f'values for {c} do not match for sc_point {gid}!'
+        c_truth = p_true[c].values.astype('float32')
+        c_test = p_test[c].values.astype('float32')
+        assert np.allclose(c_truth, c_test, equal_nan=True), msg
+
+    for c in check_cost_cols:
+        msg = f'values for {c} do not match for sc_point {gid}!'
+        c_test = p_test[c].values.astype('float32')
+        if c in {'new_sub_cost', 'connection_cost'}:
+            c_test[c_test >= SINK_CONNECTION_COST] = 0
+        assert np.allclose(c_test, 0, equal_nan=True), msg
+
+    for c in check_no_lm_cols:
+        msg = f'values for {c} do not match for sc_point {gid}!'
+        # truth set has incorrect mults
+        true_mask = ((p_true["dist_km"].astype('float32') >= cutoff)
+                      & (~p_true["category"].isin({TRANS_LINE_CAT})))
+        c_truth = p_true.loc[true_mask, c].values.astype('float32')
+        test_mask = ((p_test["dist_km"].astype('float32') >= cutoff)
+                      & (~p_test["category"].isin({TRANS_LINE_CAT})))
+        c_test = p_test.loc[test_mask, c].values.astype('float32')
+
+        if c == "trans_cap_cost":
+            c_truth -= (p_true.loc[true_mask, "connection_cost"]
+                        .values.astype('float32'))
+            c_truth += (p_test.loc[test_mask, "connection_cost"]
+                        .values.astype('float32'))
+
+        assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
 
 @pytest.fixture(scope="module")
