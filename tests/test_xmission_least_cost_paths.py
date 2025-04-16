@@ -868,7 +868,7 @@ def test_apply_mults_by_route(runner, route_table):
 
         polarity_config_path = os.path.join(td, 'config_polarity.json')
         polarity_config = {"138": {"ac": 4, "dc": 4.5},
-                            "69": {"ac": 5, "dc": 5.5},
+                           "69": {"ac": 5, "dc": 5.5},
                            "345": {"ac": 6, "dc": 6.5},
                            "500": {"ac": 7, "dc": 7.5}}
         with open(polarity_config_path, 'w') as f:
