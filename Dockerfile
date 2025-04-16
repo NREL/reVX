@@ -4,7 +4,7 @@ FROM continuumio/miniconda3
 WORKDIR /reVX
 RUN mkdir -p /reVX
 RUN conda update conda -y && \
-    conda create --name revx --yes python=3.8
+    conda create --name revx --yes python=3.11
 # Copy package
 COPY . /reVX
 
