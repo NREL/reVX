@@ -512,7 +512,6 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
 
         with h5py.File(cost_h5_path, "a") as fh:
             tb = fh["transmission_barrier"][:]
-            iso = fh["ISO_regions"][:]
 
             del fh["transmission_barrier"]
             del fh["ISO_regions"]
@@ -520,7 +519,6 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
             assert "ISO_regions" not in fh.keys()
 
             fh.create_dataset("tb", data=tb)
-            fh.create_dataset("iso", data=iso)
 
         config = {
             "log_directory": td,
@@ -538,7 +536,6 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
                                  "multiplier_scalar": 100}],
             "min_line_length": 0,
             "save_paths": False,
-            "iso_regions_layer_name": "iso",
         }
 
         config_path = os.path.join(td, 'config.json')
