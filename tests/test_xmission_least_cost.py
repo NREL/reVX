@@ -29,7 +29,8 @@ from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SHORT_CUTOFF,
                                                        SHORT_MULT,
                                                        MEDIUM_CUTOFF,
-                                                       MEDIUM_MULT)
+                                                       MEDIUM_MULT,
+                                                       SINK_CONNECTION_COST)
 from reVX.least_cost_xmission.least_cost_xmission_cli import main
 from reVX.least_cost_xmission.least_cost_paths_cli import main as lcp_main
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
@@ -105,22 +106,27 @@ def check_baseline(truth, test, lmk="linear"):
 
         for c in check_cost_cols:
             msg = f'values for {c} do not match for sc_point {gid}!'
-            # truth set has incorrect regions for tlines
-            mask = ~p_true["category"].isin({TRANS_LINE_CAT})
-            c_truth = p_true.loc[mask, c].values.astype('float32')
-            mask = ~p_test["category"].isin({TRANS_LINE_CAT})
-            c_test = p_test.loc[mask, c].values.astype('float32')
-            assert np.allclose(c_truth, c_test, equal_nan=True), msg
+            c_test = test[c].values.astype('float32')
+            if c in {'new_sub_cost', 'connection_cost'}:
+                c_test[c_test>=SINK_CONNECTION_COST] = 0
+            assert np.allclose(c_test, 0, equal_nan=True), msg
 
         for c in ckeck_no_lm_cols:
             msg = f'values for {c} do not match for sc_point {gid}!'
             # truth set has incorrect mults
-            mask = ((p_true["dist_km"].astype('float32') >= cutoff)
-                    & (~p_true["category"].isin({TRANS_LINE_CAT})))
-            c_truth = p_true.loc[mask, c].values.astype('float32')
-            mask = ((p_test["dist_km"].astype('float32') >= cutoff)
-                    & (~p_test["category"].isin({TRANS_LINE_CAT})))
-            c_test = p_test.loc[mask, c].values.astype('float32')
+            true_mask = ((p_true["dist_km"].astype('float32') >= cutoff)
+                         & (~p_true["category"].isin({TRANS_LINE_CAT})))
+            c_truth = p_true.loc[true_mask, c].values.astype('float32')
+            test_mask = ((p_test["dist_km"].astype('float32') >= cutoff)
+                         & (~p_test["category"].isin({TRANS_LINE_CAT})))
+            c_test = p_test.loc[test_mask, c].values.astype('float32')
+
+            if c == "trans_cap_cost":
+                c_truth -= (p_true.loc[true_mask, "connection_cost"]
+                            .values.astype('float32'))
+                c_truth += (p_test.loc[test_mask, "connection_cost"]
+                            .values.astype('float32'))
+
             assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
     for c in check_baseline_cols:
@@ -131,22 +137,26 @@ def check_baseline(truth, test, lmk="linear"):
 
     for c in check_cost_cols:
         msg = f'values for {c} do not match!'
-        # truth set has incorrect regions for tlines
-        mask = ~truth["category"].isin({TRANS_LINE_CAT})
-        c_truth = truth.loc[mask, c].values.astype('float32')
-        mask = ~test["category"].isin({TRANS_LINE_CAT})
-        c_test = test.loc[mask, c].values.astype('float32')
-        assert np.allclose(c_truth, c_test, equal_nan=True), msg
+        c_test = test[c].values.astype('float32')
+        if c in {'new_sub_cost', 'connection_cost'}:
+            c_test[c_test>=SINK_CONNECTION_COST] = 0
+        assert np.allclose(c_test, 0, equal_nan=True), msg
 
     for c in ckeck_no_lm_cols:
         msg = f'values for {c} do not match!'
         # truth set has incorrect mults
-        mask = ((truth["dist_km"].astype('float32') >= cutoff)
-                & (~truth["category"].isin({TRANS_LINE_CAT})))
-        c_truth = truth.loc[mask, c].values.astype('float32')
-        mask = ((test["dist_km"].astype('float32') >= cutoff)
-                & (~test["category"].isin({TRANS_LINE_CAT})))
-        c_test = test.loc[mask, c].values.astype('float32')
+        true_mask = ((truth["dist_km"].astype('float32') >= cutoff)
+                     & (~truth["category"].isin({TRANS_LINE_CAT})))
+        c_truth = truth.loc[true_mask, c].values.astype('float32')
+        test_mask = ((test["dist_km"].astype('float32') >= cutoff)
+                     & (~test["category"].isin({TRANS_LINE_CAT})))
+        c_test = test.loc[test_mask, c].values.astype('float32')
+
+        if c == "trans_cap_cost":
+            c_truth -= (truth.loc[true_mask, "connection_cost"]
+                        .values.astype('float32'))
+            c_truth += (test.loc[test_mask, "connection_cost"]
+                        .values.astype('float32'))
         assert np.allclose(c_truth, c_test, equal_nan=True), msg
 
     check_length_mults(test, lmk=lmk)
