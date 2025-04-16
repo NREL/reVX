@@ -34,8 +34,7 @@ from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        SUBSTATION_CAT,
                                                        MINIMUM_SPUR_DIST_KM,
                                                        CLIP_RASTER_BUFFER,
-                                                       NUM_NN_SINKS,
-                                                       ISO_H5_LAYER_NAME)
+                                                       NUM_NN_SINKS)
 from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
 from reVX.least_cost_xmission.trans_cap_costs import CostLayer
 
@@ -164,10 +163,6 @@ def from_config(ctx, config, verbose):
                    'cost layer')
 @click.option('--cost_multiplier_scalar', '-cmult', type=float,
               show_default=True, default=1, help="Final cost layer multiplier")
-@click.option('--iso_regions_layer_name', '-irln', default=ISO_H5_LAYER_NAME,
-              type=STR, show_default=True,
-              help='Name of ISO regions layer in `cost_fpath` file. The '
-                   "layer maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .")
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -232,10 +227,9 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
           region_identifier_column, capacity_class, resolution,
           xmission_config, min_line_length, sc_point_gids, nn_sinks,
           clipping_buffer, cost_multiplier_layer, cost_multiplier_scalar,
-          iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
-          save_paths, radius, expand_radius, mp_delay, simplify_geo,
-          cost_layers, friction_layers, tracked_layers,
-          length_mult_kind, cell_size, use_hard_barrier):
+          max_workers, out_dir, log_dir, verbose, save_paths, radius,
+          expand_radius, mp_delay, simplify_geo, cost_layers, friction_layers,
+          tracked_layers, length_mult_kind, cell_size, use_hard_barrier):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -272,7 +266,6 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
               "clipping_buffer": clipping_buffer,
               "cost_multiplier_layer": cost_multiplier_layer,
               "cost_multiplier_scalar": cost_multiplier_scalar,
-              "iso_regions_layer_name": iso_regions_layer_name,
               "max_workers": max_workers,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
@@ -544,7 +537,6 @@ def get_node_cmd(config, gids):
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
             '-cml {}'.format(SLURM.s(config.cost_multiplier_layer)),
             '-cmult {}'.format(SLURM.s(config.cost_multiplier_scalar)),
-            '-irln {}'.format(SLURM.s(config.iso_regions_layer_name)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
@@ -606,7 +598,6 @@ def run_local(ctx, config):
                clipping_buffer=config.clipping_buffer,
                cost_multiplier_layer=config.cost_multiplier_layer,
                cost_multiplier_scalar=config.cost_multiplier_scalar,
-               iso_regions_layer_name=config.iso_regions_layer_name,
                region_identifier_column=config.region_identifier_column,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
