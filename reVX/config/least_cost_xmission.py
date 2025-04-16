@@ -11,8 +11,7 @@ from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        RESOLUTION,
                                                        NUM_NN_SINKS,
                                                        CLIP_RASTER_BUFFER,
-                                                       MINIMUM_SPUR_DIST_KM,
-                                                       ISO_H5_LAYER_NAME)
+                                                       MINIMUM_SPUR_DIST_KM)
 from reV.supply_curve.extent import SupplyCurveExtent
 from reV.config.base_analysis_config import AnalysisConfig
 from reV.utilities.exceptions import ConfigError
@@ -195,13 +194,6 @@ class LeastCostXmissionConfig(AnalysisConfig):
         Final cost layer multiplier, defaults to ``1``.
         """
         return float(self.get('cost_multiplier_scalar', 1))
-
-    @property
-    def iso_regions_layer_name(self):
-        """
-        Name of ISO regions layer in `cost_fpath` file.
-        """
-        return self.get('iso_regions_layer_name', ISO_H5_LAYER_NAME)
 
     @property
     def cost_layers(self) -> List[dict]:
