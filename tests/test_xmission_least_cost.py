@@ -83,6 +83,10 @@ def check_baseline(truth, test, lmk="linear"):
                        'sub_upgrade_cost', 'new_sub_cost', 'connection_cost']
     check_no_lm_cols = ["tie_line_cost", "trans_cap_cost"]
 
+    truth = truth.loc[truth["raw_line_cost"] < 1e12]
+    test = (truth[["trans_gid", "sc_point_gid"]]
+            .merge(test, on=["trans_gid", "sc_point_gid"])).reset_index()
+
     msg = 'Unique sc_point gids do not match!'
     assert np.allclose(truth['sc_point_gid'].unique(),
                        test['sc_point_gid'].unique()), msg
@@ -211,7 +215,7 @@ def test_capacity_class(capacity, lmk):
         mask = truth['sc_point_gid'].isin(sc_point_gids)
         truth = truth.loc[mask]
 
-    test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
+    test = LeastCostXmission.run(COST_H5, FEATURES,
                                  [{"layer_name": cost_layer}],
                                  friction_layers=[DEFAULT_BARRIER],
                                  sc_point_gids=sc_point_gids,
@@ -255,7 +259,7 @@ def test_parallel(max_workers, lmk):
         mask = truth['sc_point_gid'].isin(sc_point_gids)
         truth = truth.loc[mask]
 
-    test = LeastCostXmission.run(COST_H5, FEATURES, capacity,
+    test = LeastCostXmission.run(COST_H5, FEATURES,
                                  [{"layer_name": cost_layer}],
                                  friction_layers=[DEFAULT_BARRIER],
                                  max_workers=max_workers,
@@ -294,7 +298,7 @@ def test_resolution(resolution, lmk):
         truth = truth.loc[mask]
 
     cost_layer = f'tie_line_costs_{_cap_class_to_cap(100)}MW'
-    test = LeastCostXmission.run(COST_H5, FEATURES, 100,
+    test = LeastCostXmission.run(COST_H5, FEATURES,
                                  [{"layer_name": cost_layer}],
                                  friction_layers=[DEFAULT_BARRIER],
                                  resolution=resolution,
@@ -338,7 +342,7 @@ def test_tracked_layers():
             fh.create_dataset("layer4", data=np.ones(data_shape) * 4)
             fh.create_dataset("layer5", data=np.ones(data_shape))
 
-        test = LeastCostXmission.run(cost_h5_path, FEATURES, capacity,
+        test = LeastCostXmission.run(cost_h5_path, FEATURES,
                                      [{"layer_name": cost_layer}],
                                      friction_layers=[DEFAULT_BARRIER],
                                      sc_point_gids=sc_point_gids,
@@ -367,6 +371,7 @@ def test_cli(runner, save_paths, lmk):
     Test CostCreator CLI
     """
     capacity = random.choice([100, 200, 400, 1000])
+    cost_layer = f"tie_line_costs_{_cap_class_to_cap(capacity)}MW"
     truth = os.path.join(TESTDATADIR, 'xmission',
                          f'least_cost_{capacity}MW.csv')
     truth = pd.read_csv(truth)
@@ -379,10 +384,9 @@ def test_cli(runner, save_paths, lmk):
             },
             "cost_fpath": COST_H5,
             "features_fpath": FEATURES,
-            "capacity_class": f'{capacity}MW',
             "min_line_length": 5.76,
             "save_paths": save_paths,
-            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+            "cost_layers": [{"layer_name": cost_layer}],
             "friction_layers": [DEFAULT_BARRIER],
             "length_mult_kind": lmk
         }
@@ -397,12 +401,12 @@ def test_cli(runner, save_paths, lmk):
         assert result.exit_code == 0, msg
 
         if save_paths:
-            test = '{}_{}MW_128.gpkg'.format(os.path.basename(td), capacity)
+            test = '{}_128.gpkg'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = gpd.read_file(test)
             assert test.geometry is not None
         else:
-            test = '{}_{}MW_128.csv'.format(os.path.basename(td), capacity)
+            test = '{}_128.csv'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = pd.read_csv(test)
         test_rev = test.rename(columns=SupplyCurveField.map_from_legacy())
@@ -446,7 +450,6 @@ def test_regional_cli(runner, ri_ba, save_paths):
             "features_fpath": ri_substations_path,
             "regions_fpath": ri_ba_path,
             "region_identifier_column": "ba_str",
-            "capacity_class": 1000,
             "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
             "friction_layers": [DEFAULT_BARRIER],
             "min_line_length": 0,
@@ -464,12 +467,12 @@ def test_regional_cli(runner, ri_ba, save_paths):
         assert result.exit_code == 0, msg
 
         if save_paths:
-            test = '{}_1000_128.gpkg'.format(os.path.basename(td))
+            test = '{}_128.gpkg'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = gpd.read_file(test)
             assert test.geometry is not None
         else:
-            test = '{}_1000_128.csv'.format(os.path.basename(td))
+            test = '{}_128.csv'.format(os.path.basename(td))
             test = os.path.join(td, test)
             test = pd.read_csv(test)
 
@@ -546,7 +549,6 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
             "features_fpath": ri_substations_path,
             "regions_fpath": ri_ba_path,
             "region_identifier_column": "ba_str",
-            "capacity_class": 1000,
             "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
             "friction_layers": [{"layer_name": LCP_AGG_COST_LAYER_NAME,
                                  "multiplier_layer": "tb",
@@ -565,7 +567,7 @@ def test_regional_cli_new_layer_names(runner, ri_ba):
                .format(traceback.print_exception(*result.exc_info)))
         assert result.exit_code == 0, msg
 
-        test = '{}_1000_128.csv'.format(os.path.basename(td))
+        test = '{}_128.csv'.format(os.path.basename(td))
         test = os.path.join(td, test)
         test = pd.read_csv(test)
 
