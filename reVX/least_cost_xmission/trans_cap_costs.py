@@ -1235,6 +1235,8 @@ class TransCapCosts(TieLineCosts):
 
         for int_col in ["end_row", "end_col", "poi_gid"]:
             features[int_col] = features[int_col].astype("Int64")
+        for float_col in  ["raw_line_cost", "dist_km"]:
+            features[float_col] = features[float_col].astype("float")
         return features
 
     def compute_connection_costs(self, features=None,
