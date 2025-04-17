@@ -20,7 +20,6 @@ from typing import Union, Optional, Tuple, Dict
 
 from reV.handlers.exclusions import ExclusionLayers
 
-from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SINK_CAT,
                                                        SINK_CONNECTION_COST,
@@ -1189,7 +1188,7 @@ class TransCapCosts(TieLineCosts):
 
         for int_col in ["end_row", "end_col", "poi_gid"]:
             features[int_col] = features[int_col].astype("Int64")
-        for float_col in  ["raw_line_cost", "dist_km"]:
+        for float_col in ["raw_line_cost", "dist_km"]:
             features[float_col] = features[float_col].astype("float")
         return features
 
