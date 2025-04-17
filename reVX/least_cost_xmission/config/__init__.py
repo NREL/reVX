@@ -6,5 +6,5 @@ import os
 
 from reVX.least_cost_xmission.config.xmission_config import (
     XmissionConfig, LandUseClasses, LandUseMultipliers, SlopeMultipliers,
-    IsoMultipliers
+    IsoMultipliers, parse_config
 )

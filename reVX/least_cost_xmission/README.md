@@ -148,6 +148,17 @@ The below example JSON file shows all possible keys with example values. The for
                 "mpa.tif": { "map": {"2": 5, "3": 7}, "extent": "all" },
             }
         },
+        {
+            "layer_name": "ROW",
+            "description": "Right of way fractional values",
+            "include_in_h5": false,
+            "values_are_costs_per_mile": false,  // This is the default; Should be `false` if you wish to avoid any extra processing
+            "build": {
+                "ROW.tif": {
+                    "pass_through": true
+                },
+            }
+        },
     ],
 
     "merge_friction_and_barriers": {
@@ -243,7 +254,6 @@ Find least cost paths, costs, and connection costs on eagle login node for 1000M
 $ least-cost-xmission local \
     --cost_fpath /shared-projects/rev/exclusions/xmission_costs.h5 \
     --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
-    --capacity_class 1000
     --cl tie_line_costs_1500MW
 ```
 
@@ -262,18 +272,14 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   },
   "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
-  "capacity_class": "1000",
-  "cost_layers": ["tie_line_costs_{}MW"],
-  "iso_regions_layer_name": "iso_regions",
-  "barrier_mult": "100",
+  "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
+  "friction_layers": [
+    {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
+  ],
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
 }
 ```
-
-Note that the `iso_regions_layer_name` input is needed because our nayer name
-is not the expected default value of `"ISO_regions"` (our layer name is
-lowercase).
 
 Assuming the above config file is saved as `config_conus.json` in the current directory, it can be kicked off with:
 
@@ -327,13 +333,15 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
       "walltime": 1
     },
     "cost_fpath": "/path/to/cost.h5",
-    "features_fpath": "./substations_with_ba.gpkg",
+    "route_table": "./substations_with_ba.gpkg",
     "network_nodes_fpath": "./nn.gpkg",
     "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
     "region_identifier_column": "rr_id",
     "capacity_class": "400",
-    "cost_layers": ["tie_line_costs_{}MW"],
-    "barrier_mult": "100",
+    "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+    "friction_layers": [
+      {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
+    ],
     "log_directory": "./logs",
     "log_level": "INFO",
 }
@@ -369,10 +377,10 @@ You should now have a file containing all of the reinforcement costs for the sub
     "features_fpath": "./substations_with_ba.gpkg",
     "regions_fpath": "./regions.gpkg",
     "region_identifier_column": "rr_id",
-    "capacity_class": "1000",
-    "cost_layers": ["tie_line_costs_{}MW"],
-    "iso_regions_layer_name": "iso_regions",
-    "barrier_mult": "100",
+    "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
+    "friction_layers": [
+      {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
+    ],
     "log_directory": "./logs",
     "log_level": "INFO",
     "min_line_length": 0,
@@ -402,7 +410,7 @@ The resulting tables can be passed directly to `reV`, which will automatically d
 
 
 ### Substation and tie-line connections (New)
-Since we want to allow tie-line connecitons, we must first run LCP to determine where new substation will be built:
+Since we want to allow tie-line connections, we must first run LCP to determine where new substation will be built:
 
 ```JSON5
 {
@@ -418,10 +426,14 @@ Since we want to allow tie-line connecitons, we must first run LCP to determine 
     "features_fpath": "/path/to/substations_and_tlines.gpkg",
     "regions_fpath": "/path/to/regions.gpkg",
     "region_identifier_column": "rr_id",
-    "capacity_class": "200",  // 138 kV
-    "barrier_mult": "5000",
-    "cost_layers": ["tie_line_costs_{}MW", "swca_cultural_resources_risk", "swca_natural_resources_risk"],
-    "iso_regions_layer_name": "iso_regions",
+    "cost_layers": [
+        {"layer_name": "tie_line_costs_205MW"},
+        {"layer_name": "swca_cultural_resources_risk"},
+        {"layer_name": "swca_natural_resources_risk"}
+    ],
+    "friction_layers": [
+      {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
+    ],
     "log_directory": "./logs",
     "log_level": "INFO",
     "resolution": 128,
@@ -437,19 +449,19 @@ The data will come split into multiple files (in this case 100, since we used 10
 $ least-cost-xmission merge-output -of transmission_200MW_128.gpkg -od ./ least_cost_transmission_*_200_128.gpkg
 ```
 
-Once you have the connecitons table, extract the substation locations using the following reVX command:
+Once you have the connections table, extract the substation locations using the following reVX command:
 
 ```
 $ least-cost-paths ss-from-conn -con ./transmission_200MW_128.gpkg -rid rr_id -of ./ss_from_conns_200_128.gpkg
 ```
 
-If your netwrok nodes file is missing the region identified column, you can add it now:
+If your network nodes file is missing the region identified column, you can add it now:
 
 ```
 $ least-cost-paths add-rr-to-nn -nodes ./nn.gpkg -regs ./regions.gpkg -rid rr_id
 ```
 
-Now you can cpmpute the reinforcement paths the same way as the method above:
+Now you can compute the reinforcement paths the same way as the method above:
 
 ```JSON5
 {
@@ -462,13 +474,15 @@ Now you can cpmpute the reinforcement paths the same way as the method above:
       "walltime": 1
     },
     "cost_fpath": "/path/to/cost.h5",
-    "features_fpath": "./ss_from_conns_200_128.gpkg",
+    "route_table": "./ss_from_conns_200_128.gpkg",
     "network_nodes_fpath": "./nn.gpkg",
     "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
     "region_identifier_column": "rr_id",
     "capacity_class": "200",
-    "cost_layers": ["tie_line_costs_{}MW"],
-    "barrier_mult": "5000",
+    "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+    "friction_layers": [
+      {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
+    ],
     "log_directory": "./logs",
     "log_level": "INFO",
     "save_paths": true,
@@ -525,7 +539,6 @@ Find least cost paths, costs, and connection costs on eagle login node for 100MW
 $ least-cost-xmission local \
     --cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
     --features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
-    --capacity_class 100
 ```
 Run the above analysis for only two SC points, using only one core.
 
@@ -533,7 +546,6 @@ Run the above analysis for only two SC points, using only one core.
 $ least-cost-xmission local -v \
     --cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
     --features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
-    --capacity_class 100 \
     --max_workers 1 \
     --sc_point_gids [36092,36093]
 ```
@@ -544,7 +556,7 @@ Using a config file is the preferred method of running an analysis. The below fi
 
 The value for `allocation` should be set to the desired SLURM allocation. The `max_workers` key can be used to reduce the workers on each node if memory issues are encountered, but can typically be left out.
 
-```
+```JSON
 {
   "execution_control": {
     "allocation": "YOUR_SLURM_ALLOCATION",
@@ -558,8 +570,12 @@ The value for `allocation` should be set to the desired SLURM allocation. The `m
   "name": "test",
   "cost_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5",
   "features_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg",
-  "capacity_class": "100",
-  "barrier_mult": "100",
+  "cost_layers": [
+    {"layer_name": "tie_line_costs_102MW"},
+  ],
+  "friction_layers": [
+    {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
+  ],
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "DEBUG",
   "sc_point_gids": [40139],
@@ -578,7 +594,7 @@ $ least-cost-xmission from-config --config ./config_aoswt.json
 
 A sample config for WOWTS would look very similar:
 
-```
+```JSON
 {
   "execution_control": {
     "allocation": "YOUR_SLURM_ALLOCATION",
@@ -588,13 +604,17 @@ A sample config for WOWTS would look very similar:
     "walltime": 4
   },
   "log_directory": "/scratch/USER_NAME/log",
-  "log_level": "INFO"
+  "log_level": "INFO",
   "cost_fpath": "/projects/rev/data/transmission/north_america/conus/least_cost/offshore/processing/conus_20240221.h5",
   "features_fpath": "/projects/rev/projects/wowts/data/20240223_poi_trans_feats.gpkg",
-  "capacity_class": "1000",
-  "cost_layers": ["tie_line_costs_{}MW", "wet_costs"],
-  "length_invariant_cost_layers": ["landfall_costs"],
-  "barrier_mult": "5000",
+  "cost_layers": [
+    {"layer_name": "tie_line_costs_1500MW"},
+    {"layer_name": "wet_costs"},
+    {"layer_name": "landfall_costs", "is_invariant": true},
+  ],
+  "friction_layers": [
+    {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
+  ],
   "resolution": 157,
   "radius": 777,
   "expand_radius": false,
@@ -629,7 +649,7 @@ $ least-cost-xmission merge-output --drop TransLine --split-to-geojson \
 ### Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage
 The processing can also be run within Python. This example uses `contextily` to add a base map to the plot, but is not required. Offshore needs an aggregation "resolution" of 118.
 
-```
+```python
 import contextily as cx
 from rex.utilities.loggers import init_mult
 from reVX.least_cost_xmission.least_cost_xmission import LeastCostXmission
