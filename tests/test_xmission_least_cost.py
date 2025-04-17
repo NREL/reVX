@@ -158,10 +158,10 @@ def _check_baseline_for_gid(gid, p_true, p_test, check_baseline_cols,
         msg = f'values for {c} do not match for sc_point {gid}!'
         # truth set has incorrect mults
         true_mask = ((p_true["dist_km"].astype('float32') >= cutoff)
-                      & (~p_true["category"].isin({TRANS_LINE_CAT})))
+                     & (~p_true["category"].isin({TRANS_LINE_CAT})))
         c_truth = p_true.loc[true_mask, c].values.astype('float32')
         test_mask = ((p_test["dist_km"].astype('float32') >= cutoff)
-                      & (~p_test["category"].isin({TRANS_LINE_CAT})))
+                     & (~p_test["category"].isin({TRANS_LINE_CAT})))
         c_test = p_test.loc[test_mask, c].values.astype('float32')
 
         if c == "trans_cap_cost":
