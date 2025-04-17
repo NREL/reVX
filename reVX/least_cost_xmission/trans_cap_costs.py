@@ -24,15 +24,12 @@ from reVX.least_cost_xmission.config import parse_config
 from reVX.least_cost_xmission.config.constants import (TRANS_LINE_CAT,
                                                        SINK_CAT,
                                                        SINK_CONNECTION_COST,
-                                                       SUBSTATION_CAT,
-                                                       LOAD_CENTER_CAT,
                                                        CELL_SIZE,
                                                        SHORT_MULT,
                                                        MEDIUM_MULT,
                                                        SHORT_CUTOFF,
                                                        MEDIUM_CUTOFF,
-                                                       MINIMUM_SPUR_DIST_KM,
-                                                       ISO_H5_LAYER_NAME)
+                                                       MINIMUM_SPUR_DIST_KM)
 from reVX.utilities.exceptions import (InvalidMCPStartValueError,
                                        LeastCostPathNotFoundError)
 
@@ -825,13 +822,9 @@ class TransCapCosts(TieLineCosts):
     (least-cost tie-line cost + connection cost) for all features to be
     connected a single supply curve point
     """
-    _CHECK_FOR_INVALID_REGION = True
 
-    def __init__(self, cost_fpath, sc_point, features, capacity_class,
-                 cost_layer, start_indices, row_slice, col_slice,
-                 xmission_config=None,
-                 iso_regions_layer_name=ISO_H5_LAYER_NAME,
-                 cell_size=CELL_SIZE):
+    def __init__(self, cost_fpath, sc_point, features, cost_layer,
+                 start_indices, row_slice, col_slice, cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -845,9 +838,6 @@ class TransCapCosts(TieLineCosts):
             to the indices of the feature **in the original cost
             array**. Must also have a "category" column that
             distinguishes between substations and transmission lines.
-        capacity_class : int | str
-            Transmission feature ``capacity_class`` class. Used to look
-            up connection costs.
        cost_layers : List[dict]
             List of dictionaries giving info about the layers in H5 that
             are summed to determine total costs raster used for routing.
@@ -856,18 +846,11 @@ class TransCapCosts(TieLineCosts):
             for more details on this input.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
         cost_multiplier_layer : str, optional
             Name of layer containing final cost layer spatial
             multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
-        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
-            Name of ISO regions layer in `cost_fpath` file. The layer
-            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
-            By default, :obj:`ISO_H5_LAYER_NAME`.
         friction_layers : List[dict] | None, optional
             List of layers in H5 to be added to the cost raster to
             influence routing but NOT reported in final cost. Should
@@ -895,21 +878,11 @@ class TransCapCosts(TieLineCosts):
             square. By default, :obj:`CELL_SIZE`.
         """
         self._sc_point = sc_point
-        self._region_layer = None
-        self._iso_regions_layer_name = iso_regions_layer_name
         super().__init__(cost_fpath, start_indices, cost_layer, row_slice,
                          col_slice, cell_size=cell_size)
 
-        self._config = parse_config(xmission_config=xmission_config)
-        self._capacity_class = self._config._parse_cap_class(capacity_class)
         self._features = self._prep_features(features)
         self._clip_mask = None
-
-    def _extract_data_from_cost_h5(self, fh):
-        """Extract extra info from cost H5 file. """
-        super()._extract_data_from_cost_h5(fh)
-        self._region_layer = fh[self._iso_regions_layer_name,
-                                self._row_slice, self._col_slice]
 
     @property
     def sc_point(self):
@@ -980,28 +953,6 @@ class TransCapCosts(TieLineCosts):
 
         return self._clip_mask
 
-    @property
-    def capacity_class(self):
-        """
-        SC point capacity class
-
-        Returns
-        -------
-        str
-        """
-        return self._capacity_class
-
-    @property
-    def tie_line_voltage(self):
-        """
-        Tie line voltage in kV
-
-        Returns
-        -------
-        int
-        """
-        return self._config.capacity_to_kv(self.capacity_class)
-
     @staticmethod
     def _get_clipping_slices(cost_fpath, sc_point_idx, radius=None):
         """
@@ -1048,123 +999,6 @@ class TransCapCosts(TieLineCosts):
         col_slice = slice(col_min, col_max)
 
         return start_indices, row_slice, col_slice
-
-    def _calc_xformer_cost(self, features):
-        """
-        Compute transformer costs in $/MW for needed features, all
-        others will be 0
-
-        Parameters
-        ----------
-        features : pd.DataFrame
-            Table of transmission features to compute transformer costs
-            for
-        tie_line_voltage : int
-            Tie-line voltage in kV
-        config : str | dict | XmissionConfig
-            Transmission configuration
-
-        Returns
-        -------
-        xformer_costs : ndarray
-            vector of $/MW transformer costs
-        """
-
-        mask = features['category'] == SUBSTATION_CAT
-        mask &= features['max_volts'] < self.tie_line_voltage
-        if np.any(mask):
-            msg = ('Voltages for substations {} do not exceed tie-line '
-                   'voltage of {}'
-                   .format(features.loc[mask, 'trans_gid'].values,
-                           self.tie_line_voltage))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        xformer_costs = np.zeros(len(features))
-        for volts, df in features.groupby('min_volts'):
-            idx = df.index.values
-            xformer_costs[idx] = self._config.xformer_cost(
-                volts, self.tie_line_voltage)
-
-        mask = features['category'] == TRANS_LINE_CAT
-        mask &= features['max_volts'] < self.tie_line_voltage
-        xformer_costs[mask] = 0
-
-        mask = features['min_volts'] <= self.tie_line_voltage
-        xformer_costs[mask] = 0
-
-        mask = features['region'] == self._config['iso_lookup']['TEPPC']
-        xformer_costs[mask] = 0
-
-        return xformer_costs
-
-    def _calc_sub_upgrade_cost(self, features):
-        """
-        Compute substation upgrade costs for needed features, all others
-        will be 0
-
-        Parameters
-        ----------
-        features : pd.DataFrame
-            Table of transmission features to compute transformer costs
-            for
-
-        Returns
-        -------
-        sub_upgrade_costs : ndarray
-            Substation upgrade costs in $
-        """
-
-        sub_upgrade_cost = np.zeros(len(features))
-        if self._CHECK_FOR_INVALID_REGION and np.any(features['region'] == 0):
-            mask = features['region'] == 0
-            msg = ('Features {} have an invalid region! Region must != 0!'
-                   .format(features.loc[mask, 'trans_gid'].values))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        mask = features['category'].isin([SUBSTATION_CAT, LOAD_CENTER_CAT])
-        if np.any(mask):
-            for region, df in features.loc[mask].groupby('region'):
-                idx = df.index.values
-                sub_upgrade_cost[idx] = self._config.sub_upgrade_cost(
-                    region, self.tie_line_voltage)
-
-        return sub_upgrade_cost
-
-    def _calc_new_sub_cost(self, features):
-        """
-        Compute new substation costs for needed features, all others
-        will be 0
-
-        Parameters
-        ----------
-        features : pd.DataFrame
-            Table of transmission features to compute transformer costs
-            for
-
-        Returns
-        -------
-        new_sub_cost : ndarray
-            new substation costs in $
-        """
-
-        new_sub_cost = np.zeros(len(features))
-        if self._CHECK_FOR_INVALID_REGION and np.any(features['region'] == 0):
-            mask = features['region'] == 0
-            msg = ('Features {} have an invalid region! Region must != 0!'
-                   .format(features.loc[mask, 'trans_gid'].values))
-            logger.error(msg)
-            raise RuntimeError(msg)
-
-        mask = features['category'] == TRANS_LINE_CAT
-        if np.any(mask):
-            for region, df in features.loc[mask].groupby('region'):
-                idx = df.index.values
-                new_sub_cost[idx] = self._config.new_sub_cost(
-                    region, self.tie_line_voltage)
-
-        return new_sub_cost
 
     def _prep_features(self, features):
         """
@@ -1243,18 +1077,6 @@ class TransCapCosts(TieLineCosts):
 
         return [row, col]
 
-    def _check_tline_voltage(self, cost, feat):
-        """Return large cost if tie line voltage is too low. """
-        if feat['max_volts'] < self.tie_line_voltage:
-            msg = ('Tie-line {} voltage of {}kV is less than tie line '
-                   'voltage of {}kV.'
-                   .format(feat['trans_gid'], feat['max_volts'],
-                           self.tie_line_voltage))
-            logger.debug(msg)
-            cost = 1e12
-
-        return cost
-
     def compute_tie_line_costs(self,  # noqa: C901
                                min_line_length=MINIMUM_SPUR_DIST_KM,
                                save_paths=False,
@@ -1302,24 +1124,19 @@ class TransCapCosts(TieLineCosts):
             logger.debug('Feat index is: %s', feat_idx)
 
             row, col = feat_idx
-            region = self._region_layer[row, col]
             row += self.row_offset
             col += self.col_offset
             poi_gid = self._full_shape[1] * row + col
-            logger.debug('Adding row, col, poi_gid, region: %d, %d, %d, %s',
-                         row, col, poi_gid, str(region))
+            logger.debug('Adding row, col, poi_gid: %d, %d, %d',
+                         row, col, poi_gid)
 
             features.loc[index, 'end_row'] = row
             features.loc[index, 'end_col'] = col
             features.loc[index, 'poi_gid'] = poi_gid
-            features.loc[index, 'region'] = region
 
             try:
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
                 (length, cost, poi_lat, poi_lon, path, cl_results) = result
-
-                if t_line:
-                    cost = self._check_tline_voltage(cost, feat)
 
                 if length < min_line_length:
                     msg = ('Tie-line length {} will be increased to the '
@@ -1372,6 +1189,8 @@ class TransCapCosts(TieLineCosts):
 
         for int_col in ["end_row", "end_col", "poi_gid"]:
             features[int_col] = features[int_col].astype("Int64")
+        for float_col in  ["raw_line_cost", "dist_km"]:
+            features[float_col] = features[float_col].astype("float")
         return features
 
     def compute_connection_costs(self, features=None,
@@ -1407,14 +1226,12 @@ class TransCapCosts(TieLineCosts):
                                      * features['length_mult'])
 
         # Transformer costs
-        features['xformer_cost_per_mw'] = self._calc_xformer_cost(features)
-        capacity = int(self.capacity_class.strip('MW'))
-        features['xformer_cost'] = (features['xformer_cost_per_mw']
-                                    * capacity)
+        features['xformer_cost_per_mw'] = 0
+        features['xformer_cost'] = 0
 
         # Substation costs
-        features['sub_upgrade_cost'] = self._calc_sub_upgrade_cost(features)
-        features['new_sub_cost'] = self._calc_new_sub_cost(features)
+        features['sub_upgrade_cost'] = 0
+        features['new_sub_cost'] = 0
 
         # Sink costs
         mask = features['category'] == SINK_CAT
@@ -1488,9 +1305,8 @@ class TransCapCosts(TieLineCosts):
         return features
 
     @classmethod
-    def run(cls, cost_fpath, sc_point, features, capacity_class, cost_layers,
-            radius=None, xmission_config=None, cost_multiplier_layer=None,
-            cost_multiplier_scalar=1, iso_regions_layer_name=ISO_H5_LAYER_NAME,
+    def run(cls, cost_fpath, sc_point, features, cost_layers, radius=None,
+            cost_multiplier_layer=None, cost_multiplier_scalar=1,
             min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
             simplify_geo=None, friction_layers=None, tracked_layers=None,
             length_mult_kind="linear", cell_size=CELL_SIZE,
@@ -1512,8 +1328,6 @@ class TransCapCosts(TieLineCosts):
             to the indices of the feature **in the original cost
             array**. Must also have a "category" column that
             distinguishes between substations and transmission lines.
-        capacity_class : int | str
-            Transmission feature capacity_class class
         cost_layers : List[dict]
             List of dictionaries giving info about the layers in H5 that
             are summed to determine total costs raster used for routing.
@@ -1522,18 +1336,11 @@ class TransCapCosts(TieLineCosts):
             for more details on this input.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
         cost_multiplier_layer : str, optional
             Name of layer containing final cost layer spatial
             multipliers. By default, ``None``.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
-        iso_regions_layer_name : str, default=:obj:`ISO_H5_LAYER_NAME`
-            Name of ISO regions layer in `cost_fpath` file. The layer
-            maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .
-            By default, :obj:`ISO_H5_LAYER_NAME`.
         min_line_length : float, optional
             Minimum line length in km, by default 0
         save_paths : bool, optional
@@ -1602,12 +1409,9 @@ class TransCapCosts(TieLineCosts):
                      tracked_layers=tracked_layers,
                      cost_multiplier_layer=cost_multiplier_layer,
                      cost_multiplier_scalar=cost_multiplier_scalar)
-            tcc = cls(cost_fpath, sc_point, features, capacity_class,
-                      cl, start_indices=start_indices,
-                      row_slice=row_slice, col_slice=col_slice,
-                      xmission_config=xmission_config,
-                      iso_regions_layer_name=iso_regions_layer_name,
-                      cell_size=cell_size)
+            tcc = cls(cost_fpath, sc_point, features, cl,
+                      start_indices=start_indices, row_slice=row_slice,
+                      col_slice=col_slice, cell_size=cell_size)
 
             features = tcc.compute(min_line_length=min_line_length,
                                    save_paths=save_paths,
@@ -1637,8 +1441,6 @@ class RegionalTransCapCosts(TransCapCosts):
     Additionally, the `trans_gid`, `min_volt` and `max_volt` columns are
     no longer required in the features input.
     """
-    TRANSFORMER_COST_VOLTAGE = 69
-    _CHECK_FOR_INVALID_REGION = False
 
     def _get_trans_line_idx(self, trans_line):
         """Get the cheapest point on each transmission line.
@@ -1671,33 +1473,6 @@ class RegionalTransCapCosts(TransCapCosts):
         point_ind = np.argmin(self._cumulative_costs[rows, cols])
 
         return [rows[point_ind], cols[point_ind]]
-
-    def _check_tline_voltage(self, cost, *__, **___):
-        """No adjustments. """
-        return cost
-
-    def _calc_xformer_cost(self, features):
-        """Compute transformer costs in $/MW
-
-        Parameters
-        ----------
-        features : pd.DataFrame
-            Table of transmission features to compute transformer costs
-            for
-
-        Returns
-        -------
-        xformer_costs : ndarray
-            vector of $/MW transformer costs
-        """
-        cost = self._config.xformer_cost(self.TRANSFORMER_COST_VOLTAGE,
-                                         self.tie_line_voltage)
-        xformer_costs = np.full(len(features), cost)
-
-        mask = features['region'] == self._config['iso_lookup']['TEPPC']
-        xformer_costs[mask] = 0
-
-        return xformer_costs
 
 
 class ReinforcementLineCosts(TieLineCosts):

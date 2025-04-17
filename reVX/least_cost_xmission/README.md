@@ -254,7 +254,6 @@ Find least cost paths, costs, and connection costs on eagle login node for 1000M
 $ least-cost-xmission local \
     --cost_fpath /shared-projects/rev/exclusions/xmission_costs.h5 \
     --features_fpath /projects/rev/data/transmission/shapefiles/conus_allconns.gpkg \
-    --capacity_class 1000
     --cl tie_line_costs_1500MW
 ```
 
@@ -273,20 +272,14 @@ The below file can be used to start a full CONUS analysis for the 1000MW power c
   },
   "cost_fpath": "/shared-projects/rev/exclusions/xmission_costs.h5",
   "features_fpath": "/projects/rev/data/transmission/shapefiles/conus_allconns.gpkg",
-  "capacity_class": "1000",
-  "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+  "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
   "friction_layers": [
     {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
   ],
-  "iso_regions_layer_name": "iso_regions",
   "log_directory": "/scratch/USER_NAME/log",
   "log_level": "INFO"
 }
 ```
-
-Note that the `iso_regions_layer_name` input is needed because our layer name
-is not the expected default value of `"ISO_regions"` (our layer name is
-lowercase).
 
 Assuming the above config file is saved as `config_conus.json` in the current directory, it can be kicked off with:
 
@@ -384,12 +377,10 @@ You should now have a file containing all of the reinforcement costs for the sub
     "features_fpath": "./substations_with_ba.gpkg",
     "regions_fpath": "./regions.gpkg",
     "region_identifier_column": "rr_id",
-    "capacity_class": "1000",
-    "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+    "cost_layers": [{"layer_name": "tie_line_costs_1500MW"}],
     "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
     ],
-    "iso_regions_layer_name": "iso_regions",
     "log_directory": "./logs",
     "log_level": "INFO",
     "min_line_length": 0,
@@ -435,16 +426,14 @@ Since we want to allow tie-line connections, we must first run LCP to determine 
     "features_fpath": "/path/to/substations_and_tlines.gpkg",
     "regions_fpath": "/path/to/regions.gpkg",
     "region_identifier_column": "rr_id",
-    "capacity_class": "200",  // 138 kV
     "cost_layers": [
-        {"layer_name": "tie_line_costs_{}MW"},
+        {"layer_name": "tie_line_costs_205MW"},
         {"layer_name": "swca_cultural_resources_risk"},
         {"layer_name": "swca_natural_resources_risk"}
     ],
     "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
     ],
-    "iso_regions_layer_name": "iso_regions",
     "log_directory": "./logs",
     "log_level": "INFO",
     "resolution": 128,
@@ -550,7 +539,6 @@ Find least cost paths, costs, and connection costs on eagle login node for 100MW
 $ least-cost-xmission local \
     --cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
     --features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
-    --capacity_class 100
 ```
 Run the above analysis for only two SC points, using only one core.
 
@@ -558,7 +546,6 @@ Run the above analysis for only two SC points, using only one core.
 $ least-cost-xmission local -v \
     --cost_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5 \
     --features_fpath /shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg \
-    --capacity_class 100 \
     --max_workers 1 \
     --sc_point_gids [36092,36093]
 ```
@@ -583,9 +570,8 @@ The value for `allocation` should be set to the desired SLURM allocation. The `m
   "name": "test",
   "cost_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_costs.h5",
   "features_fpath": "/shared-projects/rev/transmission_tables/least_cost/offshore/aoswt_pois.gpkg",
-  "capacity_class": "100",
   "cost_layers": [
-    {"layer_name": "tie_line_costs_{}MW"},
+    {"layer_name": "tie_line_costs_102MW"},
   ],
   "friction_layers": [
     {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
@@ -621,9 +607,8 @@ A sample config for WOWTS would look very similar:
   "log_level": "INFO",
   "cost_fpath": "/projects/rev/data/transmission/north_america/conus/least_cost/offshore/processing/conus_20240221.h5",
   "features_fpath": "/projects/rev/projects/wowts/data/20240223_poi_trans_feats.gpkg",
-  "capacity_class": "1000",
   "cost_layers": [
-    {"layer_name": "tie_line_costs_{}MW"},
+    {"layer_name": "tie_line_costs_1500MW"},
     {"layer_name": "wet_costs"},
     {"layer_name": "landfall_costs", "is_invariant": true},
   ],
