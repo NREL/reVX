@@ -23,8 +23,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
     """Config framework for Least Cost Xmission"""
 
     NAME = 'LeastCostXmission'
-    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'capacity_class',
-                    'cost_layers')
+    REQUIREMENTS = ('cost_fpath', 'features_fpath', 'cost_layers')
 
     def __init__(self, config):
         """
@@ -127,25 +126,11 @@ class LeastCostXmissionConfig(AnalysisConfig):
         return rid_col
 
     @property
-    def capacity_class(self):
-        """
-        Capacity class, either {capacity}MW or capacity value in MW
-        """
-        return self['capacity_class']
-
-    @property
     def resolution(self):
         """
         SC point resolution
         """
         return self.get('resolution', RESOLUTION)
-
-    @property
-    def xmission_config(self):
-        """
-        Xmission config input
-        """
-        return self.get('xmission_config', None)
 
     @property
     def length_mult_kind(self):

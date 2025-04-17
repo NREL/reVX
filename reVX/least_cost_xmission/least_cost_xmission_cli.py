@@ -130,15 +130,9 @@ def from_config(ctx, config, verbose):
 @click.option('--region_identifier_column', '-rid', type=STR, default=None,
               help=("Name of column in reinforcement regions GeoPackage"
                     "containing a unique identifier for each region."))
-@click.option('--capacity_class', '-cap', type=str, required=True,
-              help=("Capacity class of transmission features to connect "
-                    "supply curve points to"))
 @click.option('--resolution', '-res', type=int,
               show_default=True, default=128,
               help=("SC point resolution"))
-@click.option('--xmission_config', '-xcfg', type=STR, show_default=True,
-              default=None,
-              help=("Path to Xmission config .json"))
 @click.option('--min_line_length', '-mll', type=int,
               show_default=True, default=MINIMUM_SPUR_DIST_KM,
               help=("Minimum Tie-line length."))
@@ -195,10 +189,7 @@ def from_config(ctx, config, verbose):
 @click.option('--cost-layers', '-cl', required=True, multiple=True,
               default=(),
               help='Layer in H5 to add to total cost raster used for routing. '
-                   'Multiple layers may be specified. Layer name may have '
-                   'curly brackets (``{}``), which will be filled in '
-                   'based on the capacity class input (e.g. '
-                   '"tie_line_costs_{}MW")')
+                   'Multiple layers may be specified.')
 @click.option('--friction_layers', '-fl', required=False, multiple=True,
               default=(),
               help='Layers to be added to costs to influence routing but '
@@ -224,12 +215,12 @@ def from_config(ctx, config, verbose):
                    'hard barrier')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
-          region_identifier_column, capacity_class, resolution,
-          xmission_config, min_line_length, sc_point_gids, nn_sinks,
-          clipping_buffer, cost_multiplier_layer, cost_multiplier_scalar,
-          max_workers, out_dir, log_dir, verbose, save_paths, radius,
-          expand_radius, mp_delay, simplify_geo, cost_layers, friction_layers,
-          tracked_layers, length_mult_kind, cell_size, use_hard_barrier):
+          region_identifier_column, resolution, min_line_length,
+          sc_point_gids, nn_sinks, clipping_buffer, cost_multiplier_layer,
+          cost_multiplier_scalar, max_workers, out_dir, log_dir, verbose,
+          save_paths, radius, expand_radius, mp_delay, simplify_geo,
+          cost_layers, friction_layers, tracked_layers, length_mult_kind,
+          cell_size, use_hard_barrier):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -255,12 +246,7 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
 
-    logger.debug("Xmission_config input: %r", xmission_config)
-    if isinstance(xmission_config, str) and "{" in xmission_config:
-        xmission_config = dict_str_load(xmission_config)
-
     kwargs = {"resolution": resolution,
-              "xmission_config": xmission_config,
               "min_line_length": min_line_length,
               "sc_point_gids": sc_point_gids,
               "clipping_buffer": clipping_buffer,
@@ -282,19 +268,17 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
         least_costs = RegionalXmission.run(cost_fpath, features_fpath,
                                            regions_fpath,
                                            region_identifier_column,
-                                           capacity_class, cost_layers,
-                                           **kwargs)
+                                           cost_layers, **kwargs)
     else:
         kwargs["nn_sinks"] = nn_sinks
         least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
-                                            capacity_class, cost_layers,
-                                            **kwargs)
+                                            cost_layers, **kwargs)
     if len(least_costs) == 0:
         logger.error('No paths found.')
         return
 
     ext = 'gpkg' if save_paths else 'csv'
-    fn_out = '{}_{}_{}.{}'.format(name, capacity_class, resolution, ext)
+    fn_out = '{}_{}.{}'.format(name, resolution, ext)
     fpath_out = os.path.join(out_dir, fn_out)
 
     logger.info('Writing output to %s', fpath_out)
@@ -528,9 +512,7 @@ def get_node_cmd(config, gids):
             '-feats {}'.format(SLURM.s(config.features_fpath)),
             '-regs {}'.format(SLURM.s(config.regions_fpath)),
             '-rid {}'.format(SLURM.s(config.region_identifier_column)),
-            '-cap {}'.format(SLURM.s(config.capacity_class)),
             '-res {}'.format(SLURM.s(config.resolution)),
-            '-xcfg {}'.format(SLURM.s(config.xmission_config)),
             '-mll {}'.format(SLURM.s(config.min_line_length)),
             '-gids {}'.format(SLURM.s(gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
@@ -589,9 +571,7 @@ def run_local(ctx, config):
                cost_fpath=config.cost_fpath,
                features_fpath=config.features_fpath,
                regions_fpath=config.regions_fpath,
-               capacity_class=config.capacity_class,
                resolution=config.resolution,
-               xmission_config=config.xmission_config,
                min_line_length=config.min_line_length,
                sc_point_gids=config.sc_point_gids,
                nn_sinks=config.nn_sinks,

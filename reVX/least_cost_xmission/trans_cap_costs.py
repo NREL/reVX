@@ -823,9 +823,8 @@ class TransCapCosts(TieLineCosts):
     connected a single supply curve point
     """
 
-    def __init__(self, cost_fpath, sc_point, features, capacity_class,
-                 cost_layer, start_indices, row_slice, col_slice,
-                 xmission_config=None, cell_size=CELL_SIZE):
+    def __init__(self, cost_fpath, sc_point, features, cost_layer,
+                 start_indices, row_slice, col_slice, cell_size=CELL_SIZE):
         """
         Parameters
         ----------
@@ -839,9 +838,6 @@ class TransCapCosts(TieLineCosts):
             to the indices of the feature **in the original cost
             array**. Must also have a "category" column that
             distinguishes between substations and transmission lines.
-        capacity_class : int | str
-            Transmission feature ``capacity_class`` class. Used to look
-            up connection costs.
        cost_layers : List[dict]
             List of dictionaries giving info about the layers in H5 that
             are summed to determine total costs raster used for routing.
@@ -850,9 +846,6 @@ class TransCapCosts(TieLineCosts):
             for more details on this input.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
         cost_multiplier_layer : str, optional
             Name of layer containing final cost layer spatial
             multipliers. By default, ``None``.
@@ -888,8 +881,6 @@ class TransCapCosts(TieLineCosts):
         super().__init__(cost_fpath, start_indices, cost_layer, row_slice,
                          col_slice, cell_size=cell_size)
 
-        self._config = parse_config(xmission_config=xmission_config)
-        self._capacity_class = self._config._parse_cap_class(capacity_class)
         self._features = self._prep_features(features)
         self._clip_mask = None
 
@@ -961,28 +952,6 @@ class TransCapCosts(TieLineCosts):
                                        [x[0], y[0]]])
 
         return self._clip_mask
-
-    @property
-    def capacity_class(self):
-        """
-        SC point capacity class
-
-        Returns
-        -------
-        str
-        """
-        return self._capacity_class
-
-    @property
-    def tie_line_voltage(self):
-        """
-        Tie line voltage in kV
-
-        Returns
-        -------
-        int
-        """
-        return self._config.capacity_to_kv(self.capacity_class)
 
     @staticmethod
     def _get_clipping_slices(cost_fpath, sc_point_idx, radius=None):
@@ -1108,18 +1077,6 @@ class TransCapCosts(TieLineCosts):
 
         return [row, col]
 
-    def _check_tline_voltage(self, cost, feat):
-        """Return large cost if tie line voltage is too low. """
-        if feat['max_volts'] < self.tie_line_voltage:
-            msg = ('Tie-line {} voltage of {}kV is less than tie line '
-                   'voltage of {}kV.'
-                   .format(feat['trans_gid'], feat['max_volts'],
-                           self.tie_line_voltage))
-            logger.debug(msg)
-            cost = 1e12
-
-        return cost
-
     def compute_tie_line_costs(self,  # noqa: C901
                                min_line_length=MINIMUM_SPUR_DIST_KM,
                                save_paths=False,
@@ -1180,9 +1137,6 @@ class TransCapCosts(TieLineCosts):
             try:
                 result = self.least_cost_path(feat_idx, save_path=save_paths)
                 (length, cost, poi_lat, poi_lon, path, cl_results) = result
-
-                if t_line:
-                    cost = self._check_tline_voltage(cost, feat)
 
                 if length < min_line_length:
                     msg = ('Tie-line length {} will be increased to the '
@@ -1351,12 +1305,12 @@ class TransCapCosts(TieLineCosts):
         return features
 
     @classmethod
-    def run(cls, cost_fpath, sc_point, features, capacity_class, cost_layers,
-            radius=None, xmission_config=None, cost_multiplier_layer=None,
-            cost_multiplier_scalar=1, min_line_length=MINIMUM_SPUR_DIST_KM,
-            save_paths=False, simplify_geo=None, friction_layers=None,
-            tracked_layers=None, length_mult_kind="linear",
-            cell_size=CELL_SIZE, use_hard_barrier=True):
+    def run(cls, cost_fpath, sc_point, features, cost_layers, radius=None,
+            cost_multiplier_layer=None, cost_multiplier_scalar=1,
+            min_line_length=MINIMUM_SPUR_DIST_KM, save_paths=False,
+            simplify_geo=None, friction_layers=None, tracked_layers=None,
+            length_mult_kind="linear", cell_size=CELL_SIZE,
+            use_hard_barrier=True):
         """
         Compute Transmission capital cost of connecting SC point to
         transmission features.
@@ -1374,8 +1328,6 @@ class TransCapCosts(TieLineCosts):
             to the indices of the feature **in the original cost
             array**. Must also have a "category" column that
             distinguishes between substations and transmission lines.
-        capacity_class : int | str
-            Transmission feature capacity_class class
         cost_layers : List[dict]
             List of dictionaries giving info about the layers in H5 that
             are summed to determine total costs raster used for routing.
@@ -1384,9 +1336,6 @@ class TransCapCosts(TieLineCosts):
             for more details on this input.
         radius : int, optional
             Radius around sc_point to clip cost to, by default None
-        xmission_config : str | dict | XmissionConfig, optional
-            Path to Xmission config .json, dictionary of Xmission config
-            .jsons, or preloaded XmissionConfig objects, by default None
         cost_multiplier_layer : str, optional
             Name of layer containing final cost layer spatial
             multipliers. By default, ``None``.
@@ -1460,10 +1409,9 @@ class TransCapCosts(TieLineCosts):
                      tracked_layers=tracked_layers,
                      cost_multiplier_layer=cost_multiplier_layer,
                      cost_multiplier_scalar=cost_multiplier_scalar)
-            tcc = cls(cost_fpath, sc_point, features, capacity_class,
-                      cl, start_indices=start_indices,
-                      row_slice=row_slice, col_slice=col_slice,
-                      xmission_config=xmission_config, cell_size=cell_size)
+            tcc = cls(cost_fpath, sc_point, features, cl,
+                      start_indices=start_indices, row_slice=row_slice,
+                      col_slice=col_slice, cell_size=cell_size)
 
             features = tcc.compute(min_line_length=min_line_length,
                                    save_paths=save_paths,
@@ -1525,10 +1473,6 @@ class RegionalTransCapCosts(TransCapCosts):
         point_ind = np.argmin(self._cumulative_costs[rows, cols])
 
         return [rows[point_ind], cols[point_ind]]
-
-    def _check_tline_voltage(self, cost, *__, **___):
-        """No adjustments. """
-        return cost
 
 
 class ReinforcementLineCosts(TieLineCosts):
