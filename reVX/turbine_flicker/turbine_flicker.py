@@ -557,8 +557,7 @@ def _compute_shadow_flicker(rotor_diameter, lat, lon, wind_dir,
         2D array centered on the turbine with the number of flicker
         hours per "exclusion" pixel
     """
-    # Import HOPP dynamically so its not a requirement
-    from hybrid.flicker.flicker_mismatch_grid import FlickerMismatch
+    FlickerMismatch = _patched_flicker_class()
 
     mult = max_flicker_exclusion_range / rotor_diameter
     FlickerMismatch.diam_mult_nwe = mult
@@ -760,3 +759,59 @@ def compute_flicker_exclusions(hub_height, rotor_diameter, points, res_fpath,
             log_mem(logger)
 
     return flicker_arr
+
+
+def _patched_flicker_class():
+    """Temporary patch for HOPP flicker class with delayed import
+
+    Delete this function when HOPP patches this bug.
+    """
+    # Delay HOPP import so its not a requirement
+    from hopp.simulation.technologies.layout.flicker_mismatch import (
+        FlickerMismatch
+    )
+    from shapely.geometry import Point, box, GeometryCollection
+
+    def _calculate_shading(weight, shadows, site_points,
+                            heat_map, gridcell_width, gridcell_height,
+                            normalize_by_area=False):
+        if not shadows:
+            return
+
+        module_width_half = gridcell_width / 2
+        module_height_half = gridcell_height / 2
+        for shadow in shadows:
+            if normalize_by_area:
+                intersecting_points = site_points.intersection(
+                    shadow.buffer(
+                    np.linalg.norm([gridcell_height, gridcell_width])))
+            else:
+                intersecting_points = site_points.intersection(shadow)
+            if intersecting_points:
+                if isinstance(intersecting_points, Point):
+                    intersecting_points = GeometryCollection(
+                        [intersecting_points])
+
+                xs = np.array([pt.x for pt in intersecting_points.geoms])
+                ys = np.array([pt.y for pt in intersecting_points.geoms])
+                x_ind = (xs - site_points.bounds[0]) / gridcell_width
+                y_ind = (ys - site_points.bounds[1]) / gridcell_height
+                x_ind = np.round(x_ind).astype(int)
+                y_ind = np.round(y_ind).astype(int)
+                for n in range(len(intersecting_points.geoms)):
+                    x = x_ind[n]
+                    y = y_ind[n]
+                    pt = intersecting_points.geoms[n]
+                    if normalize_by_area:
+                        cell = box(pt.x - module_width_half,
+                                   pt.y - module_height_half,
+                                   pt.x + module_width_half, pt.y +
+                                   module_height_half)
+                        intersection = cell.intersection(shadow)
+                        area_weight = intersection.area / cell.area
+                        heat_map[y, x] += weight * area_weight
+                    else:
+                        heat_map[y, x] += weight
+
+    FlickerMismatch._calculate_shading = _calculate_shading
+    return FlickerMismatch
