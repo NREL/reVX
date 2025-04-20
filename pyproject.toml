@@ -64,6 +64,9 @@ build = [
   "pkginfo>=1.10.0,<2",
   "twine>=6.1.0,<7",
 ]
+flicker = [
+  "HOPP>=3.2.0,<3.3"
+]
 
 [project.urls]
 homepage = "https://www2.nrel.gov/gis/renewable-energy-potential"
