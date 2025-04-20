@@ -28,7 +28,7 @@ from reVX.turbine_flicker.turbine_flicker_cli import main, flicker_fn_out
 from reVX.handlers.geotiff import Geotiff
 from reVX.handlers.layered_h5 import LayeredH5
 
-pytest.importorskip('hybrid.flicker')
+pytest.importorskip('hopp.simulation.technologies.layout.flicker_mismatch')
 
 EXCL_H5 = os.path.join(TESTDATADIR, 'turbine_flicker', 'blue_creek_blds.h5')
 RES_H5 = os.path.join(TESTDATADIR, 'turbine_flicker', 'blue_creek_wind.h5')
