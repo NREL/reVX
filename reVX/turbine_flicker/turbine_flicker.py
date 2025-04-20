@@ -761,6 +761,7 @@ def compute_flicker_exclusions(hub_height, rotor_diameter, points, res_fpath,
     return flicker_arr
 
 
+# pylint: disable
 def _patched_flicker_class():
     """Temporary patch for HOPP flicker class with delayed import
 
@@ -774,8 +775,8 @@ def _patched_flicker_class():
     from shapely.geometry import Point, box, GeometryCollection
 
     def _calculate_shading(weight, shadows, site_points,
-                            heat_map, gridcell_width, gridcell_height,
-                            normalize_by_area=False):
+                           heat_map, gridcell_width, gridcell_height,
+                           normalize_by_area=False):
         if not shadows:
             return
 
@@ -784,8 +785,8 @@ def _patched_flicker_class():
         for shadow in shadows:
             if normalize_by_area:
                 intersecting_points = site_points.intersection(
-                    shadow.buffer(
-                    np.linalg.norm([gridcell_height, gridcell_width])))
+                    shadow.buffer(np.linalg.norm([gridcell_height,
+                                                  gridcell_width])))
             else:
                 intersecting_points = site_points.intersection(shadow)
             if intersecting_points:
@@ -806,8 +807,8 @@ def _patched_flicker_class():
                     if normalize_by_area:
                         cell = box(pt.x - module_width_half,
                                    pt.y - module_height_half,
-                                   pt.x + module_width_half, pt.y +
-                                   module_height_half)
+                                   pt.x + module_width_half,
+                                   pt.y + module_height_half)
                         intersection = cell.intersection(shadow)
                         area_weight = intersection.area / cell.area
                         heat_map[y, x] += weight * area_weight
