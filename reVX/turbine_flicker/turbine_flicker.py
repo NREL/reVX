@@ -764,7 +764,8 @@ def compute_flicker_exclusions(hub_height, rotor_diameter, points, res_fpath,
 def _patched_flicker_class():
     """Temporary patch for HOPP flicker class with delayed import
 
-    Delete this function when HOPP patches this bug.
+    Delete this function when HOPP patches this bug:
+    https://github.com/NREL/HOPP/issues/478
     """
     # Delay HOPP import so its not a requirement
     from hopp.simulation.technologies.layout.flicker_mismatch import (
