@@ -96,14 +96,14 @@ class ProminentWindDirections(Aggregation):
         rows, cols = row_col_indices(sc_point_gids, shape[1])
 
         row_shifts = [-1, -1, 0, 1, 1, 1, 0, -1]
-        rows = np.expand_dims(rows, axis=1) + row_shifts
+        rows = np.expand_dims(rows.astype(np.int32), axis=1) + row_shifts
         mask = rows < 0
         rows[mask] = 0
         mask = rows > shape[0]
         rows[mask] = shape[0]
 
         col_shifts = [0, 1, 1, 1, 0, -1, -1, -1]
-        cols = np.expand_dims(cols, axis=1) + col_shifts
+        cols = np.expand_dims(cols.astype(np.int32), axis=1) + col_shifts
         mask = cols < 0
         cols[mask] = 0
         mask = cols > shape[1]
