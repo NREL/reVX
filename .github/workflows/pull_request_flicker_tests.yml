@@ -25,7 +25,7 @@ jobs:
       shell: bash -l {0}
       run: |
         conda install rtree pip pytest
-        pip install --upgrade setuptools poetry-core
+        pip install --upgrade setuptools poetry-core cffi
         pip install --no-build-isolation -e .[flicker]
     - name: Run pytest and Generate coverage report
       shell: bash -l {0}
