@@ -281,7 +281,7 @@ class PlexosNode:
 
                 buildout -= to_build
 
-                res_built.append(np.round(to_build, decimals=5))
+                res_built.append(float(np.round(to_build, decimals=5)))
 
                 gen_gid = int(row['gen_gid'])
                 if self._forecast_map is None:

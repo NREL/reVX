@@ -1187,7 +1187,7 @@ class TransCapCosts(TieLineCosts):
                                         crs=self._cost_crs)
 
         for int_col in ["end_row", "end_col", "poi_gid"]:
-            features[int_col] = features[int_col].astype("Int64")
+            features[int_col] = features[int_col].astype("int64")
         for float_col in ["raw_line_cost", "dist_km"]:
             features[float_col] = features[float_col].astype("float")
         return features

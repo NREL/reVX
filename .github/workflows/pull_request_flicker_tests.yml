@@ -1,4 +1,4 @@
-name: Pytests
+name: Flicker Tests
 
 on: pull_request
 
@@ -9,35 +9,25 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: [3.13]
-        include:
-          - os: ubuntu-latest
-            python-version: 3.12
-          - os: ubuntu-latest
-            python-version: 3.11
-          - os: ubuntu-latest
-            python-version: '3.10'
-          - os: ubuntu-latest
-            python-version: 3.9
 
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         ref: ${{ github.event.pull_request.head.sha }}
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: conda-incubator/setup-miniconda@v2
       with:
         auto-update-conda: true
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.11
         miniconda-version: "latest"
     - name: Install conda dependencies
       shell: bash -l {0}
       run: |
         conda install rtree pip pytest
-        pip install --upgrade setuptools
-        pip install --no-build-isolation -e .
+        pip install --upgrade setuptools poetry-core cffi
+        pip install --no-build-isolation -e .[flicker]
     - name: Run pytest and Generate coverage report
       shell: bash -l {0}
       run: |
-        pytest -v
+        pytest -v tests/test_turbine_flicker.py
