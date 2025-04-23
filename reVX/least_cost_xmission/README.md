@@ -628,22 +628,20 @@ A sample config for WOWTS would look very similar:
 Running an analysis on multiple nodes will result in multiple output files. These can be collected via several means. The below command will combine all output files into a single GeoPackage, assuming `save_paths` was enabled. If paths are not saved, the output will consist of multiple CSV files that must be merged manually.
 
 ```
-$ least-cost-xmission merge-output --out-file combined.gpkg \
-    output_files_*.gpkg
+$ least-cost-xmission merge-output --out-file combined.gpkg output_files_*.gpkg
 ```
 
 Transmission feature categories that are not desired in the final output can be dropped with:
 
 ```
-$ least-cost-xmission merge-output --out-file combined.gpkg \
-    --drop TransLine --drop LoadCen output_files_*.gpkg
+$ least-cost-xmission merge-output --out-file combined.gpkg --drop TransLine --drop LoadCen output_files_*.gpkg
 ```
 
-Additionally, the results may be split into GeoJSONs by transmission feature connected to with the following. This will not create a combined GeoPackage file. The optional `--simplify-geo YYY` argument, where `YYY` is a number, can also be used if not set in the config file. Setting `simplify-geo` in the config file results in much faster run times than in post-processing.
+The optional `--simplify-geo YYY` argument, where `YYY` is a number, can also be used if not set in the config file. Setting `simplify-geo` in the config file results in much faster run times than in post-processing.
 
+Additionally, the results may be split into GeoJSONs by transmission feature connected to with the following:
 ```
-$ least-cost-xmission merge-output --drop TransLine --split-to-geojson \
-    --out-path ./out output_files_*.gpkg
+$ least-cost-xmission split-to-geojson --out-path ./out output_files_*.gpkg
 ```
 
 ### Locally run an offshore analysis for a single SC point, plot the results, and save to a GeoPackage
