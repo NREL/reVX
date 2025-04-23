@@ -293,31 +293,21 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
 
 
 @main.command()
-@click.option('--split-to-geojson', '-s', is_flag=True,
-              help='After merging GeoPackages, split into GeoJSON by POI name'
-              '.')
-@click.option('--suppress-combined-file', is_flag=True,
-              help='Don\'t create combined layer.')
 @click.option('--out-file', '-of', default=None, type=STR,
               help='Name for output GeoPackage/CSV file.')
-@click.option('--drop', '-d', default=None, type=STR, multiple=True,
-              help=('Transmission feature category types to drop from '
-                    'results. Options: {}'.format(", ".join(TRANS_CAT_TYPES))))
 @click.option('--out-dir', '-od', type=click.Path(),
               default='./out', show_default=True,
               help='Output directory for output files.')
+@click.option('--drop', '-d', default=None, type=STR, multiple=True,
+              help=('Transmission feature category types to drop from '
+                    'results. Options: {}'.format(", ".join(TRANS_CAT_TYPES))))
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help='Simplify path geometries by a value before exporting.')
-@click.option('--ss_id_col', '-ssid', default=None, type=STR,
-              show_default=True,
-              help='Name of column used to unqiuely identify substations. '
-                   'Used for reinforcement calcaultions only. ')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
 # flake8: noqa: C901
-def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
-                 out_dir, drop, simplify_geo, ss_id_col, files):
+def merge_output(ctx, out_file, out_dir, drop, simplify_geo, files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON
     """
@@ -335,63 +325,129 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
                             'received %s', TRANS_CAT_TYPES, drop)
                 return
 
-    warnings.filterwarnings('ignore', category=RuntimeWarning)
-    dfs = []
-    for i, file in enumerate(files, start=1):
-        logger.info('Loading %s (%i/%i)', file, i, len(files))
-        df_tmp = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
-        dfs.append(df_tmp)
+    create_dirs(out_dir)
+    out_file = 'combo_{}'.format(files[0]) if out_file is None else out_file
+    out_file = os.path.join(out_dir, out_file)
 
-    df = pd.concat(dfs)
-    warnings.filterwarnings('default', category=RuntimeWarning)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        for i, file in enumerate(files, start=1):
+            logger.info('Loading %s (%i/%i)', file, i, len(files))
+            df = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
 
-    if drop:
-        mask = df['category'].isin(drop)
-        logger.info('Dropping %d of %d total features with category(ies): %s',
-                    mask.sum(), len(df), ", ".join(drop))
-        df = df[~mask]
+            if drop:
+                mask = df['category'].isin(drop)
+                logger.info('Dropping %d of %d total features with '
+                            'category(ies): %s', mask.sum(), len(df),
+                            ", ".join(drop))
+                df = df[~mask].reset_index()
 
-    df = df.reset_index()
+            if len(df) == 0:
+                logger.info('No transmission features to save.')
+                continue
 
-    if len(df) == 0:
-        logger.info('No transmission features to save.')
+            if simplify_geo:
+                logger.info('Simplifying geometries by {}'
+                            .format(simplify_geo))
+                df.geometry = df.geometry.simplify(simplify_geo)
+
+            logger.info('Saving paths to %s', out_file)
+            if os.path.exists(out_file):
+                if "gpkg" in out_file:
+                    df.to_file(out_file, driver="GPKG", mode="a")
+                else:
+                    df.to_csv(out_file, index=False, mode="a", header=False)
+            else:
+                if "gpkg" in out_file:
+                    df.to_file(out_file, driver="GPKG", mode="w")
+                else:
+                    df.to_csv(out_file, index=False, mode="w")
+
+
+@main.command()
+@click.option('--ss_id_col', '-ssid', type=STR,
+              help='Name of column used to uniquely identify substations. '
+                   'Used for reinforcement calculations only. ')
+@click.option('--out-file', '-of', default=None, type=STR,
+              help='Name for output GeoPackage/CSV file.')
+@click.option('--out-dir', '-od', type=click.Path(),
+              default='./out', show_default=True,
+              help='Output directory for output files.')
+@click.argument('files', type=STR, nargs=-1)
+@click.pass_context
+# flake8: noqa: C901
+def min_reinforcement_costs(ctx, ss_id_col, out_file, out_dir, files):
+    """Compute minimum reinforcement cost for each substation"""
+
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    if len(files) == 0:
+        logger.error('No file(s) passed to be split')
         return
 
-    if simplify_geo:
-        logger.info('Simplifying geometries by {}'.format(simplify_geo))
-        df.geometry = df.geometry.simplify(simplify_geo)
+    dfs = []
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        for i, file in enumerate(files, start=1):
+            logger.info('Loading %s (%i/%i)', file, i, len(files))
+            df_tmp = (gpd.read_file(file)
+                      if "gpkg" in file else pd.read_csv(file))
+            dfs.append(df_tmp)
 
-    if ss_id_col is not None:
-        logger.info('Computing minimum reinforcement cost')
-        df = min_reinforcement_costs(df, group_col=ss_id_col)
+    df = pd.concat(dfs)
+    logger.info('Computing minimum reinforcement cost')
+    df = min_reinforcement_costs(df, group_col=ss_id_col)
 
     create_dirs(out_dir)
+    out_file = ('combo_{}'.format(files[0])
+                if out_file is None else out_file)
+    out_file = os.path.join(out_dir, out_file)
+    logger.info('Saving all combined paths to %s', out_file)
+    if "gpkg" in out_file:
+        df.to_file(out_file, driver="GPKG")
+    else:
+        df.to_csv(out_file, index=False)
 
-    # Create combined output file
-    if not suppress_combined_file:
-        out_file = ('combo_{}'.format(files[0])
-                    if out_file is None else out_file)
-        out_file = os.path.join(out_dir, out_file)
-        logger.info('Saving all combined paths to %s', out_file)
-        if "gpkg" in out_file:
-            df.to_file(out_file, driver="GPKG")
-        else:
-            df.to_csv(out_file, index=False)
+
+@main.command()
+@click.option('--out-file', '-of', default=None, type=STR,
+              help='Name for output GeoPackage/CSV file.')
+@click.option('--out-dir', '-od', type=click.Path(),
+              default='./out', show_default=True,
+              help='Output directory for output files.')
+@click.argument('files', type=STR, nargs=-1)
+@click.pass_context
+# flake8: noqa: C901
+def split_to_geojson(ctx, out_file, out_dir, files):
+    """Split GeoPackage into GeoJSON by POI name"""
+
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    if len(files) == 0:
+        logger.error('No file(s) passed to be split')
+        return
+
+    dfs = []
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        for i, file in enumerate(files, start=1):
+            logger.info('Loading %s (%i/%i)', file, i, len(files))
+            dfs.append(gpd.read_file(file))
+
+    df = pd.concat(dfs)
+    create_dirs(out_dir)
 
     # Split out put in to GeoJSON by POI name
-    if split_to_geojson:
-        if not isinstance(df, gpd.GeoDataFrame):
-            click.echo('Geo-spatial aware input files must be provided to '
-                       'split to Geo-JSON.')
-            sys.exit(1)
-        pois = set(df['POI Name'])
-        for i, poi in enumerate(pois, start=1):
-            safe_poi_name = poi.replace(' ', '_').replace('/', '_')
-            out_file = os.path.join(out_dir, f"{safe_poi_name}_paths.geojson")
-            paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
-            logger.info('Writing {} paths for {} to {} ({}/{})'
-                        .format(len(paths), poi, out_file, i, len(pois)))
-            paths.to_file(out_file, driver="GeoJSON")
+    pois = set(df['POI Name'])
+    for i, poi in enumerate(pois, start=1):
+        safe_poi_name = poi.replace(' ', '_').replace('/', '_')
+        out_file = os.path.join(out_dir, f"{safe_poi_name}_paths.geojson")
+        paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
+        logger.info('Writing {} paths for {} to {} ({}/{})'
+                    .format(len(paths), poi, out_file, i, len(pois)))
+        paths.to_file(out_file, driver="GeoJSON")
 
 
 @main.command()
