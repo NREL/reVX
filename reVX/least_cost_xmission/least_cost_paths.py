@@ -274,10 +274,9 @@ class LeastCostPaths:
         return route_points, row_slice, col_slice, shape
 
     def process_least_cost_paths(self, cost_layers, cost_multiplier_scalar=1,
-                                 indices=None, max_workers=None,
-                                 save_paths=False, friction_layers=None,
-                                 tracked_layers=None, cell_size=CELL_SIZE,
-                                 use_hard_barrier=True):
+                                 max_workers=None, save_paths=False,
+                                 friction_layers=None, tracked_layers=None,
+                                 cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Find Least Cost Paths between all pairs of provided features for
         the given tie-line capacity class
@@ -292,9 +291,6 @@ class LeastCostPaths:
             for more details on this input.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
-        indices : iterable, optional
-            Indices of the routes that should be processed. By default
-            ``None``, which process all routes.
         max_workers : int, optional
             Number of workers to use for processing, if 1 run in serial,
             if None use all available cores, by default None
@@ -339,8 +335,6 @@ class LeastCostPaths:
             of length, cost, and geometry for each path
         """
         max_workers = os.cpu_count() if max_workers is None else max_workers
-        if indices is not None:
-            self._route_points = self._route_points.loc[indices]
 
         if self._route_points.empty:
             return self._route_points
@@ -531,13 +525,20 @@ class LeastCostPaths:
             of length, cost, and geometry for each path
         """
         ts = time.time()
+        try:
+            route_points = pd.read_csv(route_points)
+        except (TypeError, UnicodeDecodeError):
+            pass
+
+        if indices is not None:
+            route_points = route_points.loc[indices]
+
         lcp = cls(cost_fpath, route_points, xmission_config=xmission_config,
                   clip_buffer=clip_buffer,
                   cost_multiplier_layer=cost_multiplier_layer)
         least_cost_paths = lcp.process_least_cost_paths(
             cost_layers,
             cost_multiplier_scalar=cost_multiplier_scalar,
-            indices=indices,
             save_paths=save_paths,
             max_workers=max_workers,
             friction_layers=friction_layers,
