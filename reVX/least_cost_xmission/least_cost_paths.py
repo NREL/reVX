@@ -67,6 +67,7 @@ class LeastCostPaths:
 
         self._config = parse_config(xmission_config=xmission_config)
 
+        self._clip_buffer = clip_buffer
         out = self._map_to_costs(cost_fpath, route_points,
                                  clip_buffer=clip_buffer)
         self._route_points, self._row_slice, self._col_slice, self._shape = out
@@ -357,7 +358,7 @@ class LeastCostPaths:
             least_cost_paths = []
             logger.info('Computing Least Cost Paths in serial')
             log_mem(logger)
-            for ind, info, routes in self._paths_to_compute():
+            for ind, info, routes, rs, cs in self._paths_to_compute():
                 *start_idx, polarity, voltage = info
                 route_cl = _update_multipliers(cost_layers, polarity, voltage,
                                                self._config)
@@ -366,7 +367,7 @@ class LeastCostPaths:
                 end_indices = routes[['end_row', 'end_col']].values
                 lcp = TieLineCosts.run(self._cost_fpath, start_idx,
                                        end_indices, route_cl,
-                                       self._row_slice, self._col_slice,
+                                       row_slice=rs, col_slice=cs,
                                        cost_multiplier_layer=(
                                            self._cost_multiplier_layer),
                                        cost_multiplier_scalar=(
@@ -397,7 +398,7 @@ class LeastCostPaths:
         """Compute LCP's in parallel using futures. """
         futures, paths = {}, []
 
-        for ind, info, routes in self._paths_to_compute():
+        for ind, info, routes, rs, cs in self._paths_to_compute():
             *start_idx, polarity, voltage = info
             route_cl = _update_multipliers(cost_layers, polarity, voltage,
                                            self._config)
@@ -406,7 +407,7 @@ class LeastCostPaths:
             end_indices = routes[['end_row', 'end_col']].values
             future = exe.submit(TieLineCosts.run, self._cost_fpath,
                                 start_idx, end_indices, route_cl,
-                                self._row_slice, self._col_slice,
+                                row_slice=rs, col_slice=cs,
                                 cost_multiplier_layer=(
                                     self._cost_multiplier_layer),
                                 cost_multiplier_scalar=cost_multiplier_scalar,
@@ -434,8 +435,41 @@ class LeastCostPaths:
 
         ind = 1
         for group_info, routes in self._route_points.groupby(group_cols):
-            yield ind, group_info, routes.reset_index(drop=True)
+            routes, row_slice, col_slice = self._get_slices(routes)
+            group_info = self._adjust_start_end_idx(group_info, row_slice,
+                                                    col_slice)
+            yield ind, group_info, routes, row_slice, col_slice
             ind += 1
+
+    def _adjust_start_end_idx(self, group_info, row_slice, col_slice):
+        """Adjust start and end indices to match new slices"""
+        start_row, start_col, polarity, voltage = group_info
+        start_row = start_row + self._row_slice.start - row_slice.start
+        start_col = start_col + self._col_slice.start - col_slice.start
+        return start_row, start_col, polarity, voltage
+
+    def _get_slices(self, routes):
+        """Re-compute slices to reduce mem footprint"""
+        start_row = routes['start_row'] + self._row_slice.start
+        start_col = routes['start_col'] + self._col_slice.start
+        end_row = routes['end_row'] + self._row_slice.start
+        end_col = routes['end_col'] + self._col_slice.start
+
+        logger.debug('Getting clip size...')
+        row_slice, col_slice = LeastCostPaths._get_clip_slice(
+            start_row, start_col, end_row, end_col,
+            self._shape, clip_buffer=self._clip_buffer)
+        logger.debug('Done!')
+
+        routes['start_row'] = start_row - row_slice.start
+        routes['start_col'] = start_col - col_slice.start
+        routes['end_row'] = end_row - row_slice.start
+        routes['end_col'] = end_col - col_slice.start
+
+        logger.debug(f"Num rows in chunk: {len(routes)}")
+        logger.debug(f"Slices: {row_slice}, {col_slice}")
+
+        return routes.reset_index(drop=True), row_slice, col_slice
 
     @classmethod
     def run(cls, cost_fpath, route_points, cost_layers, xmission_config=None,
@@ -557,6 +591,19 @@ class ReinforcementPaths(LeastCostPaths):
     Compute reinforcement line paths between substations and a single
     balancing area network node.
     """
+
+    def _paths_to_compute(self):
+        """Iterate over the paths that should be computed"""
+        group_cols = ["start_row", "start_col", "polarity", "voltage"]
+
+        for check_col in ["polarity", "voltage"]:
+            if check_col not in self._route_points.columns:
+                self._route_points[check_col] = "unknown"
+
+        ind = 1
+        for group_info, routes in self._route_points.groupby(group_cols):
+            yield ind, group_info, routes.reset_index(drop=True)
+            ind += 1
 
     def process_least_cost_paths(self, transmission_lines, line_cap_mw,
                                  cost_layers, cost_multiplier_scalar=1,
