@@ -49,11 +49,6 @@ def _cap_class_to_cap(capacity):
     return DEFAULT_CONFIG['power_classes'][capacity_class]
 
 
-def _permute_results(res):
-    """Add route permutations to results"""
-    return pd.concat([res, res.rename(columns={"start_index": "index",
-                                               "index": "start_index"})])
-
 
 def check(truth, test, check_cols=CHECK_COLS):
     """
@@ -123,7 +118,6 @@ def test_capacity_class(capacity, route_table):
     test = LeastCostPaths.run(COST_H5, route_table, [cost_layer],
                               max_workers=1,
                               friction_layers=[DEFAULT_BARRIER])
-    test = _permute_results(test)
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -146,7 +140,6 @@ def test_parallel(max_workers, route_table):
     test = LeastCostPaths.run(COST_H5, route_table, [cost_layer],
                               friction_layers=[DEFAULT_BARRIER],
                               max_workers=max_workers)
-    test = _permute_results(test)
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -169,7 +162,6 @@ def test_invariant_costs(route_table):
     test = LeastCostPaths.run(COST_H5, route_table, [cost_layer],
                               max_workers=1,
                               friction_layers=[DEFAULT_BARRIER])
-    test = _permute_results(test)
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -205,7 +197,6 @@ def test_cost_multiplier_layer(route_table):
                                   friction_layers=[DEFAULT_BARRIER],
                                   cost_multiplier_layer="test_layer")
 
-    test = _permute_results(test)
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
 
@@ -230,7 +221,6 @@ def test_cost_multiplier_scalar(route_table):
                               max_workers=1,
                               friction_layers=[DEFAULT_BARRIER],
                               cost_multiplier_scalar=5)
-    test = _permute_results(test)
 
     if not os.path.exists(truth):
         test.to_csv(truth, index=False)
@@ -368,7 +358,6 @@ def test_cli(runner, save_paths, route_table):
             test = os.path.join(td, test)
             test = pd.read_csv(test)
 
-        test = _permute_results(test)
         check(truth, test)
 
     LOGGERS.clear()
@@ -601,7 +590,6 @@ def test_config_given_but_no_mult_in_layers(runner, route_table):
         test = os.path.join(td, test)
         test = pd.read_csv(test)
 
-        test = _permute_results(test)
         check(truth, test)
 
     LOGGERS.clear()
@@ -655,7 +643,6 @@ def test_apply_row_mult(runner, route_table):
         test = pd.read_csv(test)
         test["cost"] /= 2
 
-        test = _permute_results(test)
         check(truth, test)
 
     LOGGERS.clear()
@@ -716,7 +703,6 @@ def test_apply_polarity_mult(runner, route_table):
         test = pd.read_csv(test)
         test["cost"] /= 3
 
-        test = _permute_results(test)
         check(truth, test)
 
     LOGGERS.clear()
@@ -778,7 +764,6 @@ def test_apply_row_and_polarity_mult(runner, route_table):
         test = pd.read_csv(test)
         test["cost"] /= 6
 
-        test = _permute_results(test)
         check(truth, test)
 
     LOGGERS.clear()
@@ -841,7 +826,6 @@ def test_apply_row_and_polarity_with_existing_mult(runner, route_table):
         test = pd.read_csv(test)
         test["cost"] /= 30
 
-        test = _permute_results(test)
         check(truth, test)
 
     LOGGERS.clear()
@@ -874,15 +858,15 @@ def test_apply_mults_by_route(runner, route_table):
         with open(polarity_config_path, 'w') as f:
             json.dump(polarity_config, f)
 
-        routes_fp = os.path.join(td, 'routes.csv')
         for idx, volt in idx_to_volt.items():
             mask = route_table["start_index"] == idx
             route_table.loc[mask, "voltage"] = volt
 
         for idx, polarity in idx_to_polarity.items():
-            mask = route_table["index"] == idx
+            mask = route_table["start_index"] == idx
             route_table.loc[mask, "polarity"] = polarity
 
+        routes_fp = os.path.join(td, 'routes.csv')
         route_table.to_csv(routes_fp, index=False)
         config = {
             "log_directory": td,
@@ -925,7 +909,6 @@ def test_apply_mults_by_route(runner, route_table):
 
         test["cost"] /= divisors
 
-        test = _permute_results(test)
         check(truth, test)
 
     LOGGERS.clear()
