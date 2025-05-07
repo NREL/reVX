@@ -439,6 +439,7 @@ class LeastCostPaths:
             group_info = self._adjust_start_end_idx(group_info, row_slice,
                                                     col_slice)
             yield ind, group_info, routes, row_slice, col_slice
+            # yield ind, group_info, routes.reset_index(drop=True), self._row_slice, self._col_slice
             ind += 1
 
     def _adjust_start_end_idx(self, group_info, row_slice, col_slice):
