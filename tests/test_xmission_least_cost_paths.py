@@ -49,7 +49,6 @@ def _cap_class_to_cap(capacity):
     return DEFAULT_CONFIG['power_classes'][capacity_class]
 
 
-
 def check(truth, test, check_cols=CHECK_COLS):
     """
     Compare values in truth and test for given columns
