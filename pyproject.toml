@@ -32,7 +32,6 @@ classifiers=[
 ]
 dependencies = [
   "addfips>=0.4.2,<0.5",
-  "dask>=2024.8.0,<2025",
   "fiona>=1.10.1,<2",
   "geopandas>=1.0.1,<2",
   "NREL-gaps>=0.8.0,<0.9",
