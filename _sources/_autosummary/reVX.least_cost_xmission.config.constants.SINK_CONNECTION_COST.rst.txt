@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.config.constants.SINK\_CONNECTION\_COST
+==================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.constants
+
+.. autodata:: SINK_CONNECTION_COST

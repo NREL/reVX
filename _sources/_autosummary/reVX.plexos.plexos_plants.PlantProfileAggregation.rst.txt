@@ -1,0 +1,43 @@
+reVX.plexos.plexos\_plants.PlantProfileAggregation
+==================================================
+
+.. currentmodule:: reVX.plexos.plexos_plants
+
+.. autoclass:: PlantProfileAggregation
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PlantProfileAggregation.aggregate
+      ~PlantProfileAggregation.aggregate_profiles
+      ~PlantProfileAggregation.get_gen_gid
+      ~PlantProfileAggregation.plants_meta
+      ~PlantProfileAggregation.run
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~PlantProfileAggregation.cf_fpath
+      ~PlantProfileAggregation.cf_gid_map
+      ~PlantProfileAggregation.mymean_fpath
+      ~PlantProfileAggregation.plant_builds
+      ~PlantProfileAggregation.plants
+      ~PlantProfileAggregation.plexos_table
+      ~PlantProfileAggregation.sc_bus_dist
+      ~PlantProfileAggregation.sc_table
+      ~PlantProfileAggregation.tz_alias
+      ~PlantProfileAggregation.unique_plant_names
+   
+   

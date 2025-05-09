@@ -1,0 +1,6 @@
+reVX.offshore.offshore\_inputs\_cli.eagle
+=========================================
+
+.. currentmodule:: reVX.offshore.offshore_inputs_cli
+
+.. autofunction:: eagle

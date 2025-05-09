@@ -1,0 +1,57 @@
+reVX.config.reeds.ClassifyConfigGroup
+=====================================
+
+.. currentmodule:: reVX.config.reeds
+
+.. autoclass:: ClassifyConfigGroup
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ClassifyConfigGroup.check_files
+      ~ClassifyConfigGroup.check_overwrite_keys
+      ~ClassifyConfigGroup.clear
+      ~ClassifyConfigGroup.copy
+      ~ClassifyConfigGroup.fromkeys
+      ~ClassifyConfigGroup.get
+      ~ClassifyConfigGroup.items
+      ~ClassifyConfigGroup.keys
+      ~ClassifyConfigGroup.pop
+      ~ClassifyConfigGroup.popitem
+      ~ClassifyConfigGroup.resolve_path
+      ~ClassifyConfigGroup.set_self_dict
+      ~ClassifyConfigGroup.setdefault
+      ~ClassifyConfigGroup.str_replace_and_resolve
+      ~ClassifyConfigGroup.update
+      ~ClassifyConfigGroup.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~ClassifyConfigGroup.REQUIREMENTS
+      ~ClassifyConfigGroup.STR_REP
+      ~ClassifyConfigGroup.cap_bins
+      ~ClassifyConfigGroup.config_dir
+      ~ClassifyConfigGroup.config_keys
+      ~ClassifyConfigGroup.log_level
+      ~ClassifyConfigGroup.name
+      ~ClassifyConfigGroup.pre_filter
+      ~ClassifyConfigGroup.regions
+      ~ClassifyConfigGroup.resource_classes
+      ~ClassifyConfigGroup.rev_table
+      ~ClassifyConfigGroup.sort_bins_by
+      ~ClassifyConfigGroup.trg_by_region
+   
+   
