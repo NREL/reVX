@@ -34,7 +34,6 @@ from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
 
 
 
-
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_county_centroids.gpkg')
 ALLCONNS_FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
@@ -424,8 +423,8 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "transmission_lines_fpath": ri_conns_path,
             "region_identifier_column": "ba_str",
             "cost_layers": [{"layer_name": "tie_line_costs_400MW",
-                             "multiplier_scalar": 1/400,  # convert to $/MW
-                            }],
+                             "multiplier_scalar": 1 / 400,  # convert to $/MW
+                             }],
             "friction_layers": [DEFAULT_BARRIER],
             "save_paths": save_paths
         }
@@ -459,7 +458,8 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
         assert np.isclose(test.reinforcement_cost_per_mw.min(), 7405.728,
                           atol=0.001)
         assert np.isclose(test.reinforcement_dist_km.min(), 1.918, atol=0.001)
-        assert np.isclose(test.reinforcement_dist_km.max(), 80.0236, atol=0.001)
+        assert np.isclose(test.reinforcement_dist_km.max(), 80.0236,
+                          atol=0.001)
         assert len(test["reinforcement_poi_lat"].unique()) == 4
         assert len(test["reinforcement_poi_lon"].unique()) == 4
         assert np.isclose(test.reinforcement_cost_per_mw.max(), 1213837.2737,
@@ -528,8 +528,8 @@ def test_reinforcement_cli_single_tline_voltage(runner,
             "transmission_lines_fpath": ri_conns_path,
             "region_identifier_column": "ba_str",
             "cost_layers": [{"layer_name": "tie_line_costs_400MW",
-                             "multiplier_scalar": 1/400,  # convert to $/MW
-                            }],
+                             "multiplier_scalar": 1 / 400,  # convert to $/MW
+                             }],
             "friction_layers": [DEFAULT_BARRIER],
             "save_paths": False,
         }
