@@ -189,9 +189,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
         Each dict in the list should have the following keys:
 
             - "layer_name": (REQUIRED) Name of layer in HDF5 file
-              containing cost data. Layer names may have curly brackets
-              (``{}``), which will be filled in based on the capacity
-              class input (e.g. "tie_line_costs_{}MW").
+              containing cost data.
             - "multiplier_layer": (OPTIONAL) Name of layer in HDF5 file
               containing spatially explicit multiplier values to apply
               to this cost layer before summing it with the others.
@@ -313,16 +311,14 @@ class LeastCostPathsConfig(AnalysisConfig):
         """Validate all inputs given for reinforcement run"""
         reinforcement_run = any(val is not None for val in
                                 [self.transmission_lines_fpath,
-                                 self.network_nodes_fpath,
-                                 self.capacity_class])
+                                 self.network_nodes_fpath])
         missing_inputs = any(val is None for val in
                              [self.transmission_lines_fpath,
-                              self.network_nodes_fpath,
-                              self.capacity_class])
+                              self.network_nodes_fpath])
         if reinforcement_run and missing_inputs:
             msg = ("Must specify all of the following arguments for "
                    "reinforcement computations: 'transmission_lines_fpath', "
-                   "'network_nodes_fpath', and 'capacity_class'!")
+                   "and 'network_nodes_fpath'!")
             logger.error(msg)
             raise ValueError(msg)
 
@@ -378,16 +374,6 @@ class LeastCostPathsConfig(AnalysisConfig):
         Transmission line features  config input
         """
         return self.get('transmission_lines_fpath', None)
-
-    @property
-    def capacity_class(self):
-        """
-        Capacity class of the 'base' greenfield costs layer. Costs will
-        be scaled by the capacity corresponding to this class to report
-        reinforcement costs as $/MW. Only used for reinforcement path
-        computations.
-        """
-        return self.get("capacity_class")
 
     @property
     def cost_layers(self):

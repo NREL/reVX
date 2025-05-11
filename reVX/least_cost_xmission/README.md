@@ -337,8 +337,7 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
     "network_nodes_fpath": "./nn.gpkg",
     "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
     "region_identifier_column": "rr_id",
-    "capacity_class": "400",
-    "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+    "cost_layers": [{"layer_name": "tie_line_costs_400MW", "multiplier_scalar": 0.0025}],
     "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 100}
     ],
@@ -347,7 +346,8 @@ Next, compute the reinforcement paths on multiple nodes. Use the file below as a
 }
 ```
 
-Note that we are specifying ``"capacity_class": "400"`` (which then fills in the ``{}`` in ``"tie_line_costs_{}MW"``) to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+Note that we are specifying ``tie_line_costs_400MW`` as the cost layer to use the 230 kV (400MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. We also have to provide a
+``"multiplier_scalar"`` input of of ``0.0025`` (i.e. 1/400) to convert ``$`` values to ``$/MW``. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
 "region_identifier_column" and the values in that column should match the region containing the substations and network nodes. In order to avoid unnecessary computation, ensure that your features input contains
 only the substations for which you computed reinforcement costs in the previous step.
 
@@ -478,8 +478,7 @@ Now you can compute the reinforcement paths the same way as the method above:
     "network_nodes_fpath": "./nn.gpkg",
     "transmission_lines_fpath": "/path/to/substations_and_tlines.gpkg",
     "region_identifier_column": "rr_id",
-    "capacity_class": "200",
-    "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+    "cost_layers": [{"layer_name": "tie_line_costs_200MW", "multiplier_scalar": 0.005}],
     "friction_layers": [
       {"layer_name": "lcp_agg_costs", "multiplier_layer": "transmission_barrier", "multiplier_scalar": 5000}
     ],
@@ -489,7 +488,8 @@ Now you can compute the reinforcement paths the same way as the method above:
 }
 ```
 
-Note that we are specifying ``"capacity_class": "200"`` (which then fills in the ``{}`` in ``"tie_line_costs_{}MW"``) to use the 138 kV (205 MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
+Note that we are specifying ``tie_line_costs_200MW`` as the cost layer to use the 138 kV (205 MW capacity) greenfield costs for portions of the reinforcement paths that do no have existing transmission.  We also have to provide a
+``"multiplier_scalar"`` input of ``0.005`` (i.e. 1/200) to convert ``$`` values to ``$/MW``. If you would like to save the reinforcement path geometries, simply add `"save_paths": true` to the file, but note that this may increase your data product size significantly. Your features and network nodes data should contain the
 "region_identifier_column" and the values in that column should match the region containing the substations and network nodes.
 
 After putting together your config file, simply call

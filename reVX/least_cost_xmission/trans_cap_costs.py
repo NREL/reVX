@@ -1485,23 +1485,20 @@ class ReinforcementLineCosts(TieLineCosts):
     being traced. If the reinforcement path travels along two different
     line voltages, corresponding costs are used for each portion of the
     path. In the case that the path must cross a region with no existing
-    transmission lines to reach the destination, half (50%) of the
-    greenfield cost of the ``cost_layers`` input is used.
+    transmission lines to reach the destination, the greenfield cost of
+    the ``cost_layers`` input is used.
     """
     def __init__(self, transmission_lines, cost_fpath, start_indices,
-                 line_cap_mw, cost_layer, row_slice, col_slice,
-                 cell_size=CELL_SIZE):
+                 cost_layer, row_slice, col_slice, cell_size=CELL_SIZE):
         """
 
         Parameters
         ----------
-        transmission_lines : dict
-            Dictionary where the keys are the names of cost layers in
-            the cost HDF5 file and values are **clipped** arrays with
-            the corresponding existing transmission lines rasterized
-            into them (i.e. array value is 1 at a pixel if there is a
-            transmission line, otherwise 0). These arrays will be used
-            to compute the reinforcement costs along existing
+        transmission_lines : array
+            Arrays with existing transmission lines rasterized into
+            it (i.e. array value is cost per MW for that pixel if there
+            is a transmission line, otherwise 0). These array will be
+            used to compute the reinforcement costs along existing
             transmission lines of differing voltages.
         cost_fpath : str
             Full path of .h5 file with cost arrays.
@@ -1513,10 +1510,6 @@ class ReinforcementLineCosts(TieLineCosts):
             start location to each of the `end_indices`, which are also
             locations in the cost array (typically substations within
             the BA of the network node).
-        line_cap_mw : int | str
-            Capacity (MW) of the line that is being used for the 'base'
-            greenfield costs layer. Costs will be normalized by this
-            input to report reinforcement costs as $/MW.
         cost_layers : List[dict]
             List of dictionaries giving info about the layers in H5 that
             are summed to determine the 'base' greenfield costs raster
@@ -1567,17 +1560,13 @@ class ReinforcementLineCosts(TieLineCosts):
                          cell_size=cell_size)
         self._null_extras = {}
 
-        self._cost_layer.cost = self._cost_layer.cost / line_cap_mw
-        with ExclusionLayers(cost_fpath) as f:
-            for capacity_mw, lines in transmission_lines.items():
-                t_lines = np.where(lines)
-                cost_layer = 'tie_line_costs_{}MW'.format(capacity_mw)
-                costs = f[cost_layer, row_slice, col_slice][t_lines]
-                # allow crossing of barriers along existing transmission lines
-                costs[costs <= 0] = 1
-                routing_cost = costs * 1e-9  # 0 not allowed
-                self._cost_layer.mcp_cost[t_lines] = routing_cost
-                self._cost_layer.cost[t_lines] = costs / capacity_mw
+        t_lines = np.where(transmission_lines)
+        costs = transmission_lines[t_lines]
+        # make sure no negative costs, which would get treated as barriers
+        costs[costs <= 0] = 1
+        routing_cost = costs * 1e-9  # 0 not allowed
+        self._cost_layer.mcp_cost[t_lines] = routing_cost
+        self._cost_layer.cost[t_lines] = costs
 
     def _compute_by_layer_results(self, *__, **___):
         """By-layer results not supported for reinforcement run. """
@@ -1589,23 +1578,20 @@ class ReinforcementLineCosts(TieLineCosts):
 
     @classmethod
     def run(cls, transmission_lines, cost_fpath, start_indices, end_indices,
-            line_cap_mw, cost_layers, row_slice, col_slice,
-            cost_multiplier_layer=None, cost_multiplier_scalar=1,
-            save_paths=False, friction_layers=None, tracked_layers=None,
-            cell_size=CELL_SIZE, use_hard_barrier=True):
+            cost_layers, row_slice, col_slice, cost_multiplier_layer=None,
+            cost_multiplier_scalar=1, save_paths=False, friction_layers=None,
+            tracked_layers=None, cell_size=CELL_SIZE, use_hard_barrier=True):
         """
         Compute reinforcement line path to all features to be connected
         a single supply curve point.
 
         Parameters
         ----------
-        transmission_lines : dict
-            Dictionary where the keys are the names of cost layers in
-            the cost HDF5 file and values are **clipped** arrays with
-            the corresponding existing transmission lines rasterized
-            into them (i.e. array value is 1 at a pixel if there is a
-            transmission line, otherwise 0). These arrays will be used
-            to compute the reinforcement costs along existing
+        transmission_lines : array
+            Arrays with existing transmission lines rasterized into
+            it (i.e. array value is cost per MW for that pixel if there
+            is a transmission line, otherwise 0). These array will be
+            used to compute the reinforcement costs along existing
             transmission lines of differing voltages.
         cost_fpath : str
             Full path of .h5 file with cost arrays.
@@ -1624,10 +1610,6 @@ class ReinforcementLineCosts(TieLineCosts):
             within a single BA). Paths are computed from the
             `start_indices` (typically the network node of the BA) to
             each of the individual pairs of `end_indices`.
-        line_cap_mw : int | str
-            Capacity (MW) of the line that is being used for the 'base'
-            greenfield costs layer. Costs will be normalized by this
-            input to report reinforcement costs as $/MW.
         cost_layers : List[dict]
             List of dictionaries giving info about the layers in H5 that
             are summed to determine the 'base' greenfield costs raster
@@ -1694,11 +1676,10 @@ class ReinforcementLineCosts(TieLineCosts):
                  tracked_layers=tracked_layers,
                  cost_multiplier_layer=cost_multiplier_layer,
                  cost_multiplier_scalar=cost_multiplier_scalar)
-        tlc = cls(transmission_lines, cost_fpath, start_indices,
-                  line_cap_mw, cl, row_slice, col_slice, cell_size=cell_size)
+        tlc = cls(transmission_lines, cost_fpath, start_indices, cl,
+                  row_slice, col_slice, cell_size=cell_size)
 
         tie_lines = tlc.compute(end_indices, save_paths=save_paths)
-        tie_lines['cost'] = tie_lines['cost'] * 0.5
 
         row, col = start_indices
         with ExclusionLayers(cost_fpath) as f:

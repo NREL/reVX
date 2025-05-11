@@ -84,7 +84,6 @@ def run_local(ctx, config):
                network_nodes_fpath=config.network_nodes_fpath,
                transmission_lines_fpath=config.transmission_lines_fpath,
                xmission_config=config.xmission_config,
-               capacity_class=config.capacity_class,
                clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
                cost_multiplier_layer=config.cost_multiplier_layer,
@@ -156,11 +155,7 @@ def from_config(ctx, config, verbose):
 @click.option('--cost-layers', '-cl', required=True, multiple=True,
               default=(),
               help='Layer in H5 to add to total cost raster used for routing. '
-                   'Multiple layers may be specified. If running '
-                   'reinforcement computations, layer name may have '
-                   'curly brackets (``{}``), which will be filled in '
-                   'based on the capacity class input (e.g. '
-                   '"tie_line_costs_{}MW")')
+                   'Multiple layers may be specified.')
 @click.option('--network_nodes_fpath', '-nn', type=STR, show_default=True,
               default=None,
               help=("Path to Network Nodes GeoPackage. If given alongside "
@@ -177,11 +172,6 @@ def from_config(ctx, config, verbose):
               default=None,
               help=("Path to transmission config .json. Only used for "
                     "reinforcement path computations."))
-@click.option('--capacity_class', '-cap', type=str, required=False,
-              help=("Capacity class of the 'base' greenfield costs layer. "
-                    "Costs will be scaled by the capacity corresponding to "
-                    "this class to report reinforcement costs as $/MW. "
-                    "Only used for reinforcement path computations."))
 @click.option('--clip_buffer', '-cb', type=int,
               show_default=True, default=0,
               help="Optional number of array elements to buffer clip area by.")
@@ -238,11 +228,11 @@ def from_config(ctx, config, verbose):
                    'hard barrier')
 @click.pass_context
 def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
-          transmission_lines_fpath, xmission_config, capacity_class,
-          clip_buffer, start_index, step_index, cost_multiplier_layer,
-          cost_multiplier_scalar, max_workers, region_identifier_column,
-          save_paths, out_dir, log_dir, ss_id_col, verbose, friction_layers,
-          tracked_layers, cell_size, use_hard_barrier):
+          transmission_lines_fpath, xmission_config, clip_buffer, start_index,
+          step_index, cost_multiplier_layer, cost_multiplier_scalar,
+          max_workers, region_identifier_column, save_paths, out_dir, log_dir,
+          ss_id_col, verbose, friction_layers, tracked_layers, cell_size,
+          use_hard_barrier):
     """
     Run Least Cost Paths on local hardware
     """
@@ -291,10 +281,6 @@ def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
 
     if is_reinforcement_run:
         logger.info('Detected reinforcement run!')
-        cc_str = xmission_config._parse_cap_class(capacity_class)
-        cap = xmission_config['power_classes'][cc_str]
-        for layer_info in cost_layers:
-            layer_info["layer_name"] = layer_info["layer_name"].format(cap)
         inds = _get_indices(network_nodes_fpath, sort_cols="geometry",
                             start_ind=start_index, n_chunks=step_index)
         if len(inds) == 0:
@@ -306,8 +292,7 @@ def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
                                              network_nodes_fpath,
                                              region_identifier_column,
                                              transmission_lines_fpath,
-                                             capacity_class, cost_layers,
-                                             **kwargs)
+                                             cost_layers, **kwargs)
     else:
         inds = _get_indices(route_table,
                             sort_cols=["start_lat", "start_lon"],
@@ -622,7 +607,6 @@ def get_node_cmd(config, start_index=0):
             '-nn {}'.format(SLURM.s(config.network_nodes_fpath)),
             '-tl {}'.format(SLURM.s(config.transmission_lines_fpath)),
             '-rid {}'.format(SLURM.s(config.region_identifier_column)),
-            '-cap {}'.format(SLURM.s(config.capacity_class)),
             '-cb {}'.format(SLURM.s(config.clip_buffer)),
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),

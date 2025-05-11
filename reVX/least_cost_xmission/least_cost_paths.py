@@ -20,8 +20,7 @@ from rex.utilities.execution import SpawnProcessPool
 from rex.utilities.loggers import log_mem
 
 from reVX.least_cost_xmission.config import parse_config
-from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
-                                                       TRANS_LINE_CAT)
+from reVX.least_cost_xmission.config.constants import CELL_SIZE, METERS_IN_MILE
 from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
                                                       ReinforcementLineCosts)
 
@@ -605,29 +604,23 @@ class ReinforcementPaths(LeastCostPaths):
             yield ind, group_info, routes.reset_index(drop=True)
             ind += 1
 
-    def process_least_cost_paths(self, transmission_lines, line_cap_mw,
-                                 cost_layers, cost_multiplier_scalar=1,
-                                 max_workers=None, save_paths=False,
-                                 friction_layers=None, tracked_layers=None,
-                                 cell_size=CELL_SIZE, use_hard_barrier=True):
+    def process_least_cost_paths(self, transmission_lines, cost_layers,
+                                 cost_multiplier_scalar=1, max_workers=None,
+                                 save_paths=False, friction_layers=None,
+                                 tracked_layers=None, cell_size=CELL_SIZE,
+                                 use_hard_barrier=True):
         """
         Find the reinforcement line paths between the network node and
         the substations for the given tie-line capacity class
 
         Parameters
         ----------
-        transmission_lines : dict
-            Dictionary where the keys are the names of cost layers in
-            the cost HDF5 file and values are arrays with the
-            corresponding existing transmission lines rasterized into
-            them (i.e. array value is 1 at a pixel if there is a
-            transmission line, otherwise 0). These arrays will be used
-            to compute the reinforcement costs along existing
+        transmission_lines : array
+            Arrays with existing transmission lines rasterized into
+            it (i.e. array value is cost per MW for that pixel if there
+            is a transmission line, otherwise 0). These array will be
+            used to compute the reinforcement costs along existing
             transmission lines of differing voltages.
-        line_cap_mw : int | str
-            Capacity (MW) of the line that is being used for the 'base'
-            greenfield costs layer. Costs will be normalized by this
-            input to report reinforcement costs as $/MW.
         cost_layers : List[dict]
             List of dictionaries giving info about the layers in H5 that
             are summed to determine the 'base' greenfield costs raster
@@ -637,7 +630,7 @@ class ReinforcementPaths(LeastCostPaths):
             only used if the reinforcement path *must* deviate from
             existing transmission lines. Typically, a capacity class of
             400 MW (230kV transmission line) is used for the base
-            greenfield costs.
+            greenfield costs. Costs must have units of $/MW.
         cost_multiplier_scalar : int | float, optional
             Final cost layer multiplier. By default, ``1``.
         max_workers : int, optional
@@ -687,10 +680,8 @@ class ReinforcementPaths(LeastCostPaths):
         if self._route_points.empty:
             return self._route_points
 
-        transmission_lines = {
-            capacity_mw: lines[self._row_slice, self._col_slice]
-            for capacity_mw, lines in transmission_lines.items()
-        }
+        transmission_lines = transmission_lines[self._row_slice,
+                                                self._col_slice]
 
         max_workers = os.cpu_count() if max_workers is None else max_workers
         max_workers = int(max_workers)
@@ -705,9 +696,9 @@ class ReinforcementPaths(LeastCostPaths):
                                   loggers=loggers) as exe:
                 reinforcement_cost_paths = self._compute_paths_in_chunks(
                     exe, max_workers, num_iters, transmission_lines,
-                    line_cap_mw, cost_layers, cost_multiplier_scalar,
-                    save_paths, friction_layers, tracked_layers,
-                    cell_size=cell_size, use_hard_barrier=use_hard_barrier)
+                    cost_layers, cost_multiplier_scalar, save_paths,
+                    friction_layers, tracked_layers, cell_size=cell_size,
+                    use_hard_barrier=use_hard_barrier)
 
         else:
             reinforcement_cost_paths = []
@@ -727,7 +718,6 @@ class ReinforcementPaths(LeastCostPaths):
                                                  self._cost_fpath,
                                                  start_idx,
                                                  end_indices,
-                                                 line_cap_mw,
                                                  route_cl,
                                                  self._row_slice,
                                                  self._col_slice,
@@ -754,10 +744,10 @@ class ReinforcementPaths(LeastCostPaths):
                                              errors="ignore")
 
     def _compute_paths_in_chunks(self, exe, max_submissions, num_iters,
-                                 transmission_lines, line_cap_mw,
-                                 cost_layers, cost_multiplier_scalar,
-                                 save_paths, friction_layers, tracked_layers,
-                                 cell_size, use_hard_barrier):
+                                 transmission_lines, cost_layers,
+                                 cost_multiplier_scalar, save_paths,
+                                 friction_layers, tracked_layers, cell_size,
+                                 use_hard_barrier):
         """Compute RCP's in parallel using futures. """
         futures, paths = {}, []
 
@@ -770,8 +760,8 @@ class ReinforcementPaths(LeastCostPaths):
             end_indices = routes[['end_row', 'end_col']].values
             future = exe.submit(ReinforcementLineCosts.run,
                                 transmission_lines, self._cost_fpath,
-                                start_idx, end_indices, line_cap_mw,
-                                route_cl, self._row_slice, self._col_slice,
+                                start_idx, end_indices, route_cl,
+                                self._row_slice, self._col_slice,
                                 cost_multiplier_layer=(
                                     self._cost_multiplier_layer),
                                 cost_multiplier_scalar=cost_multiplier_scalar,
@@ -792,7 +782,7 @@ class ReinforcementPaths(LeastCostPaths):
     @classmethod
     def run(cls, cost_fpath, route_table, network_nodes_fpath,
             region_identifier_column, transmission_lines_fpath,
-            capacity_class, cost_layers, xmission_config=None, clip_buffer=0,
+            cost_layers, xmission_config=None, clip_buffer=0,
             cost_multiplier_layer=None, cost_multiplier_scalar=1,
             indices=None, max_workers=None, save_paths=False,
             friction_layers=None, tracked_layers=None, ss_id_col="poi_gid",
@@ -822,10 +812,6 @@ class ReinforcementPaths(LeastCostPaths):
         region_identifier_column : str
             Name of column in `network_nodes_fpath` GeoPackage
             containing a unique identifier for each region.
-        capacity_class : int | str
-            Capacity class of the 'base' greenfield costs layer. Costs
-            will be scaled by the capacity corresponding to this class
-            to report reinforcement costs as $/MW.
         cost_layers : List[dict]
             List of dictionaries giving info about the layers in H5 that
             are summed to determine the 'base' greenfield costs raster
@@ -835,7 +821,7 @@ class ReinforcementPaths(LeastCostPaths):
             only used if the reinforcement path *must* deviate from
             existing transmission lines. Typically, a capacity class of
             400 MW (230kV transmission line) is used for the base
-            greenfield costs.
+            greenfield costs. Costs must have units of $/MW.
         xmission_config : str | dict | XmissionConfig, optional
             Path to Xmission config .json, dictionary of Xmission config
             .jsons, or preloaded XmissionConfig objects.
@@ -903,11 +889,8 @@ class ReinforcementPaths(LeastCostPaths):
         """
         ts = time.time()
         xmission_config = parse_config(xmission_config=xmission_config)
-        capacity_class = xmission_config._parse_cap_class(capacity_class)
-        line_cap_mw = xmission_config['power_classes'][capacity_class]
 
-        lcp_kwargs = {"line_cap_mw": line_cap_mw,
-                      "cost_layers": cost_layers,
+        lcp_kwargs = {"cost_layers": cost_layers,
                       "friction_layers": friction_layers,
                       "cost_multiplier_scalar": cost_multiplier_scalar,
                       "save_paths": save_paths,
@@ -930,17 +913,16 @@ class ReinforcementPaths(LeastCostPaths):
 
         logger.info('Loading tline shapes from %s', transmission_lines_fpath)
         lines = gpd.read_file(transmission_lines_fpath).to_crs(cost_crs)
-        mapping = {'VOLTAGE': 'voltage'}
+        mapping = {'rep_voltage': 'voltage'}
         lines = lines.rename(columns=mapping)
-        transmission_lines = (lines[lines.category == TRANS_LINE_CAT]
-                              .reset_index(drop=True))
-        logger.info('Loaded %d tline shapes from %s', len(transmission_lines),
+        if "USDperMWcell" not in lines:
+            lines["USDperMWcell"] = (lines["USDperMWmile"]
+                                     / METERS_IN_MILE * CELL_SIZE)
+        logger.info('Loaded %d tline shapes from %s', len(lines),
                     transmission_lines_fpath)
 
         logger.debug("Rasterizing transmission lines onto grid...")
-        transmission_lines = _rasterize_transmission(transmission_lines,
-                                                     xmission_config,
-                                                     cost_shape,
+        transmission_lines = _rasterize_transmission(lines, cost_shape,
                                                      cost_transform)
 
         logger.info('Loading network nodes from %s', network_nodes_fpath)
@@ -1072,44 +1054,14 @@ def features_to_route_table(features):
     return all_routes.reset_index(drop=False)
 
 
-def _rasterize_transmission(transmission_lines, xmission_config, cost_shape,
-                            cost_transform):
+def _rasterize_transmission(transmission_lines, cost_shape, cost_transform):
     """Rasterize transmission lines and assemble them into a dict. """
 
-    transmission_lines_dict = {}
-    capacities = sorted(xmission_config['power_classes'].values())
-    v_min = 0
-    for capacity in capacities[:-1]:
-        v_max = xmission_config['power_to_voltage'][str(capacity)]
-        curr_lines = transmission_lines[
-            (transmission_lines["voltage"] > v_min)
-            & (transmission_lines["voltage"] <= v_max)
-        ]
-        if len(curr_lines) == 0:
-            continue
-        out = _rasterize_transmission_layer(curr_lines, cost_shape,
-                                            cost_transform)
-        transmission_lines_dict[int(capacity)] = out
-        v_min = v_max
-
-    curr_lines = transmission_lines[transmission_lines["voltage"] > v_min]
-    if len(curr_lines) == 0:
-        return transmission_lines_dict
-
-    out = _rasterize_transmission_layer(curr_lines, cost_shape, cost_transform)
-    transmission_lines_dict[int(capacities[-1])] = out
-    return transmission_lines_dict
-
-
-def _rasterize_transmission_layer(transmission_lines, cost_shape,
-                                  cost_transform):
-    """Rasterize a single transmission layer. """
-    shapes = [(geom, 1) for geom in transmission_lines["geometry"]
-              if geom is not None]
-    out = np.zeros(cost_shape, dtype='uint8')
+    out = np.zeros(cost_shape, dtype='float32')
+    shapes = zip(transmission_lines["geometry"],
+                 transmission_lines["USDperMWcell"])
     rasterio.features.rasterize(shapes=shapes, out=out, out_shape=out.shape,
                                 fill=0, transform=cost_transform)
-
     return out
 
 

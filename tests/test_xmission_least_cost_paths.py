@@ -26,10 +26,13 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX import TESTDATADIR
 from reVX.handlers.geotiff import Geotiff
 from reVX.least_cost_xmission.config import XmissionConfig
+from reVX.least_cost_xmission.config.constants import TRANS_LINE_CAT
 from reVX.least_cost_xmission.trans_cap_costs import LCP_AGG_COST_LAYER_NAME
 from reVX.least_cost_xmission.least_cost_paths_cli import main
 from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
                                                        features_to_route_table)
+
+
 
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
@@ -370,6 +373,11 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
     ri_ba, ri_network_nodes = ba_regions_and_network_nodes
     ri_feats = gpd.clip(gpd.read_file(ALLCONNS_FEATURES), ri_ba.buffer(10_000))
 
+    conns = (ri_feats[ri_feats["category"] == TRANS_LINE_CAT]
+             .reset_index(drop=True))
+    conns = conns.rename(columns={'voltage': 'rep_voltage'})
+    conns["USDperMWmile"] = conns["rep_voltage"] * 100
+
     with tempfile.TemporaryDirectory() as td:
         ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
         ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
@@ -380,6 +388,9 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
         ri_network_nodes_path = os.path.join(td, 'ri_network_nodes.gpkg')
         ri_network_nodes.to_file(ri_network_nodes_path, driver="GPKG",
                                  index=False)
+
+        ri_conns_path = os.path.join(td, 'ri_conns.gpkg')
+        conns.to_file(ri_conns_path, driver="GPKG", index=False)
 
         ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
         result = runner.invoke(main,
@@ -410,10 +421,11 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
             "cost_fpath": COST_H5,
             "route_table": ri_substations_path,
             "network_nodes_fpath": ri_network_nodes_path,
-            "transmission_lines_fpath": ALLCONNS_FEATURES,
+            "transmission_lines_fpath": ri_conns_path,
             "region_identifier_column": "ba_str",
-            "capacity_class": 400,
-            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+            "cost_layers": [{"layer_name": "tie_line_costs_400MW",
+                             "multiplier_scalar": 1/400,  # convert to $/MW
+                            }],
             "friction_layers": [DEFAULT_BARRIER],
             "save_paths": save_paths
         }
@@ -444,13 +456,13 @@ def test_reinforcement_cli(runner, ba_regions_and_network_nodes, save_paths):
         assert "ba_str" in test
 
         assert len(test) == 69
-        assert np.isclose(test.reinforcement_cost_per_mw.min(), 3332.695,
+        assert np.isclose(test.reinforcement_cost_per_mw.min(), 7405.728,
                           atol=0.001)
         assert np.isclose(test.reinforcement_dist_km.min(), 1.918, atol=0.001)
-        assert np.isclose(test.reinforcement_dist_km.max(), 80.353, atol=0.001)
+        assert np.isclose(test.reinforcement_dist_km.max(), 80.0236, atol=0.001)
         assert len(test["reinforcement_poi_lat"].unique()) == 4
         assert len(test["reinforcement_poi_lon"].unique()) == 4
-        assert np.isclose(test.reinforcement_cost_per_mw.max(), 598521.629,
+        assert np.isclose(test.reinforcement_cost_per_mw.max(), 1213837.2737,
                           atol=0.001)
 
     LOGGERS.clear()
@@ -464,6 +476,12 @@ def test_reinforcement_cli_single_tline_voltage(runner,
     ri_ba, ri_network_nodes = ba_regions_and_network_nodes
     ri_feats = gpd.clip(gpd.read_file(ALLCONNS_FEATURES), ri_ba.buffer(10_000))
 
+    conns = (ri_feats[ri_feats["category"] == TRANS_LINE_CAT]
+             .reset_index(drop=True))
+    conns["voltage"] = 138
+    conns = conns.rename(columns={'voltage': 'rep_voltage'})
+    conns["USDperMWmile"] = conns["rep_voltage"] * 100
+
     with tempfile.TemporaryDirectory() as td:
         ri_feats_path = os.path.join(td, 'ri_feats.gpkg')
         ri_feats.to_file(ri_feats_path, driver="GPKG", index=False)
@@ -474,6 +492,9 @@ def test_reinforcement_cli_single_tline_voltage(runner,
         ri_network_nodes_path = os.path.join(td, 'ri_network_nodes.gpkg')
         ri_network_nodes.to_file(ri_network_nodes_path, driver="GPKG",
                                  index=False)
+
+        ri_conns_path = os.path.join(td, 'ri_conns.gpkg')
+        conns.to_file(ri_conns_path, driver="GPKG", index=False)
 
         ri_substations_path = os.path.join(td, 'ri_subs.gpkg')
         result = runner.invoke(main,
@@ -495,11 +516,6 @@ def test_reinforcement_cli_single_tline_voltage(runner,
         assert (counts.index == ['p4', 'p1', 'p3', 'p2']).all()
         assert (counts == [50, 34, 10, 5]).all()
 
-        ri_tlines_path = os.path.join(td, 'ri_tlines.gpkg')
-        tlines = gpd.read_file(ALLCONNS_FEATURES)
-        tlines["voltage"] = 138
-        tlines.to_file(ri_tlines_path, driver="GPKG", index=False)
-
         config = {
             "log_directory": td,
             "execution_control": {
@@ -509,10 +525,11 @@ def test_reinforcement_cli_single_tline_voltage(runner,
             "cost_fpath": COST_H5,
             "route_table": ri_substations_path,
             "network_nodes_fpath": ri_network_nodes_path,
-            "transmission_lines_fpath": ri_tlines_path,
+            "transmission_lines_fpath": ri_conns_path,
             "region_identifier_column": "ba_str",
-            "capacity_class": 400,
-            "cost_layers": [{"layer_name": "tie_line_costs_{}MW"}],
+            "cost_layers": [{"layer_name": "tie_line_costs_400MW",
+                             "multiplier_scalar": 1/400,  # convert to $/MW
+                            }],
             "friction_layers": [DEFAULT_BARRIER],
             "save_paths": False,
         }
