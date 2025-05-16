@@ -619,7 +619,7 @@ class TieLineCosts:
                               if layer_name.endswith("_cost"))
 
         # Sanity check that total of cost layers matches full cost raster.
-        if round(test_total_cost) != round(cost):
+        if not np.isclose(test_total_cost, cost):
             msg = (f'Sum of cost_layers costs ({test_total_cost:,}) does '
                    f'not equal cost calculated with composite cost layer '
                    f'({cost:,})')
