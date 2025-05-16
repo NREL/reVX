@@ -734,8 +734,8 @@ class ReinforcementPaths(LeastCostPaths):
                              .format(ind, num_iters))
                 log_mem(logger)
 
-            reinforcement_cost_paths = pd.concat(reinforcement_cost_paths,
-                                                 ignore_index=True)
+        reinforcement_cost_paths = pd.concat(reinforcement_cost_paths,
+                                             ignore_index=True)
 
         reinforcement_cost_paths = reinforcement_cost_paths.dropna(
             axis="columns", how="all")
