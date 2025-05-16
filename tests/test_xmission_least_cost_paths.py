@@ -33,7 +33,6 @@ from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
                                                        features_to_route_table)
 
 
-
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
 FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_county_centroids.gpkg')
 ALLCONNS_FEATURES = os.path.join(TESTDATADIR, 'xmission', 'ri_allconns.gpkg')
