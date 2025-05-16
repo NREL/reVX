@@ -84,7 +84,7 @@ class LayerBuildConfig(BaseModel, extra='forbid'):
     barrier/friction. The value of overlapping ranges are added together."""
 
     pass_through: Optional[bool] = False
-    """Pass cost data through without estra processing."""
+    """Pass cost data through without extra processing."""
 
     rasterize: Optional[Rasterize] = None
     """Rasterize a vector and save as layer"""
