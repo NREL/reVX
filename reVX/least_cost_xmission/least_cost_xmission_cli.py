@@ -35,7 +35,8 @@ from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        MINIMUM_SPUR_DIST_KM,
                                                        CLIP_RASTER_BUFFER,
                                                        NUM_NN_SINKS)
-from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
+from reVX.least_cost_xmission.least_cost_paths import (
+    min_reinforcement_costs as mrc)
 from reVX.least_cost_xmission.trans_cap_costs import CostLayer
 
 TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
@@ -397,7 +398,7 @@ def min_reinforcement_costs(ctx, ss_id_col, out_file, out_dir, files):
 
     df = pd.concat(dfs)
     logger.info('Computing minimum reinforcement cost')
-    df = min_reinforcement_costs(df, group_col=ss_id_col)
+    df = mrc(df, group_col=ss_id_col)
 
     create_dirs(out_dir)
     out_file = ('combo_{}'.format(files[0])
