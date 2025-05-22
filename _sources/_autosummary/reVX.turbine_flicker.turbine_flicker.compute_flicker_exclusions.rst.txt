@@ -1,0 +1,6 @@
+reVX.turbine\_flicker.turbine\_flicker.compute\_flicker\_exclusions
+===================================================================
+
+.. currentmodule:: reVX.turbine_flicker.turbine_flicker
+
+.. autofunction:: compute_flicker_exclusions

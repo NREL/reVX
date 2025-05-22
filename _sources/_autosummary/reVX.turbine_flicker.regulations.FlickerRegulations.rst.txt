@@ -1,0 +1,35 @@
+reVX.turbine\_flicker.regulations.FlickerRegulations
+====================================================
+
+.. currentmodule:: reVX.turbine_flicker.regulations
+
+.. autoclass:: FlickerRegulations
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~FlickerRegulations.REQUIRED_COLUMNS
+      ~FlickerRegulations.df
+      ~FlickerRegulations.generic
+      ~FlickerRegulations.generic_exists
+      ~FlickerRegulations.hub_height
+      ~FlickerRegulations.locals_exist
+      ~FlickerRegulations.rotor_diameter
+   
+   

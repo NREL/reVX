@@ -1,0 +1,6 @@
+reVX.offshore.offshore\_inputs\_cli.get\_node\_cmd
+==================================================
+
+.. currentmodule:: reVX.offshore.offshore_inputs_cli
+
+.. autofunction:: get_node_cmd

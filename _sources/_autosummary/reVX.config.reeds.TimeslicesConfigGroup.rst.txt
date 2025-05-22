@@ -1,0 +1,54 @@
+reVX.config.reeds.TimeslicesConfigGroup
+=======================================
+
+.. currentmodule:: reVX.config.reeds
+
+.. autoclass:: TimeslicesConfigGroup
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TimeslicesConfigGroup.check_files
+      ~TimeslicesConfigGroup.check_overwrite_keys
+      ~TimeslicesConfigGroup.clear
+      ~TimeslicesConfigGroup.copy
+      ~TimeslicesConfigGroup.fromkeys
+      ~TimeslicesConfigGroup.get
+      ~TimeslicesConfigGroup.items
+      ~TimeslicesConfigGroup.keys
+      ~TimeslicesConfigGroup.pop
+      ~TimeslicesConfigGroup.popitem
+      ~TimeslicesConfigGroup.resolve_path
+      ~TimeslicesConfigGroup.set_self_dict
+      ~TimeslicesConfigGroup.setdefault
+      ~TimeslicesConfigGroup.str_replace_and_resolve
+      ~TimeslicesConfigGroup.update
+      ~TimeslicesConfigGroup.values
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TimeslicesConfigGroup.REQUIREMENTS
+      ~TimeslicesConfigGroup.STR_REP
+      ~TimeslicesConfigGroup.all_profiles
+      ~TimeslicesConfigGroup.config_dir
+      ~TimeslicesConfigGroup.config_keys
+      ~TimeslicesConfigGroup.log_level
+      ~TimeslicesConfigGroup.name
+      ~TimeslicesConfigGroup.profiles
+      ~TimeslicesConfigGroup.reg_cols
+      ~TimeslicesConfigGroup.timeslices
+   
+   

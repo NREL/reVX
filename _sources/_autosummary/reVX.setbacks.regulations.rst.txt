@@ -1,0 +1,40 @@
+reVX.setbacks.regulations
+=========================
+
+.. automodule:: reVX.setbacks.regulations
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      select_setback_regulations
+      validate_setback_regulations_input
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      SetbackRegulations
+      WindSetbackRegulations
+   
+   
+
+   
+   
+   
+
+
+
