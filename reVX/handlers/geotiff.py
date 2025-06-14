@@ -11,8 +11,6 @@ import logging
 import rasterio
 import numpy as np
 import pandas as pd
-from affine import Affine
-from pyproj import Transformer
 
 from rex.utilities.parse_keys import parse_keys
 from reVX.utilities.exceptions import GeoTiffKeyError
