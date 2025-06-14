@@ -16,6 +16,8 @@ from pyproj import Transformer
 
 from rex.utilities.parse_keys import parse_keys
 from reVX.utilities.exceptions import GeoTiffKeyError
+from reVX.utilities.utilities import (centered_pixels,
+                                      transform_pixels_to_lat_lon)
 
 
 logger = logging.getLogger(__name__)
@@ -357,15 +359,10 @@ class Geotiff:
             rows = rows[row_slice]
             cols = cols[col_slice]
 
-        pixel_center_translation = Affine.translation(0.5, 0.5)
-        adjusted_transform = self._src.transform * pixel_center_translation
-        cols, rows = adjusted_transform * [cols, rows]
-
-        transformer = Transformer.from_crs(self._src.profile["crs"],
-                                           'epsg:4326', always_xy=True)
-
-        cols, rows = transformer.transform(cols, rows)
-        return rows.astype(np.float32), cols.astype(np.float32)
+        rows, cols = centered_pixels(rows, cols, self._src.transform)
+        lat, lon = transform_pixels_to_lat_lon(rows, cols,
+                                               self._src.profile["crs"])
+        return lat.astype(np.float32), lon.astype(np.float32)
 
     def _get_data(self, ds, *ds_slice):
         """Get the flattened geotiff layer data.
