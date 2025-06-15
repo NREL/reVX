@@ -15,8 +15,11 @@ import sklearn
 from affine import Affine
 from pyproj import Transformer
 from sklearn.metrics.pairwise import haversine_distances
-
+from reV.supply_curve.extent import SupplyCurveExtent
+from reV.handlers.exclusions import ExclusionLayers
+from reV.utilities import SupplyCurveField
 from reV.utilities import log_versions as reV_log_versions
+
 from reVX.version import __version__
 
 
@@ -166,3 +169,55 @@ def transform_pixels_to_lat_lon(rows, cols, src_crs):
     transformer = Transformer.from_crs(src_crs, 'epsg:4326', always_xy=True)
     longitudes, latitudes = transformer.transform(cols, rows)
     return latitudes, longitudes
+
+
+def rev_sc_to_geotiff_arr(sc, excl_fp, resolution, cols, dtype="float32"):
+    """Convert a reV supply curve to a GeoTIF-like array
+
+    Parameters
+    ----------
+    sc : pandas.DataFrame
+        reV supply curve containing all `cols`.
+    excl_fp : str
+        Path to exclusions file used to create the supply curve.
+    resolution : int
+        Supply curve resolution (aggregation factor).
+    cols : iter of str
+        Iterable of column names to convert to GeoTIFF files. Each
+        column will be converted to a GeoTIFF file. Only numeric columns
+        are supported.
+    dtype : {"float32", "float64"}, default="float32"
+        Data type to save the GeoTIFF data as. By default, "float32".
+
+    Yields
+    ------
+    col, values, profile : tuple
+        Tuple of (column name, 2D array of values, rasterio profile)
+        for each column in `cols`.
+    """
+
+    sce = SupplyCurveExtent(excl_fp, resolution)
+
+    with ExclusionLayers(excl_fp) as excl:
+        profile = dict(excl.profile)
+
+    profile["transform"][0] *= resolution
+    profile["transform"][4] *= resolution
+    profile["height"], profile["width"] = sce.shape
+    profile["nodata"] = np.nan
+
+    sc = sc.drop_duplicates(SupplyCurveField.SC_POINT_GID)
+
+    all_sc_point_gids = pd.DataFrame(
+        {SupplyCurveField.SC_POINT_GID: np.arange(sce.n_rows * sce.n_cols,
+                                                  dtype=dtype)})
+
+    for col in cols:
+        subset_cols = [SupplyCurveField.SC_POINT_GID, col]
+        out_values = all_sc_point_gids.merge(sc[subset_cols],
+                                             on=SupplyCurveField.SC_POINT_GID,
+                                             how="left")
+        out_values = out_values[col].values
+        out_values = out_values.reshape(sce.n_rows, sce.n_cols, order="C")
+        yield col, out_values, profile
+
