@@ -1,0 +1,6 @@
+reVX.setbacks.functions.features\_with\_centroid\_in\_county
+============================================================
+
+.. currentmodule:: reVX.setbacks.functions
+
+.. autofunction:: features_with_centroid_in_county

@@ -1,0 +1,6 @@
+reVX.setbacks.setbacks\_cli.merge\_setbacks
+===========================================
+
+.. currentmodule:: reVX.setbacks.setbacks_cli
+
+.. autofunction:: merge_setbacks

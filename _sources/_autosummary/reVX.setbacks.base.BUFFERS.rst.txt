@@ -1,0 +1,6 @@
+reVX.setbacks.base.BUFFERS
+==========================
+
+.. currentmodule:: reVX.setbacks.base
+
+.. autodata:: BUFFERS

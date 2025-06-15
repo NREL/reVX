@@ -1,0 +1,6 @@
+reVX.utilities.utilities.centered\_pixels
+=========================================
+
+.. currentmodule:: reVX.utilities.utilities
+
+.. autofunction:: centered_pixels

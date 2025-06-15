@@ -1,0 +1,6 @@
+reVX.offshore.dist\_to\_ports\_cli.get\_node\_cmd
+=================================================
+
+.. currentmodule:: reVX.offshore.dist_to_ports_cli
+
+.. autofunction:: get_node_cmd

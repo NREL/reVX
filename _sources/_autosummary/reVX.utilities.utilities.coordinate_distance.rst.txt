@@ -1,0 +1,6 @@
+reVX.utilities.utilities.coordinate\_distance
+=============================================
+
+.. currentmodule:: reVX.utilities.utilities
+
+.. autofunction:: coordinate_distance

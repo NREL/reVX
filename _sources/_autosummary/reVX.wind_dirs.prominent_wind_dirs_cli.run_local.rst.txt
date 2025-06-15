@@ -1,0 +1,6 @@
+reVX.wind\_dirs.prominent\_wind\_dirs\_cli.run\_local
+=====================================================
+
+.. currentmodule:: reVX.wind_dirs.prominent_wind_dirs_cli
+
+.. autofunction:: run_local

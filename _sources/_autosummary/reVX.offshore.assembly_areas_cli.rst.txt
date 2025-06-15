@@ -1,0 +1,32 @@
+reVX.offshore.assembly\_areas\_cli
+==================================
+
+.. automodule:: reVX.offshore.assembly_areas_cli
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      eagle
+      get_node_cmd
+      run_local
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

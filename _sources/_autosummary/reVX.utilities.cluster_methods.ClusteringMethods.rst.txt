@@ -1,0 +1,24 @@
+reVX.utilities.cluster\_methods.ClusteringMethods
+=================================================
+
+.. currentmodule:: reVX.utilities.cluster_methods
+
+.. autoclass:: ClusteringMethods
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ClusteringMethods.kmeans
+   
+   
+
+   
+   
+   
