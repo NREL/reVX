@@ -72,8 +72,6 @@ def test_plexos_node_build(sc_build, cf_fpath):
                        / np.sum(res_built))
     assert err < 1, 'Built capacity does not match desired to within 1%'
 
-    return x
-
 
 def test_plexos_node_profile(sc_build, cf_fpath):
     """Test that a plexos node buildout profile matches source data"""
