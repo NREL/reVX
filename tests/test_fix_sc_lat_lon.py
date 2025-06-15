@@ -120,6 +120,10 @@ def test_sc_to_gpkg(runner):
                            test_gpkg[SupplyCurveField.LONGITUDE])
         assert 'geometry' in test_gpkg.columns
         assert test_gpkg.area.sum() > 0
+        assert np.allclose(test_gpkg.centroid.x,
+                           test_gpkg[SupplyCurveField.LONGITUDE])
+        assert np.allclose(test_gpkg.centroid.y,
+                           test_gpkg[SupplyCurveField.LATITUDE])
 
     LOGGERS.clear()
 

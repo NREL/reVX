@@ -60,7 +60,7 @@ def fix_sc_lat_lon(sc_fps, excl_fp, resolution, as_gpkg=False):
     points = []
     if as_gpkg:
         points = np.array([Point(x, y)
-                           for x, y in zip(rows.flatten(), cols.flatten())])
+                           for x, y in zip(cols.flatten(), rows.flatten())])
 
     for sc_fp in sc_fps:
         sc = pd.read_csv(sc_fp)
