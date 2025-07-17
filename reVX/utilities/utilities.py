@@ -12,9 +12,14 @@ import rasterio
 import shapely
 import skimage
 import sklearn
+from affine import Affine
+from pyproj import Transformer
 from sklearn.metrics.pairwise import haversine_distances
-
+from reV.supply_curve.extent import SupplyCurveExtent
+from reV.handlers.exclusions import ExclusionLayers
+from reV.utilities import SupplyCurveField
 from reV.utilities import log_versions as reV_log_versions
+
 from reVX.version import __version__
 
 
@@ -120,3 +125,99 @@ def load_fips_to_state_map():
     cdf = pd.read_csv(addfips.AddFIPS.data / "data" / "states.csv")
     cdf["fips"] = cdf["fips"].apply(lambda x: f"{x:02d}")
     return dict(zip(cdf["fips"], cdf["name"]))
+
+
+def centered_pixels(rows, cols, src_transform):
+    """Convert array indices to pixel center locations
+
+    Parameters
+    ----------
+    rows, cols : np.ndarray
+        2D array of array indices to convert to locations.
+    src_transform : affine.Affine
+        Affine transform to move from indices of array to pixel
+        locations.
+
+    Returns
+    -------
+    rows, cols : np.ndarray
+        Array indices transformed to centered pixels locations in the
+        source coordinate system (defined by `src_transform`).
+    """
+    pixel_center_translation = Affine.translation(0.5, 0.5)
+    adjusted_transform = src_transform * pixel_center_translation
+    cols, rows = adjusted_transform * [cols, rows]
+    return rows, cols
+
+
+def transform_pixels_to_lat_lon(rows, cols, src_crs):
+    """Transform pixel locations to latitude/longitude positions.
+
+    Parameters
+    ----------
+    rows, cols : np.ndarray
+        2D array of pixel locations in the `src_crs`.
+    src_crs : str
+        The Coordinate Reference System of the input `rows` and `cols`
+        represented as a string.
+
+    Returns
+    -------
+    latitudes, longitudes : np.ndarray
+        Pixels transformed to latitudes and longitudes.
+    """
+    transformer = Transformer.from_crs(src_crs, 'epsg:4326', always_xy=True)
+    longitudes, latitudes = transformer.transform(cols, rows)
+    return latitudes, longitudes
+
+
+def rev_sc_to_geotiff_arr(sc, excl_fp, resolution, cols, dtype="float32"):
+    """Convert a reV supply curve to a GeoTIF-like array
+
+    Parameters
+    ----------
+    sc : pandas.DataFrame
+        reV supply curve containing all `cols`.
+    excl_fp : str
+        Path to exclusions file used to create the supply curve.
+    resolution : int
+        Supply curve resolution (aggregation factor).
+    cols : iter of str
+        Iterable of column names to convert to GeoTIFF files. Each
+        column will be converted to a GeoTIFF file. Only numeric columns
+        are supported.
+    dtype : {"float32", "float64"}, default="float32"
+        Data type to save the GeoTIFF data as. By default, "float32".
+
+    Yields
+    ------
+    col, values, profile : tuple
+        Tuple of (column name, 2D array of values, rasterio profile)
+        for each column in `cols`.
+    """
+
+    sce = SupplyCurveExtent(excl_fp, resolution)
+
+    with ExclusionLayers(excl_fp) as excl:
+        profile = dict(excl.profile)
+
+    profile["transform"][0] *= resolution
+    profile["transform"][4] *= resolution
+    profile["height"], profile["width"] = sce.shape
+    profile["nodata"] = np.nan
+
+    sc = sc.drop_duplicates(SupplyCurveField.SC_POINT_GID)
+
+    all_sc_point_gids = pd.DataFrame(
+        {SupplyCurveField.SC_POINT_GID: np.arange(sce.n_rows * sce.n_cols,
+                                                  dtype=dtype)})
+
+    for col in cols:
+        subset_cols = [SupplyCurveField.SC_POINT_GID, col]
+        out_values = all_sc_point_gids.merge(sc[subset_cols],
+                                             on=SupplyCurveField.SC_POINT_GID,
+                                             how="left")
+        out_values = out_values[col].values
+        out_values = out_values.reshape(sce.n_rows, sce.n_cols, order="C")
+        yield col, out_values, profile
+
