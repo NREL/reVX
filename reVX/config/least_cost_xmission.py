@@ -270,7 +270,7 @@ class LeastCostXmissionConfig(AnalysisConfig):
             elif (isinstance(sc_point_gids, str)
                   and sc_point_gids.endswith(".csv")):
                 points = pd.read_csv(sc_point_gids)
-                sc_point_gids = list(points.sc_point_gid.values)
+                sc_point_gids = points.sc_point_gid.to_list()
 
             if not isinstance(sc_point_gids, list):
                 raise ValueError('sc_point_gids must be a list or path to a '
