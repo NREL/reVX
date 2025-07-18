@@ -45,7 +45,7 @@ from reVX.least_cost_xmission.trans_cap_costs import (
 logger = logging.getLogger(__name__)
 
 
-class LeastCostXmission(LeastCostPaths):
+class LeastCostXmissionLegacy(LeastCostPaths):
     """
     Compute Least Cost tie-line paths and full transmission cap cost
     for all possible connections to all supply curve points
@@ -1095,6 +1095,63 @@ class LeastCostXmission(LeastCostPaths):
                             (time.time() - ts) / 60))
 
         return least_costs
+
+
+class LeastCostXmission(LeastCostXmissionLegacy):
+    """LeastCostXmission class with radius clipping"""
+
+    _TCC_CLASS = RegionalTransCapCosts
+
+    @staticmethod
+    def _load_trans_feats(features_fpath):
+        """Load existing transmission features from disk."""
+
+        logger.debug("Loading transmission features...")
+
+        features = gpd.read_file(features_fpath)
+        features = features.reset_index(drop=True)
+        features = features.drop(columns=["bgid", "egid", "cap_left"],
+                                 errors="ignore")
+        mapping = {"gid": "trans_gid"}
+        features = features.rename(columns=mapping)
+        mask = features["category"].isna()
+        if mask.any():
+            msg = f"Dropping {mask.sum():,} features with NaN category!"
+            logger.warning(msg)
+            warn(msg)
+            features = features[~mask].reset_index(drop=True)
+
+        return features, None
+
+    def _clip_to_sc_point(self, sc_point, *__,
+                          clipping_buffer=CLIP_RASTER_BUFFER, radius=None,
+                          expand_radius=True, **___):
+        """Clip features to be substations in the region of the sc point."""
+        logger.debug("Clipping features to sc_point %d", sc_point.sc_point_gid)
+
+        with ExclusionLayers(self._cost_fpath) as f:
+            transform = f.profile["transform"]
+            crs = CRS.from_string(f.crs)
+
+        sc_features = self._features.to_crs(crs).copy(deep=True)
+
+        resolution = transform[0]
+        transform = rasterio.Affine(*transform)
+
+        if radius is not None:
+            sc_features = self._clip_to_radius(sc_point, radius, sc_features,
+                                               clipping_buffer, resolution,
+                                               expand_radius)
+
+        if sc_features.empty:
+            return sc_features, None
+
+        radius = _compute_radius(sc_features, sc_point, transform,
+                                 clipping_buffer)
+        logger.debug("%d transmission features found in clipped area of "
+                     "radius %.2f", len(sc_features), radius)
+
+        return sc_features, radius
 
 
 class RegionalXmission(LeastCostXmission):

@@ -25,8 +25,8 @@ from reV.handlers.exclusions import ExclusionLayers
 from reVX import __version__
 from reVX.handlers.geotiff import Geotiff
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
-from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
-                                                          RegionalXmission)
+from reVX.least_cost_xmission.least_cost_xmission import (
+    LeastCostXmissionLegacy, LeastCostXmission, RegionalXmission)
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT,
                                                        LOAD_CENTER_CAT,
@@ -270,10 +270,13 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
                                            regions_fpath,
                                            region_identifier_column,
                                            cost_layers, **kwargs)
-    else:
-        kwargs["nn_sinks"] = nn_sinks
+    elif radius is not None:
         least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
                                             cost_layers, **kwargs)
+    else:
+        kwargs["nn_sinks"] = nn_sinks
+        least_costs = LeastCostXmissionLegacy.run(cost_fpath, features_fpath,
+                                                  cost_layers, **kwargs)
     if len(least_costs) == 0:
         logger.error('No paths found.')
         return
