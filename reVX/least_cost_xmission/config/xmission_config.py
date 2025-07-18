@@ -10,7 +10,7 @@ import numpy as np
 from typing import List
 from typing_extensions import TypedDict
 
-from rex.utilities.utilities import safe_json_load
+from gaps.config import load_config
 
 
 class LandUseClasses(TypedDict):
@@ -179,7 +179,7 @@ class XmissionConfig(dict):
         """
         if config is not None:
             if isinstance(config, str):
-                config = safe_json_load(config)
+                config = load_config(config)
 
             if not isinstance(config, dict):
                 msg = ('Xmission costs config must be a path to a json file, '
@@ -189,8 +189,8 @@ class XmissionConfig(dict):
                 raise ValueError(msg)
 
             for k, v in config.items():
-                if v.endswith('.json'):
-                    v = safe_json_load(v)
+                if v.endswith('.json') or v.endswith('.json5'):
+                    v = load_config(v)
 
                 self[k] = v
 
@@ -311,3 +311,24 @@ class XmissionConfig(dict):
             v_class = classes[-1]
 
         return costs[str(v_class)]
+
+
+def parse_config(xmission_config=None):
+    """
+    Load Xmission config if needed
+
+    Parameters
+    ----------
+    config : str | dict | XmissionConfig, optional
+        Path to Xmission config .json, dictionary of Xmission config
+        .jsons, or preloaded XmissionConfig objects, by default None
+
+    Returns
+    -------
+    XmissionConfig
+    """
+    if not isinstance(xmission_config, XmissionConfig):
+        xmission_config = XmissionConfig(config=xmission_config)
+
+    logger.debug("Xmissing config:\n%s", xmission_config)
+    return xmission_config
