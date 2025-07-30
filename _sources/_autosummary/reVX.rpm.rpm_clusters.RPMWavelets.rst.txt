@@ -1,0 +1,24 @@
+reVX.rpm.rpm\_clusters.RPMWavelets
+==================================
+
+.. currentmodule:: reVX.rpm.rpm_clusters
+
+.. autoclass:: RPMWavelets
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~RPMWavelets.get_dwt_coefficients
+   
+   
+
+   
+   
+   

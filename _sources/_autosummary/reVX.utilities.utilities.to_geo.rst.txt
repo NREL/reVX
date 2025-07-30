@@ -1,0 +1,6 @@
+reVX.utilities.utilities.to\_geo
+================================
+
+.. currentmodule:: reVX.utilities.utilities
+
+.. autofunction:: to_geo

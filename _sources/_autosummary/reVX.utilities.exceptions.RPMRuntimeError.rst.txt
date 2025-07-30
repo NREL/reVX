@@ -1,0 +1,6 @@
+reVX.utilities.exceptions.RPMRuntimeError
+=========================================
+
+.. currentmodule:: reVX.utilities.exceptions
+
+.. autoexception:: RPMRuntimeError

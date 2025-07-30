@@ -1,0 +1,6 @@
+reVX.utilities.utilities.rev\_sc\_to\_geotiff\_arr
+==================================================
+
+.. currentmodule:: reVX.utilities.utilities
+
+.. autofunction:: rev_sc_to_geotiff_arr

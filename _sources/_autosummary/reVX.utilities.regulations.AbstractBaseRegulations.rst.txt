@@ -1,0 +1,33 @@
+reVX.utilities.regulations.AbstractBaseRegulations
+==================================================
+
+.. currentmodule:: reVX.utilities.regulations
+
+.. autoclass:: AbstractBaseRegulations
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AbstractBaseRegulations.REQUIRED_COLUMNS
+      ~AbstractBaseRegulations.df
+      ~AbstractBaseRegulations.generic
+      ~AbstractBaseRegulations.generic_exists
+      ~AbstractBaseRegulations.locals_exist
+   
+   
