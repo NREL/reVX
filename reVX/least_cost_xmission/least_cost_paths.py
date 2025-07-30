@@ -998,12 +998,14 @@ def min_reinforcement_costs(table, group_col="poi_gid"):
 
     logger.debug("Dropping NA reinforcement costs")
     table = table[~table["reinforcement_cost_per_mw"].isna()]
+    table = table.reset_index(drop=True)
     logger.debug("Reinforcement table with no NA costs contains %d paths",
                  len(table))
     grouped = table.groupby(group_col)
     logger.debug("Reinforcement table contains %d groups of %s",
                  len(grouped), group_col)
     table = table.loc[grouped["reinforcement_cost_per_mw"].idxmin()]
+    logger.debug("Final reinforcement table contains %d rows", len(table))
     return table.reset_index(drop=True)
 
 
