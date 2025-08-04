@@ -40,8 +40,8 @@ LCP_AGG_COST_LAYER_NAME = "lcp_agg_costs"
 class CostLayer:
     """Class to build a cot/routing layer from user input"""
 
-    SOFT_BARRIER_VALUE = 1e20
-    """Value used in places where the cost <= 0
+    SOFT_BARRIER_MULTIPLIER = 100
+    """Multiplier to apply to max cost to use for barriers.
 
     This value is only used if ``use_hard_barrier=False``.
     """
@@ -233,7 +233,7 @@ class CostLayer:
         # remains constant
         self.mcp_cost += friction_costs
 
-        max_val = max(self.SOFT_BARRIER_VALUE, np.max(self.mcp_cost))
+        max_val = np.max(self.mcp_cost) * self.SOFT_BARRIER_MULTIPLIER
         self.mcp_cost = np.where(self.mcp_cost <= 0,
                                  -1 if self._use_hard_barrier else max_val,
                                  self.mcp_cost)
