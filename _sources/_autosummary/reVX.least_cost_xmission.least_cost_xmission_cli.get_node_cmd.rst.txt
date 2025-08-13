@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.least\_cost\_xmission\_cli.get\_node\_cmd
+====================================================================
+
+.. currentmodule:: reVX.least_cost_xmission.least_cost_xmission_cli
+
+.. autofunction:: get_node_cmd

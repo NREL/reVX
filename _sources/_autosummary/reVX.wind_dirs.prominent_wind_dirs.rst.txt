@@ -1,0 +1,31 @@
+reVX.wind\_dirs.prominent\_wind\_dirs
+=====================================
+
+.. automodule:: reVX.wind_dirs.prominent_wind_dirs
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+   
+      ProminentWindDirections
+   
+   
+
+   
+   
+   
+
+
+

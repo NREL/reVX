@@ -1,0 +1,25 @@
+reVX.plexos.base.PlexosNode
+===========================
+
+.. currentmodule:: reVX.plexos.base
+
+.. autoclass:: PlexosNode
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~PlexosNode.make_node_profile
+      ~PlexosNode.run
+   
+   
+
+   
+   
+   

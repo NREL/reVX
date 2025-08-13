@@ -1,0 +1,6 @@
+reVX.least\_cost\_xmission.config.constants.MTN\_MULT
+=====================================================
+
+.. currentmodule:: reVX.least_cost_xmission.config.constants
+
+.. autodata:: MTN_MULT
