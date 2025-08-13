@@ -265,7 +265,10 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
     logger.debug("Exclusion filepath(s): {!r}".format(excl_fpath))
 
     min_area = min_area or config.get("min_area")
-    logger.debug("Minimum area: {!r}".format(excl_fpath))
+    logger.debug("Minimum area: {!r}".format(min_area))
+
+    kernel = kernel or config.get("kernel", "queen")
+    logger.debug("Kernel: {!r}".format(kernel))
 
     excl_dict = config['excl_dict']
     logger.debug("Exclusion dictionary: {!r}".format(excl_dict))
