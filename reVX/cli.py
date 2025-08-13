@@ -243,10 +243,14 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
                     'name of the layer in the exclusion file to write the '
                     'mask to.'))
 @click.option('--min_area', '-ma', default=None, type=FLOAT,
-              help=('Minimum required contiguous area in sq-km.'))
-@click.option('--kernel', '-k', type=STR, default='queen',
-              show_default=True,
-              help=('Contiguous filter method to use on final exclusion.'))
+              help=('Minimum required contiguous area in sq-km. If not '
+                    'provided via command line, will attempt to pull this '
+                    'value from the `excl_dict_fpath` input.'))
+@click.option('--kernel', '-k', type=STR, default=None,
+              help=('Contiguous filter method to use on final exclusion. If '
+                    'not provided via command line, will attempt to pull this '
+                    'value from the `excl_dict_fpath` input. If not present '
+                    'in the `excl_dict_fpath` input, will be set to "queen".'))
 @click.option('--hsds', '-hsds', is_flag=True,
               help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
                     'behind HSDS'))
