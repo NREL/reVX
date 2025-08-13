@@ -5,7 +5,6 @@ reVX command line interface (CLI).
 import click
 import logging
 import os
-import json
 from pathlib import Path
 import pandas as pd
 
