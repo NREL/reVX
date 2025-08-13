@@ -8,6 +8,7 @@ import click
 import logging
 import os
 import json
+from math import ceil
 from pathlib import Path
 from warnings import warn
 
@@ -32,9 +33,8 @@ from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
 from reVX.least_cost_xmission.least_cost_xmission import region_mapper
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT,
-                                                       SUBSTATION_CAT,
-                                                       BARRIERS_MULT,
-                                                       BARRIER_H5_LAYER_NAME)
+                                                       SUBSTATION_CAT)
+from reVX.least_cost_xmission.trans_cap_costs import CostLayer
 from reVX import __version__
 
 logger = logging.getLogger(__name__)
@@ -79,16 +79,15 @@ def run_local(ctx, config):
     ctx.obj['NAME'] = config.name
     ctx.invoke(local,
                cost_fpath=config.cost_fpath,
-               features_fpath=config.features_fpath,
+               route_table=config.route_table,
                cost_layers=config.cost_layers,
                network_nodes_fpath=config.network_nodes_fpath,
                transmission_lines_fpath=config.transmission_lines_fpath,
                xmission_config=config.xmission_config,
-               capacity_class=config.capacity_class,
                clip_buffer=config.clip_buffer,
                start_index=0, step_index=1,
-               tb_layer_name=config.tb_layer_name,
-               barrier_mult=config.barrier_mult,
+               cost_multiplier_layer=config.cost_multiplier_layer,
+               cost_multiplier_scalar=config.cost_multiplier_scalar,
                max_workers=config.execution_control.max_workers,
                region_identifier_column=config.region_identifier_column,
                save_paths=config.save_paths,
@@ -96,9 +95,10 @@ def run_local(ctx, config):
                log_dir=config.log_directory,
                ss_id_col=config.ss_id_col,
                verbose=config.log_level,
-               li_cost_layers=config.length_invariant_cost_layers,
+               friction_layers=config.friction_layers,
                tracked_layers=config.tracked_layers,
-               cell_size=config.cell_size)
+               cell_size=config.cell_size,
+               use_hard_barrier=config.use_hard_barrier)
 
 
 @main.command()
@@ -149,17 +149,13 @@ def from_config(ctx, config, verbose):
               required=True,
               help=("Path to h5 file with cost rasters and other required "
                     "layers"))
-@click.option('--features_fpath', '-feats', required=True,
+@click.option('--route_table', '-routes', required=True,
               type=click.Path(exists=True),
               help="Path to GeoPackage with transmission features")
 @click.option('--cost-layers', '-cl', required=True, multiple=True,
               default=(),
               help='Layer in H5 to add to total cost raster used for routing. '
-                   'Multiple layers may be specified. If running '
-                   'reinforcement computations, layer name may have '
-                   'curly brackets (``{}``), which will be filled in '
-                   'based on the capacity class input (e.g. '
-                   '"tie_line_costs_{}MW")')
+                   'Multiple layers may be specified.')
 @click.option('--network_nodes_fpath', '-nn', type=STR, show_default=True,
               default=None,
               help=("Path to Network Nodes GeoPackage. If given alongside "
@@ -176,11 +172,6 @@ def from_config(ctx, config, verbose):
               default=None,
               help=("Path to transmission config .json. Only used for "
                     "reinforcement path computations."))
-@click.option('--capacity_class', '-cap', type=str, required=False,
-              help=("Capacity class of the 'base' greenfield costs layer. "
-                    "Costs will be scaled by the capacity corresponding to "
-                    "this class to report reinforcement costs as $/MW. "
-                    "Only used for reinforcement path computations."))
 @click.option('--clip_buffer', '-cb', type=int,
               show_default=True, default=0,
               help="Optional number of array elements to buffer clip area by.")
@@ -190,16 +181,13 @@ def from_config(ctx, config, verbose):
 @click.option('--step_index', '-step', type=int,
               show_default=True, default=1,
               help=("Step index of features to run."))
-@click.option('--tb_layer_name', '-tbln', default=BARRIER_H5_LAYER_NAME,
-              type=STR, show_default=True,
-              help='Name of transmission barrier layer in `cost_fpath` file. '
-                   'This layer defines the multipliers applied to the cost '
-                   'layer to determine LCP routing (but does not actually '
-                   'affect output costs')
-@click.option('--barrier_mult', '-bmult', type=float,
-              show_default=True, default=BARRIERS_MULT,
-              help=("Transmission barrier multiplier, used when computing the "
-                    "least cost tie-line path"))
+@click.option('--cost_multiplier_layer', '-cml', default=None, type=STR,
+              help='Name of cost multiplier layer in `cost_fpath` file. '
+                   'This layer defines the multipliers applied to the final '
+                   'cost layer')
+@click.option('--cost_multiplier_scalar', '-cmult', type=float,
+              show_default=True, default=1,
+              help=("Final cost layer multiplier"))
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -221,12 +209,11 @@ def from_config(ctx, config, verbose):
                    'Used for reinforcement calcaultions only. ')
 @click.option('--verbose', '-v', is_flag=True,
               help='Flag to turn on debug logging. Default is not verbose.')
-@click.option('--li-cost-layers', '-licl', required=False, multiple=True,
+@click.option('--friction_layers', '-fl', required=False, multiple=True,
               default=(),
-              help='Length-invariant cost layer in H5 to add to total cost '
-                   'raster used for routing. These costs do not scale with '
-                   'distance traversed acroiss the cell. Multiple layers may '
-                   'be specified.')
+              help='Layers to be added to costs to influence routing but '
+                   'NOT reported in final cost (i.e. friction, barriers, '
+                   'etc.)')
 @click.option('--tracked_layers', '-trl', type=STR, default=None,
               show_default=True,
               help=('Dictionary mapping layer names to strings, where the '
@@ -236,12 +223,16 @@ def from_config(ctx, config, verbose):
               show_default=True, default=CELL_SIZE,
               help=("Side length of a single cell in meters. Cells are "
                     "assumed to be square. Default is"))
+@click.option('--use_hard_barrier', '-uhb', is_flag=True,
+              help='Optional flag to treat any cost values of <= 0 as a '
+                   'hard barrier')
 @click.pass_context
-def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
-          transmission_lines_fpath, xmission_config, capacity_class,
-          clip_buffer, start_index, step_index, tb_layer_name, barrier_mult,
+def local(ctx, cost_fpath, route_table, cost_layers, network_nodes_fpath,
+          transmission_lines_fpath, xmission_config, clip_buffer, start_index,
+          step_index, cost_multiplier_layer, cost_multiplier_scalar,
           max_workers, region_identifier_column, save_paths, out_dir, log_dir,
-          ss_id_col, verbose, li_cost_layers, tracked_layers, cell_size):
+          ss_id_col, verbose, friction_layers, tracked_layers, cell_size,
+          use_hard_barrier):
     """
     Run Least Cost Paths on local hardware
     """
@@ -260,45 +251,62 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     logger.debug("Tracked layers input: %r", tracked_layers)
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
-    cost_layers = list(cost_layers)
-    li_cost_layers = list(li_cost_layers)
+
+    cost_layers = [dict_str_load(layer_info) if isinstance(layer_info, str)
+                   else layer_info for layer_info in cost_layers]
+    friction_layers = [dict_str_load(layer_info)
+                       if isinstance(layer_info, str)
+                       else layer_info
+                       for layer_info in friction_layers]
 
     is_reinforcement_run = (network_nodes_fpath is not None
                             and transmission_lines_fpath is not None)
 
-    kwargs = {"clip_buffer": int(clip_buffer),
-              "tb_layer_name": tb_layer_name,
-              "barrier_mult": barrier_mult,
+    logger.debug("Xmission_config input: %r", xmission_config)
+    if isinstance(xmission_config, str) and "{" in xmission_config:
+        xmission_config = dict_str_load(xmission_config)
+
+    xmission_config = XmissionConfig(config=xmission_config)
+    logger.debug('Xmission Config: {}'.format(xmission_config))
+    kwargs = {"xmission_config": xmission_config,
+              "clip_buffer": int(clip_buffer),
+              "cost_multiplier_layer": cost_multiplier_layer,
+              "cost_multiplier_scalar": cost_multiplier_scalar,
               "save_paths": save_paths,
               "max_workers": max_workers,
-              "length_invariant_cost_layers": li_cost_layers,
+              "friction_layers": friction_layers,
               "tracked_layers": tracked_layers,
-              "cell_size": cell_size}
+              "cell_size": cell_size,
+              "use_hard_barrier": use_hard_barrier}
 
     if is_reinforcement_run:
         logger.info('Detected reinforcement run!')
-        xmission_config = XmissionConfig(config=xmission_config)
-        kwargs["xmission_config"] = xmission_config
-        cc_str = xmission_config._parse_cap_class(capacity_class)
-        cap = xmission_config['power_classes'][cc_str]
-        cost_layers = [layer.format(cap) for layer in cost_layers]
-        logger.debug('Xmission Config: {}'.format(xmission_config))
-        features = gpd.read_file(network_nodes_fpath)
-        features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
-        kwargs["indices"] = features.index[start_index::step_index]
+        inds = _get_indices(network_nodes_fpath, sort_cols="geometry",
+                            start_ind=start_index, n_chunks=step_index)
+        if len(inds) == 0:
+            logger.info('No indices to process: %s', str(inds))
+            return
+        kwargs["indices"] = inds
         kwargs["ss_id_col"] = ss_id_col
-        least_costs = ReinforcementPaths.run(cost_fpath, features_fpath,
+        least_costs = ReinforcementPaths.run(cost_fpath, route_table,
                                              network_nodes_fpath,
                                              region_identifier_column,
                                              transmission_lines_fpath,
-                                             capacity_class, cost_layers,
-                                             **kwargs)
+                                             cost_layers, **kwargs)
     else:
-        features = gpd.read_file(features_fpath)
-        features, *__ = LeastCostPaths._map_to_costs(cost_fpath, features)
-        kwargs["indices"] = features.index[start_index::step_index]
-        least_costs = LeastCostPaths.run(cost_fpath, features_fpath,
+        inds = _get_indices(route_table,
+                            sort_cols=["start_lat", "start_lon"],
+                            start_ind=start_index, n_chunks=step_index)
+        if len(inds) == 0:
+            logger.info('No indices to process: %s', str(inds))
+            return
+        kwargs["indices"] = inds
+        least_costs = LeastCostPaths.run(cost_fpath, route_table,
                                          cost_layers, **kwargs)
+
+    if least_costs is None or least_costs.empty:
+        logger.info('No paths found')
+        return
 
     fpath_out = os.path.join(out_dir, f'{name}_lcp')
     if save_paths:
@@ -313,6 +321,41 @@ def local(ctx, cost_fpath, features_fpath, cost_layers, network_nodes_fpath,
     logger.info('Writing output complete')
     elapsed_time = (time.time() - start_time) / 60
     logger.info("Processing took %.2f minutes", elapsed_time)
+
+
+@main.command()
+@click.option('--config', '-c', required=True,
+              type=click.Path(exists=True),
+              help='Filepath to Least Cost Xmission config json file.')
+@click.option('--out_dir', '-o', type=STR, default=None,
+              help='Directory to save cost layers to. Default is config '
+              'directory')
+@click.pass_context
+def build_cost_layer(ctx, config, out_dir):
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    if out_dir is None:
+        out_dir = Path(config).parent
+    else:
+        out_dir = Path(out_dir)
+
+    config = LeastCostPathsConfig(config)
+    cl = CostLayer(config.cost_fpath, slice(None), slice(None),
+                   cell_size=config.cell_size,
+                   use_hard_barrier=config.use_hard_barrier)
+    cl.build(cost_layers=config.cost_layers,
+             friction_layers=config.friction_layers,
+             tracked_layers=config.tracked_layers,
+             cost_multiplier_layer=config.cost_multiplier_layer,
+             cost_multiplier_scalar=config.cost_multiplier_scalar)
+
+    with ExclusionLayers(config.cost_fpath) as fh:
+        profile = fh.profile
+
+    out_dir.mkdir(exist_ok=True, parents=True)
+    Geotiff.write(out_dir / "agg_costs.tif", profile, cl.cost)
+    Geotiff.write(out_dir / "final_routing_layer.tif", profile, cl.mcp_cost)
 
 
 @main.command()
@@ -560,16 +603,15 @@ def get_node_cmd(config, start_index=0):
     args = ['-n {}'.format(SLURM.s(config.name)),
             'local',
             '-cost {}'.format(SLURM.s(config.cost_fpath)),
-            '-feats {}'.format(SLURM.s(config.features_fpath)),
+            '-routes {}'.format(SLURM.s(config.route_table)),
             '-nn {}'.format(SLURM.s(config.network_nodes_fpath)),
             '-tl {}'.format(SLURM.s(config.transmission_lines_fpath)),
             '-rid {}'.format(SLURM.s(config.region_identifier_column)),
-            '-cap {}'.format(SLURM.s(config.capacity_class)),
             '-cb {}'.format(SLURM.s(config.clip_buffer)),
             '-start {}'.format(SLURM.s(start_index)),
             '-step {}'.format(SLURM.s(config.execution_control.nodes or 1)),
-            '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
-            '-bmult {}'.format(SLURM.s(config.barrier_mult)),
+            '-cml {}'.format(SLURM.s(config.cost_multiplier_layer)),
+            '-cmult {}'.format(SLURM.s(config.cost_multiplier_scalar)),
             '-ssid {}'.format(SLURM.s(config.ss_id_col)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
@@ -578,12 +620,15 @@ def get_node_cmd(config, start_index=0):
             ]
 
     for layer in config.cost_layers:
-        args.append(f'-cl {layer}')
-    for layer in config.length_invariant_cost_layers:
-        args.append(f'-licl {layer}')
+        args.append(f'-cl {SLURM.s(layer)}')
+    for layer in config.friction_layers:
+        args.append(f'-fl {SLURM.s(layer)}')
 
     if config.save_paths:
         args.append('-paths')
+
+    if config.use_hard_barrier:
+        args.append('-uhb')
 
     if config.tracked_layers:
         args.append('-trl {}'.format(SLURM.s(config.tracked_layers)))
@@ -639,6 +684,15 @@ def eagle(config, start_index=0):
 
     click.echo(msg)
     logger.info(msg)
+
+
+def _get_indices(features_fp, sort_cols, start_ind, n_chunks):
+    """Get indices of points that are sorted by location"""
+    features = gpd.read_file(features_fp)
+    features = features.sort_values(sort_cols)
+
+    chunk_size = int(ceil(len(features) / n_chunks))
+    return features.index[start_ind * chunk_size:(start_ind + 1) * chunk_size]
 
 
 if __name__ == '__main__':
