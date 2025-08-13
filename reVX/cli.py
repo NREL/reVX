@@ -228,13 +228,13 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
 @exclusions.command()
 @click.option('--excl_dict_fpath', '-ed', required=True,
               type=click.Path(exists=True),
-              help=('Path to JSON file containing the ``"excl_dict"`` '
-                    'key which points to the exclusion dictionary defining '
-                    'the mask that should be generated. A typical reV '
-                    'aggregation config satisfied this requirement. If this '
-                    'file also contains an ``"excl_fpath"`` key, the value '
-                    'from the file will override the ``--excl_h5`` CLI '
-                    'argument input.'))
+              help=('Path to config file (JSON/JSON5/TOML/YAML) containing '
+                    'the ``"excl_dict"`` key which points to the exclusion '
+                    'dictionary defining the mask that should be generated. '
+                    'A typical reV aggregation config satisfies this '
+                    'requirement. If this file also contains an '
+                    '``"excl_fpath"`` key, the value from the file will '
+                    'override the ``--excl_h5`` CLI argument input.'))
 @click.option('--out', '-o', required=True, type=STR,
               help=('Output name. If this string value ends in ".tif" '
                     'or ".tiff", this input is assumed to be a path to an '
