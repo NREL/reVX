@@ -261,8 +261,7 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
 
     logger.info("Calculating exclusion mask from {!r}".format(excl_dict_fpath))
 
-    with open(excl_dict_fpath, 'r') as fh:
-        config = json.load(fh)
+    config = load_config(excl_dict_fpath)
 
     excl_fpath = config.get("excl_fpath", ctx.obj['EXCL_H5'])
     logger.debug("Exclusion filepath(s): {!r}".format(excl_fpath))
