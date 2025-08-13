@@ -297,6 +297,7 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
         LayeredH5(excl_fpath).write_layer_to_h5(mask_, out, profile,
                                                 description=desc)
 
+
 @main.command()
 @click.option('--agg_config', '-ac', required=True,
               type=click.Path(exists=True),
