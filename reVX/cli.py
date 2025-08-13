@@ -5,7 +5,6 @@ reVX command line interface (CLI).
 import click
 import logging
 import os
-import json
 from pathlib import Path
 import pandas as pd
 
@@ -228,13 +227,13 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
 @exclusions.command()
 @click.option('--excl_dict_fpath', '-ed', required=True,
               type=click.Path(exists=True),
-              help=('Path to JSON file containing the ``"excl_dict"`` '
-                    'key which points to the exclusion dictionary defining '
-                    'the mask that should be generated. A typical reV '
-                    'aggregation config satisfied this requirement. If this '
-                    'file also contains an ``"excl_fpath"`` key, the value '
-                    'from the file will override the ``--excl_h5`` CLI '
-                    'argument input.'))
+              help=('Path to config file (JSON/JSON5/TOML/YAML) containing '
+                    'the ``"excl_dict"`` key which points to the exclusion '
+                    'dictionary defining the mask that should be generated. '
+                    'A typical reV aggregation config satisfies this '
+                    'requirement. If this file also contains an '
+                    '``"excl_fpath"`` key, the value from the file will '
+                    'override the ``--excl_h5`` CLI argument input.'))
 @click.option('--out', '-o', required=True, type=STR,
               help=('Output name. If this string value ends in ".tif" '
                     'or ".tiff", this input is assumed to be a path to an '
@@ -243,29 +242,36 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
                     'name of the layer in the exclusion file to write the '
                     'mask to.'))
 @click.option('--min_area', '-ma', default=None, type=FLOAT,
-              help=('Minimum required contiguous area in sq-km.'))
-@click.option('--kernel', '-k', type=STR, default='queen',
-              show_default=True,
-              help=('Contiguous filter method to use on final exclusion.'))
+              help=('Minimum required contiguous area in sq-km. If not '
+                    'provided via command line, will attempt to pull this '
+                    'value from the `excl_dict_fpath` input.'))
+@click.option('--kernel', '-k', type=STR, default=None,
+              help=('Contiguous filter method to use on final exclusion. If '
+                    'not provided via command line, will attempt to pull this '
+                    'value from the `excl_dict_fpath` input. If not present '
+                    'in the `excl_dict_fpath` input, will be set to "queen".'))
 @click.option('--hsds', '-hsds', is_flag=True,
               help=('Flag to use h5pyd to handle .h5 domain hosted on AWS '
                     'behind HSDS'))
 @click.pass_context
 def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
-    """
-    Compute Setbacks locally
-    """
+    """Compute reV exclusions mask from exclusion dictionary"""
     log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
     init_logger('reV', log_level=log_level)
     init_logger('reVX', log_level=log_level)
 
     logger.info("Calculating exclusion mask from {!r}".format(excl_dict_fpath))
 
-    with open(excl_dict_fpath, 'r') as fh:
-        config = json.load(fh)
+    config = load_config(excl_dict_fpath)
 
     excl_fpath = config.get("excl_fpath", ctx.obj['EXCL_H5'])
     logger.debug("Exclusion filepath(s): {!r}".format(excl_fpath))
+
+    min_area = min_area or config.get("min_area")
+    logger.debug("Minimum area: {!r}".format(min_area))
+
+    kernel = kernel or config.get("kernel", "queen")
+    logger.debug("Kernel: {!r}".format(kernel))
 
     excl_dict = config['excl_dict']
     logger.debug("Exclusion dictionary: {!r}".format(excl_dict))
@@ -289,6 +295,7 @@ def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
                 .format(excl_dict))
         LayeredH5(excl_fpath).write_layer_to_h5(mask_, out, profile,
                                                 description=desc)
+
 
 @main.command()
 @click.option('--agg_config', '-ac', required=True,
