@@ -252,9 +252,7 @@ def layers_from_h5(ctx, out_dir, layers, hsds):
                     'behind HSDS'))
 @click.pass_context
 def mask(ctx, excl_dict_fpath, out, min_area, kernel, hsds):
-    """
-    Compute Setbacks locally
-    """
+    """Compute reV exclusions mask from exclusion dictionary"""
     log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
     init_logger('reV', log_level=log_level)
     init_logger('reVX', log_level=log_level)
