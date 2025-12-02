@@ -29,8 +29,8 @@ from reVX.least_cost_xmission.config import XmissionConfig
 from reVX.least_cost_xmission.config.constants import TRANS_LINE_CAT
 from reVX.least_cost_xmission.trans_cap_costs import LCP_AGG_COST_LAYER_NAME
 from reVX.least_cost_xmission.least_cost_paths_cli import main
-from reVX.least_cost_xmission.least_cost_paths import (LeastCostPaths,
-                                                       features_to_route_table)
+from reVX.least_cost_xmission.least_cost_paths import (
+    LeastCostPaths, features_to_route_table, _MUSD_PER_MILE_TO_USD_PER_PIXEL)
 
 
 COST_H5 = os.path.join(TESTDATADIR, 'xmission', 'xmission_layers.h5')
@@ -716,7 +716,7 @@ def test_apply_polarity_mult(runner, route_table):
         test = '{}_lcp.csv'.format(os.path.basename(td))
         test = os.path.join(td, test)
         test = pd.read_csv(test)
-        test["cost"] /= 3
+        test["cost"] /= 3 * _MUSD_PER_MILE_TO_USD_PER_PIXEL
 
         check(truth, test)
 
@@ -777,7 +777,7 @@ def test_apply_row_and_polarity_mult(runner, route_table):
         test = '{}_lcp.csv'.format(os.path.basename(td))
         test = os.path.join(td, test)
         test = pd.read_csv(test)
-        test["cost"] /= 6
+        test["cost"] /= 6 * _MUSD_PER_MILE_TO_USD_PER_PIXEL
 
         check(truth, test)
 
@@ -839,7 +839,7 @@ def test_apply_row_and_polarity_with_existing_mult(runner, route_table):
         test = '{}_lcp.csv'.format(os.path.basename(td))
         test = os.path.join(td, test)
         test = pd.read_csv(test)
-        test["cost"] /= 30
+        test["cost"] /= 30 * _MUSD_PER_MILE_TO_USD_PER_PIXEL
 
         check(truth, test)
 
@@ -920,7 +920,8 @@ def test_apply_mults_by_route(runner, route_table):
             polarity = row["polarity"]
             divisors.append(1.2
                             * row_config[voltage]
-                            * polarity_config[voltage][polarity])
+                            * polarity_config[voltage][polarity]
+                            * _MUSD_PER_MILE_TO_USD_PER_PIXEL)
 
         test["cost"] /= divisors
 

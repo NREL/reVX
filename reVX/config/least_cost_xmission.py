@@ -421,7 +421,14 @@ class LeastCostPathsConfig(AnalysisConfig):
               Every "voltage" + "polarity" combination in the routing
               table must be given in the "voltage_polarity_mult"
               dictionary in the xmission config, otherwise an error will
-              be thrown. Default is ``False``.
+              be thrown.
+
+              ..IMPORTANT::
+                The multiplier in this config is assumed to be in units
+                of million $ per mile and will be converted to
+                $ per pixel before being applied to the layer!.
+
+              Default is ``False``.
 
         """
         return self['cost_layers']
@@ -472,7 +479,14 @@ class LeastCostPathsConfig(AnalysisConfig):
               Every "voltage" + "polarity" combination in the routing
               table must be given in the "voltage_polarity_mult"
               dictionary in the xmission config, otherwise an error will
-              be thrown. Default is ``False``.
+              be thrown.
+
+              ..IMPORTANT::
+                The multiplier in this config is assumed to be in units
+                of million $ per mile and will be converted to
+                $ per pixel before being applied to the layer!.
+
+              Default is ``False``.
 
         """
         # self.get('friction_layers', []) does not work!!

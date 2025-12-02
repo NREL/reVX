@@ -25,6 +25,10 @@ from reVX.least_cost_xmission.trans_cap_costs import (TieLineCosts,
                                                       ReinforcementLineCosts)
 
 logger = logging.getLogger(__name__)
+# Convert from Million dollars/mile to $/pixel:
+# 1,000,000 [$/million dollars] * 90 [meters/pixel] / 1609.344 [meters/mile]
+# = 55923.40730136006 [$/pixel];
+_MUSD_PER_MILE_TO_USD_PER_PIXEL = 55923.40730136006
 
 
 class LeastCostPaths:
@@ -1113,6 +1117,7 @@ def _update_multipliers(layers, polarity, voltage, xmission_config):
             polarity_config = xmission_config["voltage_polarity_mult"]
             polarity_multiplier = polarity_config[voltage][polarity]
             layer["multiplier_scalar"] = (layer.get("multiplier_scalar", 1)
-                                          * polarity_multiplier)
+                                          * polarity_multiplier
+                                          * _MUSD_PER_MILE_TO_USD_PER_PIXEL)
 
     return output_layers
