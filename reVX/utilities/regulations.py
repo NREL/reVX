@@ -94,6 +94,15 @@ class AbstractBaseRegulations(ABC):
         self._regulations_df = regulations_df
         self._validate_regulations()
 
+    @property
+    def geometry_provided(self):
+        """bool: ``True`` if the input regulations include geometries."""
+        return (
+            isinstance(self._regulations_df, gpd.GeoDataFrame)
+            and "geometry" in self._regulations_df
+            and not self._regulations_df["geometry"].isna().all()
+        )
+
     def _validate_regulations(self):
         """Perform several validations on regulations"""
 
