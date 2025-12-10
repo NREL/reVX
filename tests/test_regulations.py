@@ -31,7 +31,7 @@ def test_regulations_init():
                            regulations_fpath=REGS_FPATH)
     assert np.isclose(regs.generic, GENERIC_REG_VAL)
 
-    for col in TestRegulations.REQUIRED_COLUMNS:
+    for col in regs.required_columns:
         assert col in regs.df
         assert not regs.df[col].isna().any()
 
@@ -82,12 +82,13 @@ def test_regulations_na_cols():
                'nan_values.csv']:
         regs_path = os.path.join(TESTDATADIR, 'setbacks', 'non_standard_regs',
                                  fn)
-        regs_df = pd.read_csv(regs_path)
-        assert regs_df[TestRegulations.REQUIRED_COLUMNS].isna().values.any()
-
         regs = TestRegulations(generic_regulation_value=GENERIC_REG_VAL,
                                regulations_fpath=regs_path)
-        for col in TestRegulations.REQUIRED_COLUMNS:
+
+        regs_df = pd.read_csv(regs_path)
+        assert regs_df[regs.required_columns].isna().values.any()
+
+        for col in regs.required_columns:
             assert not regs.df[col].isna().any()
 
 
