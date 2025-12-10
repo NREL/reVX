@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 class AbstractBaseRegulations(ABC):
     """ABC for county regulation values. """
 
-    REQUIRED_COLUMNS = ["Feature Type", "Value Type", "Value", "FIPS"]
+    _BASE_REQUIRED_COLUMNS = ["Feature Type", "Value Type", "Value"]
 
     def __init__(self, generic_regulation_value=None, regulations_fpath=None):
         """
@@ -103,6 +103,15 @@ class AbstractBaseRegulations(ABC):
             and not self._regulations_df["geometry"].isna().all()
         )
 
+    @property
+    def required_columns(self):
+        """list: Required columns for regulations DataFrame. """
+        cols = self._BASE_REQUIRED_COLUMNS.copy()
+        if not self.geometry_provided:
+            cols.append("FIPS")
+
+        return cols
+
     def _validate_regulations(self):
         """Perform several validations on regulations"""
 
@@ -121,7 +130,7 @@ class AbstractBaseRegulations(ABC):
 
     def _check_for_req_missing_cols(self):
         """Check for missing (required) columns in regulations DataFrame. """
-        missing = [col for col in self.REQUIRED_COLUMNS
+        missing = [col for col in self.required_columns
                    if col not in self._regulations_df]
         if any(missing):
             msg = ('Regulations are missing the following required columns: {}'
@@ -131,7 +140,7 @@ class AbstractBaseRegulations(ABC):
 
     def _remove_nans_from_req_cols(self):
         """Remove rows with NaN values from required columns. """
-        for col in self.REQUIRED_COLUMNS:
+        for col in self.required_columns:
             na_rows = self._regulations_df[col].isna()
             self._regulations_df = self._regulations_df[~na_rows]
 
