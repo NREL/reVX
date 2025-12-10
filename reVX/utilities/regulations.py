@@ -33,10 +33,11 @@ class AbstractBaseRegulations(ABC):
             represents, `Value Type`, which specifies the type of the
             value (e.g. a multiplier or static height, etc.), `Value`,
             which specifies the numeric value of the regulation, and
-            `FIPS`, which specifies a unique 5-digit code for each
-            county (this can be an integer - no leading zeros required).
-            A `None` value signifies that no local regulations should
-            be applied. By default `None`.
+            either `FIPS`, which specifies a unique 5-digit code for
+            each county (this can be an integer - no leading zeros
+            required), or a `geometry` column containing the spatial
+            extent for each row. A `None` value signifies that no local
+            regulations should be applied. By default `None`.
         """
 
         self._generic_regulation_value = generic_regulation_value
