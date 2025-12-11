@@ -180,8 +180,37 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
         if regulations_df is None:
             return
 
+        if self._regulations.geometry_provided:
+            self._regulations.df = self._validate_regulations_geopackage_input(
+                regulations_df)
+            return
+
+        self._regulations.df = self._add_region_shapes_from_fips_layer(
+            regulations_df)
+
+    def _validate_regulations_geopackage_input(self, regulations_df):
+        """Validate regulations GeoDataFrame input.="""
+        geometry_mask = ~regulations_df['geometry'].isna()
+        if not geometry_mask.any():
+            msg = ('Regulations were supplied with a geometry column, '
+                    'but all geometries are null.')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        regs_with_geom = regulations_df.loc[geometry_mask].copy()
+        if regs_with_geom.crs is None:
+            msg = ('Regulations geometries must have a defined CRS. '
+                    'Set the CRS prior to computing exclusions.')
+            logger.error(msg)
+            raise RuntimeError(msg)
+
+        regs_with_geom = regs_with_geom.to_crs(crs=self.profile['crs'])
+        return regs_with_geom.reset_index(drop=True)
+
+    def _add_region_shapes_from_fips_layer(self, regulations_df):
+        """Add shapes to regulations by rasterizing county FIPS layer"""
         with ExclusionLayers(self._excl_fpath, hsds=self._hsds) as exc:
-            self._fips = exc['cnty_fips']
+            fips = exc['cnty_fips']
             cnty_fips_profile = exc.get_layer_profile('cnty_fips')
 
         if 'FIPS' not in regulations_df:
@@ -198,7 +227,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
 
         logger.info('Merging county geometries w/ local regulations')
         shapes_from_raster = rio_features.shapes(
-            self._fips.astype(np.int32),
+            fips.astype(np.int32),
             transform=cnty_fips_profile['transform']
         )
         county_regs = []
@@ -218,8 +247,7 @@ class AbstractBaseExclusionsMerger(AbstractExclusionCalculatorInterface):
             geometry='geometry'
         )
         regulations_df = regulations_df.reset_index()
-        regulations_df = regulations_df.to_crs(crs=self.profile['crs'])
-        self._regulations.df = regulations_df
+        return regulations_df.to_crs(crs=self.profile['crs'])
 
     @property
     def profile(self):
