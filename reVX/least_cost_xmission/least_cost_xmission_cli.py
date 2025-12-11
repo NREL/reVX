@@ -14,29 +14,30 @@ import logging
 import warnings
 import pandas as pd
 import geopandas as gpd
-from typing import List
+from pathlib import Path
 
 from rex.utilities.loggers import init_mult, create_dirs, init_logger
 from rex.utilities.cli_dtypes import STR, INTLIST, INT, FLOAT
 from rex.utilities.hpc import SLURM
 from rex.utilities.utilities import get_class_properties, dict_str_load
+from reV.handlers.exclusions import ExclusionLayers
 
 from reVX import __version__
+from reVX.handlers.geotiff import Geotiff
 from reVX.config.least_cost_xmission import LeastCostXmissionConfig
-from reVX.least_cost_xmission.least_cost_xmission import (LeastCostXmission,
-                                                          RegionalXmission)
+from reVX.least_cost_xmission.least_cost_xmission import (
+    LeastCostXmissionLegacy, LeastCostXmission, RegionalXmission)
 from reVX.least_cost_xmission.config.constants import (CELL_SIZE,
                                                        TRANS_LINE_CAT,
                                                        LOAD_CENTER_CAT,
                                                        SINK_CAT,
                                                        SUBSTATION_CAT,
                                                        MINIMUM_SPUR_DIST_KM,
-                                                       BARRIERS_MULT,
                                                        CLIP_RASTER_BUFFER,
-                                                       NUM_NN_SINKS,
-                                                       BARRIER_H5_LAYER_NAME,
-                                                       ISO_H5_LAYER_NAME)
-from reVX.least_cost_xmission.least_cost_paths import min_reinforcement_costs
+                                                       NUM_NN_SINKS)
+from reVX.least_cost_xmission.least_cost_paths import (
+    min_reinforcement_costs as mrc)
+from reVX.least_cost_xmission.trans_cap_costs import CostLayer
 
 TRANS_CAT_TYPES = [TRANS_LINE_CAT, LOAD_CENTER_CAT, SINK_CAT, SUBSTATION_CAT]
 
@@ -130,15 +131,9 @@ def from_config(ctx, config, verbose):
 @click.option('--region_identifier_column', '-rid', type=STR, default=None,
               help=("Name of column in reinforcement regions GeoPackage"
                     "containing a unique identifier for each region."))
-@click.option('--capacity_class', '-cap', type=str, required=True,
-              help=("Capacity class of transmission features to connect "
-                    "supply curve points to"))
 @click.option('--resolution', '-res', type=int,
               show_default=True, default=128,
               help=("SC point resolution"))
-@click.option('--xmission_config', '-xcfg', type=STR, show_default=True,
-              default=None,
-              help=("Path to Xmission config .json"))
 @click.option('--min_line_length', '-mll', type=int,
               show_default=True, default=MINIMUM_SPUR_DIST_KM,
               help=("Minimum Tie-line length."))
@@ -157,20 +152,12 @@ def from_config(ctx, config, verbose):
 @click.option('--clipping_buffer', '-buffer', type=float,
               show_default=True, default=CLIP_RASTER_BUFFER,
               help=("Buffer to expand clipping radius by"))
-@click.option('--tb_layer_name', '-tbln', default=BARRIER_H5_LAYER_NAME,
-              type=STR, show_default=True,
-              help='Name of transmission barrier layer in `cost_fpath` file. '
-                   'This layer defines the multipliers applied to the cost '
-                   'layer to determine LCP routing (but does not actually '
-                   'affect output costs')
-@click.option('--barrier_mult', '-bmult', type=float,
-              show_default=True, default=BARRIERS_MULT,
-              help=("Tranmission barrier multiplier, used when computing the "
-                    "least cost tie-line path"))
-@click.option('--iso_regions_layer_name', '-irln', default=ISO_H5_LAYER_NAME,
-              type=STR, show_default=True,
-              help='Name of ISO regions layer in `cost_fpath` file. The '
-                   "layer maps pixels to ISO region ID's (1, 2, 3, 4, etc.) .")
+@click.option('--cost_multiplier_layer', '-cml', default=None, type=STR,
+              help='Name of cost multiplier layer in `cost_fpath` file. '
+                   'This layer defines the multipliers applied to the final '
+                   'cost layer')
+@click.option('--cost_multiplier_scalar', '-cmult', type=float,
+              show_default=True, default=1, help="Final cost layer multiplier")
 @click.option('--max_workers', '-mw', type=INT,
               show_default=True, default=None,
               help=("Number of workers to use for processing, if 1 run in "
@@ -203,16 +190,12 @@ def from_config(ctx, config, verbose):
 @click.option('--cost-layers', '-cl', required=True, multiple=True,
               default=(),
               help='Layer in H5 to add to total cost raster used for routing. '
-                   'Multiple layers may be specified. Layer name may have '
-                   'curly brackets (``{}``), which will be filled in '
-                   'based on the capacity class input (e.g. '
-                   '"tie_line_costs_{}MW")')
-@click.option('--li-cost-layers', '-licl', required=False, multiple=True,
+                   'Multiple layers may be specified.')
+@click.option('--friction_layers', '-fl', required=False, multiple=True,
               default=(),
-              help='Length-invariant cost layer in H5 to add to total cost '
-                   'raster used for routing. These costs do not scale with '
-                   'distance traversed acroiss the cell. Multiple layers may '
-                   'be specified.')
+              help='Layers to be added to costs to influence routing but '
+                   'NOT reported in final cost (i.e. friction, barriers, '
+                   'etc.)')
 @click.option('--tracked_layers', '-trl', type=STR, default=None,
               show_default=True,
               help=('Dictionary mapping layer names to strings, where the '
@@ -228,15 +211,17 @@ def from_config(ctx, config, verbose):
               show_default=True, default=CELL_SIZE,
               help=("Side length of a single cell in meters. Cells are "
                     "assumed to be square. Default is"))
+@click.option('--use_hard_barrier', '-uhb', is_flag=True,
+              help='Optional flag to treat any cost values of <= 0 as a '
+                   'hard barrier')
 @click.pass_context
 def local(ctx, cost_fpath, features_fpath, regions_fpath,
-          region_identifier_column, capacity_class, resolution,
-          xmission_config, min_line_length, sc_point_gids, nn_sinks,
-          clipping_buffer, tb_layer_name, barrier_mult,
-          iso_regions_layer_name, max_workers, out_dir, log_dir, verbose,
+          region_identifier_column, resolution, min_line_length,
+          sc_point_gids, nn_sinks, clipping_buffer, cost_multiplier_layer,
+          cost_multiplier_scalar, max_workers, out_dir, log_dir, verbose,
           save_paths, radius, expand_radius, mp_delay, simplify_geo,
-          cost_layers: List[str], li_cost_layers, tracked_layers,
-          length_mult_kind, cell_size):
+          cost_layers, friction_layers, tracked_layers, length_mult_kind,
+          cell_size, use_hard_barrier):
     """
     Run Least Cost Xmission on local hardware
     """
@@ -252,47 +237,52 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
     logger.info('Computing Least Cost Xmission connections and writing them {}'
                 .format(out_dir))
 
-    cost_layers = list(cost_layers)
-    li_cost_layers = list(li_cost_layers)
+    cost_layers = [dict_str_load(layer_info) if isinstance(layer_info, str)
+                   else layer_info for layer_info in cost_layers]
+    friction_layers = [dict_str_load(layer_info)
+                       if isinstance(layer_info, str)
+                       else layer_info
+                       for layer_info in friction_layers]
+
     if isinstance(tracked_layers, str):
         tracked_layers = dict_str_load(tracked_layers)
 
     kwargs = {"resolution": resolution,
-              "xmission_config": xmission_config,
               "min_line_length": min_line_length,
               "sc_point_gids": sc_point_gids,
               "clipping_buffer": clipping_buffer,
-              "tb_layer_name": tb_layer_name,
-              "barrier_mult": barrier_mult,
-              "iso_regions_layer_name": iso_regions_layer_name,
+              "cost_multiplier_layer": cost_multiplier_layer,
+              "cost_multiplier_scalar": cost_multiplier_scalar,
               "max_workers": max_workers,
               "save_paths": save_paths,
               "simplify_geo": simplify_geo,
               "radius": radius,
               "expand_radius": expand_radius,
               "mp_delay": mp_delay,
-              "length_invariant_cost_layers": li_cost_layers,
+              "friction_layers": friction_layers,
               "length_mult_kind": length_mult_kind,
               "tracked_layers": tracked_layers,
-              "cell_size": cell_size}
+              "cell_size": cell_size,
+              "use_hard_barrier": use_hard_barrier}
 
     if regions_fpath is not None:
         least_costs = RegionalXmission.run(cost_fpath, features_fpath,
                                            regions_fpath,
                                            region_identifier_column,
-                                           capacity_class, cost_layers,
-                                           **kwargs)
+                                           cost_layers, **kwargs)
+    elif radius is not None:
+        least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
+                                            cost_layers, **kwargs)
     else:
         kwargs["nn_sinks"] = nn_sinks
-        least_costs = LeastCostXmission.run(cost_fpath, features_fpath,
-                                            capacity_class, cost_layers,
-                                            **kwargs)
+        least_costs = LeastCostXmissionLegacy.run(cost_fpath, features_fpath,
+                                                  cost_layers, **kwargs)
     if len(least_costs) == 0:
         logger.error('No paths found.')
         return
 
     ext = 'gpkg' if save_paths else 'csv'
-    fn_out = '{}_{}_{}.{}'.format(name, capacity_class, resolution, ext)
+    fn_out = '{}_{}.{}'.format(name, resolution, ext)
     fpath_out = os.path.join(out_dir, fn_out)
 
     logger.info('Writing output to %s', fpath_out)
@@ -307,31 +297,21 @@ def local(ctx, cost_fpath, features_fpath, regions_fpath,
 
 
 @main.command()
-@click.option('--split-to-geojson', '-s', is_flag=True,
-              help='After merging GeoPackages, split into GeoJSON by POI name'
-              '.')
-@click.option('--suppress-combined-file', is_flag=True,
-              help='Don\'t create combined layer.')
 @click.option('--out-file', '-of', default=None, type=STR,
               help='Name for output GeoPackage/CSV file.')
-@click.option('--drop', '-d', default=None, type=STR, multiple=True,
-              help=('Transmission feature category types to drop from '
-                    'results. Options: {}'.format(", ".join(TRANS_CAT_TYPES))))
 @click.option('--out-dir', '-od', type=click.Path(),
               default='./out', show_default=True,
               help='Output directory for output files.')
+@click.option('--drop', '-d', default=None, type=STR, multiple=True,
+              help=('Transmission feature category types to drop from '
+                    'results. Options: {}'.format(", ".join(TRANS_CAT_TYPES))))
 @click.option('--simplify-geo', type=FLOAT,
               show_default=True, default=None,
               help='Simplify path geometries by a value before exporting.')
-@click.option('--ss_id_col', '-ssid', default=None, type=STR,
-              show_default=True,
-              help='Name of column used to unqiuely identify substations. '
-                   'Used for reinforcement calcaultions only. ')
 @click.argument('files', type=STR, nargs=-1)
 @click.pass_context
 # flake8: noqa: C901
-def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
-                 out_dir, drop, simplify_geo, ss_id_col, files):
+def merge_output(ctx, out_file, out_dir, drop, simplify_geo, files):
     """
     Merge output GeoPackage/CSV files and optionally convert to GeoJSON
     """
@@ -349,63 +329,129 @@ def merge_output(ctx, split_to_geojson, suppress_combined_file, out_file,
                             'received %s', TRANS_CAT_TYPES, drop)
                 return
 
-    warnings.filterwarnings('ignore', category=RuntimeWarning)
-    dfs = []
-    for i, file in enumerate(files, start=1):
-        logger.info('Loading %s (%i/%i)', file, i, len(files))
-        df_tmp = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
-        dfs.append(df_tmp)
+    create_dirs(out_dir)
+    out_file = 'combo_{}'.format(files[0]) if out_file is None else out_file
+    out_file = os.path.join(out_dir, out_file)
 
-    df = pd.concat(dfs)
-    warnings.filterwarnings('default', category=RuntimeWarning)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        for i, file in enumerate(files, start=1):
+            logger.info('Loading %s (%i/%i)', file, i, len(files))
+            df = gpd.read_file(file) if "gpkg" in file else pd.read_csv(file)
 
-    if drop:
-        mask = df['category'].isin(drop)
-        logger.info('Dropping %d of %d total features with category(ies): %s',
-                    mask.sum(), len(df), ", ".join(drop))
-        df = df[~mask]
+            if drop:
+                mask = df['category'].isin(drop)
+                logger.info('Dropping %d of %d total features with '
+                            'category(ies): %s', mask.sum(), len(df),
+                            ", ".join(drop))
+                df = df[~mask].reset_index()
 
-    df = df.reset_index()
+            if len(df) == 0:
+                logger.info('No transmission features to save.')
+                continue
 
-    if len(df) == 0:
-        logger.info('No transmission features to save.')
+            if simplify_geo:
+                logger.info('Simplifying geometries by {}'
+                            .format(simplify_geo))
+                df.geometry = df.geometry.simplify(simplify_geo)
+
+            logger.info('Saving paths to %s', out_file)
+            if os.path.exists(out_file):
+                if "gpkg" in out_file:
+                    df.to_file(out_file, driver="GPKG", mode="a")
+                else:
+                    df.to_csv(out_file, index=False, mode="a", header=False)
+            else:
+                if "gpkg" in out_file:
+                    df.to_file(out_file, driver="GPKG", mode="w")
+                else:
+                    df.to_csv(out_file, index=False, mode="w")
+
+
+@main.command()
+@click.option('--ss_id_col', '-ssid', type=STR,
+              help='Name of column used to uniquely identify substations. '
+                   'Used for reinforcement calculations only. ')
+@click.option('--out-file', '-of', default=None, type=STR,
+              help='Name for output GeoPackage/CSV file.')
+@click.option('--out-dir', '-od', type=click.Path(),
+              default='./out', show_default=True,
+              help='Output directory for output files.')
+@click.argument('files', type=STR, nargs=-1)
+@click.pass_context
+# flake8: noqa: C901
+def min_reinforcement_costs(ctx, ss_id_col, out_file, out_dir, files):
+    """Compute minimum reinforcement cost for each substation"""
+
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    if len(files) == 0:
+        logger.error('No file(s) passed to be split')
         return
 
-    if simplify_geo:
-        logger.info('Simplifying geometries by {}'.format(simplify_geo))
-        df.geometry = df.geometry.simplify(simplify_geo)
+    dfs = []
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        for i, file in enumerate(files, start=1):
+            logger.info('Loading %s (%i/%i)', file, i, len(files))
+            df_tmp = (gpd.read_file(file)
+                      if "gpkg" in file else pd.read_csv(file))
+            dfs.append(df_tmp)
 
-    if ss_id_col is not None:
-        logger.info('Computing minimum reinforcement cost')
-        df = min_reinforcement_costs(df, group_col=ss_id_col)
+    df = pd.concat(dfs)
+    logger.info('Computing minimum reinforcement cost')
+    df = mrc(df, group_col=ss_id_col)
 
     create_dirs(out_dir)
+    out_file = ('combo_{}'.format(files[0])
+                if out_file is None else out_file)
+    out_file = os.path.join(out_dir, out_file)
+    logger.info('Saving all combined paths to %s', out_file)
+    if "gpkg" in out_file:
+        df.to_file(out_file, driver="GPKG")
+    else:
+        df.to_csv(out_file, index=False)
 
-    # Create combined output file
-    if not suppress_combined_file:
-        out_file = ('combo_{}'.format(files[0])
-                    if out_file is None else out_file)
-        out_file = os.path.join(out_dir, out_file)
-        logger.info('Saving all combined paths to %s', out_file)
-        if "gpkg" in out_file:
-            df.to_file(out_file, driver="GPKG")
-        else:
-            df.to_csv(out_file, index=False)
+
+@main.command()
+@click.option('--out-file', '-of', default=None, type=STR,
+              help='Name for output GeoPackage/CSV file.')
+@click.option('--out-dir', '-od', type=click.Path(),
+              default='./out', show_default=True,
+              help='Output directory for output files.')
+@click.argument('files', type=STR, nargs=-1)
+@click.pass_context
+# flake8: noqa: C901
+def split_to_geojson(ctx, out_file, out_dir, files):
+    """Split GeoPackage into GeoJSON by POI name"""
+
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    if len(files) == 0:
+        logger.error('No file(s) passed to be split')
+        return
+
+    dfs = []
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        for i, file in enumerate(files, start=1):
+            logger.info('Loading %s (%i/%i)', file, i, len(files))
+            dfs.append(gpd.read_file(file))
+
+    df = pd.concat(dfs)
+    create_dirs(out_dir)
 
     # Split out put in to GeoJSON by POI name
-    if split_to_geojson:
-        if not isinstance(df, gpd.GeoDataFrame):
-            click.echo('Geo-spatial aware input files must be provided to '
-                       'split to Geo-JSON.')
-            sys.exit(1)
-        pois = set(df['POI Name'])
-        for i, poi in enumerate(pois, start=1):
-            safe_poi_name = poi.replace(' ', '_').replace('/', '_')
-            out_file = os.path.join(out_dir, f"{safe_poi_name}_paths.geojson")
-            paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
-            logger.info('Writing {} paths for {} to {} ({}/{})'
-                        .format(len(paths), poi, out_file, i, len(pois)))
-            paths.to_file(out_file, driver="GeoJSON")
+    pois = set(df['POI Name'])
+    for i, poi in enumerate(pois, start=1):
+        safe_poi_name = poi.replace(' ', '_').replace('/', '_')
+        out_file = os.path.join(out_dir, f"{safe_poi_name}_paths.geojson")
+        paths = df[df['POI Name'] == poi].to_crs(epsg=4326)
+        logger.info('Writing {} paths for {} to {} ({}/{})'
+                    .format(len(paths), poi, out_file, i, len(pois)))
+        paths.to_file(out_file, driver="GeoJSON")
 
 
 @main.command()
@@ -469,6 +515,41 @@ def merge_reinforcement_costs(ctx, cost_fpath, reinforcement_cost_fpath,
         costs.to_csv(out_file, index=False)
 
 
+@main.command()
+@click.option('--config', '-c', required=True,
+              type=click.Path(exists=True),
+              help='Filepath to Least Cost Xmission config json file.')
+@click.option('--out_dir', '-o', type=STR, default=None,
+              help='Directory to save cost layers to. Default is config '
+              'directory')
+@click.pass_context
+def build_cost_layer(ctx, config, out_dir):
+    log_level = "DEBUG" if ctx.obj.get('VERBOSE') else "INFO"
+    init_logger('reVX', log_level=log_level)
+
+    if out_dir is None:
+        out_dir = Path(config).parent
+    else:
+        out_dir = Path(out_dir)
+
+    config = LeastCostXmissionConfig(config)
+    cl = CostLayer(config.cost_fpath, slice(None), slice(None),
+                   cell_size=config.cell_size,
+                   use_hard_barrier=config.use_hard_barrier)
+    cl.build(cost_layers=config.cost_layers,
+             friction_layers=config.friction_layers,
+             tracked_layers=config.tracked_layers,
+             cost_multiplier_layer=config.cost_multiplier_layer,
+             cost_multiplier_scalar=config.cost_multiplier_scalar)
+
+    with ExclusionLayers(config.cost_fpath) as fh:
+        profile = fh.profile
+
+    out_dir.mkdir(exist_ok=True, parents=True)
+    Geotiff.write(out_dir / "agg_costs.tif", profile, cl.cost)
+    Geotiff.write(out_dir / "final_routing_layer.tif", profile, cl.mcp_cost)
+
+
 def get_node_cmd(config, gids):
     """
     Get the node CLI call for Least Cost Xmission
@@ -491,16 +572,13 @@ def get_node_cmd(config, gids):
             '-feats {}'.format(SLURM.s(config.features_fpath)),
             '-regs {}'.format(SLURM.s(config.regions_fpath)),
             '-rid {}'.format(SLURM.s(config.region_identifier_column)),
-            '-cap {}'.format(SLURM.s(config.capacity_class)),
             '-res {}'.format(SLURM.s(config.resolution)),
-            '-xcfg {}'.format(SLURM.s(config.xmission_config)),
             '-mll {}'.format(SLURM.s(config.min_line_length)),
             '-gids {}'.format(SLURM.s(gids)),
             '-nn {}'.format(SLURM.s(config.nn_sinks)),
             '-buffer {}'.format(SLURM.s(config.clipping_buffer)),
-            '-tbln {}'.format(SLURM.s(config.tb_layer_name)),
-            '-bmult {}'.format(SLURM.s(config.barrier_mult)),
-            '-irln {}'.format(SLURM.s(config.iso_regions_layer_name)),
+            '-cml {}'.format(SLURM.s(config.cost_multiplier_layer)),
+            '-cmult {}'.format(SLURM.s(config.cost_multiplier_scalar)),
             '-mw {}'.format(SLURM.s(config.execution_control.max_workers)),
             '-o {}'.format(SLURM.s(config.dirout)),
             '-log {}'.format(SLURM.s(config.log_directory)),
@@ -510,12 +588,14 @@ def get_node_cmd(config, gids):
             ]
 
     for layer in config.cost_layers:
-        args.append(f'-cl {layer}')
-    for layer in config.length_invariant_cost_layers:
-        args.append(f'-licl {layer}')
+        args.append(f'-cl {SLURM.s(layer)}')
+    for layer in config.friction_layers:
+        args.append(f'-fl {SLURM.s(layer)}')
 
     if config.save_paths:
         args.append('--save_paths')
+    if config.use_hard_barrier:
+        args.append('-uhb')
     if config.radius:
         args.append('-rad {}'.format(config.radius))
     if config.expand_radius:
@@ -551,16 +631,13 @@ def run_local(ctx, config):
                cost_fpath=config.cost_fpath,
                features_fpath=config.features_fpath,
                regions_fpath=config.regions_fpath,
-               capacity_class=config.capacity_class,
                resolution=config.resolution,
-               xmission_config=config.xmission_config,
                min_line_length=config.min_line_length,
                sc_point_gids=config.sc_point_gids,
                nn_sinks=config.nn_sinks,
                clipping_buffer=config.clipping_buffer,
-               tb_layer_name=config.tb_layer_name,
-               barrier_mult=config.barrier_mult,
-               iso_regions_layer_name=config.iso_regions_layer_name,
+               cost_multiplier_layer=config.cost_multiplier_layer,
+               cost_multiplier_scalar=config.cost_multiplier_scalar,
                region_identifier_column=config.region_identifier_column,
                max_workers=config.execution_control.max_workers,
                out_dir=config.dirout,
@@ -572,10 +649,11 @@ def run_local(ctx, config):
                save_paths=config.save_paths,
                simplify_geo=config.simplify_geo,
                cost_layers=config.cost_layers,
-               li_cost_layers=config.length_invariant_cost_layers,
+               friction_layers=config.friction_layers,
                tracked_layers=config.tracked_layers,
                length_mult_kind=config.length_mult_kind,
-               cell_size=config.cell_size)
+               cell_size=config.cell_size,
+               use_hard_barrier=config.use_hard_barrier)
 
 
 def eagle(config, gids):
